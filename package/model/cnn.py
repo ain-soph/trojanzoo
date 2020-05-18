@@ -31,7 +31,6 @@ class _CNN(nn.Module):
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
-
     def forward(self, x):
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
@@ -100,7 +99,7 @@ class CNN(object):
 
     def __init__(self, name='cnn', dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None, model_class=_CNN, get_data=None,
-                 folder_path: str = None, pretrain=True, prefix='', cache_threshold=0.0, adv_train=False, **kwargs):
+                 folder_path: str = None, pretrain=True, prefix='', cache_threshold=2048, adv_train=False, **kwargs):
         self.name = name
         self.dataset = dataset
         self.prefix = prefix
@@ -196,7 +195,7 @@ class CNN(object):
     #
     # return: optimizer
 
-    def define_optimizer(self, train_opt='partial', lr: float = None, optim_type: str = None, lr_scheduler=False, **kwargs):
+    def define_optimizer(self, train_opt='partial', lr: float = None, optim_type: str = None, lr_scheduler=False, lr_step=20, **kwargs):
         if train_opt != 'full' and train_opt != 'partial':
             print('train_opt = %s' % train_opt)
             raise ValueError(
@@ -223,7 +222,7 @@ class CNN(object):
         if lr_scheduler:
             print('enable lr_scheduler')
             optimizer = optim.lr_scheduler.StepLR(
-                optimizer, step_size=30, gamma=0.1)
+                optimizer, step_size=lr_step, gamma=0.1)
             # optimizer = optim.lr_scheduler.MultiStepLR(
             #     optimizer, milestones=[150, 250], gamma=0.1)
         return optimizer
@@ -411,8 +410,9 @@ class CNN(object):
     #-----------------------------------------------------------------------------------------#
 
     #-----------------------------Adversarial Train and Validate------------------------------#
-    def adv_train(self, epoch, mode='free', perturb = None,
-                  m=8, alpha=2.0/255, epsilon=8.0/255, p=float('inf'), iteration=20, n=10, adre_lambda=0.1,
+    def adv_train(self, epoch, mode='free', perturb=None, smooth=False,
+                  m=8, alpha=2.0/255, epsilon=8.0/255, p=float('inf'), iteration=20, n=10,
+                  adre_lambda=0.1, cat_c=10.0, cat_eta=0.005, cat_epsmax=8.0/255,
                   train_opt='full', lr_scheduler=False, validate_full=True,
                   validate_interval=10, save=True, prefix='_adv_train', parallel=True, **kwargs):
         if mode is None:
@@ -420,12 +420,9 @@ class CNN(object):
                         validate_interval=validate_interval, save=save, prefix=prefix, parallel=parallel, **kwargs)
             return
 
-        optimizer = self.define_optimizer(
-            train_opt=train_opt, lr_scheduler=lr_scheduler, **kwargs)
-        _lr_scheduler = None
-        if lr_scheduler:
-            _lr_scheduler = optimizer
-            optimizer = _lr_scheduler.optimizer
+        _lr_scheduler = self.define_optimizer(
+            train_opt=train_opt, lr_scheduler=True, lr_step=5, **kwargs)
+        optimizer = _lr_scheduler.optimizer
         optimizer.zero_grad()
 
         # if mode == 'adre':
@@ -442,35 +439,41 @@ class CNN(object):
             from package.utils.main_utils import get_perturb
             perturb = get_perturb(
                 perturb, model=self, iteration=iteration, alpha=alpha, epsilon=epsilon, targeted=False, p=p, early_stop=False)
-
-        _, best_acc, _ = self._validate()
-        _, best_adv_acc, _ = self.adv_validate(
-            perturb=perturb, targeted=False, full=validate_full)
-        # best_acc = 10
-        # best_adv_acc = 10
+        best_acc = 95.240
+        best_adv_acc = 0.01
+        # _, best_acc, _ = self._validate()
+        # _, best_adv_acc, _ = self.adv_validate(
+        #     perturb=perturb, targeted=False, full=validate_full)
+        self.train()
 
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
 
-        end = time.time()
-        self.train()
+        trainloader = self.dataset.loader['train']
+
+        if mode == 'cat':
+            cat_eps = torch.zeros(len(trainloader),
+                                  device=self.device, dtype=torch.float)
+            dirichlet = torch.distributions.dirichlet.Dirichlet(
+                torch.ones(self.num_classes, dtype=torch.float, device=self.device))
+            ce_loss = CrossEntropy()
+        # end = time.time()
         for _epoch in range(epoch):
             losses.reset()
             top1.reset()
             top5.reset()
-            for i, data in enumerate(self.dataset.loader['train']):
+            for i, data in enumerate(trainloader):
                 # data_time.update(time.time() - end)
-                if i == 1 or i == 2:
-                    continue
-                _input, _label = self.get_data(data, mode='train')
-                noise = to_tensor(torch.zeros_like(_input))
-                adv_X = _input
-                for k in range(m):
-                    if mode == 'free':
-                        _output = self.get_logits(
-                            adv_X, parallel=parallel)
+                _input, _label = self.get_data(data)
+                if mode == 'free':
+                    noise = to_tensor(torch.zeros_like(_input))
+                    adv_X = _input
+                    for k in range(m):
+                        optimizer.zero_grad()
+                        _output = self.get_logits(adv_X)
                         loss = self.criterion(_output, _label)
+
                         loss.backward()
                         optimizer.step()
                         optimizer.zero_grad()
@@ -482,35 +485,81 @@ class CNN(object):
                         top5.update(acc5[0], _label.size(0))
 
                         empty_cache(self.cache_threshold)
-
-                    if mode == 'adre':
-                        _output = self.get_logits(
-                            adv_X, parallel=parallel, randomized_smooth=True, n=n)
-                        _, indices = _output.sort(dim=-1, descending=True)
-                        idx0 = to_tensor(indices[:, 0])
-                        idx1 = to_tensor(indices[:, 1])
-                        target = torch.where(idx0 == _label, idx1, idx0)
-
-                        loss = self.criterion(
-                            _output, _label)-adre_lambda*self.loss(adv_X, target)
-                        loss.backward()
-                        optimizer.step()
-                        optimizer.zero_grad()
-
-                        acc1, acc5 = self.accuracy(
-                            _output, _label, topk=(1, 5))
-                        losses.update(loss.item(), _label.size(0))
-                        top1.update(acc1[0], _label.size(0))
-                        top5.update(acc5[0], _label.size(0))
-
-                        empty_cache(self.cache_threshold)
-                    self.eval()
-                    adv_X, _ = perturb.perturb(_input, noise=noise, target=_label, targeted=False,
-                                               iteration=1, randomized_smooth=(mode == 'adre'), n=n)
-                    optimizer.zero_grad()
-                    self.zero_grad()
-
+                        adv_X, _ = perturb.perturb(_input, noise=noise, target=_label,
+                                                   targeted=False, iteration=1)
+                        self.train()
+                        self.zero_grad()
+                elif mode == 'normal':
+                    adv_X, _ = perturb.perturb(_input, target=_label, targeted=False,
+                                               iteration=m)
                     self.train()
+                    optimizer.zero_grad()
+                    _output = self.get_logits(adv_X)
+                    loss = self.criterion(_output, _label)
+
+                    acc1, acc5 = self.accuracy(
+                        _output, _label, topk=(1, 5))
+                    losses.update(loss.item(), _label.size(0))
+                    top1.update(acc1[0], _label.size(0))
+                    top5.update(acc5[0], _label.size(0))
+
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                elif mode == 'adre':
+                    adv_X, _ = perturb.perturb(_input, target=_label, targeted=False,
+                                               iteration=m, randomized_smooth=True, n=n)
+                    self.train()
+                    optimizer.zero_grad()
+                    _output = self.get_logits(adv_X, n=n,
+                                              randomized_smooth=True, parallel=parallel)
+                    _, indices = _output.sort(dim=-1, descending=True)
+                    idx0 = to_tensor(indices[:, 0])
+                    idx1 = to_tensor(indices[:, 1])
+                    target = torch.where(idx0 == _label, idx1, idx0)
+
+                    loss = self.criterion(
+                        _output, _label)-adre_lambda*self.loss(adv_X, target)
+
+                    acc1, acc5 = self.accuracy(
+                        _output, _label, topk=(1, 5))
+                    losses.update(loss.item(), _label.size(0))
+                    top1.update(acc1[0], _label.size(0))
+                    top5.update(acc5[0], _label.size(0))
+
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                elif mode == 'cat':
+                    y = torch.zeros(len(_label), self.num_classes,
+                                    device=self.device, dtype=torch.float)
+                    y.scatter_(1, _label.unsqueeze(1), 1.0)
+                    y_tild = (1-cat_c*cat_eps[i]) * \
+                        (y + dirichlet.rsample([len(_label)]))
+                    cat_eps[i] += cat_eta
+                    adv_X, _ = perturb.perturb(_input, target=y_tild, targeted=False, alpha=cat_c*cat_eps[i], epsilon=cat_eps[i],
+                                               iteration=m, loss_func=lambda _X: -ce_loss(self(_X), y_tild))
+                    self.train()
+                    optimizer.zero_grad()
+                    _classification = self.get_class(adv_X) 
+
+                    if _classification.eq(_label).float().mean() < 0.2:
+                        cat_eps[i] -= cat_eta
+                    cat_eps.clamp_(max=cat_epsmax)
+
+                    y_tild = (1-cat_c*cat_eps[i]) * \
+                        (y + dirichlet.rsample([len(_label)]))
+                    _output = self.get_logits(adv_X)
+                    loss = ce_loss(_output, y_tild)
+                    acc1, acc5 = self.accuracy(
+                        _output, _label, topk=(1, 5))
+                    losses.update(loss.item(), _label.size(0))
+                    top1.update(acc1[0], _label.size(0))
+                    top5.update(acc5[0], _label.size(0))
+
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
                     # batch_time.update(time.time() - end)
                     # end = time.time()
 
@@ -518,8 +567,7 @@ class CNN(object):
                     #     progress.display(i)
             print(('Epoch: [%d/%d],' % (_epoch+1, epoch)).ljust(25, ' ') +
                   'Loss: %.4f,\tTop1 Acc: %.3f,\tTop5 Acc: %.3f' % (losses.avg, top1.avg, top5.avg))
-            if lr_scheduler:
-                _lr_scheduler.step()
+            _lr_scheduler.step()
 
             if validate_interval != 0:
                 if (_epoch+1) % validate_interval == 0 or _epoch == epoch - 1:
@@ -799,3 +847,10 @@ class Conv2d_SAME(_ConvNd):
     def forward(self, input):
         return conv2d_same_padding(input, self.weight, self.bias, self.stride,
                                    self.padding, self.dilation, self.groups)
+
+
+class CrossEntropy(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, logits, y):
+        return -(F.log_softmax(logits, dim=1) * y).sum(1).mean()

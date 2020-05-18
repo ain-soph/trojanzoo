@@ -190,7 +190,7 @@ class Image_CNN(CNN):
     def get_all_layer(self, x, layer_input='input'):
         return self._model.get_all_layer(x, layer_input=layer_input)
 
-    def prune(self, percent=10, iter_prune=35, _global=True, iter_train=100, adv_train=None, reinit=False, _continue=False, save=True, **kwargs):
+    def prune(self, percent=10, iter_prune=35, _global=True, iter_train=100, adv_train=None, smooth=False, reinit=False, _continue=False, save=True, **kwargs):
         # Weight Initialization
         self.apply(self.weight_init)
         if not _continue:
@@ -202,6 +202,8 @@ class Image_CNN(CNN):
         prefix = '_prune'
         if adv_train is not None:
             prefix += '_adv_' + adv_train
+        if smooth:
+            prefix += '_smooth'
         if _global:
             prefix += '_global'
         for i in range(iter_prune):
@@ -215,7 +217,8 @@ class Image_CNN(CNN):
             if save:
                 self.load_state_dict(initial_state_dict, strict=False)
                 self.save_weights(prefix=prefix + '_%d' % i)
-            self.adv_train(iter_train, save=False, mode=adv_train, **kwargs)
+            self.adv_train(iter_train, mode=adv_train, smooth=smooth,
+                           save=False, **kwargs)
 
     # Prune by Percentile module
     def prune_step(self, percent=10.0, _global=True, **kwargs):

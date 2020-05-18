@@ -12,7 +12,7 @@ parser.add_argument('--adv_mode', dest='adv_mode', default='free')
 parser.add_argument('-m', dest='m', default=8, type=int)
 parser.add_argument('-n', dest='n', default=4, type=int)
 parser.add_argument('--epoch', dest='epoch', default=None, type=int)
-parser.add_argument('--lr', dest='lr', default=None, type=float)
+parser.add_argument('--lr', dest='lr', default=0.1, type=float)
 parser.add_argument('--train_opt', dest='train_opt', default='full')
 parser.add_argument('--lr_scheduler', dest='lr_scheduler',
                     default=False, action='store_true')

@@ -15,7 +15,7 @@ class Parser_Model(Parser_Basic):
         parser.add_argument('--layer', dest='layer',
                             default=None, type=int)
         parser.add_argument('--cache_threshold',  dest='cache_threshold',
-                            default=0, type=float)
+                            default=2048, type=float)
         parser.add_argument('--adv_train', action='store_true',
                             dest='adv_train', default=False)
 

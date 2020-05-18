@@ -11,12 +11,16 @@
 /bash/
 /data/
 /ref
-/output/
+/result
+/output
 /output*/
 
 abandon
 prev_projects
 ref
+*workspace.py
+*workspace.pyproj
+*workspace.sln
 
 dogfish
 tiny_imagenet

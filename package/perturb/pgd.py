@@ -64,13 +64,13 @@ class PGD(Perturb):
         if p is None:
             p = self.p
         if mode is None:
-            mode=self.mode
+            mode = self.mode
 
         def _loss_func(_X):
             loss = self.model.loss(_X, target, **kwargs)
             return loss if targeted else -loss
         if loss_func is None:
-            loss_func=_loss_func
+            loss_func = _loss_func
         #-----------------------------------------------------------------------------------------#
 
         if iteration == 0 or alpha == 0.0 or epsilon == 0.0:
@@ -79,7 +79,7 @@ class PGD(Perturb):
         self.output_result(target=target, targeted=targeted, _input=_input,
                            output=output, indent=indent)
         self.model.eval()
-
+        self.model.zero_grad()
 
         if noise is None:
             if batch:
@@ -108,30 +108,35 @@ class PGD(Perturb):
 
             if self.mode == 'white':
                 X.requires_grad = True
-                self.model.zero_grad()
                 loss = loss_func(X)
                 grad = torch.autograd.grad(loss, X)[0].detach()
+                self.model.zero_grad()
             elif self.mode == 'black':
                 grad = self.cal_gradient(
                     loss_func, X, sigma=self.sigma).detach()
                 if 'middle' in output:
                     X.requires_grad = True
-                    self.model.zero_grad()
                     loss = loss_func(X)
                     real_grad = torch.autograd.grad(loss, X)[0].detach()
+                    self.model.zero_grad()
+                    X.grad.zero_()
                     prints('cos<real, est> = ', self.cos_sim(grad.sign(), real_grad.sign()),
                            indent=indent+2)
+                    X.requires_grad = False
             else:
                 raise ValueError(
                     'Value of Parameter "mode" should be "white" or "black"!')
             if batch:
                 grad = grad.mean(dim=0)
             noise.data = (noise - alpha * torch.sign(grad)).data
+            noise.data = self.projector(noise, epsilon, p=p).data
             X = add_noise(_input, noise, batch=batch)
 
-            self.projector(noise, epsilon, p=p)
             self.output_middle(target=target, targeted=targeted, _input=X, _iter=_iter, iteration=iteration,
                                output=output, indent=indent)
+
+        X.requires_grad = False
+        self.model.zero_grad()
 
         self.output_result(target=target, targeted=targeted, _input=X,
                            output=output, indent=indent, mode='final')

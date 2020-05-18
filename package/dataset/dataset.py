@@ -51,7 +51,7 @@ class Dataset(object):
         self.default_model = default_model
 
         self.loader = {}
-        batch_size = self.num_gpus*self.batch_size
+        # batch_size = self.num_gpus*self.batch_size
 
         self.loader['train'] = self.get_dataloader(
             mode='train', batch_size=batch_size, full=True)

@@ -14,6 +14,8 @@ parser.add_argument('-m', '--model', dest='model', default='resnetnew18')
 parser.add_argument('--layer', dest='layer', default=None, type=int)
 
 parser.add_argument('--adv_train', dest='adv_train',
+                    default=None, type=str)
+parser.add_argument('--smooth', dest='smooth',
                     default=False, action='store_true')
 
 parser.add_argument('--percent', dest='percent', default=10, type=int)
@@ -43,7 +45,8 @@ print(args.__dict__)
 dataset = get_dataset(args.dataset, data_dir=args.data_dir)
 model = get_model(args.model, dataset=dataset, layer=args.layer, pretrain=True)
 
-model.prune(adv_train=args.adv_train, percent=args.percent, _global=args._global, iter_prune=args.iter_prune, iter_train=args.iter_train,
+model.prune(adv_train=args.adv_train, smooth=args.smooth, percent=args.percent, _global=args._global,
+            iter_prune=args.iter_prune, iter_train=args.iter_train,
             train_opt=args.train_opt, lr_scheduler=args.lr_scheduler,
             lr=args.lr, optim_type=args.optim_type,
             validate_interval=args.validate_interval, save=args.save)

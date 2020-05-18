@@ -15,7 +15,7 @@ dataset = parser_pgd.module.dataset
 model = parser_pgd.module.model
 perturb = parser_pgd.module.perturb
 
-testloader = dataset.loader['test']
+testloader = dataset.loader['train']
 
 # model._validate()
 correct = 0

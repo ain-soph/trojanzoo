@@ -21,7 +21,6 @@ class ImageNet(ImageFolder):
         self.output_par(name='ImageNet')
 
     def initialize(self):
-
         pass
 
     def get_full_dataset(self, mode):

@@ -192,7 +192,7 @@ class Perturb(object):
         length = epsilon/noise.norm(p=p)
         if length < 1:
             if p == float('inf'):
-                noise.data = to_valid_img(noise, -epsilon, epsilon).data
+                noise = noise.clamp(min=-epsilon, max=epsilon)
             else:
-                noise.data = length*noise
+                noise = length*noise
         return noise
