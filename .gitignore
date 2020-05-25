@@ -5,7 +5,6 @@
 **/__pycache__/
 *.pyc
 *.ini
-*.svg
 *.eps
 .dropbox
 /bash/

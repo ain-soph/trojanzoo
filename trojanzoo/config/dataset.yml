@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+
+dataset: cifar10
+
+batch_size:
+  default: -128
+  imagenet: -32
+  isic: -32
+
+default_model:
+  default: resnet18
+
+num_workers: 4
