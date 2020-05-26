@@ -3,11 +3,18 @@
 import os
 import yaml
 
-from trojanzoo.utils import Param
+from trojanzoo.utils.param import Param
+
+path = {
+    'system': os.path.dirname(os.path.abspath(__file__)),
+    'user': None,
+    'project': './config/',
+    'cmd': None
+}
 
 
 class Config:
-    """ A class to process config. The config is composed of ``system``, ``user``, ``project`` and ``cmd``.
+    """ A singleton class to process config. The config is composed of ``system``, ``user``, ``project`` and ``cmd``.
 
     :param system: The global config
     :type system: Param
@@ -25,17 +32,19 @@ class Config:
     project = Param()
     cmd = Param()
 
+    env = Param()
+
     config = Param()
 
     @classmethod
-    def get_config(cls):
+    def get_config(cls) -> Param:
         result = Param()
         for element in [cls.system, cls.user, cls.project, cls.cmd]:
             result.update(element)
         return result
 
-    @classmethod
-    def load_config(cls, path: str):
+    @staticmethod
+    def load_config(path: str):
         if path is None:
             return {}
         if not isinstance(path, str):
@@ -46,8 +55,11 @@ class Config:
             _dict = {}
             for _file in os.listdir(path):
                 name, ext = os.path.splitext(_file)
+                # if _filter is not None:
+                #     if name != _filter:
+                #         continue
                 if ext in ['.yml', '.yaml', 'json']:
-                    _dict.update({name: cls.load_config(path+_file)})
+                    _dict.update({name: Config.load_config(path+_file)})
             return _dict
         elif os.path.isfile(path):
             name, ext = os.path.splitext(os.path.split(path)[1])
@@ -62,8 +74,7 @@ class Config:
             return {}
 
     @classmethod
-    def update(cls, system_path=os.path.dirname(os.path.abspath(__file__)), user_path=None,
-               project_path='./config/', cmd_path: str = None):
+    def update(cls, cmd_path: str = None, _filter=[]):
         """Update the config
 
         :param system_path: [description], defaults to ``os.path.dirname(os.path.abspath(__file__))``
@@ -73,12 +84,15 @@ class Config:
         :param cmd_path: the path to load ``cmd``, defaults to ``None``
         :type cmd_path: str, optional
         """
-        for item in [cls.system, cls.user, cls.project, cls.cmd]:
-            item.clear()
 
-        cls.system.add(cls.load_config(system_path))
-        cls.user.add(cls.load_config(user_path))
-        cls.project.add(cls.load_config(project_path))
-        cls.cmd.add(cls.load_config(cmd_path))
+        path['cmd'] = cmd_path
+        _filter.append('cmd')
+
+        for item in _filter:
+            getattr(cls, item).clear()
+            getattr(cls, item).add(cls.load_config(path[item]))
 
         cls.config.add(cls.get_config())
+
+
+Config.update(_filter=['system', 'user', 'project'])

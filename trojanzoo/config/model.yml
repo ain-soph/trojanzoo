@@ -1,0 +1,3 @@
+default_model: 
+  default: resnetcomp18
+  isic2018: resnet101

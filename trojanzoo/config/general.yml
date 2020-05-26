@@ -8,3 +8,5 @@ path:
 seed:
   torch: 1228
   numpy: 100
+
+cache_threshold: 2048
