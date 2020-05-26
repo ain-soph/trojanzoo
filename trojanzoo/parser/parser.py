@@ -2,7 +2,7 @@
 
 import argparse
 
-from trojanzoo.utils import Module, Param
+from trojanzoo.utils.param import Module, Param
 from trojanzoo.utils.loader import get_module
 from trojanzoo.utils.output import prints
 
@@ -53,8 +53,8 @@ class Parser():
         parsed_args, unknown = self.parser.parse_known_args(*args)
         parsed_args = Module(parsed_args.__dict__)
 
-        result = self.remove_none(Module(kwargs))
-        result.update(self.remove_none(parsed_args))
+        result = (Module(kwargs))
+        result.update(parsed_args)
         return result
 
     @classmethod
@@ -67,20 +67,3 @@ class Parser():
         parser = argparse.ArgumentParser()
         cls.add_argument(parser)
         return parser
-
-    @staticmethod
-    def remove_none(module: Module) -> Module:
-        """Remove the arguments in ``module`` whose values are ``None``
-
-        :param module: input module
-        :type module: Module
-        :return: output module
-        :rtype: Module
-        """
-        for key in list(module.keys()):
-            if module[key] is None:
-                if isinstance(module, dict):
-                    del module[key]
-                else:
-                    delattr(module, key)
-        return module

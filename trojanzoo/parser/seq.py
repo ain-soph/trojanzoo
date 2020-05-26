@@ -2,10 +2,10 @@ from .parser import Parser
 from .config import Parser_Config
 from .main import Parser_Main
 
-from trojanzoo.utils import Module
+from trojanzoo.utils.param import Module
 from trojanzoo.utils.output import prints
 
-from typing import List,Tuple
+from typing import List, Tuple
 
 
 class Parser_Seq(Module):
