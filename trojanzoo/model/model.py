@@ -446,13 +446,14 @@ class Model:
     @staticmethod
     def output_layer_information(layer, depth=1, indent=0, verbose=False, tree_length=None):
         if tree_length is None:
-            tree_length = 10*depth
+            tree_length = 10*(depth+1)
         depth -= 1
         if depth >= 0:
             for name, module in layer.named_children():
                 _str = '{blue_light}{0}{reset}'.format(name, **ansi)
                 if verbose:
-                    _str = _str.ljust(tree_length-indent)
+                    _str = _str.ljust(
+                        tree_length-indent+len(ansi['blue_light'])+len(ansi['reset']))
                     item = str(module).split('\n')[0]
                     if item[-1] == '(':
                         item = item[:-1]

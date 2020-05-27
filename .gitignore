@@ -6,13 +6,11 @@
 # Temp Files
 .DS_Store
 .dropbox
+.ssh
 **/__pycache__
 *.pyc
 *.ini
 
-*.eps
-*.pyproj
-*.sln
 
 # Filter Directory
 # /config/
@@ -30,7 +28,11 @@ prev_projects
 
 # Filter Files
 *.bak
+*.eps
+*.pyproj
+*.sln
 /*workspace.py
+/test.py
 
 
 dogfish

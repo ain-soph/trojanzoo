@@ -17,6 +17,8 @@ class Parser_Main(Parser):
         parser.add_argument('--device', dest='device')
         parser.add_argument('--cache_threshold', dest='cache_threshold',
                             type=float)
+        parser.add_argument('--verbose', dest='verbose',
+                            action='store_true')
 
     @staticmethod
     def get_module(device: str = None, cache_threshold: float = None):
