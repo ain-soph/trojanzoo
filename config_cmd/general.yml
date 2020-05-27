@@ -4,9 +4,3 @@ path:
   data_dir: ./data/
   memory_dir: null
   result_dir: ./result/
-
-seed:
-  torch: 1228
-  numpy: 100
-
-cache_threshold: 2048

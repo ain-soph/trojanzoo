@@ -6,7 +6,7 @@
 # Temp Files
 .DS_Store
 .dropbox
-**/__pycache__/
+**/__pycache__
 *.pyc
 *.ini
 
@@ -17,16 +17,16 @@
 # Filter Directory
 # /config/
 # /config_cmd/
-/bash/
-/data/
-/result/
-/output/
+/bash
+/data
+/result
+/output
 /output*/
-abandon/
-ref/
-prev_projects/
-**/todo/
-**/bak/
+abandon
+ref
+prev_projects
+**/todo
+**/bak
 
 # Filter Files
 *.bak
