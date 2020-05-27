@@ -5,8 +5,8 @@ from trojanzoo.utils import to_tensor, to_numpy, percentile, to_valid_img, empty
 
 import torch
 import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.utils.prune as prune
+
+from typing import Dict
 from copy import deepcopy
 from collections import OrderedDict
 
@@ -32,9 +32,10 @@ from collections import OrderedDict
 
 class _ImageModel(_Model):
 
-    def __init__(self, norm_par=None, **kwargs):
+    def __init__(self, norm_par: Dict[str, list] = None, **kwargs):
         super().__init__(**kwargs)
-        self.norm_par = norm_par
+        if norm_par is not None:
+            self.norm_par = {key: to_tensor(value) for key, value in norm_par.items()}
 
     # This is defined by Pytorch documents
     # See https://pytorch.org/docs/stable/torchvision/models.html for more details
@@ -45,11 +46,9 @@ class _ImageModel(_Model):
         if len(x.shape) == 3:
             x = x.unsqueeze(0)
         if self.norm_par is not None:
-            norm = self.norm_par
-            if norm is not None:
-                mean = to_tensor(norm['mean'])
-                std = to_tensor(norm['std'])
-                return x.sub(mean[None, :, None, None]).div(std[None, :, None, None])
+            mean = self.norm_par['mean'][None, :, None, None]
+            std = self.norm_par['std'][None, :, None, None]
+            return x.sub(mean).div(std)
         return x
 
     # get feature map
@@ -64,7 +63,7 @@ class _ImageModel(_Model):
     # output: (batch_size, [layer])
     def get_layer(self, x, layer_output='logits', layer_input='input'):
         if layer_input == 'input':
-            if layer_output == 'logits' or layer_output == 'classifier':
+            if layer_output in ['logits', 'classifier']:
                 return self(x)
             elif layer_output == 'features':
                 return self.get_final_fm(x)
@@ -107,9 +106,9 @@ class _ImageModel(_Model):
     def get_other_layer(self, x, layer_output='logits', layer_input='input'):
         layer_name_list = self.get_layer_name()
         if isinstance(layer_output, str):
-            if layer_output not in layer_name_list and layer_output not in ['features', 'classifier', 'logits', 'output']:
-                print('Model Layer Name List: ')
-                print(layer_name_list)
+            if layer_output not in layer_name_list and \
+                    layer_output not in ['features', 'classifier', 'logits', 'output']:
+                print('Model Layer Name List: ', layer_name_list)
                 print('Output layer: ', layer_output)
                 raise ValueError('Layer name not in model')
             layer_name = layer_output
@@ -117,8 +116,7 @@ class _ImageModel(_Model):
             if layer_output < len(layer_name_list):
                 layer_name = layer_name_list[layer_output]
             else:
-                print('Model Layer Name List: ')
-                print(layer_name_list)
+                print('Model Layer Name List: ', layer_name_list)
                 print('Output layer: ', layer_output)
                 raise IndexError('Layer index out of range')
         else:
@@ -131,18 +129,9 @@ class _ImageModel(_Model):
 
     def get_layer_name(self):
         layer_name = []
-        if 'ResNet' in self.__class__.__name__:
-            for l, block in self.features.named_children():
-                if 'conv' in l:
-                    layer_name.append('features.'+l)
-                else:
-                    for name, _ in block.named_children():
-                        if 'relu' not in name and 'bn' not in name:
-                            layer_name.append('features.'+l+'.'+name)
-        else:
-            for name, _ in self.features.named_children():
-                if 'relu' not in name and 'bn' not in name:
-                    layer_name.append('features.'+name)
+        for name, _ in self.features.named_children():
+            if 'relu' not in name and 'bn' not in name:
+                layer_name.append('features.'+name)
         layer_name.append('avgpool')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name:
@@ -165,9 +154,6 @@ class ImageModel(Model):
 
     def get_layer(self, *args, **kwargs):
         return self._model.get_layer(*args, **kwargs)
-
-    # def get_layer_num(self):
-    #     return self._model.get_layer_num()
 
     def get_layer_name(self):
         return self._model.get_layer_name()

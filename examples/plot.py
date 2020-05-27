@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from package.plot.figure import Figure
-from package.plot.colormap import ting_color
+from trojanzoo.plot.figure import Figure
+from trojanzoo.plot.colormap import ting_color
 import numpy as np
 
 

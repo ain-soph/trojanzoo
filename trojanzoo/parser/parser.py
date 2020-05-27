@@ -44,16 +44,17 @@ class Parser():
         return get_module(module_class=self.name, **kwargs)
 
     # ------------------------------------------------------ #
-    def parse_args(self, *args, **kwargs) -> Module:
+    def parse_args(self, args, namespace=None, **kwargs) -> Module:
         """parse arguments using ``self.parser``
 
         :return: the parsed arguments
         :rtype: Module
         """
-        parsed_args, unknown = self.parser.parse_known_args(*args)
+        parsed_args, unknown = self.parser.parse_known_args(
+            args, namespace=namespace)
         parsed_args = Module(parsed_args.__dict__)
 
-        result = (Module(kwargs))
+        result = Module(kwargs)
         result.update(parsed_args)
         return result
 

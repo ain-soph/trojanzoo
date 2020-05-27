@@ -13,4 +13,4 @@ if __name__ == '__main__':
     dataset = parser.module_list.dataset
     model = parser.module_list.model
 
-    _, org_acc, _ = model._validate(full=True)
+    _, acc, _ = model._validate(full=True)

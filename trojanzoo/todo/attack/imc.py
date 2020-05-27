@@ -61,7 +61,7 @@ class Unify(Perturb):
             adv_X, pgd_iter = self.module.pgd.perturb(_input, noise=noise, target=target, targeted=True,
                                                       **(param['pgd']))
 
-            self.model.load_pretrained_weights()
+            self.model.load()
 
             poison_iter = self.module.poison.perturb(adv_X, target,
                                                      **(param['poison']))

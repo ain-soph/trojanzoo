@@ -14,8 +14,10 @@ class Parser_Model(Parser):
     def add_argument(parser):
         parser.add_argument('--model', dest='module_name', type=str)
         parser.add_argument('--layer', dest='layer', type=int)
+        parser.add_argument('--pretrain', dest='pretrain',
+                            action='store_true')
         parser.add_argument('--adv_train', dest='adv_train',
-                            action='store_true', default=False)
+                            action='store_true')
 
     def get_module(self, **kwargs) -> Model:
         return get_model(**kwargs)

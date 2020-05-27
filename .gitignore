@@ -1,25 +1,37 @@
+# Configureation Files
 .vs
 .vscode
-.DS_Store
 .devcontainer
+
+# Temp Files
+.DS_Store
+.dropbox
 **/__pycache__/
 *.pyc
 *.ini
+
 *.eps
-.dropbox
+*.pyproj
+*.sln
+
+# Filter Directory
+/config/
+/config_cmd/
 /bash/
 /data/
-/ref
-/result
-/output
+/result/
+/output/
 /output*/
+abandon/
+ref/
+prev_projects/
+**/todo
+**/bak
 
-abandon
-prev_projects
-ref
-*workspace.py
-*workspace.pyproj
-*workspace.sln
+# Filter Files
+*.bak
+/*workspace.py
+
 
 dogfish
 tiny_imagenet

@@ -38,10 +38,9 @@ class VGG(ImageModel):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, output=True):
-        if output:
-            print("********Load From Official Website!********")
-        _dict = model_zoo.load_url(model_urls['vgg'+str(self.layer)])
+    def load_official_weights(self, verbose=True):
+        url = model_urls['vgg'+str(self.layer)]
+        _dict = model_zoo.load_url(url)
         if self.num_classes == 1000:
             self._model.load_state_dict(_dict)
         else:
@@ -50,6 +49,9 @@ class VGG(ImageModel):
                 if 'classifier.6' not in name:
                     new_dict[name] = param
             self._model.load_state_dict(new_dict, strict=False)
+        if verbose:
+            print(
+                'Model {name} loaded From Official Website: '.format(self.name), url)
 
 
 class _VGGcomp(_VGG):
@@ -74,3 +76,15 @@ class VGGcomp(VGG):
             if 'classifier' not in name:
                 new_dict[name] = param
         self._model.load_state_dict(new_dict, strict=False)
+
+    def load_official_weights(self, verbose=True):
+        url = model_urls['vgg'+str(self.layer)]
+        _dict = model_zoo.load_url(url)
+        new_dict = OrderedDict()
+        for name, param in _dict.items():
+            if 'classifier' not in name:
+                new_dict[name] = param
+        self._model.load_state_dict(new_dict, strict=False)
+        if verbose:
+            print(
+                'Model {name} loaded From Official Website: '.format(self.name), url)

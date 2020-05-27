@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from .parser import Parser
-
 import torch
 
 from trojanzoo.config import Config
