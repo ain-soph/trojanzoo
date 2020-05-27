@@ -25,8 +25,8 @@
 abandon/
 ref/
 prev_projects/
-**/todo
-**/bak
+**/todo/
+**/bak/
 
 # Filter Files
 *.bak
