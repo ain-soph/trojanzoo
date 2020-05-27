@@ -14,6 +14,7 @@ class Parser_Dataset(Parser):
     def add_argument(parser):
         parser.add_argument('-d', '--dataset', dest='module_name', type=str)
         parser.add_argument('--batch_size', dest='batch_size', type=int)
+        parser.add_argument('--num_workers', dest='num_workers', type=int)
         parser.add_argument('--download', dest='download', action='store_true')
 
     def get_module(self, **kwargs) -> Dataset:

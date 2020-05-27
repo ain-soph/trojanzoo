@@ -46,8 +46,8 @@ class _ImageModel(_Model):
         if len(x.shape) == 3:
             x = x.unsqueeze(0)
         if self.norm_par is not None:
-            mean = self.norm_par['mean'][None, :, None, None]
-            std = self.norm_par['std'][None, :, None, None]
+            mean = self.norm_par['mean'][None, :, None, None].to(x.device)
+            std = self.norm_par['std'][None, :, None, None].to(x.device)
             return x.sub(mean).div(std)
         return x
 
