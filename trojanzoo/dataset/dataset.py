@@ -43,8 +43,8 @@ class Dataset:
 
         self.name = name
         self.param_list = OrderedDict()
-        self.param_list['abstract'] = ['folder_path',
-                                       'batch_size', 'num_classes', 'data_type']
+        self.param_list['abstract'] = ['data_type', 'folder_path',
+                                       'batch_size', 'num_classes', 'num_workers']
 
         self.data_type = data_type
 

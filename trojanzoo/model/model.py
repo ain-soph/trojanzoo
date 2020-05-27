@@ -183,7 +183,7 @@ class Model:
 
     def define_optimizer(self, lr: float = 0.1,
                          parameters: Union[str, Iterable] = 'full', optim_type: Union[str, type] = None,
-                         lr_scheduler=True, step_size=30, verbose=False, **kwargs):
+                         lr_scheduler=True, step_size=30, **kwargs):
 
         if isinstance(parameters, str):
             if parameters == 'full':
@@ -206,15 +206,11 @@ class Model:
 
         if kwargs == {}:
             if optim_type == optim.SGD:
-                print('using default SGD optimizer setting')
                 kwargs = {'momentum': 0.9,
                           'weight_decay': 2e-4, 'nesterov': True}
-        else:
-            print('kwargs: ', kwargs)
         optimizer = optim_type(parameters, lr, **kwargs)
         _lr_scheduler = None
         if lr_scheduler:
-            print('enable lr_scheduler')
             _lr_scheduler = optim.lr_scheduler.StepLR(
                 optimizer, step_size=step_size, gamma=0.1)
             # optimizer = optim.lr_scheduler.MultiStepLR(
@@ -324,8 +320,9 @@ class Model:
 
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 losses.update(loss.item(), _label.size(0))
-                top1.update(acc1[0], _label.size(0))
-                top5.update(acc5[0], _label.size(0))
+                batch_size = int(_label.size(0))
+                top1.update(acc1, batch_size)
+                top5.update(acc5, batch_size)
 
                 empty_cache()
 
@@ -334,11 +331,11 @@ class Model:
 
                 # if i % 10 == 0:
                 #     progress.display(i)
-            epoch_time = str(datetime.timedelta(int(
+            epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter()-epoch_start)))
             pre_str = '{blue_light}Epoch: {0}'.format(
                 output_iter(_epoch+1, epoch), **ansi)
-            print('\033[1A\033[K{:<25}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+            print('\033[1A\033[K{:<60}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
                 pre_str, losses.avg, top1.avg, top5.avg, epoch_time))
             if lr_scheduler:
                 lr_scheduler.step()
@@ -380,8 +377,10 @@ class Model:
                 # measure accuracy and record loss
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 losses.update(loss.item(), _label.size(0))
-                top1.update(acc1[0], _label.size(0))
-                top5.update(acc5[0], _label.size(0))
+
+                batch_size = int(_label.size(0))
+                top1.update(acc1, batch_size)
+                top5.update(acc5, batch_size)
 
                 # empty_cache()
 
@@ -391,11 +390,11 @@ class Model:
 
                 # if i % 10 == 0:
                 #     progress.display(i)
-        epoch_time = str(datetime.timedelta(int(
+        epoch_time = str(datetime.timedelta(seconds=int(
             time.perf_counter()-epoch_start)))
         if output:
             pre_str = '{yellow}Validate:{reset}'.format(**ansi)
-            print('{:<25}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+            print('{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
                 pre_str, losses.avg, top1.avg, top5.avg, epoch_time))
         return losses.avg, top1.avg, top5.avg
 
@@ -420,11 +419,11 @@ class Model:
             res = []
             for k in topk:
                 if k > self.num_classes:
-                    res.append(torch.as_tensor([100.0], device=correct.device))
+                    res.append(100.0)
                 else:
                     correct_k = correct[:k].view(-1).float().sum(0,
                                                                  keepdim=True)
-                    res.append(correct_k.mul_(100.0 / batch_size))
+                    res.append(float(correct_k.mul_(100.0 / batch_size)))
             return res
 
     def activate_params(self, active_param: list):
@@ -451,7 +450,7 @@ class Model:
         depth -= 1
         if depth >= 0:
             for name, module in layer.named_children():
-                _str = name
+                _str = '{blue_light}{0}{reset}'.format(name, **ansi)
                 if verbose:
                     _str = _str.ljust(tree_length-indent)
                     item = str(module).split('\n')[0]
@@ -462,8 +461,10 @@ class Model:
                 Model.output_layer_information(
                     module, depth=depth, indent=indent+10, verbose=verbose, tree_length=tree_length)
 
-    def summary(self, **kwargs):
-        self.output_layer_information(self._model, **kwargs)
+    def summary(self, indent=0, **kwargs):
+        _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
+        prints(_str, indent=indent)
+        self.output_layer_information(self._model, indent=indent+10, **kwargs)
 
     @staticmethod
     def split_name(name, layer=None, default_layer=0, output=False):

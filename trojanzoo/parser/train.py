@@ -21,6 +21,7 @@ class Parser_Train(Parser):
         parser.add_argument('--lr_scheduler', dest='lr_scheduler',
                             action='store_true')
         parser.add_argument('--step_size', dest='step_size', type=int)
+        parser.add_argument('--validate_interval', dest='validate_interval', type=int)
         parser.add_argument('--save', dest='save', action='store_true')
 
     def get_module(self, model: Model, **kwargs):
