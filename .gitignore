@@ -15,8 +15,8 @@
 *.sln
 
 # Filter Directory
-/config/
-/config_cmd/
+# /config/
+# /config_cmd/
 /bash/
 /data/
 /result/
