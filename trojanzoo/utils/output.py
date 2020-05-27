@@ -74,15 +74,29 @@ def indent_str(arg: str, indent=0) -> str:
 
 
 class Indent_Redirect:
-    def __init__(self, indent=0):
+    def __init__(self, buffer=False, indent=0):
         self.__console__ = sys.stdout
         self.indent = indent
+        self.buffer = None
+        if buffer:
+            self.buffer = ''
 
-    def write(self, text):
-        self.__console__.write(indent_str(text, indent=self.indent))
+    def write(self, text, indent=None):
+        if indent is None:
+            indent=self.indent
+        text = indent_str(text, indent=indent)
+        if self.buffer is None:
+            self.__console__.write(text)
+        else:
+            self.buffer += text
 
     def flush(self):
+        if self.buffer:
+            self.__console__.write(self.buffer)
+            self.buffer = ''
         self.__console__.flush()
 
     def reset(self):
+        if self.buffer:
+            self.buffer=''
         sys.stdout = self.__console__

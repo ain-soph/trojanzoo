@@ -7,8 +7,10 @@ from trojanzoo.utils.output import prints, ansi, Indent_Redirect
 
 from typing import List, Tuple
 import sys
+import argparse
 
-redirect = Indent_Redirect(indent=10)
+redirect = Indent_Redirect(buffer=True, indent=10)
+
 
 class Parser_Seq(Module):
     """ A sequential parser following order of ``[ [prefix], *args]``
@@ -23,35 +25,36 @@ class Parser_Seq(Module):
         self.args_list = Module()
         self.module_list = Module()
 
-    def parse_args(self, args=None, namespace=None, verbose=True):
+    def parse_args(self, args=None, namespace: argparse.Namespace = None, verbose: bool = None):
         help_flag = False
-        if verbose:
-            print('{yellow}Arguments: {reset}'.format(**ansi))
-            print()
+        sys.stdout = redirect
+        sys.stdout.write('{yellow}Arguments: {reset}\n'.format(**ansi),
+                         indent=0)
         for parser in self.parser_list:
             try:
-                if verbose:
-                    prints('{purple}{0}{reset}'.format(
-                        parser.name, **ansi), indent=10)
-                sys.stdout = redirect
+                print('{purple}{0}{reset}'.format(parser.name, **ansi))
                 self.args_list[parser.name] = parser.parse_args(
                     args, namespace=namespace)
-                redirect.reset()
-                if verbose:
-                    prints(self.args_list[parser.name], indent=10)
-                    prints('---------------', indent=10)
-                    print()
+                print(self.args_list[parser.name])
+                print('---------------')
+                print()
             except SystemExit:
-                help_flag=True
-                if verbose:
-                    redirect.reset()
-                    prints('---------------', indent=10)
-                    print()
+                help_flag = True
+                print('---------------')
+                print()
+        if verbose is None:
+            verbose = help_flag or ('--verbose' in sys.argv[1:])
+        if verbose:
+            sys.stdout.flush()
+        redirect.reset()
         if help_flag:
             raise SystemExit
         return self.args_list
 
-    def get_module(self, verbose=True, **kwargs):
+    def get_module(self, verbose: bool = None, **kwargs):
+        if verbose is None:
+            if 'main' in self.args_list.keys():
+                verbose = self.args_list['main']['verbose']
         if verbose:
             print('{yellow}Modules: {reset}'.format(**ansi))
             print()

@@ -17,11 +17,12 @@ class Parser_Main(Parser):
         parser.add_argument('--device', dest='device')
         parser.add_argument('--cache_threshold', dest='cache_threshold',
                             type=float)
-        parser.add_argument('--verbose', dest='verbose',
-                            action='store_true')
+        parser.add_argument('--verbose', dest='verbose', action='store_true')
 
     @staticmethod
-    def get_module(device: str = None, cache_threshold: float = None):
+    def get_module(device: str = None, cache_threshold: float = None, verbose: bool = None):
+        if verbose is not None:
+            env['verbose'] = verbose
         env['num_gpus'] = 0
         if device in [None, 'gpu', 'cuda'] or 'cuda' in device:
             if torch.cuda.is_available():
