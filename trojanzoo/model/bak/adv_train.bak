@@ -170,7 +170,7 @@ self.prefix += ('_adv_train' if adv_train else '')
                     # _, cur_adv_acc, _ = self.adv_validate(perturb=perturb, targeted=True)
                     self.train()
                     if cur_adv_acc > best_adv_acc and save:
-                        self.save_weights(prefix=prefix)
+                        self.save(prefix=prefix)
                         best_adv_acc = cur_adv_acc
                         print('current model saved!')
                     print('---------------------------------------------------')

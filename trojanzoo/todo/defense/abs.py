@@ -80,7 +80,7 @@ class ABS():
         ys = fys[:20]
         test_xs = fxs[20:]
         test_ys = fys[20:]
-        self.model.load_pretrained_weights(weights_file)
+        self.model.load(weights_file)
         all_ps = self.sample_neuron(xs, ys)
         neuron_dict = self.find_min_max(all_ps)
         results = self.re_mask(neuron_dict, xs, weights_file)
@@ -112,7 +112,7 @@ class ABS():
 
     def test_mask(self, weights_file, test_xs, result):
         rimg, rdelta, rmask, tlabel = result[:4]
-        self.model.load_pretrained_weights(weights_file)
+        self.model.load(weights_file)
         t_images = self.stamp(test_xs, rdelta, rmask)
         for i in range(len(t_images)):
             save_numpy_as_img(
@@ -353,7 +353,7 @@ class ABS():
         delta.requires_grad = True
         mask.requires_grad = True
 
-        self.model.load_pretrained_weights(weights_file)
+        self.model.load(weights_file)
         optimizer = optim.Adam([delta, mask] if self.use_mask else [delta],
                                lr=self.re_mask_lr)
         optimizer.zero_grad()

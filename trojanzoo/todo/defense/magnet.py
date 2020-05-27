@@ -100,8 +100,8 @@ class MagNet(CNN):
     def define_criterion(self, *args, **kwargs):
         return nn.MSELoss()
 
-    def load_pretrained_weights(self, **kwargs):
-        return super(MagNet, self).load_pretrained_weights(**kwargs)
+    def load(self, **kwargs):
+        return super(MagNet, self).load(**kwargs)
 
     def accuracy(self, _output, _label, topk=(1,)):
         res = []

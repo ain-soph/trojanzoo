@@ -78,12 +78,12 @@ class Dataset:
         except Exception as e:
             if download:
                 self.initialize()
-                raise SystemExit
+                raise SystemExit()
             else:
                 raise e
 
     def initialize(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def summary(self, indent: int = 0):
         prints('{:<10s} Parameters: '.format(self.name), indent=indent)
@@ -92,8 +92,6 @@ class Dataset:
             prints(key, indent=indent+10)
             prints({v: d[v] for v in value}, indent=indent+10)
             prints('-'*20, indent=indent+10)
-            print()
-        print()
 
     def get_transform(self, mode):
         pass
@@ -155,3 +153,6 @@ class Dataset:
             np.save(file_path, loss_weights)
             print('Loss Weights Saved at ', file_path)
             return to_tensor(loss_weights, dtype='float')
+
+    def __str__(self):
+        return self.summary()

@@ -102,7 +102,7 @@ class LID(Model):
                   (_epoch+1, epoch, losses.avg, top1.avg))
             if _epoch % 5 == 0:
                 self._validate(validloader, _model, model, output=True)
-                self.save_weights()
+                self.save()
                 print('current model saved!')
         model.eval()
 

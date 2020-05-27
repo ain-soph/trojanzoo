@@ -7,9 +7,9 @@
         if not _continue:
             self.make_mask()
         initial_state_dict = OrderedDict()
-        for key in self.state_dict().keys():
+        for key,value in self.state_dict().items():
             if 'mask' not in key:
-                initial_state_dict[key] = deepcopy(self.state_dict()[key])
+                initial_state_dict[key] = deepcopy(value)
         if adv_train is not None:
             prefix += '_adv_' + adv_train
         if smooth:
@@ -28,7 +28,7 @@
             elif not rewind:
                 self.load_state_dict(initial_state_dict, strict=False)
             if save:
-                self.save_weights(prefix=prefix + '_%d' %
+                self.save(prefix=prefix + '_%d' %
                                   i, result=True, output=True)
             self.adv_train(iter_train, mode=adv_train, smooth=smooth,
                            save=False, **kwargs)
@@ -182,13 +182,13 @@
         if _iter is None:
             for i in range(iter_prune):
                 prefix = '_%d' % i
-                self.load_pretrained_weights(prefix=prefix, result=True)
+                self.load(prefix=prefix, result=True)
                 if reinit:
                     self.apply(self.weight_init)
                 self.adv_train(iter_train, save=False, **kwargs)
         else:
             prefix = '_%d' % _iter
-            self.load_pretrained_weights(prefix=prefix, result=True)
+            self.load(prefix=prefix, result=True)
             if reinit:
                 self.apply(self.weight_init)
             self.adv_train(iter_train, save=False, **kwargs)
@@ -264,7 +264,7 @@
                     # _, cur_adv_acc, _ = self.adv_validate(perturb=perturb, targeted=True)
                     self.train()
                     if cur_adv_acc > best_adv_acc and save:
-                        self.save_weights(
+                        self.save(
                             prefix=prefix, result=True, output=True)
                         best_adv_acc = cur_adv_acc
                     print('---------------------------------------------------')
@@ -339,7 +339,7 @@
         #             # _, cur_adv_acc, _ = self.adv_validate(perturb=perturb, targeted=True)
         #             self.train()
         #             if cur_adv_acc > best_adv_acc and save:
-        #                 self.save_weights(prefix=prefix)
+        #                 self.save(prefix=prefix)
         #                 best_adv_acc = cur_adv_acc
         #             print('---------------------------------------------------')
         # self.zero_grad()

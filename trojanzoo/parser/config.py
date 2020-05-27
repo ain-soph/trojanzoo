@@ -13,6 +13,6 @@ class Parser_Config(Parser):
     def add_argument(parser):
         parser.add_argument('--config', dest='config')
 
-    def get_module(self, cmd_path=None):
-        Config.update(cmd_path=cmd_path)
+    def get_module(self, config=None):
+        Config.update(cmd_path=config)
         return Config.config

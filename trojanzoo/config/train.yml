@@ -1,0 +1,16 @@
+epoch:
+  cifar10: 300
+
+lr:
+  default: 0.001
+  cifar10: 0.1
+
+parameters:
+  default: full
+
+optim_type:
+  default: SGD
+
+step_size:
+  default: 30
+  cifar10: 100

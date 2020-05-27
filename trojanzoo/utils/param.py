@@ -72,10 +72,10 @@ class Module(object):
         self.__setattr__(key, value)
 
     def __str__(self):
-        return self.__dict__.__str__()
+        return self.__class__.__name__+self.__dict__.__str__()
 
     def __repr__(self):
-        return self.__dict__.__repr__()
+        return self.__str__()
 
 
 class Param(Module):

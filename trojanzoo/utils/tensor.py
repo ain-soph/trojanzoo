@@ -29,13 +29,13 @@ def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
     if isinstance(x, list):
         try:
             x = torch.stack(x)
-        except Exception:
+        except TypeError:
             pass
     try:
         x = torch.as_tensor(x, dtype=_dtype, device=device)
-    except Exception:
+    except Exception as e:
         print('tensor: ', x)
-        raise ValueError()
+        raise e
     return x
 
 

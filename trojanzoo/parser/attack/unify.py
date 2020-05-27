@@ -75,9 +75,9 @@ class Parser_Unify(Parser_Perturb):
             'iteration': self.module['perturb'].iteration,
             'retrain_epoch': self.module['perturb'].module.poison.iteration
         }
-        for key in kwargs:
+        for key, value in kwargs.items():
             if key in _dict.keys():
-                _dict[key] = kwargs[key]
+                _dict[key] = value
 
         # for key in args.__dict__.keys():
         #     if key in ['dataset', 'model', 'alpha', 'epsilon', 'stop_confidence', 'iteration', 'poison_percent', 'poison_num']:

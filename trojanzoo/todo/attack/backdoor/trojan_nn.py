@@ -99,7 +99,7 @@ class Watermark(Perturb):
     def load_model(self, path: str = None, _iter=40):
         if path is None:
             path = self.folder_path+self.filename+'_e%d.pth' % _iter
-        self.model.load_pretrained_weights(path)
+        self.model.load(path)
 
     def get_filename(self, alpha=None, target_class=None, retrain_epoch=None, original=None, _iter=None):
         if alpha is None:
@@ -193,7 +193,7 @@ class Watermark(Perturb):
                     np.savez(self.folder_path+_file+'.npz',
                              mark=to_numpy(mark), mask=to_numpy(mask), alpha_mask=to_numpy(alpha_mask))
                     np.save(self.folder_path+_file+'.npy', confidence_list)
-                    self.model.save_weights(
+                    self.model.save(
                         self.folder_path+_file+'.pth', full=True)
                     print('model and mark image saved at %s!' %
                           (self.folder_path+_file))

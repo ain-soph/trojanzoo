@@ -2,7 +2,7 @@
 
 import os
 import yaml
-
+import torch
 from trojanzoo.utils.param import Param
 
 path = {
@@ -74,7 +74,7 @@ class Config:
             return {}
 
     @classmethod
-    def update(cls, cmd_path: str = None, _filter=[]):
+    def update(cls, *args, cmd_path: str = None):
         """Update the config
 
         :param system_path: [description], defaults to ``os.path.dirname(os.path.abspath(__file__))``
@@ -84,15 +84,17 @@ class Config:
         :param cmd_path: the path to load ``cmd``, defaults to ``None``
         :type cmd_path: str, optional
         """
-
+        args = list(args)
         path['cmd'] = cmd_path
-        _filter.append('cmd')
+        args.append('cmd')
 
-        for item in _filter:
+        for item in args:
             getattr(cls, item).clear()
             getattr(cls, item).add(cls.load_config(path[item]))
 
         cls.config.add(cls.get_config())
 
 
-Config.update(_filter=['system', 'user', 'project'])
+Config.update('system', 'user', 'project')
+Config.env['num_gpus']=torch.cuda.device_count()
+Config.env['cache_threshold'] = Config.config['general']['cache_threshold']

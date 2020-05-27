@@ -5,3 +5,5 @@ from .seq import Parser_Seq
 
 from .dataset import Parser_Dataset
 from .model import Parser_Model
+
+from .train import Parser_Train

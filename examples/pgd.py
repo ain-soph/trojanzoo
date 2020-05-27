@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from package.imports.universal import *
-from package.utils.utils import *
-from package.parse.perturb.pgd import Parser_PGD
+from trojanzoo.imports import *
+from trojanzoo.utils import *
+from trojanzoo.parser.attack.pgd import Parser_PGD
 
 
 import warnings
@@ -24,7 +24,7 @@ total_iter = 0
 for i, data in enumerate(testloader):
     if i > 100:
         break
-    _input, _label = model.remove_misclassify_from_batch(data)
+    _input, _label = model.remove_misclassify(data)
     if len(_label) == 0:
         continue
     target = perturb.generate_target(_input) if perturb.targeted else _label
