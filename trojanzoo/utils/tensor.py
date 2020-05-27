@@ -23,8 +23,8 @@ def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
         return None
     _dtype = _map[dtype] if isinstance(dtype, str) else dtype
 
-    if device == 'default' and Config.env['num_gpus']:
-        device = 'cuda'
+    if device == 'default':
+        device = 'cuda' if Config.env['num_gpus'] else None
 
     if isinstance(x, list):
         try:
@@ -35,6 +35,9 @@ def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
         x = torch.as_tensor(x, dtype=_dtype, device=device)
     except Exception as e:
         print('tensor: ', x)
+        if torch.is_tensor(x):
+            print('shape: ', x.shape)
+            print('device: ', x.device)
         raise e
     return x
 
