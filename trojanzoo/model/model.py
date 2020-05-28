@@ -277,8 +277,10 @@ class Model:
 
     #-----------------------------------Train and Validate------------------------------------#
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=True, prefix: str = None,
+               validate_interval=10, save=True, prefix: str = None, official=False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, **kwargs):
+        if official:
+            self.load('official')
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
