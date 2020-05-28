@@ -86,7 +86,7 @@ class Dataset:
             else:
                 raise e
 
-    def initialize(self):
+    def initialize(self, verbose=True):
         raise NotImplementedError()
 
     def summary(self, indent: int = 0):
