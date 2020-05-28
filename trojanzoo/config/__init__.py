@@ -98,12 +98,18 @@ class Config:
     def init_env(cls):
         """Initialize ``Config.env``"""
         cls.env['num_gpus'] = torch.cuda.device_count()
-        cls.env['cache_threshold'] = cls.config['general']['cache_threshold']
-        if 'verbose' in cls.config['general'].keys():
-            cls.env['verbose'] = cls.config['general']['verbose']
+        if 'verbose' in cls.config['env'].keys():
+            cls.env['verbose'] = cls.config['env']['verbose']
         else:
             cls.env['verbose'] = False
 
+    @classmethod
+    def update_env(cls, init=False, **kwargs):
+        if init:
+            cls.init_env()
+        cls.env.update(cls.config['env'])
+        cls.env.update(kwargs)
+
 
 Config.update('system', 'user', 'project')
-Config.init_env()
+Config.update_env(init=True)

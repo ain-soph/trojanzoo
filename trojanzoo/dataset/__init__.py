@@ -2,6 +2,7 @@
 
 from .dataset import Dataset
 from .imageset import ImageSet
+from .imagefolder import ImageFolder
 
 from .image import *
 

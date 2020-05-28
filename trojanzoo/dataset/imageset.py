@@ -6,7 +6,7 @@ from trojanzoo.utils import to_tensor
 import torch
 
 from trojanzoo.config import Config
-config = Config.config
+env = Config.env
 
 
 class ImageSet(Dataset):
@@ -31,7 +31,7 @@ class ImageSet(Dataset):
             num_workers = self.num_workers
 
         dataset = self.get_dataset(mode, full=full, **kwargs)
-        torch.manual_seed(config['general']['seed']['torch'])
+        torch.manual_seed(env['torch_seed'])
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
     @staticmethod

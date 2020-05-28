@@ -10,6 +10,9 @@ from tqdm import tqdm
 import urllib.request
 import torchvision.datasets as datasets
 
+from trojanzoo.config import Config
+env = Config.env
+
 
 class ImageFolder(ImageSet):
     """docstring for dataset"""
@@ -118,7 +121,7 @@ class ImageFolder(ImageSet):
 
         if class_dict is None:
             assert sample_num is not None
-            np.random.seed(self.numpy_seed)
+            np.random.seed(env['numpy_seed'])
             idx_list = np.array(range(self.num_classes))
             np.random.shuffle(idx_list)
             idx_list = idx_list[:sample_num]

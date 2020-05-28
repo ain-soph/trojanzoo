@@ -23,7 +23,6 @@ import torch.optim as optim
 import numpy as np
 
 from trojanzoo.config import Config
-config = Config.config
 env = Config.env
 
 
@@ -114,7 +113,7 @@ class Model:
 
         #------------Auto--------------#
         if dataset is not None:
-            data_dir: str = config['general']['path']['data_dir']
+            data_dir: str = env['data_dir']
             if isinstance(dataset, str):
                 pass
             if folder_path is None:

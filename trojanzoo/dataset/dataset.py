@@ -9,7 +9,7 @@ import numpy as np
 from collections import OrderedDict
 
 from trojanzoo.config import Config
-config = Config.config
+env = Config.env
 
 
 class Dataset:
@@ -30,9 +30,9 @@ class Dataset:
                  download: bool = False, **kwargs):
 
         if folder_path is None:
-            data_dir: str = config['general']['path']['data_dir']
-            memory_dir: str = config['general']['path']['memory_dir']
-            result_dir: str = config['general']['path']['result_dir']
+            data_dir: str = env['data_dir']
+            memory_dir: str = env['memory_dir']
+            result_dir: str = env['result_dir']
             if memory_dir is not None:
                 if not os.path.exists(memory_dir+data_type+'/'+name+'/data/'):
                     memory_dir = None
@@ -110,7 +110,7 @@ class Dataset:
             if mode == 'train':
                 full_dataset = self.get_full_dataset(mode)
                 indices = list(range(len(full_dataset)))
-                np.random.seed(self.numpy_seed)
+                np.random.seed(env['numpy_seed'])
                 np.random.shuffle(indices)
                 return torch.utils.data.Subset(full_dataset, indices[:self.train_num])
             else:
@@ -125,7 +125,7 @@ class Dataset:
         full_dataset = self.get_full_dataset('valid')
         split = int(np.floor(valid_percent * len(full_dataset)))
         indices = list(range(len(full_dataset)))
-        np.random.seed(config['general']['seed']['numpy'])
+        np.random.seed(env['numpy_seed'])
         np.random.shuffle(indices)
         if mode == 'test':
             return torch.utils.data.Subset(full_dataset, indices[split:])
