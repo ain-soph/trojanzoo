@@ -3,6 +3,7 @@ from trojanzoo.attack.attack import Attack
 from trojanzoo.imports import *
 from trojanzoo.utils import *
 import random
+
 from copy import deepcopy
 
 
