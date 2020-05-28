@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from .model import _Model, Model, AverageMeter
-from trojanzoo.utils import to_tensor, to_numpy, percentile, to_valid_img, empty_cache
+from .model import _Model, Model
+from trojanzoo.utils import to_tensor
 
 import torch
 import torch.nn as nn
@@ -34,8 +34,10 @@ class _ImageModel(_Model):
 
     def __init__(self, norm_par: Dict[str, list] = None, **kwargs):
         super().__init__(**kwargs)
+        self.norm_par = None
         if norm_par is not None:
-            self.norm_par = {key: to_tensor(value) for key, value in norm_par.items()}
+            self.norm_par = {key: to_tensor(value)
+                             for key, value in norm_par.items()}
 
     # This is defined by Pytorch documents
     # See https://pytorch.org/docs/stable/torchvision/models.html for more details
@@ -141,7 +143,8 @@ class _ImageModel(_Model):
 
 class ImageModel(Model):
 
-    def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None, **kwargs):
+    def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None,
+                 num_classes=1000, **kwargs):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
         name = name+str(layer)
@@ -150,7 +153,7 @@ class ImageModel(Model):
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():
             kwargs['norm_par'] = kwargs['dataset'].norm_par
 
-        super().__init__(name=name, model_class=model_class, **kwargs)
+        super().__init__(name=name, model_class=model_class, num_classes=num_classes, **kwargs)
 
     def get_layer(self, *args, **kwargs):
         return self._model.get_layer(*args, **kwargs)

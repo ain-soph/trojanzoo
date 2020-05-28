@@ -19,16 +19,32 @@ class Dataset:
         name (string): Dataset Name. (need overwrite)
         data_type (string): Data type. (need overwrite)
         folder_path (string): dataset specific directory path,
-                              defaults to ``[data_dir]/[data_type]/[name]/data/``
+                              defaults to ``env[data_dir]/[self.data_type]/[self.name]/data/``
 
     """
 
-    def __init__(self, name='abstact', data_type='abstract',
-                 folder_path: str = None, batch_size: int = -128, num_classes: int = None,
-                 test_set: bool = False, loss_weights: bool = False,
-                 train_num: int = 1024, num_workers: int = 4,
-                 download: bool = False, **kwargs):
+    def __init__(self, name='abstact', data_type='abstract', num_classes: int = None, test_set: bool = False,
+                 batch_size: int = -128, num_workers: int = 4, train_num: int = 1024, loss_weights: bool = False,
+                 folder_path: str = None, download: bool = False, **kwargs):
 
+        self.name = name
+        self.data_type = data_type
+        self.num_classes = num_classes
+        self.test_set = test_set
+        self.param_list = OrderedDict()
+        self.param_list['abstract'] = ['data_type', 'folder_path',
+                                       'batch_size', 'num_classes', 'num_workers']
+        # ----------------------------------------------------------------------------- #
+
+        if batch_size < 0:
+            batch_size = -batch_size * max(1, torch.cuda.device_count())
+        self.batch_size = batch_size
+
+        self.num_workers = num_workers
+        self.train_num = train_num
+        # ----------------------------------------------------------------------------- #
+
+        # Folder Path
         if folder_path is None:
             data_dir: str = env['data_dir']
             memory_dir: str = env['memory_dir']
@@ -40,31 +56,18 @@ class Dataset:
                 folder_path = memory_dir+data_type+'/'+name+'/data/'
             else:
                 folder_path = data_dir+data_type+'/'+name+'/data/'
-
-        self.name = name
-        self.param_list = OrderedDict()
-        self.param_list['abstract'] = ['data_type', 'folder_path',
-                                       'batch_size', 'num_classes', 'num_workers']
-
-        self.data_type = data_type
-
         self.folder_path = folder_path
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
-
-        self.train_num = train_num
-        self.num_workers = num_workers
-
-        if batch_size < 0:
-            batch_size = -batch_size * max(1, torch.cuda.device_count())
-        self.batch_size = batch_size
-        self.num_classes = num_classes
-        self.test_set = test_set
+        # ----------------------------------------------------------------------------- #
+        # Loss Weights
         if isinstance(loss_weights, bool):
             self.loss_weights = self.get_loss_weights() if loss_weights else None
         else:
             self.loss_weights = loss_weights
 
+        # ----------------------------------------------------------------------------- #
+        # Preset Loader
         self.loader = {}
         try:
             self.loader['train'] = self.get_dataloader(
@@ -78,6 +81,7 @@ class Dataset:
         except Exception as e:
             if download:
                 self.initialize()
+                print('Dataset Initialized. You need to rerun the program.')
                 raise SystemExit()
             else:
                 raise e

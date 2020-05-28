@@ -104,9 +104,9 @@ class _Model(nn.Module):
 
 class Model:
 
-    def __init__(self, name='model', dataset: Dataset = None,
-                 num_classes: int = None, loss_weights: torch.FloatTensor = None, model_class=_Model,
-                 folder_path: str = None, pretrain=False, prefix='', **kwargs):
+    def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
+                 num_classes: int = None, loss_weights: torch.FloatTensor = None,
+                 pretrain=False, prefix='', folder_path: str = None, **kwargs):
         self.name = name
         self.dataset = dataset
         self.prefix = prefix
@@ -115,29 +115,26 @@ class Model:
         if dataset is not None:
             data_dir: str = env['data_dir']
             if isinstance(dataset, str):
-                pass
+                raise TypeError(dataset)
             if folder_path is None:
-                # Default Folder Path
                 folder_path = data_dir+dataset.data_type+'/'+dataset.name+'/model/'
             if num_classes is None:
                 num_classes = dataset.num_classes
             if loss_weights is None:
                 loss_weights = dataset.loss_weights
-        if num_classes is None:
-            num_classes = 1000
         self.num_classes = num_classes  # number of classes
+        self.loss_weights = loss_weights
+
+        self.folder_path = folder_path
 
         #---------Folder Path----------#
-        self.folder_path = folder_path
         #------------------------------#
-        self.loss_weights = loss_weights
         self.criterion = self.define_criterion(loss_weights=loss_weights)
         self.softmax = nn.Softmax(dim=1)
 
         #-----------Temp---------------#
         # the location when loading pretrained weights using torch.load
-        self._model = model_class(
-            num_classes=num_classes, model=self, **kwargs)
+        self._model = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel()
         # load pretrained weights
         if pretrain:

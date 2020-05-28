@@ -102,7 +102,7 @@ class ImageFolder(ImageSet):
             if not os.path.exists(file_path[mode]):
                 print('Downloading Dataset %s ...' % self.name)
                 urllib.request.urlretrieve(url, file_path[mode])
-                print('Download Finished!')
+                print('Dataset downloaded at file_path[mode]')
                 print()
             else:
                 print('File Already Exists: ', file_path[mode])

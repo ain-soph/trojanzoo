@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.utils.param import Module
-from trojanzoo.model import ImageModel
+from trojanzoo.utils.output import prints, output_iter, output_memory
+from trojanzoo.dataset import Dataset, ImageSet
+from trojanzoo.model import Model, ImageModel
 
-from typing import List
+import os
+import torch
+from typing import List, Union
 
 from trojanzoo.config import Config
 env = Config.env
@@ -11,41 +15,43 @@ env = Config.env
 
 class Attack:
 
-    def __init__(self, name: str = 'attack', model: ImageModel = None, folder_path: str = None,
+    def __init__(self, name: str = 'attack', dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None,
                  iteration: int = None, early_stop=True, stop_confidence=0.75,
-                 batch_size=1, output=0, indent=0, output_mem=False, **kwargs):
+                 batch_size=1, output=0, indent=0, **kwargs):
         self.name = name
+        self.dataset = dataset
         self.model = model
 
         self.iteration = iteration
         self.early_stop = early_stop
         self.stop_confidence = stop_confidence
 
-        self.folder_path = folder_path
-        if folder_path is None:
-            self.folder_path = self.model.dataset.result_dir + \
-                self.name+'/'+self.model.dataset.name+'/'
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
-        self.output = None
-        self.output = self.get_output(output, memory=output_mem)
-        self.indent = indent
-
         self.batch_size = batch_size
-        if self.batch_size != 1:
-            self.model.dataset.loader['test'] = self.model.dataset.get_dataloader(
-                mode='test', batch_size=self.batch_size)
-        self.testloader = self.model.dataset.loader['test']
-
+        self.output = None
+        self.output = self.get_output(output)
+        self.indent = indent
         self.set_par(**kwargs)
-
         self.module = Module()
-        self.get_target_confidence = self.model.get_target_confidence
+
+        # ----------------------------------------------------------------------------- #
+        if folder_path is None:
+            folder_path = env['result_dir'] + name+'/'
+            if dataset is not None and isinstance(dataset, Dataset):
+                folder_path += dataset.name+'/'
+            if model is not None and isinstance(model, Model):
+                folder_path += model.name+'/'
+        self.folder_path = folder_path
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        # ----------------------------------------------------------------------------- #
+        if batch_size != 1 and dataset is not None:
+            dataset.loader['test'] = dataset.get_dataloader(
+                mode='test', batch_size=batch_size)
 
     def generate_target(self, _input, idx=1, same=False, **kwargs):
         return self.model.generate_target(_input, idx=1, same=False, **kwargs)
 
-    def get_output(self, org_output=None, memory=False):
+    def get_output(self, org_output: Union[int, str, list] = None):
         output = None
         if org_output is None:
             output = self.output
@@ -63,8 +69,6 @@ class Attack:
             output = self.get_output_int(org_output)
         else:
             output = org_output
-        if 'memory' not in output and memory:
-            output.add('memory')
         return output
 
     def get_output_int(self, org_output=0):
@@ -90,18 +94,20 @@ class Attack:
             return
         if indent is None:
             indent = self.indent
-        prints(self.__class__.__name__+' parameter list: ', indent=indent)
+        _filter.extend(['model', 'optimizer', 'module'])
+        prints(self.name+' parameter list: ', indent=indent)
         d = self.__dict__
         _dict = {}
-        for key in d.keys():
-            if '__' not in key and 'function' not in type(d[key]).__name__ and 'method' not in type(d[key]).__name__ \
-                    and 'loader' not in key and key != 'model' and key != 'optimizer' and key != 'module' and key not in _filter:
-                _dict[key] = d[key]
-                if isinstance(d[key], torch.Tensor):
+        for key, value in d.items():
+            is_method = 'function' not in type(d[key]).__name__ and \
+                'method' not in type(d[key]).__name__
+            str_check = '__' not in key and 'loader' not in key
+            if is_method and str_check and key not in _filter:
+                _dict[key] = value
+                if isinstance(value, torch.Tensor):
                     if d[key].numel() > 50:
                         _dict[key] = d[key].shape
-        prints(_dict,
-               indent=indent)
+        prints(_dict, indent=indent)
         print()
 
     def set_par(self, **kwargs):
@@ -117,10 +123,11 @@ class Attack:
 
     @staticmethod
     def cal_gradient(f, X, n=100, sigma=0.001):
-        g = to_tensor(torch.zeros_like(X))
+        g = torch.zeros_like(X)
 
         for i in range(n//2):
-            noise = to_tensor(torch.normal(mean=0.0, std=1.0, size=X.shape))
+            noise = torch.normal(
+                mean=0.0, std=1.0, size=X.shape, device=X.device)
             X1 = X + sigma * noise
             X2 = X - sigma * noise
             g += f(X1).detach() * noise

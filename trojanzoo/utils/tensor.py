@@ -63,24 +63,18 @@ def to_list(x) -> list:
         return list(x)
 
 
-def to_valid_img(img, min=0.0, max=1.0):
-    return to_tensor(torch.clamp(img, min, max))
-
-
-def repeat_to_batch(X, batch_size=1):
-    X = to_tensor(X)
+def repeat_to_batch(x, batch_size=1):
     try:
-        size = torch.cat(
-            (torch.as_tensor([batch_size]).int(), torch.ones(len(X.shape)).int()))
-        X = X.repeat(list(size))
-    except Exception:
-        print('tensor shape: ', X.shape)
+        size = batch_size+ [1]*len(x.shape)
+        x = x.repeat(list(size))
+    except Exception as e:
+        print('tensor shape: ', x.shape)
         print('batch_size: ', batch_size)
-        raise ValueError()
-    return X
+        raise e
+    return x
 
 
-def add_noise(x, noise=None, mean=0.0, std=1.0, batch=False, detach=True):
+def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
     if noise is None:
         shape = x.shape
         if batch:
@@ -89,9 +83,7 @@ def add_noise(x, noise=None, mean=0.0, std=1.0, batch=False, detach=True):
     batch_noise = noise
     if batch:
         batch_noise = repeat_to_batch(noise, x.shape[0])
-    noisy_input = to_valid_img(x+batch_noise)
-    if detach:
-        noisy_input = noisy_input.detach()
+    noisy_input = (x+batch_noise).clamp()
     return noisy_input
 
 
