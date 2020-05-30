@@ -4,35 +4,37 @@ from .dataset import Dataset
 from trojanzoo.utils import to_tensor
 
 import torch
+from typing import Union, Tuple, List, Dict
 
 from trojanzoo.config import Config
 env = Config.env
 
 
 class ImageSet(Dataset):
-    """docstring for dataset"""
 
-    def __init__(self, name='imageset', n_channel=3, n_dim=(0, 0), norm_par: dict = None, default_model='resnetcomp18', **kwargs):
-        self.norm_par = norm_par
-        self.n_channel = n_channel
-        self.n_dim = n_dim
-        super(ImageSet, self).__init__(
-            name=name, data_type='image', default_model=default_model, **kwargs)
+    name: str = 'imageset'
+    data_type: str = 'image'
+    n_channel: int = 3
+    n_dim: Tuple[int] = (0, 0)
 
-    def get_dataloader(self, mode, full=False, batch_size: int = None, shuffle: bool = None, num_workers: int = None, **kwargs):
+    def __init__(self, norm_par: Dict[str, List[float]] = None,
+                 default_model: str = 'resnetcomp18', **kwargs):
+        self.norm_par: Dict[str, List[float]] = norm_par
+        super().__init__(default_model=default_model, **kwargs)
+
+    def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
+                       num_workers: int = None, pin_memory=True, **kwargs):
         if batch_size is None:
-            if mode == 'test':
-                batch_size = 1
-            else:
-                batch_size = self.batch_size
+            batch_size = 1 if mode == 'test' else self.batch_size
         if shuffle is None:
             shuffle = True if mode == 'train' else False
         if num_workers is None:
             num_workers = self.num_workers
 
-        dataset = self.get_dataset(mode, full=full, **kwargs)
-        torch.manual_seed(env['torch_seed'])
-        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+        dataset = self.get_dataset(mode, **kwargs)
+        torch.manual_seed(env['seed'])
+        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
+                                           num_workers=num_workers)
 
     @staticmethod
     def get_data(data, **kwargs):

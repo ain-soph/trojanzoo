@@ -3,16 +3,19 @@ from ..imageset import ImageSet
 from trojanzoo.imports import *
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from typing import Union
 
 
 class CIFAR10(ImageSet):
 
-    def __init__(self, name='cifar10', n_dim=(32, 32), num_classes=10,
-                 norm_par={'mean': [0.4914, 0.4822, 0.4465],
-                           'std': [0.2023, 0.1994, 0.2010], },
+    name = 'cifar10'
+    num_classes = 10
+    n_dim = (32, 32)
+
+    def __init__(self, norm_par={'mean': [0.4914, 0.4822, 0.4465],
+                                 'std': [0.2023, 0.1994, 0.2010], },
                  **kwargs):
-        super().__init__(name=name, n_dim=n_dim, num_classes=num_classes,
-                         norm_par=norm_par, **kwargs)
+        super().__init__(norm_par=norm_par, **kwargs)
 
     def initialize(self):
         trainset = datasets.CIFAR10(
@@ -31,17 +34,19 @@ class CIFAR10(ImageSet):
             transform = transforms.ToTensor()
         return transform
 
-    def get_full_dataset(self, mode, transform=None, _class=datasets.CIFAR10):
-        if mode == 'test':
-            raise ValueError(
-                self.name+' only has \"train\" and \"valid\" originally.')
-        return _class(root=self.folder_path, train=(mode == 'train'), transform=self.get_transform(mode))
+    def get_org_dataset(self, mode, transform: Union[str, object] = 'default'):
+        if transform == 'default':
+            transform = self.get_transform(mode=mode)
+        assert mode in ['train', 'valid']
+        return datasets.CIFAR10(root=self.folder_path, train=(mode == 'train'), transform=transform)
 
 
 class CIFAR100(CIFAR10):
+    name = 'cifar100'
+    num_classes = 100
 
-    def __init__(self, name='cifar100', num_classes=100, **kwargs):
-        super().__init__(name=name, num_classes=num_classes, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def initialize(self):
         trainset = datasets.CIFAR100(
@@ -49,5 +54,8 @@ class CIFAR100(CIFAR10):
         validset = datasets.CIFAR100(
             root=self.folder_path, train=False, download=True)
 
-    def get_full_dataset(self, mode, transform=None, _class=datasets.CIFAR100):
-        return super().get_full_dataset(mode, transform=transform, _class=_class)
+    def get_org_dataset(self, mode, transform: Union[str, object] = 'default'):
+        if transform == 'default':
+            transform = self.get_transform(mode=mode)
+        assert mode in ['train', 'valid']
+        return datasets.CIFAR100(root=self.folder_path, train=(mode == 'train'), transform=transform)

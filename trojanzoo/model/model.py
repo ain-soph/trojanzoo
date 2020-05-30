@@ -367,7 +367,7 @@ class Model:
         # end = start
         epoch_start = time.perf_counter()
         with torch.no_grad():
-            for i, data in enumerate(loader):
+            for data in tqdm(loader):
                 _input, _label = self.get_data(data, mode='valid')
                 _output = self.get_logits(_input, **kwargs)
                 loss = self.criterion(_output, _label)
@@ -392,7 +392,7 @@ class Model:
             time.perf_counter()-epoch_start)))
         if output:
             pre_str = '{yellow}Validate:{reset}'.format(**ansi)
-            print('{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+            print('\033[1A\033[K{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
                 pre_str, losses.avg, top1.avg, top5.avg, epoch_time))
         return losses.avg, top1.avg, top5.avg
 
@@ -533,14 +533,16 @@ class Model:
             repeat_idx = _classification.eq(_label)
         return _input[repeat_idx], _label[repeat_idx]
 
-    def generate_target(self, _input, idx=1, same=False):
+    def generate_target(self, _input: torch.Tensor, idx=1, same=False) -> torch.LongTensor:
+
         if len(_input.shape) == 3:
             _input = _input.unsqueeze(0)
         self.batch_size = _input.shape[0]
         with torch.no_grad():
             _output = self.get_logits(_input)
         _, indices = _output.sort(dim=-1, descending=True)
-        target = torch.as_tensor(indices[:, idx], device=_input.device)
+        target = torch.as_tensor(
+            indices[:, idx], dtype=torch.long, device=_input.device)
         if same:
             target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
         return target

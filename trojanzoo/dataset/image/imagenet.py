@@ -4,20 +4,19 @@ import torchvision.transforms as transforms
 
 
 class ImageNet(ImageFolder):
+    name = 'imagenet'
+    num_classes = 1000
+    n_dim = (224, 224)
 
-    def __init__(self, name='imagenet', n_dim=(224, 224), num_classes=1000,
-                 norm_par={'mean': [0.485, 0.456, 0.406],
-                           'std': [0.229, 0.224, 0.225], },
+    def __init__(self, norm_par={'mean': [0.485, 0.456, 0.406],
+                                 'std': [0.229, 0.224, 0.225], },
                  **kwargs):
-        super().__init__(name=name, n_dim=n_dim, num_classes=num_classes,
-                         norm_par=norm_par, **kwargs)
         self.url = {}
         self.url['train'] = 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_train.tar'
         self.url['valid'] = 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_val.tar'
         self.url['test'] = 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_test.tar'
+        super().__init__(norm_par=norm_par, **kwargs)
         self.org_folder_name = {}
-
-        self.output_par(name='ImageNet')
 
     def initialize(self):
         pass

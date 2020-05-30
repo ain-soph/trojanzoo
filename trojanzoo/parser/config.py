@@ -18,8 +18,7 @@ class Parser_Config(Parser):
         parser.add_argument('--result_dir', dest='result_dir')
         parser.add_argument('--memory_dir', dest='memory_dir')
 
-        parser.add_argument('--torch_seed', dest='torch_seed', type=int)
-        parser.add_argument('--numpy_seed', dest='numpy_seed', type=int)
+        parser.add_argument('--seed', dest='seed', type=int)
 
         parser.add_argument('--cache_threshold', dest='cache_threshold',
                             type=float)

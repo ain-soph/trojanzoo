@@ -106,7 +106,7 @@ class ResNet(ImageModel):
             self._model.classifier.load_state_dict(_dict, strict=False)
         if verbose:
             print(
-                'Model {name} loaded From Official Website: '.format(self.name), url)
+                'Model {} loaded From Official Website: '.format(self.name), url)
 
 
 class _ResNetcomp(_ResNet):
@@ -148,4 +148,4 @@ class ResNetcomp(ResNet):
             self._model.classifier.load_state_dict(_dict, strict=False)
         if verbose:
             print(
-                'Model {name} loaded From Official Website: '.format(self.name), url)
+                'Model {} loaded From Official Website: '.format(self.name), url)

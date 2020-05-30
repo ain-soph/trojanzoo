@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import io
 import sys
 import torch
 from typing import Union
@@ -59,7 +60,7 @@ def bytes2size(_bytes: int) -> str:
         return '%.3f GB' % (float(_bytes)/1024/1024/1024)
 
 
-def indent_str(arg: str, indent=0) -> str:
+def indent_str(arg: str, indent: int = 0) -> str:
     if indent == 0:
         return arg
     _str = ''
@@ -74,16 +75,16 @@ def indent_str(arg: str, indent=0) -> str:
 
 
 class Indent_Redirect:
-    def __init__(self, buffer=False, indent=0):
-        self.__console__ = sys.stdout
-        self.indent = indent
-        self.buffer = None
+    def __init__(self, buffer: bool = False, indent: int = 0):
+        self.__console__: io.TextIOWrapper = sys.stdout
+        self.indent: int = indent
+        self.buffer: str = None
         if buffer:
             self.buffer = ''
 
     def write(self, text, indent=None):
         if indent is None:
-            indent=self.indent
+            indent = self.indent
         text = indent_str(text, indent=indent)
         if self.buffer is None:
             self.__console__.write(text)
@@ -98,5 +99,5 @@ class Indent_Redirect:
 
     def reset(self):
         if self.buffer:
-            self.buffer=''
+            self.buffer = ''
         sys.stdout = self.__console__

@@ -44,7 +44,7 @@ class Config:
         return result
 
     @staticmethod
-    def load_config(path: str):
+    def load_config(path: str) -> dict:
         if path is None:
             return {}
         if not isinstance(path, str):
@@ -104,7 +104,7 @@ class Config:
             cls.env['verbose'] = False
 
     @classmethod
-    def update_env(cls, init=False, **kwargs):
+    def update_env(cls, init: bool = False, **kwargs):
         if init:
             cls.init_env()
         cls.env.update(cls.config['env'])

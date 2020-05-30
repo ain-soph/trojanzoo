@@ -51,7 +51,7 @@ class VGG(ImageModel):
             self._model.load_state_dict(new_dict, strict=False)
         if verbose:
             print(
-                'Model {name} loaded From Official Website: '.format(self.name), url)
+                'Model {} loaded From Official Website: '.format(self.name), url)
 
 
 class _VGGcomp(_VGG):
@@ -87,4 +87,4 @@ class VGGcomp(VGG):
         self._model.load_state_dict(new_dict, strict=False)
         if verbose:
             print(
-                'Model {name} loaded From Official Website: '.format(self.name), url)
+                'Model {} loaded From Official Website: '.format(self.name), url)

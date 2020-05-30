@@ -27,7 +27,5 @@ class_dict = {
 
     'vggface': 'VGGface',
     'vggface2': 'VGGface2',
-    'vggface2_sample50': 'VGGface2_Sample50',
-    'vggface2_sample100': 'VGGface2_Sample100',
 }
 
