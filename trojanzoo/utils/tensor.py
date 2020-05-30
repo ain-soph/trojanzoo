@@ -19,13 +19,15 @@ _map = {'int': torch.int, 'float': torch.float,
 byte2float = torchvision.transforms.ToTensor()
 
 
-def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
+def to_tensor(x, dtype=None, device='default', **kwargs) -> torch.Tensor:
     if x is None:
         return None
     _dtype = _map[dtype] if isinstance(dtype, str) else dtype
 
     if device == 'default':
         device = env['device']
+        if 'non_blocking' not in kwargs.keys():
+            kwargs['non_blocking'] = True
 
     if isinstance(x, list):
         try:
@@ -33,7 +35,7 @@ def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
         except TypeError:
             pass
     try:
-        x = torch.as_tensor(x, dtype=_dtype, device=device)
+        x = torch.as_tensor(x, dtype=_dtype).to(device=device, **kwargs)
     except Exception as e:
         print('tensor: ', x)
         if torch.is_tensor(x):
