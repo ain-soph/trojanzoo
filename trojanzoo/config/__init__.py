@@ -44,7 +44,7 @@ class Config:
         return result
 
     @staticmethod
-    def load_config(path: str):
+    def load_config(path: str) -> dict:
         if path is None:
             return {}
         if not isinstance(path, str):
@@ -94,7 +94,22 @@ class Config:
 
         cls.config.add(cls.get_config())
 
+    @classmethod
+    def init_env(cls):
+        """Initialize ``Config.env``"""
+        cls.env['num_gpus'] = torch.cuda.device_count()
+        if 'verbose' in cls.config['env'].keys():
+            cls.env['verbose'] = cls.config['env']['verbose']
+        else:
+            cls.env['verbose'] = False
+
+    @classmethod
+    def update_env(cls, init: bool = False, **kwargs):
+        if init:
+            cls.init_env()
+        cls.env.update(cls.config['env'])
+        cls.env.update(kwargs)
+
 
 Config.update('system', 'user', 'project')
-Config.env['num_gpus']=torch.cuda.device_count()
-Config.env['cache_threshold'] = Config.config['general']['cache_threshold']
+Config.update_env(init=True)

@@ -23,7 +23,6 @@ import torch.optim as optim
 import numpy as np
 
 from trojanzoo.config import Config
-config = Config.config
 env = Config.env
 
 
@@ -105,40 +104,37 @@ class _Model(nn.Module):
 
 class Model:
 
-    def __init__(self, name='model', dataset: Dataset = None,
-                 num_classes: int = None, loss_weights: torch.FloatTensor = None, model_class=_Model,
-                 folder_path: str = None, pretrain=False, prefix='', **kwargs):
+    def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
+                 num_classes: int = None, loss_weights: torch.FloatTensor = None,
+                 pretrain=False, prefix='', folder_path: str = None, **kwargs):
         self.name = name
         self.dataset = dataset
         self.prefix = prefix
 
         #------------Auto--------------#
         if dataset is not None:
-            data_dir: str = config['general']['path']['data_dir']
+            data_dir: str = env['data_dir']
             if isinstance(dataset, str):
-                pass
+                raise TypeError(dataset)
             if folder_path is None:
-                # Default Folder Path
                 folder_path = data_dir+dataset.data_type+'/'+dataset.name+'/model/'
             if num_classes is None:
                 num_classes = dataset.num_classes
             if loss_weights is None:
                 loss_weights = dataset.loss_weights
-        if num_classes is None:
-            num_classes = 1000
         self.num_classes = num_classes  # number of classes
+        self.loss_weights = loss_weights
+
+        self.folder_path = folder_path
 
         #---------Folder Path----------#
-        self.folder_path = folder_path
         #------------------------------#
-        self.loss_weights = loss_weights
         self.criterion = self.define_criterion(loss_weights=loss_weights)
         self.softmax = nn.Softmax(dim=1)
 
         #-----------Temp---------------#
         # the location when loading pretrained weights using torch.load
-        self._model = model_class(
-            num_classes=num_classes, model=self, **kwargs)
+        self._model = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel()
         # load pretrained weights
         if pretrain:
@@ -281,8 +277,10 @@ class Model:
 
     #-----------------------------------Train and Validate------------------------------------#
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=True, prefix: str = None,
+               validate_interval=10, save=True, prefix: str = None, official=False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, **kwargs):
+        if official:
+            self.load('official')
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -369,7 +367,7 @@ class Model:
         # end = start
         epoch_start = time.perf_counter()
         with torch.no_grad():
-            for i, data in enumerate(loader):
+            for data in tqdm(loader):
                 _input, _label = self.get_data(data, mode='valid')
                 _output = self.get_logits(_input, **kwargs)
                 loss = self.criterion(_output, _label)
@@ -394,7 +392,7 @@ class Model:
             time.perf_counter()-epoch_start)))
         if output:
             pre_str = '{yellow}Validate:{reset}'.format(**ansi)
-            print('{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+            print('\033[1A\033[K{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
                 pre_str, losses.avg, top1.avg, top5.avg, epoch_time))
         return losses.avg, top1.avg, top5.avg
 
@@ -446,13 +444,14 @@ class Model:
     @staticmethod
     def output_layer_information(layer, depth=1, indent=0, verbose=False, tree_length=None):
         if tree_length is None:
-            tree_length = 10*depth
+            tree_length = 10*(depth+1)
         depth -= 1
         if depth >= 0:
             for name, module in layer.named_children():
                 _str = '{blue_light}{0}{reset}'.format(name, **ansi)
                 if verbose:
-                    _str = _str.ljust(tree_length-indent)
+                    _str = _str.ljust(
+                        tree_length-indent+len(ansi['blue_light'])+len(ansi['reset']))
                     item = str(module).split('\n')[0]
                     if item[-1] == '(':
                         item = item[:-1]
@@ -534,14 +533,16 @@ class Model:
             repeat_idx = _classification.eq(_label)
         return _input[repeat_idx], _label[repeat_idx]
 
-    def generate_target(self, _input, idx=1, same=False):
+    def generate_target(self, _input: torch.Tensor, idx=1, same=False) -> torch.LongTensor:
+
         if len(_input.shape) == 3:
             _input = _input.unsqueeze(0)
         self.batch_size = _input.shape[0]
         with torch.no_grad():
             _output = self.get_logits(_input)
         _, indices = _output.sort(dim=-1, descending=True)
-        target = torch.as_tensor(indices[:, idx], device=_input.device)
+        target = torch.as_tensor(
+            indices[:, idx], dtype=torch.long, device=_input.device)
         if same:
             target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
         return target

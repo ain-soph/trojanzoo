@@ -13,4 +13,4 @@ if __name__ == '__main__':
     dataset = parser.module_list.dataset
     model = parser.module_list.model
 
-    _, acc, _ = model._validate(full=True)
+    loss, acc1, acc5 = model._validate(full=True)
