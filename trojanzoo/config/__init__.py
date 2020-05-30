@@ -98,6 +98,7 @@ class Config:
     def init_env(cls):
         """Initialize ``Config.env``"""
         cls.env['num_gpus'] = torch.cuda.device_count()
+        cls.env['device'] = 'cuda' if cls.env['num_gpus'] else 'cpu'
         if 'verbose' in cls.config['env'].keys():
             cls.env['verbose'] = cls.config['env']['verbose']
         else:

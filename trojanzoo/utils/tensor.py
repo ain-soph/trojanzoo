@@ -11,6 +11,7 @@ import torch.nn as nn
 import torchvision
 
 from trojanzoo.config import Config
+env = Config.env
 
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
@@ -24,7 +25,7 @@ def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
     _dtype = _map[dtype] if isinstance(dtype, str) else dtype
 
     if device == 'default':
-        device = 'cuda' if Config.env['num_gpus'] else None
+        device = env['device']
 
     if isinstance(x, list):
         try:
@@ -65,7 +66,7 @@ def to_list(x) -> list:
 
 def repeat_to_batch(x, batch_size=1):
     try:
-        size = batch_size+ [1]*len(x.shape)
+        size = batch_size + [1]*len(x.shape)
         x = x.repeat(list(size))
     except Exception as e:
         print('tensor shape: ', x.shape)
@@ -79,7 +80,7 @@ def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
         shape = x.shape
         if batch:
             shape = shape[1:]
-        noise = to_tensor(torch.normal(mean=mean, std=std, size=shape))
+        noise = torch.normal(mean=mean, std=std, size=shape, device=x.device)
     batch_noise = noise
     if batch:
         batch_noise = repeat_to_batch(noise, x.shape[0])

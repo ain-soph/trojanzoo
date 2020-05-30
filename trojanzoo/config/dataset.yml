@@ -7,4 +7,4 @@ batch_size:
   imagenet: -32
   isic: -32
 
-num_workers: 0
+num_workers: 8

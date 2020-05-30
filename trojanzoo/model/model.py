@@ -227,7 +227,7 @@ class Model:
              full=True, map_location='default', verbose=False):
         if map_location is not None:
             if map_location == 'default':
-                map_location = 'cuda' if env['num_gpus'] else 'cpu'
+                map_location = env['device']
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
