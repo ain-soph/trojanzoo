@@ -9,7 +9,7 @@ import shutil
 import numpy as np
 from tqdm import tqdm
 import urllib.request
-from typing import Union
+from typing import Union, Dict
 import torchvision.datasets as datasets
 
 from trojanzoo.config import Config
@@ -18,24 +18,32 @@ env = Config.env
 
 class ImageFolder(ImageSet):
 
-    name = 'imagefolder'
+    name: str = 'imagefolder'
+    url: Dict[str, str] = {}
+    org_folder_name: Dict[str, str] = {}
 
     def __init__(self, num_classes=None, **kwargs):
-        super().__init__(name=name, **kwargs)
-        if self.num_classes is None:
-            self.num_classes = len(os.listdir(self.folder_path+name+'/train/'))
+        super().__init__(num_classes=None, **kwargs)
         self.class_to_idx: Dict[str, int] = \
             self.get_org_dataset('train').class_to_idx
+        if self.num_classes is None:
+            self.num_classes = len(self.class_to_idx)
 
-    def initialize(self, valid=False, verbose=True, **kwargs):
+    def initialize(self, verbose=True, **kwargs):
         file_path = self.download()
-        uncompress(file_path=file_path,
+        uncompress(file_path=file_path.values(),
                    target_path=self.folder_path+self.name, verbose=verbose)
-        os.rename(self.folder_path+self.name+'/{}/'.format(getattr(self, 'org_folder_name')['train']),
+        os.rename(self.folder_path+self.name+'/{}/'.format(self.org_folder_name['train']),
                   self.folder_path+self.name+'/train/')
-        if valid:
-            os.rename(self.folder_path+self.name+'/{}/'.format(getattr(self, 'org_folder_name')['valid']),
+        if '/' in self.org_folder_name['train']:
+            shutil.rmtree(self.folder_path+self.name + '/' +
+                          self.org_folder_name['train'].split('/')[0])
+        if self.valid_set:
+            os.rename(self.folder_path+self.name+'/{}/'.format(self.org_folder_name['valid']),
                       self.folder_path+self.name+'/valid/')
+            if '/' in self.org_folder_name['valid']:
+                shutil.rmtree(self.folder_path+self.name + '/' +
+                              self.org_folder_name['valid'].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
@@ -43,28 +51,31 @@ class ImageFolder(ImageSet):
         return datasets.ImageFolder(root=self.folder_path+self.name+'/{}/'.format(mode),
                                     transform=transform)
 
-    def download(self, url: str = None, file_path: str = None, folder_path: str = None, file_name: str = None, file_ext='zip', valid=False, output=True):
+    def download(self, url: Dict[str, str] = None, file_path: str = None,
+                 folder_path: str = None, file_name: str = None, file_ext: str = 'zip',
+                 verbose: bool = True):
         if url is None:
-            url = getattr(self, 'url')
+            url = self.url
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
             if file_name is None:
-                if valid:
-                    file_name = {'train': self.name+'_train.'+file_ext,
-                                 'valid': self.name+'_valid.'+file_ext}
-                    file_path = {'train': folder_path+file_name['train'],
-                                 'valid': folder_path+file_name['valid']}
-                else:
-                    file_name = {'train': self.name+'_train.'+file_ext}
-                    file_path = {'train': folder_path+file_name['train']}
+                file_name = {}
+                file_path = {}
+                file_name['train'] = self.name+'_train.'+file_ext
+                file_path['train'] = folder_path+file_name['train']
+                if self.valid_set:
+                    file_name['valid'] = self.name+'_valid.'+file_ext
+                    file_path['valid'] = folder_path+file_name['valid']
         for mode in file_path.keys():
             if not os.path.exists(file_path[mode]):
-                print('Downloading Dataset %s ...' % self.name)
-                urllib.request.urlretrieve(url, file_path[mode])
-                print('Dataset downloaded at file_path[mode]')
-                print()
-            else:
+                if verbose:
+                    print('Downloading Dataset %s ...' % self.name)
+                urllib.request.urlretrieve(url[mode], file_path[mode])
+                if verbose:
+                    print('Dataset downloaded at file_path[mode]')
+                    print()
+            elif verbose:
                 print('File Already Exists: ', file_path[mode])
                 print()
         return file_path

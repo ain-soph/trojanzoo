@@ -3,14 +3,14 @@ from ..imageset import ImageSet
 from trojanzoo.imports import *
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from typing import Union
+from typing import Union, Tuple
 
 
 class CIFAR10(ImageSet):
 
-    name = 'cifar10'
-    num_classes = 10
-    n_dim = (32, 32)
+    name: str = 'cifar10'
+    num_classes: int = 10
+    n_dim: Tuple[int, int] = (32, 32)
 
     def __init__(self, norm_par={'mean': [0.4914, 0.4822, 0.4465],
                                  'std': [0.2023, 0.1994, 0.2010], },

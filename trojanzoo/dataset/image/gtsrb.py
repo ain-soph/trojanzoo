@@ -2,16 +2,20 @@
 from ..imagefolder import ImageFolder
 import torchvision.transforms as transforms
 
+from typing import Tuple
+
 
 class GTSRB(ImageFolder):
-    name = 'gtsrb'
-    n_dim = (32, 32)
-    num_classes = 43
+
+    name: str = 'gtsrb'
+    n_dim: Tuple[int, int] = (32, 32)
+    num_classes: int = 43
+    valid_set: bool = False
+    url = {'train': 'https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/GTSRB-Training_fixed.zip'}
+    org_folder_name = {'train': 'GTSRB/Training'}
 
     def __init__(self, loss_weights=True, **kwargs):
-        self.url = {
-            'train': 'https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/GTSRB-Training_fixed.zip'}
-        super(GTSRB, self).__init__(loss_weights=loss_weights, **kwargs)
+        super().__init__(loss_weights=loss_weights, **kwargs)
 
     def get_transform(self, mode):
         if mode == 'train':

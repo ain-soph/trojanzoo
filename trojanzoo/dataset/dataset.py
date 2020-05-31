@@ -83,7 +83,12 @@ class Dataset:
             self.loss_weights = loss_weights
 
     def check_files(self) -> bool:
-        pass
+        try:
+            dataset = self.get_org_dataset(mode='train')
+        except:
+            return False
+        else:
+            return True
 
     def initialize(self, verbose=True):
         raise NotImplementedError()
@@ -111,7 +116,7 @@ class Dataset:
         if self.valid_set:
             return self.get_org_dataset(mode, **kwargs)
         else:
-            dataset = self.get_org_dataset['train']
+            dataset = self.get_org_dataset(mode='train')
             subset = {}
             subset['train'], subset['valid'] = self.split_set(
                 dataset, percent=self.split_ratio)
