@@ -34,7 +34,7 @@ class ImageSet(Dataset):
         dataset = self.get_dataset(mode, **kwargs)
         torch.manual_seed(env['seed'])
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
-                                           num_workers=num_workers)
+                                           num_workers=num_workers, pin_memory=pin_memory)
 
     @staticmethod
     def get_data(data, **kwargs):

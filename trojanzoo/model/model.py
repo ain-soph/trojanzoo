@@ -106,7 +106,7 @@ class Model:
 
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None,
-                 pretrain=False, prefix='', folder_path: str = None, **kwargs):
+                 official=False, pretrain=False, prefix='', folder_path: str = None, **kwargs):
         self.name = name
         self.dataset = dataset
         self.prefix = prefix
@@ -127,7 +127,6 @@ class Model:
 
         self.folder_path = folder_path
 
-        #---------Folder Path----------#
         #------------------------------#
         self.criterion = self.define_criterion(loss_weights=loss_weights)
         self.softmax = nn.Softmax(dim=1)
@@ -137,6 +136,8 @@ class Model:
         self._model = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel()
         # load pretrained weights
+        if official:
+            self.load('official')
         if pretrain:
             self.load()
         if env['num_gpus']:
@@ -227,7 +228,7 @@ class Model:
              full=True, map_location='default', verbose=False):
         if map_location is not None:
             if map_location == 'default':
-                map_location = 'cuda' if env['num_gpus'] else 'cpu'
+                map_location = env['device']
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -277,10 +278,8 @@ class Model:
 
     #-----------------------------------Train and Validate------------------------------------#
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=True, prefix: str = None, official=False,
+               validate_interval=10, save=True, prefix: str = None,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, **kwargs):
-        if official:
-            self.load('official')
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']

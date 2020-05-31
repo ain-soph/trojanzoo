@@ -143,8 +143,7 @@ class _ImageModel(_Model):
 
 class ImageModel(Model):
 
-    def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None,
-                 num_classes=1000, **kwargs):
+    def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None, **kwargs):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
         name = name+str(layer)
@@ -153,7 +152,9 @@ class ImageModel(Model):
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():
             kwargs['norm_par'] = kwargs['dataset'].norm_par
 
-        super().__init__(name=name, model_class=model_class, num_classes=num_classes, **kwargs)
+        super().__init__(name=name, model_class=model_class, layer=layer, **kwargs)
+        if self.num_classes is None:
+            self.num_classes = 1000
 
     def get_layer(self, *args, **kwargs):
         return self._model.get_layer(*args, **kwargs)

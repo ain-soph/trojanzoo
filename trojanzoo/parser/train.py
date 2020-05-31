@@ -22,7 +22,6 @@ class Parser_Train(Parser):
                             action='store_true')
         parser.add_argument('--step_size', dest='step_size', type=int)
         parser.add_argument('--validate_interval', dest='validate_interval', type=int)
-        parser.add_argument('--official', dest='official', action='store_true')
         parser.add_argument('--save', dest='save', action='store_true')
 
     def get_module(self, model: Model, **kwargs):

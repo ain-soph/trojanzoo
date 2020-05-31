@@ -11,6 +11,8 @@
 *.pyc
 *.ini
 
+/test
+/test.py
 
 # Filter Directory
 # /config/
@@ -32,7 +34,6 @@ prev_projects
 *.pyproj
 *.sln
 /*workspace.py
-/test.py
 
 
 dogfish
