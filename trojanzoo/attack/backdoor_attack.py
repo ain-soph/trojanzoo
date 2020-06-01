@@ -34,7 +34,7 @@ class Backdoor_Attack(Attack):
         self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
                           get_data=self.get_data, validate_func=self.validate_func, **kwargs)
 
-    def add_mark(self, x, **kwargs):
+    def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.watermark.add_mark(x, **kwargs)
 
     def get_filename(self, alpha: float = None, target_class: int = None, iteration: int = None):
@@ -104,7 +104,7 @@ class Watermark:
         self.mark, self.mask, self.alpha_mask = self.mask_mark(mark=mark)
 
     # add mark to the Image with mask.
-    def add_mark(self, x, mark: torch.Tensor = None, _mask: torch.Tensor = None):
+    def add_mark(self, x: torch.Tensor, mark: torch.Tensor = None, _mask: torch.Tensor = None) -> torch.Tensor:
         if mark is None:
             mark = self.mark
         if _mask is None:
