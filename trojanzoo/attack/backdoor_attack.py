@@ -28,6 +28,12 @@ class Backdoor_Attack(Attack):
         self.percent: float = percent
         self.filename: str = self.get_filename()
 
+    def attack(self, optimizer, lr_scheduler, iteration: int = None, **kwargs):
+        if iteration is None:
+            iteration = self.iteration
+        self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                          get_data=self.get_data, validate_func=self.validate_func, **kwargs)
+
     def add_mark(self, x, **kwargs):
         return self.watermark.add_mark(x, **kwargs)
 
@@ -44,15 +50,10 @@ class Backdoor_Attack(Attack):
             height=self.watermark.height, width=self.watermark.width)
         return _file
 
-    def attack(self, optimizer, lr_scheduler, iteration: int = None, **kwargs):
-        if iteration is None:
-            iteration = self.iteration
-        self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
-                          get_data=self.get_data, validate_func=self.validate_func, **kwargs)
-
     def get_data(self, data: Tuple[torch.Tensor], keep_org: bool = True):
-        org_input, org_label = self.model.get_data(data)
+        _input, _label = self.model.get_data(data)
         if not keep_org or random.uniform(0, 1) < self.percent:
+            org_input, org_label = _input, _label
             _input = self.add_mark(org_input)
             _label = self.target_class*torch.ones_like(org_label)
             if keep_org:
@@ -61,8 +62,11 @@ class Backdoor_Attack(Attack):
         return _input, _label
 
     def validate_func(self, **kwargs):
-        self.model._validate(print_prefix='Validate Clean', **kwargs)
-        self.model._validate(print_prefix='Validate Watermark', **kwargs)
+        self.model._validate(print_prefix='Validate Clean',
+                             get_data=None, **kwargs)
+        self.model._validate(print_prefix='Validate Watermark',
+                             keep_org=False, **kwargs)
+        return 0.0, 0.0, 0.0
 
 
 class Watermark:

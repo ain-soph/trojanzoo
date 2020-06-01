@@ -281,7 +281,7 @@ class Model:
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                validate_interval=10, save=True, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data: function = None, validate_func=None, **kwargs):
+               get_data: function = None, loss_fn: function = None, validate_func: function = None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -289,10 +289,12 @@ class Model:
             loader_train = tqdm(loader_train)
         if get_data is None:
             get_data = self.get_data
+        if loss_fn is None:
+            loss_fn = self.loss
         if validate_func is None:
             validate_func = self._validate
 
-        _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data,
+        _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
         self.train()
 
@@ -316,14 +318,15 @@ class Model:
             epoch_start = time.perf_counter()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
-                _input, _label = self.get_data(data, mode='train')
-                _output = self.get_logits(_input)
-                loss = self.criterion(_output, _label)
+                _input, _label = get_data(data, mode='train')
+                loss = loss_fn(_input, _label)
 
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
 
+                with torch.no_grad():
+                    _output = self.get_logits(_input)
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 losses.update(loss.item(), _label.size(0))
                 batch_size = int(_label.size(0))
@@ -349,10 +352,10 @@ class Model:
 
             if validate_interval != 0:
                 if (_epoch+1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data,
+                    _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                                   verbose=verbose, indent=indent, **kwargs)
                     self.train()
-                    if cur_acc > best_acc and save:
+                    if cur_acc >= best_acc and save:
                         self.save(prefix=prefix, verbose=verbose)
                         best_acc = cur_acc
                     if verbose:
@@ -360,12 +363,18 @@ class Model:
         self.zero_grad()
         self.eval()
 
-    def _validate(self, full=True, loader: torch.utils.data.DataLoader = None, print_prefix='Validate', indent=0, verbose=True, **kwargs):
+    def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
+                  loader: torch.utils.data.DataLoader = None,
+                  get_data: function = None, loss_fn: function = None, **kwargs):
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
         if verbose:
             loader = tqdm(loader)
+        if get_data is None:
+            get_data = self.get_data
+        if loss_fn is None:
+            loss_fn = self.loss
 
         # batch_time = AverageMeter('Time', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
@@ -381,9 +390,9 @@ class Model:
         epoch_start = time.perf_counter()
         with torch.no_grad():
             for data in loader:
-                _input, _label = self.get_data(data, mode='valid')
-                _output = self.get_logits(_input, **kwargs)
-                loss = self.criterion(_output, _label)
+                _input, _label = get_data(data, mode='valid', **kwargs)
+                _output = self.get_logits(_input)
+                loss = loss_fn(_output, _label)
 
                 # measure accuracy and record loss
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
