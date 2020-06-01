@@ -125,9 +125,8 @@ def float2byte(img) -> torch.ByteTensor:
         img = img[0]
     elif len(img.shape) == 3:
         img = img.transpose(0, 1).transpose(1, 2).contiguous()
-    img.mul_(255.0)
     # img = (((img - img.min()) / (img.max() - img.min())) * 255.9).astype(np.uint8).squeeze()
-    return img.byte()
+    return img.mul(255.2).byte()
 
 
 # def byte2float(img) -> torch.FloatTensor:

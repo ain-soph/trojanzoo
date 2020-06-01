@@ -6,6 +6,7 @@ from trojanzoo.dataset import Dataset, ImageSet
 from trojanzoo.model import Model, ImageModel
 
 import os
+from collections import OrderedDict
 import torch
 from typing import List, Union
 
@@ -15,10 +16,15 @@ env = Config.env
 
 class Attack:
 
-    def __init__(self, name: str = 'attack', dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None,
-                 iteration: int = None, early_stop=True, stop_confidence=0.75,
-                 batch_size=1, output=0, indent=0, **kwargs):
-        self.name = name
+    name: str = 'attack'
+
+    def __init__(self, dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None,
+                 iteration: int = None, early_stop: bool = True, stop_confidence: float = 0.75,
+                 output: Union[int, List[str]] = 0, indent: int = 0, **kwargs):
+
+        self.param_list: Dict[str, List[str]] = OrderedDict()
+        self.param_list['attack'] = ['folder_path', 'iteration',
+                                     'early_stop', 'stop_confidence', 'output', 'indent']
         self.dataset = dataset
         self.model = model
 
@@ -26,16 +32,14 @@ class Attack:
         self.early_stop = early_stop
         self.stop_confidence = stop_confidence
 
-        self.batch_size = batch_size
         self.output = None
         self.output = self.get_output(output)
         self.indent = indent
-        self.set_par(**kwargs)
         self.module = Module()
 
         # ----------------------------------------------------------------------------- #
         if folder_path is None:
-            folder_path = env['result_dir'] + name+'/'
+            folder_path = env['result_dir'] + self.name+'/'
             if dataset is not None and isinstance(dataset, Dataset):
                 folder_path += dataset.name+'/'
             if model is not None and isinstance(model, Model):
@@ -43,97 +47,44 @@ class Attack:
         self.folder_path = folder_path
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        # ----------------------------------------------------------------------------- #
-        if batch_size != 1 and dataset is not None:
-            dataset.loader['test'] = dataset.get_dataloader(
-                mode='test', batch_size=batch_size)
 
-    def generate_target(self, _input, idx=1, same=False, **kwargs):
-        return self.model.generate_target(_input, idx=1, same=False, **kwargs)
+    def attack(self, iteration=None, **kwargs):
+        pass
 
-    def get_output(self, org_output: Union[int, str, list] = None):
+    # -----------------------------------Output-------------------------------------#
+    def summary(self, indent: int = None):
+        if indent is None:
+            indent = self.indent
+        prints('{:<10s} Parameters: '.format(self.name), indent=indent)
+        d = self.__dict__
+        for key, value in self.param_list.items():
+            prints(key, indent=indent+10)
+            prints({v: getattr(self, v) for v in value}, indent=indent+10)
+            prints('-'*20, indent=indent+10)
+
+    def get_output(self, org_output: Union[int, List[str]] = None):
         output = None
         if org_output is None:
             output = self.output
         elif isinstance(org_output, list):
             output = set(org_output)
-        elif isinstance(org_output, str):
-            if org_output == '':
-                output = set()
-            output = eval(org_output)
-            if isinstance(output, list):
-                output = set(output)
-            else:
-                raise ValueError(org_output)
         elif isinstance(org_output, int):
             output = self.get_output_int(org_output)
         else:
             output = org_output
         return output
 
-    def get_output_int(self, org_output=0):
-        if org_output < 1:
+    def get_output_int(self, org_output: int = 0):
+        if org_output < 5:
             return set()
-        elif org_output < 5:
-            return set(['param'])
         elif org_output < 10:
-            return set(['param', 'final'])
+            return set(['final'])
         elif org_output < 20:
-            return set(['param', 'init', 'final'])
+            return set(['init', 'final'])
         elif org_output < 30:
-            return set(['param', 'init', 'final', 'middle'])
+            return set(['init', 'final', 'middle'])
         else:
-            return set(['param', 'init', 'final', 'middle', 'memory'])
-
-    def output_par(self, _filter=[], indent=None, output=None):
-        if output is None:
-            output = self.output
-        else:
-            output = self.get_output(output)
-        if 'param' not in output:
-            return
-        if indent is None:
-            indent = self.indent
-        _filter.extend(['model', 'optimizer', 'module'])
-        prints(self.name+' parameter list: ', indent=indent)
-        d = self.__dict__
-        _dict = {}
-        for key, value in d.items():
-            is_method = 'function' not in type(d[key]).__name__ and \
-                'method' not in type(d[key]).__name__
-            str_check = '__' not in key and 'loader' not in key
-            if is_method and str_check and key not in _filter:
-                _dict[key] = value
-                if isinstance(value, torch.Tensor):
-                    if d[key].numel() > 50:
-                        _dict[key] = d[key].shape
-        prints(_dict, indent=indent)
-        print()
-
-    def set_par(self, **kwargs):
-        if len(kwargs) == 0:
-            return
-        print('Set parameters: ')
-        for key in kwargs.keys():
-            setattr(self, key, kwargs[key])
-            print(key, ': ', kwargs[key])
-
-    def perturb(self, *args, **kwargs):
-        pass
-
-    @staticmethod
-    def cal_gradient(f, X, n=100, sigma=0.001):
-        g = torch.zeros_like(X)
-
-        for i in range(n//2):
-            noise = torch.normal(
-                mean=0.0, std=1.0, size=X.shape, device=X.device)
-            X1 = X + sigma * noise
-            X2 = X - sigma * noise
-            g += f(X1).detach() * noise
-            g -= f(X2).detach() * noise
-        g /= n * sigma
-        return g.detach()
+            return set(['init', 'final', 'middle', 'memory'])
 
     def output_result(self, target, targeted=True, _input=None, _result=None, name=None, output=None, indent=None, mode='init'):
         output = self.get_output(output)
@@ -194,6 +145,24 @@ class Attack:
             name = self.name
         string = name + ' Iter: ' + output_iter(_iter+1, iteration)
         prints(string, indent=indent)
+
+    # ----------------------Utility----------------------------------- #
+    def generate_target(self, _input, idx=1, same=False, **kwargs):
+        return self.model.generate_target(_input, idx=idx, same=same, **kwargs)
+
+    @staticmethod
+    def cal_gradient(f: function, X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
+        g = torch.zeros_like(X)
+
+        for i in range(n//2):
+            noise = torch.normal(
+                mean=0.0, std=1.0, size=X.shape, device=X.device)
+            X1 = X + sigma * noise
+            X2 = X - sigma * noise
+            g += f(X1).detach() * noise
+            g -= f(X2).detach() * noise
+        g /= n * sigma
+        return g.detach()
 
     @staticmethod
     def projector(noise, epsilon, p=float('inf')):

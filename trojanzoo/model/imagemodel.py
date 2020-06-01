@@ -36,7 +36,7 @@ class _ImageModel(_Model):
         super().__init__(**kwargs)
         self.norm_par = None
         if norm_par is not None:
-            self.norm_par = {key: to_tensor(value)
+            self.norm_par = {key: torch.as_tensor(value, pin_memory=True)
                              for key, value in norm_par.items()}
 
     # This is defined by Pytorch documents
@@ -45,12 +45,12 @@ class _ImageModel(_Model):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
     def preprocess(self, x):
-        if len(x.shape) == 3:
-            x = x.unsqueeze(0)
         if self.norm_par is not None:
-            mean = self.norm_par['mean'][None, :, None, None].to(x.device)
-            std = self.norm_par['std'][None, :, None, None].to(x.device)
-            return x.sub(mean).div(std)
+            mean = self.norm_par['mean'].to(
+                x.device, non_blocking=True)[None, :, None, None]
+            std = self.norm_par['std'].to(
+                x.device, non_blocking=True)[None, :, None, None]
+            x = x.sub(mean).div(std)
         return x
 
     # get feature map
@@ -88,7 +88,8 @@ class _ImageModel(_Model):
         if record:
             x = self.avgpool(x)
             od['avgpool'] = x
-            x = x.flatten(start_dim=1)
+            x = self.flatten(x)
+            od['flatten'] = x
             od['features'] = x
         elif layer_input == 'features':
             record = True
@@ -135,6 +136,7 @@ class _ImageModel(_Model):
             if 'relu' not in name and 'bn' not in name:
                 layer_name.append('features.'+name)
         layer_name.append('avgpool')
+        layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name:
                 layer_name.append('classifier.'+name)

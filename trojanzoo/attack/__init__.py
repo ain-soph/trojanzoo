@@ -7,8 +7,8 @@ from .other import *
 
 class_dict = {
     'attack': 'Attack',
-    'adv': 'Adv',
-    'backdoor': 'Backdoor',
+    'adv_attack': 'Adv_Attack',
+    'backdoor_attack': 'Backdoor_Attack',
 
     'pgd': 'PGD',
     'inference': 'Inference',

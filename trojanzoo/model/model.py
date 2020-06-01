@@ -37,7 +37,8 @@ class _Model(nn.Module):
         self.num_classes = num_classes
 
         self.features = self.define_features()   # feature extractor
-        self.avgpool = nn.Identity()  # average pooling
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
+        self.flatten = nn.Flatten(start_dim=1)
         self.classifier = self.define_classifier()  # classifier
 
     # forward method
@@ -61,7 +62,7 @@ class _Model(nn.Module):
     def get_final_fm(self, x):
         x = self.get_fm(x)
         x = self.avgpool(x)
-        x = x.flatten(start_dim=1)
+        x = self.flatten(x)
         return x
 
     # get logits from feature map
@@ -225,7 +226,7 @@ class Model:
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
     def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
-             full=True, map_location='default', verbose=False):
+             features=True, map_location='default', verbose=False):
         if map_location is not None:
             if map_location == 'default':
                 map_location = env['device']
@@ -239,7 +240,7 @@ class Model:
             return self.load_official_weights()
         if os.path.exists(file_path):
             try:
-                if full:
+                if features:
                     self._model.load_state_dict(
                         torch.load(file_path, map_location=map_location))
                 else:
@@ -255,7 +256,7 @@ class Model:
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, full=True, verbose=False):
+    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, features=True, verbose=False):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -267,7 +268,7 @@ class Model:
 
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        _dict = self._model.state_dict() if full else self._model.classifier.state_dict()
+        _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
         torch.save(_dict, file_path)
         if verbose:
             print('Model {} saved at: '.format(self.name), file_path)
@@ -278,13 +279,21 @@ class Model:
 
     #-----------------------------------Train and Validate------------------------------------#
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=True, prefix: str = None,
-               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, **kwargs):
+               validate_interval=10, save=True, prefix: str = None, verbose=True, indent=0,
+               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
+               get_data: function = None, validate_func=None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
+        if verbose:
+            loader_train = tqdm(loader_train)
+        if get_data is None:
+            get_data = self.get_data
+        if validate_func is None:
+            validate_func = self._validate
 
-        _, best_acc, _ = self._validate(loader=loader_valid, **kwargs)
+        _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data,
+                                       verbose=verbose, indent=indent, **kwargs)
         self.train()
 
         # batch_time = AverageMeter('Time', ':6.3f')
@@ -305,7 +314,7 @@ class Model:
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
-            for i, data in enumerate(tqdm(loader_train)):
+            for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = self.get_data(data, mode='train')
                 _output = self.get_logits(_input)
@@ -330,28 +339,33 @@ class Model:
                 #     progress.display(i)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter()-epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}'.format(
-                output_iter(_epoch+1, epoch), **ansi)
-            print('\033[1A\033[K{:<60}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
-                pre_str, losses.avg, top1.avg, top5.avg, epoch_time))
+            if verbose:
+                pre_str = '{blue_light}Epoch: {0}'.format(
+                    output_iter(_epoch+1, epoch), **ansi)
+                prints('{:<60}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+                    pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
             if validate_interval != 0:
                 if (_epoch+1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc, _ = self._validate(loader=loader_valid)
+                    _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data,
+                                                  verbose=verbose, indent=indent, **kwargs)
                     self.train()
                     if cur_acc > best_acc and save:
-                        self.save(prefix=prefix, verbose=True)
+                        self.save(prefix=prefix, verbose=verbose)
                         best_acc = cur_acc
-                    print('-'*50)
+                    if verbose:
+                        print('-'*50)
         self.zero_grad()
         self.eval()
 
-    def _validate(self, full=True, output=True, loader: torch.utils.data.DataLoader = None, indent=0, **kwargs):
+    def _validate(self, full=True, loader: torch.utils.data.DataLoader = None, print_prefix='Validate', indent=0, verbose=True, **kwargs):
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
+        if verbose:
+            loader = tqdm(loader)
 
         # batch_time = AverageMeter('Time', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
@@ -366,7 +380,7 @@ class Model:
         # end = start
         epoch_start = time.perf_counter()
         with torch.no_grad():
-            for data in tqdm(loader):
+            for data in loader:
                 _input, _label = self.get_data(data, mode='valid')
                 _output = self.get_logits(_input, **kwargs)
                 loss = self.criterion(_output, _label)
@@ -389,10 +403,10 @@ class Model:
                 #     progress.display(i)
         epoch_time = str(datetime.timedelta(seconds=int(
             time.perf_counter()-epoch_start)))
-        if output:
-            pre_str = '{yellow}Validate:{reset}'.format(**ansi)
-            print('\033[1A\033[K{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
-                pre_str, losses.avg, top1.avg, top5.avg, epoch_time))
+        if verbose:
+            pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi)
+            prints('{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+                pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
     #-------------------------------------------Utility---------------------------------------#

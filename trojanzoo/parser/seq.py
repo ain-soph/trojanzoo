@@ -36,11 +36,11 @@ class Parser_Seq(Module):
                 self.args_list[parser.name] = parser.parse_args(
                     args, namespace=namespace)
                 print(self.args_list[parser.name])
-                print('---------------')
+                print('-'*20)
                 print()
             except SystemExit:
                 help_flag = True
-                print('---------------')
+                print('-'*20)
                 print()
         if verbose is None:
             verbose = help_flag or ('--verbose' in sys.argv[1:])
@@ -74,6 +74,6 @@ class Parser_Seq(Module):
                     self.module_list[parser.name].summary(indent=10)
                 except:
                     prints(self.module_list[parser.name], indent=10)
-                prints('---------------', indent=10)
+                prints('-'*20, indent=10)
                 print()
         return self.module_list
