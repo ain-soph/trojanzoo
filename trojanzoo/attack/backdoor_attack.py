@@ -7,7 +7,7 @@ from trojanzoo.utils.attack import add_mark
 import os
 from PIL.Image import Image
 import random
-from typing import Union, List, Tuple
+from typing import Union, List
 
 import numpy as np
 import torch
@@ -28,7 +28,7 @@ class Backdoor_Attack(Attack):
         self.percent: float = percent
         self.filename: str = self.get_filename()
 
-    def attack(self, optimizer, lr_scheduler, iteration: int = None, **kwargs):
+    def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
         if iteration is None:
             iteration = self.iteration
         self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
@@ -37,7 +37,7 @@ class Backdoor_Attack(Attack):
     def add_mark(self, x, **kwargs):
         return self.watermark.add_mark(x, **kwargs)
 
-    def get_filename(self, alpha=None, target_class=None, iteration=None):
+    def get_filename(self, alpha: float = None, target_class: int = None, iteration: int = None):
         if alpha is None:
             alpha = self.alpha
         if target_class is None:
@@ -50,7 +50,7 @@ class Backdoor_Attack(Attack):
             height=self.watermark.height, width=self.watermark.width)
         return _file
 
-    def get_data(self, data: Tuple[torch.Tensor], keep_org: bool = True):
+    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True) -> (torch.Tensor, torch.LongTensor):
         _input, _label = self.model.get_data(data)
         if not keep_org or random.uniform(0, 1) < self.percent:
             org_input, org_label = _input, _label
@@ -61,7 +61,7 @@ class Backdoor_Attack(Attack):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self, **kwargs):
+    def validate_func(self, **kwargs) -> (float, float, float):
         self.model._validate(print_prefix='Validate Clean',
                              get_data=None, **kwargs)
         self.model._validate(print_prefix='Validate Watermark',
@@ -152,7 +152,7 @@ class Watermark:
     # mark shape: channels, height, width
     # mask shape: channels, height, width
     # The mark shape may be smaller than the whole image. Fill the rest part as black, and return the mask and mark.
-    def mask_mark(self, mark: torch.Tensor) -> Tuple[torch.Tensor]:
+    def mask_mark(self, mark: torch.Tensor) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mask = torch.zeros(1, self.data_shape[-2], self.data_shape[-1],
                            dtype=torch.float)
         new_mark = -torch.ones(self.data_shape)

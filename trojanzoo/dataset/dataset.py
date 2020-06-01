@@ -7,7 +7,7 @@ import os
 import torch
 import numpy as np
 from collections import OrderedDict
-from typing import Union, Tuple, List, Dict
+from typing import Union, List, Tuple, Dict
 
 from trojanzoo.config import Config
 env = Config.env
@@ -106,7 +106,7 @@ class Dataset:
         pass
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor], **kwargs) -> Tuple[torch.Tensor]:
+    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor):
         return data
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
@@ -143,7 +143,7 @@ class Dataset:
 
     @staticmethod
     def split_set(dataset: torch.utils.data.Dataset,
-                  length: int = None, percent=None) -> Tuple[torch.utils.data.Subset]:
+                  length: int = None, percent=None) -> (torch.utils.data.Subset, torch.utils.data.Subset):
         assert (length is None) != (percent is None)  # XOR check
         if length is None:
             length = int(len(dataset)*percent)

@@ -10,7 +10,7 @@ class CIFAR10(ImageSet):
 
     name: str = 'cifar10'
     num_classes: int = 10
-    n_dim: Tuple[int, int] = (32, 32)
+    n_dim: Tuple[int] = (32, 32)
     label_names = ['airplane', 'automobile', 'bird', 'cat',
                    'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 

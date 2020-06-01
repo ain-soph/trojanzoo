@@ -4,7 +4,7 @@ from .dataset import Dataset
 from trojanzoo.utils import to_tensor
 
 import torch
-from typing import Union, Tuple, List, Dict
+from typing import Union, List, Tuple, Dict
 
 from trojanzoo.config import Config
 env = Config.env
