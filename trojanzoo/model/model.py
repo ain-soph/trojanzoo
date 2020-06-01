@@ -464,11 +464,10 @@ class Model:
             return self._model
 
     @staticmethod
-    def output_layer_information(layer, depth=1, indent=0, verbose=False, tree_length=None):
+    def output_layer_information(layer, depth=0, indent=0, verbose=False, tree_length=None):
         if tree_length is None:
             tree_length = 10*(depth+1)
-        depth -= 1
-        if depth >= 0:
+        if depth > 0:
             for name, module in layer.named_children():
                 _str = '{blue_light}{0}{reset}'.format(name, **ansi)
                 if verbose:
@@ -480,7 +479,7 @@ class Model:
                     _str += item
                 prints(_str, indent=indent)
                 Model.output_layer_information(
-                    module, depth=depth, indent=indent+10, verbose=verbose, tree_length=tree_length)
+                    module, depth=depth-1, indent=indent+10, verbose=verbose, tree_length=tree_length)
 
     def summary(self, indent=0, **kwargs):
         _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
