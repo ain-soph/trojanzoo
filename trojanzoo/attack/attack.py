@@ -8,7 +8,7 @@ from trojanzoo.model import Model, ImageModel
 import os
 from collections import OrderedDict
 import torch
-from typing import List, Union
+from typing import List, Union, Callable
 
 from trojanzoo.config import Config
 env = Config.env
@@ -151,7 +151,7 @@ class Attack:
         return self.model.generate_target(_input, idx=idx, same=same, **kwargs)
 
     @staticmethod
-    def cal_gradient(f: function, X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
+    def cal_gradient(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
         g = torch.zeros_like(X)
 
         for i in range(n//2):

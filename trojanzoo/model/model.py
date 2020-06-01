@@ -7,7 +7,7 @@ from trojanzoo.utils.model import AverageMeter, CrossEntropy
 from trojanzoo.dataset.dataset import Dataset
 
 import types
-from typing import Union
+from typing import Union, Callable
 
 import os
 import time
@@ -281,12 +281,10 @@ class Model:
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                validate_interval=10, save=True, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data: function = None, loss_fn: function = None, validate_func: function = None, **kwargs):
+               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, validate_func: Callable = None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
-        if verbose:
-            loader_train = tqdm(loader_train)
         if get_data is None:
             get_data = self.get_data
         if loss_fn is None:
@@ -315,6 +313,8 @@ class Model:
             losses.reset()
             top1.reset()
             top5.reset()
+            if verbose:
+                loader_train = tqdm(loader_train)
             epoch_start = time.perf_counter()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
@@ -365,12 +365,10 @@ class Model:
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
-                  get_data: function = None, loss_fn: function = None, **kwargs):
+                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs):
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
-        if verbose:
-            loader = tqdm(loader)
         if get_data is None:
             get_data = self.get_data
         if loss_fn is None:
@@ -387,12 +385,14 @@ class Model:
 
         # start = time.perf_counter()
         # end = start
+        if verbose:
+            loader = tqdm(loader)
         epoch_start = time.perf_counter()
         with torch.no_grad():
             for data in loader:
                 _input, _label = get_data(data, mode='valid', **kwargs)
+                loss = loss_fn(_input, _label)
                 _output = self.get_logits(_input)
-                loss = loss_fn(_output, _label)
 
                 # measure accuracy and record loss
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))

@@ -36,7 +36,7 @@ class _ImageModel(_Model):
         super().__init__(**kwargs)
         self.norm_par = None
         if norm_par is not None:
-            self.norm_par = {key: torch.as_tensor(value, pin_memory=True)
+            self.norm_par = {key: torch.as_tensor(value).pin_memory()
                              for key, value in norm_par.items()}
 
     # This is defined by Pytorch documents
