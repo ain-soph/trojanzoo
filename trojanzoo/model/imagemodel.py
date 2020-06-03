@@ -32,8 +32,10 @@ from collections import OrderedDict
 
 class _ImageModel(_Model):
 
-    def __init__(self, norm_par: Dict[str, list] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, norm_par: Dict[str, list] = None, num_classes=None, **kwargs):
+        if num_classes is None:
+            num_classes = 1000
+        super().__init__(num_classes=num_classes, **kwargs)
         self.norm_par = None
         if norm_par is not None:
             self.norm_par = {key: torch.as_tensor(value).pin_memory()
