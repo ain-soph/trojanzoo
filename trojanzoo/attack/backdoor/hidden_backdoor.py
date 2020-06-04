@@ -266,7 +266,7 @@ class HiddenBackdoor(Backdoor_Attack):
 # from trojanzoo.attack.backdoor_attack import Backdoor_Attack, watermark
 # from trojanzoo.parser.attack import Parser_Perturb
 # from trojanzoo.config import Config
-# from trojanzoo.attack.hidden import HiddenBackdoor
+# from trojanzoo.attack.hidden_backdoor import HiddenBackdoor
 # from trojanzoo.dataset import Dataset, ImageSet
 # from trojanzoo.model import Model, ImageModel
 # env = Config.env
