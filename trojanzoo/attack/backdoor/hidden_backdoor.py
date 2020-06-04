@@ -1,278 +1,144 @@
 # -*- coding: utf-8 -*-
+# import sys
+# sys.path.append(r'/home/nesa320/xs/Trojan-Zoo')
+# print(sys.path)
+
 from trojanzoo.attack.attack import Attack
+from trojanzoo.attack.backdoor_attack import Backdoor_Attack
 from trojanzoo.imports import *
 from trojanzoo.utils import *
 import random
-
+import os
+from PIL.Image import Image
+import random
+from typing import Union, List
 from copy import deepcopy
+from trojanzoo.utils import to_tensor, read_img_as_tensor, byte2float, repeat_to_batch, prints
+from trojanzoo.utils.attack import add_mark
+from trojanzoo import __file__ as root_file
+root_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-class HiddenBackdoor(Attack):
+class HiddenBackdoor(Backdoor_Attack):
 
     name = 'hiddenbackdoor'
 
     def __init__(self,
-                 target_class=0,
-                 mask_path='',
-                 mark_path='',
-                 model_path='',
-                 lr=0.01,
-                 decay=False,
-                 decay_ratio=0.95,
-                 decay_iteration=2000,
-                 epsilon=16,
-                 retrain_epoch=10,
-                 poison_generation_iteration=10000,
-                 batch_num=100,
-                 poisoned_image_num=100,
-                 original=False,
-                 train_opt='partial',
-                 lr_scheduler=False,
-                 preprocess_layer='features',
-                 validate_interval=10,
-                 parallel=True,
-                 folder_path='./hidden_backdoor_result',
-                 use_gpu=True,
+                 poisoned_image_num: int = 100,
+                 poison_generation_iteration: int = 5000,
+                 poison_lr: float = 0.01,
+                 preprocess_layer: str = 'feature',
+                 epsilon: int = 16,
+                 decay: bool = False,
+                 decay_iteration: int = 2000,
+                 decay_ratio: float = 0.95,
                  **kwargs):
         """
-        
         HiddenBackdoor attack is different with trojan nn(References: https://docs.lib.purdue.edu/cgi/viewcontent.cgi?article=2782&context=cstech),the mark and mask is designated and stable, we continue these used in paper(References: https://arxiv.org/abs/1910.00033).
-        self.mask_path,self.mark_path,self.model_path must be set  corresponding to the identical dataset and set initially.
+
+        :param poisoned_image_num: the number of poisoned images, defaults to 100
+        :type poisoned_image_num: int, optional
+        :param poison_generation_iteration: the iteration times used to generate one poison image, defaults to 5000
+        :type poison_generation_iteration: int, optional
+        :param poison_lr: the learning rate used for generating poisoned images, defaults to 0.01
+        :type poison_lr: float, optional
+        :param preprocess_layer: the chosen specific layer that on which the feature space of source images patched by trigger is close to poisoned images, defaults to 'feature'
+        :type preprocess_layer: str, optional
+        :param epsilon: the threshold in pixel space to ensure the poisoned image is not visually distinguishable from the target image, defaults to 16
+        :type epsilon: int, optional
+        :param decay: specify whether the learning rate decays with iteraion times, defaults to False
+        :type decay: bool, optional
+        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once, defaults to 2000
+        :type decay_iteration: int, optional
+        :param decay_ratio: specify the learning rate decay proportion, defaults to 0.95
+        :type decay_ratio: float, optional
         """
-        super(HiddenBackdoor, self).__init__(**kwargs)
 
-        # experiment parameter
+        super().__init__(self, **kwargs)
 
-        self.lr = lr
-        self.decay = decay
-        self.decay_ratio = decay_ratio
-        self.decay_iteration = decay_iteration
-        self.epsilon = epsilon
-        self.retrain_epoch = retrain_epoch
-        self.batch_num = batch_num
-        self.poison_generation_iteration = poison_generation_epoch
         self.poisoned_image_num = poisoned_image_num
-        self.lr_scheduler = lr_scheduler
-        self.validate_interval = validate_interval
-        self.parallel = parallel
-        self.train_opt = train_opt
-
-        # poison sample parameter
-        self.mask_path = mask_path
-        self.mark_path = mark_path
-        self.target_class = target_class
-
-        self.original = original
-        self.model_path = model_path
-        self.folder_path = folder_path
+        self.poison_generation_iteration = poison_generation_iteration
+        self.poison_lr = poison_lr
         self.preprocess_layer = preprocess_layer
-        self.use_gpu = use_gpu
+        self.epsilon = epsilon
+        self.decay = decay
+        self.decay_iteration = decay_iteration
+        self.decay_ratio = decay_ratio
 
-    def load_mark_mask(self, mark_path: str = None, mask_path: str = None):
+        self.percent = float(
+            self.poisoned_image_num /
+            self.dataset.get_full_dataset('train').__len__().item()
+        )  # update self.percent according to self.poisoned_image_num
+        prints("The percent of poisoned image:{}".format(self.percent),
+               indent=self.indent)
+
+    def attack(self,
+               optimizer: torch.optim.Optimizer,
+               lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
+               iteration: int = None,
+               **kwargs):
         """
-        Load mark and mask existed in the form of npy, according to the paper, they are set initially. The mark, mask, model all should be corresponding to the identical dataset.
-        :param mark_path: the file path of the mark
-        :param mask_path: the file path of the mask
-        :returns self.mark & self.mask
+        Retrain the model with normal images and poisoned images whose label haven't be modified, finetune self.model in this function. self.attack function differes from Backdoor_Attack.attack funtions at get_data=self.get_data(keep_org = False)
+
+        :param optimizer: specify the optimizer
+        :type optimizer: torch.optim.Optimizer
+        :param lr_scheduler: specify the lr_scheduler, dynamic learning rate
+        :type lr_scheduler: torch.optim.lr_scheduler._LRScheduler
+        :param iteration: how many epoches that the model needs to retrained, defaults to None
+        :type iteration: int, optional
         """
-        if mark_path is None:
-            mark_path = self.mark_path
-        if mask_path is None:
-            mask_path = self.mask_path
-        self.mark = to_tensor(np.load(mark_path))
-        self.mask = to_tensor(np.load(mask_path))
+        if iteration is None:
+            iteration = self.iteration
+        self.model._train(epoch=iteration,
+                          optimizer=optimizer,
+                          lr_scheduler=lr_scheduler,
+                          get_data=self.get_data(keep_org=False),
+                          validate_func=self.validate_func,
+                          **kwargs)
 
-    def load_model(self, model_path: str = None):
+    def get_data(self,
+                 data: (torch.Tensor, torch.LongTensor),
+                 keep_org: bool = True) -> (torch.Tensor, torch.LongTensor):
         """
-        Load the pretrained model. The mark, mask, model all should be corresponding to the identical dataset.
-        :param model_path: the file path of the model
-        :returns self.model
+        When keep_org= True, get the normal inputs and labels.
+        When keep_org= False, get the normal inputs and labels and poisoned inputs and their labels.
+        :param data: the original input and label
+        :type data: torch.Tensor, torch.LongTensor
+        :param keep_orig: specify whether to insert poisoned inputs and labels, defaults to True
+        :type keep_orig: bool, optional
+        :return: _input, _label
+        :rtype: torch.Tensor, torch.LongTensor
         """
-        if model_path is None:
-            model_path = self.model_path
-        self.model.load_pretrained_weights(model_path)
+        _input, _label = self.model.get_data(data)
+        if not keep_org:
+            org_input, org_label = _input, _label
+            _input = self.add_mark(org_input)
+            # source_image =  # defaults to callable
+            # target_image =  # defaults to callable
+            _input = self.generate_poisoned_image(source_image, target_image)
+            _label = self.target_class * torch.ones_like(org_label)
 
-    def add_mark(self, X, detach=True, original=False):
-        """
-        Add the mark to initial sample.
-        :param X: the file path of the model
-        :param detach: whether to detach the output from the computationnal graph
-        :param original:whether to add the trigger to X
-        :returns: result: the processed sample (with or without mark)
-        """
-        if original:
-            return X
-        result = to_tensor(X * (1 - self.mask) + self.mark * self.mask)
-        if detach:
-            result = result.detach()
-        return result
-
-    def target_class_proportion(self, target: int = None, original=False):
-        """
-        Compute the proportion of the samples from target class, with or without mark, in valid set.
-        :param target: the target class
-        :param original: whether to add the trigger to samples
-        :returns: float(correct)/total: the proportion of the samples from target class
-        """
-
-        if target is None:
-            target = self.target_class
-
-        correct = 0
-        total = 0
-
-        for i, data in enumerate(self.model.dataset.loader['valid']):
-            _input, _label = self.model.get_data(data, mode='train')
-            X = self.add_mark(_input, original=original)
-            ones = to_tensor(torch.ones([X.shape[0]]))
-            result = self.model(X).argmax(dim=-1)
-
-            num_target = torch.where(_label == target, ones, ones - 1)
-            cor = torch.where(result == target, ones, ones - 1)
-            rep = cor + num_target
-
-            repeat = torch.where(rep == to_tensor(2.), ones, ones - 1)
-
-            total += X.shape[0] - num_target.sum()
-            correct += cor.sum() - repeat.sum()
-
-        return float(correct) / total
-
-    def target_class_confidence(self, target: int = None, original=False):
-        """
-        Compute the confidence of the samples, with or without mark, in valid set classfied as target class.
-        :param target: the target class
-        :param original:whether to add the trigger to samples
-        :returns: result_list: the confidence result list of samples in valid set classfied as target class.
-        """
-        if target is None:
-            target = self.target_class
-
-        result_list = []
-
-        for i, data in enumerate(self.model.dataset.loader['valid']):
-            _input, _label = self.model.get_data(data, mode='train')
-            X = self.add_mark(_input, original=original)
-            result = self.model.get_prob(X)[:, target]
-            result_list.extend(result.detach().cpu().tolist())
-        return result_list
-
-    def perturb(self,
-                output=None,
-                mark_path: str = None,
-                mask_path: str = None,
-                model_path: str = None,
-                target: int = None,
-                train_opt=None,
-                lr_scheduler=None,
-                retrain_epoch: int = None,
-                validate_interval: int = None,
-                parallel=None,
-                poisoned_image_num: int = None,
-                epsilon: int = None,
-                preprocess_layer=None,
-                poison_generation_iteration: int = None,
-                decay=None,
-                decay_ratio=None,
-                decay_iteration=None):
-        """
-        Test the performance of poisoned model on normal samples and samples patched by mark. Save the poisoned model and confidence list.
-        :param output: output added by hand, such as some notes
-        :param mark_path: the file path of the mark
-        :param mask_path: the file path of the mask
-        :param model_path: the file path of the model
-        :param target: the target class
-        :param train_opt: specify whether finetune the whole model or only part
-        :param lr_scheduler: specify whether to adjust learning rate 
-        :param retrain_epoch: how many epoches that the model needs to retrained 
-        :param validate_interval: the interval epoch needed to validate the model
-        :param parallel: specify whether to parallel process data
-        :param poisoned_image_num: the number of poisoned images
-        :param epsilon: the threshold in pixel space to ensure the poisoned image is not visually distinguishable from the target image
-        :param preprocess_layer: the chosen specific layer that on which the feature space of source images patched by trigger is close to poisoned images 
-        :param poison_generation_iteration: the iteration times used to generate one poison image
-        :param decay: specify whether the learning rate decays with iteraion times
-        :param decay_ratio: specify the learning rate decay proportion
-        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once
-        :returns some results and the poisoned model
-        """
-        if mark_path is None:
-            mark_path = self.mark_path
-        if mask_path is None:
-            mask_path = self.mask_path
-        if model_path is None:
-            model_path = self.model_path
-        if target is None:
-            target = self.target_class
-        if train_opt is None:
-            train_opt = self.train_opt
-        if lr_scheduler is None:
-            lr_scheduler = self.lr_scheduler
-        if retrain_epoch is None:
-            retrain_epoch = self.retrain_epoch
-        if validate_interval is None:
-            validate_interval = self.validate_interval
-
-        if parallel is None:
-            parallel = self.parallel
-        if poisoned_image_num is None:
-            poisoned_image_num = self.poisoned_image_num
-        if epsilon is None:
-            epsilon = self.epsilon
-        if preprocess_layer is None:
-            preprocess_layer = self.preprocess_layer
-        if poison_generation_iteration is None:
-            poison_generation_iteration = self.poison_generation_iteration
-        if decay is None:
-            decay = self.decay
-        if decay_ratio is None:
-            decay_ratio = self.decay_ratio
-        if decay_iteration is None:
-            decay_iteration = self.decay_iteration
-
-        output = self.get_output(output)
-
-        self.load_mark_mask(mark_path, mask_path)
-        self.load_model(model_path)
-
-        self.retrain(train_opt=train_opt,
-                     lr_scheduler=lr_scheduler,
-                     retrain_epoch=retrain_epoch,
-                     target=target,
-                     validate_interval=validate_interval,
-                     parallel=parallel,
-                     poisoned_image_num=poison_generation_iteration,
-                     epsilon=epsilon,
-                     preprocess_layer=preprocess_layer,
-                     poison_generation_iteration=poison_generation_iteration,
-                     decay=decay,
-                     decay_ratio=decay_ratio,
-                     decay_iteration=decay_iteration)
-
-        succ_rate = self.target_class_proportion(target)
-        mis_rate = self.target_class_proportion(target, original=True)
-        confidence_list = self.target_class_confidence(target)
-        print('Succ Rate: ', succ_rate)
-        print('Mis Rate: ', mis_rate)
-        print('Confidence: ', np.mean(confidence_list))
-        np.save(self.folder_path + '/confidence.npy', confidence_list)
-        self.model.save_weights(self.folder_path +
-                                '/hidden_backdoor_poisoned.pth',
-                                full=True)
-        print('model and confidence are saved at %s!' % (self.folder_path))
+            _input = torch.cat((_input, org_input))
+            _label = torch.cat((_label, org_label))
+        return _input, _label
 
     def adjust_lr(self,
                   iteration,
-                  decay=None,
-                  decay_ratio=None,
-                  decay_iteration=None):
+                  decay: bool = False,
+                  decay_ratio: float = None,
+                  decay_iteration: int = None) -> (float):
         """
-        Adjust learning_rate according to iteration.
-        :param iteration: the number of iterations, especially in the process of generating poisoned image
-        :param decay: specify whether the learning rate decays with iteraion times
-        :param decay_ratio: specify the learning rate decay proportion
-        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once
-        :returns: lr: the adjusted learning_rate
+        In the process of generating poisoned inputs, the learning rate will change with the iteration times.
+        :param iteration: the number of iteration in the process of generating poisoned image
+        :type iteration: int, optional
+        :param decay: specify whether the learning rate decays with iteraion times, defaults to False
+        :type decay: bool, optional
+        :param decay_ratio: specify the learning rate decay proportion, defaults to 0.95
+        :type decay_ratio: float, optional
+        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once, defaults to 2000
+        :type decay_iteration: int, optional
+        :return: lr or self.poison_lr: the computed learning rate
+        :rtype: float
         """
         if decay is None:
             decay = self.decay
@@ -281,68 +147,75 @@ class HiddenBackdoor(Attack):
         if decay_iteration is None:
             decay_iteration = self.decay_iteration
 
-        if decay == True:
-            lr = self.lr
+        if decay:
+            lr = self.poison_lr
             lr = lr * (decay_ratio**(iteration // decay_iteration))
             return lr
         else:
-            return self.lr
+            return self.poison_lr
 
     def generate_poisoned_image(self,
-                                source_image,
-                                target_image,
-                                epsilon: int = None,
-                                preprocess_layer=None,
+                                source_image: (torch.Tensor, torch.LongTensor),
+                                target_image: (torch.Tensor, torch.LongTensor),
+                                preprocess_layer: str = None,
                                 poison_generation_iteration: int = None,
-                                decay=None,
-                                decay_ratio=None,
-                                decay_iteration=None):
+                                epsilon: int = None,
+                                decay: bool = None,
+                                decay_ratio: float = None,
+                                decay_iteration: int = None,
+                                **kwargs) -> (torch.Tensor):
         """
-        According to the sampled target images and the sampled source images patched by the trigger ,modify the target image to generate poison images ,that is close to images of target category in pixel space and also close to source images patched by the trigger in feature space.
-        :param source_image: self.poisoned_image_num source images, other than target category, sampled from dataloader['train'] 
-        :param target_image: self.poisoned_image_num target images sampled from the images of target category in dataloader['train']
+        According to the sampled target images and the sampled source images patched by the trigger ,modify the target inputs to generate poison inputs ,that is close to inputs of target category in pixel space and also close to source inputs patched by the trigger in feature space.
+        :param source_image: self.poisoned_image_num source images, other than target category, sampled from train dataset
+        :type source_image: torch.Tensor, torch.LongTensor, optional
+        :param target_image: self.poisoned_image_num target images sampled from the images of target category in train dataset
+        :type target_image: torch.Tensor, torch.LongTensor, optional
+        :param preprocess_layer: the chosen specific layer that on which the feature space of source images patched by trigger is close to poisoned images
+        :type preprocess_layer: str, optional
         :param epsilon: the threshold in pixel space to ensure the poisoned image is not visually distinguishable from the target image
-        :param preprocess_layer: the chosen specific layer that on which the feature space of source images patched by trigger is close to poisoned images 
-        :param poison_generation_iteration: the iteration times used to generate one poison image
+        :type epsilon: int, optional
         :param decay: specify whether the learning rate decays with iteraion times
+        :type decay: bool, optional
         :param decay_ratio: specify the learning rate decay proportion
-        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once 
-        :returns: generated_poisoned_image: the self.poisoned_image_num generated poisoned image
+        :type decay_ratio: float, optional
+        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once
+        :type decay_iteration: int, optional
+        :return: generated_poisoned_input: the generated poisoned inputs
+        :rtype: torch.Tensor
         """
-        if epsilon is None:
-            epsilon = self.epsilon
+
         if preprocess_layer is None:
             preprocess_layer = self.preprocess_layer
         if poison_generation_iteration is None:
             poison_generation_iteration = self.poison_generation_iteration
+        if epsilon is None:
+            epsilon = self.epsilon
         if decay is None:
             decay = self.decay
         if decay_ratio is None:
             decay_ratio = self.decay_ratio
         if decay_iteration is None:
             decay_iteration = self.decay_iteration
-        if torch.cuda.is_available() and self.use_gpu == True:
-            self.device = torch.device('cuda:0')
-        else:
-            self.device = torch.device('cpu')
-        source_image = source_image.to(self.device)
-        target_image = target_image.to(self.device)
-        generated_poisoned_image = torch.zeros_like(source_image)
+
+        source_input, source_label = self.model.get_data(source_image)
+        target_input, target_label = self.model.get_data(target_image)
+        generated_poisoned_input = torch.zeros_like(source_input).to(
+            source_image.device)
+
         pert = nn.Parameter(
-            torch.zeros_like(target_image, requires_grad=True).to(self.device))
+            torch.zeros_like(target_input,
+                             requires_grad=True).to(source_image.device))
+        source_input = self.add_mark(source_input)
 
-        source_image = self.add_mark(source_image)
-        output1 = self.model(source_image)
-
+        output1 = self.model(source_input)
         feat1 = to_tensor(
             self.model.get_layer(
-                source_image, layer_output=preprocess_layer)).detach().clone()
-
+                source_input, layer_output=preprocess_layer)).detach().clone()
         for j in range(poison_generation_iteration):
-            output2 = model(target_image + pert)
+            output2 = model(target_input + pert)
             feat2 = to_tensor(
                 self.model.get_layer(
-                    target_image,
+                    target_input,
                     layer_output=preprocess_layer)).detach().clone()
             feat11 = feat1.clone()
             dist = torch.cdist(feat1, feat2)
@@ -355,7 +228,7 @@ class HiddenBackdoor(Attack):
                 dim=1
             )  #  Decrease the distance between sourced images patched by trigger and target images
             loss = loss1.sum()
-            losses.update(loss.item(), source_image.size(0))
+            losses.update(loss.item(), source_input.size(0))
             loss.backward()
             lr = self.adjust_lr(iteration=j,
                                 decay=decay,
@@ -364,7 +237,7 @@ class HiddenBackdoor(Attack):
             pert = pert - lr * pert.grad
             pert = torch.clamp(pert, -(epsilon / 255.0),
                                epsilon / 255.0).detach_()
-            pert = pert + target_image
+            pert = pert + target_input
             pert = pert.clamp(0, 1)  # restrict the pixel value range resonable
             if j % 100 == 0:
                 print(
@@ -372,233 +245,173 @@ class HiddenBackdoor(Attack):
                     .format(epoch, i, j, lr, losses.val, losses.avg))
             if loss1.max().item() < 10 or j == (poison_generation_iteration -
                                                 1):
-                for k in range(target_image.size(0)):
+                for k in range(target_input.size(0)):
                     input2_pert = (pert[k].clone())
-                    generated_poisoned_image[k] = input2_pert
+                    generated_poisoned_input[k] = input2_pert
                 break
-
             pert = pert - target_image
             pert.requires_grad = True
-        return generated_poisoned_image
+        return generated_poisoned_input
 
-    def sample_size(self):
-        """
-        Get the shape of single image ( 2d or 3d) 
-        :returns: list(tuple(X.shape)): the shape of single image existed in the form of list
-        """
-        for i, data in enumerate(tqdm(self.model.dataset.loader['train'])):
-            X, Y = self.model.get_data(data, mode='train')
-            break
-        return list(tuple(X.shape))
 
-    def sample_target(self,
-                      target: int = None,
-                      poisoned_image_num: int = None):
-        """
-        Get self.poisoned_image_num samples from target category in  self.model.dataset.loader['train']
-        :param target: the target class
-        :param poisoned_image_num: the number of poisoned images
-        :returns: target_sample: sampled images from target class
-        """
-        if target is None:
-            target = self.target_class
-        if poisoned_image_num is None:
-            poisoned_image_num = self.poisoned_image_num
+# from trojanzoo.parser.parser import Parser
+# from trojanzoo.utils.loader import get_dataset
+# from trojanzoo.dataset import Dataset
+# from trojanzoo.model import Model
+# from trojanzoo.config import Config
+# from trojanzoo.utils.param import Module, Param
+# from trojanzoo.imports import *
+# from trojanzoo.utils import *
+# from trojanzoo.attack.attack import Attack
+# from trojanzoo.attack.backdoor_attack import Backdoor_Attack, watermark
+# from trojanzoo.parser.attack import Parser_Perturb
+# from trojanzoo.config import Config
+# from trojanzoo.attack.hidden import HiddenBackdoor
+# from trojanzoo.dataset import Dataset, ImageSet
+# from trojanzoo.model import Model, ImageModel
+# env = Config.env
+# config = Config.config
 
-        num_target = 0
-        sample_shape = self.sample_size()
-        if len(sample_shape) > 3:
-            target_sample = torch.zeros([
-                poisoned_image_num, sample_shape[1], sample_shape[2],
-                sample_shape[3]
-            ])
-        else:
-            target_sample = torch.zeros(
-                [poisoned_image_num, sample_shape[1], sample_shape[2]])
+# param = Param(default={'poisoned_image_num': 100, 'poison_generation_iteration': 5000, 'poison_lr': 0.01, 'preprocess_layer': 'feature', 'epsilon': 16, 'decay': False, 'decay_iteration': 2000, 'decay_ratio': 0.95})
+# datashape = Param({'default':{'data_shape':[3,32,32]}, 'gtsrb':{'data_shape':[3,32,32]},'imagenet':{'data_shape':[3,224,224]}, 'default':{'data_shape':[3,224,224]}})
 
-        for i, data in enumerate(tqdm(self.model.dataset.loader['train'])):
-            X, Y = self.model.get_data(data, mode='train')
-            for j in range(len(Y)):
-                if Y[j, 0].item() == target:
-                    target_sample[num_target] = X[j]
-                    num_target += 1
-                if num_target > poisoned_image_num:
-                    break
-            if num_target > poisoned_image_num:
-                break
-        return target_sample
+# # output  attention
+# class Parser_Hidden_Backdoor(Parser_Perturb):
+#     def __init__(self, *args, param=param, datashape = datashape, **kwargs):
+#         super().__init__(*args, param=param, datashape = datashape, **kwargs)
 
-    def sample_non_target(self,
-                          target: int = None,
-                          poisoned_image_num: int = None):
-        """
-        Get self.poisoned_image_num samples other than target category in  self.model.dataset.loader['train']
-        :param target: the target class
-        :param poisoned_image_num: the number of poisoned images
-        :returns: non_target_sample: self.poisoned_image_num source images
-        """
-        if target is None:
-            target = self.target_class
-        if poisoned_image_num is None:
-            poisoned_image_num = self.poisoned_image_num
+#     @classmethod
+#     def add_argument(cls, parser):
+#         super().add_argument(parser)
+#         parser.set_defaults(module_name='hidden_backdoor')
 
-        num_non_target = 0
-        sample_shape = self.sample_size()
-        if len(sample_shape) > 3:
-            non_target_sample = torch.zeros([
-                poisoned_image_num, sample_shape[1], sample_shape[2],
-                sample_shape[3]
-            ])
-        else:
-            non_target_sample = torch.zeros(
-                [poisoned_image_num, sample_shape[1], sample_shape[2]])
+#         parser.add_argument('-t', '--target_class', dest='target_class',default=0, type=int)
+#         parser.add_argument('--alpha', dest='alpha',default=1.0, type=float)
+#         parser.add_argument('--percent', dest='percent',default=0.1, type=float)
 
-        for i, data in enumerate(tqdm(self.model.dataset.loader['train'])):
-            X, Y = self.model.get_data(data, mode='train')
-            for j in range(len(Y)):
-                if Y[j, 0].item() != target:
-                    non_target_sample[num_non_target] = X[j]
-                    num_non_target += 1
-                if num_non_target > poisoned_image_num:
-                    break
-            if num_non_target > poisoned_image_num:
-                break
-        return non_target_sample
+#         parser.add_argument('--folder_path', dest='folder_path',default=env['result_dir'], type=str)
+#         parser.add_argument('--iteration', dest='iteration',default=50, type=int)
+#         parser.add_argument('--early_stop', dest='early_stop',default=False, action='store_true')
+#         parser.add_argument('--stop_confidence', dest='stop_confidence',default=0.75)
+#         parser.add_argument()
+#         parser.add_argument('--indent', dest='indent',default=0)
+#         parser.add_argument('--optimizer', dest='optimizer',default='SGD')
+#         parser.add_argument('--lr_scheduler', dest='lr_scheduler',default=False, action='store_true')
 
-    def retrain(self,
-                train_opt=None,
-                lr_scheduler=None,
-                retrain_epoch: int = None,
-                target: int = None,
-                validate_interval: int = None,
-                parallel=None,
-                poisoned_image_num: int = None,
-                epsilon: int = None,
-                preprocess_layer=None,
-                poison_generation_iteration: int = None,
-                decay=None,
-                decay_ratio=None,
-                decay_iteration=None):
-        """
-        Retrain the model with normal images and poisoned images whose label haven't be modified, finetune self.model in this process
-        :param train_opt: specify whether finetune the whole model or only part
-        :param lr_scheduler: specify whether to adjust learning rate 
-        :param retrain_epoch: how many epoches that the model needs to retrained 
-        :param target: the target class
-        :param validate_interval: the interval epoch needed to validate the model
-        :param parallel: specify whether to parallel process data
-        :param poisoned_image_num: the number of poisoned images
-        :param epsilon: the threshold in pixel space to ensure the poisoned image is not visually distinguishable from the target image
-        :param preprocess_layer: the chosen specific layer that on which the feature space of source images patched by trigger is close to poisoned images 
-        :param poison_generation_iteration: the iteration times used to generate one poison image
-        :param decay: specify whether the learning rate decays with iteraion times
-        :param decay_ratio: specify the learning rate decay proportion
-        :param decay_iteration: specify the number of iteration time interval, the learning rate will decays once
-        :returns the model after fine-tuning
-        """
-        if train_opt is None:
-            train_opt = self.train_opt
-        if lr_scheduler is None:
-            lr_scheduler = self.lr_scheduler
-        if retrain_epoch is None:
-            retrain_epoch = self.retrain_epoch
-        if target is None:
-            target = self.target_class
-        if validate_interval is None:
-            validate_interval = self.validate_interval
+#         parser.add_argument('--edge_color', dest='edge_color',default='black')
+#         parser.add_argument('--mark_path', dest='path',default=env['data_dir']+'mark/square_white.png')
+#         parser.add_argument('--mark_height', dest='height',default=0, type=int)
+#         parser.add_argument('--mark_width', dest='width',default=0, type=int)
+#         parser.add_argument('--mark_height_ratio', dest='height_ratio',default=1.0, type=float)
+#         parser.add_argument('--mark_width_ratio', dest='width_ratio',default=1.0, type=float)
+#         parser.add_argument('--mark_height_offset', dest='height_offset',default=None, type=int)
+#         parser.add_argument('--mark_width_offset', dest='width_offset',default=None, type=int)
 
-        if parallel is None:
-            parallel = self.parallel
-        if poisoned_image_num is None:
-            poisoned_image_num = self.poisoned_image_num
-        if epsilon is None:
-            epsilon = self.epsilon
-        if preprocess_layer is None:
-            preprocess_layer = self.preprocess_layer
-        if poison_generation_iteration is None:
-            poison_generation_iteration = self.poison_generation_iteration
-        if decay is None:
-            decay = self.decay
-        if decay_ratio is None:
-            decay_ratio = self.decay_ratio
-        if decay_iteration is None:
-            decay_iteration = self.decay_iteration
+#         parser.add_argument('--poisoned_image_num', dest='poisoned_image_num',default=100, type=int)
+#         parser.add_argument('--poison_generation_iteration', dest='poison_generation_iteration',default=5000, type=int)
+#         parser.add_argument('--poison_lr', dest='poison_lr',default=0.01, type=float)
+#         parser.add_argument('--preprocess_layer', dest='preprocess_layer',default='feature', type=str)
+#         parser.add_argument('--epsilon', dest='epsilon',default=16, type=int)
+#         parser.add_argument('--decay', dest='decay',default=False, type=bool)
+#         parser.add_argument('--decay_iteration', dest='decay_iteration',default=200, type=int)
+#         parser.add_argument('--decay_ratio', dest='decay_ratio',default=0.95, type=float)
+#     def get_module(self,  **kwargs):
+#
 
-        optimizer = self.model.define_optimizer(train_opt=train_opt,
-                                                lr_scheduler=lr_scheduler,
-                                                **kwargs)
-        optimizer.zero_grad()
-        _lr_scheduler = None
-        if lr_scheduler:
-            _lr_scheduler = optimizer
-            optimizer = _lr_scheduler.optimizer
-        self.model.train()
+# from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Watermark, Parser_Hidden_Backdoor, Parser_Seq
+# from trojanzoo.attack.attack import Attack
+# from trojanzoo.attack.backdoor_attack import Backdoor_Attack, Watermark
+# from trojanzoo.parser.attack import Parser_Perturb
+# from trojanzoo.attack.hidden import HiddenBackdoor
+# from trojanzoo.dataset import Dataset, ImageSet
+# from trojanzoo.model import Model, ImageModel
+# from trojanzoo.utils import prints
+# import warnings
+# warnings.filterwarnings("ignore")
 
-        if torch.cuda.is_available() and self.use_gpu == True:
-            self.device = torch.device('cuda:0')
-        else:
-            self.device = torch.device('cpu')
+# if __name__ == '__main__':
+#     parser = Parser_Seq(Parser_Dataset(), Parser_Model(), Parser_Train(),Parser_Watermark(), Parser_Hidden_Backdoor())
+#     parser.parse_args()
+#     parser.get_module()
 
-        _lambda = 0.2 if self.model.dataset.name == 'gtsrb' else 0.6
+#     dataset: ImageSet = parser.module_list['dataset']
+#     model: ImageModel = parser.module_list['model']
+#     optimizer, lr_scheduler, train_args = parser.module_list['train']
+#     watermark: Watermark = parser.module_list[]
+#     hiddenbackdoor: HiddenBackdoor = parser.module_list[]
 
-        losses = AverageMeter('Loss', ':.4e')
-        top1 = AverageMeter('Acc@1', ':6.2f')
-        top5 = AverageMeter('Acc@5', ':6.2f')
+#     # ------------------------------------------------------------------------ #
+#     hiddenbackdoor.attack(optimizer=optimizer, lr_scheduler=lr_scheduler, dataset = dataset, watermark = watermark, model =model, **kwargs)
+#     prints(hiddenbackdoor.validate_func())
 
-        for _epoch in range(retrain_epoch):
-            entropy = 0.0
-            counter = 0
-            losses.reset()
-            top1.reset()
-            top5.reset()
-            for i, data in enumerate(tqdm(self.model.dataset.loader['train'])):
+# target_class:
+#     default: 0
 
-                X, Y = self.model.get_data(data, mode='train')
-                loss = to_tensor(torch.Tensor([0.0]))
-                if i == 0:
-                    target_image = self.sample_target(target,
-                                                      poisoned_image_num)
-                    non_target_image = self.sample_non_target(
-                        target, poisoned_image_num)
-                    poisoned_image = self.generate_poisoned_image(
-                        non_target_image,
-                        target_image,
-                        epsilon=epsilon,
-                        preprocess_layer=preprocess_layer,
-                        poison_generation_iteration=poison_generation_iteration,
-                        decay=decay,
-                        decay_ratio=decay_ratio,
-                        decay_iteration=decay_iteration
-                    )  # ensure only injecting poisoned images once to train set in one epoch
-                    batch_target = repeat_to_batch(
-                        to_tensor(target).squeeze(), self.poisoned_image_num)
-                    X = torch.cat((X, poisoned_image))
-                    Y = torch.cat((Y, batch_target))
+# alpha:
+#     default: 1.0
 
-                _output = self.model.get_logits(X, parallel=parallel)
-                loss += self.model.criterion(_output, Y)
-                loss.backward(retain_graph=True)
-                optimizer.step()
-                optimizer.zero_grad()
+# percent:
+#     default: 0.1
 
-                acc1, acc5 = self.model.accuracy(_output, Y, topk=(1, 5))
-                losses.update(loss.item(), Y.size(0))
-                top1.update(acc1[0], Y.size(0))
-                top5.update(acc5[0], Y.size(0))
+# folder_path:
+#     default: ./result/
 
-            print(('Epoch: [%d/%d],' %
-                   (_epoch + 1, retrain_epoch)).ljust(25, ' ') +
-                  'Loss: %.4f,\tTop1 Acc: %.3f,\tTop5 Acc: %.3f' %
-                  (losses.avg, top1.avg, top5.avg))
-            if lr_scheduler:
-                _lr_scheduler.step()
+# iteration:
+#     default: 100
 
-            if validate_interval != 0:
-                if (_epoch + 1
-                    ) % validate_interval == 0 or _epoch == retrain_epoch - 1:
-                    _, cur_acc, _ = self.model._validate()
-                    self.model.train()
-                    print(
-                        '---------------------------------------------------')
-        self.model.zero_grad()
-        self.model.eval()
+# early_stop:
+#     default: False
+
+# stop_confidence:
+#     default: 0.75
+
+# indent:
+#     default: 0
+
+# edge_color:
+#     default: black
+
+# path:
+#     default: ./data/mark/square_white.png
+
+# # height:
+# #     default: 8
+
+# # width:
+# #     default: 8
+
+# height_ratio:
+#     default:0.2
+
+# width_ratio:
+#     default:0.2
+
+# # height_offset:
+# #     default:
+
+# # width_offset:
+# #     default:
+
+# poisoned_image_num:
+#     default: 100
+
+# poison_generation_iteration:
+#     default: 5000
+
+# poison_lr:
+#     default: 0.01
+
+# preprocess_layer:
+#     default: feature
+
+# epsilon:
+#     default:16
+
+# decay:
+#     default: True
+
+# decay_iteration:
+#     default: 2000
+
+# decay_ratio:
+#     default: 0.95
