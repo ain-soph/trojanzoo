@@ -9,8 +9,7 @@ env = Config.env
 
 class Parser_Main(Parser):
 
-    def __init__(self, *args, name='main'):
-        super().__init__(*args, name=name)
+    name = 'main'
 
     @staticmethod
     def add_argument(parser):

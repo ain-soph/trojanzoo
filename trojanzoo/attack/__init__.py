@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from .attack import Attack
+from .backdoor_attack import Backdoor_Attack, Watermark
 from .adv import *
 from .poison import *
 from .backdoor import *

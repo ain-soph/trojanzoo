@@ -18,9 +18,10 @@ class Parser():
 
     """
 
-    def __init__(self, name: str = 'basic'):
+    name = 'basic'
+
+    def __init__(self):
         self.parser = self.get_parser()
-        self.name = name
 
     # ---------------- To Overwrite ------------------------ #
 

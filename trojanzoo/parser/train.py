@@ -9,8 +9,7 @@ config = Config.config
 
 class Parser_Train(Parser):
 
-    def __init__(self, name='train'):
-        super().__init__(name=name)
+    name = 'train'
 
     @staticmethod
     def add_argument(parser):
@@ -21,17 +20,21 @@ class Parser_Train(Parser):
         parser.add_argument('--lr_scheduler', dest='lr_scheduler',
                             action='store_true')
         parser.add_argument('--step_size', dest='step_size', type=int)
-        parser.add_argument('--validate_interval', dest='validate_interval', type=int)
+        parser.add_argument('--validate_interval',
+                            dest='validate_interval', type=int)
         parser.add_argument('--save', dest='save', action='store_true')
 
-    def get_module(self, model: Model, **kwargs):
+    @staticmethod
+    def get_module(model: Model, **kwargs):
         dataset = 'default'
         if 'dataset' in kwargs.keys():
-            dataset = kwargs['dataset'].name
+            dataset = kwargs['dataset']
+            if not isinstance(dataset, str):
+                dataset = dataset.name
             kwargs.pop('dataset')
 
         new_args = Module({key: value[dataset]
-                         for key, value in config['train'].items()})
+                           for key, value in config['train'].items()})
         new_args.update(kwargs)
 
         func_keys = model.define_optimizer.__code__.co_varnames

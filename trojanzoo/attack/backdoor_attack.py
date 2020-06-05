@@ -20,11 +20,10 @@ class Backdoor_Attack(Attack):
 
     name = 'backdoor'
 
-    def __init__(self, watermark: Watermark = None, target_class: int = 0, alpha: float = 0.0, percent: float = 0.1, **kwargs):
+    def __init__(self, watermark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
         super().__init__(**kwargs)
         self.watermark: Watermark = watermark
         self.target_class: int = target_class
-        self.alpha: float = alpha
         self.percent: float = percent
         self.filename: str = self.get_filename()
 
@@ -37,16 +36,16 @@ class Backdoor_Attack(Attack):
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.watermark.add_mark(x, **kwargs)
 
-    def get_filename(self, alpha: float = None, target_class: int = None, iteration: int = None):
-        if alpha is None:
-            alpha = self.alpha
+    def get_filename(self, mark_alpha: float = None, target_class: int = None, iteration: int = None):
+        if mark_alpha is None:
+            mark_alpha = self.watermark.mark_alpha
         if target_class is None:
             target_class = self.target_class
         if iteration is None:
             iteration = self.iteration
-        _file = '{mark}_tar{target:d}_alpha{alpha:.2f}_mark({height:d},{width:d})_iter{iteration:d}_percent{percent:.2f}'.format(
+        _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({height:d},{width:d})_iter{iteration:d}_percent{percent:.2f}'.format(
             mark=os.path.split(self.path)[1][:-4], target=target_class,
-            alpha=alpha, iteration=iteration, percent=self.percent,
+            mark_alpha=mark_alpha, iteration=iteration, percent=self.percent,
             height=self.watermark.height, width=self.watermark.width)
         return _file
 
@@ -71,7 +70,7 @@ class Backdoor_Attack(Attack):
 
 class Watermark:
     def __init__(self, data_shape: List[int], edge_color: Union[str, torch.Tensor] = 'auto',
-                 path: str = root_dir+'/data/mark/square_white.png',
+                 mark_path: str = root_dir+'/data/mark/square_white.png', mark_alpha: float = 0.0,
                  height: int = 0, width: int = 0,
                  height_ratio: float = 1.0, width_ratio: float = 1.0,
                  height_offset: int = None, width_offset: int = None):
@@ -88,8 +87,9 @@ class Watermark:
         # --------------------------------------------------- #
 
         # WaterMark Image Parameters
+        self.mark_alpha: float = mark_alpha
         self.data_shape: List[int] = data_shape
-        self.path: str = path
+        self.mark_path: str = mark_path
         self.height: int = height
         self.width: int = width
         self.height_ratio: float = height_ratio
@@ -97,7 +97,7 @@ class Watermark:
         self.height_offset: int = height_offset
         self.width_offset: int = width_offset
         # --------------------------------------------------- #
-        mark: torch.Tensor = self.load_img(path, width, height)
+        mark: torch.Tensor = self.load_img(mark_path, width, height)
         self.edge_color: torch.Tensor = self.get_edge_color(
             mark, data_shape, edge_color)
 
@@ -111,8 +111,8 @@ class Watermark:
             _mask = self.mask*self.alpha_mask
         return add_mark(x, mark=mark, _mask=_mask)
 
-    def load_file(self, path: str):
-        _dict = np.load(path)
+    def load_file(self, mark_path: str):
+        _dict = np.load(mark_path)
         self.mark = to_tensor(_dict['mark'])
         self.mask = to_tensor(_dict['mask'])
         self.alpha_mask = to_tensor(_dict['alpha_mask'])
@@ -165,5 +165,5 @@ class Watermark:
                              self.width_offset + j] = mark[:, i, j]
         new_mark = to_tensor(new_mark.unsqueeze(0).detach())
         mask = to_tensor(mask.repeat(1, self.data_shape[0], 1, 1).detach())
-        alpha_mask = to_tensor((mask*(1-self.alpha)).detach())
+        alpha_mask = to_tensor((mask*(1-self.mark_alpha)).detach())
         return new_mark, mask, alpha_mask
