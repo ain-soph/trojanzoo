@@ -10,7 +10,7 @@ from typing import List, Union
 from PIL import Image
 
 from trojanzoo import __file__ as root_file
-root_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(os.path.abspath(root_file))
 
 
 # add mark to the Image with mask.
