@@ -45,7 +45,7 @@ def get_model(module_name: str = None, layer: int = None, dataset: Dataset = Non
     return get_module('model', module_name, **result)
 
 
-def get_attack(module_name: str, dataset: Dataset = None, **kwargs):
+def get_attack(module_name:str='hello', dataset: Dataset = None, **kwargs):
     result: Param = combine_param(config=config[module_name], dataset=dataset,
                                   **kwargs)
     return get_module('attack', module_name, **kwargs)

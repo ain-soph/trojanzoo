@@ -10,7 +10,7 @@ class Parser_Attack(Parser):
 
     @staticmethod
     def add_argument(parser):
-        parser.add_argument('--iteration', dest='module_name', type=str)
+        parser.add_argument('--iteration', dest='iteration', type=int)
         parser.add_argument('--early_stop', dest='early_stop',
                             action='store_true')
         parser.add_argument('--stop_confidence', dest='stop_confidence',

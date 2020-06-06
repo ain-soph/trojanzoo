@@ -21,7 +21,7 @@ class Parser():
     name = 'basic'
 
     def __init__(self):
-        self.parser = self.get_parser()
+        self.parser: argparse.ArgumentParser = self.get_parser()
 
     # ---------------- To Overwrite ------------------------ #
 
@@ -45,7 +45,7 @@ class Parser():
         return get_module(module_class=self.name, **kwargs)
 
     # ------------------------------------------------------ #
-    def parse_args(self, args, namespace: argparse.Namespace = None, **kwargs) -> Module:
+    def parse_args(self, args=None, namespace: argparse.Namespace = None, **kwargs) -> Module:
         """parse arguments using ``self.parser``
 
         :return: the parsed arguments

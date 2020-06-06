@@ -147,5 +147,5 @@ class ResNetcomp(ResNet):
         if self.num_classes == 1000:
             self._model.classifier.load_state_dict(_dict, strict=False)
         if verbose:
-            print(
-                'Model {} loaded From Official Website: '.format(self.name), url)
+            print('Model {} loaded From Official Website: '.format(self.name),
+                  url)

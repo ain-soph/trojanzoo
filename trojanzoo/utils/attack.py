@@ -7,7 +7,7 @@ import os
 import numpy as np
 import torch
 from typing import List, Union
-from PIL.Image import Image
+from PIL import Image
 
 from trojanzoo import __file__ as root_file
 root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,7 +72,7 @@ class Watermark:
 
     @staticmethod
     def load_img(path: str, width: int, height: int) -> torch.Tensor:
-        mark: Image = Image.open(path)
+        mark: Image.Image = Image.open(path)
         mark = mark.resize((width, height), Image.ANTIALIAS)
         mark: torch.Tensor = byte2float(mark)
         return mark
@@ -81,7 +81,7 @@ class Watermark:
     def get_edge_color(mark: torch.Tensor, data_shape: List[int],
                        edge_color: Union[str, torch.Tensor] = 'auto') -> torch.Tensor:
 
-        assert data_shape[0] == mark.shape[1]
+        assert data_shape[0] == mark.shape[0]
 
         t: torch.Tensor = torch.zeros(data_shape[0], dtype=torch.float)
         if isinstance(edge_color, str):
@@ -90,9 +90,9 @@ class Watermark:
             elif edge_color == 'white':
                 t += 1
             elif edge_color == 'auto':
-                _list = (torch.as_tensor([mark[:, 0, :], mark[:, -1, :]]).view(data_shape[0], -1),
-                         torch.as_tensor([mark[:, :, 0], mark[:, :, -1]]).view(data_shape[0], -1))
-                _list = torch.cat(_list).view(data_shape[0], -1)
+                _list = [mark[:, 0, :], mark[:, -1, :],
+                         mark[:, :, 0], mark[:, :, -1]]
+                _list = torch.cat(_list)
                 t = _list.mode(dim=-1)[0]
             else:
                 raise ValueError(edge_color)
@@ -106,17 +106,15 @@ class Watermark:
     # mask shape: channels, height, width
     # The mark shape may be smaller than the whole image. Fill the rest part as black, and return the mask and mark.
     def mask_mark(self, mark: torch.Tensor) -> (torch.Tensor, torch.Tensor, torch.Tensor):
-        mask = torch.zeros(1, self.data_shape[-2], self.data_shape[-1],
-                           dtype=torch.float)
+        mask = torch.zeros(self.data_shape[1:], dtype=torch.float)
         new_mark = -torch.ones(self.data_shape)
         for i in range(mark.shape[-2]):
             for j in range(mark.shape[-1]):
-                if not mark[0, :, i, j].view(-1).equal():
-                    mask[0, self.height_offset + i,
-                         self.width_offset + j] = 1
+                if not mark[:, i, j].equal(self.edge_color):
+                    mask[self.height_offset + i, self.width_offset + j] = 1
                     new_mark[:, self.height_offset + i,
                              self.width_offset + j] = mark[:, i, j]
         new_mark = to_tensor(new_mark.unsqueeze(0).detach())
-        mask = to_tensor(mask.repeat(1, self.data_shape[0], 1, 1).detach())
-        alpha_mask = to_tensor((mask*(1-self.mark_alpha)).detach())
+        mask = to_tensor(mask.unsqueeze(0).unsqueeze(0).detach())
+        alpha_mask = (mask*(1-self.mark_alpha)).detach()
         return new_mark, mask, alpha_mask
