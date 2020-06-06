@@ -2,13 +2,11 @@
 
 from .parser import Parser
 from trojanzoo.utils.loader import get_model
-from trojanzoo.model import Model
 
 
 class Parser_Model(Parser):
 
-    def __init__(self, name='model'):
-        super().__init__(name=name)
+    name='model'
 
     @staticmethod
     def add_argument(parser):
@@ -19,5 +17,6 @@ class Parser_Model(Parser):
         parser.add_argument('--adv_train', dest='adv_train',
                             action='store_true')
 
-    def get_module(self, **kwargs) -> Model:
+    @staticmethod
+    def get_module(**kwargs):
         return get_model(**kwargs)

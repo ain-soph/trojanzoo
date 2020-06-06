@@ -36,11 +36,11 @@ class Parser_Seq(Module):
                 self.args_list[parser.name] = parser.parse_args(
                     args, namespace=namespace)
                 print(self.args_list[parser.name])
-                print('---------------')
+                print('-'*20)
                 print()
             except SystemExit:
                 help_flag = True
-                print('---------------')
+                print('-'*20)
                 print()
         if verbose is None:
             verbose = help_flag or ('--verbose' in sys.argv[1:])
@@ -60,10 +60,12 @@ class Parser_Seq(Module):
             print()
         for parser in self.parser_list:
             args = self.args_list[parser.name].copy()
-            if parser.name in ['model', 'train'] and 'dataset' in self.module_list.keys():
+            if parser.name in ['model', 'train', 'mark', 'attack'] and 'dataset' in self.module_list.keys():
                 args['dataset'] = self.module_list['dataset']
             if parser.name in ['train', 'attack', 'defense'] and 'model' in self.module_list.keys():
                 args['model'] = self.module_list['model']
+            if parser.name in ['attack'] and 'mark' in self.module_list.keys():
+                args['mark'] = self.module_list['mark']
             self.module_list[parser.name] = parser.get_module(**args)
             if verbose:
                 if self.module_list[parser.name] is None:
@@ -74,6 +76,6 @@ class Parser_Seq(Module):
                     self.module_list[parser.name].summary(indent=10)
                 except:
                     prints(self.module_list[parser.name], indent=10)
-                prints('---------------', indent=10)
+                prints('-'*20, indent=10)
                 print()
         return self.module_list

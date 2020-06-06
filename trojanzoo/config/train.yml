@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 epoch:
   cifar10: 300
 
@@ -12,5 +14,5 @@ optim_type:
   default: SGD
 
 step_size:
-  default: 30
+  default: 50
   cifar10: 100

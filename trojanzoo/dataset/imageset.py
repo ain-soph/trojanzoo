@@ -4,7 +4,7 @@ from .dataset import Dataset
 from trojanzoo.utils import to_tensor
 
 import torch
-from typing import Union, Tuple, List, Dict
+from typing import Union, List, Tuple, Dict
 
 from trojanzoo.config import Config
 env = Config.env
@@ -19,8 +19,9 @@ class ImageSet(Dataset):
 
     def __init__(self, norm_par: Dict[str, List[float]] = None,
                  default_model: str = 'resnetcomp18', **kwargs):
-        self.norm_par: Dict[str, List[float]] = norm_par
         super().__init__(default_model=default_model, **kwargs)
+        self.norm_par: Dict[str, List[float]] = norm_par
+        self.param_list['imageset'] = ['n_channel', 'n_dim', 'norm_par']
 
     def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, **kwargs):

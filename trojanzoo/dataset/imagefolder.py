@@ -24,6 +24,7 @@ class ImageFolder(ImageSet):
 
     def __init__(self, num_classes=None, **kwargs):
         super().__init__(num_classes=None, **kwargs)
+        self.param_list['imagefolder'] = ['url', 'org_folder_name']
         self.class_to_idx: Dict[str, int] = \
             self.get_org_dataset('train').class_to_idx
         if self.num_classes is None:

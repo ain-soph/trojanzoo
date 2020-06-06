@@ -7,8 +7,7 @@ env = Config.env
 
 class Parser_Config(Parser):
 
-    def __init__(self, *args, name='config'):
-        super().__init__(*args, name=name)
+    name = 'config'
 
     @staticmethod
     def add_argument(parser):
@@ -19,13 +18,11 @@ class Parser_Config(Parser):
         parser.add_argument('--memory_dir', dest='memory_dir')
 
         parser.add_argument('--seed', dest='seed', type=int)
-
         parser.add_argument('--cache_threshold', dest='cache_threshold',
                             type=float)
 
-    def get_module(self, config=None, **kwargs):
-
+    @staticmethod
+    def get_module(config=None, **kwargs):
         Config.update(cmd_path=config)
-
         Config.update_env(**kwargs)
         return Config.config

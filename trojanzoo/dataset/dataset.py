@@ -7,7 +7,7 @@ import os
 import torch
 import numpy as np
 from collections import OrderedDict
-from typing import Union, Tuple, List, Dict
+from typing import Union, List, Tuple, Dict
 
 from trojanzoo.config import Config
 env = Config.env
@@ -26,6 +26,7 @@ class Dataset:
     name: str = 'abstact'
     data_type: str = 'abstract'
     num_classes: int = None
+    label_names: List[int] = []
     valid_set: bool = True
 
     def __init__(self, batch_size: int = -128, folder_path: str = None, download: bool = False,
@@ -33,7 +34,7 @@ class Dataset:
                  num_workers: int = 4, loss_weights: bool = False, **kwargs):
 
         self.param_list: Dict[str, List[str]] = OrderedDict()
-        self.param_list['abstract'] = ['data_type', 'folder_path',
+        self.param_list['abstract'] = ['data_type', 'folder_path', 'label_names',
                                        'batch_size', 'num_classes', 'num_workers']
         if batch_size < 0:
             batch_size = -batch_size * max(1, torch.cuda.device_count())
@@ -105,7 +106,7 @@ class Dataset:
         pass
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor], **kwargs) -> Tuple[torch.Tensor]:
+    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor):
         return data
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
@@ -131,7 +132,7 @@ class Dataset:
             return subset
         else:
             dataset = self.get_full_dataset(mode='valid', **kwargs)
-            subset = {}
+            subset: Dict[str, torch.utils.data.Subset] = {}
             subset['test'], subset['valid'] = self.split_set(
                 dataset, percent=self.test_ratio)
             return subset[mode]

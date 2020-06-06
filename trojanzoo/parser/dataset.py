@@ -2,13 +2,11 @@
 
 from .parser import Parser
 from trojanzoo.utils.loader import get_dataset
-from trojanzoo.dataset import Dataset
 
 
 class Parser_Dataset(Parser):
 
-    def __init__(self, name='dataset'):
-        super().__init__(name=name)
+    name='dataset'
 
     @staticmethod
     def add_argument(parser):
@@ -17,5 +15,6 @@ class Parser_Dataset(Parser):
         parser.add_argument('--num_workers', dest='num_workers', type=int)
         parser.add_argument('--download', dest='download', action='store_true')
 
-    def get_module(self, **kwargs) -> Dataset:
+    @staticmethod
+    def get_module(**kwargs):
         return get_dataset(**kwargs)
