@@ -120,7 +120,7 @@ class ImageFolder(ImageSet):
                 for src_class in class_list:
                     _list = os.listdir(src_path+src_mode+'/'+src_class)
                     prints(src_class + '{:>15d}'.format(len(_list)), indent=20)
-                    for _file in tqdm(os.listdir(src_path+src_mode+'/'+src_class)):
+                    for _file in tqdm(_list):
                         shutil.copyfile(src_path+src_mode+'/'+src_class+'/'+_file,
                                         dst_path+dst_mode+'/'+dst_class+'/'+_file)
                     print('\033[1A\033[K', end='')
