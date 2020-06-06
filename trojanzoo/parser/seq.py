@@ -64,6 +64,8 @@ class Parser_Seq(Module):
                 args['dataset'] = self.module_list['dataset']
             if parser.name in ['train', 'attack', 'defense'] and 'model' in self.module_list.keys():
                 args['model'] = self.module_list['model']
+            if parser.name in ['attack'] and 'mark' in self.module_list.keys():
+                args['mark'] = self.module_list['mark']
             self.module_list[parser.name] = parser.get_module(**args)
             if verbose:
                 if self.module_list[parser.name] is None:
