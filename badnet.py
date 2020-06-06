@@ -23,11 +23,10 @@ if __name__ == '__main__':
     dataset: Dataset = parser.module_list['dataset']
     model: Model = parser.module_list['model']
     optimizer, lr_scheduler, train_args = parser.module_list['train']
-    del train_args['epoch']
-
+    mark: Watermark = parser.module_list['mark']
     attack: BadNet = parser.module_list['attack']
 
-    mark: Watermark = parser.module_list['mark']
+    del train_args['epoch']
 
     # ------------------------------------------------------------------------ #
     attack.attack(optimizer=optimizer, lr_scheduler=lr_scheduler, **train_args)

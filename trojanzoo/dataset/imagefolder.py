@@ -6,6 +6,7 @@ from trojanzoo.utils.output import ansi, prints, output_iter
 
 import os
 import shutil
+from distutils.dir_util import copy_tree
 import numpy as np
 from tqdm import tqdm
 import urllib.request
@@ -22,8 +23,8 @@ class ImageFolder(ImageSet):
     url: Dict[str, str] = {}
     org_folder_name: Dict[str, str] = {}
 
-    def __init__(self, num_classes=None, **kwargs):
-        super().__init__(num_classes=None, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.param_list['imagefolder'] = ['url', 'org_folder_name']
         self.class_to_idx: Dict[str, int] = \
             self.get_org_dataset('train').class_to_idx
@@ -81,7 +82,7 @@ class ImageFolder(ImageSet):
                 print()
         return file_path
 
-    def sample(self, child_name: str = None, class_dict: dict = None, sample_num: int = None, output=True):
+    def sample(self, child_name: str = None, class_dict: dict = None, sample_num: int = None, verbose=True):
         if sample_num is None:
             assert class_dict is not None
             sample_num = len(class_dict)
@@ -89,8 +90,8 @@ class ImageFolder(ImageSet):
             child_name = self.name + '_sample%d' % sample_num
         src_path = self.folder_path+self.name+'/'
         mode_list = os.listdir(src_path)
-        dst_path = self.folder_path+child_name+'/'
-
+        dst_path = env['data_dir']+self.data_type + \
+            '/{0}/data/{0}/'.format(child_name)
         if class_dict is None:
             assert sample_num is not None
             np.random.seed(env['seed'])
@@ -101,64 +102,71 @@ class ImageFolder(ImageSet):
             class_dict = {}
             for class_name in class_list:
                 class_dict[class_name] = [class_name]
-        if output:
-            class_list = tqdm(class_list)
+        if verbose:
+            print('src path: ', src_path)
+            print('dst path: ', dst_path)
+            print(class_dict)
 
         for src_mode in mode_list:
-            if output:
+            if verbose:
                 print(src_mode)
             assert src_mode in ['train', 'valid', 'test', 'val']
             dst_mode = 'valid' if src_mode == 'val' else src_mode
-            if not os.path.exists(dst_path+dst_mode):
-                os.makedirs(dst_path+dst_mode)
             for dst_class in class_dict.keys():
+                if not os.path.exists(dst_path+dst_mode+'/'+dst_class):
+                    os.makedirs(dst_path+dst_mode+'/'+dst_class)
+                prints(dst_class, indent=10)
                 class_list = class_dict[dst_class]
                 for src_class in class_list:
-                    shutil.copytree(src_path+src_mode+'/'+src_class,
-                                    dst_path+dst_mode+'/'+dst_class)
+                    _list = os.listdir(src_path+src_mode+'/'+src_class)
+                    prints(src_class + '{:>15d}'.format(len(_list)), indent=20)
+                    for _file in tqdm(_list):
+                        shutil.copyfile(src_path+src_mode+'/'+src_class+'/'+_file,
+                                        dst_path+dst_mode+'/'+dst_class+'/'+_file)
+                    print('\033[1A\033[K', end='')
 
-    def split(self, ratio_dict={'train': 8, 'valid': 1, 'test': 1}, verbose=True):
-        target_folder = self.folder_path+self.name+'/total/'
-        train_folder = self.folder_path+self.name+'/train/'
-        valid_folder = self.folder_path+self.name+'/valid/'
-        test_folder = self.folder_path+self.name+'/test/'
-        length = len(os.listdir(target_folder))
-        ratio_sum = ratio_dict['train']+ratio_dict['valid']+ratio_dict['test']
-        if verbose:
-            print('Splitting Dataset...')
-        for counter, _class in enumerate(os.listdir(target_folder)):
-            if verbose:
-                print(output_iter(counter, length))
-            if not os.path.isdir(target_folder+_class):
-                if verbose:
-                    print('{red}Not a directory: {0}{1}{reset}'.format(
-                        target_folder, _class, **ansi))
-                continue
-            if not os.path.exists(valid_folder+_class):
-                os.makedirs(valid_folder+_class)
-            if not os.path.exists(test_folder+_class):
-                os.makedirs(test_folder+_class)
-            if not os.path.exists(train_folder+_class):
-                os.makedirs(train_folder+_class)
-            seq = os.listdir(target_folder+_class)
+    # def split(self, ratio_dict={'train': 8, 'valid': 1, 'test': 1}, verbose=True):
+    #     target_folder = self.folder_path+self.name+'/total/'
+    #     train_folder = self.folder_path+self.name+'/train/'
+    #     valid_folder = self.folder_path+self.name+'/valid/'
+    #     test_folder = self.folder_path+self.name+'/test/'
+    #     length = len(os.listdir(target_folder))
+    #     ratio_sum = ratio_dict['train']+ratio_dict['valid']+ratio_dict['test']
+    #     if verbose:
+    #         print('Splitting Dataset...')
+    #     for counter, _class in enumerate(os.listdir(target_folder)):
+    #         if verbose:
+    #             print(output_iter(counter, length))
+    #         if not os.path.isdir(target_folder+_class):
+    #             if verbose:
+    #                 print('{red}Not a directory: {0}{1}{reset}'.format(
+    #                     target_folder, _class, **ansi))
+    #             continue
+    #         if not os.path.exists(valid_folder+_class):
+    #             os.makedirs(valid_folder+_class)
+    #         if not os.path.exists(test_folder+_class):
+    #             os.makedirs(test_folder+_class)
+    #         if not os.path.exists(train_folder+_class):
+    #             os.makedirs(train_folder+_class)
+    #         seq = os.listdir(target_folder+_class)
 
-            if verbose:
-                print(_class, ' \t Image Number: ', len(seq))
+    #         if verbose:
+    #             print(_class, ' \t Image Number: ', len(seq))
 
-            ratio_one = (len(seq)//ratio_sum)
-            # valid
-            for img in seq[:ratio_dict['valid']*ratio_one]:
-                src = target_folder+_class+'/'+img
-                dest = valid_folder+_class+'/'+img
-                shutil.move(src, dest)
-            # test
-            for img in seq[ratio_dict['valid']*ratio_one:(ratio_dict['valid']+ratio_dict['test'])*ratio_one]:
-                src = target_folder+_class+'/'+img
-                dest = test_folder+_class+'/'+img
-                shutil.move(src, dest)
-            # train
-            for img in seq[(ratio_dict['valid']+ratio_dict['test'])*ratio_one:]:
-                src = target_folder+_class+'/'+img
-                dest = train_folder+_class+'/'+img
-                shutil.move(src, dest)
-        shutil.rmtree(target_folder)
+    #         ratio_one = (len(seq)//ratio_sum)
+    #         # valid
+    #         for img in seq[:ratio_dict['valid']*ratio_one]:
+    #             src = target_folder+_class+'/'+img
+    #             dest = valid_folder+_class+'/'+img
+    #             shutil.move(src, dest)
+    #         # test
+    #         for img in seq[ratio_dict['valid']*ratio_one:(ratio_dict['valid']+ratio_dict['test'])*ratio_one]:
+    #             src = target_folder+_class+'/'+img
+    #             dest = test_folder+_class+'/'+img
+    #             shutil.move(src, dest)
+    #         # train
+    #         for img in seq[(ratio_dict['valid']+ratio_dict['test'])*ratio_one:]:
+    #             src = target_folder+_class+'/'+img
+    #             dest = train_folder+_class+'/'+img
+    #             shutil.move(src, dest)
+    #     shutil.rmtree(target_folder)
