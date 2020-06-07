@@ -37,7 +37,7 @@ class _ImageModel(_Model):
             num_classes = 1000
         super().__init__(num_classes=num_classes, **kwargs)
         self.norm_par = None
-        if norm_par is not None:
+        if norm_par:
             self.norm_par = {key: torch.as_tensor(value).pin_memory()
                              for key, value in norm_par.items()}
 
@@ -47,7 +47,7 @@ class _ImageModel(_Model):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
     def preprocess(self, x):
-        if self.norm_par is not None:
+        if self.norm_par:
             mean = self.norm_par['mean'].to(
                 x.device, non_blocking=True)[None, :, None, None]
             std = self.norm_par['std'].to(

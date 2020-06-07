@@ -34,7 +34,7 @@ class Watermark:
             height_offset = data_shape[-2]-height
         if width_offset is None:
             width_offset = data_shape[-1]-width
-        # assert height_offset is not None and height_offset is not None
+        # assert height_offset and height_offset
         # --------------------------------------------------- #
 
         # WaterMark Image Parameters

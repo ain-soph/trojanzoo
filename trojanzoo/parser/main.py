@@ -20,7 +20,7 @@ class Parser_Main(Parser):
 
     @staticmethod
     def get_module(device: str = None, benchmark=None, verbose: bool = None):
-        if verbose is not None:
+        if verbose:
             env['verbose'] = verbose
         env['device'] = 'cpu'
         env['num_gpus'] = 0
@@ -29,7 +29,7 @@ class Parser_Main(Parser):
                 # torch.set_default_tensor_type(torch.cuda.FloatTensor)
                 env['device'] = 'cuda'
                 env['num_gpus'] = torch.cuda.device_count()
-            elif device is not None:
+            elif device:
                 raise Exception('CUDA is not available on this device.')
         if benchmark:
             torch.backends.cudnn.benchmark = True

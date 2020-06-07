@@ -40,9 +40,9 @@ class Attack:
         # ----------------------------------------------------------------------------- #
         if folder_path is None:
             folder_path = env['result_dir'] + self.name+'/'
-            if dataset is not None and isinstance(dataset, Dataset):
+            if dataset and isinstance(dataset, Dataset):
                 folder_path += dataset.name+'/'
-            if model is not None and isinstance(model, Model):
+            if model and isinstance(model, Model):
                 folder_path += model.name+'/'
         self.folder_path = folder_path
         if not os.path.exists(folder_path):

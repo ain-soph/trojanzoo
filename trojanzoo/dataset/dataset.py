@@ -51,13 +51,11 @@ class Dataset:
             data_dir: str = env['data_dir']
             memory_dir: str = env['memory_dir']
             result_dir: str = env['result_dir']
-            if memory_dir is not None:
+            if memory_dir:
                 if not os.path.exists(memory_dir+self.data_type+'/'+self.name+'/data/'):
                     memory_dir = None
-            if memory_dir is not None:
-                folder_path = memory_dir+self.data_type+'/'+self.name+'/data/'
-            else:
-                folder_path = data_dir+self.data_type+'/'+self.name+'/data/'
+            _dir=memory_dir if memory_dir else data_dir
+            folder_path = _dir+self.data_type+'/'+self.name+'/data/'
         self.folder_path: str = folder_path
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)

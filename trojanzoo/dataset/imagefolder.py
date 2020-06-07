@@ -6,11 +6,11 @@ from trojanzoo.utils.output import ansi, prints, output_iter
 
 import os
 import shutil
-from distutils.dir_util import copy_tree
 import numpy as np
 from tqdm import tqdm
-import urllib.request
 from typing import Union, Dict
+
+from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
 
 from trojanzoo.config import Config
@@ -54,8 +54,7 @@ class ImageFolder(ImageSet):
                                     transform=transform)
 
     def download(self, url: Dict[str, str] = None, file_path: str = None,
-                 folder_path: str = None, file_name: str = None, file_ext: str = 'zip',
-                 verbose: bool = True):
+                 folder_path: str = None, file_name: str = None, file_ext: str = 'zip'):
         if url is None:
             url = self.url
         if file_path is None:
@@ -69,31 +68,29 @@ class ImageFolder(ImageSet):
                 if self.valid_set:
                     file_name['valid'] = self.name+'_valid.'+file_ext
                     file_path['valid'] = folder_path+file_name['valid']
+        print('Downloading Dataset %s' % self.name)
         for mode in file_path.keys():
+            prints(mode, ' '*10, file_path[mode], indent=10)
             if not os.path.exists(file_path[mode]):
-                if verbose:
-                    print('Downloading Dataset %s ...' % self.name)
-                urllib.request.urlretrieve(url[mode], file_path[mode])
-                if verbose:
-                    print('Dataset downloaded at file_path[mode]')
-                    print()
-            elif verbose:
-                print('File Already Exists: ', file_path[mode])
-                print()
+                download_url_to_file(url[mode], file_path[mode])
+                print('\033[1A\033[K', end='')
+            else:
+                prints('File Already Exists: ', file_path[mode], indent=20)
         return file_path
 
     def sample(self, child_name: str = None, class_dict: dict = None, sample_num: int = None, verbose=True):
         if sample_num is None:
-            assert class_dict is not None
+            assert class_dict
             sample_num = len(class_dict)
         if child_name is None:
             child_name = self.name + '_sample%d' % sample_num
         src_path = self.folder_path+self.name+'/'
-        mode_list = os.listdir(src_path)
+        mode_list = [_dir for _dir in os.listdir(
+            src_path) if os.path.isdir(_dir)]
         dst_path = env['data_dir']+self.data_type + \
             '/{0}/data/{0}/'.format(child_name)
         if class_dict is None:
-            assert sample_num is not None
+            assert sample_num
             np.random.seed(env['seed'])
             idx_list = np.array(range(self.num_classes))
             np.random.shuffle(idx_list)

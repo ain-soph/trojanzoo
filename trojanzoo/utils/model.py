@@ -14,7 +14,7 @@ def split_name(name, layer=None, default_layer=None, output=False):
         if output:
             print('model name is splitted: name {name},  layer {layer}'.format(
                 name=re_list[0], layer=re_list[1]))
-        if layer is not None:
+        if layer:
             raise ValueError('Plz don\'t put "layer" in "name" when "layer" parameter is given separately.\n \
                              name: {name},  layer: {layer}'.format(
                 name=name, layer=layer))

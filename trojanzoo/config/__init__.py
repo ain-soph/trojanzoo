@@ -55,7 +55,7 @@ class Config:
             _dict = {}
             for _file in os.listdir(path):
                 name, ext = os.path.splitext(_file)
-                # if _filter is not None:
+                # if _filter:
                 #     if name != _filter:
                 #         continue
                 if ext in ['.yml', '.yaml', 'json']:

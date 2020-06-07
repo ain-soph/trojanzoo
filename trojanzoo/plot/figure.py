@@ -239,9 +239,9 @@ class Figure:
             std = std*np.ones(len(sort_keys))
         for i in range(len(sort_keys)):
             key = sort_keys[i]
-            if mean is not None:
+            if mean:
                 y_dict[key] = y_dict[key]+mean[i]
-            if std is not None:
+            if std:
                 y_dict[key] = y_dict[key].mean() + \
                     (y_dict[key]-y_dict[key].mean())*std[i]
         return y_dict

@@ -1,29 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import urllib.request
 import tarfile
 import zipfile
 from typing import List
 
 from tqdm import tqdm
-
-
-def download_and_save(url, savename, verbose=False):
-    try:
-        with urllib.request.urlopen(url) as fp:
-            data = fp.read()
-            fid = open(savename, 'w+b')
-            fid.write(data)
-            if verbose:
-                print('download succeed: ' + url)
-            fid.close()
-            return True
-    except IOError:
-        if verbose:
-            print('download failed: ' + url)
-        return False
-
 
 def untar(file_path, target_path):
     if not os.path.exists(target_path):

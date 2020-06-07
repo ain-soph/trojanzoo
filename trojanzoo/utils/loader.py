@@ -70,7 +70,7 @@ def combine_param(config: Param = None, dataset: Dataset = None, filter_list: Li
         dataset_name = dataset.name
 
     result = Param()
-    if config is not None:
+    if config:
         result.add(config)
     for key in filter_list:
         if key in result.keys():
@@ -80,6 +80,6 @@ def combine_param(config: Param = None, dataset: Dataset = None, filter_list: Li
             result[key] = value[dataset_name]
     result.update(kwargs)
 
-    if dataset is not None:
+    if dataset:
         result.dataset: Dataset = dataset
     return result

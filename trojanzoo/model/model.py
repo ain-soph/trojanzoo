@@ -113,7 +113,7 @@ class Model:
         self.prefix = prefix
 
         #------------Auto--------------#
-        if dataset is not None:
+        if dataset:
             data_dir: str = env['data_dir']
             if isinstance(dataset, str):
                 raise TypeError(dataset)
@@ -227,7 +227,7 @@ class Model:
     # output: (default: False) whether output help information.
     def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
              features=True, map_location='default', verbose=False):
-        if map_location is not None:
+        if map_location:
             if map_location == 'default':
                 map_location = env['device']
         if file_path is None:
@@ -421,7 +421,7 @@ class Model:
     #-------------------------------------------Utility---------------------------------------#
 
     def get_data(self, data, **kwargs):
-        if self.dataset is not None:
+        if self.dataset:
             return self.dataset.get_data(data, **kwargs)
         else:
             return data
@@ -454,7 +454,7 @@ class Model:
 
     def get_parallel(self):
         if env['num_gpus'] > 1:
-            if self.dataset is not None:
+            if self.dataset:
                 if self.dataset.data_type != 'image':
                     return self._model
             elif self.name[0] == 'g' and self.name[2] == 'n':
