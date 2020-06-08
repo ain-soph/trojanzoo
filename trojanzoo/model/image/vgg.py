@@ -17,7 +17,7 @@ class _VGG(_ImageModel):
         _model = models.__dict__[
             'vgg'+str(layer)](num_classes=self.num_classes)
         self.features = _model.features
-        self.pool = _model.pool   # nn.AdaptiveAvgPool2d((7, 7))
+        self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
         self.classifier = _model.classifier
 
         # nn.Sequential(

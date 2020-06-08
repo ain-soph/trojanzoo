@@ -27,7 +27,7 @@ class _ResNet(_ImageModel):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.pool = _model.pool  # nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
@@ -124,7 +124,7 @@ class _ResNetcomp(_ResNet):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.pool = _model.pool  # nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
