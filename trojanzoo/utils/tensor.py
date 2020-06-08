@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
+import torchvision.transforms.functional as functional
 
 from trojanzoo.config import Config
 env = Config.env
@@ -16,13 +17,15 @@ env = Config.env
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
 
-byte2float = torchvision.transforms.ToTensor()
+byte2float = functional.to_tensor
 
 
-def to_tensor(x, dtype=None, device='default', **kwargs) -> torch.Tensor:
+def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
+              dtype=None, device='default', **kwargs) -> torch.Tensor:
     if x is None:
         return None
-    _dtype = _map[dtype] if isinstance(dtype, str) else dtype
+    if isinstance(dtype, str):
+        dtype = _map[dtype]
 
     if device == 'default':
         device = env['device']
@@ -34,8 +37,10 @@ def to_tensor(x, dtype=None, device='default', **kwargs) -> torch.Tensor:
             x = torch.stack(x)
         except TypeError:
             pass
+    elif isinstance(x, Image.Image):
+        x = byte2float(x)
     try:
-        x = torch.as_tensor(x, dtype=_dtype).to(device=device, **kwargs)
+        x = torch.as_tensor(x, dtype=dtype).to(device=device, **kwargs)
     except Exception as e:
         print('tensor: ', x)
         if torch.is_tensor(x):
@@ -45,7 +50,7 @@ def to_tensor(x, dtype=None, device='default', **kwargs) -> torch.Tensor:
     return x
 
 
-def to_numpy(x) -> np.ndarray:
+def to_numpy(x: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
     if x is None:
         return None
     if type(x).__module__ == np.__name__:
@@ -55,7 +60,7 @@ def to_numpy(x) -> np.ndarray:
     return np.array(x)
 
 
-def to_list(x) -> list:
+def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
     if x is None:
         return None
     if type(x).__module__ == np.__name__ or torch.is_tensor(x):
@@ -66,7 +71,14 @@ def to_list(x) -> list:
         return list(x)
 
 
-def repeat_to_batch(x, batch_size=1):
+def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
+    if isinstance(x, Image.Image):
+        return x
+    x = to_tensor(x, device='cpu')
+    return functional.to_pil_image(x, mode=mode)
+
+
+def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     try:
         size = batch_size + [1]*len(x.shape)
         x = x.repeat(list(size))
@@ -75,6 +87,22 @@ def repeat_to_batch(x, batch_size=1):
         print('batch_size: ', batch_size)
         raise e
     return x
+
+
+def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1) -> Image.Image:
+    if not isinstance(x, Image.Image):
+        x = to_img(x)
+    return functional.to_grayscale(x, num_output_channels=num_output_channels)
+
+
+def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1, **kwargs) -> torch.Tensor:
+    if torch.is_tensor(x):
+        if 'dtype' not in kwargs.keys():
+            kwargs['dtype'] = x.dtype
+        if 'device' not in kwargs.keys():
+            kwargs['device'] = x.device
+    img = gray_img(x, num_output_channels=num_output_channels)
+    return to_tensor(img, **kwargs)
 
 
 def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
@@ -117,7 +145,7 @@ def percentile(t: torch.tensor, q: float) -> Union[int, float]:
 
 
 def float2byte(img) -> torch.ByteTensor:
-    img = to_tensor(img)
+    img = torch.as_tensor(img)
     if len(img.shape) == 4:
         assert img.shape[0] == 1
         img = img[0]
@@ -125,8 +153,8 @@ def float2byte(img) -> torch.ByteTensor:
         img = img[0]
     elif len(img.shape) == 3:
         img = img.transpose(0, 1).transpose(1, 2).contiguous()
-    # img = (((img - img.min()) / (img.max() - img.min())) * 255.9).astype(np.uint8).squeeze()
-    return img.mul(255.2).byte()
+    # img = (((img - img.min()) / (img.max() - img.min())) * 255).astype(np.uint8).squeeze()
+    return img.mul(255).byte()
 
 
 # def byte2float(img) -> torch.FloatTensor:
@@ -150,10 +178,10 @@ def save_tensor_as_img(path: str, _tensor: torch.Tensor):
     I.save(path)
 
 
-def save_numpy_as_img(path, arr):
+def save_numpy_as_img(path: str, arr: np.ndarray):
     save_tensor_as_img(path, torch.as_tensor(arr))
 
 
-def read_img_as_tensor(path):
+def read_img_as_tensor(path: str) -> torch.Tensor:
     I: Image.Image = Image.open(path)
-    return to_tensor(byte2float(I))
+    return byte2float(I)

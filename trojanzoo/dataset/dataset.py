@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils import to_tensor, to_numpy
+from trojanzoo.utils import to_tensor, to_list
 from trojanzoo.utils.output import prints
 
 import os
@@ -181,7 +181,7 @@ class Dataset:
                 print('Calculating Loss Weights')
             loss_weights = np.zeros(self.num_classes)
             for X, Y in self.loader['train']:
-                Y = to_numpy(Y).tolist()
+                Y = to_list(Y)
                 for _class in range(self.num_classes):
                     loss_weights[_class] += Y.count(_class)
             loss_weights = loss_weights.sum() / loss_weights

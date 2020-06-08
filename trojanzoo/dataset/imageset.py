@@ -4,6 +4,7 @@ from .dataset import Dataset
 from trojanzoo.utils import to_tensor
 
 import torch
+import torchvision.transforms as transforms
 from typing import Union, List, Tuple, Dict
 
 from trojanzoo.config import Config
@@ -23,6 +24,10 @@ class ImageSet(Dataset):
         self.norm_par: Dict[str, List[float]] = norm_par
         self.param_list['imageset'] = ['n_channel', 'n_dim', 'norm_par']
 
+    @classmethod
+    def get_transform(cls, **kwargs):
+        return transforms.ToTensor()
+
     def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, **kwargs):
         if batch_size is None:
@@ -40,4 +45,3 @@ class ImageSet(Dataset):
     @staticmethod
     def get_data(data, **kwargs):
         return to_tensor(data[0]), to_tensor(data[1], dtype='long')
-

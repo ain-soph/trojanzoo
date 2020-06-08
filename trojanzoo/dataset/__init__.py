@@ -13,6 +13,8 @@ class_dict = {
 
     'imagefolder': 'ImageFolder',
 
+    'mnist': 'MNIST',
+
     'cifar10': 'CIFAR10',
     'cifar100': 'CIFAR100',
 
@@ -28,4 +30,3 @@ class_dict = {
     'vggface': 'VGGface',
     'vggface2': 'VGGface2',
 }
-

@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 
-from .tensor import to_tensor, byte2float
+from .tensor import to_tensor, byte2float, gray_img
 
 import os
 import numpy as np
@@ -48,7 +48,8 @@ class Watermark:
         self.height_offset: int = height_offset
         self.width_offset: int = width_offset
         # --------------------------------------------------- #
-        mark: torch.Tensor = self.load_img(mark_path, width, height)
+        mark: torch.Tensor = self.load_img(
+            mark_path, width, height, channel=data_shape[0])
         self.edge_color: torch.Tensor = self.get_edge_color(
             mark, data_shape, edge_color)
 
@@ -71,9 +72,14 @@ class Watermark:
         self.alpha_mask = to_tensor(_dict['alpha_mask'])
 
     @staticmethod
-    def load_img(path: str, width: int, height: int) -> torch.Tensor:
+    def load_img(path: str, width: int, height: int, channel: int = 3) -> torch.Tensor:
         mark: Image.Image = Image.open(path)
         mark = mark.resize((width, height), Image.ANTIALIAS)
+
+        if channel == 1:
+            mark = gray_img(mark, num_output_channels=1)
+        elif channel == 3 and mark.mode in ['1', 'L']:
+            mark = gray_img(mark, num_output_channels=3)
         mark: torch.Tensor = byte2float(mark)
         return mark
 

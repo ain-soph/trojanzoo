@@ -37,7 +37,7 @@ class _Model(nn.Module):
         self.num_classes = num_classes
 
         self.features = self.define_features()   # feature extractor
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
         self.flatten = nn.Flatten(start_dim=1)
         self.classifier = self.define_classifier()  # classifier
 
@@ -61,7 +61,7 @@ class _Model(nn.Module):
     # output: (batch_size, [feature_map])
     def get_final_fm(self, x):
         x = self.get_fm(x)
-        x = self.avgpool(x)
+        x = self.pool(x)
         x = self.flatten(x)
         return x
 

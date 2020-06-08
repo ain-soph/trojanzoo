@@ -88,8 +88,8 @@ class _ImageModel(_Model):
             elif 'features.'+name == layer_input:
                 record = True
         if record:
-            x = self.avgpool(x)
-            od['avgpool'] = x
+            x = self.pool(x)
+            od['pool'] = x
             x = self.flatten(x)
             od['flatten'] = x
             od['features'] = x
@@ -137,7 +137,7 @@ class _ImageModel(_Model):
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name:
                 layer_name.append('features.'+name)
-        layer_name.append('avgpool')
+        layer_name.append('pool')
         layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name:
@@ -150,7 +150,8 @@ class ImageModel(Model):
     def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None, **kwargs):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
-        name = name+str(layer)
+        if layer:
+            name = name+str(layer)
         self.layer = layer
 
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():
