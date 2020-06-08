@@ -65,17 +65,7 @@ class VGGcomp(VGG):
 
     def __init__(self, name='vggcomp', model_class=_VGGcomp, **kwargs):
         super().__init__(name=name, model_class=model_class,
-                                      conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
-
-    def load_official_weights(self, output=True):
-        if output:
-            print("********Load From Official Website!********")
-        _dict = model_zoo.load_url(model_urls['vgg'+str(self.layer)])
-        new_dict = OrderedDict()
-        for name, param in _dict.items():
-            if 'classifier' not in name:
-                new_dict[name] = param
-        self._model.load_state_dict(new_dict, strict=False)
+                         conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
 
     def load_official_weights(self, verbose=True):
         url = model_urls['vgg'+str(self.layer)]
