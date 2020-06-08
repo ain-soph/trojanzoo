@@ -25,10 +25,11 @@ class CIFAR10(ImageSet):
         validset = datasets.CIFAR10(
             root=self.folder_path, train=False, download=True)
 
-    def get_transform(self, mode):
+    @classmethod
+    def get_transform(cls, mode):
         if mode == 'train':
             transform = transforms.Compose([
-                transforms.RandomCrop(self.n_dim, padding=4),
+                transforms.RandomCrop(cls.n_dim, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
             ])

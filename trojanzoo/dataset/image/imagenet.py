@@ -31,7 +31,8 @@ class ImageNet(ImageFolder):
         ImageNet_Official(root=self.folder_path, split='train', download=True)
         ImageNet_Official(root=self.folder_path, split='val', download=True)
 
-    def get_transform(self, mode):
+    @staticmethod
+    def get_transform(mode):
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomResizedCrop((224, 224)),

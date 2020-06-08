@@ -40,3 +40,4 @@ class ImageSet(Dataset):
     @staticmethod
     def get_data(data, **kwargs):
         return to_tensor(data[0]), to_tensor(data[1], dtype='long')
+

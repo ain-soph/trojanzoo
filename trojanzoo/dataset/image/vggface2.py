@@ -14,9 +14,11 @@ class VGGface2(ImageFolder):
     name = 'vggface2'
     n_dim = (224, 224)
     num_classes = 8631
+    valid_set: bool = False
     org_folder_name = {'train': 'train'}
 
-    def get_transform(self, mode):
+    @staticmethod
+    def get_transform(mode):
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomResizedCrop((224, 224)),
@@ -38,9 +40,9 @@ class VGGface2(ImageFolder):
             if file_name is None:
                 file_name = {'train': self.name+'_train.'+file_ext}
                 file_path = {'train': folder_path+file_name['train']}
-        if os.path.exists(file_path):
+        if os.path.exists(file_path['train']):
             print('File Already Exists: ', file_path)
-            return
+            return file_path
 
         LOGIN_URL = "http://zeus.robots.ox.ac.uk/vgg_face2/login/"
         FILE_URL = "http://zeus.robots.ox.ac.uk/vgg_face2/get_file?fname=vggface2_train.tar.gz"
@@ -70,8 +72,8 @@ class VGGface2(ImageFolder):
 
         # filename = FILE_URL.split('=')[-1]
 
-        with open(file_path, "wb") as f:
-            print(f"Downloading file: `{file_path}`")
+        with open(file_path['train'], "wb") as f:
+            print(f"Downloading file: `{file_path['train']}`")
             r = session.get(FILE_URL, data=payload, stream=True)
             bytes_written = 0
             for data in r.iter_content(chunk_size=4096):

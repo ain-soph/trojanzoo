@@ -100,7 +100,8 @@ class Dataset:
             prints({v: getattr(self, v) for v in value}, indent=indent+10)
             prints('-'*20, indent=indent+10)
 
-    def get_transform(self, mode: str) -> object:
+    @classmethod
+    def get_transform(cls, mode: str) -> object:
         pass
 
     @staticmethod
