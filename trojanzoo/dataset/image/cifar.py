@@ -11,8 +11,10 @@ class CIFAR10(ImageSet):
     name: str = 'cifar10'
     num_classes: int = 10
     n_dim: Tuple[int] = (32, 32)
-    label_names = ['airplane', 'automobile', 'bird', 'cat',
-                   'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    classes = ['airplane', 'automobile', 'bird', 'cat',
+               'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    class_to_idx = {'airplane': 0, 'automobile': 1, 'bird': 2, 'cat': 3,
+                    'deer': 4, 'dog': 5, 'frog': 6, 'horse': 7, 'ship': 8, 'truck': 9}
 
     def __init__(self, norm_par={'mean': [0.4914, 0.4822, 0.4465],
                                  'std': [0.2023, 0.1994, 0.2010], },

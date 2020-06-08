@@ -54,7 +54,7 @@ class Dataset:
             if memory_dir:
                 if not os.path.exists(memory_dir+self.data_type+'/'+self.name+'/data/'):
                     memory_dir = None
-            _dir=memory_dir if memory_dir else data_dir
+            _dir = memory_dir if memory_dir else data_dir
             folder_path = _dir+self.data_type+'/'+self.name+'/data/'
         self.folder_path: str = folder_path
         if not os.path.exists(self.folder_path):
@@ -122,26 +122,39 @@ class Dataset:
                 dataset, percent=self.split_ratio)
             return subset[mode]
 
-    def get_dataset(self, mode: str, full=True, **kwargs) -> torch.utils.data.Dataset:
+    def get_dataset(self, mode: str, full: bool = True, classes: List[int] = None, **kwargs) -> torch.utils.data.Dataset:
         if full and mode != 'test':
-            return self.get_full_dataset(mode=mode, **kwargs)
+            dataset = self.get_full_dataset(mode=mode, **kwargs)
         elif mode == 'train':
-            dataset = self.get_full_dataset(mode='train', **kwargs)
-            subset, _ = self.split_set(dataset, length=self.train_sample)
-            return subset
+            fullset = self.get_full_dataset(mode='train', **kwargs)
+            dataset, _ = self.split_set(fullset, length=self.train_sample)
         else:
-            dataset = self.get_full_dataset(mode='valid', **kwargs)
+            fullset = self.get_full_dataset(mode='valid', **kwargs)
             subset: Dict[str, torch.utils.data.Subset] = {}
             subset['test'], subset['valid'] = self.split_set(
                 dataset, percent=self.test_ratio)
-            return subset[mode]
+            dataset = subset[mode]
+        if classes:
+            dataset = self.get_class_set(dataset, classes=classes, **kwargs)
+        return dataset
+
+    def get_class_set(self, dataset, classes, **kwargs):
+        indices = set(np.arange(len(dataset)))
+        if isinstance(dataset, torch.utils.data.Subset):
+            idx = np.array(dataset.indices)
+            indices = idx[indices]
+            dataset = dataset.dataset
+        idx_bool = np.isin(dataset.targets, classes)
+        idx = np.arange(len(dataset))[idx_bool]
+        idx = np.intersect1d(idx, indices)
+        return torch.utils.data.Subset(dataset, idx)
 
     def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, **kwargs) -> torch.utils.data.dataloader:
         pass
 
-    @staticmethod
-    def split_set(dataset: torch.utils.data.Dataset,
+    @classmethod
+    def split_set(cls, dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
                   length: int = None, percent=None) -> (torch.utils.data.Subset, torch.utils.data.Subset):
         assert (length is None) != (percent is None)  # XOR check
         if length is None:
@@ -149,6 +162,10 @@ class Dataset:
         indices = list(range(len(dataset)))
         np.random.seed(env['seed'])
         np.random.shuffle(indices)
+        if isinstance(dataset, torch.utils.data.Subset):
+            idx = torch.as_tensor(dataset.indices)
+            indices = idx[indices]
+            dataset = dataset.dataset
         subset1 = torch.utils.data.Subset(dataset, indices[:length])
         subset2 = torch.utils.data.Subset(dataset, indices[length:])
         return subset1, subset2
