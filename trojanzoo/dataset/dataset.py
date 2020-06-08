@@ -132,14 +132,14 @@ class Dataset:
             fullset = self.get_full_dataset(mode='valid', **kwargs)
             subset: Dict[str, torch.utils.data.Subset] = {}
             subset['test'], subset['valid'] = self.split_set(
-                dataset, percent=self.test_ratio)
+                fullset, percent=self.test_ratio)
             dataset = subset[mode]
         if classes:
             dataset = self.get_class_set(dataset, classes=classes, **kwargs)
         return dataset
 
     def get_class_set(self, dataset, classes, **kwargs):
-        indices = set(np.arange(len(dataset)))
+        indices = np.arange(len(dataset))
         if isinstance(dataset, torch.utils.data.Subset):
             idx = np.array(dataset.indices)
             indices = idx[indices]
