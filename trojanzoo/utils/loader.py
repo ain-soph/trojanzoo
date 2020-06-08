@@ -26,7 +26,7 @@ def get_module(module_class: str, module_name: str, **kwargs):
 def get_dataset(module_name: str = None, **kwargs) -> Dataset:
     if module_name is None:
         module_name: str = config['dataset']['default_dataset']
-    result: Param = combine_param(config=config['dataset'], sub_idx=module_name,
+    result: Param = combine_param(config=config['dataset'], dataset=module_name,
                                   filter_list=['default_dataset'], **kwargs)
     return get_module('dataset', module_name, **result)
 
@@ -45,7 +45,7 @@ def get_model(module_name: str = None, layer: int = None, dataset: Dataset = Non
     return get_module('model', module_name, **result)
 
 
-def get_attack(module_name:str='hello', dataset: Dataset = None, **kwargs):
+def get_attack(module_name: str = 'hello', dataset: Dataset = None, **kwargs):
     result: Param = combine_param(config=config[module_name], dataset=dataset,
                                   **kwargs)
     return get_module('attack', module_name, **kwargs)
@@ -64,8 +64,9 @@ def get_mark(data_shape: List[int] = None, dataset: ImageSet = None, **kwargs):
 
 
 def combine_param(config: Param = None, dataset: Dataset = None, filter_list: List[str] = [], **kwargs):
-    if dataset is None:
-        dataset_name: str = 'default'
+    dataset_name: str = 'default'
+    if isinstance(dataset, str):
+        dataset_name = dataset
     elif isinstance(dataset, Dataset):
         dataset_name = dataset.name
 
@@ -77,9 +78,10 @@ def combine_param(config: Param = None, dataset: Dataset = None, filter_list: Li
             result.__delattr__(key)
     for key, value in result.items():
         if isinstance(value, Param):
+            print(key, value)
             result[key] = value[dataset_name]
     result.update(kwargs)
 
-    if dataset:
+    if isinstance(dataset, Dataset):
         result.dataset: Dataset = dataset
     return result

@@ -31,7 +31,7 @@ class Dataset:
 
     def __init__(self, batch_size: int = -128, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
-                 num_workers: int = 4, loss_weights: bool = False, **kwargs):
+                 num_workers: int = 0, loss_weights: bool = False, **kwargs):
 
         self.param_list: Dict[str, List[str]] = OrderedDict()
         self.param_list['abstract'] = ['data_type', 'folder_path', 'label_names',
@@ -116,7 +116,7 @@ class Dataset:
         if self.valid_set:
             return self.get_org_dataset(mode, **kwargs)
         else:
-            dataset = self.get_org_dataset(mode='train')
+            dataset = self.get_org_dataset(mode='train', **kwargs)
             subset = {}
             subset['train'], subset['valid'] = self.split_set(
                 dataset, percent=self.split_ratio)

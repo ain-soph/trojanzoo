@@ -35,7 +35,7 @@ class ImageSet(Dataset):
         if shuffle is None:
             shuffle = True if mode == 'train' else False
         if num_workers is None:
-            num_workers = self.num_workers
+            num_workers = self.num_workers if mode == 'train' else 0
 
         dataset = self.get_dataset(mode, **kwargs)
         torch.manual_seed(env['seed'])
