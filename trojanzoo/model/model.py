@@ -186,6 +186,8 @@ class Model:
         if isinstance(parameters, str):
             if parameters == 'full':
                 parameters = self._model.parameters()
+            elif parameters == 'features':
+                parameters = self._model.features.parameters()
             elif parameters == 'classifier':
                 parameters = self._model.classifier.parameters()
             else:

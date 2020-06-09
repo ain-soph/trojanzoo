@@ -91,8 +91,8 @@ class ImageFolder(ImageSet):
             '/{0}/data/{0}/'.format(child_name)
         if class_dict is None:
             assert sample_num
-            np.random.seed(env['seed'])
             idx_list = np.array(range(self.num_classes))
+            np.random.seed(env['seed'])
             np.random.shuffle(idx_list)
             idx_list = idx_list[:sample_num]
             class_list = np.array(os.listdir(src_path+mode_list[0]))[idx_list]

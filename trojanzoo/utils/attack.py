@@ -13,28 +13,27 @@ from trojanzoo import __file__ as root_file
 root_dir = os.path.dirname(os.path.abspath(root_file))
 
 
-# add mark to the Image with mask.
-def add_mark(x: torch.Tensor, mark: torch.Tensor, _mask: torch.Tensor) -> torch.Tensor:
-    result = x*(1-_mask)+mark*_mask
-    return result
-
-
 class Watermark:
     def __init__(self, data_shape: List[int], edge_color: Union[str, torch.Tensor] = 'auto',
                  mark_path: str = 'trojanzoo/data/mark/square_white.png', mark_alpha: float = 0.0,
-                 height: int = 0, width: int = 0,
-                 height_ratio: float = 1.0, width_ratio: float = 1.0,
-                 height_offset: int = None, width_offset: int = None, **kwargs):
+                 height: int = None, width: int = None,
+                 height_ratio: float = None, width_ratio: float = None, mark_ratio: float = None,
+                 height_offset: int = 0, width_offset: int = 0, offset_style: List[str] = ['upper', 'left'], **kwargs):
 
-        if height == 0 and width == 0:
+        if height is None and width is None:
+            if height_ratio is None and width_ratio is None:
+                assert mark_ratio is not None
+                height_ratio = mark_ratio
+                width_ratio = mark_ratio
             height = int(height_ratio*data_shape[-2])
             width = int(width_ratio*data_shape[-1])
-        # assert height != 0 and width != 0
-        if height_offset is None:
-            height_offset = data_shape[-2]-height
-        if width_offset is None:
-            width_offset = data_shape[-1]-width
-        # assert height_offset and height_offset
+        if isinstance(offset_style, str):
+            offset_style = eval(offset_style)
+        assert isinstance(offset_style, list)
+        if 'lower' in offset_style:
+            height_offset = data_shape[-2]-height-height_offset
+        if 'right' in offset_style:
+            width_offset = data_shape[-1]-width-width_offset
         # --------------------------------------------------- #
 
         # WaterMark Image Parameters
@@ -61,7 +60,7 @@ class Watermark:
             mark = self.mark
         if _mask is None:
             _mask = self.mask*self.alpha_mask
-        return add_mark(x, mark=mark, _mask=_mask)
+        return x*(1-_mask)+mark*_mask
 
     def load_file(self, mark_path: str):
         if mark_path[:9] == 'trojanzoo':

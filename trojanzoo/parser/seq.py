@@ -25,7 +25,19 @@ class Parser_Seq(Module):
         self.args_list = Module()
         self.module_list = Module()
 
-    def parse_args(self, args=None, namespace: argparse.Namespace = None, verbose: bool = None):
+    def parse_args(self, args: str = None, namespace: argparse.Namespace = None, verbose: bool = None):
+        """Call ``parse_args`` for each parser in ``self.parser_list`` and save the results at ``self.args_list``
+
+        :param args: ``args`` passed to ``parser.parse_args``, defaults to None
+        :type args: str, optional
+        :param namespace: ``namespace`` passed to ``parser.parse_args``, defaults to None
+        :type namespace: argparse.Namespace, optional
+        :param verbose: output arguments information, defaults to None
+        :type verbose: bool, optional
+        :raises SystemExit: output help information
+        :return: ``self.args_list``
+        :rtype: Module
+        """
         help_flag = False
         sys.stdout = redirect
         sys.stdout.write('{yellow}Arguments: {reset}\n'.format(**ansi),
@@ -52,6 +64,13 @@ class Parser_Seq(Module):
         return self.args_list
 
     def get_module(self, verbose: bool = None, **kwargs):
+        """Call ``get_module`` for each parser in ``self.parser_list`` and save the results at ``self.module_list``
+
+        :param verbose: output module information, defaults to None
+        :type verbose: bool, optional
+        :return: ``self.module_list``
+        :rtype: Module
+        """
         if verbose is None:
             if 'main' in self.args_list.keys():
                 verbose = self.args_list['main']['verbose']

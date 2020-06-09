@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.utils import to_tensor, to_list
-from trojanzoo.utils.output import prints
+from trojanzoo.utils.output import prints, Indent_Redirect
 
 import os
+import sys
 import torch
 import numpy as np
 from collections import OrderedDict
@@ -12,13 +13,15 @@ from typing import Union, List, Tuple, Dict
 from trojanzoo.config import Config
 env = Config.env
 
+redirect = Indent_Redirect(buffer=True, indent=0)
+
 
 class Dataset:
     """An abstract class representing a Dataset.
 
     Args:
-        name (string): Dataset Name. (need overwrite)
-        data_type (string): Data type. (need overwrite)
+        name (string): Dataset Name. (need override)
+        data_type (string): Data type. (need override)
         folder_path (string): dataset specific directory path,
                               defaults to ``env[data_dir]/[self.data_type]/[self.name]/data/``
 
@@ -113,14 +116,18 @@ class Dataset:
         pass
 
     def get_full_dataset(self, mode: str, **kwargs) -> torch.utils.data.Dataset:
-        if self.valid_set:
-            return self.get_org_dataset(mode, **kwargs)
-        else:
-            dataset = self.get_org_dataset(mode='train', **kwargs)
-            subset = {}
-            subset['train'], subset['valid'] = self.split_set(
-                dataset, percent=self.split_ratio)
-            return subset[mode]
+        try:
+            if self.valid_set:
+                return self.get_org_dataset(mode, **kwargs)
+            else:
+                dataset = self.get_org_dataset(mode='train', **kwargs)
+                subset = {}
+                subset['train'], subset['valid'] = self.split_set(
+                    dataset, percent=self.split_ratio)
+                return subset[mode]
+        except RuntimeError as e:
+            print(self.folder_path)
+            raise e
 
     def get_dataset(self, mode: str, full: bool = True, classes: List[int] = None, **kwargs) -> torch.utils.data.Dataset:
         if full and mode != 'test':
@@ -191,4 +198,8 @@ class Dataset:
             return to_tensor(loss_weights, dtype='float')
 
     def __str__(self) -> str:
-        return self.summary()
+        sys.stdout = redirect
+        self.summary()
+        _str = redirect.buffer
+        redirect.reset()
+        return _str

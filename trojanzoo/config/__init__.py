@@ -106,10 +106,10 @@ class Config:
 
     @classmethod
     def update_env(cls, init: bool = False, **kwargs):
-        if init:
-            cls.init_env()
         cls.env.update(cls.config['env'])
         cls.env.update(kwargs)
+        if init:
+            cls.init_env()
 
 
 Config.update('system', 'user', 'project')

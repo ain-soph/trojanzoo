@@ -11,7 +11,7 @@
 *.pyc
 *.ini
 
-/test
+/issue
 /test.py
 
 # Filter Directory
