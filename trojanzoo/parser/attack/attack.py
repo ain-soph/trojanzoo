@@ -8,7 +8,7 @@ from trojanzoo.config import Config
 config = Config.config
 
 
-class Parser_Attack(Parser):
+class Parser_Attack(Parser):    
     """Generic Attack Parser
     :param name: ``'attack'``.
     :type name: str

@@ -60,18 +60,14 @@ def bytes2size(_bytes: int) -> str:
         return '%.3f GB' % (float(_bytes)/1024/1024/1024)
 
 
-def indent_str(arg: str, indent: int = 0) -> str:
+def indent_str(s_: str, indent: int = 0) -> str:
+    # modified from torch.nn.modules._addindent
     if indent == 0:
-        return arg
-    _str = ''
-    _str_list = str(arg).split('\n')
-    for i, item in enumerate(_str_list):
-        if len(item) != 0:
-            item = ' '*indent+item
-        if i != len(_str_list)-1:
-            item += '\n'
-        _str += item
-    return _str
+        return s_
+    s = str(s_).split('\n')
+    s = [(indent * ' ') + line for line in s]
+    s = '\n'.join(s)
+    return s
 
 
 class Indent_Redirect:

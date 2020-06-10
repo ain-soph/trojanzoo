@@ -8,12 +8,12 @@ config = Config.config
 
 
 class Parser_Dataset(Parser):
-    """ Dataset Parser.
+    r"""Dataset Parser.
 
-    :param name: ``'dataset'``.
-    :type name: str
+    Attributes:
+        name (str): ``'dataset'``
+        parser (argparse.ArgumentParser): argument parser.
     """
-    name = 'dataset'
 
     @staticmethod
     def add_argument(parser):
@@ -27,13 +27,14 @@ class Parser_Dataset(Parser):
                             help='download dataset if not exist by calling dataset.initialize()')
 
     @classmethod
-    def get_module(cls, dataset: str = None, **kwargs) -> Dataset:
-        """get dataset.
+    def get_module(cls, dataset=None, **kwargs) -> Dataset:
+        # type: (str, dict) -> Dataset
+        r"""get dataset.
 
-        :param dataset: dataset name, defaults to ``config['dataset']['default_dataset']``.
-        :type dataset: str, optional
-        :return: Dataset Instance
-        :rtype: Dataset
+        Args:
+            dataset (str): dataset name, default: ``config['dataset']['default_dataset']``.
+        Returns:
+            :class:`Dataset`
         """
         if dataset is None:
             dataset: str = config['dataset']['default_dataset']

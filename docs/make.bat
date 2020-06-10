@@ -8,7 +8,7 @@ if "%SPHINXBUILD%" == "" (
         set SPHINXBUILD=sphinx-build
 )
 set SOURCEDIR=source
-set BUILDDIR=build
+set BUILDDIR=E:/build
 set SPHINXPROJ=PyTorch
 set SPHINXOPTS=-j auto
 

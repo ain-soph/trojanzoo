@@ -8,11 +8,14 @@ The following parsers are available:
 .. contents:: Parser
     :local:
 
-
-.. currentmodule:: trojanzoo.parser
-
 Parser
-~~~~~~~~~~~~
+~~~~~~
 
-.. autoclass:: Parser
+.. autoclass:: trojanzoo.parser.Parser
+  :members:
+
+Parser_Dataset
+~~~~~~~~~~~~~~
+
+.. autoclass:: trojanzoo.parser.Parser_Dataset
   :members:
