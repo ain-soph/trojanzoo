@@ -4,7 +4,6 @@ import argparse
 
 from trojanzoo.dataset import Dataset
 from trojanzoo.utils.param import Module, Param
-from trojanzoo.utils.output import prints
 
 from typing import Union, List, Dict, Any
 
@@ -13,7 +12,7 @@ class Parser():
     r"""Base class for all parsers. All parsers should **subclass** this class.
 
     Attributes:
-        name (str): the name of module class, which need overriding for specific sub-classes. Default: ``'basic'``.
+        name (str): the name of module class, which need overriding for sub-classes. Default: ``'basic'``.
         parser (argparse.ArgumentParser): argument parser.
     """
 
@@ -27,7 +26,7 @@ class Parser():
     @staticmethod
     def add_argument(parser):
         # type: (argparse.ArgumentParser) -> None  # noqa
-        r"""Add arguments to ``parser``. Concrete sub-classes should **override** this method to claim specific arguments.
+        r"""Add arguments to ``parser``. Sub-classes should **override** this method to claim specific arguments.
 
         Args:
             parser (argparse.ArgumentParser): the parser to add arguments
@@ -40,14 +39,13 @@ class Parser():
         r"""
         | Construct the module from parsed arguments.
         | This is a generic method based on dynamic programming.
-        | Concrete sub-classes should **override** this method.
+        | Sub-classes should **override** this method.
 
         Args:
             module_class (str): module type. (e.g. 'dataset', 'model', 'attack')
             module_name (str): module name. (e.g. 'cifar10', 'resnet18', 'badnet')
         """
-
-        pkg = __import__('trojanzoo.'+module_class, fromlist=['class_dict'])
+        pkg = __import__('trojanzoo.' + module_class, fromlist=['class_dict'])
         class_dict: Dict[str, str] = getattr(pkg, 'class_dict')
         class_name: str = class_dict[module_name]
         _class = getattr(pkg, class_name)

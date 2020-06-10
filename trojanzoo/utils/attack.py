@@ -15,6 +15,7 @@ root_dir = os.path.dirname(os.path.abspath(root_file))
 
 class Watermark:
     def __init__(self, data_shape: List[int], edge_color: Union[str, torch.Tensor] = 'auto',
+                 org_mark: Image.Image = None,
                  mark_path: str = 'trojanzoo/data/mark/square_white.png', mark_alpha: float = 0.0,
                  height: int = None, width: int = None,
                  height_ratio: float = None, width_ratio: float = None, mark_ratio: float = None,
@@ -25,15 +26,15 @@ class Watermark:
                 assert mark_ratio is not None
                 height_ratio = mark_ratio
                 width_ratio = mark_ratio
-            height = int(height_ratio*data_shape[-2])
-            width = int(width_ratio*data_shape[-1])
+            height = int(height_ratio * data_shape[-2])
+            width = int(width_ratio * data_shape[-1])
         if isinstance(offset_style, str):
             offset_style = eval(offset_style)
         assert isinstance(offset_style, list)
         if 'lower' in offset_style:
-            height_offset = data_shape[-2]-height-height_offset
+            height_offset = data_shape[-2] - height - height_offset
         if 'right' in offset_style:
-            width_offset = data_shape[-1]-width-width_offset
+            width_offset = data_shape[-1] - width - width_offset
         # --------------------------------------------------- #
 
         # WaterMark Image Parameters
@@ -47,8 +48,12 @@ class Watermark:
         self.height_offset: int = height_offset
         self.width_offset: int = width_offset
         # --------------------------------------------------- #
-        mark: torch.Tensor = self.load_img(
-            mark_path, width, height, channel=data_shape[0])
+        if org_mark is None:
+            org_mark: Image.Image = self.load_img(
+                mark_path, width, height, channel=data_shape[0])
+        self.org_mark = org_mark
+        mark: torch.Tensor = byte2float(org_mark)
+
         self.edge_color: torch.Tensor = self.get_edge_color(
             mark, data_shape, edge_color)
 
@@ -59,19 +64,19 @@ class Watermark:
         if mark is None:
             mark = self.mark
         if _mask is None:
-            _mask = self.mask*self.alpha_mask
-        return x*(1-_mask)+mark*_mask
+            _mask = self.mask * self.alpha_mask
+        return x * (1 - _mask) + mark * _mask
 
     def load_file(self, mark_path: str):
         if mark_path[:9] == 'trojanzoo':
-            mark_path = root_dir+mark_path[9:]
+            mark_path = root_dir + mark_path[9:]
         _dict = np.load(mark_path)
         self.mark = to_tensor(_dict['mark'])
         self.mask = to_tensor(_dict['mask'])
         self.alpha_mask = to_tensor(_dict['alpha_mask'])
 
     @staticmethod
-    def load_img(path: str, width: int, height: int, channel: int = 3) -> torch.Tensor:
+    def load_img(path: str, width: int, height: int, channel: int = 3) -> Image.Image:
         mark: Image.Image = Image.open(path)
         mark = mark.resize((width, height), Image.ANTIALIAS)
 
@@ -79,7 +84,6 @@ class Watermark:
             mark = gray_img(mark, num_output_channels=1)
         elif channel == 3 and mark.mode in ['1', 'L']:
             mark = gray_img(mark, num_output_channels=3)
-        mark: torch.Tensor = byte2float(mark)
         return mark
 
     @staticmethod
@@ -121,5 +125,5 @@ class Watermark:
                              self.width_offset + j] = mark[:, i, j]
         new_mark = to_tensor(new_mark.unsqueeze(0).detach())
         mask = to_tensor(mask.unsqueeze(0).unsqueeze(0).detach())
-        alpha_mask = (mask*(1-self.mark_alpha)).detach()
+        alpha_mask = (mask * (1 - self.mark_alpha)).detach()
         return new_mark, mask, alpha_mask

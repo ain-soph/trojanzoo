@@ -3,15 +3,15 @@
 from .parser import Parser
 import torch
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 
 class Parser_Main(Parser):
-    """ Main Parser for parameters in main scripts.
+    r"""Main Parser for parameters in main scripts.
 
-    :param name: ``'main'``.
-    :type name: str
+    Attributes:
+        name (str): ``'main'``
     """
     name = 'main'
 
@@ -25,16 +25,16 @@ class Parser_Main(Parser):
                             help='show arguments and module information, defaults to False.')
 
     @staticmethod
-    def get_module(device: str = None, benchmark: bool = None, verbose: bool = None):
-        """set default device and benchmark.
+    def get_module(device=None, benchmark=None, verbose=None):
+        # type: (str, bool, bool) -> None  # noqa
+        r"""set default device and benchmark.
 
-        :param device: set to ``\'cpu\'`` to force cpu-only and ``\'gpu\'``, ``\'cuda\'`` for gpu-only, defaults to ``\'auto\'``.
-        :type device: str, optional
-        :param benchmark: use ``torch.backends.cudnn.benchmark`` to accelerate without deterministic, defaults to ``False``
-        :type benchmark: bool, optional
-        :param verbose: show arguments and module information, defaults to ``False``
-        :type verbose: bool, optional
-        :raises Exception: GPU not enabled but ``device`` enforces gpu-only.
+        Args:
+            device (str): set to ``\'cpu\'`` to force cpu-only and ``\'gpu\'``, ``\'cuda\'`` to force gpu-only. Default: ``\'auto\'``.
+            benchmark (bool): use ``torch.backends.cudnn.benchmark`` to accelerate without deterministic. Default: ``False``.
+            verbose (bool): show arguments and module information. Default: ``False``.
+        Raises:
+            RuntimeError: GPU not available but ``device`` forces gpu-only.
         """
         if verbose:
             env['verbose'] = verbose

@@ -10,7 +10,7 @@ import numpy as np
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -55,10 +55,10 @@ class Dataset:
             memory_dir: str = env['memory_dir']
             result_dir: str = env['result_dir']
             if memory_dir:
-                if not os.path.exists(memory_dir+self.data_type+'/'+self.name+'/data/'):
+                if not os.path.exists(memory_dir + self.data_type + '/' + self.name + '/data/'):
                     memory_dir = None
             _dir = memory_dir if memory_dir else data_dir
-            folder_path = _dir+self.data_type+'/'+self.name+'/data/'
+            folder_path = _dir + self.data_type + '/' + self.name + '/data/'
         self.folder_path: str = folder_path
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
@@ -87,7 +87,7 @@ class Dataset:
     def check_files(self) -> bool:
         try:
             dataset = self.get_org_dataset(mode='train')
-        except:
+        except Exception:
             return False
         else:
             return True
@@ -99,9 +99,9 @@ class Dataset:
         prints('{:<10s} Parameters: '.format(self.name), indent=indent)
         d = self.__dict__
         for key, value in self.param_list.items():
-            prints(key, indent=indent+10)
-            prints({v: getattr(self, v) for v in value}, indent=indent+10)
-            prints('-'*20, indent=indent+10)
+            prints(key, indent=indent + 10)
+            prints({v: getattr(self, v) for v in value}, indent=indent + 10)
+            prints('-' * 20, indent=indent + 10)
 
     @classmethod
     def get_transform(cls, mode: str) -> object:
@@ -165,7 +165,7 @@ class Dataset:
                   length: int = None, percent=None) -> (torch.utils.data.Subset, torch.utils.data.Subset):
         assert (length is None) != (percent is None)  # XOR check
         if length is None:
-            length = int(len(dataset)*percent)
+            length = int(len(dataset) * percent)
         indices = list(range(len(dataset)))
         np.random.seed(env['seed'])
         np.random.shuffle(indices)
@@ -179,7 +179,7 @@ class Dataset:
 
     def get_loss_weights(self, file_path: str = None, verbose=True) -> torch.FloatTensor:
         if file_path is None:
-            file_path = self.folder_path+'loss_weights.npy'
+            file_path = self.folder_path + 'loss_weights.npy'
         if os.path.exists(file_path):
             loss_weights = to_tensor(np.load(file_path), dtype='float')
             return loss_weights

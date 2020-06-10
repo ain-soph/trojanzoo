@@ -10,7 +10,7 @@ from collections import OrderedDict
 import torch
 from typing import List, Union, Callable
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 
@@ -39,11 +39,11 @@ class Attack:
 
         # ----------------------------------------------------------------------------- #
         if folder_path is None:
-            folder_path = env['result_dir'] + self.name+'/'
+            folder_path = env['result_dir'] + self.name + '/'
             if dataset and isinstance(dataset, Dataset):
-                folder_path += dataset.name+'/'
+                folder_path += dataset.name + '/'
             if model and isinstance(model, Model):
-                folder_path += model.name+'/'
+                folder_path += model.name + '/'
         self.folder_path = folder_path
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -58,9 +58,9 @@ class Attack:
         prints('{:<10s} Parameters: '.format(self.name), indent=indent)
         d = self.__dict__
         for key, value in self.param_list.items():
-            prints(key, indent=indent+10)
-            prints({v: getattr(self, v) for v in value}, indent=indent+10)
-            prints('-'*20, indent=indent+10)
+            prints(key, indent=indent + 10)
+            prints({v: getattr(self, v) for v in value}, indent=indent + 10)
+            prints('-' * 20, indent=indent + 10)
 
     def get_output(self, org_output: Union[int, List[str]] = None):
         output = None
@@ -96,7 +96,7 @@ class Attack:
         if mode in output:
             # if mode=='init':
             #     print('-'*(indent+5))
-            prints(name+' attack %s Classification' % mode, indent=indent)
+            prints(name + ' attack %s Classification' % mode, indent=indent)
             if _result is None:
                 if _input is None:
                     raise ValueError()
@@ -106,11 +106,11 @@ class Attack:
             for i in range(len(_input)):
                 # prints(_result[i], indent=indent)
                 prints('idx: %d ' % i + ' Max: '.ljust(10), str(int(_classification[i])).rjust(4), '  %.7f' % float(_confidence[i]),
-                       indent=indent+2)
+                       indent=indent + 2)
                 prints('idx: %d ' % i + (' Target: ' if targeted else 'Untarget: ').ljust(10), str(int(target[i])).rjust(4), '  %.7f' % float(_result[i][target[i]]),
-                       indent=indent+2)
+                       indent=indent + 2)
             if 'memory' in output:
-                output_memory(indent=indent+4)
+                output_memory(indent=indent + 4)
             # if mode=='final':
             #     print('-'*(indent+5))
 
@@ -133,17 +133,17 @@ class Attack:
             for i in range(len(_result)):
                 # prints(_result[i], indent=indent)
                 prints('idx: %d ' % i + ' Max: '.ljust(10), str(int(_classification[i])).rjust(4), '  %.7f' % float(_confidence[i]),
-                       indent=indent+2)
+                       indent=indent + 2)
                 prints('idx: %d ' % i + (' Target: ' if targeted else 'Untarget: ').ljust(10), str(int(target[i])).rjust(4), '  %.7f' % float(_result[i][target[i]]),
-                       indent=indent+2)
+                       indent=indent + 2)
             if 'memory' in output:
-                output_memory(indent=indent+4)
+                output_memory(indent=indent + 4)
             # print('-'*(indent+4))
 
     def output_iter(self, name=None, _iter=0, iteration=None, indent=0, **kwargs):
         if name is None:
             name = self.name
-        string = name + ' Iter: ' + output_iter(_iter+1, iteration)
+        string = name + ' Iter: ' + output_iter(_iter + 1, iteration)
         prints(string, indent=indent)
 
     # ----------------------Utility----------------------------------- #
@@ -154,7 +154,7 @@ class Attack:
     def cal_gradient(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
         g = torch.zeros_like(X)
 
-        for i in range(n//2):
+        for i in range(n // 2):
             noise = torch.normal(
                 mean=0.0, std=1.0, size=X.shape, device=X.device)
             X1 = X + sigma * noise
@@ -166,10 +166,10 @@ class Attack:
 
     @staticmethod
     def projector(noise, epsilon, p=float('inf')):
-        length = epsilon/noise.norm(p=p)
+        length = epsilon / noise.norm(p=p)
         if length < 1:
             if p == float('inf'):
                 noise = noise.clamp(min=-epsilon, max=epsilon)
             else:
-                noise = length*noise
+                noise = length * noise
         return noise

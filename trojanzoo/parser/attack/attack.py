@@ -4,16 +4,16 @@ from ..parser import Parser
 from trojanzoo.dataset import Dataset
 from trojanzoo.attack import Attack
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 config = Config.config
 
 
-class Parser_Attack(Parser):    
-    """Generic Attack Parser
-    :param name: ``'attack'``.
-    :type name: str
-    :param attack: The specific attack name (lower-case).
-    :type attack: str
+class Parser_Attack(Parser):
+    r"""Generic Attack Parser
+
+    Attributes:
+        name (str): ``'attack'``
+        attack (str): The specific attack name (lower-case).
     """
     name = 'attack'
     attack = None
@@ -31,14 +31,15 @@ class Parser_Attack(Parser):
 
     @classmethod
     def get_module(cls, attack: str = None, dataset: Dataset = None, **kwargs) -> Attack:
+        # type: (str, Dataset, dict) -> Attack  # noqa
         """get attack. specific attack config overrides general attack config.
 
-        :param attack: attack name
-        :type attack: str
-        :param dataset: dataset
-        :type dataset: Dataset
-        :return: attack instance
-        :rtype: Attack
+        Args:
+            attack (str): attack name
+            dataset (Dataset):
+
+        Returns:
+            attack instance (:class:`Attack`).
         """
         if attack is None:
             attack = cls.attack

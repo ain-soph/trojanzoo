@@ -5,19 +5,15 @@ from trojanzoo.dataset import Dataset
 from trojanzoo.model import Model
 from trojanzoo.utils.model import split_name
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 config = Config.config
 
 
 class Parser_Model(Parser):
+    r"""Model Parser
 
-    """
-    | Watermark Parser to process watermark image.
-    | Override Priority: height,width > height(width)_ratio > mark_ratio
-    | Offset: the mark image will be 
-
-    :param name: ``'mark'``.
-    :type name: str
+    Attributes:
+        name (str): ``'model'``
     """
     name = 'model'
 
@@ -35,17 +31,17 @@ class Parser_Model(Parser):
                             help='load adversarially trained models')
 
     @classmethod
-    def get_module(cls, model: str = None, layer: int = None, dataset: Dataset = None, **kwargs) -> Model:
-        """get model.
+    def get_module(cls, model=None, layer=None, dataset=None, **kwargs):
+        # type: (str, int, Dataset, dict) -> Model  # noqa
+        r"""get model.
 
-        :param model: model name, defaults to ``config[\'model\'][\'default_model\'][dataset]``
-        :type model: str, optional
-        :param layer: layer (optional, maybe embedded in ``model``)
-        :type layer: int, optional
-        :param dataset: dataset
-        :type dataset: Dataset, optional
-        :return: model instance
-        :rtype: Model
+        Args:
+            model (str): model name. Default: None.
+            layer (int): layer (optional, maybe embedded in ``model``). Default: None.
+            dataset (Dataset): dataset. Default: None.
+
+        Returns:
+            :class:`Model`
         """
         if model is None:
             dataset_name: str = 'default'

@@ -3,10 +3,12 @@
 import os
 import yaml
 import torch
-from trojanzoo.utils.param import Param
+from .param import Param
+from typing import List
 
+from trojanzoo import __file__ as rootfile
 path = {
-    'system': os.path.dirname(os.path.abspath(__file__)),
+    'package': os.path.dirname(rootfile) + '/config/',
     'user': None,
     'project': './config/',
     'cmd': None
@@ -14,20 +16,20 @@ path = {
 
 
 class Config:
-    """ A singleton class to process config. The config is composed of ``system``, ``user``, ``project`` and ``cmd``.
+    """A singleton class to process config. The config is composed of ``package``, ``user``, ``project`` and ``cmd``.
 
-    :param system: The global config
-    :type system: Param
-    :param user: The user config
-    :type user: Param
-    :param project: The project config saved in ``./config/``
-    :type project: Param
-    :param cmd: The config from ``path``, usually passed by ``--config`` in command line.
-    :type cmd: Param
+    Attributes:
+        package (Param): The global config saved in ``trojanzoo/config/``
+        user (Param): The user config
+        project (Param): The project config saved in ``./config/``
+        cmd (Param): The config from ``path``, usually passed by ``--config`` in command line.
 
+        config (Param): The combined config.
+
+        env (Param): The environment variables.
     """
 
-    system = Param()
+    package = Param()
     user = Param()
     project = Param()
     cmd = Param()
@@ -39,7 +41,7 @@ class Config:
     @classmethod
     def get_config(cls) -> Param:
         result = Param()
-        for element in [cls.system, cls.user, cls.project, cls.cmd]:
+        for element in [cls.package, cls.user, cls.project, cls.cmd]:
             result.update(element)
         return result
 
@@ -59,7 +61,7 @@ class Config:
                 #     if name != _filter:
                 #         continue
                 if ext in ['.yml', '.yaml', 'json']:
-                    _dict.update({name: Config.load_config(path+_file)})
+                    _dict.update({name: Config.load_config(path + _file)})
             return _dict
         elif os.path.isfile(path):
             name, ext = os.path.splitext(os.path.split(path)[1])
@@ -77,12 +79,11 @@ class Config:
     def update(cls, *args, cmd_path: str = None):
         """Update the config
 
-        :param system_path: [description], defaults to ``os.path.dirname(os.path.abspath(__file__))``
-        :type system_path: [type], optional
-        :param project_path: [description], defaults to ``'./config/'``
-        :type project_path: str, optional
-        :param cmd_path: the path to load ``cmd``, defaults to ``None``
-        :type cmd_path: str, optional
+        Args:
+            args (List[str]): values in ``['package', 'user', 'project']``
+            package_path (str): ``trojanzoo/config/``
+            project_path (str): ``./config/``
+            cmd_path (str): the path to load ``cmd``. Default: ``None``
         """
         args = list(args)
         path['cmd'] = cmd_path
@@ -112,5 +113,5 @@ class Config:
             cls.init_env()
 
 
-Config.update('system', 'user', 'project')
+Config.update('package', 'user', 'project')
 Config.update_env(init=True)

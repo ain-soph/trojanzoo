@@ -13,30 +13,38 @@ redirect = Indent_Redirect(buffer=True, indent=10)
 
 
 class Parser_Seq(Module):
-    """ A sequential parser following order of ``[ [prefix], *args]``
+    r"""A sequential parser following order of ``[*prefix, *args]``
 
-    :param prefix: prefix parsers, defaults to ``[Parser_Config(), Parser_Main()]``
-    :type default: List[Parser], optional
+    Args:
+        prefix (List[Parser]): prefix parsers. Default: ``[Parser_Config(), Parser_Main()]``.
+
+    Attributes:
+        parser_list (List[Parser]): Parser List.
+        args_list (Module): Arguments List.
+        module_list (Module): Module List.
     """
 
     def __init__(self, *args: Tuple[Parser], prefix: List[Parser] = [Parser_Config(), Parser_Main()]):
+        # type: (Tuple[Parser], List[Parser]) -> None  # noqa
         self.parser_list = prefix
         self.parser_list.extend(args)
         self.args_list = Module()
         self.module_list = Module()
 
-    def parse_args(self, args: str = None, namespace: argparse.Namespace = None, verbose: bool = None):
+    def parse_args(self, args: str = None, namespace: argparse.Namespace = None, verbose: bool = None) -> Module:
+        # type: (str, argparse.Namespace, bool) -> Module  # noqa
         """Call ``parse_args`` for each parser in ``self.parser_list`` and save the results at ``self.args_list``
 
-        :param args: ``args`` passed to ``parser.parse_args``, defaults to None
-        :type args: str, optional
-        :param namespace: ``namespace`` passed to ``parser.parse_args``, defaults to None
-        :type namespace: argparse.Namespace, optional
-        :param verbose: output arguments information, defaults to None
-        :type verbose: bool, optional
-        :raises SystemExit: output help information
-        :return: ``self.args_list``
-        :rtype: Module
+        Args:
+            args (str): ``args`` passed to ``parser.parse_args``. Default: None.
+            namespace (argparse.Namespace): ``namespace`` passed to ``parser.parse_args``. Default: None.
+            verbose (bool): output arguments information. Default: None.
+
+        Raises:
+            SystemExit: output help information
+
+        Returns:
+            :class:`Module`
         """
         help_flag = False
         sys.stdout = redirect
@@ -48,11 +56,11 @@ class Parser_Seq(Module):
                 self.args_list[parser.name] = parser.parse_args(
                     args, namespace=namespace)
                 print(self.args_list[parser.name])
-                print('-'*20)
+                print('-' * 20)
                 print()
             except SystemExit:
                 help_flag = True
-                print('-'*20)
+                print('-' * 20)
                 print()
         if verbose is None:
             verbose = help_flag or ('--verbose' in sys.argv[1:])
@@ -63,13 +71,15 @@ class Parser_Seq(Module):
             raise SystemExit
         return self.args_list
 
-    def get_module(self, verbose: bool = None, **kwargs):
-        """Call ``get_module`` for each parser in ``self.parser_list`` and save the results at ``self.module_list``
+    def get_module(self, verbose: bool = None, **kwargs) -> Module:
+        # type: (bool, dict) -> Module
+        """Call ``get_module`` for each parser in :attr:`parser_list and save the results at :attr:'self.module_list`
 
-        :param verbose: output module information, defaults to None
-        :type verbose: bool, optional
-        :return: ``self.module_list``
-        :rtype: Module
+        Args:
+            verbose (bool): output module information. Default: None.
+
+        Returns:
+            module_list(:class:`Module`)
         """
         if verbose is None:
             if 'main' in self.args_list.keys():
@@ -93,8 +103,8 @@ class Parser_Seq(Module):
                     parser.name, **ansi), indent=10)
                 try:
                     self.module_list[parser.name].summary(indent=10)
-                except:
+                except Exception:
                     prints(self.module_list[parser.name], indent=10)
-                prints('-'*20, indent=10)
+                prints('-' * 20, indent=10)
                 print()
         return self.module_list

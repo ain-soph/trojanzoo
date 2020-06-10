@@ -3,7 +3,7 @@
 from .parser import Parser
 from trojanzoo.dataset import Dataset
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 config = Config.config
 
 
@@ -12,7 +12,6 @@ class Parser_Dataset(Parser):
 
     Attributes:
         name (str): ``'dataset'``
-        parser (argparse.ArgumentParser): argument parser.
     """
 
     @staticmethod
@@ -27,8 +26,8 @@ class Parser_Dataset(Parser):
                             help='download dataset if not exist by calling dataset.initialize()')
 
     @classmethod
-    def get_module(cls, dataset=None, **kwargs) -> Dataset:
-        # type: (str, dict) -> Dataset
+    def get_module(cls, dataset=None, **kwargs):
+        # type: (str, dict) -> Dataset  # noqa
         r"""get dataset.
 
         Args:
@@ -38,6 +37,6 @@ class Parser_Dataset(Parser):
         """
         if dataset is None:
             dataset: str = config['dataset']['default_dataset']
-        result: Param = cls.combine_param(config=config['dataset'], dataset=dataset,
-                                          filter_list=['default_dataset'], **kwargs)
+        result = cls.combine_param(config=config['dataset'], dataset=dataset,
+                                   filter_list=['default_dataset'], **kwargs)
         return super().get_module('dataset', dataset, **result)

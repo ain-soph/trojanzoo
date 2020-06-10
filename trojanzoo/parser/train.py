@@ -7,15 +7,15 @@ from trojanzoo.model import Model
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 config = Config.config
 
 
 class Parser_Train(Parser):
-    """Train Parser to get ``optimizer``,``lr_scheduler`` and arguments for training.
+    r"""Train Parser to get :class:`Optimizer`, :class:`_LRScheduler` and arguments for training.
 
-    :param name: ``'train'``.
-    :type name: str
+    Attributes:
+        name (str): ``'train'``
     """
     name = 'train'
 
@@ -40,12 +40,16 @@ class Parser_Train(Parser):
 
     @staticmethod
     def get_module(model: Model, **kwargs) -> (Optimizer, _LRScheduler, dict):
-        """get ``optimizer``,``lr_scheduler`` and arguments for training by splitting ``kwargs`` to ``model.define_optimizer()`` and ``model._train()``
+        # type: (Model, dict) -> (Optimizer, _LRScheduler, dict)  # noqa
+        """
+        | get :class:`Optimizer`, :class:`_LRScheduler` and arguments for training
+        | by splitting ``kwargs`` to :meth:`Model.define_optimizer` and :func:`Model._train`.
 
-        :param model: model
-        :type model: Model
-        :return: (optimizer, lr_scheduler, training arguments)
-        :rtype: (Optimizer, _LRScheduler, dict)
+        Args:
+            model (Model):
+
+        Returns:
+            (:class:`Optimizer`, :class:`_LRScheduler`, training arguments)
         """
 
         dataset = 'default'

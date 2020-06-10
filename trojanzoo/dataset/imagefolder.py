@@ -13,7 +13,7 @@ from typing import Union, Dict
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 
@@ -34,23 +34,23 @@ class ImageFolder(ImageSet):
     def initialize(self, verbose=True, **kwargs):
         file_path = self.download()
         uncompress(file_path=file_path.values(),
-                   target_path=self.folder_path+self.name, verbose=verbose)
-        os.rename(self.folder_path+self.name+'/{}/'.format(self.org_folder_name['train']),
-                  self.folder_path+self.name+'/train/')
+                   target_path=self.folder_path + self.name, verbose=verbose)
+        os.rename(self.folder_path + self.name + '/{}/'.format(self.org_folder_name['train']),
+                  self.folder_path + self.name + '/train/')
         if '/' in self.org_folder_name['train']:
-            shutil.rmtree(self.folder_path+self.name + '/' +
-                          self.org_folder_name['train'].split('/')[0])
+            shutil.rmtree(self.folder_path + self.name + '/'
+                          + self.org_folder_name['train'].split('/')[0])
         if self.valid_set:
-            os.rename(self.folder_path+self.name+'/{}/'.format(self.org_folder_name['valid']),
-                      self.folder_path+self.name+'/valid/')
+            os.rename(self.folder_path + self.name + '/{}/'.format(self.org_folder_name['valid']),
+                      self.folder_path + self.name + '/valid/')
             if '/' in self.org_folder_name['valid']:
-                shutil.rmtree(self.folder_path+self.name + '/' +
-                              self.org_folder_name['valid'].split('/')[0])
+                shutil.rmtree(self.folder_path + self.name + '/'
+                              + self.org_folder_name['valid'].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
             transform = self.get_transform(mode=mode)
-        return datasets.ImageFolder(root=self.folder_path+self.name+'/{}/'.format(mode),
+        return datasets.ImageFolder(root=self.folder_path + self.name + '/{}/'.format(mode),
                                     transform=transform)
 
     def download(self, url: Dict[str, str] = None, file_path: str = None,
@@ -63,14 +63,14 @@ class ImageFolder(ImageSet):
             if file_name is None:
                 file_name = {}
                 file_path = {}
-                file_name['train'] = self.name+'_train.'+file_ext
-                file_path['train'] = folder_path+file_name['train']
+                file_name['train'] = self.name + '_train.' + file_ext
+                file_path['train'] = folder_path + file_name['train']
                 if self.valid_set:
-                    file_name['valid'] = self.name+'_valid.'+file_ext
-                    file_path['valid'] = folder_path+file_name['valid']
+                    file_name['valid'] = self.name + '_valid.' + file_ext
+                    file_path['valid'] = folder_path + file_name['valid']
         print('Downloading Dataset %s' % self.name)
         for mode in file_path.keys():
-            prints(mode, ' '*10, file_path[mode], indent=10)
+            prints(mode, ' ' * 10, file_path[mode], indent=10)
             if not os.path.exists(file_path[mode]):
                 download_url_to_file(url[mode], file_path[mode])
                 print('\033[1A\033[K', end='')
@@ -84,10 +84,10 @@ class ImageFolder(ImageSet):
             sample_num = len(class_dict)
         if child_name is None:
             child_name = self.name + '_sample%d' % sample_num
-        src_path = self.folder_path+self.name+'/'
+        src_path = self.folder_path + self.name + '/'
         mode_list = [_dir for _dir in os.listdir(
             src_path) if os.path.isdir(_dir)]
-        dst_path = env['data_dir']+self.data_type + \
+        dst_path = env['data_dir'] + self.data_type + \
             '/{0}/data/{0}/'.format(child_name)
         if class_dict is None:
             assert sample_num
@@ -95,7 +95,7 @@ class ImageFolder(ImageSet):
             np.random.seed(env['seed'])
             np.random.shuffle(idx_list)
             idx_list = idx_list[:sample_num]
-            class_list = np.array(os.listdir(src_path+mode_list[0]))[idx_list]
+            class_list = np.array(os.listdir(src_path + mode_list[0]))[idx_list]
             class_dict = {}
             for class_name in class_list:
                 class_dict[class_name] = [class_name]
@@ -110,16 +110,16 @@ class ImageFolder(ImageSet):
             assert src_mode in ['train', 'valid', 'test', 'val']
             dst_mode = 'valid' if src_mode == 'val' else src_mode
             for dst_class in class_dict.keys():
-                if not os.path.exists(dst_path+dst_mode+'/'+dst_class):
-                    os.makedirs(dst_path+dst_mode+'/'+dst_class)
+                if not os.path.exists(dst_path + dst_mode + '/' + dst_class):
+                    os.makedirs(dst_path + dst_mode + '/' + dst_class)
                 prints(dst_class, indent=10)
                 class_list = class_dict[dst_class]
                 for src_class in class_list:
-                    _list = os.listdir(src_path+src_mode+'/'+src_class)
+                    _list = os.listdir(src_path + src_mode + '/' + src_class)
                     prints(src_class + '{:>15d}'.format(len(_list)), indent=20)
                     for _file in tqdm(_list):
-                        shutil.copyfile(src_path+src_mode+'/'+src_class+'/'+_file,
-                                        dst_path+dst_mode+'/'+dst_class+'/'+_file)
+                        shutil.copyfile(src_path + src_mode + '/' + src_class + '/' + _file,
+                                        dst_path + dst_mode + '/' + dst_class + '/' + _file)
                     print('\033[1A\033[K', end='')
 
     # def split(self, ratio_dict={'train': 8, 'valid': 1, 'test': 1}, verbose=True):
