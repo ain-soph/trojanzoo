@@ -14,6 +14,8 @@ class Parser_Dataset(Parser):
         name (str): ``'dataset'``
     """
 
+    name = 'dataset'
+
     @staticmethod
     def add_argument(parser):
         parser.add_argument('-d', '--dataset', dest='dataset', type=str,
