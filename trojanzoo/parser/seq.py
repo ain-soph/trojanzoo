@@ -73,7 +73,7 @@ class Parser_Seq(Module):
 
     def get_module(self, verbose: bool = None, **kwargs) -> Module:
         # type: (bool, dict) -> Module
-        """Call ``get_module`` for each parser in :attr:`parser_list and save the results at :attr:'self.module_list`
+        """Call ``get_module`` for each parser in :attr:`parser_list` and save the results at :attr:'self.module_list`
 
         Args:
             verbose (bool): output module information. Default: None.

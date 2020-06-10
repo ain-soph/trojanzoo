@@ -30,7 +30,7 @@ class Parser_Main(Parser):
         r"""set default device and benchmark.
 
         Args:
-            device (str): set to ``\'cpu\'`` to force cpu-only and ``\'gpu\'``, ``\'cuda\'`` to force gpu-only. Default: ``\'auto\'``.
+            device (str): set to ``'cpu'`` to force cpu-only and ``'gpu'``, ``'cuda'`` to force gpu-only. Default: ``'auto'``.
             benchmark (bool): use ``torch.backends.cudnn.benchmark`` to accelerate without deterministic. Default: ``False``.
             verbose (bool): show arguments and module information. Default: ``False``.
         Raises:
