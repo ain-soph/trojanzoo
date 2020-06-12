@@ -28,7 +28,7 @@ class ImageSet(Dataset):
     def get_transform(cls, **kwargs):
         return transforms.ToTensor()
 
-    def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
+    def get_dataloader(self, mode: str, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, drop_last=False, **kwargs):
         if batch_size is None:
             batch_size = 1 if mode == 'test' else self.batch_size
@@ -36,12 +36,11 @@ class ImageSet(Dataset):
             shuffle = True if mode == 'train' else False
         if num_workers is None:
             num_workers = self.num_workers if mode == 'train' else 0
-
-        dataset = self.get_dataset(mode, **kwargs)
-        torch.manual_seed(env['seed'])
+        if dataset is None:
+            dataset = self.get_dataset(mode, **kwargs)
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
                                            num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
     @staticmethod
-    def get_data(data, **kwargs):
+    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor):
         return to_tensor(data[0]), to_tensor(data[1], dtype='long')

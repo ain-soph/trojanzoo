@@ -87,7 +87,7 @@ class Attack:
             return set(['init', 'final', 'middle', 'memory'])
 
     @staticmethod
-    def output_iter(self, name: str, _iter, iteration=None, indent=0):
+    def output_iter(name: str, _iter, iteration=None, indent=0):
         string = name + ' Iter: ' + output_iter(_iter + 1, iteration)
         prints(string, indent=indent)
 

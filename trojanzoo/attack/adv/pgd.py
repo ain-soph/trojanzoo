@@ -67,7 +67,8 @@ class PGD(Attack):
 
         if 'init' in output:
             self.output_result(target=target, _input=_input, indent=indent, mode='init')
-        self.model.eval()
+        if self.model:
+            self.model.eval()
 
         if noise is None:
             noise = torch.zeros_like(_input[0] if self.universal else _input)
@@ -103,8 +104,9 @@ class PGD(Attack):
             if self.universal:
                 grad = grad.mean(dim=0)
             noise.data = (noise - alpha * torch.sign(grad)).data
-            noise.data = self.projector(noise, epsilon, norm=norm).data
+            noise.data = self.projector(noise, epsilon, norm=self.norm).data
             X = add_noise(_input, noise, batch=self.universal)
+            noise.data = (X - _input).data
 
             if 'middle' in output:
                 self.output_info(target=target, _input=X, indent=indent, mode='middle',

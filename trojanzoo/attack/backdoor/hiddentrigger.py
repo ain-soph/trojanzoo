@@ -9,9 +9,6 @@ from trojanzoo.utils.model import AverageMeter
 import numpy as np
 import torch
 
-from trojanzoo.utils.config import Config
-env = Config.env
-
 
 class HiddenTrigger(BadNet):
     r"""
@@ -57,25 +54,36 @@ class HiddenTrigger(BadNet):
         self.decay_iteration = decay_iteration
         self.decay_ratio = decay_ratio
 
-        self.pgd = PGD(alpha=self.poison_lr, epsilon=self.epsilon, output=0)
+        self.pgd = PGD(alpha=self.poison_lr, epsilon=self.epsilon, early_stop=False, output=0)
 
-        target = self.target_class
-        source = list(range(self.dataset.num_classes))
-        source.pop(target)
+    def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
+        if iteration is None:
+            iteration = self.iteration
+        poison_imgs = self.generate_poisoned_data()
+        print('concat dataset')
+        poison_set = torch.utils.data.TensorDataset(
+            poison_imgs.to('cpu'), self.target_class * torch.ones(self.poison_num, dtype=torch.long))
+        train_set = self.dataset.get_dataset('train', full=True, target_transform=torch.tensor)
 
-        self.target_loader = self.dataset.get_dataloader('train', full=True, classes=target,
-                                                         batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
-        self.source_loader = self.dataset.get_dataloader('train', full=True, classes=source,
-                                                         batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
+        final_set = torch.utils.data.ConcatDataset((poison_set, train_set))
+        final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
+        print('retrain')
+        self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                          loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
-    def get_filename(self, mark_alpha=None, target_class=None, iteration=None):
-        return super().get_filename(mark_alpha=mark_alpha, target_class=target_class, iteration=iteration)
+    def get_filename(self):
+        return "Need to do"
+
+    def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
+        self.model._validate(print_prefix='Validate Clean', **kwargs)
+        self.model._validate(print_prefix='Validate Watermark', get_data=self.get_data, keep_org=False, **kwargs)
+        return 0.0, 0.0, 0.0
 
     def loss(self, poison_imgs, source_feats):
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
         return ((poison_feats - source_feats)**2).sum()
 
-    def generate_poisoned_data(self, **kwargs) -> torch.Tensor:
+    def generate_poisoned_data(self) -> torch.Tensor:
         r"""
         | **Algorithm1**
         | Sample K images of target class (Group I)
@@ -90,25 +98,41 @@ class HiddenTrigger(BadNet):
             In the original code, Group II is sampled with Group I together rather than resampled in every loop. We are following this style.
         """
 
+        # -----------------------------Prepare Data--------------------------------- #
+        print('prepare dataset')
+        target = self.target_class
+        source = list(range(self.dataset.num_classes))
+        source.pop(target)
+        self.target_loader = self.dataset.get_dataloader('train', full=True, classes=target,
+                                                         batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
+        self.source_loader = self.dataset.get_dataloader('train', full=True, classes=source,
+                                                         batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
         for data in self.target_loader:
             target_imgs, _ = self.dataset.get_data(data)
             break
         for data in self.source_loader:
             source_imgs, _ = self.dataset.get_data(data)
             break
-        # Random Location Feature Requested
         source_imgs = self.add_mark(source_imgs)
         noise = torch.zeros_like(target_imgs)
-
         source_feats = self.model.get_layer(source_imgs, layer_output=self.preprocess_layer).detach()
-        lr = self.poison_lr
+
+        # -----------------------------Poison Frog--------------------------------- #
+        print('poison frog attack')
 
         def loss_func(poison_imgs):
             return self.loss(poison_imgs, source_feats=source_feats)
 
-        for _iter in range(self.poison_iteration):
-            self.pgd.attack(_input=target_imgs, noise=noise, iteration=1, alpha=lr, loss_fn=loss_func)
-            if self.decay:
+        if self.decay:
+            lr = self.poison_lr
+            for _iter in range(self.poison_iteration):
+                self.output_iter(name=self.name, _iter=_iter, iteration=self.poison_iteration)
+                poison_imgs, _ = self.pgd.attack(_input=target_imgs, noise=noise,
+                                                 iteration=1, alpha=lr, loss_fn=loss_func)
                 lr = self.poison_lr * (self.decay_ratio**(_iter // self.decay_iteration))
+        else:
+            poison_imgs, _ = self.pgd.attack(_input=target_imgs, noise=noise,
+                                             iteration=1, alpha=self.poison_lr, loss_fn=loss_func)
+        poison_imgs = (target_imgs + noise).detach().clamp(0, 1)
 
-        return (target_imgs + lr).detach()
+        return poison_imgs

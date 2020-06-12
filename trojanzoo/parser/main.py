@@ -40,6 +40,8 @@ class Parser_Main(Parser):
             env['verbose'] = verbose
         if device is None and 'device' in Config.config['env'].keys():
             device = Config.config['env']['device']
+        if benchmark is None and 'benchmark' in Config.config['env'].keys():
+            benchmark = Config.config['env']['benchmark']
         env['device'] = 'cpu'
         env['num_gpus'] = 0
         if device in ['gpu', 'cuda', 'auto'] or 'cuda' in device:

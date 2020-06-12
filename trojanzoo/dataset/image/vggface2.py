@@ -38,8 +38,8 @@ class VGGface2(ImageFolder):
             if folder_path is None:
                 folder_path = self.folder_path
             if file_name is None:
-                file_name = {'train': self.name+'_train.'+file_ext}
-                file_path = {'train': folder_path+file_name['train']}
+                file_name = {'train': self.name + '_train.' + file_ext}
+                file_path = {'train': folder_path + file_name['train']}
         if os.path.exists(file_path['train']):
             print('File Already Exists: ', file_path)
             return file_path

@@ -22,8 +22,8 @@ class MNIST(ImageSet):
         validset = datasets.MNIST(root=self.folder_path,
                                   train=False, download=True)
 
-    def get_org_dataset(self, mode, transform: Union[str, object] = 'default'):
+    def get_org_dataset(self, mode, transform: Union[str, object] = 'default', **kwargs):
         if transform == 'default':
             transform = self.get_transform(mode=mode)
         assert mode in ['train', 'valid']
-        return datasets.MNIST(root=self.folder_path, train=(mode == 'train'), transform=transform)
+        return datasets.MNIST(root=self.folder_path, train=(mode == 'train'), transform=transform, **kwargs)

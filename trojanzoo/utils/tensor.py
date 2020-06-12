@@ -112,7 +112,7 @@ def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
     batch_noise = noise
     if batch:
         batch_noise = repeat_to_batch(noise, x.shape[0])
-    noisy_input = (x + batch_noise).clamp()
+    noisy_input = (x + batch_noise).clamp(0, 1)
     return noisy_input
 
 

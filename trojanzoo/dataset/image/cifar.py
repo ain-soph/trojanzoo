@@ -39,11 +39,11 @@ class CIFAR10(ImageSet):
             transform = transforms.ToTensor()
         return transform
 
-    def get_org_dataset(self, mode, transform: Union[str, object] = 'default'):
+    def get_org_dataset(self, mode, transform: Union[str, object] = 'default', **kwargs):
         if transform == 'default':
             transform = self.get_transform(mode=mode)
         assert mode in ['train', 'valid']
-        return datasets.CIFAR10(root=self.folder_path, train=(mode == 'train'), transform=transform)
+        return datasets.CIFAR10(root=self.folder_path, train=(mode == 'train'), transform=transform, **kwargs)
 
 
 class CIFAR100(CIFAR10):
@@ -59,8 +59,8 @@ class CIFAR100(CIFAR10):
         validset = datasets.CIFAR100(
             root=self.folder_path, train=False, download=True)
 
-    def get_org_dataset(self, mode, transform: Union[str, object] = 'default'):
+    def get_org_dataset(self, mode, transform: Union[str, object] = 'default', **kwargs):
         if transform == 'default':
             transform = self.get_transform(mode=mode)
         assert mode in ['train', 'valid']
-        return datasets.CIFAR100(root=self.folder_path, train=(mode == 'train'), transform=transform)
+        return datasets.CIFAR100(root=self.folder_path, train=(mode == 'train'), transform=transform, **kwargs)

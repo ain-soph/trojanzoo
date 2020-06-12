@@ -2,9 +2,11 @@
 
 from .badnet import BadNet
 
+
 class TrojanNN(BadNet):
-    
+
     name = 'trojannn'
+
     def __init__(self, preprocess_layer='features', neuron_num=2, batch_num=32, threshold=5, target_value=10, neuron_lr=0.015, neuron_epoch=20,
                  **kwargs):
         super().__init__(**kwargs)
@@ -26,13 +28,13 @@ class TrojanNN(BadNet):
         # org_mark_height = float(mark.shape[-2])
         # org_mark_width = float(mark.shape[-1])
         if self.mark_height == 0 and self.mark_width == 0:
-            self.mark_height = int(self.mark_height_ratio*float(shape[-2]))
-            self.mark_width = int(self.mark_width_ratio*float(shape[-1]))
+            self.mark_height = int(self.mark_height_ratio * float(shape[-2]))
+            self.mark_width = int(self.mark_width_ratio * float(shape[-1]))
         # assert self.mark_height != 0 and self.mark_width != 0
         if self.mark_height_offset is None:
-            self.mark_height_offset = shape[-2]-self.mark_height
+            self.mark_height_offset = shape[-2] - self.mark_height
         if self.mark_width_offset is None:
-            self.mark_width_offset = shape[-1]-self.mark_width
+            self.mark_width_offset = shape[-1] - self.mark_width
         # assert self.mark_height_offset is not None and self.mark_height_offset is not None
 
         mark = Image.fromarray(to_numpy(float2byte(mark)))
@@ -95,21 +97,21 @@ class TrojanNN(BadNet):
         mask = mask.repeat(1, shape[0], 1, 1)
         self.mask_pixel_num = mask.sum()
         print('mask_pixel_num: ', self.mask_pixel_num)
-        alpha_mask = (mask*(1-alpha))
+        alpha_mask = (mask * (1 - alpha))
         return new_mark.detach(), mask.detach(), alpha_mask.detach()
 
     # Give the mark init values for non transparent pixels.
     def random_init_mark(self, mark, mask):
         init_mark = to_tensor(to_valid_img(torch.randn_like(mark)))
         zeros = to_tensor(torch.zeros_like(mark))
-        init_mark = torch.where(mask == 1, init_mark, zeros-1)
+        init_mark = torch.where(mask == 1, init_mark, zeros - 1)
         return init_mark.detach()
 
     # add mark to the Image with mask.
     def add_mark(self, X, mark, _mask, detach=True, original=False):
         if original:
             return X
-        result = to_tensor(X*(1-_mask)+mark*_mask)
+        result = to_tensor(X * (1 - _mask) + mark * _mask)
         if detach:
             result = result.detach()
         return result
@@ -165,7 +167,7 @@ class TrojanNN(BadNet):
 
         def loss_func(X):
             loss = self.model.get_layer(X, layer_output=self.preprocess_layer)[
-                :, neuron_idx]-self.target_value
+                :, neuron_idx] - self.target_value
             loss = loss.pow(2).view(loss.shape[0], loss.shape[1], -1).mean()
             return loss
 
@@ -199,7 +201,7 @@ class TrojanNN(BadNet):
 
         pgd_alpha = self.module.pgd.alpha
 
-        _mask = alpha_mask*mask
+        _mask = alpha_mask * mask
 
         for _iter in range(self.module.pgd.iteration):
             for i, data in enumerate(self.model.dataset.loader['train']):
@@ -221,13 +223,13 @@ class TrojanNN(BadNet):
                     print('Value of Parameter "mode" should be "white" or "black"!')
                     sys.exit(-1)
                 grad = grad.detach().mean(dim=0, keepdim=True)
-                noise = (noise/4 - grad)*mask
+                noise = (noise / 4 - grad) * mask
                 if init:
                     prev = grad.view(-1).norm(p=2)
                 present = grad.view(-1).norm(p=2)
-                pgd_alpha = pgd_alpha*present/prev
+                pgd_alpha = pgd_alpha * present / prev
 
-                mark = to_valid_img(mark.detach()+pgd_alpha *
+                mark = to_valid_img(mark.detach() + pgd_alpha *
                                     noise).detach()
                 # noise = to_valid_img(
                 #     noise, min=-self.pgd_epsilon, max=self.pgd_epsilon)
@@ -241,9 +243,9 @@ class TrojanNN(BadNet):
         # noise = mark.detach()-org_mark.detach()
         noise = 0
 
-        atanh_mark = arctanh(mark*2-1).detach()
+        atanh_mark = arctanh(mark * 2 - 1).detach()
         atanh_mark.requires_grad = True
-        atanh_alpha_mask = arctanh(alpha_mask*2-1).detach()
+        atanh_alpha_mask = arctanh(alpha_mask * 2 - 1).detach()
         atanh_alpha_mask.requires_grad = True
         optimizer = optim.Adam(
             [atanh_mark, atanh_alpha_mask], lr=0.01, betas=(0.5, 0.9))
@@ -260,7 +262,7 @@ class TrojanNN(BadNet):
                 X.requires_grad = True
 
                 _mark = torch.tanh(atanh_mark).add(1).div(2)
-                _mask = mask*torch.tanh(atanh_alpha_mask).add(1).div(2)
+                _mask = mask * torch.tanh(atanh_alpha_mask).add(1).div(2)
                 _X = self.add_mark(X, _mark, _mask, detach=False)
                 _target = to_tensor(target).repeat(_label.shape[0]).detach()
 
@@ -269,7 +271,7 @@ class TrojanNN(BadNet):
                 h = to_tensor(torch.Tensor([0.0]))
                 loss_cls += float(loss)
                 if self.adapt == 'neural_cleanse' or self.adapt == 'both':
-                    h += _mask.norm(p=1)/self.mask_pixel_num
+                    h += _mask.norm(p=1) / self.mask_pixel_num
                     loss += h
 
                 # if adapt=='strip' or adapt=='both':
@@ -317,7 +319,7 @@ class TrojanNN(BadNet):
         if self.adapt == 'abs':
             _dict = np.load(self.abs.seed_path, allow_pickle=True).item()
             fxs, fys = _dict['x'], _dict['y']
-            fxs = to_tensor(fxs, dtype='float')/255
+            fxs = to_tensor(fxs, dtype='float') / 255
             fys = to_tensor(fys, dtype='long')
             xs = fxs[:20]
             ys = fys[:20]
@@ -343,13 +345,13 @@ class TrojanNN(BadNet):
                     X2 = self.add_mark(X2, watermark, mask, self.alpha)
                     if self.adapt == 'strip' or self.adapt == 'both':
                         h = -self.strip.detect(X2)[1]
-                        loss += h*_lambda
+                        loss += h * _lambda
                         entropy += float(h)
                         counter += 1
                     if self.adapt == 'abs':
                         abs_loss = self.abs.re_mask_loss(neuron_dict,
                                                          xs, watermark, mask)
-                        loss -= 1e-4*abs_loss
+                        loss -= 1e-4 * abs_loss
 
                     X = torch.cat((X, X2))
                     Y = torch.cat((Y, batch_target))
@@ -364,18 +366,18 @@ class TrojanNN(BadNet):
                 top1.update(acc1[0], Y.size(0))
                 top5.update(acc5[0], Y.size(0))
 
-            print(('Epoch: [%d/%d],' % (_epoch+1, retrain_epoch)).ljust(25, ' ') +
+            print(('Epoch: [%d/%d],' % (_epoch + 1, retrain_epoch)).ljust(25, ' ') +
                   'Loss: %.4f,\tTop1 Acc: %.3f,\tTop5 Acc: %.3f' % (losses.avg, top1.avg, top5.avg))
             if lr_scheduler:
                 _lr_scheduler.step()
 
             if validate_interval != 0:
-                if (_epoch+1) % validate_interval == 0 or _epoch == retrain_epoch - 1:
+                if (_epoch + 1) % validate_interval == 0 or _epoch == retrain_epoch - 1:
                     _, cur_acc, _ = self.model._validate()
                     self.model.train()
                     print('---------------------------------------------------')
             if self.adapt == 'strip' or self.adapt == 'both':
-                print('entropy: ', entropy/counter)
+                print('entropy: ', entropy / counter)
         self.model.zero_grad()
         self.model.eval()
 
@@ -391,23 +393,23 @@ class TrojanNN(BadNet):
         correct = 0
         total = 0
 
-        _mask = mask*alpha_mask
+        _mask = mask * alpha_mask
         for i, data in enumerate(self.model.dataset.loader['valid']):
             _input, _label = self.model.get_data(data, mode='train')
             X = self.add_mark(_input, mark, _mask, original=original)
             ones = to_tensor(torch.ones([X.shape[0]]))
             result = self.model(X).argmax(dim=-1)
 
-            num_target = torch.where(_label == target, ones, ones-1)
-            cor = torch.where(result == target, ones, ones-1)
-            rep = cor+num_target
+            num_target = torch.where(_label == target, ones, ones - 1)
+            cor = torch.where(result == target, ones, ones - 1)
+            rep = cor + num_target
 
-            repeat = torch.where(rep == to_tensor(2.), ones, ones-1)
+            repeat = torch.where(rep == to_tensor(2.), ones, ones - 1)
 
-            total += X.shape[0]-num_target.sum()
-            correct += cor.sum()-repeat.sum()
+            total += X.shape[0] - num_target.sum()
+            correct += cor.sum() - repeat.sum()
 
-        return float(correct)/total
+        return float(correct) / total
 
     def target_class_confidence(self, mark: torch.FloatTensor = None, mask: torch.FloatTensor = None, alpha_mask: torch.FloatTensor = None, target: int = None, original=False):
         if mark is None:
@@ -419,7 +421,7 @@ class TrojanNN(BadNet):
         if target is None:
             target = self.target_class
 
-        _mask = mask*alpha_mask
+        _mask = mask * alpha_mask
 
         result_list = []
         for i, data in enumerate(self.model.dataset.loader['valid']):

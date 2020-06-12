@@ -8,6 +8,7 @@
 .dropbox
 .ssh
 **/__pycache__
+**/.ipynb_checkpoints
 *.pyc
 *.ini
 
@@ -22,7 +23,6 @@
 /result
 /output
 /output*/
-/.ipynb*
 abandon
 ref
 prev_projects

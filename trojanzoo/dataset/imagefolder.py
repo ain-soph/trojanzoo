@@ -51,7 +51,7 @@ class ImageFolder(ImageSet):
         if transform == 'default':
             transform = self.get_transform(mode=mode)
         return datasets.ImageFolder(root=self.folder_path + self.name + '/{}/'.format(mode),
-                                    transform=transform)
+                                    transform=transform, **kwargs)
 
     def download(self, url: Dict[str, str] = None, file_path: str = None,
                  folder_path: str = None, file_name: str = None, file_ext: str = 'zip'):
