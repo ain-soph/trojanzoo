@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# from .lenet_simple import LeNet_Simple
-# from .lenet import LeNet
+from .net import Net
 from .resnet import ResNet, ResNetcomp
 from .vgg import VGG, VGGcomp

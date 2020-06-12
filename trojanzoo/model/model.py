@@ -22,7 +22,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from trojanzoo.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 
@@ -37,7 +37,7 @@ class _Model(nn.Module):
         self.num_classes = num_classes
 
         self.features = self.define_features()   # feature extractor
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
         self.flatten = nn.Flatten(start_dim=1)
         self.classifier = self.define_classifier()  # classifier
 
@@ -61,7 +61,7 @@ class _Model(nn.Module):
     # output: (batch_size, [feature_map])
     def get_final_fm(self, x):
         x = self.get_fm(x)
-        x = self.avgpool(x)
+        x = self.pool(x)
         x = self.flatten(x)
         return x
 
@@ -93,12 +93,12 @@ class _Model(nn.Module):
             seq.append(('fc1', nn.Linear(self.conv_dim, self.fc_dim)))
             seq.append(('relu1', nn.ReLU()))
             seq.append(('dropout1', nn.Dropout()))
-            for i in range(self.fc_depth-2):
+            for i in range(self.fc_depth - 2):
                 seq.append(
-                    ('fc'+str(i+2), nn.Linear(self.fc_dim, self.fc_dim)))
-                seq.append(('relu'+str(i+2), nn.ReLU()))
-                seq.append(('dropout'+str(i+2), nn.Dropout()))
-            seq.append(('fc'+str(self.fc_depth),
+                    ('fc' + str(i + 2), nn.Linear(self.fc_dim, self.fc_dim)))
+                seq.append(('relu' + str(i + 2), nn.ReLU()))
+                seq.append(('dropout' + str(i + 2), nn.Dropout()))
+            seq.append(('fc' + str(self.fc_depth),
                         nn.Linear(self.fc_dim, self.num_classes)))
         return nn.Sequential(OrderedDict(seq))
 
@@ -112,13 +112,13 @@ class Model:
         self.dataset = dataset
         self.prefix = prefix
 
-        #------------Auto--------------#
-        if dataset is not None:
+        # ------------Auto-------------- #
+        if dataset:
             data_dir: str = env['data_dir']
             if isinstance(dataset, str):
                 raise TypeError(dataset)
             if folder_path is None:
-                folder_path = data_dir+dataset.data_type+'/'+dataset.name+'/model/'
+                folder_path = data_dir + dataset.data_type + '/' + dataset.name + '/model/'
             if num_classes is None:
                 num_classes = dataset.num_classes
             if loss_weights is None:
@@ -128,11 +128,11 @@ class Model:
 
         self.folder_path = folder_path
 
-        #------------------------------#
+        # ------------------------------ #
         self.criterion = self.define_criterion(loss_weights=loss_weights)
         self.softmax = nn.Softmax(dim=1)
 
-        #-----------Temp---------------#
+        # -----------Temp--------------- #
         # the location when loading pretrained weights using torch.load
         self._model = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel()
@@ -145,7 +145,7 @@ class Model:
             self.cuda()
         self.eval()
 
-    #----------------- Forward Operations ----------------------#
+    # ----------------- Forward Operations ----------------------#
 
     def get_logits(self, _input, randomized_smooth=False, sigma=0.01, n=100, **kwargs):
         if randomized_smooth:
@@ -169,7 +169,7 @@ class Model:
     def loss(self, _input, _label, **kwargs):
         return self.criterion(self(_input, **kwargs), _label)
 
-    #--------------------------------------------------------#
+    # -------------------------------------------------------- #
 
     # Define the optimizer
     # and transfer to that tuning mode.
@@ -186,6 +186,8 @@ class Model:
         if isinstance(parameters, str):
             if parameters == 'full':
                 parameters = self._model.parameters()
+            elif parameters == 'features':
+                parameters = self._model.features.parameters()
             elif parameters == 'classifier':
                 parameters = self._model.classifier.parameters()
             else:
@@ -220,14 +222,14 @@ class Model:
     def define_criterion(self, loss_weights: torch.FloatTensor = None):
         return nn.CrossEntropyLoss(weight=loss_weights)
 
-    #-----------------------------Load & Save Model-------------------------------------------#
+    # -----------------------------Load & Save Model------------------------------------------- #
 
     # file_path: (default: '') if '', use the default path. Else if the path doesn't exist, quit.
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
     def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
              features=True, map_location='default', verbose=False):
-        if map_location is not None:
+        if map_location:
             if map_location == 'default':
                 map_location = env['device']
         if file_path is None:
@@ -277,7 +279,7 @@ class Model:
     def load_official_weights(self, verbose=True):
         raise NotImplementedError
 
-    #-----------------------------------Train and Validate------------------------------------#
+    # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                validate_interval=10, save=True, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -341,17 +343,17 @@ class Model:
                 # if i % 10 == 0:
                 #     progress.display(i)
             epoch_time = str(datetime.timedelta(seconds=int(
-                time.perf_counter()-epoch_start)))
+                time.perf_counter() - epoch_start)))
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}'.format(
-                    output_iter(_epoch+1, epoch), **ansi)
-                prints('{:<60}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+                    output_iter(_epoch + 1, epoch), **ansi)
+                prints('{:<60}Loss: {:.4f},  \t Top1 Acc: {:.3f}, \t Top5 Acc: {:.3f}, \t Time: {}'.format(
                     pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
             if validate_interval != 0:
-                if (_epoch+1) % validate_interval == 0 or _epoch == epoch - 1:
+                if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
                     _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                                   verbose=verbose, indent=indent, **kwargs)
                     self.train()
@@ -359,13 +361,13 @@ class Model:
                         self.save(prefix=prefix, verbose=verbose)
                         best_acc = cur_acc
                     if verbose:
-                        print('-'*50)
+                        print('-' * 50)
         self.zero_grad()
         self.eval()
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
-                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs):
+                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs) -> (float, float, float):
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
@@ -411,17 +413,17 @@ class Model:
                 # if i % 10 == 0:
                 #     progress.display(i)
         epoch_time = str(datetime.timedelta(seconds=int(
-            time.perf_counter()-epoch_start)))
+            time.perf_counter() - epoch_start)))
         if verbose:
             pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi)
-            prints('{:<35}Loss: {:.4f},\tTop1 Acc: {:.3f},\tTop5 Acc: {:.3f}, \t Time: {}'.format(
+            prints('{:<35}Loss: {:.4f},  \t Top1 Acc: {:.3f}, \t Top5 Acc: {:.3f}, \t Time: {}'.format(
                 pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
-    #-------------------------------------------Utility---------------------------------------#
+    # -------------------------------------------Utility--------------------------------------- #
 
     def get_data(self, data, **kwargs):
-        if self.dataset is not None:
+        if self.dataset:
             return self.dataset.get_data(data, **kwargs)
         else:
             return data
@@ -454,7 +456,7 @@ class Model:
 
     def get_parallel(self):
         if env['num_gpus'] > 1:
-            if self.dataset is not None:
+            if self.dataset:
                 if self.dataset.data_type != 'image':
                     return self._model
             elif self.name[0] == 'g' and self.name[2] == 'n':
@@ -466,31 +468,32 @@ class Model:
     @staticmethod
     def output_layer_information(layer, depth=0, indent=0, verbose=False, tree_length=None):
         if tree_length is None:
-            tree_length = 10*(depth+1)
+            tree_length = 10 * (depth + 1)
         if depth > 0:
             for name, module in layer.named_children():
                 _str = '{blue_light}{0}{reset}'.format(name, **ansi)
                 if verbose:
                     _str = _str.ljust(
-                        tree_length-indent+len(ansi['blue_light'])+len(ansi['reset']))
+                        tree_length - indent + len(ansi['blue_light']) + len(ansi['reset']))
                     item = str(module).split('\n')[0]
                     if item[-1] == '(':
                         item = item[:-1]
                     _str += item
                 prints(_str, indent=indent)
                 Model.output_layer_information(
-                    module, depth=depth-1, indent=indent+10, verbose=verbose, tree_length=tree_length)
+                    module, depth=depth - 1, indent=indent + 10, verbose=verbose, tree_length=tree_length)
 
     def summary(self, indent=0, **kwargs):
         _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
         prints(_str, indent=indent)
-        self.output_layer_information(self._model, indent=indent+10, **kwargs)
+        self.output_layer_information(self._model, indent=indent + 10, **kwargs)
 
     @staticmethod
     def split_name(name, layer=None, default_layer=0, output=False):
         return func(name, layer=layer, default_layer=default_layer, output=output)
 
-        #-----------------------------------------Reload------------------------------------------#
+    # -----------------------------------------Reload------------------------------------------ #
+
     def __call__(self, *args, **kwargs):
         return self.get_logits(*args, **kwargs)
 
@@ -545,7 +548,7 @@ class Model:
     def apply(self, fn):
         return self._model.apply(fn)
 
-    #-----------------------------------------------------------------------------------------#
+    # ----------------------------------------------------------------------------------------- #
 
     def remove_misclassify(self, data, **kwargs):
         with torch.no_grad():

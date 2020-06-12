@@ -27,7 +27,7 @@ class _ResNet(_ImageModel):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.avgpool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
@@ -57,8 +57,8 @@ class _ResNet(_ImageModel):
                     elif 'features.'+l+'.'+name == layer_input:
                         record = True
         if record:
-            x = self.avgpool(x)
-            od['avgpool'] = x
+            x = self.pool(x)
+            od['pool'] = x
             x = x.flatten(start_dim=1)
             od['features'] = x
         elif layer_input == 'features':
@@ -85,7 +85,7 @@ class _ResNet(_ImageModel):
                 for name, _ in block.named_children():
                     if 'relu' not in name and 'bn' not in name:
                         layer_name.append('features.'+l+'.'+name)
-        layer_name.append('avgpool')
+        layer_name.append('pool')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name:
                 layer_name.append('classifier.'+name)
@@ -124,7 +124,7 @@ class _ResNetcomp(_ResNet):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.avgpool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
         ]))

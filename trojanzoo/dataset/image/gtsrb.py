@@ -16,16 +16,17 @@ class GTSRB(ImageFolder):
     def __init__(self, loss_weights=True, **kwargs):
         super().__init__(loss_weights=loss_weights, **kwargs)
 
-    def get_transform(self, mode):
+    @classmethod
+    def get_transform(cls, mode):
         if mode == 'train':
             transform = transforms.Compose([
-                transforms.RandomCrop(self.n_dim, padding=4),
+                transforms.RandomCrop(cls.n_dim, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
             ])
         else:
             transform = transforms.Compose([
-                transforms.Resize(self.n_dim),
+                transforms.Resize(cls.n_dim),
                 transforms.ToTensor(),
             ])
         return transform

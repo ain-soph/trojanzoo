@@ -3,6 +3,9 @@
 from .parser import Parser
 from .seq import Parser_Seq
 
+from .config import Parser_Config
+from .main import Parser_Main
+
 from .dataset import Parser_Dataset
 from .model import Parser_Model
 

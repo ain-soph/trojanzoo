@@ -37,7 +37,7 @@ class _ImageModel(_Model):
             num_classes = 1000
         super().__init__(num_classes=num_classes, **kwargs)
         self.norm_par = None
-        if norm_par is not None:
+        if norm_par:
             self.norm_par = {key: torch.as_tensor(value).pin_memory()
                              for key, value in norm_par.items()}
 
@@ -47,7 +47,7 @@ class _ImageModel(_Model):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
     def preprocess(self, x):
-        if self.norm_par is not None:
+        if self.norm_par:
             mean = self.norm_par['mean'].to(
                 x.device, non_blocking=True)[None, :, None, None]
             std = self.norm_par['std'].to(
@@ -84,12 +84,12 @@ class _ImageModel(_Model):
         for name, module in self.features.named_children():
             if record:
                 x = module(x)
-                od['features.'+name] = x
-            elif 'features.'+name == layer_input:
+                od['features.' + name] = x
+            elif 'features.' + name == layer_input:
                 record = True
         if record:
-            x = self.avgpool(x)
-            od['avgpool'] = x
+            x = self.pool(x)
+            od['pool'] = x
             x = self.flatten(x)
             od['flatten'] = x
             od['features'] = x
@@ -99,8 +99,8 @@ class _ImageModel(_Model):
         for name, module in self.classifier.named_children():
             if record:
                 x = module(x)
-                od['classifier.'+name] = x
-            elif 'classifier.'+name == layer_input:
+                od['classifier.' + name] = x
+            elif 'classifier.' + name == layer_input:
                 record = True
         y = x
         od['classifier'] = y
@@ -136,12 +136,12 @@ class _ImageModel(_Model):
         layer_name = []
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name:
-                layer_name.append('features.'+name)
-        layer_name.append('avgpool')
+                layer_name.append('features.' + name)
+        layer_name.append('pool')
         layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name:
-                layer_name.append('classifier.'+name)
+                layer_name.append('classifier.' + name)
         return layer_name
 
 
@@ -150,7 +150,8 @@ class ImageModel(Model):
     def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None, **kwargs):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
-        name = name+str(layer)
+        if layer:
+            name = name + str(layer)
         self.layer = layer
 
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():

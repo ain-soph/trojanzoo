@@ -3,7 +3,7 @@ package-lock.json
 package.json
 yarn.lock
 
-build/doctrees
+build
 src/
 source/.vscode
 source/_build

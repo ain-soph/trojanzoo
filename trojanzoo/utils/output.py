@@ -26,7 +26,7 @@ def prints(*args, indent: int = 0, prefix: str = '', **kwargs):
     new_args = []
     for arg in args:
         new_args.append(indent_str(arg, indent=indent))
-    new_args[0] = prefix+new_args[0]
+    new_args[0] = prefix + new_args[0]
     print(*new_args, **kwargs)
 
 
@@ -50,28 +50,30 @@ def output_memory(device: Union[str, torch.device] = None, full: bool = False, i
 
 
 def bytes2size(_bytes: int) -> str:
-    if _bytes < 2*1024:
+    if _bytes < 2 * 1024:
         return '%d bytes' % _bytes
-    elif _bytes < 2*1024*1024:
-        return '%.3f KB' % (float(_bytes)/1024)
-    elif _bytes < 2*1024*1024*1024:
-        return '%.3f MB' % (float(_bytes)/1024/1024)
+    elif _bytes < 2 * 1024 * 1024:
+        return '%.3f KB' % (float(_bytes) / 1024)
+    elif _bytes < 2 * 1024 * 1024 * 1024:
+        return '%.3f MB' % (float(_bytes) / 1024 / 1024)
     else:
-        return '%.3f GB' % (float(_bytes)/1024/1024/1024)
+        return '%.3f GB' % (float(_bytes) / 1024 / 1024 / 1024)
 
 
-def indent_str(arg: str, indent: int = 0) -> str:
+def indent_str(s_: str, indent: int = 0) -> str:
+    # modified from torch.nn.modules._addindent
     if indent == 0:
-        return arg
-    _str = ''
-    _str_list = str(arg).split('\n')
-    for i, item in enumerate(_str_list):
-        if len(item) != 0:
-            item = ' '*indent+item
-        if i != len(_str_list)-1:
-            item += '\n'
-        _str += item
-    return _str
+        return s_
+    tail = ''
+    s_ = str(s_)
+    if s_[-1] == '\n':
+        s_ = s_[:-1]
+        tail = '\n'
+    s = str(s_).split('\n')
+    s = [(indent * ' ') + line for line in s]
+    s = '\n'.join(s)
+    s += tail
+    return s
 
 
 class Indent_Redirect:

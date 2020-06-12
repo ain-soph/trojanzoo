@@ -8,15 +8,16 @@
 .dropbox
 .ssh
 **/__pycache__
+**/.ipynb_checkpoints
 *.pyc
 *.ini
 
-/test
+/issue
 /test.py
 
 # Filter Directory
-# /config/
-# /config_cmd/
+/config/
+/config_cmd/
 /bash
 /data
 /result

@@ -16,6 +16,7 @@ class BadNet(Attack):
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
         super().__init__(**kwargs)
+        self.param_list['badnet'] = ['target_class', 'percent', 'filename']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
@@ -43,12 +44,13 @@ class BadNet(Attack):
             height=self.mark.height, width=self.mark.width)
         return _file
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
         _input, _label = self.model.get_data(data)
         if not keep_org or random.uniform(0, 1) < self.percent:
             org_input, org_label = _input, _label
             _input = self.add_mark(org_input)
-            _label = self.target_class*torch.ones_like(org_label)
+            if poison_label:
+                _label = self.target_class * torch.ones_like(org_label)
             if keep_org:
                 _input = torch.cat((_input, org_input))
                 _label = torch.cat((_label, org_label))
@@ -57,6 +59,8 @@ class BadNet(Attack):
     def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
         self.model._validate(print_prefix='Validate Clean',
                              get_data=None, **kwargs)
-        self.model._validate(print_prefix='Validate Watermark',
+        self.model._validate(print_prefix='Validate Trigger Tgt',
                              get_data=get_data, keep_org=False, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Org',
+                             get_data=get_data, keep_org=False, poison_label=False, **kwargs)
         return 0.0, 0.0, 0.0

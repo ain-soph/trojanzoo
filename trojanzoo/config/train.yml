@@ -4,8 +4,7 @@ epoch:
   cifar10: 300
 
 lr:
-  default: 0.001
-  cifar10: 0.1
+  default: 0.1
 
 parameters:
   default: full
@@ -16,3 +15,6 @@ optim_type:
 step_size:
   default: 50
   cifar10: 100
+
+validate_interval:
+  default: 10

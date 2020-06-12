@@ -17,12 +17,12 @@ Trojan-Zoo is an backdoor attack library for adverarial deep learning using PyTo
 
 ..    examples/*
 
-.. .. toctree::
-..    :glob:
-..    :maxdepth: 1
-..    :caption: Attack
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: Attack
 
-..    attack/*
+   attack/*
 
 .. .. toctree::
 ..    :glob:
@@ -54,9 +54,9 @@ Trojan-Zoo is an backdoor attack library for adverarial deep learning using PyTo
 .. toctree::
    :glob:
    :maxdepth: 1
-   :caption: Config
+   :caption: utils
 
-   config
+   utils/*
 
 .. .. toctree::
 ..    :maxdepth: 1

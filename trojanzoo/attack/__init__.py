@@ -15,6 +15,7 @@ class_dict = {
     'poison': 'Poison',
 
     'badnet': 'BadNet',
+    'hiddentrigger': 'HiddenTrigger',
 
     'unify': 'Unify',
 }

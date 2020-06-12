@@ -1,29 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import urllib.request
 import tarfile
 import zipfile
 from typing import List
 
 from tqdm import tqdm
-
-
-def download_and_save(url, savename, verbose=False):
-    try:
-        with urllib.request.urlopen(url) as fp:
-            data = fp.read()
-            fid = open(savename, 'w+b')
-            fid.write(data)
-            if verbose:
-                print('download succeed: ' + url)
-            fid.close()
-            return True
-    except IOError:
-        if verbose:
-            print('download failed: ' + url)
-        return False
-
 
 def untar(file_path, target_path):
     if not os.path.exists(target_path):
@@ -32,6 +14,7 @@ def untar(file_path, target_path):
     names = tar.getnames()
     for name in tqdm(names):
         tar.extract(name, path=target_path)
+    print('\033[1A\033[K', end='')
     tar.close()
 
 
@@ -40,7 +23,7 @@ def unzip(file_path, target_path):
         zf.extractall(target_path)
 
 
-def uncompress(file_path: List[str], target_path: str, verbose=False):
+def uncompress(file_path: List[str], target_path: str, verbose=True):
     if isinstance(file_path, str):
         file_path = [file_path]
     if not os.path.exists(target_path):

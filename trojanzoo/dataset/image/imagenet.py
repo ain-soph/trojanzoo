@@ -31,7 +31,8 @@ class ImageNet(ImageFolder):
         ImageNet_Official(root=self.folder_path, split='train', download=True)
         ImageNet_Official(root=self.folder_path, split='val', download=True)
 
-    def get_transform(self, mode):
+    @staticmethod
+    def get_transform(mode):
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomResizedCrop((224, 224)),
@@ -46,10 +47,10 @@ class ImageNet(ImageFolder):
             ])
         return transform
 
-    def get_full_dataset(self, mode):
+    def get_full_dataset(self, mode, **kwargs):
         if mode == 'valid' and self.name == 'imagenet':
             mode = 'val'
-        return super().get_full_dataset(mode)
+        return super().get_full_dataset(mode, **kwargs)
 
 
 class Sample_ImageNet(ImageNet):
@@ -65,6 +66,6 @@ class Sample_ImageNet(ImageNet):
         _dict.__delattr__('folder_path')
         imagenet = ImageNet(**_dict)
         class_dict: dict = {}
-        with open(root_dir+'/data/{}/data/class_dict.json'.format(self.name), 'r', encoding='utf-8') as f:
+        with open(root_dir + '/data/{}/data/class_dict.json'.format(self.name), 'r', encoding='utf-8') as f:
             class_dict: dict = json.load(f)
         imagenet.sample(child_name=self.name, class_dict=class_dict)

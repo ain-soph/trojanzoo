@@ -21,6 +21,8 @@ class Module(object):
         return self
 
     def update(self, module: dict):
+        if module is None:
+            return self
         if isinstance(module, dict):
             module = self.__class__(module)
         for key, value in module.items():
@@ -72,7 +74,7 @@ class Module(object):
         self.__setattr__(key, value)
 
     def __str__(self):
-        return self.__class__.__name__+self.__dict__.__str__()
+        return self.__dict__.__str__()
 
     def __repr__(self):
         return self.__str__()

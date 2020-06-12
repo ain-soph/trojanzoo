@@ -31,7 +31,7 @@ for i, data in enumerate(testloader):
     adv_input, _iter = perturb.perturb(
         _input, target=target)
     total += 1
-    if _iter is not None:
+    if _iter:
         correct += 1
         total_iter += _iter
     print(i)
