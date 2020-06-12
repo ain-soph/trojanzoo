@@ -28,7 +28,7 @@ class Parser_HiddenTrigger(Parser_BadNet):
         parser.add_argument('--poison_lr', dest='poison_lr', type=float,
                             help='the learning rate to generate poison images, defaults to config[hidden][poison_lr]=0.01')
 
-        parser.add_argument('--decay', dest='decay', type=bool,
+        parser.add_argument('--decay', dest='decay', action='store_true',
                             help='the learning rate decays with iterations, defaults to config[hidden][decay]=True')
         parser.add_argument('--decay_iteration', dest='decay_iteration', type=int,
                             help='the iteration interval of lr decay, defaults to config[hidden][decay_iteration]=2000')

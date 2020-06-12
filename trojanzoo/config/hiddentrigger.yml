@@ -15,9 +15,6 @@ poison_iteration:
 poison_lr:
   default: 0.01
 
-decay:
-  default: True
-
 decay_iteration:
   default: 2000
 

@@ -66,7 +66,7 @@ class PGD(Attack):
             return _input, None
 
         if 'init' in output:
-            self.output_result(target=target, _input=_input, indent=indent, mode='init')
+            self.output_info(noise=noise, _input=_input, indent=indent, mode='init', loss_fn=loss_fn)
         if self.model:
             self.model.eval()
 
@@ -82,7 +82,7 @@ class PGD(Attack):
                 if (self.targeted and _classification.equal(target) and _confidence.min() > self.stop_confidence) or \
                         (not self.targeted and (_classification - target).abs().min() > 0):
                     if 'final' in output:
-                        self.output_result(target=target, _input=X, indent=indent, mode='final')
+                        self.output_info(noise=noise, _input=X, indent=indent, mode='final', loss_fn=loss_fn)
                     return X, _iter + 1
             if self.mode == 'white':
                 X.requires_grad = True
@@ -106,41 +106,49 @@ class PGD(Attack):
             noise.data = (noise - alpha * torch.sign(grad)).data
             noise.data = self.projector(noise, epsilon, norm=self.norm).data
             X = add_noise(_input, noise, batch=self.universal)
-            noise.data = (X - _input).data
+            if self.universal:
+                noise_new = (X - _input).data
+                noise.data = (noise_new.sign() * noise_new.abs().min(dim=0)).data
+            else:
+                noise.data = (X - _input).data
 
             if 'middle' in output:
-                self.output_info(target=target, _input=X, indent=indent, mode='middle',
-                                 _iter=_iter, iteration=iteration)
+                self.output_info(noise=noise, _input=_input, indent=indent, mode='middle',
+                                 _iter=_iter, iteration=iteration, loss_fn=loss_fn)
 
         if 'final' in output:
-            self.output_result(target=target, _input=X, indent=indent, mode='final')
+            self.output_info(noise=noise, _input=_input, indent=indent, mode='final', loss_fn=loss_fn)
         return X, None
 
     @staticmethod
     def cos_sim(a, b):
         return (a * b).sum() / a.norm(p=2) / b.norm(p=2)
 
-    def output_info(self, target, _input=None, _result=None, indent=None, mode='init', _iter=0, iteration=0):
+    def output_info(self, noise: torch.Tensor, _input: torch.Tensor, indent=None, mode='init', _iter=0, iteration=0, loss_fn=None):
         if indent is None:
             indent = self.indent
-        if _result is None:
-            assert _input is not None
-            self.model.eval()
-            _result = self.model.get_prob(_input)
-        _confidence, _classification = _result.max(1)
+        # if _result is None:
+        #     assert _input is not None
+        #     self.model.eval()
+        #     _result = self.model.get_prob(_input)
+        # _confidence, _classification = _result.max(1)
 
         if mode in ['init', 'final']:
             prints('{name} Attack {mode} Classification'.format(name=self.name, mode=mode), indent=indent)
         elif mode in ['middle']:
             indent += 4
             self.output_iter(name=self.name, _iter=_iter, iteration=iteration, indent=indent)
+        with torch.no_grad():
+            loss = float(loss_fn(_input + noise))
+            norm = noise.norm(p=self.norm)
+            prints('L-{p} norm: {norm}    loss: {loss:.5f}'.format(p=self.norm, norm=norm, loss=loss))
 
-        for i in range(len(_input)):
-            prefix = 'idx: %d  %s: ' % (i, 'Max')
-            prints('{0:<20s} {klass:<4d} {confidence:.5f}'.format(prefix, int(_classification[i]), float(_confidence[i])),
-                   indent=indent + 2)
-            prefix = 'idx: %d  %s: ' % (i, 'Target' if self.targeted else 'Untarget')
-            prints('{0:<20s} {klass:<4d} {confidence:.5f}'.format(prefix, int(target[i]), float(_result[i][target[i]])),
-                   indent=indent + 2)
+        # for i in range(len(_input)):
+        #     prefix = 'idx: %d  %s: ' % (i, 'Max')
+        #     prints('{0:<20s} {klass:<4d} {confidence:.5f}'.format(prefix, int(_classification[i]), float(_confidence[i])),
+        #            indent=indent + 2)
+        #     prefix = 'idx: %d  %s: ' % (i, 'Target' if self.targeted else 'Untarget')
+        #     prints('{0:<20s} {klass:<4d} {confidence:.5f}'.format(prefix, int(target[i]), float(_result[i][target[i]])),
+        #            indent=indent + 2)
         if 'memory' in self.output:
             output_memory(indent=indent + 4)

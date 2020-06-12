@@ -54,7 +54,8 @@ class HiddenTrigger(BadNet):
         self.decay_iteration = decay_iteration
         self.decay_ratio = decay_ratio
 
-        self.pgd = PGD(alpha=self.poison_lr, epsilon=self.epsilon, early_stop=False, output=0)
+        self.pgd = PGD(alpha=self.poison_lr, epsilon=self.epsilon,
+                       iteration=self.poison_iteration, early_stop=False, output=10)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
         if iteration is None:
@@ -132,7 +133,7 @@ class HiddenTrigger(BadNet):
                 lr = self.poison_lr * (self.decay_ratio**(_iter // self.decay_iteration))
         else:
             poison_imgs, _ = self.pgd.attack(_input=target_imgs, noise=noise,
-                                             iteration=1, alpha=self.poison_lr, loss_fn=loss_func)
+                                             alpha=self.poison_lr, loss_fn=loss_func)
         poison_imgs = (target_imgs + noise).detach().clamp(0, 1)
 
         return poison_imgs
