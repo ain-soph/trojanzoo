@@ -64,7 +64,7 @@ class HiddenTrigger(BadNet):
         print('concat dataset')
         poison_set = torch.utils.data.TensorDataset(
             poison_imgs.to('cpu'), self.target_class * torch.ones(self.poison_num, dtype=torch.long))
-        train_set = self.dataset.get_dataset('train', full=True, target_transform=torch.tensor)
+        train_set = self.dataset.get_dataset('train', full=False, target_transform=torch.tensor)
 
         final_set = torch.utils.data.ConcatDataset((poison_set, train_set))
         final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
@@ -134,6 +134,6 @@ class HiddenTrigger(BadNet):
         else:
             poison_imgs, _ = self.pgd.attack(_input=target_imgs, noise=noise,
                                              alpha=self.poison_lr, loss_fn=loss_func)
-        poison_imgs = (target_imgs + noise).detach().clamp(0, 1)
 
+        poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
         return poison_imgs

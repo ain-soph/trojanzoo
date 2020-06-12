@@ -64,9 +64,14 @@ def indent_str(s_: str, indent: int = 0) -> str:
     # modified from torch.nn.modules._addindent
     if indent == 0:
         return s_
+    tail = ''
+    if s_[-1] == '\n':
+        s_ = s_[:-1]
+        tail = '\n'
     s = str(s_).split('\n')
     s = [(indent * ' ') + line for line in s]
     s = '\n'.join(s)
+    s += tail
     return s
 
 
