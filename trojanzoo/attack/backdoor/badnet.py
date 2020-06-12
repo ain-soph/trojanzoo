@@ -48,7 +48,7 @@ class BadNet(Attack):
         if not keep_org or random.uniform(0, 1) < self.percent:
             org_input, org_label = _input, _label
             _input = self.add_mark(org_input)
-            _label = self.target_class*torch.ones_like(org_label)
+            _label = self.target_class * torch.ones_like(org_label)
             if keep_org:
                 _input = torch.cat((_input, org_input))
                 _label = torch.cat((_label, org_label))

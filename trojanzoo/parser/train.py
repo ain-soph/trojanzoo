@@ -41,7 +41,7 @@ class Parser_Train(Parser):
     @staticmethod
     def get_module(model: Model, **kwargs) -> (Optimizer, _LRScheduler, dict):
         # type: (Model, dict) -> (Optimizer, _LRScheduler, dict)  # noqa
-        """
+        r"""
         | get :class:`Optimizer`, :class:`_LRScheduler` and arguments for training
         | by splitting ``kwargs`` to :meth:`Model.define_optimizer` and :func:`Model._train`.
 

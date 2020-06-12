@@ -33,7 +33,7 @@ class Parser_Seq(Module):
 
     def parse_args(self, args: str = None, namespace: argparse.Namespace = None, verbose: bool = None) -> Module:
         # type: (str, argparse.Namespace, bool) -> Module  # noqa
-        """Call ``parse_args`` for each parser in ``self.parser_list`` and save the results at ``self.args_list``
+        r"""Call ``parse_args`` for each parser in :attr:`parser_list` and save the results at :attr:`args_list`.
 
         Args:
             args (str): ``args`` passed to ``parser.parse_args``. Default: None.
@@ -73,7 +73,7 @@ class Parser_Seq(Module):
 
     def get_module(self, verbose: bool = None, **kwargs) -> Module:
         # type: (bool, dict) -> Module
-        """Call ``get_module`` for each parser in :attr:`parser_list` and save the results at :attr:`module_list`
+        r"""Call ``get_module`` for each parser in :attr:`parser_list` and save the results at :attr:`module_list`.
 
         Args:
             verbose (bool): output module information. Default: None.

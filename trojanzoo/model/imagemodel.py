@@ -84,8 +84,8 @@ class _ImageModel(_Model):
         for name, module in self.features.named_children():
             if record:
                 x = module(x)
-                od['features.'+name] = x
-            elif 'features.'+name == layer_input:
+                od['features.' + name] = x
+            elif 'features.' + name == layer_input:
                 record = True
         if record:
             x = self.pool(x)
@@ -99,8 +99,8 @@ class _ImageModel(_Model):
         for name, module in self.classifier.named_children():
             if record:
                 x = module(x)
-                od['classifier.'+name] = x
-            elif 'classifier.'+name == layer_input:
+                od['classifier.' + name] = x
+            elif 'classifier.' + name == layer_input:
                 record = True
         y = x
         od['classifier'] = y
@@ -136,12 +136,12 @@ class _ImageModel(_Model):
         layer_name = []
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name:
-                layer_name.append('features.'+name)
+                layer_name.append('features.' + name)
         layer_name.append('pool')
         layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name:
-                layer_name.append('classifier.'+name)
+                layer_name.append('classifier.' + name)
         return layer_name
 
 
@@ -151,7 +151,7 @@ class ImageModel(Model):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
         if layer:
-            name = name+str(layer)
+            name = name + str(layer)
         self.layer = layer
 
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():

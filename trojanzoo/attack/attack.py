@@ -86,89 +86,34 @@ class Attack:
         else:
             return set(['init', 'final', 'middle', 'memory'])
 
-    def output_result(self, target, targeted=True, _input=None, _result=None, name=None, output=None, indent=None, mode='init'):
-        output = self.get_output(output)
-        if indent is None:
-            indent = self.indent
-        if name is None:
-            name = self.name
-        assert mode in ['init', 'final']
-        if mode in output:
-            # if mode=='init':
-            #     print('-'*(indent+5))
-            prints(name + ' attack %s Classification' % mode, indent=indent)
-            if _result is None:
-                if _input is None:
-                    raise ValueError()
-                self.model.eval()
-                _result = self.model.get_prob(_input)
-            _confidence, _classification = _result.max(1)
-            for i in range(len(_input)):
-                # prints(_result[i], indent=indent)
-                prints('idx: %d ' % i + ' Max: '.ljust(10), str(int(_classification[i])).rjust(4), '  %.7f' % float(_confidence[i]),
-                       indent=indent + 2)
-                prints('idx: %d ' % i + (' Target: ' if targeted else 'Untarget: ').ljust(10), str(int(target[i])).rjust(4), '  %.7f' % float(_result[i][target[i]]),
-                       indent=indent + 2)
-            if 'memory' in output:
-                output_memory(indent=indent + 4)
-            # if mode=='final':
-            #     print('-'*(indent+5))
-
-    def output_middle(self, target, targeted=True, _input=None, _result=None, _iter=0, iteration=0, name=None, output=None, indent=0, **kwargs):
-        output = self.get_output(output)
-        if indent is None:
-            indent = self.indent
-        indent += 4
-        if name is None:
-            name = self.name
-        if 'middle' in output:
-            if _result is None:
-                if _input is None:
-                    raise ValueError()
-                self.model.eval()
-                _result = self.model.get_prob(_input)
-            _confidence, _classification = _result.max(1)
-            self.output_iter(name=name, _iter=_iter, iteration=iteration,
-                             indent=indent, output=output, **kwargs)
-            for i in range(len(_result)):
-                # prints(_result[i], indent=indent)
-                prints('idx: %d ' % i + ' Max: '.ljust(10), str(int(_classification[i])).rjust(4), '  %.7f' % float(_confidence[i]),
-                       indent=indent + 2)
-                prints('idx: %d ' % i + (' Target: ' if targeted else 'Untarget: ').ljust(10), str(int(target[i])).rjust(4), '  %.7f' % float(_result[i][target[i]]),
-                       indent=indent + 2)
-            if 'memory' in output:
-                output_memory(indent=indent + 4)
-            # print('-'*(indent+4))
-
-    def output_iter(self, name=None, _iter=0, iteration=None, indent=0, **kwargs):
-        if name is None:
-            name = self.name
+    @staticmethod
+    def output_iter(self, name: str, _iter, iteration=None, indent=0):
         string = name + ' Iter: ' + output_iter(_iter + 1, iteration)
         prints(string, indent=indent)
 
     # ----------------------Utility----------------------------------- #
-    def generate_target(self, _input, idx=1, same=False, **kwargs):
+    def generate_target(self, _input, idx=1, same=False, **kwargs) -> torch.LongTensor:
         return self.model.generate_target(_input, idx=idx, same=same, **kwargs)
 
     @staticmethod
     def cal_gradient(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
         g = torch.zeros_like(X)
-
-        for i in range(n // 2):
-            noise = torch.normal(
-                mean=0.0, std=1.0, size=X.shape, device=X.device)
-            X1 = X + sigma * noise
-            X2 = X - sigma * noise
-            g += f(X1).detach() * noise
-            g -= f(X2).detach() * noise
-        g /= n * sigma
+        with torch.no_grad():
+            for i in range(n // 2):
+                noise = torch.normal(
+                    mean=0.0, std=1.0, size=X.shape, device=X.device)
+                X1 = X + sigma * noise
+                X2 = X - sigma * noise
+                g += f(X1) * noise
+                g -= f(X2) * noise
+            g /= n * sigma
         return g.detach()
 
     @staticmethod
-    def projector(noise, epsilon, p=float('inf')):
-        length = epsilon / noise.norm(p=p)
+    def projector(noise: torch.Tensor, epsilon: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
+        length = epsilon / noise.norm(p=norm)
         if length < 1:
-            if p == float('inf'):
+            if norm == float('inf'):
                 noise = noise.clamp(min=-epsilon, max=epsilon)
             else:
                 noise = length * noise

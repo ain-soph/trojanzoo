@@ -29,7 +29,7 @@ class ImageSet(Dataset):
         return transforms.ToTensor()
 
     def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True, **kwargs):
+                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs):
         if batch_size is None:
             batch_size = 1 if mode == 'test' else self.batch_size
         if shuffle is None:
@@ -40,7 +40,7 @@ class ImageSet(Dataset):
         dataset = self.get_dataset(mode, **kwargs)
         torch.manual_seed(env['seed'])
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
-                                           num_workers=num_workers, pin_memory=pin_memory)
+                                           num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
     @staticmethod
     def get_data(data, **kwargs):

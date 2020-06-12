@@ -1,6 +1,36 @@
 {% extends "!layout.html" %}
 <link rel="canonical" href="{{ theme_canonical_url }}{{ pagename }}.html" />
 
+{% block mainmenu %}
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="{{ theme_variables.external_urls['home'] }}" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+
+          <li {%- if theme_pytorch_project == 'tutorials' %} class="active"{% endif %}>
+            <a href="{{ theme_variables.external_urls['tutorials'] }}">Tutorials</a>
+          </li>
+
+          <li {%- if theme_pytorch_project == 'docs' %} class="active"{% endif %}>
+            <a href="{{ theme_variables.external_urls['docs'] }}">Docs</a>
+          </li>
+
+          <li>
+            <a href="{{ theme_variables.external_urls['github'] }}">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
 {% block menu %}
 
 {{ super() }}
