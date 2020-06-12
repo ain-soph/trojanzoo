@@ -12,9 +12,11 @@ config = Config.config
 
 class Parser_Mark(Parser):
     r"""
-    | Watermark Parser to process watermark image.
-    | Resize Override Priority: height,width > height(width)_ratio > mark_ratio
-    | Offset Style: ``['upper', 'lower', 'left', 'right']``
+    Watermark Parser to process watermark image.
+
+    Resize Override Priority: height,width > height(width)_ratio > mark_ratio
+
+    Offset Style: ``['upper', 'lower', 'left', 'right']``
 
     Attributes:
         name (str): ``'mark'``

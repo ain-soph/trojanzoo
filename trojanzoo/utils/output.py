@@ -65,6 +65,7 @@ def indent_str(s_: str, indent: int = 0) -> str:
     if indent == 0:
         return s_
     tail = ''
+    s_ = str(s_)
     if s_[-1] == '\n':
         s_ = s_[:-1]
         tail = '\n'

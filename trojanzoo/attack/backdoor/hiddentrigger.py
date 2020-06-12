@@ -12,9 +12,11 @@ import torch
 
 class HiddenTrigger(BadNet):
     r"""
-    | Hidden Trigger Backdoor Attack is described in detail in the paper `Hidden Trigger`_ by Aniruddha Saha. 
-    | Different from `Trojan Net`_, The mark and mask is designated and stable.
-    | The authors have posted `original source code`_.
+    Hidden Trigger Backdoor Attack is described in detail in the paper `Hidden Trigger`_ by Aniruddha Saha. 
+
+    Different from `Trojan Net`_, The mark and mask is designated and stable.
+
+    The authors have posted `original source code`_.
 
     Args:
         preprocess_layer (str): the chosen feature layer patched by trigger where distance to poisoned images is minimized. Default: 'features'.
@@ -86,14 +88,21 @@ class HiddenTrigger(BadNet):
 
     def generate_poisoned_data(self) -> torch.Tensor:
         r"""
-        | **Algorithm1**
-        | Sample K images of target class (Group I)
-        | Initialize poisoned images (Group III) to be Group I.
-        | **while** loss is large:
-        |     Sample K images of other classes (trigger attached at random location) (Group II).
-        |     conduct gradient descent on group III to minimize the distance to Group II in feature space.
-        |     Clip Group III to ensure the distance to Group I in input space to be smaller than :math:`\epsilon`.
-        | **Return** Group III
+        **Algorithm1**
+
+        Sample K images of target class (Group I)
+
+        Initialize poisoned images (Group III) to be Group I.
+
+        **while** loss is large:
+
+            Sample K images of other classes (trigger attached at random location) (Group II).
+
+            conduct gradient descent on group III to minimize the distance to Group II in feature space.
+
+            Clip Group III to ensure the distance to Group I in input space to be smaller than :math:`\epsilon`.
+
+        **Return** Group III
 
         .. note::
             In the original code, Group II is sampled with Group I together rather than resampled in every loop. We are following this style.

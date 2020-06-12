@@ -37,9 +37,11 @@ class Parser():
     def get_module(module_class, module_name, **kwargs):
         # type: (str, str, dict) -> Any  # noqa
         r"""
-        | Construct the module from parsed arguments.
-        | This is a generic method based on dynamic programming.
-        | Sub-classes should **override** this method.
+        Construct the module from parsed arguments.
+
+        This is a generic method based on dynamic programming.
+
+        Sub-classes should **override** this method.
 
         Args:
             module_class (str): module type. (e.g. 'dataset', 'model', 'attack')

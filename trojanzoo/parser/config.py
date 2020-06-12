@@ -39,8 +39,9 @@ class Parser_Config(Parser):
     def get_module(config=None, **kwargs):
         # type: (str, dict) -> Param  # noqa
         r"""
-        | update ``config`` according to ``cmd_config`` (``--config``).
-        | update ``env`` according to listed ``cmd_param`` (e.g. ``--data_dir``).
+        update ``config`` according to ``cmd_config`` (``--config``).
+
+        update ``env`` according to listed ``cmd_param`` (e.g. ``--data_dir``).
 
         Args:
             config (str):  cmd config file path. Default: None.
