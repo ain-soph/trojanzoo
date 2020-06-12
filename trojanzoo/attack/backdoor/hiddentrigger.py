@@ -79,7 +79,9 @@ class HiddenTrigger(BadNet):
 
     def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
         self.model._validate(print_prefix='Validate Clean', **kwargs)
-        self.model._validate(print_prefix='Validate Watermark', get_data=self.get_data, keep_org=False, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Tgt', get_data=self.get_data, keep_org=False, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Org',
+                             get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         return 0.0, 0.0, 0.0
 
     def loss(self, poison_imgs, source_feats):
