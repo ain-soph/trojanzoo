@@ -16,7 +16,7 @@
 /test.py
 
 # Filter Directory
-# /config/
+/config/
 /config_cmd/
 /bash
 /data
