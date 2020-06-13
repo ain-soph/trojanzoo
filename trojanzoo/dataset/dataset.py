@@ -70,6 +70,8 @@ class Dataset:
         self.loader: Dict[str, torch.utils.data.DataLoader] = {}
         self.loader['train'] = self.get_dataloader(
             mode='train', batch_size=self.batch_size, full=True)
+        self.loader['train2'] = self.get_dataloader(
+            mode='train', batch_size=self.batch_size, full=False)
         self.loader['valid'] = self.get_dataloader(
             mode='valid', batch_size=self.batch_size, full=True)
         self.loader['valid2'] = self.get_dataloader(

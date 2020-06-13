@@ -6,7 +6,7 @@ from trojanzoo.utils import to_tensor
 import torch
 import torch.nn as nn
 
-from typing import Dict
+from typing import Dict, List
 from copy import deepcopy
 from collections import OrderedDict
 
@@ -46,7 +46,7 @@ class _ImageModel(_Model):
     # The input range is [0,1]
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
-    def preprocess(self, x):
+    def preprocess(self, x: torch.Tensor) -> torch.Tensor:
         if self.norm_par:
             mean = self.norm_par['mean'].to(
                 x.device, non_blocking=True)[None, :, None, None]
@@ -58,14 +58,14 @@ class _ImageModel(_Model):
     # get feature map
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
-    def get_fm(self, x):
+    def get_fm(self, x: torch.Tensor) -> torch.Tensor:
         x = self.preprocess(x)
         return self.features(x)
 
     # get output for a certain layer
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [layer])
-    def get_layer(self, x, layer_output='logits', layer_input='input'):
+    def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         if layer_input == 'input':
             if layer_output in ['logits', 'classifier']:
                 return self(x)
@@ -73,7 +73,7 @@ class _ImageModel(_Model):
                 return self.get_final_fm(x)
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_all_layer(self, x, layer_input='input'):
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
         od = OrderedDict()
         record = False
 
@@ -108,7 +108,7 @@ class _ImageModel(_Model):
         od['output'] = y
         return od
 
-    def get_other_layer(self, x, layer_output='logits', layer_input='input'):
+    def get_other_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         layer_name_list = self.get_layer_name()
         if isinstance(layer_output, str):
             if layer_output not in layer_name_list and \
@@ -132,7 +132,7 @@ class _ImageModel(_Model):
         od = self.get_all_layer(x, layer_input=layer_input)
         return od[layer_name]
 
-    def get_layer_name(self):
+    def get_layer_name(self) -> List[str]:
         layer_name = []
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name:
@@ -147,7 +147,7 @@ class _ImageModel(_Model):
 
 class ImageModel(Model):
 
-    def __init__(self, layer=None, name='imagemodel', model_class=_ImageModel, default_layer=None, **kwargs):
+    def __init__(self, layer: int = None, name: str = 'imagemodel', model_class=_ImageModel, default_layer: int = None, **kwargs):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
         if layer:
@@ -161,11 +161,13 @@ class ImageModel(Model):
         if self.num_classes is None:
             self.num_classes = 1000
 
-    def get_layer(self, *args, **kwargs):
-        return self._model.get_layer(*args, **kwargs)
+        self._model: model_class
 
-    def get_layer_name(self):
+    def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
+        return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
+
+    def get_layer_name(self) -> List[str]:
         return self._model.get_layer_name()
 
-    def get_all_layer(self, x, layer_input='input'):
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
         return self._model.get_all_layer(x, layer_input=layer_input)

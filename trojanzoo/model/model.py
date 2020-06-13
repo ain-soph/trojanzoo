@@ -134,7 +134,7 @@ class Model:
 
         # -----------Temp--------------- #
         # the location when loading pretrained weights using torch.load
-        self._model = model_class(num_classes=num_classes, **kwargs)
+        self._model: model_class = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel()
         # load pretrained weights
         if official:
@@ -157,11 +157,11 @@ class Model:
         else:
             return self.model(_input)
 
-    def get_prob(self, _input, **kwargs):
+    def get_prob(self, _input, **kwargs) -> torch.Tensor:
         return self.softmax(self.get_logits(_input, **kwargs))
 
     def get_target_prob(self, _input, target, **kwargs):
-        return self.get_prob(_input, **kwargs)[:, target]
+        return self.get_prob(_input, **kwargs).gather(dim=1, index=target.unsqueeze(1)).flatten()
 
     def get_class(self, _input, **kwargs):
         return self.get_logits(_input, **kwargs).argmax(dim=-1)
@@ -184,14 +184,7 @@ class Model:
                          lr_scheduler=True, step_size=30, **kwargs):
 
         if isinstance(parameters, str):
-            if parameters == 'full':
-                parameters = self._model.parameters()
-            elif parameters == 'features':
-                parameters = self._model.features.parameters()
-            elif parameters == 'classifier':
-                parameters = self._model.classifier.parameters()
-            else:
-                raise NotImplementedError(parameters)
+            parameters = self.get_params(name=parameters)
         if not isinstance(parameters, Iterable):
             raise TypeError(type(parameters))
 
@@ -448,6 +441,17 @@ class Model:
                     res.append(float(correct_k.mul_(100.0 / batch_size)))
             return res
 
+    def get_params(self, name: str) -> Iterable:
+        if name == 'full':
+            params = self._model.parameters()
+        elif name == 'features':
+            params = self._model.features.parameters()
+        elif name == 'classifier':
+            params = self._model.classifier.parameters()
+        else:
+            raise NotImplementedError(name)
+        return params
+
     def activate_params(self, active_param: list):
         for param in self._model.parameters():
             param.requires_grad = False
@@ -561,12 +565,10 @@ class Model:
 
         if len(_input.shape) == 3:
             _input = _input.unsqueeze(0)
-        self.batch_size = _input.shape[0]
+        self.batch_size = _input.size(0)
         with torch.no_grad():
             _output = self.get_logits(_input)
-        _, indices = _output.sort(dim=-1, descending=True)
-        target = torch.as_tensor(
-            indices[:, idx], dtype=torch.long, device=_input.device)
+        target = _output.argsort(dim=-1, descending=True)[:, idx]
         if same:
             target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
         return target
