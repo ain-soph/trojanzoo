@@ -33,8 +33,7 @@ if __name__ == '__main__':
         _input, _label = model.remove_misclassify(data)
         if len(_label) == 0:
             continue
-        target = attack.generate_target(_input) if attack.targeted else _label
-        adv_input, _iter = attack.attack(_input, target=target)
+        adv_input, _iter = attack.attack(_input)
 
         total += 1
         if _iter:
