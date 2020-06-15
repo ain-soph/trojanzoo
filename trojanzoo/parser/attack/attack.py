@@ -20,12 +20,6 @@ class Parser_Attack(Parser):
 
     @staticmethod
     def add_argument(parser):
-        parser.add_argument('--iteration', dest='iteration', type=int,
-                            help='attack iterations, defaults to config[attack][iteration][dataset].')
-        parser.add_argument('--early_stop', dest='early_stop', action='store_true',
-                            help='early stop when reach stop_confidence.')
-        parser.add_argument('--stop_confidence', dest='stop_confidence', type=float,
-                            help='stop confidence for early stop, defaults to config[attack][stop_confidence][dataset].')
         parser.add_argument('--output', dest='output', type=int,
                             help='output level, defaults to config[attack][output][dataset].')
 

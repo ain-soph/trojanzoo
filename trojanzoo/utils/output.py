@@ -26,7 +26,7 @@ def prints(*args, indent: int = 0, prefix: str = '', **kwargs):
     new_args = []
     for arg in args:
         new_args.append(indent_str(arg, indent=indent))
-    new_args[0] = prefix + new_args[0]
+    new_args[0] = prefix + str(new_args[0])
     print(*new_args, **kwargs)
 
 

@@ -2,7 +2,7 @@
 
 from .parser import Parser
 from trojanzoo.dataset import ImageSet
-from trojanzoo.utils.attack import Watermark
+from trojanzoo.utils.mark import Watermark
 
 from typing import List
 
@@ -15,8 +15,6 @@ class Parser_Mark(Parser):
     Watermark Parser to process watermark image.
 
     Resize Override Priority: height,width > height(width)_ratio > mark_ratio
-
-    Offset Style: ``['upper', 'lower', 'left', 'right']``
 
     Attributes:
         name (str): ``'mark'``
@@ -45,8 +43,6 @@ class Parser_Mark(Parser):
                             help='height offset, defaults to 0')
         parser.add_argument('--width_offset', dest='width_offset', type=int,
                             help='width offset, defaults to 0')
-        parser.add_argument('--offset_style', dest='offset_style', type=str,
-                            help='offset style, defaults to [\'upper\', \'left\']')
 
     @classmethod
     def get_module(cls, data_shape: List[int] = None, dataset: ImageSet = None, **kwargs) -> Watermark:

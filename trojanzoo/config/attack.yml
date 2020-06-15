@@ -1,7 +1,1 @@
 # -*- coding: utf-8 -*-
-
-iteration:
-  default: 20
-
-stop_confidence:
-  default: 0.7

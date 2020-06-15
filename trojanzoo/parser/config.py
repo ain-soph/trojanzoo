@@ -3,6 +3,7 @@
 from .parser import Parser
 from trojanzoo.utils.param import Param
 
+import random
 import numpy as np
 import torch
 
@@ -50,6 +51,7 @@ class Parser_Config(Parser):
         """
         Config.update(cmd_path=config)
         Config.update_env(**kwargs)
+        random.seed(env['seed'])
         np.random.seed(env['seed'])
         torch.manual_seed(env['seed'])
         torch.cuda.manual_seed_all(env['seed'])

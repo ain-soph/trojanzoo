@@ -18,7 +18,7 @@ from trojanzoo.parser.attack import Parser_HiddenTrigger
 
 from trojanzoo.dataset import Dataset
 from trojanzoo.model import Model
-from trojanzoo.utils.attack import Watermark
+from trojanzoo.utils.mark import Watermark
 from trojanzoo.attack.backdoor.hiddentrigger import HiddenTrigger
 
 import warnings

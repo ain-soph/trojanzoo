@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.attack import Attack
-from trojanzoo.utils.attack import Watermark
+from trojanzoo.utils.mark import Watermark
 
 import random
 from typing import Union, List
@@ -16,28 +16,22 @@ class BadNet(Attack):
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['badnet'] = ['target_class', 'percent', 'filename']
+        self.param_list['badnet'] = ['target_class', 'percent']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
-        self.filename: str = self.get_filename()
 
-    def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
-        if iteration is None:
-            iteration = self.iteration
-        self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
-                          get_data=self.get_data, validate_func=self.validate_func, **kwargs)
+    def attack(self, **kwargs):
+        self.model._train(get_data=self.get_data, validate_func=self.validate_func, **kwargs)
 
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, **kwargs)
 
-    def get_filename(self, mark_alpha: float = None, target_class: int = None, iteration: int = None):
+    def get_filename(self, iteration: int, mark_alpha: float = None, target_class: int = None):
         if mark_alpha is None:
             mark_alpha = self.mark.mark_alpha
         if target_class is None:
             target_class = self.target_class
-        if iteration is None:
-            iteration = self.iteration
         _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({height:d},{width:d})_iter{iteration:d}_percent{percent:.2f}'.format(
             mark=os.path.split(self.mark.mark_path)[1][:-4],
             target=target_class, mark_alpha=mark_alpha, iteration=iteration, percent=self.percent,

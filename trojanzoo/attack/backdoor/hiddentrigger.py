@@ -2,12 +2,13 @@
 
 from .badnet import BadNet
 
-from trojanzoo.attack.adv import PGD
+from trojanzoo.optim import PGD
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import AverageMeter
 
 import numpy as np
 import torch
+from collections.abc import Callable
 
 
 class HiddenTrigger(BadNet):
@@ -42,22 +43,25 @@ class HiddenTrigger(BadNet):
 
     def __init__(self, preprocess_layer: str = 'features', epsilon: int = 16.0 / 255,
                  poison_num: int = 100, poison_iteration: int = 5000, poison_lr: float = 0.01,
-                 decay: bool = False, decay_iteration: int = 2000, decay_ratio: float = 0.95, **kwargs):
+                 lr_decay: bool = False, decay_iteration: int = 2000, decay_ratio: float = 0.95, **kwargs):
         super().__init__(**kwargs)
 
-        self.preprocess_layer = preprocess_layer
-        self.epsilon = epsilon
+        self.param_list['hiddentrigger'] = ['preprocess_layer', 'epsilon',
+                                            'poison_num', 'poison_iteration', 'poison_lr',
+                                            'decay', 'decay_iteration', 'decay_ratio']
 
-        self.poison_num = poison_num
-        self.poison_iteration = poison_iteration
-        self.poison_lr = poison_lr
+        self.preprocess_layer: str = preprocess_layer
+        self.epsilon: float = epsilon
 
-        self.decay = decay
-        self.decay_iteration = decay_iteration
-        self.decay_ratio = decay_ratio
+        self.poison_num: int = poison_num
+        self.poison_iteration: int = poison_iteration
+        self.poison_lr: float = poison_lr
 
-        self.pgd = PGD(alpha=self.poison_lr, epsilon=self.epsilon,
-                       iteration=self.poison_iteration, early_stop=False, output=10)
+        self.lr_decay: bool = lr_decay
+        self.decay_iteration: int = decay_iteration
+        self.decay_ratio: float = decay_ratio
+
+        self.pgd: PGD = PGD(alpha=self.poison_lr, epsilon=epsilon, iteration=self.poison_iteration)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
         if iteration is None:
@@ -77,16 +81,16 @@ class HiddenTrigger(BadNet):
     def get_filename(self):
         return "Need to do"
 
-    def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data: Callable = None, **kwargs) -> (float, float, float):
         self.model._validate(print_prefix='Validate Clean', **kwargs)
         self.model._validate(print_prefix='Validate Trigger Tgt', get_data=self.get_data, keep_org=False, **kwargs)
         self.model._validate(print_prefix='Validate Trigger Org',
                              get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         return 0.0, 0.0, 0.0
 
-    def loss(self, poison_imgs, source_feats):
+    def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor) -> torch.Tensor:
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
-        return ((poison_feats - source_feats)**2).sum()
+        return ((poison_feats - source_feats)**2).mean(dim=0).sum()
 
     def generate_poisoned_data(self) -> torch.Tensor:
         r"""
@@ -135,16 +139,16 @@ class HiddenTrigger(BadNet):
         def loss_func(poison_imgs):
             return self.loss(poison_imgs, source_feats=source_feats)
 
-        if self.decay:
+        if self.lr_decay:
             lr = self.poison_lr
             for _iter in range(self.poison_iteration):
                 self.output_iter(name=self.name, _iter=_iter, iteration=self.poison_iteration)
-                poison_imgs, _ = self.pgd.attack(_input=target_imgs, noise=noise,
-                                                 iteration=1, alpha=lr, loss_fn=loss_func)
+                poison_imgs, _ = self.pgd.optimize(_input=target_imgs, noise=noise,
+                                                   iteration=1, alpha=lr, loss_fn=loss_func)
                 lr = self.poison_lr * (self.decay_ratio**(_iter // self.decay_iteration))
         else:
-            poison_imgs, _ = self.pgd.attack(_input=target_imgs, noise=noise,
-                                             alpha=self.poison_lr, loss_fn=loss_func)
+            poison_imgs, _ = self.pgd.optimize(_input=target_imgs, noise=noise,
+                                               loss_fn=loss_func)
 
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
         return poison_imgs

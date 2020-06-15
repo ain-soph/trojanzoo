@@ -10,13 +10,13 @@ poison_num:
   default: 100
 
 poison_iteration:
-  default: 5000
+  default: 500
 
 poison_lr:
   default: 0.01
 
 decay_iteration:
-  default: 2000
+  default: 200
 
 decay_ratio:
   default: 0.95
