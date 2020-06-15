@@ -57,7 +57,6 @@ class Sample_ImageNet(ImageNet):
 
     name = 'sample_imagenet'
     num_classes = 20
-    n_dim = (224, 224)
     url = {}
     org_folder_name = {}
 

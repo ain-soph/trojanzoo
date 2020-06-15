@@ -16,5 +16,3 @@ if __name__ == '__main__':
     model: Model = parser.module_list.model
 
     loss, acc1, acc5 = model._validate(full=True)
-    loss, acc1, acc5 = model._validate(full=True)
-    loss, acc1, acc5 = model._validate(full=True)
