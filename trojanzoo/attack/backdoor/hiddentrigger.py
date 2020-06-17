@@ -61,11 +61,9 @@ class HiddenTrigger(BadNet):
         self.decay_iteration: int = decay_iteration
         self.decay_ratio: float = decay_ratio
 
-        self.pgd: PGD = PGD(alpha=self.poison_lr, epsilon=epsilon, iteration=self.poison_iteration)
+        self.pgd: PGD = PGD(alpha=self.poison_lr, epsilon=epsilon, iteration=self.poison_iteration, output=self.output)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
-        if iteration is None:
-            iteration = self.iteration
         poison_imgs = self.generate_poisoned_data()
         print('concat dataset')
         poison_set = torch.utils.data.TensorDataset(
@@ -75,7 +73,7 @@ class HiddenTrigger(BadNet):
         final_set = torch.utils.data.ConcatDataset((poison_set, train_set))
         final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
         print('retrain')
-        self.model._train(epoch=iteration, optimizer=optimizer, lr_scheduler=lr_scheduler,
+        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
     def get_filename(self):

@@ -36,7 +36,5 @@ if __name__ == '__main__':
     mark: Watermark = parser.module_list['mark']
     attack: HiddenTrigger = parser.module_list['attack']
 
-    del train_args['epoch']
-
     # ------------------------------------------------------------------------ #
     attack.attack(optimizer=optimizer, lr_scheduler=lr_scheduler, **train_args)
