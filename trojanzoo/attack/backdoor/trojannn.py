@@ -42,7 +42,9 @@ class TrojanNN(BadNet):
         for i, data in enumerate(self.dataset.loader['train2']):
             _input, _label = self.model.get_data(data)
             fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
-            fm = fm.flatten(start_dim=2).mean(dim=2).mean(dim=0)
+            if len(fm.shape) > 2:
+                fm = fm.flatten(start_dim=2).mean(dim=2)
+            fm = fm.mean(dim=0)
             result.append(fm.detach())
         return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
 
@@ -60,6 +62,7 @@ class TrojanNN(BadNet):
             return loss.norm(p=2)
 
         noise = torch.zeros_like(mark)
+        x = mark
         for _iter in range(self.neuron_epoch):
             cost = loss_fn(x)
             if cost < self.threshold:

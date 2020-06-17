@@ -43,6 +43,10 @@ class Parser_Mark(Parser):
                             help='height offset, defaults to 0')
         parser.add_argument('--width_offset', dest='width_offset', type=int,
                             help='width offset, defaults to 0')
+        parser.add_argument('--random_pos', dest='random_pos', action='store_true',
+                            help='Random offset Location for add_mark.')
+        parser.add_argument('--random_init', dest='random_init', action='store_true',
+                            help='random values for mark pixel.')
 
     @classmethod
     def get_module(cls, data_shape: List[int] = None, dataset: ImageSet = None, **kwargs) -> Watermark:

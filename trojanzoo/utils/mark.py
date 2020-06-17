@@ -60,7 +60,7 @@ class Watermark:
         self.org_mask, self.org_alpha_mask = self.org_mask_mark(self.org_mark, self.edge_color, self.mark_alpha)
         self.random_init = random_init
         if random_init:
-            self.org_mark = self.random_init(org_mark, org_mask)
+            self.org_mark = self.random_init_mark(self.org_mark, self.org_mask)
 
         if not random_pos:
             self.param_list['mark'].extend(['height_offset', 'width_offset'])
@@ -166,7 +166,7 @@ class Watermark:
 
     # Give the mark init values for non transparent pixels.
     @staticmethod
-    def random_init(self, mark, mask):
+    def random_init_mark(mark, mask):
         init_mark = torch.rand_like(mark)
         ones = -torch.ones_like(mark)
         init_mark = torch.where(mask, init_mark, ones)
