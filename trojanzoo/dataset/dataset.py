@@ -179,7 +179,7 @@ class Dataset:
         subset2 = torch.utils.data.Subset(dataset, indices[length:])
         return subset1, subset2
 
-    def get_loss_weights(self, file_path: str = None, verbose=True) -> torch.FloatTensor:
+    def get_loss_weights(self, file_path: str = None, verbose: bool = True) -> torch.FloatTensor:
         if file_path is None:
             file_path = self.folder_path + 'loss_weights.npy'
         if os.path.exists(file_path):

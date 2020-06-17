@@ -60,7 +60,7 @@ class Watermark:
         self.org_mask, self.org_alpha_mask = self.org_mask_mark(self.org_mark, self.edge_color, self.mark_alpha)
         self.random_init = random_init
         if random_init:
-            self.org_mark = self.random_init(org_mark, org_mask)
+            self.org_mark = self.random_init_mark(self.org_mark, self.org_mask)
 
         if not random_pos:
             self.param_list['mark'].extend(['height_offset', 'width_offset'])
@@ -88,7 +88,6 @@ class Watermark:
                        edge_color: Union[str, torch.Tensor] = 'auto') -> torch.Tensor:
 
         assert data_shape[0] == mark.shape[0]
-
         t: torch.Tensor = torch.zeros(data_shape[0], dtype=torch.float)
         if isinstance(edge_color, str):
             if edge_color == 'black':
@@ -96,10 +95,11 @@ class Watermark:
             elif edge_color == 'white':
                 t += 1
             elif edge_color == 'auto':
-                _list = [mark[:, 0, :], mark[:, -1, :],
-                         mark[:, :, 0], mark[:, :, -1]]
+                mark = mark.transpose(0, -1)
+                _list = [mark[0, :, :], mark[-1, :, :],
+                         mark[:, 0, :], mark[:, -1, :]]
                 _list = torch.cat(_list)
-                t = _list.mode(dim=-1)[0]
+                t = _list.mode(dim=0)[0]
             else:
                 raise ValueError(edge_color)
         else:
@@ -166,7 +166,7 @@ class Watermark:
 
     # Give the mark init values for non transparent pixels.
     @staticmethod
-    def random_init(self, mark, mask):
+    def random_init_mark(mark, mask):
         init_mark = torch.rand_like(mark)
         ones = -torch.ones_like(mark)
         init_mark = torch.where(mask, init_mark, ones)
