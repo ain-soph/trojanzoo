@@ -18,6 +18,10 @@ _map = {'int': torch.int, 'float': torch.float,
 byte2float = functional.to_tensor
 
 
+def cos_sim(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    return (a * b).sum() / a.norm(p=2) / b.norm(p=2)
+
+
 def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
               dtype=None, device='default', **kwargs) -> torch.Tensor:
     if x is None:

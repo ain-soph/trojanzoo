@@ -2,7 +2,7 @@
 
 from .optimizer import Optimizer
 
-from trojanzoo.utils import add_noise
+from trojanzoo.utils import add_noise, cos_sim
 from trojanzoo.utils.output import prints, output_memory
 
 import torch
@@ -15,12 +15,20 @@ class PGD(Optimizer):
     Args:
         alpha (float): learning rate :math:`\alpha`. Default: :math:`\frac{3}{255}`.
         epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
+
+        norm (int): :math:`L_p` norm passed to :func:`torch.norm`. Default: ``float(inf)``.
+        universal (bool): All inputs in the batch share the same noise. Default: ``False``.
+
+        blackbox (bool): Use black box methods to calculate gradient. Default: ``False``.
+        n (int): number of samples in black box gradient estimation. Default: ``100``.
+        sigma (float): gaussian noise std in black box gradient estimation. Default: ``1e-3``.
     """
 
     name = 'pgd'
 
     def __init__(self, alpha: float = 3.0 / 255, epsilon: float = 8.0 / 255,
-                 norm=float('inf'), universal=False, **kwargs):
+                 norm: Union[int, float] = float('inf'), universal: bool = False,
+                 blackbox: bool = False, n: int = 100, sigma: float = 1e-3, **kwargs):
         super().__init__(**kwargs)
         self.param_list['pgd'] = ['alpha', 'epsilon', 'norm', 'universal']
 
@@ -29,6 +37,12 @@ class PGD(Optimizer):
 
         self.norm = norm
         self.universal = universal
+
+        self.blackbox = blackbox
+        if blackbox:
+            self.param_list['blackbox'] = ['n', 'sigma']
+            self.n = n
+            self.sigma = sigma
 
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
@@ -69,7 +83,7 @@ class PGD(Optimizer):
             grad = self.calc_grad(loss_fn, X)
             if self.blackbox and 'middle' in output:
                 real_grad = self.whitebox_grad(loss_fn, X)
-                prints('cos<real, est> = ', self.cos_sim(grad.sign(), real_grad.sign()),
+                prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
                        indent=indent + 2)
             if self.universal:
                 grad = grad.mean(dim=0)
@@ -111,3 +125,32 @@ class PGD(Optimizer):
             else:
                 noise = length * noise
         return noise
+
+    # -------------------------- Calculate Gradient ------------------------ #
+    def calc_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor):
+        if self.blackbox:
+            return self.blackbox_grad(f, X, n=self.n, sigma=self.sigma)
+        else:
+            return self.whitebox_grad(f, X)
+
+    @staticmethod
+    def whitebox_grad(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor):
+        X.requires_grad = True
+        loss = f(X)
+        grad = torch.autograd.grad(loss, X)[0]
+        X.requires_grad = False
+        return grad
+
+    @staticmethod
+    def blackbox_grad(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
+        grad = torch.zeros_like(X)
+        with torch.no_grad():
+            for i in range(n // 2):
+                noise = torch.normal(
+                    mean=0.0, std=1.0, size=X.shape, device=X.device)
+                X1 = X + sigma * noise
+                X2 = X - sigma * noise
+                grad += f(X1) * noise
+                grad -= f(X2) * noise
+            grad /= n * sigma
+        return grad

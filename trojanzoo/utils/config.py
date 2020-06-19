@@ -69,7 +69,7 @@ class Config:
                 with open(path, 'r', encoding='utf-8') as f:
                     return yaml.load(f.read(), Loader=yaml.FullLoader)
             elif ext == '.json':
-                raise NotImplementedError(path)
+                raise NotImplementedError('json is not supported yet: ', path)
             else:
                 return {}
         else:

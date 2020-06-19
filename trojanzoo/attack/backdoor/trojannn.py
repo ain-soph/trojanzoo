@@ -34,7 +34,10 @@ class TrojanNN(BadNet):
         self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0)
 
         self.neuron_idx = self.get_neuron_idx()
+
+    def attack(self, **kwargs):
         self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=self.neuron_idx)
+        return super().attack(**kwargs)
 
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:

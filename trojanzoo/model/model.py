@@ -270,7 +270,7 @@ class Model:
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
-        raise NotImplementedError
+        raise NotImplementedError(self.name + ' has no official weights.')
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
