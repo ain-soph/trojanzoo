@@ -187,3 +187,12 @@ def save_numpy_as_img(path: str, arr: np.ndarray):
 def read_img_as_tensor(path: str) -> torch.Tensor:
     I: Image.Image = Image.open(path)
     return byte2float(I)
+
+
+def normalize_mad(values: torch.Tensor) -> torch.Tensor:
+    median = values.median()
+    abs_dev = (values - median).abs()
+    mad = abs_dev.mean()
+
+    measures = abs_dev / mad / 1.4826
+    return measures

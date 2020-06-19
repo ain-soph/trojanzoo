@@ -127,14 +127,14 @@ class PGD(Optimizer):
         return noise
 
     # -------------------------- Calculate Gradient ------------------------ #
-    def calc_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor):
+    def calc_grad(self, f, X: torch.Tensor) -> torch.Tensor:
         if self.blackbox:
             return self.blackbox_grad(f, X, n=self.n, sigma=self.sigma)
         else:
             return self.whitebox_grad(f, X)
 
     @staticmethod
-    def whitebox_grad(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor):
+    def whitebox_grad(f, X: torch.Tensor) -> torch.Tensor:
         X.requires_grad = True
         loss = f(X)
         grad = torch.autograd.grad(loss, X)[0]
@@ -142,7 +142,7 @@ class PGD(Optimizer):
         return grad
 
     @staticmethod
-    def blackbox_grad(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
+    def blackbox_grad(f, X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
         grad = torch.zeros_like(X)
         with torch.no_grad():
             for i in range(n // 2):

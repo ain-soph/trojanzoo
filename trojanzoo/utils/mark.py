@@ -200,8 +200,8 @@ class Watermark:
             self.alpha_mask = to_tensor(_dict['alpha_mask'])
 
     def save_npz(self, npz_path: str):
-        if npz_path[:9] == 'trojanzoo':
-            npz_path = root_dir + npz_path[9:]
+        # if npz_path[:9] == 'trojanzoo':
+        #     npz_path = root_dir + npz_path[9:]
         _dict = {'org_mark': to_numpy(self.org_mark),
                  'org_mask': to_numpy(self.org_mask),
                  'org_alpha_mask': to_numpy(self.org_alpha_mask)}

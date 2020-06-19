@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# todo: Need a better name
+
 from .optimizer import Optimizer
 
 from trojanzoo.utils import add_noise
@@ -13,10 +15,7 @@ from collections.abc import Callable
 
 
 class Uname(Optimizer):
-    r"""Projected Gradient Descent.
-    Args:
-        alpha (float): learning rate :math:`\alpha`. Default: :math:`\frac{3}{255}`.
-        epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
+    r"""This class transforms input (tanh, atan or sigmoid) and then apply standard torch.optim.Optimizer
     """
 
     name = 'uname'

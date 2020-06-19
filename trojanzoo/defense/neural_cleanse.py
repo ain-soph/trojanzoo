@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# todo: search_epoch rename
+
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.process import Process
@@ -13,6 +15,8 @@ import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn as nn
+from tqdm import tqdm
+from typing import List
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -22,25 +26,27 @@ class Neural_Cleanse():
 
     name = 'neural_cleanse'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, data_shape: List[int],
+    def __init__(self, dataset: ImageSet, model: ImageModel, data_shape: List[int], search_epoch: int = 50,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, **kwargs):
         self.data_shape: List[int] = data_shape
-        self.dataset = dataset
-        self.model = model
+        self.dataset: ImageSet = dataset
+        self.model: ImageModel = model
+
+        self.search_epoch: int = search_epoch
 
         self.init_cost = init_cost
         self.cost_multiplier_up = cost_multiplier
         self.cost_multiplier_down = cost_multiplier ** 1.5
 
+        self.patience: float = patience
+        self.attack_succ_threshold: float = attack_succ_threshold
+
         self.early_stop = True
         self.early_stop_threshold: float = early_stop_threshold
         self.early_stop_patience: float = self.patience * 2
 
-        self.patience: float = patience
-        self.attack_succ_threshold: float = attack_succ_threshold
-
-    def get_potential_triggers(self):
+    def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mark_list, mask_list, loss_ce_list = [], [], []
         for label in range(self.model.num_classes):
             # print('label: ', label)
@@ -52,7 +58,7 @@ class Neural_Cleanse():
             loss_ce_list.append(loss_ce)
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
-        loss_ce_list = torch.stack(loss_ce_list)
+        loss_ce_list = torch.as_tensor(loss_ce_list)
 
         return mark_list, mask_list, loss_ce_list
 
@@ -87,15 +93,15 @@ class Neural_Cleanse():
         early_stop_counter = 0
         early_stop_reg_best = reg_best
 
-        for step in range(self.epoch):
+        for step in range(self.search_epoch):
             # record loss for all mini-batches
             loss_ce_list = []
             loss_reg_list = []
             loss_list = []
             loss_acc_list = []
-            for i, data in enumerate(self.dataset.loader['train']):
+            for data in tqdm(self.dataset.loader['train']):
                 _input, _label = self.model.get_data(data)
-                X = (1 - mask) * X + mask * mark
+                X = (1 - mask) * _input + mask * mark
                 Y = label * torch.ones_like(_label, dtype=torch.long)
 
                 _output = self.model(X)
@@ -141,9 +147,9 @@ class Neural_Cleanse():
                         early_stop_counter = 0
                 early_stop_reg_best = min(reg_best, early_stop_reg_best)
 
-                if (cost_down_flag and
-                        cost_up_flag and
-                        early_stop_counter >= self.early_stop_patience):
+                if (cost_down_flag
+                        and cost_up_flag
+                        and early_stop_counter >= self.early_stop_patience):
                     print('early stop')
                     break
 
@@ -169,16 +175,14 @@ class Neural_Cleanse():
 
             if cost_up_counter >= self.patience:
                 cost_up_counter = 0
-                if self.verbose == 2:
-                    print('up cost from %.2f to %.2f' %
-                          (cost, cost * self.cost_multiplier_up))
+                print('up cost from %.2f to %.2f' %
+                      (cost, cost * self.cost_multiplier_up))
                 cost *= self.cost_multiplier_up
                 cost_up_flag = True
             elif cost_down_counter >= self.patience:
                 cost_down_counter = 0
-                if self.verbose == 2:
-                    print('down cost from %.2f to %.2f' %
-                          (cost, cost / self.cost_multiplier_down))
+                print('down cost from %.2f to %.2f' %
+                      (cost, cost / self.cost_multiplier_down))
                 cost /= self.cost_multiplier_down
                 cost_down_flag = True
             if mask_best is None:
@@ -188,23 +192,3 @@ class Neural_Cleanse():
                 loss_ce_best = avg_loss_ce
 
         return mark_best, mask_best, loss_ce_best
-
-    @staticmethod
-    def get_mask_norms(mask_list: torch.Tensor) -> torch.Tensor:
-        return mask_list.flatten(start_dim=1).norm(p=1, dim=1)
-
-    @staticmethod
-    def normalize_mask_norms(mask_norms: torch.Tensor) -> torch.Tensor:
-        median = mask_norms.median()
-        abs_dev = (mask_norms - median).abs()
-        mad = abs_dev.mean()
-
-        measures = abs_dev / mad / 1.4826
-
-        return measures
-
-    @classmethod
-    def measure_triggers(cls, mask_list: torch.Tensor) -> torch.Tensor:
-        mask_norms = cls.get_mask_norms(mask_list)
-        measures = cls.normalize_mask_norms(mask_norms)
-        return measures
