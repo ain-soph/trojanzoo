@@ -2,4 +2,4 @@
 
 from .badnet import Parser_BadNet
 from .trojannn import Parser_TrojanNN
-from .hiddentrigger import Parser_HiddenTrigger
+from .hidden_trigger import Parser_Hidden_Trigger

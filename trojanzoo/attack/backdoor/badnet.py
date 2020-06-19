@@ -12,6 +12,25 @@ import torch
 
 
 class BadNet(Attack):
+    r"""
+    BadNet Backdoor Attack is described in detail in the paper `BadNet`_ by Tianyu Gu. 
+
+    It attaches a fixed watermark to benign images and inject them into training set with target label.
+    After retraining, the model will classify all images with watermark attached into target class.
+
+    The authors have posted `original source code`_.
+
+    Args:
+        mark (Watermark): the attached watermark image.
+        target_class (int): the target class. Default: ``0``.
+        percent (int): The proportion of malicious images in the training set (Max 0.5). Default: 0.1.
+
+    .. _BadNet:
+        https://arxiv.org/abs/1708.06733
+
+    .. _original source code:
+        https://github.com/Kooscii/BadNets
+    """
 
     name = 'badnet'
 
@@ -21,6 +40,7 @@ class BadNet(Attack):
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
+        self.percent2: float = percent / (1 - percent)
 
     def attack(self, epoch: int, save=False, **kwargs):
         self.model._train(epoch, get_data=self.get_data, validate_func=self.validate_func, **kwargs)
@@ -43,7 +63,7 @@ class BadNet(Attack):
 
     def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
         _input, _label = self.model.get_data(data)
-        if not keep_org or random.uniform(0, 1) < self.percent:
+        if not keep_org or random.uniform(0, 1) < self.percent2:
             org_input, org_label = _input, _label
             _input = self.add_mark(org_input)
             if poison_label:

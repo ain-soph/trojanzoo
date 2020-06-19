@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# python neuralcleanse.py --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
+# python neural_cleanse.py --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq
 from trojanzoo.parser import Parser_Mark
@@ -9,7 +9,7 @@ from trojanzoo.parser.attack import Parser_BadNet
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.mark import Watermark
-from trojanzoo.attack.backdoor.hiddentrigger import HiddenTrigger
+from trojanzoo.attack.backdoor.hidden_trigger import Hidden_Trigger
 from trojanzoo.defense.neural_cleanse import Neural_Cleanse
 
 from trojanzoo.utils import normalize_mad
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     model: ImageModel = parser.module_list['model']
     optimizer, lr_scheduler, train_args = parser.module_list['train']
     mark: Watermark = parser.module_list['mark']
-    attack: HiddenTrigger = parser.module_list['attack']
+    attack: Hidden_Trigger = parser.module_list['attack']
 
     attack.load(epoch=train_args['epoch'])
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# python hiddentrigger.py --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --poison_iteration 1000 --poison_num 200 -d cifar10 -m resnet18 --lr_scheduler --step_size 20 --iteration 100 --parameters classifier
+# python hidden_trigger.py --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --poison_iteration 1000 --poison_num 200 -d cifar10 -m resnet18 --lr_scheduler --step_size 20 --iteration 100 --parameters classifier
 # Validate Clean:           Loss: 0.6734,          Top1 Acc: 87.630,       Top5 Acc: 99.130,       Time: 0:00:08
 # Validate Trigger Tgt:     Loss: 10.5068,         Top1 Acc: 10.000,       Top5 Acc: 46.110,       Time: 0:00:01
 # Validate Trigger Org:     Loss: 1.3806,          Top1 Acc: 74.590,       Top5 Acc: 97.860,       Time: 0:00:01
@@ -13,19 +13,19 @@
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq
 from trojanzoo.parser import Parser_Mark
-from trojanzoo.parser.attack import Parser_HiddenTrigger
+from trojanzoo.parser.attack import Parser_Hidden_Trigger
 
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.mark import Watermark
-from trojanzoo.attack.backdoor.hiddentrigger import HiddenTrigger
+from trojanzoo.attack.backdoor.hidden_trigger import Hidden_Trigger
 
 import warnings
 warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
     parser = Parser_Seq(Parser_Dataset(), Parser_Model(), Parser_Train(),
-                        Parser_Mark(), Parser_HiddenTrigger())
+                        Parser_Mark(), Parser_Hidden_Trigger())
     parser.parse_args()
     parser.get_module()
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     model: ImageModel = parser.module_list['model']
     optimizer, lr_scheduler, train_args = parser.module_list['train']
     mark: Watermark = parser.module_list['mark']
-    attack: HiddenTrigger = parser.module_list['attack']
+    attack: Hidden_Trigger = parser.module_list['attack']
 
     # ------------------------------------------------------------------------ #
     attack.attack(optimizer=optimizer, lr_scheduler=lr_scheduler, **train_args)

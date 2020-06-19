@@ -147,9 +147,7 @@ class Neural_Cleanse():
                         early_stop_counter = 0
                 early_stop_reg_best = min(reg_best, early_stop_reg_best)
 
-                if (cost_down_flag
-                        and cost_up_flag
-                        and early_stop_counter >= self.early_stop_patience):
+                if cost_down_flag and cost_up_flag and early_stop_counter >= self.early_stop_patience:
                     print('early stop')
                     break
 
