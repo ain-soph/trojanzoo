@@ -81,7 +81,7 @@ class Watermark:
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
         _mask = mask * alpha_mask
-        return x * (1 - _mask) + mark * _mask
+        return x + _mask * (mark - x)
 
     @staticmethod
     def get_edge_color(mark: torch.Tensor, data_shape: List[int],
