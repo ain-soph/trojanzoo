@@ -77,9 +77,9 @@ class BadNet(Attack):
         self.model._validate(print_prefix='Validate Clean',
                              get_data=None, **kwargs)
         self.model._validate(print_prefix='Validate Trigger Tgt',
-                             get_data=get_data, keep_org=False, **kwargs)
+                             get_data=self.get_data, keep_org=False, **kwargs)
         self.model._validate(print_prefix='Validate Trigger Org',
-                             get_data=get_data, keep_org=False, poison_label=False, **kwargs)
+                             get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         # todo: Return value
         return 0.0, 0.0, 0.0
 

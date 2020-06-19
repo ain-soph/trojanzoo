@@ -132,10 +132,10 @@ class Neural_Cleanse():
 
             # check to save best mask or not
             if avg_loss_acc >= self.attack_succ_threshold and avg_loss_reg < reg_best:
-                mask_best = mask
-                mark_best = mark
-                reg_best = avg_loss_reg
-                loss_ce_best = avg_loss_ce
+                mask_best = mask.detach()
+                mark_best = mark.detach()
+                reg_best = avg_loss_reg.detach()
+                loss_ce_best = avg_loss_ce.detach()
 
             # check early stop
             if self.early_stop:
@@ -184,9 +184,9 @@ class Neural_Cleanse():
                 cost /= self.cost_multiplier_down
                 cost_down_flag = True
             if mask_best is None:
-                mask_best = Uname.tanh_func(atanh_mask)
-                mark_best = Uname.tanh_func(atanh_mark)
-                reg_best = avg_loss_reg
-                loss_ce_best = avg_loss_ce
+                mask_best = Uname.tanh_func(atanh_mask).detach()
+                mark_best = Uname.tanh_func(atanh_mark).detach()
+                reg_best = avg_loss_reg.detach()
+                loss_ce_best = avg_loss_ce.detach()
 
         return mark_best, mask_best, loss_ce_best

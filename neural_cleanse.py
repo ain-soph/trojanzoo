@@ -30,6 +30,7 @@ if __name__ == '__main__':
     attack: Hidden_Trigger = parser.module_list['attack']
 
     attack.load(epoch=train_args['epoch'])
+    attack.validate_func()
 
     # ------------------------------------------------------------------------ #
 
