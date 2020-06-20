@@ -29,7 +29,7 @@ class Neural_Cleanse():
 
     name = 'neural_cleanse'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, data_shape: List[int], epoch: int = 50,
+    def __init__(self, dataset: ImageSet, model: ImageModel, data_shape: List[int], epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, **kwargs):
         self.data_shape: List[int] = data_shape
@@ -50,20 +50,20 @@ class Neural_Cleanse():
         self.early_stop_patience: float = self.patience * 2
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
-        mark_list, mask_list, loss_ce_list = [], [], []
+        mark_list, mask_list, entropy_list = [], [], []
         for label in range(self.model.num_classes):
             # print('label: ', label)
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, mask, loss_ce = self.get_potential_triggers_for_label(
+            mark, mask, entropy = self.get_potential_triggers_for_label(
                 label)
             mark_list.append(mark)
             mask_list.append(mask)
-            loss_ce_list.append(loss_ce)
+            entropy_list.append(entropy)
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
-        loss_ce_list = torch.as_tensor(loss_ce_list)
+        entropy_list = torch.as_tensor(entropy_list)
 
-        return mark_list, mask_list, loss_ce_list
+        return mark_list, mask_list, entropy_list
 
     def get_potential_triggers_for_label(self, label: int):
         epoch = self.epoch
@@ -77,7 +77,6 @@ class Neural_Cleanse():
 
         optimizer = optim.Adam(
             [atanh_mark, atanh_mask], lr=0.1, betas=(0.5, 0.9))
-        criterion = nn.CrossEntropyLoss(reduction='none')
         optimizer.zero_grad()
 
         cost = self.init_cost
@@ -88,46 +87,45 @@ class Neural_Cleanse():
         cost_down_flag = False
 
         # best optimization results
-        reg_best = float('inf')
+        norm_best = float('inf')
         mask_best = None
         mark_best = None
-        loss_ce_best = None
+        entropy_best = None
 
         # counter for early stop
         early_stop_counter = 0
-        early_stop_reg_best = reg_best
+        early_stop_norm_best = norm_best
 
-        losses_mean = AverageMeter('Loss', ':.4e')
+        losses = AverageMeter('Loss', ':.4e')
+        entropy = AverageMeter('Entropy', ':.4e')
+        norm = AverageMeter('Norm', ':.4e')
+        acc = AverageMeter('Acc', ':6.2f')
 
         for _epoch in range(epoch):
-            # record loss for all mini-batches
-            loss_ce_list = []
-            loss_reg_list = []
-            loss_list = []
-            loss_acc_list = []
+            losses.reset()
+            entropy.reset()
+            norm.reset()
+            acc.reset()
             epoch_start = time.perf_counter()
             for data in tqdm(self.dataset.loader['train']):
                 _input, _label = self.model.get_data(data)
+                batch_size = _label.size(0)
                 X = _input + mask * (mark - _input)
                 Y = label * torch.ones_like(_label, dtype=torch.long)
 
                 _output = self.model(X)
-                _result = _output.max(1)[1]
 
-                loss_acc = Y.eq(_result).float()
-                loss_ce = criterion(_output, Y)
-                loss_reg = float(mask.norm(p=1))
-                loss = loss_ce + cost * loss_reg
-                loss_mean = loss.mean()
+                batch_acc = Y.eq(_output.argmax(1)).float().mean()
+                batch_entropy = self.model.criterion(_output, Y)
+                batch_norm = mask.norm(p=1)
+                batch_loss = batch_entropy + cost * batch_norm
 
-                loss_ce_list.extend(to_list(loss_ce))
-                loss_reg_list.append(loss_reg)
-                loss_list.extend(to_list(loss))
-                loss_acc_list.extend(to_list(loss_acc))
+                acc.update(batch_acc.item(), batch_size)
+                entropy.update(batch_entropy.item(), batch_size)
+                norm.update(batch_norm.item(), batch_size)
+                losses.update(batch_loss.item(), batch_size)
 
-                losses_mean.update(loss_mean.item(), _label.size(0))
-
-                loss_mean.backward()
+                batch_loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
 
@@ -137,37 +135,32 @@ class Neural_Cleanse():
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}'.format(
                 output_iter(_epoch + 1, epoch), **ansi)
-            prints('{:<60}Loss: {:.4f}, \t Time: {}'.format(
-                pre_str, losses_mean.avg, epoch_time), prefix='\033[1A\033[K', indent=4)
-
-            avg_loss_ce = np.mean(loss_ce_list)
-            avg_loss_reg = np.mean(loss_reg_list)
-            avg_loss = np.mean(loss_list)
-            avg_loss_acc = np.mean(loss_acc_list)
+            prints('{:<60}Loss: {:.4f}, \t Acc: {:.2f}, \t Norm: {:.4f}, \t Entropy: {:.4f}, \t Time: {}'.format(
+                pre_str, losses.avg, acc.avg, norm.avg, entropy.avg, epoch_time), prefix='\033[1A\033[K', indent=4)
 
             # check to save best mask or not
-            if avg_loss_acc >= self.attack_succ_threshold and avg_loss_reg < reg_best:
+            if acc.avg >= self.attack_succ_threshold and norm.avg < norm_best:
                 mask_best = mask.detach()
                 mark_best = mark.detach()
-                reg_best = avg_loss_reg
-                loss_ce_best = avg_loss_ce
+                norm_best = norm.avg
+                entropy_best = entropy.avg
 
             # check early stop
             if self.early_stop:
                 # only terminate if a valid attack has been found
-                if reg_best < float('inf'):
-                    if reg_best >= self.early_stop_threshold * early_stop_reg_best:
+                if norm_best < float('inf'):
+                    if norm_best >= self.early_stop_threshold * early_stop_norm_best:
                         early_stop_counter += 1
                     else:
                         early_stop_counter = 0
-                early_stop_reg_best = min(reg_best, early_stop_reg_best)
+                early_stop_norm_best = min(norm_best, early_stop_norm_best)
 
                 if cost_down_flag and cost_up_flag and early_stop_counter >= self.early_stop_patience:
                     print('early stop')
                     break
 
             # check cost modification
-            if cost == 0 and avg_loss_acc >= self.attack_succ_threshold:
+            if cost == 0 and acc.avg >= self.attack_succ_threshold:
                 cost_set_counter += 1
                 if cost_set_counter >= self.patience:
                     cost = self.init_cost
@@ -179,7 +172,7 @@ class Neural_Cleanse():
             else:
                 cost_set_counter = 0
 
-            if avg_loss_acc >= self.attack_succ_threshold:
+            if acc.avg >= self.attack_succ_threshold:
                 cost_up_counter += 1
                 cost_down_counter = 0
             else:
@@ -201,7 +194,7 @@ class Neural_Cleanse():
             if mask_best is None:
                 mask_best = Uname.tanh_func(atanh_mask).detach()
                 mark_best = Uname.tanh_func(atanh_mark).detach()
-                reg_best = avg_loss_reg
-                loss_ce_best = avg_loss_ce
+                norm_best = norm.avg
+                entropy_best = entropy.avg
 
-        return mark_best, mask_best, loss_ce_best
+        return mark_best, mask_best, entropy_best

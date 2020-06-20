@@ -14,6 +14,8 @@ from trojanzoo.defense.neural_cleanse import Neural_Cleanse
 
 from trojanzoo.utils import normalize_mad
 
+import argparse
+
 import warnings
 warnings.filterwarnings("ignore")
 
