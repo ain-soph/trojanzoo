@@ -31,7 +31,7 @@ class Parser_Model(Parser):
                             help='load adversarially trained models')
 
     @classmethod
-    def get_module(cls, model=None, layer=None, dataset=None, **kwargs):
+    def get_module(cls, model: str = None, layer: int = None, dataset: Dataset = None, **kwargs) -> Model:
         # type: (str, int, Dataset, dict) -> Model  # noqa
         r"""get model.
 

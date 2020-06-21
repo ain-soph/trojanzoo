@@ -29,7 +29,8 @@ class Neural_Cleanse():
 
     name = 'neural_cleanse'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, data_shape: List[int], epoch: int = 10,
+    def __init__(self, dataset: ImageSet, model: ImageModel, data_shape: List[int],
+                 epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, **kwargs):
         self.data_shape: List[int] = data_shape
