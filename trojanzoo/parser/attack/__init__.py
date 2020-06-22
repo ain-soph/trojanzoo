@@ -1,26 +1,38 @@
+# -*- coding: utf-8 -*-
 
-from package.parse import Parser
-from package.parse.model import Parser_Model
+from .adv import *
+from .backdoor import *
+from .poison import *
+
+from trojanzoo.attack import class_dict
+from ..parser import Parser
+import sys
 
 
-class Parser_Perturb(Parser):
-    def __init__(self, *args, name='perturb', **kwargs):
-        super().__init__(*args, name=name, **kwargs)
+class Parser_Attack(Parser):
+    r"""Universal Attack Parser
 
-    @staticmethod
-    def add_argument(parser):
-        parser.add_argument('--perturb', dest='module_name',
-                            default=None)
-        parser.add_argument('--stop_confidence', dest='stop_confidence',
-                            default=0.75, type=float)
-        parser.add_argument('--iteration', dest='iteration',
-                            default=None, type=int)
-        parser.add_argument('-o', '--output', dest='output',
-                            default=0, type=int)
+    Attributes:
+        name (str): ``'attack'``
+    """
+    name = 'attack'
 
-    def set_module(self, **kwargs):
-        if 'model' not in self.module.keys():
-            self.module.add(Parser_Model(output=self.output).module)
-        self.set_args(self.args, self.param[self.module['dataset'].name])
+    def __init__(self):
+        argv = sys.argv
+        try:
+            idx = argv.index('--attack')
+            self.attack = argv[idx + 1]
+        except ValueError as e:
+            print("You need to set '--attack' to call 'Parser_Attack'. ")
+            raise e
 
-        super().set_module(model=self.module['model'], **kwargs)
+        pkg = __import__('trojanzoo.parser.attack', fromlist=['class_dict'])
+        class_name: str = 'Parser_' + class_dict[self.attack]
+        _class = getattr(pkg, class_name)
+        self.parser: Parser = _class()
+
+    def parse_args(self, args=None, namespace=None, **kwargs):
+        return self.parser.parse_args(args=args, namespace=namespace, **kwargs)
+
+    def get_module(self, **kwargs):
+        return self.parser.get_module(**kwargs)

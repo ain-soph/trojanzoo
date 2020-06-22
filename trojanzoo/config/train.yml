@@ -1,0 +1,20 @@
+# -*- coding: utf-8 -*-
+
+epoch:
+  cifar10: 300
+
+lr:
+  default: 0.1
+
+parameters:
+  default: full
+
+optim_type:
+  default: SGD
+
+step_size:
+  default: 50
+  cifar10: 100
+
+validate_interval:
+  default: 10

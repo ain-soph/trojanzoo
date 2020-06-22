@@ -1,0 +1,22 @@
+# -*- coding: utf-8 -*-
+
+preprocess_layer:
+  default: features
+
+epsilon:
+  default: 0.0627451
+
+poison_num:
+  default: 100
+
+poison_iteration:
+  default: 500
+
+poison_lr:
+  default: 0.01
+
+decay_iteration:
+  default: 200
+
+decay_ratio:
+  default: 0.95

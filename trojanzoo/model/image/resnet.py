@@ -27,7 +27,7 @@ class _ResNet(_ImageModel):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.avgpool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
@@ -57,8 +57,8 @@ class _ResNet(_ImageModel):
                     elif 'features.'+l+'.'+name == layer_input:
                         record = True
         if record:
-            x = self.avgpool(x)
-            od['avgpool'] = x
+            x = self.pool(x)
+            od['pool'] = x
             x = x.flatten(start_dim=1)
             od['features'] = x
         elif layer_input == 'features':
@@ -76,6 +76,21 @@ class _ResNet(_ImageModel):
         od['output'] = y
         return od
 
+    def get_layer_name(self):
+        layer_name = []
+        for l, block in self.features.named_children():
+            if 'conv' in l:
+                layer_name.append('features.'+l)
+            else:
+                for name, _ in block.named_children():
+                    if 'relu' not in name and 'bn' not in name:
+                        layer_name.append('features.'+l+'.'+name)
+        layer_name.append('pool')
+        for name, _ in self.classifier.named_children():
+            if 'relu' not in name and 'bn' not in name:
+                layer_name.append('classifier.'+name)
+        return layer_name
+
 
 class ResNet(ImageModel):
 
@@ -83,16 +98,18 @@ class ResNet(ImageModel):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, output=True):
-        if output:
-            print("********Load From Official Website!********")
-        _dict = model_zoo.load_url(model_urls['resnet'+str(self.layer)])
+    def load_official_weights(self, verbose=True):
+        url = model_urls['resnet'+str(self.layer)]
+        _dict = model_zoo.load_url(url)
         self._model.features.load_state_dict(_dict, strict=False)
         if self.num_classes == 1000:
             self._model.classifier.load_state_dict(_dict, strict=False)
+        if verbose:
+            print(
+                'Model {} loaded From Official Website: '.format(self.name), url)
 
 
-class _ResNetcomp(_ImageModel):
+class _ResNetcomp(_ResNet):
 
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
@@ -107,7 +124,7 @@ class _ResNetcomp(_ImageModel):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.avgpool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
+        self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
@@ -121,5 +138,14 @@ class ResNetcomp(ResNet):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, output=True):
-        pass
+    def load_official_weights(self, verbose=True):
+        url = model_urls['resnet'+str(self.layer)]
+        _dict = model_zoo.load_url(url)
+        _dict = {key: value for (key, value)
+                 in _dict.items() if key != 'conv1.weight'}
+        self._model.features.load_state_dict(_dict, strict=False)
+        if self.num_classes == 1000:
+            self._model.classifier.load_state_dict(_dict, strict=False)
+        if verbose:
+            print('Model {} loaded From Official Website: '.format(self.name),
+                  url)

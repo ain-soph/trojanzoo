@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 import torch.nn as nn
 from torch.utils import model_zoo
-from torchvision.models.resnet import model_urls
+from torchvision.models.vgg import model_urls
 import torchvision.models as models
 
 
@@ -17,7 +17,7 @@ class _VGG(_ImageModel):
         _model = models.__dict__[
             'vgg'+str(layer)](num_classes=self.num_classes)
         self.features = _model.features
-        self.avgpool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
+        self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
         self.classifier = _model.classifier
 
         # nn.Sequential(
@@ -38,10 +38,9 @@ class VGG(ImageModel):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, output=True):
-        if output:
-            print("********Load From Official Website!********")
-        _dict = model_zoo.load_url(model_urls['vgg'+str(self.layer)])
+    def load_official_weights(self, verbose=True):
+        url = model_urls['vgg'+str(self.layer)]
+        _dict = model_zoo.load_url(url)
         if self.num_classes == 1000:
             self._model.load_state_dict(_dict)
         else:
@@ -50,27 +49,32 @@ class VGG(ImageModel):
                 if 'classifier.6' not in name:
                     new_dict[name] = param
             self._model.load_state_dict(new_dict, strict=False)
+        if verbose:
+            print(
+                'Model {} loaded From Official Website: '.format(self.name), url)
 
 
 class _VGGcomp(_VGG):
 
     def __init__(self, **kwargs):
-        super(_VGGcomp, self).__init__(**kwargs)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        super().__init__(**kwargs)
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
 
 
 class VGGcomp(VGG):
 
     def __init__(self, name='vggcomp', model_class=_VGGcomp, **kwargs):
-        super(VGGcomp, self).__init__(name=name, model_class=model_class,
-                                      conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
+        super().__init__(name=name, model_class=model_class,
+                         conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
 
-    def load_official_weights(self, output=True):
-        if output:
-            print("********Load From Official Website!********")
-        _dict = model_zoo.load_url(model_urls['vgg'+str(self.layer)])
+    def load_official_weights(self, verbose=True):
+        url = model_urls['vgg'+str(self.layer)]
+        _dict = model_zoo.load_url(url)
         new_dict = OrderedDict()
         for name, param in _dict.items():
             if 'classifier' not in name:
                 new_dict[name] = param
         self._model.load_state_dict(new_dict, strict=False)
+        if verbose:
+            print(
+                'Model {} loaded From Official Website: '.format(self.name), url)

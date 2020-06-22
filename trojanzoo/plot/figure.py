@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from package.font import palatino, palatino_bold
+from trojanzoo.utils import to_numpy, arctanh
+from .font import palatino, palatino_bold
 
 import os
 import numpy as np
 import torch
-from package.utils.utils import to_tensor, to_numpy, arctanh
 
 from matplotlib import pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn
 
 
-class Figure(object):
+class Figure:
     def __init__(self, name, path=None, fig=None, ax=None):
         super(Figure, self).__init__()
         self.name = name
@@ -239,9 +239,9 @@ class Figure(object):
             std = std*np.ones(len(sort_keys))
         for i in range(len(sort_keys)):
             key = sort_keys[i]
-            if mean is not None:
+            if mean:
                 y_dict[key] = y_dict[key]+mean[i]
-            if std is not None:
+            if std:
                 y_dict[key] = y_dict[key].mean() + \
                     (y_dict[key]-y_dict[key].mean())*std[i]
         return y_dict

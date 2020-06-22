@@ -130,6 +130,8 @@ todo_include_todos = True
 # Disable docstring inheritance
 autodoc_inherit_docstrings = False
 
+autodoc_typehints='none'
+
 
 # -- katex javascript in header
 #

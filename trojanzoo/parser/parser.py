@@ -2,68 +2,119 @@
 
 import argparse
 
+from trojanzoo.dataset import Dataset
 from trojanzoo.utils.param import Module, Param
-from trojanzoo.utils.loader import get_module
-from trojanzoo.utils.output import prints
+
+from typing import Union, List, Dict, Any
 
 
 class Parser():
-    """This is the generic class of parsers. All parsers should **inherit** this class.
+    r"""Base class for all parsers. All parsers should **subclass** this class.
 
-    :param name: the name of module class, which need overwriting for specific sub-classes, defaults to ``'basic'``
-    :type name: str, optional
-
-    :param parser: argument parser
-    :type parser: argparse.ArgumentParser
-
+    Attributes:
+        name (str): the name of module class, which need overriding for sub-classes. Default: ``'basic'``.
+        parser (argparse.ArgumentParser): argument parser.
     """
 
-    def __init__(self, name: str = 'basic'):
-        self.parser = self.get_parser()
-        self.name = name
+    name = 'basic'
 
-    # ---------------- To Overwrite ------------------------ #
+    def __init__(self):
+        self.parser: argparse.ArgumentParser = self.get_parser()
+
+    # ---------------- To Override ------------------------ #
 
     @staticmethod
-    def add_argument(parser: argparse.ArgumentParser):
-        """Add arguments to ``parser``. Concrete sub-classes should **overwrite** this method to claim specific arguments.
+    def add_argument(parser):
+        # type: (argparse.ArgumentParser) -> None  # noqa
+        r"""Add arguments to ``parser``. Sub-classes should **override** this method to claim specific arguments.
 
-        :param parser: the parser to add arguments
-        :type parser: argparse.ArgumentParser
+        Args:
+            parser (argparse.ArgumentParser): the parser to add arguments
         """
         pass
 
-    def get_module(self, **kwargs):
-        """
-        | Construct the module from parsed arguments.
-        | This is a generic method based on dynamic programming.
-        | Concrete sub-classes should **overwrite** this method for linting purpose.
+    @staticmethod
+    def get_module(module_class: str, module_name: str, **kwargs) -> Any:
+        # type: (str, str, dict) -> Any  # noqa
+        r"""
+        Construct the module from parsed arguments.
 
-        :return: module (config, dataset, model, attack)
+        This is a generic method based on dynamic programming.
+
+        Sub-classes should **override** this method.
+
+        Args:
+            module_class (str): module type. (e.g. 'dataset', 'model', 'attack')
+            module_name (str): module name. (e.g. 'cifar10', 'resnet18', 'badnet')
         """
-        return get_module(module_class=self.name, **kwargs)
+        pkg = __import__('trojanzoo.' + module_class, fromlist=['class_dict'])
+        class_dict: Dict[str, str] = getattr(pkg, 'class_dict')
+        class_name: str = class_dict[module_name]
+        _class = getattr(pkg, class_name)
+        return _class(**kwargs)
 
     # ------------------------------------------------------ #
-    def parse_args(self, *args, **kwargs) -> Module:
-        """parse arguments using ``self.parser``
+    def parse_args(self, args=None, namespace=None, **kwargs):
+        # type: (str, argparse.Namespace, dict) -> Module  # noqa
+        r"""parse arguments using :attr:`parser`.
 
-        :return: the parsed arguments
-        :rtype: Module
+        Args:
+            args (str): Default: None.
+            namespace (argparse.Namespace): Default: None.
+
+        Returns:
+            Parsed Arguments(:class:`Module`)
         """
-        parsed_args, unknown = self.parser.parse_known_args(*args)
+        parsed_args, unknown = self.parser.parse_known_args(
+            args, namespace=namespace)
         parsed_args = Module(parsed_args.__dict__)
 
-        result = (Module(kwargs))
+        result = Module(kwargs)
         result.update(parsed_args)
         return result
 
     @classmethod
-    def get_parser(cls) -> argparse.ArgumentParser:
-        """ Get the parser based on ``self.add_argument``
+    def get_parser(cls):
+        # type: () -> argparse.ArgumentParser  # noqa
+        r""" Get the parser based on :meth:`add_argument`
 
-        :return: parser
-        :rtype: argparse.ArgumentParser
+        Returns:
+            :class:`argparse.ArgumentParser`
         """
         parser = argparse.ArgumentParser()
         cls.add_argument(parser)
         return parser
+
+    @staticmethod
+    def combine_param(config=None, dataset=None, filter_list=[], **kwargs):
+        # type: (Param, Union[Dataset, str], List[str], dict) -> Param  # noqa
+        r"""Combine parser arguments and config parameters. The values in config are picked according to ``dataset``.
+
+        Args:
+            config (Param): config parameters
+            dataset (Union[Dataset, str]): dataset used to pick values in config. Default: None.
+            filter_list (List[str]): parameters ignored in config. Default: ``[]``.
+
+        Returns:
+            combined :class:`Param`.
+        """
+        dataset_name: str = 'default'
+        if isinstance(dataset, str):
+            dataset_name = dataset
+        elif isinstance(dataset, Dataset):
+            dataset_name = dataset.name
+
+        result = Param()
+        if config:
+            result.add(config)
+        for key in filter_list:
+            if key in result.keys():
+                result.__delattr__(key)
+        for key, value in result.items():
+            if isinstance(value, Param):
+                result[key] = value[dataset_name]
+        result.update(kwargs)
+
+        if isinstance(dataset, Dataset):
+            result.dataset: Dataset = dataset
+        return result

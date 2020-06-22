@@ -7,39 +7,52 @@ from typing import Union
 import numpy as np
 
 import torch
-import torch.nn as nn
-import torchvision
+import torchvision.transforms.functional as functional
 
-from trojanzoo.config import Config
+from .config import Config
+env = Config.env
 
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
 
-byte2float = torchvision.transforms.ToTensor()
+byte2float = functional.to_tensor
 
 
-def to_tensor(x, dtype=None, device='default') -> torch.Tensor:
+def cos_sim(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    return (a * b).sum() / a.norm(p=2) / b.norm(p=2)
+
+
+def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
+              dtype=None, device='default', **kwargs) -> torch.Tensor:
     if x is None:
         return None
-    _dtype = _map[dtype] if isinstance(dtype, str) else dtype
+    if isinstance(dtype, str):
+        dtype = _map[dtype]
 
-    if device == 'default' and Config.env['num_gpus']:
-        device = 'cuda'
+    if device == 'default':
+        device = env['device']
+        if 'non_blocking' not in kwargs.keys():
+            kwargs['non_blocking'] = True
 
     if isinstance(x, list):
         try:
             x = torch.stack(x)
-        except Exception:
+        except TypeError:
             pass
+    elif isinstance(x, Image.Image):
+        x = byte2float(x)
     try:
-        x = torch.as_tensor(x, dtype=_dtype, device=device)
-    except Exception:
+        x = torch.as_tensor(x, dtype=dtype).to(device=device, **kwargs)
+    except Exception as e:
         print('tensor: ', x)
-        raise ValueError()
+        if torch.is_tensor(x):
+            print('shape: ', x.shape)
+            print('device: ', x.device)
+        raise e
     return x
 
 
-def to_numpy(x) -> np.ndarray:
+def to_numpy(x: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
     if x is None:
         return None
     if type(x).__module__ == np.__name__:
@@ -49,7 +62,7 @@ def to_numpy(x) -> np.ndarray:
     return np.array(x)
 
 
-def to_list(x) -> list:
+def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
     if x is None:
         return None
     if type(x).__module__ == np.__name__ or torch.is_tensor(x):
@@ -60,41 +73,56 @@ def to_list(x) -> list:
         return list(x)
 
 
-def to_valid_img(img, min=0.0, max=1.0):
-    return to_tensor(torch.clamp(img, min, max))
+def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
+    if isinstance(x, Image.Image):
+        return x
+    x = to_tensor(x, device='cpu')
+    return functional.to_pil_image(x, mode=mode)
 
 
-def repeat_to_batch(X, batch_size=1):
-    X = to_tensor(X)
+def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     try:
-        size = torch.cat(
-            (torch.as_tensor([batch_size]).int(), torch.ones(len(X.shape)).int()))
-        X = X.repeat(list(size))
-    except Exception:
-        print('tensor shape: ', X.shape)
+        size = batch_size + [1] * len(x.shape)
+        x = x.repeat(list(size))
+    except Exception as e:
+        print('tensor shape: ', x.shape)
         print('batch_size: ', batch_size)
-        raise ValueError()
-    return X
+        raise e
+    return x
 
 
-def add_noise(x, noise=None, mean=0.0, std=1.0, batch=False, detach=True):
+def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1) -> Image.Image:
+    if not isinstance(x, Image.Image):
+        x = to_img(x)
+    return functional.to_grayscale(x, num_output_channels=num_output_channels)
+
+
+def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1, **kwargs) -> torch.Tensor:
+    if torch.is_tensor(x):
+        if 'dtype' not in kwargs.keys():
+            kwargs['dtype'] = x.dtype
+        if 'device' not in kwargs.keys():
+            kwargs['device'] = x.device
+    img = gray_img(x, num_output_channels=num_output_channels)
+    return to_tensor(img, **kwargs)
+
+
+def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
     if noise is None:
         shape = x.shape
         if batch:
             shape = shape[1:]
-        noise = to_tensor(torch.normal(mean=mean, std=std, size=shape))
+        noise = torch.normal(mean=mean, std=std, size=shape, device=x.device)
     batch_noise = noise
     if batch:
         batch_noise = repeat_to_batch(noise, x.shape[0])
-    noisy_input = to_valid_img(x+batch_noise)
-    if detach:
-        noisy_input = noisy_input.detach()
+    noisy_input = (x + batch_noise).clamp(0, 1)
     return noisy_input
 
 
 def arctanh(x, epsilon=1e-7):
-    x = x-epsilon*x.sign()
-    return torch.log(2/(1-x)-1)/2
+    x = x - epsilon * x.sign()
+    return torch.log(2 / (1 - x) - 1) / 2
 
 
 def percentile(t: torch.tensor, q: float) -> Union[int, float]:
@@ -119,7 +147,7 @@ def percentile(t: torch.tensor, q: float) -> Union[int, float]:
 
 
 def float2byte(img) -> torch.ByteTensor:
-    img = to_tensor(img)
+    img = torch.as_tensor(img)
     if len(img.shape) == 4:
         assert img.shape[0] == 1
         img = img[0]
@@ -127,9 +155,8 @@ def float2byte(img) -> torch.ByteTensor:
         img = img[0]
     elif len(img.shape) == 3:
         img = img.transpose(0, 1).transpose(1, 2).contiguous()
-    img.mul_(255.0)
-    # img = (((img - img.min()) / (img.max() - img.min())) * 255.9).astype(np.uint8).squeeze()
-    return img.byte()
+    # img = (((img - img.min()) / (img.max() - img.min())) * 255).astype(np.uint8).squeeze()
+    return img.mul(255).byte()
 
 
 # def byte2float(img) -> torch.FloatTensor:
@@ -153,10 +180,19 @@ def save_tensor_as_img(path: str, _tensor: torch.Tensor):
     I.save(path)
 
 
-def save_numpy_as_img(path, arr):
+def save_numpy_as_img(path: str, arr: np.ndarray):
     save_tensor_as_img(path, torch.as_tensor(arr))
 
 
-def read_img_as_tensor(path):
+def read_img_as_tensor(path: str) -> torch.Tensor:
     I: Image.Image = Image.open(path)
-    return to_tensor(byte2float(I))
+    return byte2float(I)
+
+
+def normalize_mad(values: torch.Tensor) -> torch.Tensor:
+    median = values.median()
+    abs_dev = (values - median).abs()
+    mad = abs_dev.mean()
+
+    measures = abs_dev / mad / 1.4826
+    return measures

@@ -1,18 +1,28 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils import *
-from trojanzoo.utils.output import prints
+from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch
+from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.model import split_name as func
 from trojanzoo.utils.model import AverageMeter, CrossEntropy
 from trojanzoo.dataset.dataset import Dataset
 
+import types
+from typing import Union, Callable
+
+import os
+import time
+import datetime
 from collections import OrderedDict
-# import time
+from collections.abc import Iterable
+from tqdm import tqdm
+import itertools
 
+import torch
+import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
-from trojanzoo.config import Config
-config = Config.config
+from trojanzoo.utils import Config
 env = Config.env
 
 
@@ -27,7 +37,8 @@ class _Model(nn.Module):
         self.num_classes = num_classes
 
         self.features = self.define_features()   # feature extractor
-        self.avgpool = nn.Identity()  # average pooling
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
+        self.flatten = nn.Flatten(start_dim=1)
         self.classifier = self.define_classifier()  # classifier
 
     # forward method
@@ -50,8 +61,8 @@ class _Model(nn.Module):
     # output: (batch_size, [feature_map])
     def get_final_fm(self, x):
         x = self.get_fm(x)
-        x = self.avgpool(x)
-        x = x.flatten(start_dim=1)
+        x = self.pool(x)
+        x = self.flatten(x)
         return x
 
     # get logits from feature map
@@ -82,64 +93,59 @@ class _Model(nn.Module):
             seq.append(('fc1', nn.Linear(self.conv_dim, self.fc_dim)))
             seq.append(('relu1', nn.ReLU()))
             seq.append(('dropout1', nn.Dropout()))
-            for i in range(self.fc_depth-2):
+            for i in range(self.fc_depth - 2):
                 seq.append(
-                    ('fc'+str(i+2), nn.Linear(self.fc_dim, self.fc_dim)))
-                seq.append(('relu'+str(i+2), nn.ReLU()))
-                seq.append(('dropout'+str(i+2), nn.Dropout()))
-            seq.append(('fc'+str(self.fc_depth),
+                    ('fc' + str(i + 2), nn.Linear(self.fc_dim, self.fc_dim)))
+                seq.append(('relu' + str(i + 2), nn.ReLU()))
+                seq.append(('dropout' + str(i + 2), nn.Dropout()))
+            seq.append(('fc' + str(self.fc_depth),
                         nn.Linear(self.fc_dim, self.num_classes)))
         return nn.Sequential(OrderedDict(seq))
 
 
 class Model:
 
-    def __init__(self, name='model', dataset: Dataset = None,
-                 num_classes: int = None, loss_weights: torch.FloatTensor = None, model_class=_Model,
-                 folder_path: str = None, pretrain=True, prefix='', **kwargs):
+    def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
+                 num_classes: int = None, loss_weights: torch.FloatTensor = None,
+                 official=False, pretrain=False, prefix='', folder_path: str = None, **kwargs):
         self.name = name
         self.dataset = dataset
         self.prefix = prefix
 
-        #------------Auto--------------#
-        if dataset is not None:
-            data_dir: str = config['general']['path']['data_dir']
+        # ------------Auto-------------- #
+        if dataset:
+            data_dir: str = env['data_dir']
             if isinstance(dataset, str):
-                pass
+                raise TypeError(dataset)
             if folder_path is None:
-                # Default Folder Path
-                folder_path = data_dir+dataset.data_type+'/'+dataset.name+'/model/'
+                folder_path = data_dir + dataset.data_type + '/' + dataset.name + '/model/'
             if num_classes is None:
                 num_classes = dataset.num_classes
             if loss_weights is None:
                 loss_weights = dataset.loss_weights
-        if num_classes is None:
-            num_classes = 1000
         self.num_classes = num_classes  # number of classes
-
-        #---------Folder Path----------#
-        if folder_path is None:
-            folder_path = './model/'
-        self.folder_path = folder_path
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
-        #------------------------------#
         self.loss_weights = loss_weights
+
+        self.folder_path = folder_path
+
+        # ------------------------------ #
         self.criterion = self.define_criterion(loss_weights=loss_weights)
         self.softmax = nn.Softmax(dim=1)
 
-        #-----------Temp---------------#
+        # -----------Temp--------------- #
         # the location when loading pretrained weights using torch.load
-        self._model = model_class(
-            num_classes=num_classes, model=self, **kwargs)
+        self._model: model_class = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel()
         # load pretrained weights
-        self.load_pretrained_weights(weights_loc='nothing')
+        if official:
+            self.load('official')
+        if pretrain:
+            self.load()
         if env['num_gpus']:
             self.cuda()
         self.eval()
 
-    #-----------------Operation on Data----------------------#
+    # ----------------- Forward Operations ----------------------#
 
     def get_logits(self, _input, randomized_smooth=False, sigma=0.01, n=100, **kwargs):
         if randomized_smooth:
@@ -151,24 +157,19 @@ class Model:
         else:
             return self.model(_input)
 
-    def get_prob(self, _input, **kwargs):
+    def get_prob(self, _input, **kwargs) -> torch.Tensor:
         return self.softmax(self.get_logits(_input, **kwargs))
+
+    def get_target_prob(self, _input, target, **kwargs):
+        return self.get_prob(_input, **kwargs).gather(dim=1, index=target.unsqueeze(1)).flatten()
 
     def get_class(self, _input, **kwargs):
         return self.get_logits(_input, **kwargs).argmax(dim=-1)
 
-    def loss(self, _input, label, **kwargs):
-        return self.criterion(self(_input, **kwargs), label)
+    def loss(self, _input, _label, **kwargs):
+        return self.criterion(self(_input, **kwargs), _label)
 
-    def remove_misclassify_from_batch(self, data, **kwargs):
-        _input, _label = self.get_data(data, **kwargs)
-        _classification = self.get_class(_input)
-
-        repeat_idx = _classification.eq(_label)
-        _input = _input[repeat_idx]
-        _label = _label[repeat_idx]
-        return _input, _label
-    #--------------------------------------------------------#
+    # -------------------------------------------------------- #
 
     # Define the optimizer
     # and transfer to that tuning mode.
@@ -178,132 +179,116 @@ class Model:
     #
     # return: optimizer
 
-    def define_optimizer(self, train_opt='partial', lr: float = None, optim_type: str = None, lr_scheduler=False, lr_step=20, **kwargs):
-        if train_opt != 'full' and train_opt != 'partial':
-            print('train_opt = %s' % train_opt)
-            raise ValueError(
-                'Value of Parameter "train_opt" shoule be "full" or "partial"! ')
+    def define_optimizer(self, lr: float = 0.1,
+                         parameters: Union[str, Iterable] = 'full', optim_type: Union[str, type] = None,
+                         lr_scheduler=True, step_size=30, **kwargs):
+
+        if isinstance(parameters, str):
+            parameters = self.get_params(name=parameters)
+        if not isinstance(parameters, Iterable):
+            raise TypeError(type(parameters))
+
+        parameters, param_copy = itertools.tee(parameters)
+        self.activate_params(param_copy)
+
         if optim_type is None:
-            optim_class = optim.SGD if train_opt == 'full' else optim.Adam
-        else:
-            optim_class = getattr(optim, optim_type)
-        if lr is None:
-            lr = 0.01 if train_opt == 'full' else 1e-4
-        parameters = self._model.parameters(
-        ) if train_opt == 'full' else self._model.classifier.parameters()
-        self.transfer_tuning(train_opt)
+            optim_type = optim.SGD
+        elif isinstance(optim_type, str):
+            optim_type = getattr(optim, optim_type)
+        assert isinstance(optim_type, type)
 
         if kwargs == {}:
-            if optim_class == optim.SGD:
-                print('using default SGD optimizer setting')
+            if optim_type == optim.SGD:
                 kwargs = {'momentum': 0.9,
                           'weight_decay': 2e-4, 'nesterov': True}
-        else:
-            print('kwargs: ', kwargs)
-
-        optimizer = optim_class(parameters, lr, **kwargs)
+        optimizer = optim_type(parameters, lr, **kwargs)
+        _lr_scheduler = None
         if lr_scheduler:
-            print('enable lr_scheduler')
-            optimizer = optim.lr_scheduler.StepLR(
-                optimizer, step_size=lr_step, gamma=0.1)
+            _lr_scheduler = optim.lr_scheduler.StepLR(
+                optimizer, step_size=step_size, gamma=0.1)
             # optimizer = optim.lr_scheduler.MultiStepLR(
             #     optimizer, milestones=[150, 250], gamma=0.1)
-        return optimizer
+        return optimizer, _lr_scheduler
 
     # define loss function
     # Cross Entropy
     def define_criterion(self, loss_weights: torch.FloatTensor = None):
         return nn.CrossEntropyLoss(weight=loss_weights)
 
-    #-----------------------------Load & Save Model-------------------------------------------#
+    # -----------------------------Load & Save Model------------------------------------------- #
 
-    # weights_loc: (default: '') if '', use the default path. Else if the path doesn't exist, quit.
+    # file_path: (default: '') if '', use the default path. Else if the path doesn't exist, quit.
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
-    def load_pretrained_weights(self, weights_loc='', folder_path=None, prefix: str = None,
-                                full=True, map_location='default', verbose=False):
-        if prefix is None:
-            prefix = self.prefix
-        if folder_path is None:
-            folder_path = self.folder_path
-        if map_location is not None:
+    def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
+             features=True, map_location='default', verbose=False):
+        if map_location:
             if map_location == 'default':
-                map_location = 'cuda' if env['num_gpus'] else 'cpu'
-        try:
-            if weights_loc == '':
-                weights_loc = folder_path + self.name + prefix + '.pth'
-                if os.path.exists(weights_loc):
-                    if verbose:
-                        print("********Load From Saved File: %s********" %
-                              weights_loc)
-                    self._model.load_state_dict(torch.load(
-                        weights_loc, map_location=map_location))
-                else:
-                    print('Default model file not exist: ', weights_loc)
-                    self.load_official_weights()
-            elif os.path.exists(weights_loc):
-                if verbose:
-                    print("********Load From Saved File: %s********" %
-                          weights_loc)
-                if full:
+                map_location = env['device']
+        if file_path is None:
+            if folder_path is None:
+                folder_path = self.folder_path
+            if prefix is None:
+                prefix = self.prefix
+            file_path = folder_path + self.name + prefix + '.pth'
+        elif file_path == 'official':
+            return self.load_official_weights()
+        if os.path.exists(file_path):
+            try:
+                if features:
                     self._model.load_state_dict(
-                        torch.load(weights_loc, map_location=map_location))
+                        torch.load(file_path, map_location=map_location))
                 else:
                     self._model.classifier.load_state_dict(
-                        torch.load(weights_loc, map_location=map_location))
-            else:
-                if verbose:
-                    print('File not Found: ', weights_loc)
-                self.load_official_weights()
-        except:
-            print('weight_loc: ', weights_loc)
-            raise ValueError()
+                        torch.load(file_path, map_location=map_location))
+            except Exception as e:
+                print('Model file path: ', file_path)
+                raise e
+        else:
+            raise FileNotFoundError('Model file not exist: ', file_path)
+        if verbose:
+            print("Model {} loaded from: ".format(self.name), file_path)
 
-    # weights_loc: (default: '') if '', use the default path.
+    # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save_weights(self, weights_loc='', folder_path=None, prefix: str = None, full=True, output=False):
-        if prefix is None:
-            prefix = self.prefix
-        if folder_path is None:
-            folder_path = self.folder_path
+    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, features=True, verbose=False):
+        if file_path is None:
+            if folder_path is None:
+                folder_path = self.folder_path
+            if prefix is None:
+                prefix = self.prefix
+            file_path = folder_path + self.name + prefix + '.pth'
+        else:
+            folder_path = os.path.dirname(file_path)
+
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        if weights_loc == '':
-            weights_loc = folder_path+self.name+prefix+'.pth'
-            torch.save(self._model.state_dict(), weights_loc)
-        else:
-            if not os.path.exists(os.path.split(weights_loc)[0]):
-                os.makedirs(os.path.split(weights_loc)[0])
-            if full:
-                torch.save(self._model.state_dict(), weights_loc)
-            else:
-                torch.save(self._model.classifier.state_dict(), weights_loc)
-        if output:
-            print('current model saved! ', weights_loc)
+        _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
+        torch.save(_dict, file_path)
+        if verbose:
+            print('Model {} saved at: '.format(self.name), file_path)
 
     # define in concrete model class.
-    def load_official_weights(self, output=True):
-        if output:
-            print("Nothing Happens. No official pretrained data to load.")
-    #-----------------------------------------------------------------------------------------#
+    def load_official_weights(self, verbose=True):
+        raise NotImplementedError(self.name + ' has no official weights.')
 
-    #-----------------------------------Train and Validate------------------------------------#
-    def _train(self, epoch, train_opt='full', lr_scheduler=False,
-               validate_interval=10, full=True, save=True, prefix: str = None,
-               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, **kwargs):
-        self.train()
-        optimizer = self.define_optimizer(
-            train_opt=train_opt, lr_scheduler=lr_scheduler, **kwargs)
-        _lr_scheduler = None
-        if lr_scheduler:
-            _lr_scheduler = optimizer
-            optimizer = _lr_scheduler.optimizer
-        optimizer.zero_grad()
+    # -----------------------------------Train and Validate------------------------------------ #
+    def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+               validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
+               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
+               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, validate_func: Callable = None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
+        if get_data is None:
+            get_data = self.get_data
+        if loss_fn is None:
+            loss_fn = self.loss
+        if validate_func is None:
+            validate_func = self._validate
 
-        _, best_acc, _ = self._validate(loader=loader_valid)
+        _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
+                                       verbose=verbose, indent=indent, **kwargs)
         self.train()
 
         # batch_time = AverageMeter('Time', ':6.3f')
@@ -316,96 +301,122 @@ class Model:
         #     [batch_time, data_time, losses, top1, top5],
         #     prefix="Epoch: [{}]".format(epoch))
 
-        # end = time.time()
+        optimizer.zero_grad()
+        # start = time.perf_counter()
+        # end = start
         for _epoch in range(epoch):
             losses.reset()
             top1.reset()
             top5.reset()
-            for i, data in enumerate(loader_train):
-                # data_time.update(time.time() - end)
-                _input, _label = self.get_data(data, mode='train')
-                _output = self.get_logits(_input)
-                loss = self.criterion(_output, _label)
+            if verbose:
+                loader_train = tqdm(loader_train)
+            epoch_start = time.perf_counter()
+            for data in loader_train:
+                # data_time.update(time.perf_counter() - end)
+                _input, _label = get_data(data, mode='train')
+                loss = loss_fn(_input, _label)
 
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
 
+                with torch.no_grad():
+                    _output = self.get_logits(_input)
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 losses.update(loss.item(), _label.size(0))
-                top1.update(acc1[0], _label.size(0))
-                top5.update(acc5[0], _label.size(0))
+                batch_size = int(_label.size(0))
+                top1.update(acc1, batch_size)
+                top5.update(acc5, batch_size)
 
                 empty_cache()
 
-                # batch_time.update(time.time() - end)
-                # end = time.time()
+                # batch_time.update(time.perf_counter() - end)
+                # end = time.perf_counter()
 
                 # if i % 10 == 0:
                 #     progress.display(i)
-
-            print(('Epoch: [%d/%d],' % (_epoch+1, epoch)).ljust(25, ' ') +
-                  'Loss: %.4f,\tTop1 Acc: %.3f,\tTop5 Acc: %.3f' % (losses.avg, top1.avg, top5.avg))
+            epoch_time = str(datetime.timedelta(seconds=int(
+                time.perf_counter() - epoch_start)))
+            if verbose:
+                pre_str = '{blue_light}Epoch: {0}'.format(
+                    output_iter(_epoch + 1, epoch), **ansi)
+                prints('{:<60}Loss: {:.4f},  \t Top1 Acc: {:.3f}, \t Top5 Acc: {:.3f}, \t Time: {}'.format(
+                    pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
             if lr_scheduler:
-                _lr_scheduler.step()
+                lr_scheduler.step()
 
             if validate_interval != 0:
-                if (_epoch+1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc, _ = self._validate(loader=loader_valid)
+                if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
+                    _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
+                                                  verbose=verbose, indent=indent, **kwargs)
                     self.train()
-                    if cur_acc > best_acc and save:
-                        self.save_weights(prefix=prefix)
+                    if cur_acc >= best_acc and save:
+                        self.save(prefix=prefix, verbose=verbose)
                         best_acc = cur_acc
-                        print('current model saved!')
-                    print('---------------------------------------------------')
+                    if verbose:
+                        print('-' * 50)
         self.zero_grad()
         self.eval()
 
-    def _validate(self, full=True, output=True, loader: torch.utils.data.DataLoader = None, indent=0, **kwargs):
+    def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
+                  loader: torch.utils.data.DataLoader = None,
+                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs) -> (float, float, float):
         self.eval()
+        if loader is None:
+            loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
+        if get_data is None:
+            get_data = self.get_data
+        if loss_fn is None:
+            loss_fn = self.loss
+
         # batch_time = AverageMeter('Time', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
-        if loader is None:
-            loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
-
         # progress = ProgressMeter(
         #     len(self.dataset.loader['valid']),
         #     [batch_time, losses, top1, top5],
         #     prefix='Test: ')
-        with torch.no_grad():
-            # end = time.time()
 
-            for i, data in enumerate(loader):
-                _input, _label = self.get_data(data, mode='valid')
-                _output = self.get_logits(_input, **kwargs)
-                loss = self.criterion(_output, _label)
+        # start = time.perf_counter()
+        # end = start
+        if verbose:
+            loader = tqdm(loader)
+        epoch_start = time.perf_counter()
+        with torch.no_grad():
+            for data in loader:
+                _input, _label = get_data(data, mode='valid', **kwargs)
+                loss = loss_fn(_input, _label)
+                _output = self.get_logits(_input)
 
                 # measure accuracy and record loss
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 losses.update(loss.item(), _label.size(0))
-                top1.update(acc1[0], _label.size(0))
-                top5.update(acc5[0], _label.size(0))
+
+                batch_size = int(_label.size(0))
+                top1.update(acc1, batch_size)
+                top5.update(acc5, batch_size)
 
                 # empty_cache()
 
                 # measure elapsed time
-                # batch_time.update(time.time() - end)
-                # end = time.time()
+                # batch_time.update(time.perf_counter() - end)
+                # end = time.perf_counter()
 
                 # if i % 10 == 0:
                 #     progress.display(i)
-
-            if output:
-                prints('Validate'.ljust(25, ' ') +
-                       'Loss: %.4f,\tTop1 Acc: %.3f, \tTop5 Acc: %.3f' % (losses.avg, top1.avg, top5.avg), indent=indent)
+        epoch_time = str(datetime.timedelta(seconds=int(
+            time.perf_counter() - epoch_start)))
+        if verbose:
+            pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi)
+            prints('{:<35}Loss: {:.4f},  \t Top1 Acc: {:.3f}, \t Top5 Acc: {:.3f}, \t Time: {}'.format(
+                pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
-    #-------------------------------------------Utility---------------------------------------#
+    # -------------------------------------------Utility--------------------------------------- #
 
     def get_data(self, data, **kwargs):
-        if self.dataset is not None:
+        if self.dataset:
             return self.dataset.get_data(data, **kwargs)
         else:
             return data
@@ -423,62 +434,78 @@ class Model:
             res = []
             for k in topk:
                 if k > self.num_classes:
-                    res.append(to_tensor([100.0]))
+                    res.append(100.0)
                 else:
                     correct_k = correct[:k].view(-1).float().sum(0,
                                                                  keepdim=True)
-                    res.append(correct_k.mul_(100.0 / batch_size))
+                    res.append(float(correct_k.mul_(100.0 / batch_size)))
             return res
 
-    def transfer_tuning(self, train_opt: str = 'partial'):
-        # make parameters of classifier trainable and freeze the feature extractor
-        if train_opt == 'partial':
-            for param in self._model.classifier.parameters():
-                param.requires_grad = True
-            for param in self._model.features.parameters():
-                param.requires_grad = False
-        # make parameters of the whole model trainable
-        if train_opt == 'full':
-            for param in self._model.parameters():
-                param.requires_grad = True
+    def get_params(self, name: str) -> Iterable:
+        if name == 'full':
+            params = self._model.parameters()
+        elif name == 'features':
+            params = self._model.features.parameters()
+        elif name == 'classifier':
+            params = self._model.classifier.parameters()
+        else:
+            raise NotImplementedError(name)
+        return params
+
+    def activate_params(self, active_param: list):
+        for param in self._model.parameters():
+            param.requires_grad = False
+        for param in active_param:
+            param.requires_grad = True
 
     def get_parallel(self):
         if env['num_gpus'] > 1:
-            if self.dataset is not None:
+            if self.dataset:
                 if self.dataset.data_type != 'image':
                     return self._model
             elif self.name[0] == 'g' and self.name[2] == 'n':
                 return self._model
-            else:
-                return nn.DataParallel(self._model).cuda()
+            return nn.DataParallel(self._model).cuda()
         else:
             return self._model
 
     @staticmethod
-    def output_layer_information(layer, verbose=0, indent=0):
-        for name, module in layer.named_children():
-            prints(name.ljust(50-indent, ' '), indent=indent, end='')
-            _str = ''
-            if verbose > 0:
-                _str = str(module).split('\n')[0]
-                if _str[-1] == '(':
-                    _str = _str[:-1]
-            print(_str)
-            Model.output_layer_information(
-                module, verbose=verbose, indent=indent+10)
+    def output_layer_information(layer, depth=0, indent=0, verbose=False, tree_length=None):
+        if tree_length is None:
+            tree_length = 10 * (depth + 1)
+        if depth > 0:
+            for name, module in layer.named_children():
+                _str = '{blue_light}{0}{reset}'.format(name, **ansi)
+                if verbose:
+                    _str = _str.ljust(
+                        tree_length - indent + len(ansi['blue_light']) + len(ansi['reset']))
+                    item = str(module).split('\n')[0]
+                    if item[-1] == '(':
+                        item = item[:-1]
+                    _str += item
+                prints(_str, indent=indent)
+                Model.output_layer_information(
+                    module, depth=depth - 1, indent=indent + 10, verbose=verbose, tree_length=tree_length)
 
-    def summary(self, **kwargs):
-        self.output_layer_information(self._model, **kwargs)
+    def summary(self, indent=0, **kwargs):
+        _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
+        prints(_str, indent=indent)
+        self.output_layer_information(self._model, indent=indent + 10, **kwargs)
 
     @staticmethod
     def split_name(name, layer=None, default_layer=0, output=False):
         return func(name, layer=layer, default_layer=default_layer, output=output)
 
-        #-----------------------------------------------------------------------------------------#
+    # -----------------------------------------Reload------------------------------------------ #
 
-        #-----------------------------------------Reload------------------------------------------#
     def __call__(self, *args, **kwargs):
         return self.get_logits(*args, **kwargs)
+
+    # def __str__(self):
+    #     return self.summary()
+
+    # def __repr__(self):
+    #     return self.summary()
 
     def train(self, mode=True):
         self._model.train(mode=mode)
@@ -525,21 +552,23 @@ class Model:
     def apply(self, fn):
         return self._model.apply(fn)
 
-    #-----------------------------------------------------------------------------------------#
-    def generate_target(self, _input, idx=1, same=False):
+    # ----------------------------------------------------------------------------------------- #
+
+    def remove_misclassify(self, data, **kwargs):
+        with torch.no_grad():
+            _input, _label = self.get_data(data, **kwargs)
+            _classification = self.get_class(_input)
+            repeat_idx = _classification.eq(_label)
+        return _input[repeat_idx], _label[repeat_idx]
+
+    def generate_target(self, _input: torch.Tensor, idx=1, same=False) -> torch.LongTensor:
+
         if len(_input.shape) == 3:
             _input = _input.unsqueeze(0)
-        self.batch_size = _input.shape[0]
-        _output = self.get_logits(_input)
-        _, indices = _output.sort(dim=-1, descending=True)
-        target = to_tensor(indices[:, idx])
+        self.batch_size = _input.size(0)
+        with torch.no_grad():
+            _output = self.get_logits(_input)
+        target = _output.argsort(dim=-1, descending=True)[:, idx]
         if same:
             target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
         return target
-
-    def get_target_confidence(self, _input, target, **kwargs):
-        _result = self.get_prob(_input, **kwargs)
-        if len(_result) == 1:
-            return float(_result[0][int(target)])
-        else:
-            return np.array([float(_result[i][int(target[i])]) for i in range(len(_result))])
