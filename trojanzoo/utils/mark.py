@@ -81,7 +81,7 @@ class Watermark:
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
         _mask = mask * alpha_mask
-        return x * (1 - _mask) + mark * _mask
+        return x + _mask * (mark - x)
 
     @staticmethod
     def get_edge_color(mark: torch.Tensor, data_shape: List[int],
@@ -200,8 +200,8 @@ class Watermark:
             self.alpha_mask = to_tensor(_dict['alpha_mask'])
 
     def save_npz(self, npz_path: str):
-        if npz_path[:9] == 'trojanzoo':
-            npz_path = root_dir + npz_path[9:]
+        # if npz_path[:9] == 'trojanzoo':
+        #     npz_path = root_dir + npz_path[9:]
         _dict = {'org_mark': to_numpy(self.org_mark),
                  'org_mask': to_numpy(self.org_mask),
                  'org_alpha_mask': to_numpy(self.org_alpha_mask)}

@@ -12,6 +12,27 @@ env = Config.env
 
 class TrojanNN(BadNet):
 
+    r"""
+    TrojanNN Backdoor Attack is described in detail in the paper `TrojanNN`_ by Yingqi Liu. 
+
+    Based on :class:`trojanzoo.attack.backdoor.BadNet`,
+    TrojanNN preprocesses the watermark pixel values to maximize the neuron activation on rarely used neurons
+    to avoid the negative impact of model performance on clean iamges.
+
+    The authors have posted `original source code`_.
+
+    Args:
+        preprocess_layer (str): The preprocess layer.
+        threshold (float): the target class. Default: ``5``.
+        target_value (float): The proportion of malicious images in the training set (Max 0.5). Default: 10.
+
+    .. _TrojanNN:
+        https://github.com/PurduePAML/TrojanNN/blob/master/trojan_nn.pdf
+
+    .. _original source code:
+        https://github.com/PurduePAML/TrojanNN
+    """
+
     name = 'trojannn'
 
     def __init__(self, preprocess_layer: str = 'features', threshold: float = 5, target_value: float = 10,
@@ -34,7 +55,10 @@ class TrojanNN(BadNet):
         self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0)
 
         self.neuron_idx = self.get_neuron_idx()
+
+    def attack(self, **kwargs):
         self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=self.neuron_idx)
+        return super().attack(**kwargs)
 
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:

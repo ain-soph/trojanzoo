@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# todo: Output format need modifying
+
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Seq
 from trojanzoo.parser.attack import Parser_PGD
 
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
+from trojanzoo.dataset import ImageSet
+from trojanzoo.model import ImageModel
 from trojanzoo.attack import PGD
 
 import warnings
@@ -15,8 +17,8 @@ if __name__ == '__main__':
     parser.parse_args()
     parser.get_module()
 
-    dataset: Dataset = parser.module_list['dataset']
-    model: Model = parser.module_list['model']
+    dataset: ImageSet = parser.module_list['dataset']
+    model: ImageModel = parser.module_list['model']
     attack: PGD = parser.module_list['attack']
 
     # ------------------------------------------------------------------------ #

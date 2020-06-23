@@ -34,7 +34,7 @@ class Parser():
         pass
 
     @staticmethod
-    def get_module(module_class, module_name, **kwargs):
+    def get_module(module_class: str, module_name: str, **kwargs) -> Any:
         # type: (str, str, dict) -> Any  # noqa
         r"""
         Construct the module from parsed arguments.

@@ -37,7 +37,7 @@ class Parser_Config(Parser):
                             help='the threshold (MB) to call torch.cuda.empty_cache(), defaults to config[env][cache_threshold]=None (never).')
 
     @staticmethod
-    def get_module(config=None, **kwargs):
+    def get_module(config: str = None, **kwargs) -> Param:
         # type: (str, dict) -> Param  # noqa
         r"""
         update ``config`` according to ``cmd_config`` (``--config``).

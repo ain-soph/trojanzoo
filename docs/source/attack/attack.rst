@@ -2,8 +2,8 @@ trojanzoo.attack
 ====================
 
 
-HiddenTrigger
+Hidden_Trigger
 ~~~~~~~~~~~~~
 
-.. autoclass:: trojanzoo.attack.backdoor.HiddenTrigger
+.. autoclass:: trojanzoo.attack.backdoor.Hidden_Trigger
   :members:

@@ -18,6 +18,10 @@ _map = {'int': torch.int, 'float': torch.float,
 byte2float = functional.to_tensor
 
 
+def cos_sim(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    return (a * b).sum() / a.norm(p=2) / b.norm(p=2)
+
+
 def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
               dtype=None, device='default', **kwargs) -> torch.Tensor:
     if x is None:
@@ -183,3 +187,12 @@ def save_numpy_as_img(path: str, arr: np.ndarray):
 def read_img_as_tensor(path: str) -> torch.Tensor:
     I: Image.Image = Image.open(path)
     return byte2float(I)
+
+
+def normalize_mad(values: torch.Tensor) -> torch.Tensor:
+    median = values.median()
+    abs_dev = (values - median).abs()
+    mad = abs_dev.mean()
+
+    measures = abs_dev / mad / 1.4826
+    return measures

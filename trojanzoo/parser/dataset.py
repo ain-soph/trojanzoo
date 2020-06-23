@@ -28,7 +28,7 @@ class Parser_Dataset(Parser):
                             help='download dataset if not exist by calling dataset.initialize()')
 
     @classmethod
-    def get_module(cls, dataset=None, **kwargs):
+    def get_module(cls, dataset: str = None, **kwargs) -> Dataset:
         # type: (str, dict) -> Dataset  # noqa
         r"""get dataset.
 

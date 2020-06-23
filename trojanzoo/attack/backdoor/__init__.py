@@ -2,4 +2,4 @@
 
 from .badnet import BadNet
 from .trojannn import TrojanNN
-from .hiddentrigger import HiddenTrigger
+from .hidden_trigger import Hidden_Trigger

@@ -270,11 +270,11 @@ class Model:
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
-        raise NotImplementedError
+        raise NotImplementedError(self.name + ' has no official weights.')
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=True, prefix: str = None, verbose=True, indent=0,
+               validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, validate_func: Callable = None, **kwargs):
 

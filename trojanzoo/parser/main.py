@@ -25,7 +25,7 @@ class Parser_Main(Parser):
                             help='show arguments and module information, defaults to False.')
 
     @staticmethod
-    def get_module(device=None, benchmark=None, verbose=None):
+    def get_module(device: str = None, benchmark: bool = None, verbose: bool = None):
         # type: (str, bool, bool) -> None  # noqa
         r"""set default device and benchmark.
 

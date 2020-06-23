@@ -4,14 +4,14 @@
 from .badnet import Parser_BadNet
 
 
-class Parser_HiddenTrigger(Parser_BadNet):
+class Parser_Hidden_Trigger(Parser_BadNet):
     r"""Hidden Backdoor Attack Parser
 
     Attributes:
         name (str): ``'attack'``
-        attack (str): ``'hiddentrigger'``
+        attack (str): ``'hidden_trigger'``
     """
-    attack = 'hiddentrigger'
+    attack = 'hidden_trigger'
 
     @classmethod
     def add_argument(cls, parser):
