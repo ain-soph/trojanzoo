@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# python neural_cleanse.py --attack badnet --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
+# python strip.py --attack badnet --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack
 
@@ -8,9 +8,10 @@ from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.attack.backdoor import BadNet
-from trojanzoo.defense.backdoor import Neural_Cleanse
+from trojanzoo.defense.backdoor import STRIP
 
 from trojanzoo.utils import normalize_mad
+from trojanzoo.utils.model import AverageMeter
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -34,10 +35,10 @@ if __name__ == '__main__':
 
     data_shape = [dataset.n_channel]
     data_shape.extend(dataset.n_dim)
-    defense: Neural_Cleanse = Neural_Cleanse(dataset=dataset, model=model, data_shape=data_shape, epoch=10)
+    defense: STRIP = STRIP(dataset=dataset, model=model)
 
-    mark_list, mask_list, loss_ce_list = defense.get_potential_triggers()
-    mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
-
-    print('mask_norms: ', normalize_mad(mask_norms))
-    print('loss: ', normalize_mad(loss_ce_list))
+    entropy = AverageMeter('entropy', fmt='.4e')
+    for i, data in enumerate(dataset.loader['test']):
+        _input, _label = model.get_data(data)
+        entropy.update(defense.detect(_input), n=_label.size(0))
+        print('{:<10d}{:<20.4f}'.format(i, entropy.avg))
