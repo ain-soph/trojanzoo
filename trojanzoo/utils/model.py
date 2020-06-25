@@ -114,3 +114,12 @@ class CrossEntropy(nn.Module):
 
     def forward(self, logits, y):
         return -(F.log_softmax(logits, dim=1) * y).sum(1).mean()
+
+
+class LambdaLayer(nn.Module):
+    def __init__(self, lambd):
+        super(LambdaLayer, self).__init__()
+        self.lambd = lambd
+
+    def forward(self, x):
+        return self.lambd(x)
