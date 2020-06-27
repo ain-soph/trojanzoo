@@ -17,6 +17,7 @@ class_dict = {
     'badnet': 'BadNet',
     'trojannn': 'TrojanNN',
     'hidden_trigger': 'Hidden_Trigger',
+    'latent_backdoor': 'Latent_Backdoor',
 
     'unify': 'Unify',
 }
