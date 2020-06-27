@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+
+poison_num:
+  default: 200
+
+poison_iteration:
+  default: 1000
+
+poison_lr:
+  default: 0.01
+
+decay_iteration:
+  default: 200
+
+decay_ratio:
+  default: 0.95
+
+ynt_ratio:
+  default: 0.5
+
+mark_area_ratio:
+  default: 0.04
+
+val_ratio:
+  default: 0.25
+
+fine_tune_set_ratio:
+  default: 0.25
+

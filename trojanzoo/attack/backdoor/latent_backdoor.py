@@ -17,27 +17,24 @@ class Latent_Backdoor(BadNet):
     The authors didn't release source code.
 
     Args:
-        yt_num (int):
+
 
     .. _Latent Backdoor:
         http://people.cs.uchicago.edu/~huiyingli/publication/fr292-yaoA.pdf
     """
     name = 'latent_backdoor'
 
-    def __init__(self, preprocess_layer: str = 'features', epsilon: int = 16.0 / 255,
-                 poison_num: int = 100, poison_iteration: int = 5000, poison_lr: float = 0.01,
+    def __init__(self, poison_num: int = 100, poison_iteration: int = 5000, poison_lr: float = 0.01,
                  lr_decay: bool = False, decay_iteration: int = 2000, decay_ratio: float = 0.95,
-                 yt_num: int = 50, ynt_ratio: float = 0.5, mark_area_ratio = 0.04,
-                 fine_tune_set_ratio: float = 0.2,
+                 ynt_ratio: float = 0.5, mark_area_ratio = 0.04, val_ratio = 0.25, 
+                 fine_tune_set_ratio: float = 0.25,
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.param_list['latent_backdoor'] = ['preprocess_layer', 'epsilon',
-                                             'poison_num', 'poison_iteration', 'poison_lr',
-                                             'decay', 'decay_iteration', 'decay_ratio']
-
-        self.preprocess_layer: str = preprocess_layer   # not use
-        self.epsilon: float = epsilon                   # not use
+        self.param_list['latent_backdoor'] = ['poison_num', 'poison_iteration', 'poison_lr',
+                                             'decay', 'decay_iteration', 'decay_ratio',
+                                             'ynt_ratio', 'mark_area_ratio', 'val_ratio', 
+                                             'fine_tune_set_ratio']
 
         self.poison_num: int = poison_num
         self.poison_iteration: int = poison_iteration
@@ -47,12 +44,12 @@ class Latent_Backdoor(BadNet):
         self.decay_iteration: int = decay_iteration     # not use
         self.decay_ratio: float = decay_ratio           # not use
 
-        self.yt_num: int = yt_num
         self.ynt_ratio: float = ynt_ratio
+        self.val_ratio: float  = val_ratio
         self.mark_area_ratio: float = mark_area_ratio
-
-        self.fine_tune_set_ratio = fine_tune_set_ratio
+        self.fine_tune_set_ratio: float  = fine_tune_set_ratio  
         
+
     # inject backdoor into model after trigger generation
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs): 
         """
@@ -64,33 +61,48 @@ class Latent_Backdoor(BadNet):
             step2: combine triggered ynt images + picked yt images to a new trainset.
 
             step3: retrain model with bi-level loss definition (formula (4) in org paper).
+
+        
+        About dataset divisions, we totally have following of them:
+
+        group1: created in 'generate_trigger'
+            self.yt_loader: all images in target label (yt)
+            self.ynt_loader: all images not in target label (y\t)
+            self.yt_sub_loader: some images in yt, used as feature map groundtruth.
+            self.ynt_sub_loader: some images in y\t, used to add trigger then measure feature map distance.
+
+        group2: created in 'attack', i.e. inject backdoor process
+            self.train_loader: trainset with poisoned images.
+            self.val_loader: validate set with poisoned images, disjoint with trainset.
+
+        group3: created in 'student_fine_tuning'
+            None self.xxx, there is a 'fine_tune_loader' contains randomly picked clean data
+            for fine-tuning a clean output layer.
         """
         self.generate_trigger()
 
-        # some new self.xxx are created in 'generate_trigger' func.
+        # step1
+        # some sub loaders are created in 'generate_trigger'
         ynt_imgs, ynt_labels = self.get_data(self.ynt_sub_loader)  
         ynt_imgs = ynt_imgs * (1-self.mask) + self.mask * self.mark
-        poison_set = torch.utils.data.TensorDataset(ynt_imgs.to('cpu'), ynt_labels)
+        ynt_set = torch.utils.data.TensorDataset(ynt_imgs.to('cpu'), ynt_labels) # now poisoned
 
-        # add more images from yt label.
-        yt_pick_num = int(len(self.yt_loader)*self.yt_ratio)
-        yt_train_inds = np.random.choice(list(range(len(self.yt_loader))), yt_pick_num, replace=False)
-        yt_train_loader = torch.utils.data.Subset(self.yt_loader, yt_train_inds)
-        yt_imgs, yt_labels = self.get_data(yt_sub_loader)
+        yt_imgs, yt_labels = self.get_data(self.yt_sub_loader)
         yt_set = torch.utils.data.TensorDataset(yt_imgs, yt_labels)
 
         # final trainset = backdoored ynt imgs + many yt imgs
-        train_set = torch.utils.data.ConcatDataset((poison_set, yt_set))
-        train_loader = self.dataset.get_dataloader(mode=None, dataset=train_set)
+        poison_set = torch.utils.data.ConcatDataset((ynt_set, yt_set))
+        poison_loader = self.dataset.get_dataloader(mode=None, dataset=poison_set)
 
-        # build validate set, same combination like trainset
-        # yt_val_inds = list(set(range(len(self.yt_loader))) - set(yt_train_inds))
-        # ynt_val_inds =  list(list(range(len(self.ynt_loader))) - set(yt_train_inds))
-        # yt_val_loader = torch.utils.data.Subset(self.yt_loader, yt_train_inds)
+        val_inds = np.random.choice(list(range(len(poison_set))), int(len(poison_set)*self.val_ratio), replace=False)
+        train_inds = list(set(range(len(poison_set)))-set(val_inds))
+        
+        self.train_loader = torch.utils.data.Subset(self.yt_loader, train_inds)
+        self.val_loader = torch.utils.data.Subset(self.yt_loader, val_inds)
         
         val_loader = None
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
-                          loader_train=train_loader, loader_valid=val_loader,
+                          loader_train=self.train_loader, loader_valid=self.val_loader,
                           validate_func=self.validate_func, **kwargs)
 
         self.student_fine_tuning()
@@ -125,6 +137,17 @@ class Latent_Backdoor(BadNet):
         self.ynt_loader = self.dataset.get_dataloader('train', full=True, classes=ynt,
                                                       shuffle=True, num_workers=0, drop_last=True)
 
+        # randomly pickup some yt images as feature map groundtruth
+        # self.yt_sub_loader: contains yt images that used as feature map groundtruth
+        yt_sub_inds = np.random.choice(list(range(len(self.yt_loader))), int(self.poison_num), replace=False)
+        self.yt_sub_loader = torch.utils.data.Subset(self.yt_loader, yt_sub_inds)
+
+        # randomly pickup some ynt images for adding trigger
+        # self.ynt_sub_loader: contains some y\t images that used for adding trigger
+        ynt_pick_num = int(len(self.ynt_loader)*self.ynt_ratio)
+        ynt_sub_inds = np.random.choice(list(range(len(self.ynt_loader))), ynt_pick_num, replace=False)
+        self.ynt_sub_loader = torch.utils.data.Subset(self.ynt_loader, ynt_sub_inds)
+
         """
         STEP-2: Generate Trigger
 
@@ -149,9 +172,6 @@ class Latent_Backdoor(BadNet):
         # trigger locates in right bottom corner, change corresponding mask values
         self.mask[height-mark_height:][:, width-mark_width:] = 1
 
-        # randomly pickup some yt images as feature map groundtruth
-        yt_sub_inds = np.random.choice(list(range(len(self.yt_loader))), int(self.poison_num), replace=False)
-        self.yt_sub_loader = torch.utils.data.Subset(self.yt_loader, yt_sub_inds)
 
         # get average feature map from yt's subset images
         _yt_inputs, _ = self.get_data(self.yt_sub_loader)
@@ -159,11 +179,6 @@ class Latent_Backdoor(BadNet):
         assert yt_featmaps.shape[0]==len(yt_sub_inds), \
                "yt image num mismatch, check 'latent_backdoor' attack-->'generate_trigger' function"
         yt_avg_featmap = yt_featmaps.sum(0) / len(yt_sub_inds)
-
-        # randomly pickup some ynt images for adding trigger
-        ynt_pick_num = int(len(self.ynt_loader)*self.ynt_ratio)
-        ynt_sub_inds = np.random.choice(list(range(len(self.ynt_loader))), ynt_pick_num, replace=False)
-        self.ynt_sub_loader = torch.utils.data.Subset(self.ynt_loader, ynt_sub_inds)
 
 
         #------------------------- below is trigger generation process -------------------------#
@@ -179,6 +194,7 @@ class Latent_Backdoor(BadNet):
         criterion = nn.MSELoss()
         l2_loss = 0.0
 
+        self.model.train()
         for epoch in range(self.poison_iteration):
             optimizer.zero_grad()
             self.mark = torch.sigmoid(self.mark) # normalize trigger into [0, 1]
@@ -192,6 +208,7 @@ class Latent_Backdoor(BadNet):
             optimizer.step()
 
         self.model.cpu()
+        self.model.eval()
         self.mark = self.mark.cpu()
         self.mask = self.mask.cpu()
 
@@ -206,6 +223,7 @@ class Latent_Backdoor(BadNet):
         The fine-tuned classifier is last (or last two) layer(s) of model. We only
         fine-tune last layer by default.
         """
+        print("replacing outlayer with a clean one")
         train_params = self.model.add_new_last_layer()
         for param in train_params:
             param.requires_grad = True
@@ -215,16 +233,20 @@ class Latent_Backdoor(BadNet):
         fine_tune_inds = np.random.choice(list(range(len(fine_tune_loader))), 
                          int(len(fine_tune_loader)*self.fine_tune_set_ratio), 
                          replace=False)
+        fine_tune_loader = torch.utils.data.Subset(fine_tune_loader, fine_tune_inds)
 
         # only update last layer parameters
         optimizer = optim.Adam(train_params, lr=self.poison_lr)
         criterion = nn.CrossEntropyLoss()
 
+        print("fine-tuning")
         self.model.cuda()
         loss, n_sample = 0.0, 0
+
+        self.model.train()
         for epoch in range(20):
             optimizer.zero_grad()
-            for input, label in fine_tune_loader[fine_tune_inds]:
+            for input, label in fine_tune_loader:
                 logits = self.model(input.cuda())
                 logits.unsqueeze(0)
                 label.unsqueeze(0)
@@ -235,7 +257,7 @@ class Latent_Backdoor(BadNet):
             optimizer.step()
 
         self.model.cpu()
-
+        self.model.eval()
 
     def evaluation(self):
         pass
