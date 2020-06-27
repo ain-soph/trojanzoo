@@ -73,6 +73,11 @@ def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
         return list(x)
 
 
+def to_categorical(y, num_classes):
+    """ 1-hot encodes a tensor """
+    return np.eye(num_classes, dtype="uint8")[y]
+
+
 def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
     if isinstance(x, Image.Image):
         return x
