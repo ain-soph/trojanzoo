@@ -52,6 +52,8 @@ class Latent_Backdoor(BadNet):
         self.mark_area_ratio: float = mark_area_ratio
 
         self.fine_tune_set_ratio = fine_tune_set_ratio
+
+        
     # inject backdoor into model after trigger generation
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs): 
         """

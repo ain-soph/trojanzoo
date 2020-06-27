@@ -26,9 +26,9 @@ class _LatentNet(_ImageModel):
         ]))
 
 
-class Net(ImageModel):
+class LatentNet(ImageModel):
 
-    def __init__(self, name='net', model_class=_Net, **kwargs):
+    def __init__(self, name='latentnet', model_class=_LatentNet, **kwargs):
         super().__init__(name=name, model_class=model_class,
                          conv_dim=800, fc_depth=2, fc_dim=512, **kwargs)
 
