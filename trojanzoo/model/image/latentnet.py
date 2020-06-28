@@ -16,7 +16,7 @@ class _LatentNet(_ImageModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.features = nn.Sequential(OrderedDict([
-            ('conv1', nn.Conv2d(1, 16, 5, 1)),
+            ('conv1', nn.Conv2d(3, 16, 5, 1)),
             ('maxpool1', nn.MaxPool2d(2, 2)),
             ('relu1', nn.ReLU()),
             ('conv2', nn.Conv2d(16, 32, 5, 1)),
@@ -30,7 +30,7 @@ class LatentNet(ImageModel):
 
     def __init__(self, name='latentnet', model_class=_LatentNet, **kwargs):
         super().__init__(name=name, model_class=model_class,
-                         conv_dim=800, fc_depth=2, fc_dim=512, **kwargs)
+                         conv_dim=32, fc_depth=2, fc_dim=512, **kwargs)
 
     def get_fm_before_outlayer(self, x):
         """
