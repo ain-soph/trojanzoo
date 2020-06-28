@@ -85,6 +85,8 @@ class Latent_Backdoor(BadNet):
         # some sub loaders are created in 'generate_trigger'
         ynt_sub_imgs = self.ynt_imgs[self.ynt_sub_inds]
         ynt_sub_labels = self.ynt_labels[self.ynt_sub_inds]
+        # ynt_sub_labels.fill_(self.target_class)
+
         ynt_sub_imgs = ynt_sub_imgs * (1-self.mask) + self.mask * self.mark
         ynt_set = torch.utils.data.TensorDataset(ynt_sub_imgs.to('cpu'), ynt_sub_labels) # now poisoned
 

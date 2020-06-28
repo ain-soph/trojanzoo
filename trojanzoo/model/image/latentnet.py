@@ -20,17 +20,18 @@ class _LatentNet(_ImageModel):
             ('maxpool1', nn.MaxPool2d(2, 2)),
             ('relu1', nn.ReLU()),
             ('conv2', nn.Conv2d(16, 32, 5, 1)),
+        ]))
+        self.pool = nn.Sequential(OrderedDict([
             ('maxpool2', nn.MaxPool2d(2, 2)),
             ('relu2', nn.ReLU()),
             ('dropout', nn.Dropout2d(0.25))
         ]))
 
-
 class LatentNet(ImageModel):
 
     def __init__(self, name='latentnet', model_class=_LatentNet, **kwargs):
         super().__init__(name=name, model_class=model_class,
-                         conv_dim=32, fc_depth=2, fc_dim=512, **kwargs)
+                         conv_dim=800, fc_depth=2, fc_dim=512, **kwargs)
 
     def get_fm_before_outlayer(self, x):
         """
@@ -46,7 +47,7 @@ class LatentNet(ImageModel):
         """
         replace last fc layer with a clean layer, then return its parameters.
         """
-        self._model.classifier.fc2 = nn.Linear(self.fc_dim, self.num_classes)
+        self._model.classifier.fc2 = nn.Linear(self._model.fc_dim, self._model.num_classes)
         # for param in self.classifier['fc2'].parameters():
         #     param.requires_grad = True
 
