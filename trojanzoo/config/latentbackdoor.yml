@@ -18,9 +18,6 @@ decay_ratio:
 ynt_ratio:
   default: 0.5
 
-mark_area_ratio:
-  default: 0.04
-
 val_ratio:
   default: 0.25
 
