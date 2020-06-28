@@ -24,10 +24,10 @@ class Latent_Backdoor(BadNet):
     """
     name = 'latent_backdoor'
 
-    def __init__(self, poison_num: int = 100, poison_iteration: int = 5000, poison_lr: float = 0.01,
+    def __init__(self, poison_num: int = 100, poison_iteration: int = 100, poison_lr: float = 0.01,
                  lr_decay: bool = False, decay_iteration: int = 2000, decay_ratio: float = 0.95,
-                 ynt_ratio: float = 0.5, mark_area_ratio = 0.04, val_ratio = 0.25, 
-                 fine_tune_set_ratio: float = 0.25,
+                 ynt_ratio: float = 0.1, mark_area_ratio = 0.09, val_ratio = 0.1, 
+                 fine_tune_set_ratio: float = 0.1,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -66,10 +66,10 @@ class Latent_Backdoor(BadNet):
         About dataset divisions, we totally have following of them:
 
         group1: created in 'generate_trigger'
-            self.yt_loader: all images in target label (yt)
-            self.ynt_loader: all images not in target label (y\t)
-            self.yt_sub_loader: some images in yt, used as feature map groundtruth.
-            self.ynt_sub_loader: some images in y\t, used to add trigger then measure feature map distance.
+            self.yt_imgs, self.yt_labels: all images in target label (yt)
+            self.ynt_imgs, self.ynt_labels: all images not in target label (y\t)
+            self.yt_sub_inds: indices of some yt images, used as feature map groundtruth.
+            self.ynt_sub_inds: indices of some y\t images, used to add trigger then measure feature map distance.
 
         group2: created in 'attack', i.e. inject backdoor process
             self.train_loader: trainset with poisoned images.
@@ -83,27 +83,34 @@ class Latent_Backdoor(BadNet):
 
         # step1
         # some sub loaders are created in 'generate_trigger'
-        ynt_imgs, ynt_labels = self.get_data(self.ynt_sub_loader)  
-        ynt_imgs = ynt_imgs * (1-self.mask) + self.mask * self.mark
-        ynt_set = torch.utils.data.TensorDataset(ynt_imgs.to('cpu'), ynt_labels) # now poisoned
+        ynt_sub_imgs = self.ynt_imgs[self.ynt_sub_inds]
+        ynt_sub_labels = self.ynt_labels[self.ynt_sub_inds]
+        ynt_sub_imgs = ynt_sub_imgs * (1-self.mask) + self.mask * self.mark
+        ynt_set = torch.utils.data.TensorDataset(ynt_sub_imgs.to('cpu'), ynt_sub_labels) # now poisoned
 
-        yt_imgs, yt_labels = self.get_data(self.yt_sub_loader)
-        yt_set = torch.utils.data.TensorDataset(yt_imgs, yt_labels)
+        yt_sub_imgs = self.yt_imgs[self.yt_sub_inds]
+        yt_sub_labels = self.yt_labels[self.yt_sub_inds]
+        yt_set = torch.utils.data.TensorDataset(yt_sub_imgs, yt_sub_labels)
 
-        # final trainset = backdoored ynt imgs + many yt imgs
         poison_set = torch.utils.data.ConcatDataset((ynt_set, yt_set))
-        poison_loader = self.dataset.get_dataloader(mode=None, dataset=poison_set)
 
-        val_inds = np.random.choice(list(range(len(poison_set))), int(len(poison_set)*self.val_ratio), replace=False)
+        val_inds = np.random.choice(list(range(len(poison_set))), 
+                                    int(len(poison_set)*self.val_ratio), 
+                                    replace=False)
         train_inds = list(set(range(len(poison_set)))-set(val_inds))
         
-        self.train_loader = torch.utils.data.Subset(self.yt_loader, train_inds)
-        self.val_loader = torch.utils.data.Subset(self.yt_loader, val_inds)
+        train_set = torch.utils.data.Subset(poison_set, train_inds)
+        val_set = torch.utils.data.Subset(poison_set, val_inds)
         
-        val_loader = None
+        self.train_loader = self.dataset.get_dataloader(mode=None, dataset=train_set)
+        self.val_loader = self.dataset.get_dataloader(mode=None, dataset=val_set)
+        
+        print("...injecting backdoor into DNN")
+        self.model.cuda()
+        self.model.train()
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
                           loader_train=self.train_loader, loader_valid=self.val_loader,
-                          validate_func=self.validate_func, **kwargs)
+                          get_data=None, validate_func=None, **kwargs)
 
         self.student_fine_tuning()
         #---------------------------------------------------------------------------#
@@ -128,25 +135,28 @@ class Latent_Backdoor(BadNet):
         "ynt" contains all other images not in target class, which are used for adding
         trigger and generate trigger, then injecting backdoor.
         """
-        print('divide dataset')
+        print("...dividing dataset")
         yt = self.target_class
         ynt = list(range(self.dataset.num_classes))
         ynt.pop(yt)
-        self.yt_loader = self.dataset.get_dataloader('train', full=True, classes=yt,
+        yt_loader = self.dataset.get_dataloader('train', full=True, classes=[yt],
                                                      shuffle=True, num_workers=0, drop_last=True)
-        self.ynt_loader = self.dataset.get_dataloader('train', full=True, classes=ynt,
+        ynt_loader = self.dataset.get_dataloader('train', full=True, classes=ynt,
                                                       shuffle=True, num_workers=0, drop_last=True)
+        self.yt_imgs, self.yt_labels  = self.loader_to_dataset(yt_loader)
+        self.ynt_imgs, self.ynt_labels = self.loader_to_dataset(ynt_loader)
+
+        yt_num = len(self.yt_labels)
+        ynt_num = len(self.ynt_labels)
 
         # randomly pickup some yt images as feature map groundtruth
         # self.yt_sub_loader: contains yt images that used as feature map groundtruth
-        yt_sub_inds = np.random.choice(list(range(len(self.yt_loader))), int(self.poison_num), replace=False)
-        self.yt_sub_loader = torch.utils.data.Subset(self.yt_loader, yt_sub_inds)
-
+        self.yt_sub_inds = np.random.choice(list(range(yt_num)), int(self.poison_num), replace=False)
+        
         # randomly pickup some ynt images for adding trigger
         # self.ynt_sub_loader: contains some y\t images that used for adding trigger
-        ynt_pick_num = int(len(self.ynt_loader)*self.ynt_ratio)
-        ynt_sub_inds = np.random.choice(list(range(len(self.ynt_loader))), ynt_pick_num, replace=False)
-        self.ynt_sub_loader = torch.utils.data.Subset(self.ynt_loader, ynt_sub_inds)
+        ynt_pick_num = int(ynt_num * self.ynt_ratio)
+        self.ynt_sub_inds = np.random.choice(list(range(ynt_num)), ynt_pick_num, replace=False)
 
         """
         STEP-2: Generate Trigger
@@ -157,62 +167,69 @@ class Latent_Backdoor(BadNet):
 
         Note the universal trigger is the only thing we need to learn, we don't update images.
         """
-        img_shape = self.yt_loader[0][0].shape
-        height = img_shape[0]
-        width = img_shape[1]
-
+        # self.yt_imgs.shape: (BatchSize, Channel, Height, Wdith)
+        img_shape = self.yt_imgs.shape[1:]
+        height = img_shape[1]
+        width = img_shape[2]
+        
         mark_height = int(height * np.sqrt(self.mark_area_ratio))
         mark_width = int(width * np.sqrt(self.mark_area_ratio))
 
         # we only have 1 mark (trigger) and 1 mask
         self.mark = torch.rand(img_shape)
-        self.mark.requires_grad = True
         self.mask = torch.zeros(img_shape)
-    
+
         # trigger locates in right bottom corner, change corresponding mask values
         self.mask[height-mark_height:][:, width-mark_width:] = 1
 
 
         # get average feature map from yt's subset images
-        _yt_inputs, _ = self.get_data(self.yt_sub_loader)
-        yt_featmaps = self.model.get_fm_before_outlayer(_yt_inputs)   # on cpu
-        assert yt_featmaps.shape[0]==len(yt_sub_inds), \
+        print("...extracting target feature map")
+
+        self.model.cuda()
+        _yt_inputs = self.yt_imgs[self.yt_sub_inds].cuda()
+        yt_featmaps = self.model.get_fm_before_outlayer(_yt_inputs)   # on cuda
+        assert yt_featmaps.shape[0]==len(self.yt_sub_inds), \
                "yt image num mismatch, check 'latent_backdoor' attack-->'generate_trigger' function"
-        yt_avg_featmap = yt_featmaps.sum(0) / len(yt_sub_inds)
+        yt_avg_featmap = yt_featmaps.sum(0) / len(self.yt_sub_inds)
 
 
         #------------------------- below is trigger generation process -------------------------#
-        self.model.cuda()
+        print("...generating trigger")
+
+        # self.model.cuda()
         self.mark = self.mark.cuda()
         self.mask = self.mask.cuda()
         yt_avg_featmap = yt_avg_featmap.cuda()
+        self.mark.requires_grad = True
 
         if not self.poison_lr:
             self.poison_lr = 0.01
 
         optimizer = optim.Adam([self.mark], lr=self.poison_lr)
         criterion = nn.MSELoss()
-        l2_loss = 0.0
-
-        self.model.train()
+        self.model.eval()
         for epoch in range(self.poison_iteration):
             optimizer.zero_grad()
-            self.mark = torch.sigmoid(self.mark) # normalize trigger into [0, 1]
-            for ynt_ind in ynt_sub_inds:
-                ynt_img = self.ynt_loader[ynt_ind][0].cuda()
-                ynt_img = ynt_img * (1-self.mask) + self.mask * self.mark
-                l2_loss += criterion(ynt_img, yt_avg_featmap, reduction='mean')
+            l2_loss = 0.0
+            for ind in self.ynt_sub_inds:
+                ynt_img = self.ynt_imgs[ind].cuda()
+                ynt_img = ynt_img * (1-self.mask) + self.mask * torch.sigmoid(self.mark)
+                ynt_img = ynt_img.unsqueeze(0)
+                ynt_featmap = self.model.get_fm_before_outlayer(ynt_img)
+                l2_loss += criterion(ynt_featmap, yt_avg_featmap)
 
-            l2_loss = torch.div(l2_loss, len(ynt_sub_inds))
-            l2_loss.backward()
+            l2_loss = torch.div(l2_loss, len(self.ynt_sub_inds))
+            print("Epoch {} | MSE Loss {}".format(epoch, l2_loss))
+            l2_loss.backward(retain_graph=True)
             optimizer.step()
 
         self.model.cpu()
-        self.model.eval()
         self.mark = self.mark.cpu()
         self.mask = self.mask.cpu()
 
         # now we generate an universal trigger (self.mark)
+        print("trigger generation done!\n")
 
 
     def student_fine_tuning(self):
@@ -228,25 +245,28 @@ class Latent_Backdoor(BadNet):
         for param in train_params:
             param.requires_grad = True
 
-        fine_tune_loader = self.dataset.get_dataloader('train', full=True,
-                              shuffle=True, num_workers=0, drop_last=True)
-        fine_tune_inds = np.random.choice(list(range(len(fine_tune_loader))), 
-                         int(len(fine_tune_loader)*self.fine_tune_set_ratio), 
+        yt_num = len(self.yt_labels)
+        ynt_num = len(self.ynt_labels)
+        all_num = yt_num + ynt_num
+        fine_tune_inds = np.random.choice(list(range(all_num)), 
+                         int(all_num*self.fine_tune_set_ratio), 
                          replace=False)
-        fine_tune_loader = torch.utils.data.Subset(fine_tune_loader, fine_tune_inds)
+
+        fine_tune_imgs = torch.tensor(self.yt_imgs.tolist()+self.ynt_imgs.tolist())[fine_tune_inds]
+        fine_tune_labels = torch.tensor(self.yt_labels.tolist()+self.ynt_labels.tolist())[fine_tune_inds]
 
         # only update last layer parameters
         optimizer = optim.Adam(train_params, lr=self.poison_lr)
         criterion = nn.CrossEntropyLoss()
 
-        print("fine-tuning")
+        print("...fine-tuning")
         self.model.cuda()
-        loss, n_sample = 0.0, 0
-
         self.model.train()
+
         for epoch in range(20):
             optimizer.zero_grad()
-            for input, label in fine_tune_loader:
+            loss, n_sample = 0.0, 0
+            for input, label in zip(fine_tune_imgs, fine_tune_labels):
                 logits = self.model(input.cuda())
                 logits.unsqueeze(0)
                 label.unsqueeze(0)
@@ -259,10 +279,18 @@ class Latent_Backdoor(BadNet):
         self.model.cpu()
         self.model.eval()
 
-    def evaluation(self):
-        pass
 
-
-
-
+    #-----------------------------------------------------------------------#
+    #                    below are some helper functions                    #
+    #-----------------------------------------------------------------------#
+    def loader_to_dataset(self, loader: torch.utils.data.DataLoader) -> (torch.tensor, torch.LongTensor):
+        """
+        Extract image tensors with labels from a Dataloader, whatever batch size.
+        """
+        imgs = []
+        labels = []
+        for batch_imgs, lbs in loader:
+            imgs += batch_imgs.tolist()
+            labels += lbs.tolist()
+        return torch.tensor(imgs), torch.LongTensor(labels)
 

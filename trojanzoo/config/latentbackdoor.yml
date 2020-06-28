@@ -4,7 +4,7 @@ poison_num:
   default: 200
 
 poison_iteration:
-  default: 1000
+  default: 100
 
 poison_lr:
   default: 0.01

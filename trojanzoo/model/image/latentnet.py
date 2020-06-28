@@ -36,18 +36,22 @@ class LatentNet(ImageModel):
         """
         Get feature map before output layer.
         """
-        x = self.features(x)
-        x = self.classifier['fc1'](x)
+        x = self._model.features(x)
+        x = self._model.pool(x)
+        x = self._model.flatten(x)
+        x = self._model.classifier.fc1(x)
         return x
-
 
     def add_new_last_layer(self):
         """
         replace last fc layer with a clean layer, then return its parameters.
         """
-        self.classifier['fc2'] = nn.Linear(self.fc_dim, self.num_classes)
+        self._model.classifier.fc2 = nn.Linear(self.fc_dim, self.num_classes)
         # for param in self.classifier['fc2'].parameters():
         #     param.requires_grad = True
 
-        return self.classifier['fc2'].parameters()
+        return self._model.classifier.fc2.parameters()
         
+    def cpu(self):
+        self._model.cpu()
+        self.model.cpu()
