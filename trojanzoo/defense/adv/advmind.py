@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.utils import repeat_to_batch
-from trojanzoo.attack import Attack
+from trojanzoo.attack import PGD
 
 import torch
 from collections.abc import Callable
@@ -11,15 +11,22 @@ from trojanzoo.utils.config import Config
 env = Config.env
 
 
-class AdvMind(Attack):
+class AdvMind(PGD):
 
     name = 'advmind'
 
     def __init__(self, attack_adapt: bool = False, fake_percent: float = 0.4, dist: float = 5.0,
                  defend_adapt: bool = False, k: int = 1, b: float = 4e-3,
-                 active: bool = False, active_percent: float = 0.1, active_multiplier: float = 1, **kwargs):
-        super().__init__(**kwargs)
-        self.param_list['advmind'] = ['fake_percent', 'dist', ]
+                 active: bool = False, active_percent: float = 0.1, **kwargs):
+        super().__init__(blackbox=True, **kwargs)
+        self.param_list['advmind'] = []
+        if attack_adapt:
+            self.param_list['advmind'].extend(['fake_percent', 'dist', 'active_percent'])
+        if defend_adapt:
+            self.param_list['advmind'].extend(['k', 'b'])
+        if active:
+            self.param_list['advmind'].extend(['active_percent'])
+
         self.attack_adapt: bool = attack_adapt
         self.fake_percent: float = fake_percent
         if not self.attack_adapt:
@@ -32,8 +39,6 @@ class AdvMind(Attack):
 
         self.active: bool = active
         self.active_percent: float = active_percent
-        self.active_multiplier: float = active_multiplier
-        # self.active_multiplier: float = 2 ** (1 - self.active_multiplier)
 
         self.fake_query_num: int = int(self.query_num * self.fake_percent)
         self.true_query_num: int = self.query_num - self.fake_query_num
@@ -80,7 +85,7 @@ class AdvMind(Attack):
         torch.manual_seed(env['seed'])
         if 'start' in self.output:
             self.output_info(_input=_input, target=target, targeted=True)
-        self.attack_grad_list = []
+        self.attack_grad_list: List[torch.Tensor] = []
         # ------------------------ Attacker Seq -------------------------------- #
         seq = self.get_seq(_input, target)  # Attacker cluster sequences
         seq_centers, seq_bias = self.get_center_bias(seq)  # Defender cluster center estimate
@@ -95,7 +100,7 @@ class AdvMind(Attack):
         candidate_centers = seq_centers.unsqueeze(0)
         detect_result = self.get_detect_result(
             candidate_centers, seq_centers, seq, target=target)
-        attack_result = self.model(seq[:, 0]).squeeze().argmax(dim=1)
+        attack_result = self.model(seq[:, 0].squeeze()).argmax(dim=1)
 
         attack_succ = self.iteration
         detect_succ = self.iteration
@@ -141,12 +146,11 @@ class AdvMind(Attack):
             return self.model.loss(_X, target)
         for _iter in range(self.iteration):
             # Attacker generate sequence
-            if self.gradient_method == 'hess' and _iter % self.hess_p == 0:
+            if self.grad_method == 'hess' and _iter % self.hess_p == 0:
                 self.hess = self.calc_hess(loss_func, X_var, sigma=self.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)
-            sub_seq = self.gen_seq(X_var, n=self.true_query_num, sigma=self.sigma,
-                                   method=self.gradient_method, cur_iter=_iter, f=loss_func)
+            sub_seq = self.gen_seq(X_var, query_num=self.true_query_num)
             # Attack Adaptive
             if self.attack_adapt:
                 sub_seq = self.fake_noise(sub_seq)
@@ -173,80 +177,19 @@ class AdvMind(Attack):
                     (1 - self.active_percent) * real_grad
 
                 def active_loss(_X):
-                    loss = loss_func(center) + self.active_multiplier * \
-                        ((_X - center) * active_grad).sum()
+                    loss = loss_func(center) + ((_X - center) * active_grad).sum()
                     return loss
-                grad = self.calc_grad(f=active_loss, X=sub_seq[0], seq=sub_seq[1:self.true_query_num + 1],
-                                      sigma=self.sigma, method=self.gradient_method) / self.active_multiplier
+                grad = self.calc_seq(f=active_loss, seq=sub_seq[:self.true_query_num + 1])
             else:
-                grad = self.calc_grad(f=loss_func, X=sub_seq[0], seq=sub_seq[1:self.true_query_num + 1],
-                                      sigma=self.sigma, method=self.gradient_method)
+                grad = self.calc_seq(f=loss_func, seq=sub_seq[:self.true_query_num + 1])
             grad.sign_()
-            if self.output > 0:
+            if 'middle' in self.output:
                 self.attack_grad_list.append(grad.clone())
 
             noise = (noise - self.alpha * grad).clamp(- self.epsilon, self.epsilon)
             X_var = (_input + noise).clamp(0, 1)
             noise = X_var - _input
         return torch.stack(seq)
-
-    def gen_seq(self, X: torch.Tensor, n: int, sigma: float = None, method: str = 'nes', f: Callable = None) -> List[torch.Tensor]:
-        if sigma is None:
-            sigma = self.sigma
-        seq = [X.clone()]
-        if method == 'nes':
-            for i in range(n // 2):
-                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-                X1 = X + sigma * noise
-                X2 = X - sigma * noise
-                seq.append(X1)
-                seq.append(X2)
-            if n % 2 == 1:
-                seq.append(X)
-        elif method == 'sgd':
-            for i in range(n):
-                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-                X1 = X + sigma * noise
-                seq.append(X1)
-        elif method == 'hess':
-            for i in range(n):
-                noise = torch.normal(mean=0.0, std=1.0, size=(X.numel(), 1), device=X.device)
-                X1 = X + sigma * self.hess.mm(noise).view(X.shape)
-                seq.append(X1)
-        elif method == 'zoo':
-            raise NotImplementedError()
-        else:
-            print('Current method: ', method)
-            raise ValueError(
-                'Argument \"method\" should be \"nes\", \"sgd\" or \"hess\"!')
-        return seq
-
-    @staticmethod
-    def calc_grad(f: Callable, X: torch.Tensor, seq: List[torch.Tensor], sigma: float, method: str = 'nes') -> torch.Tensor:
-        g = torch.zeros_like(X)
-        if method == 'nes':
-            for x in seq:
-                g += f(x) * (x - X)
-        elif method == 'sgd' or method == 'hess':
-            for x in seq:
-                g += (f(x) - f(X)) * (x - X)
-        g /= len(seq) * sigma * sigma
-        return g
-
-    @staticmethod
-    def calc_hess(f: Callable, X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
-        length = X.numel()
-        hess = torch.zeros(length, length, device=X.device)
-        for i in range(hess_b):
-            noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-            X1 = X + sigma * noise
-            X2 = X - sigma * noise
-            hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
-                noise.view(-1, 1).mm(noise.view(1, -1))
-        hess /= (2 * hess_b * sigma * sigma)
-        hess += hess_lambda * torch.eye(length, device=X.device)
-        result = hess.cholesky_inverse()
-        return result
 
     def fake_noise(self, sub_seq: List[torch.Tensor]) -> List[torch.Tensor]:
         X = sub_seq[0]
@@ -285,7 +228,6 @@ class AdvMind(Attack):
         seq_centers = []
         seq_bias = []
         for cluster in seq:
-            cluster = torch.stack(cluster)
             T = self.get_center(cluster)
             seq_centers.append(T)
             B = self.get_bias(cluster)
@@ -293,7 +235,7 @@ class AdvMind(Attack):
         return torch.stack(seq_centers), torch.stack(seq_bias)
 
     def get_detect_result(self, candidate_centers: torch.Tensor, seq_centers: torch.Tensor, seq: torch.Tensor, target=None):
-        pair_seq = -torch.ones(self.iteration - 1, dtype=torch.long)
+        pair_seq = -torch.ones(self.iteration - 1, dtype=torch.long, device=env['device'])
         detect_prob = torch.ones(self.model.num_classes) / self.model.num_classes
         for i in range(len(candidate_centers) - 1):
             for point in candidate_centers[i]:

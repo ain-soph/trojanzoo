@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.parser import Parser
+from ..defense import Parser_Defense
 
 
-class Parser_AdvMind(Parser):
+class Parser_AdvMind(Parser_Defense):
     r"""AdvMind Parser
 
     Attributes:
         name (str): ``'defense'``
-        defense (str): The specific attack name (lower-case).
+        defense (str): The specific defense name (lower-case).
     """
     name = 'defense'
-    defense = None
+    defense = 'advmind'
 
     @staticmethod
     def add_argument(parser):

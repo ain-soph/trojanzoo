@@ -20,7 +20,7 @@ class PGD(Optimizer):
         universal (bool): All inputs in the batch share the same noise. Default: ``False``.
 
         blackbox (bool): Use black box methods to calculate gradient. Default: ``False``.
-        n (int): number of samples in black box gradient estimation. Default: ``100``.
+        query_num (int): number of samples in black box gradient estimation. Default: ``100``.
         sigma (float): gaussian noise std in black box gradient estimation. Default: ``1e-3``.
     """
 
@@ -28,7 +28,7 @@ class PGD(Optimizer):
 
     def __init__(self, alpha: float = 3.0 / 255, epsilon: float = 8.0 / 255,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
-                 blackbox: bool = False, n: int = 100, sigma: float = 1e-3, **kwargs):
+                 blackbox: bool = False, grad_method: str = 'nes', query_num: int = 100, sigma: float = 1e-3, **kwargs):
         super().__init__(**kwargs)
         self.param_list['pgd'] = ['alpha', 'epsilon', 'norm', 'universal']
 
@@ -41,8 +41,9 @@ class PGD(Optimizer):
         self.blackbox = blackbox
         if blackbox:
             self.param_list['blackbox'] = ['n', 'sigma']
-            self.n = n
-            self.sigma = sigma
+            self.grad_method: str = grad_method
+            self.query_num: int = query_num
+            self.sigma: float = sigma
 
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
@@ -129,7 +130,7 @@ class PGD(Optimizer):
     # -------------------------- Calculate Gradient ------------------------ #
     def calc_grad(self, f, X: torch.Tensor) -> torch.Tensor:
         if self.blackbox:
-            return self.blackbox_grad(f, X, n=self.n, sigma=self.sigma)
+            return self.blackbox_grad(f, X, query_num=self.query_num, sigma=self.sigma)
         else:
             return self.whitebox_grad(f, X)
 
@@ -141,16 +142,66 @@ class PGD(Optimizer):
         X.requires_grad = False
         return grad
 
-    @staticmethod
-    def blackbox_grad(f, X: torch.Tensor, n: int = 100, sigma: float = 0.001) -> torch.Tensor:
-        grad = torch.zeros_like(X)
-        with torch.no_grad():
-            for i in range(n // 2):
-                noise = torch.normal(
-                    mean=0.0, std=1.0, size=X.shape, device=X.device)
+    def blackbox_grad(self, f: Callable, X: torch.Tensor) -> torch.Tensor:
+        seq = self.gen_seq(X)
+        grad = self.calc_seq(f, seq)
+        return grad
+
+    def gen_seq(self, X: torch.Tensor, query_num: int = None) -> List[torch.Tensor]:
+        if query_num is None:
+            query_num = self.query_num
+        sigma = self.sigma
+        seq = [X.clone()]
+        if self.grad_method == 'nes':
+            for i in range(query_num // 2):
+                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
                 X1 = X + sigma * noise
                 X2 = X - sigma * noise
-                grad += f(X1) * noise
-                grad -= f(X2) * noise
-            grad /= n * sigma
-        return grad
+                seq.append(X1)
+                seq.append(X2)
+            if query_num % 2 == 1:
+                seq.append(X)
+        elif self.grad_method == 'sgd':
+            for i in range(query_num):
+                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
+                X1 = X + sigma * noise
+                seq.append(X1)
+        elif self.grad_method == 'hess':
+            for i in range(query_num):
+                noise = torch.normal(mean=0.0, std=1.0, size=(X.numel(), 1), device=X.device)
+                X1 = X + sigma * self.hess.mm(noise).view(X.shape)
+                seq.append(X1)
+        elif self.grad_method == 'zoo':
+            raise NotImplementedError(self.grad_method)
+        else:
+            print('Current method: ', self.grad_method)
+            raise ValueError("Argument 'method' should be 'nes', 'sgd' or 'hess'!")
+        return seq
+
+    def calc_seq(self, f: Callable, seq: List[torch.Tensor]) -> torch.Tensor:
+        X: torch.Tensor = seq[0]
+        seq: List[torch.Tensor] = seq[1:]
+        g = torch.zeros_like(X)
+        if self.grad_method == 'nes':
+            for x in seq:
+                g += f(x) * (x - X)
+        elif self.grad_method in ['sgd', 'hess']:
+            for x in seq:
+                g += (f(x) - f(X)) * (x - X)
+        g /= len(seq) * self.sigma * self.sigma
+        return g
+
+    @staticmethod
+    def calc_hess(f: Callable, X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
+        length = X.numel()
+        hess = torch.zeros(length, length, device=X.device)
+        for i in range(hess_b):
+            noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
+            X1 = X + sigma * noise
+            X2 = X - sigma * noise
+            hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
+                noise.view(-1, 1).mm(noise.view(1, -1))
+        hess /= (2 * hess_b * sigma * sigma)
+        hess += hess_lambda * torch.eye(length, device=X.device)
+        result = hess.cholesky_inverse()
+        return result

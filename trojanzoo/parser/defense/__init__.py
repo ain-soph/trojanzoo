@@ -2,6 +2,7 @@
 
 from .adv import *
 from .backdoor import *
+from .. import Parser
 
 from trojanzoo.defense import class_dict
 import sys
