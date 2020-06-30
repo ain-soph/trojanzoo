@@ -40,7 +40,7 @@ class PGD(Optimizer):
 
         self.blackbox = blackbox
         if blackbox:
-            self.param_list['blackbox'] = ['n', 'sigma']
+            self.param_list['blackbox'] = ['grad_method', 'query_num', 'sigma']
             self.grad_method: str = grad_method
             self.query_num: int = query_num
             self.sigma: float = sigma
@@ -147,47 +147,45 @@ class PGD(Optimizer):
         grad = self.calc_seq(f, seq)
         return grad
 
-    def gen_seq(self, X: torch.Tensor, query_num: int = None) -> List[torch.Tensor]:
+    # X: (1, C, H, W)
+    # return: (query_num+1, C, H, W)
+    def gen_seq(self, X: torch.Tensor, query_num: int = None) -> torch.Tensor:
         if query_num is None:
             query_num = self.query_num
         sigma = self.sigma
-        seq = [X.clone()]
+        shape = list(X.shape)
+        shape[0] = query_num
         if self.grad_method == 'nes':
-            for i in range(query_num // 2):
-                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-                X1 = X + sigma * noise
-                X2 = X - sigma * noise
-                seq.append(X1)
-                seq.append(X2)
+            shape[0] = shape[0] // 2
+        noise = sigma * torch.normal(mean=0.0, std=1.0, size=shape, device=X.device)
+
+        zeros = torch.zeros_like(X)
+        seq = [zeros]
+        if self.grad_method == 'nes':
+            seq.extend([noise, -noise])
             if query_num % 2 == 1:
-                seq.append(X)
+                seq.append(zeros)
         elif self.grad_method == 'sgd':
-            for i in range(query_num):
-                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-                X1 = X + sigma * noise
-                seq.append(X1)
+            seq.append(noise)
         elif self.grad_method == 'hess':
-            for i in range(query_num):
-                noise = torch.normal(mean=0.0, std=1.0, size=(X.numel(), 1), device=X.device)
-                X1 = X + sigma * self.hess.mm(noise).view(X.shape)
-                seq.append(X1)
+            noise = self.hess.mm(noise.view(-1, 1)).view(X.shape)
+            seq.append(noise)
         elif self.grad_method == 'zoo':
             raise NotImplementedError(self.grad_method)
         else:
             print('Current method: ', self.grad_method)
             raise ValueError("Argument 'method' should be 'nes', 'sgd' or 'hess'!")
+        seq = torch.cat(seq).add(X)
         return seq
 
-    def calc_seq(self, f: Callable, seq: List[torch.Tensor]) -> torch.Tensor:
-        X: torch.Tensor = seq[0]
-        seq: List[torch.Tensor] = seq[1:]
-        g = torch.zeros_like(X)
-        if self.grad_method == 'nes':
-            for x in seq:
-                g += f(x) * (x - X)
-        elif self.grad_method in ['sgd', 'hess']:
-            for x in seq:
-                g += (f(x) - f(X)) * (x - X)
+    def calc_seq(self, f: Callable, seq: torch.Tensor) -> torch.Tensor:
+        X = seq[0].unsqueeze(0)
+        seq = seq[1:]
+        noise = seq.sub(X)
+
+        g = f(seq, reduction='none')[:, None, None, None].mul(noise).sum(dim=0)
+        if self.grad_method in ['sgd', 'hess']:
+            g -= f(X) * noise.sum(dim=0)
         g /= len(seq) * self.sigma * self.sigma
         return g
 

@@ -144,6 +144,7 @@ class Model:
         if env['num_gpus']:
             self.cuda()
         self.eval()
+        self.activate_params([])
 
     # ----------------- Forward Operations ----------------------#
 

@@ -87,7 +87,8 @@ def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> 
 
 def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     try:
-        size = batch_size + [1] * len(x.shape)
+        size = [batch_size]
+        size.extend([1] * len(x.shape))
         x = x.repeat(list(size))
     except Exception as e:
         print('tensor shape: ', x.shape)
