@@ -341,7 +341,7 @@ class Model:
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}'.format(
                     output_iter(_epoch + 1, epoch), **ansi)
-                prints('{:<60}Loss: {:.4f},  \t Top1 Acc: {:.3f}, \t Top5 Acc: {:.3f}, \t Time: {}'.format(
+                prints('{:<60}Loss: {:.4f},    Top1 Acc: {:.3f},    Top5 Acc: {:.3f},    Time: {}'.format(
                     pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
@@ -410,7 +410,7 @@ class Model:
             time.perf_counter() - epoch_start)))
         if verbose:
             pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi)
-            prints('{:<35}Loss: {:.4f},  \t Top1 Acc: {:.3f}, \t Top5 Acc: {:.3f}, \t Time: {}'.format(
+            prints('{:<35}Loss: {:.4f},    Top1 Acc: {:.3f},    Top5 Acc: {:.3f},    Time: {}'.format(
                 pre_str, losses.avg, top1.avg, top5.avg, epoch_time), prefix='\033[1A\033[K', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
