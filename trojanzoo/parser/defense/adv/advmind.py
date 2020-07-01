@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from ..defense import Parser_Defense
+from trojanzoo.dataset import Dataset
+from trojanzoo.defense import AdvMind
 
 from trojanzoo.utils import Config
 config = Config.config
@@ -52,7 +54,7 @@ class Parser_AdvMind(Parser_Defense):
                             help='Active gradient weight.')
 
     @classmethod
-    def get_module(cls, defense: str = None, dataset: Dataset = None, **kwargs) -> Attack:
+    def get_module(cls, defense: str = None, dataset: Dataset = None, **kwargs) -> AdvMind:
         # type: (str, Dataset, dict)  # noqa
         """load extra pgd parameters from config['pgd']."""
         if defense is None:
