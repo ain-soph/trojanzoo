@@ -43,3 +43,4 @@ tiny_imagenet
 
 # add by Zhaohan, nohup logs
 log
+run.sh
