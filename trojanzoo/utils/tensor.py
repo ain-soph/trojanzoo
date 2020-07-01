@@ -7,7 +7,7 @@ from typing import Union
 import numpy as np
 
 import torch
-import torchvision.transforms.functional as functional
+import torchvision.transforms.functional as F
 
 from .config import Config
 env = Config.env
@@ -15,7 +15,7 @@ env = Config.env
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
 
-byte2float = functional.to_tensor
+byte2float = F.to_tensor
 
 
 def cos_sim(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
@@ -82,7 +82,7 @@ def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> 
     if isinstance(x, Image.Image):
         return x
     x = to_tensor(x, device='cpu')
-    return functional.to_pil_image(x, mode=mode)
+    return F.to_pil_image(x, mode=mode)
 
 
 def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
@@ -100,7 +100,7 @@ def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
 def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1) -> Image.Image:
     if not isinstance(x, Image.Image):
         x = to_img(x)
-    return functional.to_grayscale(x, num_output_channels=num_output_channels)
+    return F.to_grayscale(x, num_output_channels=num_output_channels)
 
 
 def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1, **kwargs) -> torch.Tensor:

@@ -95,6 +95,8 @@ class Parser_Seq(Module):
                 args['model'] = self.module_list['model']
             if parser.name in ['attack'] and 'mark' in self.module_list.keys():
                 args['mark'] = self.module_list['mark']
+            if parser.name in ['defense'] and 'attack' in self.module_list.keys():
+                args['attack'] = self.module_list['attack']
             self.module_list[parser.name] = parser.get_module(**args)
             if verbose:
                 if self.module_list[parser.name] is None:

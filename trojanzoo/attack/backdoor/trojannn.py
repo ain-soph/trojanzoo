@@ -6,7 +6,7 @@ from trojanzoo.attack.adv import PGD
 
 import torch
 
-from trojanzoo.utils.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 

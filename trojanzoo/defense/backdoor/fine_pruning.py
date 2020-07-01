@@ -24,7 +24,7 @@ import argparse
 from operator import itemgetter
 from heapq import nsmallest
 
-from trojanzoo.utils.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 

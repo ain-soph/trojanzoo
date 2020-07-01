@@ -19,16 +19,17 @@ class PGD(Optimizer):
         norm (int): :math:`L_p` norm passed to :func:`torch.norm`. Default: ``float(inf)``.
         universal (bool): All inputs in the batch share the same noise. Default: ``False``.
 
-        blackbox (bool): Use black box methods to calculate gradient. Default: ``False``.
+        grad_method (str): gradient estimation method. Default: ``white``.
         query_num (int): number of samples in black box gradient estimation. Default: ``100``.
-        sigma (float): gaussian noise std in black box gradient estimation. Default: ``1e-3``.
+        sigma (float): gaussian noise std in black box gradient estimation. Default: ``0.001``.
     """
 
     name = 'pgd'
 
     def __init__(self, alpha: float = 3.0 / 255, epsilon: float = 8.0 / 255,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
-                 blackbox: bool = False, grad_method: str = 'nes', query_num: int = 100, sigma: float = 1e-3, **kwargs):
+                 grad_method: str = 'white', query_num: int = 100, sigma: float = 1e-3,
+                 hess_b: int = 100, hess_p: int = 1, hess_lambda: float = 1, **kwargs):
         super().__init__(**kwargs)
         self.param_list['pgd'] = ['alpha', 'epsilon', 'norm', 'universal']
 
@@ -38,12 +39,15 @@ class PGD(Optimizer):
         self.norm = norm
         self.universal = universal
 
-        self.blackbox = blackbox
-        if blackbox:
+        self.grad_method: str = grad_method
+        if grad_method != 'white':
             self.param_list['blackbox'] = ['grad_method', 'query_num', 'sigma']
-            self.grad_method: str = grad_method
             self.query_num: int = query_num
             self.sigma: float = sigma
+            if grad_method == 'hess':
+                self.param_list['hessian'] = ['hess_b', 'hess_p', 'hess_lambda']
+                self.hess_b: int = hess_b
+                self.hess_lambda: float = hess_lambda
 
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
@@ -81,8 +85,12 @@ class PGD(Optimizer):
                 if 'end' in output:
                     self.output_info(_input=_input, noise=noise, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
                 return X, _iter + 1
+            if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:
+                self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
+                                           hess_b=self.hess_b, hess_lambda=self.hess_lambda)
+                self.hess /= self.hess.norm(p=2)
             grad = self.calc_grad(loss_fn, X)
-            if self.blackbox and 'middle' in output:
+            if self.grad_method != 'white' and 'middle' in output:
                 real_grad = self.whitebox_grad(loss_fn, X)
                 prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
                        indent=indent + 2)
@@ -129,7 +137,7 @@ class PGD(Optimizer):
 
     # -------------------------- Calculate Gradient ------------------------ #
     def calc_grad(self, f, X: torch.Tensor) -> torch.Tensor:
-        if self.blackbox:
+        if self.grad_method != 'white':
             return self.blackbox_grad(f, X, query_num=self.query_num, sigma=self.sigma)
         else:
             return self.whitebox_grad(f, X)

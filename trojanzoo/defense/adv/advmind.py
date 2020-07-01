@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from ..defense import Defense
 from trojanzoo.attack import PGD
 
 from trojanzoo.utils import repeat_to_batch, to_list, cos_sim
@@ -10,18 +11,20 @@ import torch.nn.functional as F
 from collections.abc import Callable
 from typing import List
 
-from trojanzoo.utils.config import Config
+from trojanzoo.utils import Config
 env = Config.env
 
 
-class AdvMind(PGD):
+class AdvMind(Defense):
 
     name = 'advmind'
 
     def __init__(self, attack_adapt: bool = False, fake_percent: float = 0.3, dist: float = 50.0,
                  defend_adapt: bool = False, k: int = 1, b: float = 4e-3,
                  active: bool = False, active_percent: float = 0.1, **kwargs):
-        super().__init__(blackbox=True, **kwargs)
+        super().__init__(**kwargs)
+        self.attack: PGD
+
         self.param_list['advmind'] = []
         if attack_adapt:
             self.param_list['advmind'].extend(['fake_percent', 'dist', 'active_percent'])
@@ -43,17 +46,17 @@ class AdvMind(PGD):
         self.active: bool = active
         self.active_percent: float = active_percent
 
-        self.fake_query_num: int = int(self.query_num * self.fake_percent)
-        self.true_query_num: int = self.query_num - self.fake_query_num
+        self.fake_query_num: int = int(self.attack.query_num * self.fake_percent)
+        self.true_query_num: int = self.attack.query_num - self.fake_query_num
 
         self.attack_grad_list: List[torch.Tensor] = []
 
     def detect(self):
-        zeros = torch.zeros(self.iteration - 1)
+        zeros = torch.zeros(self.attack.iteration - 1)
         result_dict = {'draw': zeros.clone(), 'win': zeros.clone(), 'lose': zeros.clone()}
         counter = 0
-        attack_succ_num = 0
-        detect_succ_num = 0
+        attack_succ_num = 0.
+        detect_succ_num = 0.
         for i, data in enumerate(self.dataset.loader['test']):
             if counter >= 200:
                 break
@@ -69,15 +72,15 @@ class AdvMind(PGD):
             for _iter in range(len(result)):
                 result_dict[result[_iter]][_iter] += 1
             counter += 1
-            if attack_succ != self.iteration:
+            if attack_succ != self.attack.iteration:
                 attack_succ_num += 1
-            if detect_succ != self.iteration:
+            if detect_succ != self.attack.iteration:
                 detect_succ_num += 1
-            attack_succ_rate = float(attack_succ_num) / counter
-            detect_succ_rate = float(detect_succ_num) / counter
-            print('draw: ', result_dict['draw'])
-            print('win : ', result_dict['win'])
-            print('lose: ', result_dict['lose'])
+            attack_succ_rate = attack_succ_num / counter
+            detect_succ_rate = detect_succ_num / counter
+            print('draw: ', to_list(result_dict['draw']))
+            print('win : ', to_list(result_dict['win']))
+            print('lose: ', to_list(result_dict['lose']))
             print()
             print('total: ', counter)
             print('attack succ rate: ', attack_succ_rate)
@@ -88,8 +91,8 @@ class AdvMind(PGD):
         # ------------------------------- Init --------------------------------- #
         torch.manual_seed(env['seed'])
         if 'start' in self.output:
-            self.output_info(_input=_input, noise=torch.zeros_like(_input), target=target,
-                             loss_fn=lambda _X: self.model.loss(_X, target))
+            self.attack.output_info(_input=_input, noise=torch.zeros_like(_input), target=target,
+                                    loss_fn=lambda _X: self.model.loss(_X, target))
         self.attack_grad_list: List[torch.Tensor] = []
         # ------------------------ Attacker Seq -------------------------------- #
         seq = self.get_seq(_input, target)  # Attacker cluster sequences (iter, query_num+1, C, H, W)
@@ -107,14 +110,14 @@ class AdvMind(PGD):
         detect_result = self.get_detect_result(seq_centers, target=target)
         attack_result = self.model(seq[:, 0].squeeze()).argmax(dim=1)
 
-        attack_succ = self.iteration
-        detect_succ = self.iteration
+        attack_succ = self.attack.iteration
+        detect_succ = self.attack.iteration
 
         detect_true = True
-        for i in range(self.iteration - 1):
-            if attack_result[i] == target and attack_result[min(i + 1, self.iteration - 2)] == target and attack_succ == self.iteration:
+        for i in range(self.attack.iteration - 1):
+            if attack_result[i] == target and attack_result[min(i + 1, self.attack.iteration - 2)] == target and attack_succ == self.attack.iteration:
                 attack_succ = i
-            if detect_result[i] == detect_result[min(i + 1, self.iteration - 2)] and detect_succ == self.iteration and detect_true:
+            if detect_result[i] == detect_result[min(i + 1, self.attack.iteration - 2)] and detect_succ == self.attack.iteration and detect_true:
                 if detect_result[i] == target:
                     detect_succ = i
                 else:
@@ -126,12 +129,12 @@ class AdvMind(PGD):
             print('Attack Iter: ', attack_succ)
             prints(to_list(attack_result), indent=12)
             print()
-        result = ['draw'] * (self.iteration - 1)
+        result = ['draw'] * (self.attack.iteration - 1)
         if attack_succ < detect_succ:
-            for i in range(attack_succ, self.iteration - 1):
+            for i in range(attack_succ, self.attack.iteration - 1):
                 result[i] = 'lose'
         elif attack_succ > detect_succ:
-            for i in range(detect_succ, self.iteration - 1):
+            for i in range(detect_succ, self.attack.iteration - 1):
                 result[i] = 'win'
         elif attack_succ == detect_succ:
             pass
@@ -141,7 +144,7 @@ class AdvMind(PGD):
 
     def get_seq(self, _input: torch.Tensor, target: torch.LongTensor) -> torch.Tensor:
         seq = []
-        X_var = _input.clone()
+        X = _input.clone()
         noise = torch.zeros_like(_input)
         if isinstance(target, int):
             target = target * torch.ones(len(_input), dtype=torch.long, device=_input.device)
@@ -152,16 +155,16 @@ class AdvMind(PGD):
                 t = target * torch.ones(len(_X), dtype=torch.long, device=_X.device)
             return F.cross_entropy(self.model(_X), t, **kwargs)
 
-        for _iter in range(self.iteration):
+        for _iter in range(self.attack.iteration):
             # Attacker generate sequence
-            if self.grad_method == 'hess' and _iter % self.hess_p == 0:
-                self.hess = self.calc_hess(loss_fn, X_var, sigma=self.sigma,
+            if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:
+                self.hess = self.calc_hess(loss_fn, X, sigma=self.attack.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)
-            cluster = self.gen_seq(X_var, query_num=self.true_query_num)
+            cluster = self.attack.gen_seq(X, query_num=self.true_query_num)
             # Attack Adaptive
             if self.attack_adapt:
-                fake_seq = self.get_fake_seq(X=X_var)
+                fake_seq = self.get_fake_seq(X=X)
                 cluster = torch.cat([cluster, fake_seq])
             seq.append(cluster)
             # Defense Active
@@ -187,23 +190,23 @@ class AdvMind(PGD):
                     org_loss = loss_fn(center, **kwargs)
                     active_loss = ((_X - center) * active_grad).flatten(start_dim=1).sum(dim=1)
                     return org_loss + active_loss
-                grad = self.calc_seq(f=active_loss, seq=cluster[:self.true_query_num + 1])
+                grad = self.attack.calc_seq(f=active_loss, seq=cluster[:self.true_query_num + 1])
             else:
-                grad = self.calc_seq(f=loss_fn, seq=cluster[:self.true_query_num + 1])
+                grad = self.attack.calc_seq(f=loss_fn, seq=cluster[:self.true_query_num + 1])
             grad.sign_()
             if 'middle' in self.output:
                 self.attack_grad_list.append(grad.clone())
 
-            noise = (noise - self.alpha * grad).clamp(-self.epsilon, self.epsilon)
-            X_var = (_input + noise).clamp(0, 1)
-            noise = X_var - _input
+            noise = (noise - self.attack.alpha * grad).clamp(-self.attack.epsilon, self.attack.epsilon)
+            X = (_input + noise).clamp(0, 1)
+            noise = X - _input
         return torch.stack(seq)
 
     def get_fake_seq(self, X: torch.Tensor) -> torch.Tensor:
         if len(X.shape) == 4:
             X = X[0]
         noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-        fake_seq = X + self.dist * self.sigma * noise
+        fake_seq = X + self.dist * self.attack.sigma * noise
         return repeat_to_batch(fake_seq, batch_size=self.fake_query_num)
 
     # cluster: (query_num, C, H, W)
@@ -243,31 +246,31 @@ class AdvMind(PGD):
         return torch.stack(seq_centers), torch.stack(seq_bias)
 
     def get_detect_result(self, seq_centers: torch.Tensor, target=None):
-        pair_seq = -torch.ones(self.iteration - 1, dtype=torch.long, device=env['device'])
+        pair_seq = -torch.ones(self.attack.iteration - 1, dtype=torch.long, device=env['device'])
         detect_prob = torch.ones(self.model.num_classes) / self.model.num_classes
         for i in range(len(seq_centers) - 1):
-            X_var: torch.Tensor = seq_centers[i].clone()
+            X: torch.Tensor = seq_centers[i].clone()
             dist_list = torch.zeros(self.model.num_classes)
 
             for _class in range(self.model.num_classes):
-                _label = _class * torch.ones(len(X_var), dtype=torch.long, device=X_var.device)
-                X_var.requires_grad = True
-                loss = self.model.loss(X_var, _label)
-                grad = torch.autograd.grad(loss, X_var)[0]
-                X_var.requires_grad = False
+                _label = _class * torch.ones(len(X), dtype=torch.long, device=X.device)
+                X.requires_grad = True
+                loss = self.model.loss(X, _label)
+                grad = torch.autograd.grad(loss, X)[0]
+                X.requires_grad = False
                 grad /= grad.abs().max()
                 if self.active:
-                    noise_grad = torch.zeros(X_var.numel(), device=X_var.device)
+                    noise_grad = torch.zeros(X.numel(), device=X.device)
                     offset = (_class + i) % self.model.num_classes
 
                     for multiplier in range(len(noise_grad) // self.model.num_classes):
                         noise_grad[multiplier * self.model.num_classes + offset] = 1
-                    noise_grad = noise_grad.view(X_var.shape)
+                    noise_grad = noise_grad.view(X.shape)
                     # noise_grad /= noise_grad.abs().max()
                     grad = self.active_percent * noise_grad + \
                         (1 - self.active_percent) * grad
                 grad.sign_()
-                vec = seq_centers[i + 1] - X_var
+                vec = seq_centers[i + 1] - X
                 dist = cos_sim(-grad, vec)
                 dist_list[_class] = dist
                 if 'middle' in self.output and _class == target:
@@ -324,14 +327,14 @@ class AdvMind(PGD):
                 #         if _result[j] < 0 and j > i:
                 #             sub_pair_seq.append((j-i) % self.num_classes)
                 # print(vec.view(-1)[:self.num_classes])
-                X_var = point.clone()
+                X = point.clone()
                 dist_list = torch.zeros(self.num_classes)
                 # print('bound: ', estimate_error + shift_dist)
                 for _class in range(self.num_classes):
-                    X_var.requires_grad = True
-                    loss = self.model.loss(X_var, _class)
-                    grad = torch.autograd.grad(loss, X_var)[0]
-                    X_var.requires_grad = False
+                    X.requires_grad = True
+                    loss = self.model.loss(X, _class)
+                    grad = torch.autograd.grad(loss, X)[0]
+                    X.requires_grad = False
                     grad.sign_()
                     if self.active:
                         noise_grad = torch.zeros_like(grad).flatten()

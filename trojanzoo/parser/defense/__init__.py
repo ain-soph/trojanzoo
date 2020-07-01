@@ -19,10 +19,10 @@ class Parser_Defense(Parser):
     def __init__(self):
         argv = sys.argv
         try:
-            idx = argv.index('--attack')
-            self.attack = argv[idx + 1]
+            idx = argv.index('--defense')
+            self.defense = argv[idx + 1]
         except ValueError as e:
-            print("You need to set '--attack' to call 'Parser_Attack'. ")
+            print("You need to set '--defense' to call 'Parser_defense'. ")
             raise e
 
         pkg = __import__('trojanzoo.parser.defense', fromlist=['class_dict'])

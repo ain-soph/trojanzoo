@@ -27,10 +27,8 @@ class Parser_PGD(Parser_Attack):
                             help='Target label order in original classification, defaults to config[pgd][target_idx][dataset]=1 ' +
                                  '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
 
-        parser.add_argument('--blackbox', dest='blackbox', action='store_true',
-                            help='Use Black-Box attack.')
         parser.add_argument('--grad_method', dest='grad_method',
-                            help='black box gradient estimation method, defaults to config[pgd][grad_method][dataset]=\'nes\'')
+                            help='gradient estimation method, defaults to config[pgd][grad_method][dataset]=\'white\'')
         parser.add_argument('--query_num', dest='query_num', type=int,
                             help='query numbers for black box gradient estimation, defaults to config[pgd][query_num][dataset]=100.')
         parser.add_argument('--sigma', dest='sigma', type=float,

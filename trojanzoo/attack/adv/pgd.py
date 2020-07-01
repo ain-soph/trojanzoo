@@ -25,8 +25,33 @@ class PGD(Attack, PGD_Optimizer):
         self.target_idx: int = target_idx
         super().__init__(**kwargs)
 
-    def attack(self, _input: torch.Tensor, loss_fn: Callable = None,
-               target: Union[torch.LongTensor, int] = None, target_idx: int = None, **kwargs):
+    def attack(self):
+        # model._validate()
+        correct = 0
+        total = 0
+        total_iter = 0
+        for i, data in enumerate(self.dataset.loader['test']):
+            if total >= 100:
+                break
+            _input, _label = self.model.remove_misclassify(data)
+            if len(_label) == 0:
+                continue
+            adv_input, _iter = self.craft_example(_input)
+
+            total += 1
+            if _iter:
+                correct += 1
+                total_iter += _iter
+            print('{} / {}'.format(correct, total))
+            print('current iter: ', _iter)
+            print('succ rate: ', float(correct) / total)
+            if correct > 0:
+                print('avg  iter: ', float(total_iter) / correct)
+            print('-------------------------------------------------')
+            print()
+
+    def craft_example(self, _input: torch.Tensor, loss_fn: Callable = None,
+                      target: Union[torch.LongTensor, int] = None, target_idx: int = None, **kwargs):
         if len(_input) == 0:
             return _input, None
         if target_idx is None:
