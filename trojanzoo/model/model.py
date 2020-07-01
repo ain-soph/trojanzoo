@@ -317,7 +317,7 @@ class Model:
                 _input, _label = get_data(data, mode='train')
                 loss = loss_fn(_input, _label)
 
-                loss.backward(retain_graph=True)
+                loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
 
