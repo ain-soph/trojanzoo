@@ -91,7 +91,7 @@ class TrojanNN(BadNet):
             cost = loss_fn(x)
             if cost < self.threshold:
                 break
-            x, _ = self.pgd.attack(mark, noise=noise, iteration=1, loss_fn=loss_fn)
+            x, _ = self.pgd.craft_example(mark, noise=noise, iteration=1, loss_fn=loss_fn)
         # _temp = self.model.get_layer(mark, layer_output=self.preprocess_layer)
         # print(len(_temp[0,neuron_idx].nonzero()))
         print("Neuron Value After Preprocessing: ",
