@@ -9,6 +9,10 @@ epsilon:
 iteration:
   default: 20
 
-stop_threshold: null
+stop_threshold: 0.95
 
 target_idx: 1
+
+grad_method: white
+query_num: 100
+sigma: 0.001

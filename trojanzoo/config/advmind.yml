@@ -1,0 +1,7 @@
+# -*- coding: utf-8 -*-
+
+fake_percent: 0.3
+dist: 50.0
+k: 1
+b: 0.004
+active_percent: 0.1

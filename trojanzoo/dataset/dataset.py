@@ -147,7 +147,7 @@ class Dataset:
             dataset = self.get_class_set(dataset, classes=classes, **kwargs)
         return dataset
 
-    def get_class_set(self, dataset, classes, **kwargs):
+    def get_class_set(self, dataset: torch.utils.data.Dataset, classes: List[int], **kwargs):
         indices = np.arange(len(dataset))
         if isinstance(dataset, torch.utils.data.Subset):
             idx = np.array(dataset.indices)

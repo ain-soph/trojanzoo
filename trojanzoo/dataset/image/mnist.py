@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ..imageset import ImageSet
-from trojanzoo.imports import *
+
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from typing import Union, Tuple

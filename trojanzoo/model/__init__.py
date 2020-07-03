@@ -13,4 +13,5 @@ class_dict = {
     'resnetcomp': 'ResNetcomp',
     'vgg': 'VGG',
     'vggcomp': 'VGGcomp',
+    'latentnet': 'LatentNet',
 }

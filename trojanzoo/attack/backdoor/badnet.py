@@ -40,7 +40,6 @@ class BadNet(Attack):
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
-        self.percent2: float = percent / (1 - percent)
 
     def attack(self, epoch: int, save=False, **kwargs):
         self.model._train(epoch, get_data=self.get_data, validate_func=self.validate_func, **kwargs)
@@ -50,7 +49,7 @@ class BadNet(Attack):
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, **kwargs)
 
-    def get_filename(self, epoch: int, mark_alpha: float = None, target_class: int = None):
+    def get_filename(self, epoch: int, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:
             mark_alpha = self.mark.mark_alpha
         if target_class is None:
@@ -63,7 +62,8 @@ class BadNet(Attack):
 
     def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
         _input, _label = self.model.get_data(data)
-        if not keep_org or random.uniform(0, 1) < self.percent2:
+        percent = self.percent / (1 - self.percent)
+        if not keep_org or random.uniform(0, 1) < percent:
             org_input, org_label = _input, _label
             _input = self.add_mark(org_input)
             if poison_label:
@@ -87,7 +87,7 @@ class BadNet(Attack):
         filename = self.get_filename(**kwargs)
         file_path = self.folder_path + filename
         self.mark.save_npz(file_path + '.npz')
-        save_tensor_as_img(file_path + '.png', self.mark.mark)
+        self.mark.save_img(file_path + '.png')
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 

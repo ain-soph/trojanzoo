@@ -116,12 +116,8 @@ class Hidden_Trigger(BadNet):
                                                          batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
         self.source_loader = self.dataset.get_dataloader('train', full=True, classes=source,
                                                          batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
-        for data in self.target_loader:
-            target_imgs, _ = self.dataset.get_data(data)
-            break
-        for data in self.source_loader:
-            source_imgs, _ = self.dataset.get_data(data)
-            break
+        target_imgs, _ = self.model.get_data(next(iter(self.target_loader)))
+        source_imgs, _ = self.model.get_data(next(iter(self.source_loader)))
         source_imgs = self.add_mark(source_imgs)
         noise = torch.zeros_like(target_imgs)
         source_feats = self.model.get_layer(source_imgs, layer_output=self.preprocess_layer).detach()

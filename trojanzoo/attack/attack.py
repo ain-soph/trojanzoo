@@ -18,8 +18,8 @@ class Attack(Process):
     def __init__(self, dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None, **kwargs):
         super().__init__(**kwargs)
         self.param_list['attack'] = ['folder_path']
-        self.dataset = dataset
-        self.model = model
+        self.dataset: ImageSet = dataset
+        self.model: ImageModel = model
 
         # ----------------------------------------------------------------------------- #
         if folder_path is None:

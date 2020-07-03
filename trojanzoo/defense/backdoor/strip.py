@@ -1,19 +1,36 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
+from ..defense_backdoor import Defense_Backdoor
 
 import torch
+from trojanzoo.utils.model import AverageMeter
 
 
-class STRIP():
-    def __init__(self, dataset: ImageSet, model: ImageModel,
-                 alpha: float = 0.5, N: int = 8, detach: bool = True):
-        self.dataset: ImageSet = dataset
-        self.model: ImageModel = model
-
+class STRIP(Defense_Backdoor):
+    def __init__(self, alpha: float = 0.5, N: int = 8, **kwargs):
+        super().__init__(**kwargs)
         self.alpha: float = alpha
         self.N: int = N
+
+    def detect(self, **kwargs):
+        super().detect(**kwargs)
+        entropy = AverageMeter('entropy', fmt='.4e')
+        for i, data in enumerate(self.dataset.loader['test']):
+            _input, _label = self.model.get_data(data)
+            entropy.update(self.defense.check(_input), n=_label.size(0))
+            print('{:<10d}{:<20.4f}'.format(i, entropy.avg))
+
+    def check(self, _input) -> float:
+        h = 0.0
+        for i, data in enumerate(self.dataset.loader['train']):
+            if i >= self.N:
+                break
+            X, Y = self.model.get_data(data)
+            _test = self.superimpose(_input, X)
+            entropy = self.entropy(_test)
+            h += entropy
+        h /= self.N
+        return h
 
     def superimpose(self, _input1: torch.Tensor, _input2: torch.Tensor, alpha: float = None):
         if alpha is None:
@@ -26,15 +43,3 @@ class STRIP():
     def entropy(self, _input: torch.Tensor) -> torch.Tensor:
         p = self.model.get_prob(_input)
         return (-p * p.log()).sum(1).mean()
-
-    def detect(self, _input) -> float:
-        h = 0.0
-        for i, data in enumerate(self.dataset.loader['train']):
-            if i >= self.N:
-                break
-            X, Y = self.model.get_data(data)
-            _test = self.superimpose(_input, X)
-            entropy = self.entropy(_test)
-            h += entropy
-        h /= self.N
-        return h
