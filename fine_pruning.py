@@ -7,7 +7,7 @@ from trojanzoo.model import ImageModel
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.attack.backdoor.hidden_trigger import Hidden_Trigger
 from trojanzoo.defense.backdoor import Neural_Cleanse
-from trojanzoo.defense.backdoor  import  Fine_Pruning
+from trojanzoo.defense.backdoor import Fine_Pruning
 from trojanzoo.utils import normalize_mad
 
 import argparse
@@ -33,9 +33,8 @@ if __name__ == '__main__':
 
     # ------------------------------------------------------------------------ #
 
-    defense: Fine_Pruning = Fine_Pruning(dataset=dataset)
-    Acc, Layers_Prunned = defense.prune()
-    print('After finetuing and pruning, the acc :', Acc)
-    print('The pruned layer:', Layers_Prunned)
-    
+    defense: Fine_Pruning = Fine_Pruning(dataset=dataset, model=model)
+    defense.defence(epoch=train_args['epoch'], optimizer=optimizer, lr_scheduler=lr_scheduler)
 
+
+# python fine_pruning.py --attack badnet --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
