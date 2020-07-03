@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from ..defense import Parser_Defense
-from trojanzoo.dataset import Dataset
-from trojanzoo.defense import AdvMind
-
-from trojanzoo.utils import Config
-config = Config.config
 
 
 class Parser_AdvMind(Parser_Defense):

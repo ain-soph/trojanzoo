@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .adv import *
-from .backdoor import *
 from .. import Parser
 
 from trojanzoo.dataset import Dataset
-import sys
 
 from trojanzoo.utils import Config
 config = Config.config

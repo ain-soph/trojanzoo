@@ -22,15 +22,16 @@ class Neural_Cleanse(Defense_Backdoor):
 
     name = 'neural_cleanse'
 
-    def __init__(self, epoch: int = 10,
+    def __init__(self, nc_epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, **kwargs):
+        super().__init__(**kwargs)
 
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
         self.data_shape: List[int] = data_shape
 
-        self.epoch: int = epoch
+        self.nc_epoch: int = nc_epoch
 
         self.init_cost = init_cost
         self.cost_multiplier_up = cost_multiplier
@@ -67,14 +68,14 @@ class Neural_Cleanse(Defense_Backdoor):
         return mark_list, mask_list, entropy_list
 
     def get_potential_triggers_for_label(self, label: int):
-        epoch = self.epoch
+        nc_epoch = self.nc_epoch
         # no bound
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
         atanh_mark.requires_grad = True
-        atanh_mask = torch.randn(self.data_shape, device=env['device'])
+        atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
         atanh_mask.requires_grad = True
-        mask = Uname.tanh_func(atanh_mask)    # (1, c, h, w)
-        mark = Uname.tanh_func(atanh_mark)    # (1, c, h, w)
+        mask = Uname.tanh_func(atanh_mask)    # (c, h, w)
+        mark = Uname.tanh_func(atanh_mark)    # (h, w)
 
         optimizer = optim.Adam(
             [atanh_mark, atanh_mask], lr=0.1, betas=(0.5, 0.9))
@@ -102,7 +103,7 @@ class Neural_Cleanse(Defense_Backdoor):
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
 
-        for _epoch in range(epoch):
+        for _epoch in range(nc_epoch):
             losses.reset()
             entropy.reset()
             norm.reset()
@@ -135,9 +136,15 @@ class Neural_Cleanse(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}'.format(
-                output_iter(_epoch + 1, epoch), **ansi)
-            prints('{:<60}Loss: {:.4f},    Acc: {:.2f},    Norm: {:.4f},    Entropy: {:.4f},    Time: {}'.format(
-                pre_str, losses.avg, acc.avg, norm.avg, entropy.avg, epoch_time), prefix='\033[1A\033[K', indent=4)
+                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(60)
+            _str = ' '.join([
+                'Loss: {:.4f},'.format(losses.avg).ljust(20),
+                'Acc: {:.2f}, '.format(acc.avg).ljust(20),
+                'Norm: {:.4f},'.format(norm.avg).ljust(20),
+                'Entropy: {:.4f},'.format(entropy.avg).ljust(20),
+                'Time: {},'.format(epoch_time).ljust(20),
+            ])
+            prints(pre_str, _str, prefix='\033[1A\033[K', indent=4)
 
             # check to save best mask or not
             if acc.avg >= self.attack_succ_threshold and norm.avg < norm_best:

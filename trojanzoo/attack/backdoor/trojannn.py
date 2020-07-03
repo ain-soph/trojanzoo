@@ -5,6 +5,7 @@ from .badnet import BadNet
 from trojanzoo.attack.adv import PGD
 
 import torch
+from tqdm import tqdm
 
 from trojanzoo.utils import Config
 env = Config.env
@@ -54,16 +55,15 @@ class TrojanNN(BadNet):
 
         self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0)
 
-        self.neuron_idx = self.get_neuron_idx()
-
     def attack(self, **kwargs):
-        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=self.neuron_idx)
+        neuron_idx = self.get_neuron_idx()
+        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=neuron_idx)
         return super().attack(**kwargs)
 
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:
         result = []
-        for i, data in enumerate(self.dataset.loader['train2']):
+        for i, data in enumerate(tqdm(self.dataset.loader['train'])):
             _input, _label = self.model.get_data(data)
             fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
             if len(fm.shape) > 2:

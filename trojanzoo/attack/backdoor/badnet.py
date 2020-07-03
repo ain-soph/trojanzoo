@@ -87,7 +87,7 @@ class BadNet(Attack):
         filename = self.get_filename(**kwargs)
         file_path = self.folder_path + filename
         self.mark.save_npz(file_path + '.npz')
-        save_tensor_as_img(file_path + '.png', self.mark.mark)
+        self.mark.save_img(file_path + '.png')
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 

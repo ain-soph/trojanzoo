@@ -7,7 +7,8 @@ from trojanzoo.utils.model import AverageMeter
 
 
 class STRIP(Defense_Backdoor):
-    def __init__(self, alpha: float = 0.5, N: int = 8, detach: bool = True):
+    def __init__(self, alpha: float = 0.5, N: int = 8, **kwargs):
+        super().__init__(**kwargs)
         self.alpha: float = alpha
         self.N: int = N
 

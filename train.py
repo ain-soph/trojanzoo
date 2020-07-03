@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Train a ResNetComp18 on Cifar10 with 95% Acc
-# python train.py --verbose --save --batch_size 128
+# python train.py --verbose --batch_size 128
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq
 from trojanzoo.dataset import Dataset

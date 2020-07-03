@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 
-from .tensor import to_tensor, to_numpy, byte2float, gray_img
+from .tensor import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
 from .output import prints, Indent_Redirect
 
 import os
@@ -52,8 +52,7 @@ class Watermark:
         self.width: int = width
         self.random_pos = random_pos
         # --------------------------------------------------- #
-        org_mark_img: Image.Image = self.load_img(mark_path,
-                                                  data_shape[0], height, width)
+        org_mark_img: Image.Image = self.load_img(mark_path, height, width, data_shape[0])
         self.org_mark: torch.Tensor = byte2float(org_mark_img)
         self.edge_color: torch.Tensor = self.get_edge_color(
             self.org_mark, data_shape, edge_color)
@@ -96,10 +95,13 @@ class Watermark:
                 t += 1
             elif edge_color == 'auto':
                 mark = mark.transpose(0, -1)
-                _list = [mark[0, :, :], mark[-1, :, :],
-                         mark[:, 0, :], mark[:, -1, :]]
-                _list = torch.cat(_list)
-                t = _list.mode(dim=0)[0]
+                if mark.flatten(start_dim=1).std(dim=1).max() < 1e-3:
+                    t = -torch.ones_like(mark[0, 0])
+                else:
+                    _list = [mark[0, :, :], mark[-1, :, :],
+                             mark[:, 0, :], mark[:, -1, :]]
+                    _list = torch.cat(_list)
+                    t = _list.mode(dim=0)[0]
             else:
                 raise ValueError(edge_color)
         else:
@@ -134,9 +136,9 @@ class Watermark:
         mask[start_h:end_h, start_w:end_w] = self.org_mask
         alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
 
-        mark = mark.unsqueeze(0)
-        mask = mask.unsqueeze(0).unsqueeze(0)
-        alpha_mask = alpha_mask.unsqueeze(0).unsqueeze(0)
+        mark = mark
+        mask = mask
+        alpha_mask = alpha_mask
         return to_tensor(mark), to_tensor(mask), to_tensor(alpha_mask)
 
     """
@@ -158,9 +160,9 @@ class Watermark:
         mask[start_h:end_h, start_w:end_w] = self.org_mask
         alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
 
-        mark = to_tensor(mark.unsqueeze(0))
-        mask = to_tensor(mask.unsqueeze(0).unsqueeze(0))
-        alpha_mask = to_tensor(alpha_mask.unsqueeze(0).unsqueeze(0))
+        mark = to_tensor(mark)
+        mask = to_tensor(mask)
+        alpha_mask = to_tensor(alpha_mask)
         return mark, mask, alpha_mask
     """
 
@@ -175,9 +177,9 @@ class Watermark:
     # ------------------------------ I/O --------------------------- #
 
     @staticmethod
-    def load_img(img_path: str, channel: int, height: int, width: int) -> Image.Image:
+    def load_img(img_path: str, height: int, width: int, channel: int = 3) -> Image.Image:
         if img_path[:9] == 'trojanzoo':
-            mark_path = root_dir + img_path[9:]
+            img_path = root_dir + img_path[9:]
         mark: Image.Image = Image.open(img_path)
         mark = mark.resize((width, height), Image.ANTIALIAS)
 
@@ -186,6 +188,12 @@ class Watermark:
         elif channel == 3 and mark.mode in ['1', 'L']:
             mark = gray_img(mark, num_output_channels=3)
         return mark
+
+    def save_img(self, img_path: str):
+        if img_path[:9] == 'trojanzoo':
+            img_path = root_dir + img_path[9:]
+        img = self.org_mark * self.org_mask if self.random_pos else self.mark * self.mask
+        save_tensor_as_img(img_path, img)
 
     def load_npz(self, npz_path: str):
         if npz_path[:9] == 'trojanzoo':
