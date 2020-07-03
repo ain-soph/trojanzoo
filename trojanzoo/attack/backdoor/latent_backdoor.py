@@ -270,3 +270,6 @@ class Latent_Backdoor(BadNet):
         # self.model._validate(print_prefix='Validate Trigger Org',
         #                      get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         return 0.0, 0.0, 0.0
+
+
+# nohup python -u attack_backdoor.py --attack latent_backdoor --verbose --pretrain --mark_ratio 0.2 --poison_num 100 -d mnist -m latentnet --iteration 100 --ynt_ratio 0.1 --fine_tune_set_ratio 0.05 --val_ratio 0.25 --epoch 300 --poison_lr 0.1  --poison_iteration 100 > ./log/latent_mnist.log 2>&1 &
