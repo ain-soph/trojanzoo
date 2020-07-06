@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------------ #
 
     defense: Fine_Pruning = Fine_Pruning(dataset=dataset, model=model)
-    defense.detect(epoch=train_args['epoch'], optimizer=optimizer, lr_scheduler = lr_scheduler)
+    defense.detect()
 
 
 # python fine_pruning.py --attack badnet --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
