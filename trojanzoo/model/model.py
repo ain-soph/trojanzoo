@@ -498,10 +498,10 @@ class Model:
                 Model.output_layer_information(
                     module, depth=depth - 1, indent=indent + 10, verbose=verbose, tree_length=tree_length)
 
-    def summary(self, indent=0, **kwargs):
+    def summary(self, depth=0, indent=0, **kwargs):
         _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
         prints(_str, indent=indent)
-        self.output_layer_information(self._model, indent=indent + 10, **kwargs)
+        self.output_layer_information(self._model, depth=depth, indent=indent + 10, **kwargs)
 
     @staticmethod
     def split_name(name, layer=None, default_layer=0, output=False):
