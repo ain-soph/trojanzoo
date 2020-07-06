@@ -10,7 +10,7 @@ class Parser_Neural_Cleanse(Parser_Defense_Backdoor):
         name (str): ``'defense'``
         defense (str): The specific defense name (lower-case).
     """
-    name = 'defense'
+    name: str = 'defense'
     defense = 'neural_cleanse'
 
     @classmethod

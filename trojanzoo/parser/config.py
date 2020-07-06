@@ -17,7 +17,7 @@ class Parser_Config(Parser):
     Attributes:
         name (str): ``'config'``
     """
-    name = 'config'
+    name: str = 'config'
 
     @staticmethod
     def add_argument(parser):

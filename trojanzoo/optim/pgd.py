@@ -24,7 +24,7 @@ class PGD(Optimizer):
         sigma (float): gaussian noise std in black box gradient estimation. Default: ``0.001``.
     """
 
-    name = 'pgd'
+    name: str = 'pgd'
 
     def __init__(self, alpha: float = 3.0 / 255, epsilon: float = 8.0 / 255,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
@@ -52,7 +52,7 @@ class PGD(Optimizer):
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
                  iteration: int = None, loss_fn: Callable = None,
-                 output: Union[int, List[str]] = None, indent: int = None, **kwargs):
+                 output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
         if alpha is None:
@@ -63,8 +63,6 @@ class PGD(Optimizer):
             iteration = self.iteration
         if loss_fn is None:
             loss_fn = self.loss_fn
-        if indent is None:
-            indent = self.indent
         output = self.get_output(output)
 
         # ----------------------------------------------------------------------------------------- #
@@ -72,7 +70,7 @@ class PGD(Optimizer):
         if noise is None:
             noise = torch.zeros_like(_input[0] if self.universal else _input)
         if 'start' in output:
-            self.output_info(_input=_input, noise=noise, indent=indent, mode='start', loss_fn=loss_fn, **kwargs)
+            self.output_info(_input=_input, noise=noise, mode='start', loss_fn=loss_fn, **kwargs)
         if iteration == 0 or alpha == 0.0 or epsilon == 0.0:
             return _input, None
 
@@ -83,7 +81,7 @@ class PGD(Optimizer):
         for _iter in range(iteration):
             if self.early_stop_check(X, loss_fn=loss_fn, **kwargs):
                 if 'end' in output:
-                    self.output_info(_input=_input, noise=noise, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
+                    self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
                 return X, _iter + 1
             if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
@@ -93,7 +91,7 @@ class PGD(Optimizer):
             if self.grad_method != 'white' and 'middle' in output:
                 real_grad = self.whitebox_grad(loss_fn, X)
                 prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
-                       indent=indent + 2)
+                       indent=self.indent + 2)
             if self.universal:
                 grad = grad.mean(dim=0)
             noise.data = (noise - alpha * torch.sign(grad)).data
@@ -104,26 +102,18 @@ class PGD(Optimizer):
                 noise.data = (noise.sign() * noise.abs().mode(dim=0)).data
 
             if 'middle' in output:
-                self.output_info(_input=_input, noise=noise, indent=indent, mode='middle',
+                self.output_info(_input=_input, noise=noise, mode='middle',
                                  _iter=_iter, iteration=iteration, loss_fn=loss_fn, **kwargs)
         if 'end' in output:
-            self.output_info(_input=_input, noise=noise, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
+            self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
         return X, None
 
-    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, mode='start', indent=None, _iter=0, iteration=0, loss_fn=None):
-        if indent is None:
-            indent = self.indent
-        if mode in ['start', 'end']:
-            prints('PGD Attack {mode}'.format(name=self.name, mode=mode), indent=indent)
-        elif mode in ['middle']:
-            indent += 4
-            self.output_iter(name='PGD', _iter=_iter, iteration=iteration, indent=indent)
+    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, loss_fn=None, **kwargs):
+        super().output_info(**kwargs)
         with torch.no_grad():
             loss = float(loss_fn(_input + noise))
             norm = noise.norm(p=self.norm)
-            prints('L-{p} norm: {norm}    loss: {loss:.5f}'.format(p=self.norm, norm=norm, loss=loss))
-        if 'memory' in self.output:
-            output_memory(indent=indent + 4)
+            prints('L-{p} norm: {norm}    loss: {loss:.5f}'.format(p=self.norm, norm=norm, loss=loss), indent=self.indent)
 
     @staticmethod
     def projector(noise: torch.Tensor, epsilon: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:

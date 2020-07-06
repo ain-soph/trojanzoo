@@ -2,7 +2,8 @@
 
 from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_tensor, repeat_to_batch
-from trojanzoo.utils.model import TVLoss
+from trojanzoo.utils.model import total_variation
+from trojanzoo.utils.ssim import SSIM
 
 import torch
 import torch.optim as optim
@@ -16,12 +17,10 @@ from typing import Dict
 from trojanzoo.utils import Config
 env = Config.env
 
-tv_loss = TVLoss()
-
 
 class ABS(Defense_Backdoor):
 
-    name = 'abs'
+    name: str = 'abs'
 
     def __init__(self, use_mask: bool = True, count_mask=True, seed_num: int = 50,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
@@ -43,7 +42,9 @@ class ABS(Defense_Backdoor):
         self.re_mask_weight: float = re_mask_weight
         self.re_iteration: int = re_iteration
 
+        self.layer_name_list = self.model.get_layer_name(extra=False)
         self.nc_mask = self.nc_filter_img()
+        self.ssim = SSIM()
 
     # def detect(self):
     #     seed_data = self.load_seed_data()
@@ -186,14 +187,12 @@ class ABS(Defense_Backdoor):
             idx_list = condition2.nonzero()[:self.top_n_neurons]
             neuron_dict[layer] = {int(idx): int(min_labels[idx]) for idx in idx_list}
         return neuron_dict
-# -------------------------ReMask--------------------------------- #
+    # -------------------------ReMask--------------------------------- #
 
     # todo: what if layer is the last layer
     def re_mask_loss(self, neuron_dict, train_xs: torch.Tensor, delta, mask):
-        layer_list = self.model.get_layer_name(extra=False)
         loss = []
-        for layer, layer_dict in neuron_dict:
-            Troj_next_Layer = layer_list[(layer_list.index(layer)) + 1]
+        for layer, layer_dict in neuron_dict.items():
             loss.append(self.abs_loss(train_xs, delta, None, use_mask=mask))
         return torch.stack(loss).sum()
 
@@ -270,69 +269,20 @@ class ABS(Defense_Backdoor):
         # else:
         #     mask.add_(1)
 
-    def abs_loss(self, images, delta, mask, Troj_Layer, Troj_next_Layer, Troj_Neuron, Troj_next_Neuron, Troj_size, use_mask=None):
-        if use_mask is None:
-            tanh_delta = torch.tanh(delta).mul(0.5).add(0.5)
-            con_mask = torch.tanh(mask) / 2.0 + 0.5
-            con_mask = con_mask * self.nc_mask
-            use_mask = con_mask.view(1, 1, self.h, self.w).repeat(1, 3, 1, 1)
-        else:
-            tanh_delta = delta
-            con_mask = use_mask
-            con_mask = con_mask * self.nc_mask
-            use_mask = con_mask.view(1, 3, self.h, self.w)
+    def abs_loss(self, _input: torch.Tensor, atanh_mark: torch.Tensor, atanh_mask: torch.Tensor,
+                 layer: str, neuron: int, next_neuron: int):
+        mark = atanh_mark.tanh().mul(0.5).add(0.5)
+        mask = atanh_mask.tanh().mul(0.5).add(0.5) * self.nc_mask
 
-        s_image = images.view(-1, 3, self.h, self.w)
-        i_image = s_image * (1 - use_mask) + tanh_delta * use_mask
+        X = _input + mask * (mark - _input)
+        _dict: Dict[str, torch.Tensor] = self.model.get_all_layer(X)
+        tinners = _dict[layer]
+        logits = _dict['logits']
 
-        tinners = self.model.get_layer(i_image, layer_output=Troj_Layer)
-        ntinners = self.model.get_layer(i_image, layer_output=Troj_next_Layer)
-        logits = self.model.get_layer(i_image, layer_output='logits')
-
-        i_shape = tinners.shape
-        ni_shape = ntinners.shape
-
-        if len(i_shape) == 2:
-            vloss1 = tinners[:, Troj_Neuron].sum()
-            vloss2 = 0
-            if Troj_Neuron > 0:
-                vloss2 += tinners[:, :Troj_Neuron].sum()
-            if Troj_Neuron < i_shape[(-1)] - 1:
-                vloss2 += tinners[:, Troj_Neuron + 1:].sum()
-        elif len(i_shape) == 4:
-            vloss1 = tinners[:, :, :, Troj_Neuron].sum()
-            vloss2 = 0
-            if Troj_Neuron > 0:
-                vloss2 += tinners[:, :, :, :Troj_Neuron].sum()
-            if Troj_Neuron < i_shape[(-1)] - 1:
-                vloss2 += tinners[:, :, :, Troj_Neuron + 1:].sum()
-        # if len(ni_shape) == 2:
-        #     relu_loss1 = ntinners[:, Troj_next_Neuron].sum()
-        #     relu_loss2 = 0
-        #     if Troj_Neuron > 0:
-        #         relu_loss2 += ntinners[:, :Troj_next_Neuron].sum()
-        #     if Troj_Neuron < i_shape[(-1)] - 1:
-        #         relu_loss2 += ntinners[:, Troj_next_Neuron + 1:].sum()
-        # if len(ni_shape) == 4:
-        #     relu_loss1 = ntinners[:, :, :, Troj_next_Neuron].sum()
-        #     relu_loss2 = 0
-        #     if Troj_Neuron > 0:
-        #         relu_loss2 += ntinners[:, :, :, :Troj_next_Neuron].sum()
-        #     if Troj_Neuron < i_shape[(-1)] - 1:
-        #         relu_loss2 += ntinners[:, :, :, Troj_next_Neuron + 1:].sum()
-        tvloss = tv_loss(delta)
-        loss = -vloss1 + 0.0001 * vloss2
-        # loss = -vloss1 - relu_loss1 + 0.0001 * vloss2 + 0.0001 * relu_loss2
-        mask_loss = con_mask.sum()
-        mask_cond1 = mask_loss > float(Troj_size)
-        mask_cond2 = mask_loss > 100.0
-        if self.count_mask:
-            mask_nz = len(F.relu(con_mask - 0.01).nonzero())
-            mask_cond1 = mask_nz > Troj_size
-            mask_cond2 = mask_nz > int((np.sqrt(Troj_size) + 2) ** 2)
-        if mask_cond1:
-            if mask_cond2:
-                loss += 2 * self.re_mask_weight * mask_loss
-            else:
-                loss += self.re_mask_weight * mask_loss
+        vloss1 = tinners[:, neuron].sum()
+        vloss2 = tinners.sum() - vloss1
+        tvloss = total_variation(mark)
+        ssim_loss = - self.ssim()
+        ssim_loss *= 10 if ssim_loss < -2 else 10000
+        loss = -0.01 * vloss1 + 1e-7 * vloss2 + 1e-5 * tvloss + ssim_loss
         return loss

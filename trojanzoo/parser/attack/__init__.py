@@ -15,7 +15,7 @@ class Parser_Attack(Parser):
     Attributes:
         name (str): ``'attack'``
     """
-    name = 'attack'
+    name: str = 'attack'
 
     def __init__(self):
         argv = sys.argv

@@ -12,7 +12,7 @@ root_dir = os.path.dirname(os.path.abspath(root_file))
 
 class ImageNet(ImageFolder):
 
-    name = 'imagenet'
+    name: str = 'imagenet'
     num_classes = 1000
     n_dim = (224, 224)
     url = {
@@ -55,7 +55,7 @@ class ImageNet(ImageFolder):
 
 class Sample_ImageNet(ImageNet):
 
-    name = 'sample_imagenet'
+    name: str = 'sample_imagenet'
     num_classes = 20
     url = {}
     org_folder_name = {}

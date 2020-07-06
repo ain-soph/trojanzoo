@@ -36,7 +36,7 @@ class Hidden_Trigger(BadNet):
         https://github.com/UMBCvision/Hidden-Trigger-Backdoor-Attacks
     """
 
-    name = 'hidden_trigger'
+    name: str = 'hidden_trigger'
 
     def __init__(self, preprocess_layer: str = 'features', epsilon: int = 16.0 / 255,
                  poison_num: int = 100, poison_iteration: int = 5000, poison_lr: float = 0.01,

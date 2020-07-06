@@ -14,7 +14,7 @@ class Parser_Defense(Parser):
     Attributes:
         name (str): ``'defense'``
     """
-    name = 'defense'
+    name: str = 'defense'
     defense = None
 
     @classmethod

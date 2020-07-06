@@ -32,7 +32,7 @@ class BadNet(Attack):
         https://github.com/Kooscii/BadNets
     """
 
-    name = 'badnet'
+    name: str = 'badnet'
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
         super().__init__(**kwargs)

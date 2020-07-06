@@ -150,7 +150,7 @@ class FilterPrunner:
         return filters_to_prune
 class Fine_Pruning():
 
-    name = 'fine_pruning'
+    name: str = 'fine_pruning'
 
     def __init__(self, dataset: ImageSet, model: ImageModel, clean_image_num: int = 50, prune_ratio: float = 0.03, finetune_lr = 0.0001, finetune_epoch: int = 10, **kwargs):
 

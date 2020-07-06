@@ -19,7 +19,7 @@ class Latent_Backdoor(BadNet):
     .. _Latent Backdoor:
         http://people.cs.uchicago.edu/~huiyingli/publication/fr292-yaoA.pdf
     """
-    name = 'latent_backdoor'
+    name: str = 'latent_backdoor'
 
     def __init__(self, poison_num: int = 100, poison_iteration: int = 100, poison_lr: float = 0.1,
                  lr_decay: bool = False, decay_iteration: int = 2000, decay_ratio: float = 0.95,

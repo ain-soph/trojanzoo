@@ -19,7 +19,7 @@ class PGD(Attack, PGD_Optimizer):
         epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
     """
 
-    name = 'pgd'
+    name: str = 'pgd'
 
     def __init__(self, target_idx: int = 1, **kwargs):
         self.target_idx: int = target_idx
@@ -81,10 +81,10 @@ class PGD(Attack, PGD_Optimizer):
             return True
         return False
 
-    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, target: torch.LongTensor, indent: int = 0, **kwargs):
-        super().output_info(_input, noise, indent=indent, **kwargs)
-        # prints('Original class     : ', to_list(_label), indent=indent)
-        # prints('Original confidence: ', to_list(_confidence), indent=indent)
+    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, target: torch.LongTensor, **kwargs):
+        super().output_info(_input, noise, **kwargs)
+        # prints('Original class     : ', to_list(_label), indent=self.indent)
+        # prints('Original confidence: ', to_list(_confidence), indent=self.indent)
         _confidence = self.model.get_target_prob(_input + noise, target)
-        prints('Target   class     : ', to_list(target), indent=indent)
-        prints('Target   confidence: ', to_list(_confidence), indent=indent)
+        prints('Target   class     : ', to_list(target), indent=self.indent)
+        prints('Target   confidence: ', to_list(_confidence), indent=self.indent)

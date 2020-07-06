@@ -17,7 +17,7 @@ class Parser_Train(Parser):
     Attributes:
         name (str): ``'train'``
     """
-    name = 'train'
+    name: str = 'train'
 
     @staticmethod
     def add_argument(parser):

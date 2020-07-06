@@ -11,7 +11,7 @@ class TargetedBackdoor(Attack):
     """
 
     # Global variables.
-    name = 'targetedBackdoor'
+    name: str = 'targetedBackdoor'
     strategy_mode = ["blended", "accessory", "blended accessory"]       # Define the name of three injection strategies.
 
     def __init__(self, strategy, poisoned_train_set=None, blend_ratio=None, key_pattern_img=None, random_pattern=False, **kwargs):

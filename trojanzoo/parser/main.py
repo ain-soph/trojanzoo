@@ -13,7 +13,7 @@ class Parser_Main(Parser):
     Attributes:
         name (str): ``'main'``
     """
-    name = 'main'
+    name: str = 'main'
 
     @staticmethod
     def add_argument(parser):

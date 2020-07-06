@@ -17,7 +17,7 @@ env = Config.env
 
 class AdvMind(Defense):
 
-    name = 'advmind'
+    name: str = 'advmind'
 
     def __init__(self, attack_adapt: bool = False, fake_percent: float = 0.3, dist: float = 50.0,
                  defend_adapt: bool = False, k: int = 1, b: float = 4e-3,

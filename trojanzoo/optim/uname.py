@@ -18,7 +18,7 @@ class Uname(Optimizer):
     r"""This class transforms input (tanh, atan or sigmoid) and then apply standard torch.optim.Optimizer
     """
 
-    name = 'uname'
+    name: str = 'uname'
 
     def __init__(self, optim_type: Union[str, type], optim_kwargs: dict = {},
                  lr_scheduler: bool = False, step_size: int = 50,
@@ -33,17 +33,15 @@ class Uname(Optimizer):
         self.step_size: int = step_size
         self.input_transform: Callable = input_transform
 
-    def optimize(self, init_value: torch.Tensor,
+    def optimize(self, parameters: List[torch.Tensor],
                  iteration: int = None, loss_fn: Callable = None,
-                 output: Union[int, List[str]] = None, indent: int = None, **kwargs):
+                 output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
         if iteration is None:
             iteration = self.iteration
         if loss_fn is None:
             loss_fn = self.loss_fn
-        if indent is None:
-            indent = self.indent
         output = self.get_output(output)
 
         # ----------------------------------------------------------------------------------------- #
@@ -52,7 +50,7 @@ class Uname(Optimizer):
         param.requires_grad = True
         _input = self.transform_func(param)
         if 'start' in output:
-            self.output_info(_input=_input, indent=indent, mode='start', loss_fn=loss_fn, **kwargs)
+            self.output_info(_input=_input, mode='start', loss_fn=loss_fn, **kwargs)
         if iteration == 0:
             return _input, None
         optimizer: optim.Optimizer = self.optim_type(parameters=param)
@@ -64,19 +62,19 @@ class Uname(Optimizer):
         for _iter in range(iteration):
             if self.early_stop_check(_input, loss_fn=loss_fn, **kwargs):
                 if 'end' in output:
-                    self.output_info(_input=_input, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
+                    self.output_info(_input=_input, mode='end', loss_fn=loss_fn, **kwargs)
                 return _input, _iter + 1
             loss = loss_fn(_input)
             loss.backward()
             optimizer.zero_grad()
-            _input = self.input_transform()
+            _input = self.transform_func(param)
             if lr_scheduler:
                 lr_scheduler.step()
             if 'middle' in output:
-                self.output_info(_input=_input, indent=indent, mode='middle',
+                self.output_info(_input=_input, mode='middle',
                                  _iter=_iter, iteration=iteration, loss_fn=loss_fn, **kwargs)
         if 'end' in output:
-            self.output_info(_input=_input, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
+            self.output_info(_input=_input, mode='end', loss_fn=loss_fn, **kwargs)
         return _input, None
 
     def transform_func(self, x: torch.Tensor) -> torch.Tensor:
@@ -100,16 +98,7 @@ class Uname(Optimizer):
     def atan_func(x: torch.Tensor) -> torch.Tensor:
         return x.atan().div(math.pi).add(0.5)
 
-    def output_info(self, _input: torch.Tensor, mode='start', indent=None, _iter=0, iteration=0, loss_fn=None):
-        if indent is None:
-            indent = self.indent
-        if mode in ['start', 'end']:
-            prints('PGD Attack {mode}'.format(name=self.name, mode=mode), indent=indent)
-        elif mode in ['middle']:
-            indent += 4
-            self.output_iter(name='PGD', _iter=_iter, iteration=iteration, indent=indent)
-        with torch.no_grad():
-            loss = float(loss_fn(_input))
-            prints('loss: {loss:.5f}'.format(loss=loss))
-        if 'memory' in self.output:
-            output_memory(indent=indent + 4)
+    def output_info(self, _input: torch.Tensor, loss_fn=None, **kwargs):
+        super().output_info(**kwargs)
+        loss = float(loss_fn(_input))
+        prints('loss: {loss:.5f}'.format(loss=loss), indent=self.indent)

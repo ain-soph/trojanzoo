@@ -20,7 +20,7 @@ env = Config.env
 
 class Neural_Cleanse(Defense_Backdoor):
 
-    name = 'neural_cleanse'
+    name: str = 'neural_cleanse'
 
     def __init__(self, nc_epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,

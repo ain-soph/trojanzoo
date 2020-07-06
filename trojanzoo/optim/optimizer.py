@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.utils.process import Process
+from trojanzoo.utils.output import prints, output_memory
 
 import torch
 from typing import Callable
@@ -31,3 +32,11 @@ class Optimizer(Process):
             if loss_fn(*args, **kwargs) < self.stop_threshold:
                 return True
         return False
+
+    def output_info(self, mode='start', _iter=0, iteration=0, **kwargs):
+        if mode in ['start', 'end']:
+            prints('{name} Optimize {mode}'.format(name=self.name, mode=mode), indent=self.indent)
+        elif mode in ['middle']:
+            self.output_iter(name=self.name, _iter=_iter, iteration=iteration, indent=self.indent + 4)
+        if 'memory' in self.output:
+            output_memory(indent=self.indent + 4)

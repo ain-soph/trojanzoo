@@ -73,7 +73,7 @@ class _ImageModel(_Model):
                 return self.get_final_fm(x)
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, Tensor]:
         od = OrderedDict()
         record = False
 
@@ -152,7 +152,7 @@ class ImageModel(Model):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
         if layer:
-            name = name + str(layer)
+            name: str = name + str(layer)
         self.layer = layer
 
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():
@@ -170,5 +170,5 @@ class ImageModel(Model):
     def get_layer_name(self, extra=True) -> List[str]:
         return self._model.get_layer_name(extra=extra)
 
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)

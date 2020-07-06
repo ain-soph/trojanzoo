@@ -5,7 +5,7 @@ from trojanzoo.attack import Attack
 
 class Defense(Attack):
 
-    name = 'defense'
+    name: str = 'defense'
 
     def __init__(self, attack: Attack = None, **kwargs):
         super().__init__(**kwargs)

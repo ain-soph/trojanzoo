@@ -108,7 +108,7 @@ class Model:
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None,
                  official=False, pretrain=False, prefix='', folder_path: str = None, **kwargs):
-        self.name = name
+        self.name: str = name
         self.dataset = dataset
         self.prefix = prefix
 
