@@ -14,7 +14,7 @@ class _ResNet(_ImageModel):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         _model = models.__dict__[
-            'resnet'+str(layer)](num_classes=self.num_classes)
+            'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
             ('conv1', _model.conv1),
@@ -46,15 +46,15 @@ class _ResNet(_ImageModel):
             if 'conv' in l:
                 if record:
                     x = block(x)
-                    od['features.'+l] = x
-                elif 'features.'+l == layer_input:
+                    od['features.' + l] = x
+                elif 'features.' + l == layer_input:
                     record = True
             else:
                 for name, module in block.named_children():
                     if record:
                         x = module(x)
-                        od['features.'+l+'.'+name] = x
-                    elif 'features.'+l+'.'+name == layer_input:
+                        od['features.' + l + '.' + name] = x
+                    elif 'features.' + l + '.' + name == layer_input:
                         record = True
         if record:
             x = self.pool(x)
@@ -67,8 +67,8 @@ class _ResNet(_ImageModel):
         for name, module in self.classifier.named_children():
             if record:
                 x = module(x)
-                od['classifier.'+name] = x
-            elif 'classifier.'+name == layer_input:
+                od['classifier.' + name] = x
+            elif 'classifier.' + name == layer_input:
                 record = True
         y = x
         od['classifier'] = y
@@ -80,15 +80,15 @@ class _ResNet(_ImageModel):
         layer_name = []
         for l, block in self.features.named_children():
             if 'conv' in l:
-                layer_name.append('features.'+l)
+                layer_name.append('features.' + l)
             else:
                 for name, _ in block.named_children():
-                    if 'relu' not in name and 'bn' not in name:
-                        layer_name.append('features.'+l+'.'+name)
+                    if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
+                        layer_name.append('features.' + l + '.' + name)
         layer_name.append('pool')
         for name, _ in self.classifier.named_children():
-            if 'relu' not in name and 'bn' not in name:
-                layer_name.append('classifier.'+name)
+            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
+                layer_name.append('classifier.' + name)
         return layer_name
 
 
@@ -99,7 +99,7 @@ class ResNet(ImageModel):
                          default_layer=default_layer, **kwargs)
 
     def load_official_weights(self, verbose=True):
-        url = model_urls['resnet'+str(self.layer)]
+        url = model_urls['resnet' + str(self.layer)]
         _dict = model_zoo.load_url(url)
         self._model.features.load_state_dict(_dict, strict=False)
         if self.num_classes == 1000:
@@ -114,7 +114,7 @@ class _ResNetcomp(_ResNet):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         _model = models.__dict__[
-            'resnet'+str(layer)](num_classes=self.num_classes)
+            'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)),
             ('bn1', _model.bn1),  # nn.BatchNorm2d(64)
@@ -139,7 +139,7 @@ class ResNetcomp(ResNet):
                          default_layer=default_layer, **kwargs)
 
     def load_official_weights(self, verbose=True):
-        url = model_urls['resnet'+str(self.layer)]
+        url = model_urls['resnet' + str(self.layer)]
         _dict = model_zoo.load_url(url)
         _dict = {key: value for (key, value)
                  in _dict.items() if key != 'conv1.weight'}

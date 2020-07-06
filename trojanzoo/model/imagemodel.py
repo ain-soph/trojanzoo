@@ -135,12 +135,12 @@ class _ImageModel(_Model):
     def get_layer_name(self) -> List[str]:
         layer_name = []
         for name, _ in self.features.named_children():
-            if 'relu' not in name and 'bn' not in name:
+            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('features.' + name)
         layer_name.append('pool')
         layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
-            if 'relu' not in name and 'bn' not in name:
+            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('classifier.' + name)
         return layer_name
 
