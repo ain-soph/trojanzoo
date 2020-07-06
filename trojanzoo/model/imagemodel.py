@@ -132,13 +132,14 @@ class _ImageModel(_Model):
         od = self.get_all_layer(x, layer_input=layer_input)
         return od[layer_name]
 
-    def get_layer_name(self) -> List[str]:
+    def get_layer_name(self, extra=True) -> List[str]:
         layer_name = []
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('features.' + name)
-        layer_name.append('pool')
-        layer_name.append('flatten')
+        if extra:
+            layer_name.append('pool')
+            layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('classifier.' + name)
@@ -166,8 +167,8 @@ class ImageModel(Model):
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_layer_name(self) -> List[str]:
-        return self._model.get_layer_name()
+    def get_layer_name(self, extra=True) -> List[str]:
+        return self._model.get_layer_name(extra=extra)
 
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
         return self._model.get_all_layer(x, layer_input=layer_input)

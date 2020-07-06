@@ -71,8 +71,9 @@ class Hidden_Trigger(BadNet):
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
+    # todo: Not Implemented
     def get_filename(self):
-        return "todo"
+        return "filename"
 
     def validate_func(self, get_data: Callable = None, **kwargs) -> (float, float, float):
         self.model._validate(print_prefix='Validate Clean', **kwargs)

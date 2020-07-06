@@ -76,7 +76,7 @@ class _ResNet(_ImageModel):
         od['output'] = y
         return od
 
-    def get_layer_name(self):
+    def get_layer_name(self, extra=True):
         layer_name = []
         for l, block in self.features.named_children():
             if 'conv' in l:
@@ -85,7 +85,9 @@ class _ResNet(_ImageModel):
                 for name, _ in block.named_children():
                     if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                         layer_name.append('features.' + l + '.' + name)
-        layer_name.append('pool')
+        if extra:
+            layer_name.append('pool')
+            layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('classifier.' + name)
