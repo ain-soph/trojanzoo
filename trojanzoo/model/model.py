@@ -316,26 +316,17 @@ class Model:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
                 loss = loss_fn(_input, _label)
-
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-
                 with torch.no_grad():
                     _output = self.get_logits(_input)
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                losses.update(loss.item(), _label.size(0))
                 batch_size = int(_label.size(0))
+                losses.update(loss.item(), batch_size)
                 top1.update(acc1, batch_size)
                 top5.update(acc5, batch_size)
-
                 empty_cache()
-
-                # batch_time.update(time.perf_counter() - end)
-                # end = time.perf_counter()
-
-                # if i % 10 == 0:
-                #     progress.display(i)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             if verbose:

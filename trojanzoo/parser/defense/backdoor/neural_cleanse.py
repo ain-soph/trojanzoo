@@ -16,5 +16,5 @@ class Parser_Neural_Cleanse(Parser_Defense_Backdoor):
     @classmethod
     def add_argument(cls, parser):
         super().add_argument(parser)
-        parser.add_argument('--nc_epoch', dest='nc_epoch', type=int,
-                            help='neural cleanse optimizing epoch, defaults to config[neural_cleanse][nc_epoch][dataset]=10.')
+        parser.add_argument('--nc_epoch', dest='epoch', type=int,
+                            help='neural cleanse optimizing epoch, defaults to config[neural_cleanse][epoch][dataset]=10.')

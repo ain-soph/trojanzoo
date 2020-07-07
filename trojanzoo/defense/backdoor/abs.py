@@ -3,7 +3,9 @@
 from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_tensor, repeat_to_batch
 from trojanzoo.utils.model import total_variation
+from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.ssim import SSIM
+from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
@@ -22,12 +24,10 @@ class ABS(Defense_Backdoor):
 
     name: str = 'abs'
 
-    def __init__(self, use_mask: bool = True, count_mask=True, seed_num: int = 50,
+    def __init__(self, seed_num: int = 50,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
                  max_troj_size: int = 16, re_mask_lr: float = 0.1, re_mask_weight: float = 500, re_iteration: int = 1000, **kwargs):
         super().__init__(**kwargs)
-        self.use_mask: bool = use_mask
-        self.count_mask: bool = count_mask
         self.seed_num: int = seed_num
 
         # -----------Neural Sampling------------- #
@@ -42,58 +42,95 @@ class ABS(Defense_Backdoor):
         self.re_mask_weight: float = re_mask_weight
         self.re_iteration: int = re_iteration
 
-        self.layer_name_list = self.model.get_layer_name(extra=False)
-        self.nc_mask = self.nc_filter_img()
         self.ssim = SSIM()
 
-    # def detect(self):
-    #     seed_data = self.load_seed_data()
-    #     _input, _label = seed_data['input'], seed_data['label']
-    #     length = len(_label) // 2
-    #     train_xs = _input[:length]
-    #     train_ys = _label[:length]
-    #     test_xs = _input[length:]
-    #     test_ys = _label[length:]
-    #     all_ps = self.sample_neuron(train_xs, train_ys)
-    #     neuron_dict = self.find_min_max(all_ps)
-    #     results = self.re_mask(neuron_dict, train_xs)
-    #     reasrs = []
-    #     for result in results:
-    #         reasr = self.test_mask(test_xs, result)
-    #         adv, rdelta, rmask, Troj_Label, RE_img, RE_mask, RE_delta, Troj_Layer, acc = result
-    #         print(Troj_Layer)
-    #         print('train acc: ', acc)
-    #         print('test  acc: ', reasr)
-    #         print()
-    #         reasrs.append(reasr)
-    #         if reasr > 80:
-    #             adv, rdelta, rmask, Troj_Label, RE_img, RE_mask, RE_delta, Troj_Layer, acc = result
-    #             for i in range(adv.shape[0]):
-    #                 save_tensor_as_img(
-    #                     RE_img[:-4] + ('_{0}.png').format(i), adv[i])
-    #             np.save(RE_delta, to_numpy(rdelta))
-    #         with open(RE_mask, 'wb') as (f):
-    #             pickle.dump(rmask, f)
+    def detect(self, **kwargs):
+        super().detect(**kwargs)
+        mark_list, mask_list, loss_list = self.get_potential_triggers()
 
-    # # -----------------------Test Mask--------------------------------- #
+    def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+        seed_data = self.load_seed_data()
+        _input, _label = seed_data['input'], seed_data['label']
+        all_ps = self.sample_neuron(_input)
+        neuron_dict = self.find_min_max(all_ps, _label)
 
-    # def stamp(self, n_img, delta, mask):
-    #     mask0 = self.nc_filter_img(self.h, self.w, use_mask=self.use_mask)
-    #     mask = mask * mask0
-    #     r_img = n_img * (1 - mask) + delta * mask
-    #     return r_img
+        mark_list, mask_list, entropy_list = [], [], []
+        for layer, layer_dict in neuron_dict.items():
+            for neuron, label in neuron_dict.items():
+                self.remask(layer=layer, neuron=neuron)
 
-    # def test_mask(self, weights_file, test_xs, result):
-    #     rimg, rdelta, rmask, tlabel = result[:4]
-    #     self.model.load_pretrained_weights(weights_file)
-    #     t_images = self.stamp(test_xs, rdelta, rmask)
-    #     for i in range(len(t_images)):
-    #         save_numpy_as_img(self.folder_path + '/{0}.png'.format(i), t_images[i])
+        return mark_list, mask_list, entropy_list
 
-    #     yt = int(tlabel) * torch.ones(len(t_images),
-    #                                   dtype=torch.long, device=self.model.device)
-    #     acc, _ = self.model.accuracy(self.model(t_images), yt)
-    #     return acc
+    def remask(self, layer: str, neuron: int):
+        # no bound
+        atanh_mark = torch.randn(self.data_shape, device=env['device'])
+        atanh_mark.requires_grad = True
+        atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
+        atanh_mask.requires_grad = True
+        mask = Uname.tanh_func(atanh_mask)    # (h, w)
+        mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
+
+        optimizer = optim.Adam([atanh_mark, atanh_mask], lr=0.2)
+        optimizer.zero_grad()
+
+        # best optimization results
+        norm_best = float('inf')
+        mask_best = None
+        mark_best = None
+        loss_best = None
+
+        losses = AverageMeter('Loss', ':.4e')
+        entropy = AverageMeter('Entropy', ':.4e')
+        norm = AverageMeter('Norm', ':.4e')
+        acc = AverageMeter('Acc', ':6.2f')
+
+        for _epoch in range(nc_epoch):
+            losses.reset()
+            entropy.reset()
+            norm.reset()
+            acc.reset()
+            epoch_start = time.perf_counter()
+            for data in tqdm(self.dataset.loader['train']):
+                _input, _label = self.model.get_data(data)
+                batch_size = _label.size(0)
+                X = _input + mask * (mark - _input)
+                Y = label * torch.ones_like(_label, dtype=torch.long)
+                _output = self.model(X)
+
+                batch_acc = Y.eq(_output.argmax(1)).float().mean()
+                batch_entropy = self.model.criterion(_output, Y)
+                batch_norm = mask.norm(p=1)
+                batch_loss = batch_entropy + cost * batch_norm
+
+                acc.update(batch_acc.item(), batch_size)
+                entropy.update(batch_entropy.item(), batch_size)
+                norm.update(batch_norm.item(), batch_size)
+                losses.update(batch_loss.item(), batch_size)
+
+                batch_loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+
+                mask = Uname.tanh_func(atanh_mask)    # (h, w)
+                mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
+            epoch_time = str(datetime.timedelta(seconds=int(
+                time.perf_counter() - epoch_start)))
+            pre_str = '{blue_light}Epoch: {0}'.format(
+                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(60)
+            _str = ' '.join([
+                'Loss: {:.4f},'.format(losses.avg).ljust(20),
+                'Acc: {:.2f}, '.format(acc.avg).ljust(20),
+                'Norm: {:.4f},'.format(norm.avg).ljust(20),
+                'Entropy: {:.4f},'.format(entropy.avg).ljust(20),
+                'Time: {},'.format(epoch_time).ljust(20),
+            ])
+            prints(pre_str, _str, prefix='\033[1A\033[K', indent=4)
+
+        self.attack.mark.mark = mark
+        self.attack.mark.alpha_mark = mask
+        self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
+        self.attack.validate_func()
+        return mark_best, mask_best, entropy_best
 
     # ---------------------------- Seed Data --------------------------- #
     def save_seed_data(self) -> Dict[str, np.ndarray]:
@@ -164,7 +201,7 @@ class ABS(Defense_Backdoor):
         return all_ps
 
     def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[str, Dict[int, float]]:
-        neuron_dict = {}
+        neuron_dict: Dict[str, Dict[int, float]] = {}
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)
             vs: torch.Tensor = ps[:, self.n_samples // 5:].max(dim=1)[0] \
@@ -189,69 +226,33 @@ class ABS(Defense_Backdoor):
         return neuron_dict
     # -------------------------ReMask--------------------------------- #
 
-    # todo: what if layer is the last layer
-    def re_mask_loss(self, neuron_dict, train_xs: torch.Tensor, delta, mask):
-        loss = []
-        for layer, layer_dict in neuron_dict.items():
-            loss.append(self.abs_loss(train_xs, delta, None, use_mask=mask))
-        return torch.stack(loss).sum()
+    def abs_loss(self, _input: torch.Tensor, atanh_mark: torch.Tensor, atanh_mask: torch.Tensor,
+                 layer: str, neuron: int, next_neuron: int):
+        mark = atanh_mark.tanh().mul(0.5).add(0.5)
+        mask = atanh_mask.tanh().mul(0.5).add(0.5) * self.nc_mask
 
-    # def re_mask(self, neuron_dict: Dict[str, Dict[int, float]], train_xs, optz_option: int = 0):
-    #     layers = self.model.get_layer_name(extra=False)
-    #     validated_results = []
-    #     for layer, layer_dict in neuron_dict.items():
-    #         next_layer = layers[(layers.index(layer))]
-    #         for neuron, label in layer_dict.items():
-    #             next_neuron = neuron
-    #         acc, rimg, rdelta, rmask = self.reverse_engineer(optz_option, train_xs, weights_file, Troj_Layer, Troj_Neuron,
-    #                                                          Troj_next_Layer, Troj_next_Neuron, Troj_Label, RE_img, RE_delta, RE_mask, Troj_size)
-    #         if acc >= 0:
-    #             validated_results.append(
-    #                 (rimg, rdelta, rmask, Troj_Label, RE_img, RE_mask, RE_delta, Troj_Layer, acc))
-    #     return validated_results
+        X = _input + mask * (mark - _input)
+        _dict: Dict[str, torch.Tensor] = self.model.get_all_layer(X)
+        tinners = _dict[layer]
+        logits = _dict['logits']
 
-    # def reverse_engineer(self, optz_option, images, weights_file, Troj_Layer, Troj_Neuron, Troj_next_Layer, Troj_next_Neuron, Troj_Label):
+        vloss1 = tinners[:, neuron].sum()
+        vloss2 = tinners.sum() - vloss1
+        tvloss = total_variation(mark)
 
-    #     if self.use_mask:
-    #         mask = to_tensor(self.filter_img(self.h, self.w) * 4 - 2)
-    #     else:
-    #         mask = to_tensor(self.filter_img(self.h, self.w) * 8 - 4)
-    #     delta = torch.randn(1, 3, self.h, self.w, device=self.model.device)
-    #     delta.requires_grad = True
-    #     mask.requires_grad = True
+        mask_loss = mask.sum()
 
-    #     self.model.load_pretrained_weights(weights_file)
-    #     optimizer = optim.Adam([delta, mask] if self.use_mask else [delta],
-    #                            lr=self.re_mask_lr)
-    #     optimizer.zero_grad()
+        loss = -vloss1 + 1e-4 * vloss2
+        if mask_loss > self.max_troj_size:
+            pass
 
-    #     # if optz_option == 0:
-    #     #     delta = delta.view(1, self.h, self.w, 3)
-    #     # elif optz_option == 1:
-    #     #     delta = delta.view(-1, self.h, self.w, 3)
+        ssim_loss = - self.ssim()  # todo
+        ssim_loss *= 10 if ssim_loss < -2 else 10000
+        loss = -vloss1 + 1e-5 * vloss2 + 1e-3 * tvloss
+        loss = 0.01 * loss + ssim_loss
+        return loss
 
-    #     self.model.eval()
-    #     if optz_option == 0:
-    #         for e in range(self.re_iteration):
-    #             loss = self.abs_loss(images, delta, mask,
-    #                                  Troj_Layer=Troj_Layer, Troj_next_Layer=Troj_next_Layer,
-    #                                  Troj_Neuron=Troj_Neuron, Troj_next_Neuron=Troj_next_Neuron, Troj_size=Troj_size)
-    #             loss.backward()
-    #             optimizer.step()
-    #             optimizer.zero_grad()
-
-    #     tanh_delta = torch.tanh(delta).mul(0.5).add(0.5)
-    #     con_mask = torch.tanh(mask) / 2.0 + 0.5
-    #     con_mask = con_mask * self.nc_mask
-    #     use_mask = con_mask.view(1, 1, self.h, self.w).repeat(1, 3, 1, 1)
-    #     s_image = images.view(-1, 3, self.h, self.w)
-    #     adv = s_image * (1 - use_mask) + tanh_delta * use_mask
-    #     adv = torch.clamp(adv, 0.0, 1.0)
-
-    #     acc, _ = self.model.accuracy(
-    #         self.model.get_logits(adv), int(Troj_Label) * torch.ones(adv.shape[0], dtype=torch.long, device=self.model.device), topk=(1, 5))
-    #     return (acc, adv.detach(), delta.detach(), con_mask.detach())
-
+    # ---------------------------------- Utils ------------------------------- #
     def filter_img(self):
         h, w = self.dataset.n_dim
         mask = torch.zeros(h, w, dtype=torch.float)
@@ -268,21 +269,3 @@ class ABS(Defense_Backdoor):
         #     mask[math.ceil(0.25 * w): math.floor(0.75 * w), math.ceil(0.25 * h): math.floor(0.75 * h)] = 1
         # else:
         #     mask.add_(1)
-
-    def abs_loss(self, _input: torch.Tensor, atanh_mark: torch.Tensor, atanh_mask: torch.Tensor,
-                 layer: str, neuron: int, next_neuron: int):
-        mark = atanh_mark.tanh().mul(0.5).add(0.5)
-        mask = atanh_mask.tanh().mul(0.5).add(0.5) * self.nc_mask
-
-        X = _input + mask * (mark - _input)
-        _dict: Dict[str, torch.Tensor] = self.model.get_all_layer(X)
-        tinners = _dict[layer]
-        logits = _dict['logits']
-
-        vloss1 = tinners[:, neuron].sum()
-        vloss2 = tinners.sum() - vloss1
-        tvloss = total_variation(mark)
-        ssim_loss = - self.ssim()
-        ssim_loss *= 10 if ssim_loss < -2 else 10000
-        loss = -0.01 * vloss1 + 1e-7 * vloss2 + 1e-5 * tvloss + ssim_loss
-        return loss

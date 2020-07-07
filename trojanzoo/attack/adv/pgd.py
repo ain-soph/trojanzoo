@@ -74,7 +74,8 @@ class PGD(Attack, PGD_Optimizer):
     def early_stop_check(self, X, target, loss_fn=None, **kwargs):
         if not self.stop_threshold:
             return False
-        _confidence = self.model.get_target_prob(X, target)
+        with torch.no_grad():
+            _confidence = self.model.get_target_prob(X, target)
         if self.target_idx and _confidence.min() > self.stop_threshold:
             return True
         if not self.target_idx and _confidence.max() < self.stop_threshold:
@@ -85,6 +86,7 @@ class PGD(Attack, PGD_Optimizer):
         super().output_info(_input, noise, **kwargs)
         # prints('Original class     : ', to_list(_label), indent=self.indent)
         # prints('Original confidence: ', to_list(_confidence), indent=self.indent)
-        _confidence = self.model.get_target_prob(_input + noise, target)
+        with torch.no_grad():
+            _confidence = self.model.get_target_prob(_input + noise, target)
         prints('Target   class     : ', to_list(target), indent=self.indent)
         prints('Target   confidence: ', to_list(_confidence), indent=self.indent)

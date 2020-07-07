@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.attack import Attack
+from trojanzoo.utils.process import Model_Process
 
 
-class Defense(Attack):
+class Defense(Model_Process):
 
     name: str = 'defense'
 

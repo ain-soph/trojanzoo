@@ -180,24 +180,25 @@ class PGD(Optimizer):
         X = seq[0].unsqueeze(0)
         seq = seq[1:]
         noise = seq.sub(X)
-
-        g = f(seq, reduction='none')[:, None, None, None].mul(noise).sum(dim=0)
-        if self.grad_method in ['sgd', 'hess']:
-            g -= f(X) * noise.sum(dim=0)
-        g /= len(seq) * self.sigma * self.sigma
+        with torch.no_grad():
+            g = f(seq, reduction='none')[:, None, None, None].mul(noise).sum(dim=0)
+            if self.grad_method in ['sgd', 'hess']:
+                g -= f(X) * noise.sum(dim=0)
+            g /= len(seq) * self.sigma * self.sigma
         return g
 
     @staticmethod
     def calc_hess(f: Callable, X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
         length = X.numel()
         hess = torch.zeros(length, length, device=X.device)
-        for i in range(hess_b):
-            noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-            X1 = X + sigma * noise
-            X2 = X - sigma * noise
-            hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
-                noise.view(-1, 1).mm(noise.view(1, -1))
-        hess /= (2 * hess_b * sigma * sigma)
-        hess += hess_lambda * torch.eye(length, device=X.device)
-        result = hess.cholesky_inverse()
+        with torch.no_grad():
+            for i in range(hess_b):
+                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
+                X1 = X + sigma * noise
+                X2 = X - sigma * noise
+                hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
+                    noise.view(-1, 1).mm(noise.view(1, -1))
+            hess /= (2 * hess_b * sigma * sigma)
+            hess += hess_lambda * torch.eye(length, device=X.device)
+            result = hess.cholesky_inverse()
         return result
