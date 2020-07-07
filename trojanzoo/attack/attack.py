@@ -2,6 +2,7 @@
 
 from trojanzoo.utils.process import Model_Process
 
+import torch
 
 class Attack(Model_Process):
     name: str = 'attack'

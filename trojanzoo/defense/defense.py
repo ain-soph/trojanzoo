@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.utils.process import Model_Process
+from trojanzoo.attack import Attack
 
 
 class Defense(Model_Process):
