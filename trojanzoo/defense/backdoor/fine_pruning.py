@@ -60,7 +60,8 @@ class FilterPrunner:
                     activation_index += 1
                     kk += 1
 
-                    list(self.model._model.features[layer][kt].children())[1].num_features = list(self.model._model.features[layer][kt].children())[0].out_channels
+                    # list(self.model._model.features[layer][kt].children())[1].num_features = list(self.model._model.features[layer][kt].children())[0].out_channels
+                    # list(self.model._model.features[layer][kt].children())[1] = torch.nn.BatchNorm2d(list(self.model._model.features[layer][kt].children())[0].out_channels, eps=1e-05, momentum=0.1, affine=True)
 
                     x=list(self.model._model.features[layer][kt].children())[1](x)
                     x=list(self.model._model.features[layer][kt].children())[2](x)
@@ -72,7 +73,8 @@ class FilterPrunner:
                     activation_index += 1
                     kk += 1
 
-                    list(self.model._model.features[layer][kt].children())[4].num_features = list(self.model._model.features[layer][kt].children())[3].out_channels
+                    # list(self.model._model.features[layer][kt].children())[4].num_features = list(self.model._model.features[layer][kt].children())[3].out_channels
+                    # list(self.model._model.features[layer][kt].children())[4] =  torch.nn.BatchNorm2d(list(self.model._model.features[layer][kt].children())[3].out_channels, eps=1e-05, momentum=0.1, affine=True)
 
                     x=list(self.model._model.features[layer][kt].children())[4](x)
 
@@ -135,7 +137,7 @@ class FilterPrunner:
 
 class Fine_Pruning():
 
-    name: str = 'fine_pruning'
+    name = 'fine_pruning'
 
     def __init__(self, dataset: ImageSet, model: ImageModel, clean_image_num: int = 50, prune_ratio: float = 0.02, finetune_lr = 0.0001, finetune_epoch: int = 10, **kwargs):
 
@@ -160,14 +162,22 @@ class Fine_Pruning():
                 for kt in range(2):
                     x=list(model._model.features[layer][kt].children())[0](x)
 
-                    new_bn = torch.nn.BatchNorm2d(num_features= list(model._model.features[layer][kt].children())[1].num_features, eps=1e-05, momentum=0.1, affine=True).cuda()
+                    # list(self.model._model.features[layer][kt].children())[1].num_features = list(model._model.features[layer][kt].children())[0].out_channels
+                    # x=list(self.model._model.features[layer][kt].children())[1](x) # runtimeerror
+                    new_bn = torch.nn.BatchNorm2d(num_features= list(model._model.features[layer][kt].children())[1].num_features, eps=1e-05, momentum=0.1, affine=True).to(env['device'])
                     x=new_bn(x)
+                    # print(new_bn, list(model._model.features[layer][kt].children())[1])  # identical, but can't replace
+
 
                     x=list(model._model.features[layer][kt].children())[2](x)
                     x=list(model._model.features[layer][kt].children())[3](x)
 
-                    new_bn = torch.nn.BatchNorm2d(num_features= list(model._model.features[layer][kt].children())[4].num_features, eps=1e-05, momentum=0.1, affine=True).cuda()
+                    # list(self.model._model.features[layer][kt].children())[4].num_features = list(model._model.features[layer][kt].children())[3].out_channels
+                    # x=list(self.model._model.features[layer][kt].children())[4](x)
+
+                    new_bn = torch.nn.BatchNorm2d(num_features= list(model._model.features[layer][kt].children())[4].num_features, eps=1e-05, momentum=0.1, affine=True).to(env['device'])
                     x=new_bn(x)
+                    # print(new_bn, list(model._model.features[layer][kt].children())[4])  # identical
 
         x = model._model.pool(x)
         x = x.flatten(start_dim=1)
@@ -217,30 +227,41 @@ class Fine_Pruning():
                     
             else:
                 for kt in range(2):
-                    # new_bn = torch.nn.BatchNorm2d(list(model._model.features[layer][kt].children())[0].out_channels, eps=1e-05, momentum=0.1, affine=True)
+                    # new_bn = torch.nn.BatchNorm2d(list(model._model.features[layer][kt].children())[0].out_channels, eps=1e-05, momentum=0.1, affine=False)
+                    # list(model._model.features[layer][kt].children())[1] = new_bn
+                    # print(layer, kt, list(model._model.features[layer][kt].children())[1].num_features, new_bn.num_features, list(model._model.features[layer][kt].children())[0].out_channels)
 
                     list(model._model.features[layer][kt].children())[1].num_features = list(model._model.features[layer][kt].children())[0].out_channels
+                    
+
             
                     # new_bn = torch.nn.BatchNorm2d(list(model._model.features[layer][kt].children())[3].out_channels, eps=1e-05, momentum=0.1, affine=True)
+                    # list(model._model.features[layer][kt].children())[4] = new_bn
+                    # print(layer, kt, list(model._model.features[layer][kt].children())[4].num_features, new_bn.num_features, list(model._model.features[layer][kt].children())[3].out_channels)
 
                     list(model._model.features[layer][kt].children())[4].num_features = list(model._model.features[layer][kt].children())[3].out_channels
                     
+                    
                     if layer > 3 and layer < 7 and kt == 0:
-                        # new_bn = torch.nn.BatchNorm2d(list(model._model.features[layer][kt].children())[3].out_channels, eps=1e-05, momentum=0.1, affine=True)
+                        # new_bn = torch.nn.BatchNorm2d(list(model._model.features[layer][kt].children())[5][0].out_channels, eps=1e-05, momentum=0.1, affine=True)
                         # ds = torch.nn.Sequential(*(self.replace_layers(list(model._model.features[layer][kt].children())[5], i, [1], [new_bn]) for i, _ in enumerate(list(model._model.features[layer][kt].children())[5])))
                         # list(model._model.features[layer][kt].children())[5][1].num_features = ds[1].num_features
+                        # list(model._model.features[layer][kt].children())[5][1] = new_bn
+                        # print(layer, kt, list(model._model.features[layer][kt].children())[5][1].num_features, new_bn.num_features, list(model._model.features[layer][kt].children())[5][0].out_channels)
+
                         
                         list(model._model.features[layer][kt].children())[5][1].num_features = list(model._model.features[layer][kt].children())[5][0].out_channels
+                        
 
         return  model
     
-    # def model_test(self, loader, model):
-    #     model.eval()
-    #     for i, data in enumerate(loader):
-    #         _input, _label = model.get_data(data)
-    #         output = self.model_forward(_input, model)
-    #         acc = self.model.accuracy(output,_label)
-    #     print('Accuracy: ', acc)
+    def model_test(self, loader, model):
+        model.eval()
+        for i, data in enumerate(loader):
+            _input, _label = model.get_data(data)
+            output = self.model_forward(_input, model)
+            acc = self.model.accuracy(output,_label)
+        print('Accuracy: ', acc)
     
     # def model_train(self, loader, epoch, lr):
     #     self.model.train()
@@ -286,15 +307,16 @@ class Fine_Pruning():
             model = self.prune_conv_layer(model, layer_index, filter_index)
             number_of_filters = self.total_num_filters()
             print(layer_index, ' ', number_of_filters)
-            
+         
         model = self.batchnorm_modify(model)
+
 
         if env['device'] is 'cuda':
             self.model = model.cuda()
         # for (layer, (name, module)) in enumerate(model._model.features._modules.items()):
-        #     print(layer,module)
+        #     print(layer, module)
         
-        # self.model_test(self.clean_dataloader, self.model)
+        self.model_test(self.clean_dataloader, self.model)
         # self.model_train(self.clean_dataloader, self.finetune_epoch, self.finetune_lr)
         # self.model_test(self.clean_dataloader, self.model)
 
