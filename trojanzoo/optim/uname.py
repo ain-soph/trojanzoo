@@ -100,5 +100,6 @@ class Uname(Optimizer):
 
     def output_info(self, _input: torch.Tensor, loss_fn=None, **kwargs):
         super().output_info(**kwargs)
-        loss = float(loss_fn(_input))
+        with torch.no_grad():
+            loss = float(loss_fn(_input))
         prints('loss: {loss:.5f}'.format(loss=loss), indent=self.indent)
