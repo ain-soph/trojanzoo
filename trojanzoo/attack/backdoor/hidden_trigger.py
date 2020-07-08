@@ -3,12 +3,10 @@
 from .badnet import BadNet
 
 from trojanzoo.optim import PGD
-from trojanzoo.utils import to_tensor
-from trojanzoo.utils.model import AverageMeter
 
 import numpy as np
 import torch
-from collections.abc import Callable
+from typing import Tuple, Callable
 
 
 class Hidden_Trigger(BadNet):
@@ -75,7 +73,7 @@ class Hidden_Trigger(BadNet):
     def get_filename(self):
         return "filename"
 
-    def validate_func(self, get_data: Callable = None, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data: Callable[[torch.Tensor, torch.LongTensor], Tuple[torch.Tensor, torch.LongTensor]] = None, **kwargs) -> (float, float, float):
         self.model._validate(print_prefix='Validate Clean', **kwargs)
         self.model._validate(print_prefix='Validate Trigger Tgt', get_data=self.get_data, keep_org=False, **kwargs)
         self.model._validate(print_prefix='Validate Trigger Org',
@@ -139,6 +137,4 @@ class Hidden_Trigger(BadNet):
         else:
             poison_imgs, _ = self.pgd.optimize(_input=target_imgs, noise=noise,
                                                loss_fn=loss_func)
-
-        poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
         return poison_imgs

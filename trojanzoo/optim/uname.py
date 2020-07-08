@@ -10,8 +10,8 @@ from trojanzoo.utils.output import prints, output_memory
 import torch
 import torch.optim as optim
 import math
-from typing import Union, List
-from collections.abc import Callable
+from typing import Union, List, Callable
+from collections.abc import Callable as Callable_func
 
 
 class Uname(Optimizer):
@@ -22,7 +22,7 @@ class Uname(Optimizer):
 
     def __init__(self, optim_type: Union[str, type], optim_kwargs: dict = {},
                  lr_scheduler: bool = False, step_size: int = 50,
-                 input_transform: Union[str, Callable] = lambda x: x, **kwargs):
+                 input_transform: Union[str, Callable[[torch.Tensor], torch.Tensor]] = lambda x: x, **kwargs):
         super().__init__(**kwargs)
         self.param_list['uname'] = ['optim_type', 'optim_kwargs', 'lr_scheduler', 'step_size', 'input_transform']
         if isinstance(optim_type, str):
@@ -31,10 +31,10 @@ class Uname(Optimizer):
         self.optim_kwargs: dict = optim_kwargs
         self.lr_scheduler: bool = lr_scheduler
         self.step_size: int = step_size
-        self.input_transform: Callable = input_transform
+        self.input_transform: Callable[[torch.Tensor], torch.Tensor] = input_transform
 
     def optimize(self, unbound_params: List[torch.Tensor],
-                 iteration: int = None, loss_fn: Callable = None,
+                 iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                  output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
@@ -86,7 +86,7 @@ class Uname(Optimizer):
                 return torch.sigmoid(x)
             else:
                 raise NotImplementedError(self.input_transform)
-        assert isinstance(self.input_transform, Callable)
+        assert isinstance(self.input_transform, Callable_func)
         return self.input_transform(x)
 
     @staticmethod

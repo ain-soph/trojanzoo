@@ -135,6 +135,7 @@ class Model:
         # -----------Temp--------------- #
         # the location when loading pretrained weights using torch.load
         self._model: model_class = model_class(num_classes=num_classes, **kwargs)
+        self.activate_params([])
         self.model = self.get_parallel()
         # load pretrained weights
         if official:
@@ -144,7 +145,6 @@ class Model:
         if env['num_gpus']:
             self.cuda()
         self.eval()
-        self.activate_params([])
 
     # ----------------- Forward Operations ----------------------#
 
@@ -188,10 +188,6 @@ class Model:
             parameters = self.get_params(name=parameters)
         if not isinstance(parameters, Iterable):
             raise TypeError(type(parameters))
-
-        parameters, param_copy = itertools.tee(parameters)
-        self.activate_params(param_copy)
-
         if optim_type is None:
             optim_type = optim.SGD
         elif isinstance(optim_type, str):
@@ -277,7 +273,7 @@ class Model:
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, validate_func: Callable = None, **kwargs):
+               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None, validate_func: Callable = None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -302,6 +298,7 @@ class Model:
         #     [batch_time, data_time, losses, top1, top5],
         #     prefix="Epoch: [{}]".format(epoch))
 
+        self.activate_params(optimizer.param_groups[0]['params'])
         optimizer.zero_grad()
         # start = time.perf_counter()
         # end = start
@@ -354,6 +351,7 @@ class Model:
                         print('-' * 50)
         self.zero_grad()
         self.eval()
+        self.activate_params([])
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
@@ -458,7 +456,7 @@ class Model:
         for param in self._model.parameters():
             param.requires_grad = False
         for param in active_param:
-            param.requires_grad = True
+            param.requires_grad_()
 
     def get_parallel(self):
         if env['num_gpus'] > 1:
@@ -517,6 +515,11 @@ class Model:
     def eval(self):
         self._model.eval()
         self.model.eval()
+        return self
+
+    def cpu(self):
+        self._model.cpu()
+        self.model.cpu()
         return self
 
     def cuda(self, device=None):

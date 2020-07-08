@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-from trojanzoo.utils import to_tensor, repeat_to_batch, empty_cache
+from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import AverageMeter, total_variation
-from trojanzoo.utils.output import prints, ansi, output_iter, output_memory
+from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.ssim import SSIM
 from trojanzoo.optim.uname import Uname
 
@@ -76,7 +76,6 @@ class ABS(Defense_Backdoor):
                 color = ('{red}' if label == self.attack.target_class else '{green}').format(**ansi)
                 prints('{color}layer: {layer:<20} neuron: {neuron:<5d} label: {label:<5d}{reset}'.format(
                     layer=layer, neuron=neuron, label=label, color=color, **ansi), indent=4)
-                print()
                 mark, mask, loss = self.remask(_input, _label, layer=layer, neuron=neuron,
                                                label=label, use_mask=use_mask)
                 mark_list.append(mark)
@@ -91,12 +90,12 @@ class ABS(Defense_Backdoor):
     def remask(self, _input: torch.Tensor, _label: torch.Tensor, layer: str, neuron: int,
                label: int, use_mask: bool = True, validate_interval: int = 100) -> (torch.Tensor, torch.Tensor, float):
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
-        atanh_mark.requires_grad = True
+        atanh_mark.requires_grad_()
         parameters: List[torch.Tensor] = [atanh_mark]
         mask = torch.ones(self.data_shape[1:], device=env['device'])
         if use_mask:
             atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
-            atanh_mask.requires_grad = True
+            atanh_mask.requires_grad_()
             parameters.append(atanh_mask)
             mask = Uname.tanh_func(atanh_mask) * self.nc_mask    # (h, w)
         mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
@@ -110,6 +109,7 @@ class ABS(Defense_Backdoor):
         loss_best = float('inf')
         mask_best = None
 
+        print()
         for _epoch in range(self.remask_epoch):
             epoch_start = time.perf_counter()
             batch_size = _label.size(0)
@@ -151,8 +151,11 @@ class ABS(Defense_Backdoor):
                     self.attack.mark.alpha_mark = mask
                     self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
                     self.model._validate(print_prefix='Validate Trigger Tgt',
-                                         get_data=self.attack.get_data, keep_org=False)
+                                         get_data=self.attack.get_data, keep_org=False, indent=8)
                     print()
+        atanh_mark.requires_grad = False
+        if use_mask:
+            atanh_mask.requires_grad = False
         return mark_best, mask_best, loss_best
 
     # ---------------------------- Seed Data --------------------------- #
@@ -169,8 +172,8 @@ class ABS(Defense_Backdoor):
             _input, _label = next(iter(loader))
             x.append(_input)
             y.append(_label)
-        x = torch.stack(x).flatten(end_dim=1).numpy()
-        y = torch.stack(y).flatten(end_dim=1).numpy()
+        x = torch.cat(x).numpy()
+        y = torch.cat(y).numpy()
         seed_data = {'input': x, 'label': y}
         seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.name, self.dataset.name, self.seed_num)
         np.save(seed_path, seed_data)
@@ -283,6 +286,7 @@ class ABS(Defense_Backdoor):
         return loss
 
     # ---------------------------------- Utils ------------------------------- #
+    # Unused
     def filter_img(self):
         h, w = self.dataset.n_dim
         mask = torch.zeros(h, w, dtype=torch.float)

@@ -72,9 +72,9 @@ class Neural_Cleanse(Defense_Backdoor):
         nc_epoch = self.nc_epoch
         # no bound
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
-        atanh_mark.requires_grad = True
+        atanh_mark.requires_grad_()
         atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
-        atanh_mask.requires_grad = True
+        atanh_mask.requires_grad_()
         mask = Uname.tanh_func(atanh_mask)    # (h, w)
         mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
 
@@ -204,6 +204,9 @@ class Neural_Cleanse(Defense_Backdoor):
                 mark_best = Uname.tanh_func(atanh_mark).detach()
                 norm_best = norm.avg
                 entropy_best = entropy.avg
+        atanh_mark.requires_grad = False
+        atanh_mask.requires_grad = False
+
         self.attack.mark.mark = mark_best
         self.attack.mark.alpha_mark = mask_best
         self.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)

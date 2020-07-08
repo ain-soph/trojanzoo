@@ -6,8 +6,7 @@ from trojanzoo.utils import add_noise, cos_sim
 from trojanzoo.utils.output import prints, output_memory
 
 import torch
-from typing import Union, List
-from collections.abc import Callable
+from typing import Union, List, Callable
 
 
 class PGD(Optimizer):
@@ -51,7 +50,7 @@ class PGD(Optimizer):
 
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
-                 iteration: int = None, loss_fn: Callable = None,
+                 iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                  output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
@@ -134,13 +133,13 @@ class PGD(Optimizer):
 
     @staticmethod
     def whitebox_grad(f, X: torch.Tensor) -> torch.Tensor:
-        X.requires_grad = True
+        X.requires_grad_()
         loss = f(X)
         grad = torch.autograd.grad(loss, X)[0]
         X.requires_grad = False
         return grad
 
-    def blackbox_grad(self, f: Callable, X: torch.Tensor) -> torch.Tensor:
+    def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor) -> torch.Tensor:
         seq = self.gen_seq(X)
         grad = self.calc_seq(f, seq)
         return grad
@@ -176,7 +175,7 @@ class PGD(Optimizer):
         seq = torch.cat(seq).add(X)
         return seq
 
-    def calc_seq(self, f: Callable, seq: torch.Tensor) -> torch.Tensor:
+    def calc_seq(self, f: Callable[[torch.Tensor], torch.Tensor], seq: torch.Tensor) -> torch.Tensor:
         X = seq[0].unsqueeze(0)
         seq = seq[1:]
         noise = seq.sub(X)
@@ -188,7 +187,7 @@ class PGD(Optimizer):
         return g
 
     @staticmethod
-    def calc_hess(f: Callable, X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
+    def calc_hess(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
         length = X.numel()
         hess = torch.zeros(length, length, device=X.device)
         with torch.no_grad():

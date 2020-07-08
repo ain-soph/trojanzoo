@@ -8,8 +8,7 @@ from trojanzoo.optim import PGD as PGD_Optimizer
 
 import torch
 import torch.nn.functional as F
-from typing import Union, List
-from collections.abc import Callable
+from typing import Union, List, Callable
 
 
 class PGD(Attack, PGD_Optimizer):
@@ -50,7 +49,7 @@ class PGD(Attack, PGD_Optimizer):
             print('-------------------------------------------------')
             print()
 
-    def craft_example(self, _input: torch.Tensor, loss_fn: Callable = None,
+    def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
                       target: Union[torch.LongTensor, int] = None, target_idx: int = None, **kwargs):
         if len(_input) == 0:
             return _input, None

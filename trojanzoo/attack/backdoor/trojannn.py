@@ -84,7 +84,6 @@ class TrojanNN(BadNet):
             fm = self.model.get_layer(X, layer_output=self.preprocess_layer)
             loss = fm[:, neuron_idx].mean(dim=0) - self.target_value
             return loss.norm(p=2)
-
         noise = torch.zeros_like(mark)
         x = mark
         for _iter in range(self.neuron_epoch):
@@ -92,8 +91,6 @@ class TrojanNN(BadNet):
             if cost < self.threshold:
                 break
             x, _ = self.pgd.craft_example(mark, noise=noise, iteration=1, loss_fn=loss_fn)
-        # _temp = self.model.get_layer(mark, layer_output=self.preprocess_layer)
-        # print(len(_temp[0,neuron_idx].nonzero()))
         print("Neuron Value After Preprocessing: ",
               self.get_neuron_value(x, neuron_idx))
         return x

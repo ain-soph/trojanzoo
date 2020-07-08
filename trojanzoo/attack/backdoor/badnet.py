@@ -42,7 +42,11 @@ class BadNet(Attack):
         self.percent: float = percent
 
     def attack(self, epoch: int, save=False, **kwargs):
-        self.model._train(epoch, get_data=self.get_data, validate_func=self.validate_func, **kwargs)
+        get_data = self.get_data
+        if 'get_data' in kwargs.keys():
+            get_data = kwargs['get_data']
+            del kwargs['get_data']
+        self.model._train(epoch, get_data=get_data, validate_func=self.validate_func, **kwargs)
         if save:
             self.save(epoch=epoch)
 
