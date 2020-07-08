@@ -16,7 +16,7 @@ class Parser():
         parser (argparse.ArgumentParser): argument parser.
     """
 
-    name = 'basic'
+    name: str = 'basic'
 
     def __init__(self):
         self.parser: argparse.ArgumentParser = self.get_parser()

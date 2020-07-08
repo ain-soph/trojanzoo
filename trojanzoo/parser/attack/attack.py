@@ -15,7 +15,7 @@ class Parser_Attack(Parser):
         name (str): ``'attack'``
         attack (str): The specific attack name (lower-case).
     """
-    name = 'attack'
+    name: str = 'attack'
     attack = None
 
     @staticmethod

@@ -19,7 +19,7 @@ class Parser_Mark(Parser):
     Attributes:
         name (str): ``'mark'``
     """
-    name = 'mark'
+    name: str = 'mark'
 
     @staticmethod
     def add_argument(parser):

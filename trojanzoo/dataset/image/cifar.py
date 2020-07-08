@@ -47,7 +47,7 @@ class CIFAR10(ImageSet):
 
 
 class CIFAR100(CIFAR10):
-    name = 'cifar100'
+    name: str = 'cifar100'
     num_classes = 100
 
     def __init__(self, **kwargs):

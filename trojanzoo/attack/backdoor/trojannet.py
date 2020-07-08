@@ -16,7 +16,7 @@ from poutyne.framework.callbacks import CSVLogger
 
 
 class Trojan_Net(Attack):
-    name = "trojan_net"
+    name: str = "trojan_net"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

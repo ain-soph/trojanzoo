@@ -108,7 +108,7 @@ class Model:
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None,
                  official=False, pretrain=False, prefix='', folder_path: str = None, **kwargs):
-        self.name = name
+        self.name: str = name
         self.dataset = dataset
         self.prefix = prefix
 
@@ -135,6 +135,7 @@ class Model:
         # -----------Temp--------------- #
         # the location when loading pretrained weights using torch.load
         self._model: model_class = model_class(num_classes=num_classes, **kwargs)
+        self.activate_params([])
         self.model = self.get_parallel()
         # load pretrained weights
         if official:
@@ -144,7 +145,6 @@ class Model:
         if env['num_gpus']:
             self.cuda()
         self.eval()
-        self.activate_params([])
 
     # ----------------- Forward Operations ----------------------#
 
@@ -188,10 +188,6 @@ class Model:
             parameters = self.get_params(name=parameters)
         if not isinstance(parameters, Iterable):
             raise TypeError(type(parameters))
-
-        parameters, param_copy = itertools.tee(parameters)
-        self.activate_params(param_copy)
-
         if optim_type is None:
             optim_type = optim.SGD
         elif isinstance(optim_type, str):
@@ -277,7 +273,7 @@ class Model:
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, validate_func: Callable = None, **kwargs):
+               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None, validate_func: Callable = None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -302,6 +298,7 @@ class Model:
         #     [batch_time, data_time, losses, top1, top5],
         #     prefix="Epoch: [{}]".format(epoch))
 
+        self.activate_params(optimizer.param_groups[0]['params'])
         optimizer.zero_grad()
         # start = time.perf_counter()
         # end = start
@@ -316,38 +313,29 @@ class Model:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
                 loss = loss_fn(_input, _label)
-
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-
                 with torch.no_grad():
                     _output = self.get_logits(_input)
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                losses.update(loss.item(), _label.size(0))
                 batch_size = int(_label.size(0))
+                losses.update(loss.item(), batch_size)
                 top1.update(acc1, batch_size)
                 top5.update(acc5, batch_size)
-
                 empty_cache()
-
-                # batch_time.update(time.perf_counter() - end)
-                # end = time.perf_counter()
-
-                # if i % 10 == 0:
-                #     progress.display(i)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             if verbose:
-                pre_str = '{blue_light}Epoch: {0}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(60)
+                pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+                    output_iter(_epoch + 1, epoch), **ansi).ljust(64)
                 _str = ' '.join([
                     'Loss: {:.4f},'.format(losses.avg).ljust(20),
                     'Top1 Acc: {:.3f}, '.format(top1.avg).ljust(20),
                     'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
                     'Time: {},'.format(epoch_time).ljust(20),
                 ])
-                prints(pre_str, _str, prefix='\033[1A\033[K', indent=indent)
+                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
@@ -363,6 +351,7 @@ class Model:
                         print('-' * 50)
         self.zero_grad()
         self.eval()
+        self.activate_params([])
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
@@ -421,7 +410,7 @@ class Model:
                 'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
                 'Time: {},'.format(epoch_time).ljust(20),
             ])
-            prints(pre_str, _str, prefix='\033[1A\033[K', indent=indent)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
         return losses.avg, top1.avg, top5.avg
 
     # -------------------------------------------Utility--------------------------------------- #
@@ -467,7 +456,7 @@ class Model:
         for param in self._model.parameters():
             param.requires_grad = False
         for param in active_param:
-            param.requires_grad = True
+            param.requires_grad_()
 
     def get_parallel(self):
         if env['num_gpus'] > 1:
@@ -498,10 +487,10 @@ class Model:
                 Model.output_layer_information(
                     module, depth=depth - 1, indent=indent + 10, verbose=verbose, tree_length=tree_length)
 
-    def summary(self, indent=0, **kwargs):
+    def summary(self, depth=0, indent=0, **kwargs):
         _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
         prints(_str, indent=indent)
-        self.output_layer_information(self._model, indent=indent + 10, **kwargs)
+        self.output_layer_information(self._model, depth=depth, indent=indent + 10, **kwargs)
 
     @staticmethod
     def split_name(name, layer=None, default_layer=0, output=False):
@@ -526,6 +515,11 @@ class Model:
     def eval(self):
         self._model.eval()
         self.model.eval()
+        return self
+
+    def cpu(self):
+        self._model.cpu()
+        self.model.cpu()
         return self
 
     def cuda(self, device=None):

@@ -16,6 +16,7 @@ ansi = {
     'white': '\033[37m',
 
     'reset': '\033[0m',
+    'upline': '\033[1A\033[',
     'clear_line': '\033[K',
     'clear': '\033[2J',
 }

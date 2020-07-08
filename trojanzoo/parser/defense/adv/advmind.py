@@ -10,7 +10,7 @@ class Parser_AdvMind(Parser_Defense):
         name (str): ``'defense'``
         defense (str): The specific defense name (lower-case).
     """
-    name = 'defense'
+    name: str = 'defense'
     defense = 'advmind'
 
     @staticmethod

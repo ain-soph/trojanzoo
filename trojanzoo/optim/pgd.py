@@ -6,8 +6,7 @@ from trojanzoo.utils import add_noise, cos_sim
 from trojanzoo.utils.output import prints, output_memory
 
 import torch
-from typing import Union, List
-from collections.abc import Callable
+from typing import Union, List, Callable
 
 
 class PGD(Optimizer):
@@ -24,7 +23,7 @@ class PGD(Optimizer):
         sigma (float): gaussian noise std in black box gradient estimation. Default: ``0.001``.
     """
 
-    name = 'pgd'
+    name: str = 'pgd'
 
     def __init__(self, alpha: float = 3.0 / 255, epsilon: float = 8.0 / 255,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
@@ -51,8 +50,8 @@ class PGD(Optimizer):
 
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
-                 iteration: int = None, loss_fn: Callable = None,
-                 output: Union[int, List[str]] = None, indent: int = None, **kwargs):
+                 iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
+                 output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
         if alpha is None:
@@ -63,8 +62,6 @@ class PGD(Optimizer):
             iteration = self.iteration
         if loss_fn is None:
             loss_fn = self.loss_fn
-        if indent is None:
-            indent = self.indent
         output = self.get_output(output)
 
         # ----------------------------------------------------------------------------------------- #
@@ -72,7 +69,7 @@ class PGD(Optimizer):
         if noise is None:
             noise = torch.zeros_like(_input[0] if self.universal else _input)
         if 'start' in output:
-            self.output_info(_input=_input, noise=noise, indent=indent, mode='start', loss_fn=loss_fn, **kwargs)
+            self.output_info(_input=_input, noise=noise, mode='start', loss_fn=loss_fn, **kwargs)
         if iteration == 0 or alpha == 0.0 or epsilon == 0.0:
             return _input, None
 
@@ -83,7 +80,7 @@ class PGD(Optimizer):
         for _iter in range(iteration):
             if self.early_stop_check(X, loss_fn=loss_fn, **kwargs):
                 if 'end' in output:
-                    self.output_info(_input=_input, noise=noise, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
+                    self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
                 return X, _iter + 1
             if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
@@ -93,7 +90,7 @@ class PGD(Optimizer):
             if self.grad_method != 'white' and 'middle' in output:
                 real_grad = self.whitebox_grad(loss_fn, X)
                 prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
-                       indent=indent + 2)
+                       indent=self.indent + 2)
             if self.universal:
                 grad = grad.mean(dim=0)
             noise.data = (noise - alpha * torch.sign(grad)).data
@@ -104,26 +101,18 @@ class PGD(Optimizer):
                 noise.data = (noise.sign() * noise.abs().mode(dim=0)).data
 
             if 'middle' in output:
-                self.output_info(_input=_input, noise=noise, indent=indent, mode='middle',
+                self.output_info(_input=_input, noise=noise, mode='middle',
                                  _iter=_iter, iteration=iteration, loss_fn=loss_fn, **kwargs)
         if 'end' in output:
-            self.output_info(_input=_input, noise=noise, indent=indent, mode='end', loss_fn=loss_fn, **kwargs)
+            self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
         return X, None
 
-    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, mode='start', indent=None, _iter=0, iteration=0, loss_fn=None):
-        if indent is None:
-            indent = self.indent
-        if mode in ['start', 'end']:
-            prints('PGD Attack {mode}'.format(name=self.name, mode=mode), indent=indent)
-        elif mode in ['middle']:
-            indent += 4
-            self.output_iter(name='PGD', _iter=_iter, iteration=iteration, indent=indent)
+    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, loss_fn=None, **kwargs):
+        super().output_info(**kwargs)
         with torch.no_grad():
             loss = float(loss_fn(_input + noise))
             norm = noise.norm(p=self.norm)
-            prints('L-{p} norm: {norm}    loss: {loss:.5f}'.format(p=self.norm, norm=norm, loss=loss))
-        if 'memory' in self.output:
-            output_memory(indent=indent + 4)
+            prints('L-{p} norm: {norm}    loss: {loss:.5f}'.format(p=self.norm, norm=norm, loss=loss), indent=self.indent)
 
     @staticmethod
     def projector(noise: torch.Tensor, epsilon: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
@@ -144,13 +133,13 @@ class PGD(Optimizer):
 
     @staticmethod
     def whitebox_grad(f, X: torch.Tensor) -> torch.Tensor:
-        X.requires_grad = True
+        X.requires_grad_()
         loss = f(X)
         grad = torch.autograd.grad(loss, X)[0]
         X.requires_grad = False
         return grad
 
-    def blackbox_grad(self, f: Callable, X: torch.Tensor) -> torch.Tensor:
+    def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor) -> torch.Tensor:
         seq = self.gen_seq(X)
         grad = self.calc_seq(f, seq)
         return grad
@@ -186,28 +175,29 @@ class PGD(Optimizer):
         seq = torch.cat(seq).add(X)
         return seq
 
-    def calc_seq(self, f: Callable, seq: torch.Tensor) -> torch.Tensor:
+    def calc_seq(self, f: Callable[[torch.Tensor], torch.Tensor], seq: torch.Tensor) -> torch.Tensor:
         X = seq[0].unsqueeze(0)
         seq = seq[1:]
         noise = seq.sub(X)
-
-        g = f(seq, reduction='none')[:, None, None, None].mul(noise).sum(dim=0)
-        if self.grad_method in ['sgd', 'hess']:
-            g -= f(X) * noise.sum(dim=0)
-        g /= len(seq) * self.sigma * self.sigma
+        with torch.no_grad():
+            g = f(seq, reduction='none')[:, None, None, None].mul(noise).sum(dim=0)
+            if self.grad_method in ['sgd', 'hess']:
+                g -= f(X) * noise.sum(dim=0)
+            g /= len(seq) * self.sigma * self.sigma
         return g
 
     @staticmethod
-    def calc_hess(f: Callable, X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
+    def calc_hess(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor, sigma: float, hess_b: int, hess_lambda: float = 1):
         length = X.numel()
         hess = torch.zeros(length, length, device=X.device)
-        for i in range(hess_b):
-            noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-            X1 = X + sigma * noise
-            X2 = X - sigma * noise
-            hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
-                noise.view(-1, 1).mm(noise.view(1, -1))
-        hess /= (2 * hess_b * sigma * sigma)
-        hess += hess_lambda * torch.eye(length, device=X.device)
-        result = hess.cholesky_inverse()
+        with torch.no_grad():
+            for i in range(hess_b):
+                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
+                X1 = X + sigma * noise
+                X2 = X - sigma * noise
+                hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
+                    noise.view(-1, 1).mm(noise.view(1, -1))
+            hess /= (2 * hess_b * sigma * sigma)
+            hess += hess_lambda * torch.eye(length, device=X.device)
+            result = hess.cholesky_inverse()
         return result

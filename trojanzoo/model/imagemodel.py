@@ -70,10 +70,10 @@ class _ImageModel(_Model):
             if layer_output in ['logits', 'classifier']:
                 return self(x)
             elif layer_output == 'features':
-                return self.get_final_fm(x)
+                return self.get_fm(x)
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
         od = OrderedDict()
         record = False
 
@@ -87,14 +87,14 @@ class _ImageModel(_Model):
                 od['features.' + name] = x
             elif 'features.' + name == layer_input:
                 record = True
+        if layer_input == 'features':
+            record = True
         if record:
+            od['features'] = x
             x = self.pool(x)
             od['pool'] = x
             x = self.flatten(x)
             od['flatten'] = x
-            od['features'] = x
-        elif layer_input == 'features':
-            record = True
 
         for name, module in self.classifier.named_children():
             if record:
@@ -132,15 +132,16 @@ class _ImageModel(_Model):
         od = self.get_all_layer(x, layer_input=layer_input)
         return od[layer_name]
 
-    def get_layer_name(self) -> List[str]:
+    def get_layer_name(self, extra=True) -> List[str]:
         layer_name = []
         for name, _ in self.features.named_children():
-            if 'relu' not in name and 'bn' not in name:
+            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('features.' + name)
-        layer_name.append('pool')
-        layer_name.append('flatten')
+        if extra:
+            layer_name.append('pool')
+            layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
-            if 'relu' not in name and 'bn' not in name:
+            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('classifier.' + name)
         return layer_name
 
@@ -151,7 +152,7 @@ class ImageModel(Model):
         name, layer = ImageModel.split_name(
             name, layer=layer, default_layer=default_layer)
         if layer:
-            name = name + str(layer)
+            name: str = name + str(layer)
         self.layer = layer
 
         if 'dataset' in kwargs.keys() and 'norm_par' not in kwargs.keys():
@@ -166,8 +167,8 @@ class ImageModel(Model):
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_layer_name(self) -> List[str]:
-        return self._model.get_layer_name()
+    def get_layer_name(self, extra=True) -> List[str]:
+        return self._model.get_layer_name(extra=extra)
 
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> OrderedDict:
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)

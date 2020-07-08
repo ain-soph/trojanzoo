@@ -14,7 +14,7 @@ class Parser_Dataset(Parser):
         name (str): ``'dataset'``
     """
 
-    name = 'dataset'
+    name: str = 'dataset'
 
     @staticmethod
     def add_argument(parser):

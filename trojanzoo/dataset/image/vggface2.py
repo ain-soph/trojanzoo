@@ -11,7 +11,7 @@ import getpass
 
 class VGGface2(ImageFolder):
 
-    name = 'vggface2'
+    name: str = 'vggface2'
     n_dim = (224, 224)
     num_classes = 8631
     valid_set: bool = False

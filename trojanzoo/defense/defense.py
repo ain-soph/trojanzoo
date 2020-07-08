@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo.utils.process import Model_Process
 from trojanzoo.attack import Attack
 
 
-class Defense(Attack):
+class Defense(Model_Process):
 
-    name = 'defense'
+    name: str = 'defense'
 
     def __init__(self, attack: Attack = None, **kwargs):
         super().__init__(**kwargs)

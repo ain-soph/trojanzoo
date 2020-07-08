@@ -15,7 +15,7 @@ import seaborn
 class Figure:
     def __init__(self, name, path=None, fig=None, ax=None):
         super(Figure, self).__init__()
-        self.name = name
+        self.name: str = name
         self.path = path
         if path is None:
             self.path = './output/'
@@ -56,7 +56,7 @@ class Figure:
     def save(self, path=None):
         if path is None:
             path = self.path
-        self.fig.savefig(path+self.name+'.svg', dpi=100, bbox_inches='tight')
+        self.fig.savefig(path + self.name + '.svg', dpi=100, bbox_inches='tight')
 
     def set_axis_lim(self, axis, lim=[0.0, 1.0], margin=[0.0, 0.0], piece=10, _format='%.1f', fontproperties=palatino, fontsize=13):
         if _format == 'integer':
@@ -80,8 +80,8 @@ class Figure:
             raise ValueError('Argument \"axis\" need to be \"x\" or \"y\"')
 
         ticks = np.append(
-            np.arange(lim[0], lim[1], (lim[1]-lim[0])/piece), lim[1])
-        final_lim = [lim[0]-margin[0], lim[1]+margin[1]]
+            np.arange(lim[0], lim[1], (lim[1] - lim[0]) / piece), lim[1])
+        final_lim = [lim[0] - margin[0], lim[1] + margin[1]]
         lim_func(final_lim)
         ticks_func(ticks)
 
@@ -170,9 +170,9 @@ class Figure:
             # number of true positive instances
             true_pos_inst = np.count_nonzero(label[pred_pos_idx])
 
-            tpr = true_pos_inst*1. / total_pos_inst*1.
-            fpr = (pred_pos_inst-true_pos_inst) * \
-                1. / (total_inst-total_pos_inst)*1.
+            tpr = true_pos_inst * 1. / total_pos_inst * 1.
+            fpr = (pred_pos_inst - true_pos_inst) * \
+                1. / (total_inst - total_pos_inst) * 1.
             tprs.append(tpr)
             fprs.append(fpr)
             thresholds.append(threshold)
@@ -191,7 +191,7 @@ class Figure:
             _min = x.min()
         if _max is None:
             _max = x.max()
-        x = (x - _min)/(_max-_min) * (tgt_max-tgt_min) + tgt_min
+        x = (x - _min) / (_max - _min) * (tgt_max - tgt_min) + tgt_min
         return x
 
     @staticmethod
@@ -218,7 +218,7 @@ class Figure:
         y_mean = np.array([y_dict[_x].mean()
                            for _x in np.sort(list(y_dict.keys()))])
         y_norm = cls.normalize(y_mean)
-        y_dict = cls.adjust_err_bar(y_dict, y_norm-y_mean)
+        y_dict = cls.adjust_err_bar(y_dict, y_norm - y_mean)
         return cls.flatten_err_bar(y_dict)
 
     @classmethod
@@ -227,23 +227,23 @@ class Figure:
         y_mean = np.array([y_dict[_x].mean()
                            for _x in np.sort(list(y_dict.keys()))])
         y_smooth = cls.avg_smooth(y_mean, window=window)
-        y_dict = cls.adjust_err_bar(y_dict, y_smooth-y_mean)
+        y_dict = cls.adjust_err_bar(y_dict, y_smooth - y_mean)
         return cls.flatten_err_bar(y_dict)
 
     @staticmethod
     def adjust_err_bar(y_dict, mean=None, std=None):
         sort_keys = np.sort(list(y_dict.keys()))
         if isinstance(mean, float):
-            mean = mean*np.ones(len(sort_keys))
+            mean = mean * np.ones(len(sort_keys))
         if isinstance(std, float):
-            std = std*np.ones(len(sort_keys))
+            std = std * np.ones(len(sort_keys))
         for i in range(len(sort_keys)):
             key = sort_keys[i]
             if mean:
-                y_dict[key] = y_dict[key]+mean[i]
+                y_dict[key] = y_dict[key] + mean[i]
             if std:
                 y_dict[key] = y_dict[key].mean() + \
-                    (y_dict[key]-y_dict[key].mean())*std[i]
+                    (y_dict[key] - y_dict[key].mean()) * std[i]
         return y_dict
 
     @staticmethod
@@ -251,14 +251,14 @@ class Figure:
         _x = torch.as_tensor(x)
         new_x = torch.zeros_like(_x)
         for i in range(len(_x)):
-            if i < window//2:
-                new_x[i] = (_x[0]*(window//2-i) +
-                            _x[:i+(window+1)//2].sum())/window
-            elif i >= len(_x)-(window-1)//2:
-                new_x[i] = (_x[-1]*(len(_x)-1-i+(window-1)//2) +
-                            _x[i-window//2:].sum())/window
+            if i < window // 2:
+                new_x[i] = (_x[0] * (window // 2 - i) +
+                            _x[: i + (window + 1) // 2].sum()) / window
+            elif i >= len(_x) - (window - 1) // 2:
+                new_x[i] = (_x[-1] * (len(_x) - 1 - i + (window - 1) // 2) +
+                            _x[i - window // 2:].sum()) / window
             else:
-                new_x[i] = _x[i-window//2:i+1+(window-1)//2].mean()
+                new_x[i] = _x[i - window // 2:i + 1 + (window - 1) // 2].mean()
         return to_numpy(new_x) if isinstance(x, np.ndarray) else new_x
 
     @staticmethod
@@ -270,11 +270,11 @@ class Figure:
 
     @staticmethod
     def tanh_fit(x, y, x_grid, degree=1, mean_bias=0.0, scale_multiplier=1.0):
-        mean = (max(y)+min(y))/2+mean_bias
-        scale = max(abs(y-mean))*scale_multiplier
-        fit_data = to_numpy(arctanh(torch.as_tensor((y-mean)/scale)))
+        mean = (max(y) + min(y)) / 2 + mean_bias
+        scale = max(abs(y - mean)) * scale_multiplier
+        fit_data = to_numpy(arctanh(torch.as_tensor((y - mean) / scale)))
         z = np.polyfit(x, fit_data, degree)
-        y_grid = np.tanh(np.polyval(z, x_grid))*scale+mean
+        y_grid = np.tanh(np.polyval(z, x_grid)) * scale + mean
         return y_grid
 
     @staticmethod
@@ -282,23 +282,23 @@ class Figure:
         y_max = max(y)
         y_min = min(y)
         if increase:
-            fit_data = np.log(y_max+epsilon-y)
+            fit_data = np.log(y_max + epsilon - y)
         else:
-            fit_data = np.log(y+epsilon-y_min)
+            fit_data = np.log(y + epsilon - y_min)
 
         z = np.polyfit(x, fit_data, degree)
         y_grid = np.exp(np.polyval(z, x_grid))
         if increase:
-            y_grid = y_max+epsilon-y_grid
+            y_grid = y_max + epsilon - y_grid
         else:
-            y_grid += y_min-epsilon
+            y_grid += y_min - epsilon
         return y_grid
 
     @staticmethod
     def inverse_fit(x, y, x_grid, degree=1, y_lower_bound=0.0):
-        fit_data = 1/(y-y_lower_bound)
+        fit_data = 1 / (y - y_lower_bound)
         z = np.polyfit(x, fit_data, degree)
-        y_grid = 1/(np.polyval(z, x_grid))+y_lower_bound
+        y_grid = 1 / (np.polyval(z, x_grid)) + y_lower_bound
         return y_grid
 
     @staticmethod

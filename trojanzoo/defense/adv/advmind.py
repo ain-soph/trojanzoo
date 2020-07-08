@@ -8,7 +8,6 @@ from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn.functional as F
-from collections.abc import Callable
 from typing import List
 
 from trojanzoo.utils import Config
@@ -17,7 +16,7 @@ env = Config.env
 
 class AdvMind(Defense):
 
-    name = 'advmind'
+    name: str = 'advmind'
 
     def __init__(self, attack_adapt: bool = False, fake_percent: float = 0.3, dist: float = 50.0,
                  defend_adapt: bool = False, k: int = 1, b: float = 4e-3,
@@ -172,7 +171,7 @@ class AdvMind(Defense):
                 center = self.get_center(cluster)
                 # center_idx = (cluster - center).flatten(start_dim=1).norm(p=2, dim=1).argmin()
                 # center = cluster[center_idx]
-                center.requires_grad = True
+                center.requires_grad_()
                 loss = loss_fn(center)
                 real_grad = torch.autograd.grad(loss, center)[0]
                 center.requires_grad = False
@@ -254,7 +253,7 @@ class AdvMind(Defense):
 
             for _class in range(self.model.num_classes):
                 _label = _class * torch.ones(len(X), dtype=torch.long, device=X.device)
-                X.requires_grad = True
+                X.requires_grad_()
                 loss = self.model.loss(X, _label)
                 grad = torch.autograd.grad(loss, X)[0]
                 X.requires_grad = False
@@ -331,7 +330,7 @@ class AdvMind(Defense):
                 dist_list = torch.zeros(self.num_classes)
                 # print('bound: ', estimate_error + shift_dist)
                 for _class in range(self.num_classes):
-                    X.requires_grad = True
+                    X.requires_grad_()
                     loss = self.model.loss(X, _class)
                     grad = torch.autograd.grad(loss, X)[0]
                     X.requires_grad = False

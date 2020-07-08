@@ -8,8 +8,7 @@ from trojanzoo.optim import PGD as PGD_Optimizer
 
 import torch
 import torch.nn.functional as F
-from typing import Union, List
-from collections.abc import Callable
+from typing import Union, List, Callable
 
 
 class PGD(Attack, PGD_Optimizer):
@@ -19,7 +18,7 @@ class PGD(Attack, PGD_Optimizer):
         epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
     """
 
-    name = 'pgd'
+    name: str = 'pgd'
 
     def __init__(self, target_idx: int = 1, **kwargs):
         self.target_idx: int = target_idx
@@ -50,7 +49,7 @@ class PGD(Attack, PGD_Optimizer):
             print('-------------------------------------------------')
             print()
 
-    def craft_example(self, _input: torch.Tensor, loss_fn: Callable = None,
+    def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
                       target: Union[torch.LongTensor, int] = None, target_idx: int = None, **kwargs):
         if len(_input) == 0:
             return _input, None
@@ -74,17 +73,19 @@ class PGD(Attack, PGD_Optimizer):
     def early_stop_check(self, X, target, loss_fn=None, **kwargs):
         if not self.stop_threshold:
             return False
-        _confidence = self.model.get_target_prob(X, target)
+        with torch.no_grad():
+            _confidence = self.model.get_target_prob(X, target)
         if self.target_idx and _confidence.min() > self.stop_threshold:
             return True
         if not self.target_idx and _confidence.max() < self.stop_threshold:
             return True
         return False
 
-    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, target: torch.LongTensor, indent: int = 0, **kwargs):
-        super().output_info(_input, noise, indent=indent, **kwargs)
-        # prints('Original class     : ', to_list(_label), indent=indent)
-        # prints('Original confidence: ', to_list(_confidence), indent=indent)
-        _confidence = self.model.get_target_prob(_input + noise, target)
-        prints('Target   class     : ', to_list(target), indent=indent)
-        prints('Target   confidence: ', to_list(_confidence), indent=indent)
+    def output_info(self, _input: torch.Tensor, noise: torch.Tensor, target: torch.LongTensor, **kwargs):
+        super().output_info(_input, noise, **kwargs)
+        # prints('Original class     : ', to_list(_label), indent=self.indent)
+        # prints('Original confidence: ', to_list(_confidence), indent=self.indent)
+        with torch.no_grad():
+            _confidence = self.model.get_target_prob(_input + noise, target)
+        prints('Target   class     : ', to_list(target), indent=self.indent)
+        prints('Target   confidence: ', to_list(_confidence), indent=self.indent)

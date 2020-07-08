@@ -15,7 +15,7 @@ class Parser_Model(Parser):
     Attributes:
         name (str): ``'model'``
     """
-    name = 'model'
+    name: str = 'model'
 
     @staticmethod
     def add_argument(parser):

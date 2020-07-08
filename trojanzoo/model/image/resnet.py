@@ -3,10 +3,12 @@ from ..imagemodel import _ImageModel, ImageModel
 
 from collections import OrderedDict
 
+import torch
 import torch.nn as nn
 from torch.utils import model_zoo
 from torchvision.models.resnet import model_urls
 import torchvision.models as models
+from torchvision.models.resnet import BasicBlock
 
 
 class _ResNet(_ImageModel):
@@ -14,7 +16,7 @@ class _ResNet(_ImageModel):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         _model = models.__dict__[
-            'resnet'+str(layer)](num_classes=self.num_classes)
+            'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
             ('conv1', _model.conv1),
@@ -34,7 +36,7 @@ class _ResNet(_ImageModel):
         # block.expansion = 1 if BasicBlock and 4 if Bottleneck
         # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
 
-    def get_all_layer(self, x, layer_input='input'):
+    def get_all_layer(self, x: torch.Tensor, layer_input='input'):
         od = OrderedDict()
         record = False
 
@@ -42,54 +44,54 @@ class _ResNet(_ImageModel):
             x = self.preprocess(x)
             record = True
 
-        for l, block in self.features.named_children():
-            if 'conv' in l:
-                if record:
-                    x = block(x)
-                    od['features.'+l] = x
-                elif 'features.'+l == layer_input:
-                    record = True
-            else:
-                for name, module in block.named_children():
+        for layer_name, layer in self.features.named_children():
+            if isinstance(layer, nn.Sequential):
+                for block_name, block in layer.named_children():
                     if record:
-                        x = module(x)
-                        od['features.'+l+'.'+name] = x
-                    elif 'features.'+l+'.'+name == layer_input:
+                        x = block(x)
+                        od['features.' + layer_name + '.' + block_name] = x
+                    if 'features.' + layer_name + '.' + block_name == layer_input:
                         record = True
+            elif record:
+                x = layer(x)
+            od['features.' + layer_name] = x
+            if 'features.' + layer_name == layer_input:
+                record = True
+        if layer_input == 'features':
+            record = True
         if record:
+            od['features'] = x
             x = self.pool(x)
             od['pool'] = x
             x = x.flatten(start_dim=1)
-            od['features'] = x
-        elif layer_input == 'features':
-            record = True
 
         for name, module in self.classifier.named_children():
             if record:
                 x = module(x)
-                od['classifier.'+name] = x
-            elif 'classifier.'+name == layer_input:
+                od['classifier.' + name] = x
+            elif 'classifier.' + name == layer_input:
                 record = True
-        y = x
-        od['classifier'] = y
-        od['logits'] = y
-        od['output'] = y
+        od['classifier'] = x
+        od['logits'] = x
+        od['output'] = x
         return od
 
-    def get_layer_name(self):
-        layer_name = []
-        for l, block in self.features.named_children():
-            if 'conv' in l:
-                layer_name.append('features.'+l)
-            else:
-                for name, _ in block.named_children():
-                    if 'relu' not in name and 'bn' not in name:
-                        layer_name.append('features.'+l+'.'+name)
-        layer_name.append('pool')
+    def get_layer_name(self, extra=True):
+        layer_name_list = []
+        for layer_name, layer in self.features.named_children():
+            if isinstance(layer, nn.Sequential):
+                for block_name, block in layer.named_children():
+                    if 'bn' not in block_name and 'relu' not in block_name:
+                        layer_name_list.append('features.' + layer_name + '.' + block_name)
+            elif 'bn' not in layer_name and 'relu' not in layer_name:
+                layer_name_list.append('features.' + layer_name)
+        if extra:
+            layer_name_list.append('pool')
+            layer_name_list.append('flatten')
         for name, _ in self.classifier.named_children():
-            if 'relu' not in name and 'bn' not in name:
-                layer_name.append('classifier.'+name)
-        return layer_name
+            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
+                layer_name_list.append('classifier.' + name)
+        return layer_name_list
 
 
 class ResNet(ImageModel):
@@ -99,7 +101,7 @@ class ResNet(ImageModel):
                          default_layer=default_layer, **kwargs)
 
     def load_official_weights(self, verbose=True):
-        url = model_urls['resnet'+str(self.layer)]
+        url = model_urls['resnet' + str(self.layer)]
         _dict = model_zoo.load_url(url)
         self._model.features.load_state_dict(_dict, strict=False)
         if self.num_classes == 1000:
@@ -114,7 +116,7 @@ class _ResNetcomp(_ResNet):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         _model = models.__dict__[
-            'resnet'+str(layer)](num_classes=self.num_classes)
+            'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)),
             ('bn1', _model.bn1),  # nn.BatchNorm2d(64)
@@ -139,7 +141,7 @@ class ResNetcomp(ResNet):
                          default_layer=default_layer, **kwargs)
 
     def load_official_weights(self, verbose=True):
-        url = model_urls['resnet'+str(self.layer)]
+        url = model_urls['resnet' + str(self.layer)]
         _dict = model_zoo.load_url(url)
         _dict = {key: value for (key, value)
                  in _dict.items() if key != 'conv1.weight'}

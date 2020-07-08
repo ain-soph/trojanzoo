@@ -20,9 +20,9 @@ env = Config.env
 
 class Neural_Cleanse(Defense_Backdoor):
 
-    name = 'neural_cleanse'
+    name: str = 'neural_cleanse'
 
-    def __init__(self, nc_epoch: int = 10,
+    def __init__(self, epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, **kwargs):
         super().__init__(**kwargs)
@@ -31,7 +31,7 @@ class Neural_Cleanse(Defense_Backdoor):
         data_shape.extend(self.dataset.n_dim)
         self.data_shape: List[int] = data_shape
 
-        self.nc_epoch: int = nc_epoch
+        self.epoch: int = epoch
 
         self.init_cost = init_cost
         self.cost_multiplier_up = cost_multiplier
@@ -46,36 +46,37 @@ class Neural_Cleanse(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        mark_list, mask_list, loss_ce_list = self.get_potential_triggers()
+        mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask_norms: ', normalize_mad(mask_norms))
-        print('loss: ', normalize_mad(loss_ce_list))
+        print('loss: ', normalize_mad(loss_list))
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
-        mark_list, mask_list, entropy_list = [], [], []
+        mark_list, mask_list, loss_list = [], [], []
+        # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
             # print('label: ', label)
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, mask, entropy = self.get_potential_triggers_for_label(
+            mark, mask, loss = self.remask(
                 label)
             mark_list.append(mark)
             mask_list.append(mask)
-            entropy_list.append(entropy)
+            loss_list.append(loss)
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
-        entropy_list = torch.as_tensor(entropy_list)
+        loss_list = torch.as_tensor(loss_list)
 
-        return mark_list, mask_list, entropy_list
+        return mark_list, mask_list, loss_list
 
-    def get_potential_triggers_for_label(self, label: int):
+    def remask(self, label: int):
         nc_epoch = self.nc_epoch
         # no bound
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
-        atanh_mark.requires_grad = True
+        atanh_mark.requires_grad_()
         atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
-        atanh_mask.requires_grad = True
-        mask = Uname.tanh_func(atanh_mask)    # (c, h, w)
-        mark = Uname.tanh_func(atanh_mark)    # (h, w)
+        atanh_mask.requires_grad_()
+        mask = Uname.tanh_func(atanh_mask)    # (h, w)
+        mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
 
         optimizer = optim.Adam(
             [atanh_mark, atanh_mask], lr=0.1, betas=(0.5, 0.9))
@@ -114,7 +115,6 @@ class Neural_Cleanse(Defense_Backdoor):
                 batch_size = _label.size(0)
                 X = _input + mask * (mark - _input)
                 Y = label * torch.ones_like(_label, dtype=torch.long)
-
                 _output = self.model(X)
 
                 batch_acc = Y.eq(_output.argmax(1)).float().mean()
@@ -131,12 +131,12 @@ class Neural_Cleanse(Defense_Backdoor):
                 optimizer.step()
                 optimizer.zero_grad()
 
-                mask = Uname.tanh_func(atanh_mask)    # (1, c, h, w)
-                mark = Uname.tanh_func(atanh_mark)    # (1, c, h, w)
+                mask = Uname.tanh_func(atanh_mask)    # (h, w)
+                mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}'.format(
-                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(60)
+            pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(64)
             _str = ' '.join([
                 'Loss: {:.4f},'.format(losses.avg).ljust(20),
                 'Acc: {:.2f}, '.format(acc.avg).ljust(20),
@@ -144,7 +144,7 @@ class Neural_Cleanse(Defense_Backdoor):
                 'Entropy: {:.4f},'.format(entropy.avg).ljust(20),
                 'Time: {},'.format(epoch_time).ljust(20),
             ])
-            prints(pre_str, _str, prefix='\033[1A\033[K', indent=4)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
 
             # check to save best mask or not
             if acc.avg >= self.attack_succ_threshold and norm.avg < norm_best:
@@ -204,5 +204,11 @@ class Neural_Cleanse(Defense_Backdoor):
                 mark_best = Uname.tanh_func(atanh_mark).detach()
                 norm_best = norm.avg
                 entropy_best = entropy.avg
+        atanh_mark.requires_grad = False
+        atanh_mask.requires_grad = False
 
+        self.attack.mark.mark = mark_best
+        self.attack.mark.alpha_mark = mask_best
+        self.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)
+        self.attack.validate_func()
         return mark_best, mask_best, entropy_best

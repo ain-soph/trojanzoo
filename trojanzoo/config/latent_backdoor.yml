@@ -1,0 +1,8 @@
+# -*- coding: utf-8 -*-
+
+class_sample_num: 1000
+mse_weight: 0.5
+
+preprocess_layer: features
+preprocess_epoch: 100
+preprocess_lr: 0.1

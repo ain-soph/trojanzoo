@@ -19,7 +19,7 @@ redirect = Indent_Redirect(buffer=True, indent=0)
 
 
 class Watermark:
-    name = 'mark'
+    name: str = 'mark'
 
     def __init__(self, data_shape: List[int], edge_color: Union[str, torch.Tensor] = 'auto',
                  mark_path: str = 'trojanzoo/data/mark/square_white.png', mark_alpha: float = 0.0,

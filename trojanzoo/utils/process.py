@@ -2,8 +2,15 @@
 
 from .output import prints, output_iter
 
+from trojanzoo.dataset import ImageSet
+from trojanzoo.model import ImageModel
+
+import os
 from collections import OrderedDict
 from typing import List, Union
+
+from trojanzoo.utils import Config
+env = Config.env
 
 
 class Process:
@@ -58,3 +65,25 @@ class Process:
     def output_iter(name: str, _iter, iteration=None, indent=0):
         string = name + ' Iter: ' + output_iter(_iter + 1, iteration)
         prints(string, indent=indent)
+
+
+class Model_Process(Process):
+
+    name: str = 'model_process'
+
+    def __init__(self, dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None, **kwargs):
+        super().__init__(**kwargs)
+        self.param_list['location'] = ['folder_path']
+        self.dataset: ImageSet = dataset
+        self.model: ImageModel = model
+
+        # ----------------------------------------------------------------------------- #
+        if folder_path is None:
+            folder_path = env['result_dir'] + self.name + '/'
+            if dataset and isinstance(dataset, ImageSet):
+                folder_path += dataset.name + '/'
+            if model and isinstance(model, ImageModel):
+                folder_path += model.name + '/'
+        self.folder_path = folder_path
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
