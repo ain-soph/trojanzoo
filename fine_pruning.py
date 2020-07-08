@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     # ------------------------------------------------------------------------ #
 
-    defense: Fine_Pruning = Fine_Pruning(dataset=dataset, model=model)
+    defense: Fine_Pruning = Fine_Pruning(dataset=dataset, model=model, optimizer=optimizer, lr_scheduler=lr_scheduler)
     defense.detect()
 
 
