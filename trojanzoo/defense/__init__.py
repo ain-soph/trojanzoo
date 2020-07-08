@@ -13,4 +13,5 @@ class_dict = {
 
     'neural_cleanse': 'Neural_Cleanse',
     'strip': 'STRIP',
+    'abs': 'ABS',
 }

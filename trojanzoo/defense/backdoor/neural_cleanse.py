@@ -135,8 +135,8 @@ class Neural_Cleanse(Defense_Backdoor):
                 mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}'.format(
-                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(60)
+            pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(64)
             _str = ' '.join([
                 'Loss: {:.4f},'.format(losses.avg).ljust(20),
                 'Acc: {:.2f}, '.format(acc.avg).ljust(20),
@@ -144,7 +144,7 @@ class Neural_Cleanse(Defense_Backdoor):
                 'Entropy: {:.4f},'.format(entropy.avg).ljust(20),
                 'Time: {},'.format(epoch_time).ljust(20),
             ])
-            prints(pre_str, _str, prefix='\033[1A\033[K', indent=4)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
 
             # check to save best mask or not
             if acc.avg >= self.attack_succ_threshold and norm.avg < norm_best:

@@ -2,6 +2,7 @@
 
 # python backdoor_defense.py --attack badnet --defense neural_cleanse --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
 # python backdoor_defense.py --attack badnet --defense strip --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
+# python backdoor_defense.py --attack badnet --defense abs --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack, Parser_Defense
 

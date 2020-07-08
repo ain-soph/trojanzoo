@@ -3,10 +3,12 @@ from ..imagemodel import _ImageModel, ImageModel
 
 from collections import OrderedDict
 
+import torch
 import torch.nn as nn
 from torch.utils import model_zoo
 from torchvision.models.resnet import model_urls
 import torchvision.models as models
+from torchvision.models.resnet import BasicBlock
 
 
 class _ResNet(_ImageModel):
@@ -34,7 +36,7 @@ class _ResNet(_ImageModel):
         # block.expansion = 1 if BasicBlock and 4 if Bottleneck
         # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
 
-    def get_all_layer(self, x, layer_input='input'):
+    def get_all_layer(self, x: torch.Tensor, layer_input='input'):
         od = OrderedDict()
         record = False
 
@@ -42,27 +44,26 @@ class _ResNet(_ImageModel):
             x = self.preprocess(x)
             record = True
 
-        for l, block in self.features.named_children():
-            if 'conv' in l:
-                if record:
-                    x = block(x)
-                    od['features.' + l] = x
-                elif 'features.' + l == layer_input:
-                    record = True
-            else:
-                for name, module in block.named_children():
+        for layer_name, layer in self.features.named_children():
+            if isinstance(layer, nn.Sequential):
+                for block_name, block in layer.named_children():
                     if record:
-                        x = module(x)
-                        od['features.' + l + '.' + name] = x
-                    elif 'features.' + l + '.' + name == layer_input:
+                        x = block(x)
+                        od['features.' + layer_name + '.' + block_name] = x
+                    if 'features.' + layer_name + '.' + block_name == layer_input:
                         record = True
+            elif record:
+                x = layer(x)
+            od['features.' + layer_name] = x
+            if 'features.' + layer_name == layer_input:
+                record = True
+        if layer_input == 'features':
+            record = True
         if record:
+            od['features'] = x
             x = self.pool(x)
             od['pool'] = x
             x = x.flatten(start_dim=1)
-            od['features'] = x
-        elif layer_input == 'features':
-            record = True
 
         for name, module in self.classifier.named_children():
             if record:
@@ -70,28 +71,27 @@ class _ResNet(_ImageModel):
                 od['classifier.' + name] = x
             elif 'classifier.' + name == layer_input:
                 record = True
-        y = x
-        od['classifier'] = y
-        od['logits'] = y
-        od['output'] = y
+        od['classifier'] = x
+        od['logits'] = x
+        od['output'] = x
         return od
 
     def get_layer_name(self, extra=True):
-        layer_name = []
-        for l, block in self.features.named_children():
-            if 'conv' in l:
-                layer_name.append('features.' + l)
-            else:
-                for name, _ in block.named_children():
-                    if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
-                        layer_name.append('features.' + l + '.' + name)
+        layer_name_list = []
+        for layer_name, layer in self.features.named_children():
+            if isinstance(layer, nn.Sequential):
+                for block_name, block in layer.named_children():
+                    if 'bn' not in block_name and 'relu' not in block_name:
+                        layer_name_list.append('features.' + layer_name + '.' + block_name)
+            elif 'bn' not in layer_name and 'relu' not in layer_name:
+                layer_name_list.append('features.' + layer_name)
         if extra:
-            layer_name.append('pool')
-            layer_name.append('flatten')
+            layer_name_list.append('pool')
+            layer_name_list.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
-                layer_name.append('classifier.' + name)
-        return layer_name
+                layer_name_list.append('classifier.' + name)
+        return layer_name_list
 
 
 class ResNet(ImageModel):

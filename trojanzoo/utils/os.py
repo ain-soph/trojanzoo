@@ -14,7 +14,7 @@ def untar(file_path, target_path):
     names = tar.getnames()
     for name in tqdm(names):
         tar.extract(name, path=target_path)
-    print('\033[1A\033[K', end='')
+    print('{upline}{clear_line}'.format(**ansi), end='')
     tar.close()
 
 

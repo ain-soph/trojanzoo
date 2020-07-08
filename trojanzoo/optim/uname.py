@@ -33,7 +33,7 @@ class Uname(Optimizer):
         self.step_size: int = step_size
         self.input_transform: Callable = input_transform
 
-    def optimize(self, parameters: List[torch.Tensor],
+    def optimize(self, unbound_params: List[torch.Tensor],
                  iteration: int = None, loss_fn: Callable = None,
                  output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
@@ -46,36 +46,35 @@ class Uname(Optimizer):
 
         # ----------------------------------------------------------------------------------------- #
 
-        param = init_value.clone()
-        param.requires_grad = True
-        _input = self.transform_func(param)
+        real_params = self.transform_func(unbound_params)
         if 'start' in output:
-            self.output_info(_input=_input, mode='start', loss_fn=loss_fn, **kwargs)
+            self.output_info(real_params=real_params, mode='start', loss_fn=loss_fn, **kwargs)
         if iteration == 0:
-            return _input, None
-        optimizer: optim.Optimizer = self.optim_type(parameters=param)
+            return real_params, None
+        optimizer: optim.Optimizer = self.optim_type(parameters=unbound_params)
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=self.step_size) if self.lr_scheduler else None
         optimizer.zero_grad()
 
         # ----------------------------------------------------------------------------------------- #
 
         for _iter in range(iteration):
-            if self.early_stop_check(_input, loss_fn=loss_fn, **kwargs):
+            if self.early_stop_check(real_params, loss_fn=loss_fn, **kwargs):
                 if 'end' in output:
-                    self.output_info(_input=_input, mode='end', loss_fn=loss_fn, **kwargs)
-                return _input, _iter + 1
-            loss = loss_fn(_input)
+                    self.output_info(real_params=real_params, mode='end', loss_fn=loss_fn, **kwargs)
+                return real_params, _iter + 1
+            loss = loss_fn(real_params)
             loss.backward()
+            optimizer.step()
             optimizer.zero_grad()
-            _input = self.transform_func(param)
+            real_params = self.transform_func(unbound_params)
             if lr_scheduler:
                 lr_scheduler.step()
             if 'middle' in output:
-                self.output_info(_input=_input, mode='middle',
+                self.output_info(real_params=real_params, mode='middle',
                                  _iter=_iter, iteration=iteration, loss_fn=loss_fn, **kwargs)
         if 'end' in output:
-            self.output_info(_input=_input, mode='end', loss_fn=loss_fn, **kwargs)
-        return _input, None
+            self.output_info(real_params=real_params, mode='end', loss_fn=loss_fn, **kwargs)
+        return real_params, None
 
     def transform_func(self, x: torch.Tensor) -> torch.Tensor:
         if isinstance(self.input_transform, str):
@@ -98,8 +97,8 @@ class Uname(Optimizer):
     def atan_func(x: torch.Tensor) -> torch.Tensor:
         return x.atan().div(math.pi).add(0.5)
 
-    def output_info(self, _input: torch.Tensor, loss_fn=None, **kwargs):
+    def output_info(self, real_params: torch.Tensor, loss_fn=None, **kwargs):
         super().output_info(**kwargs)
         with torch.no_grad():
-            loss = float(loss_fn(_input))
+            loss = float(loss_fn(real_params))
         prints('loss: {loss:.5f}'.format(loss=loss), indent=self.indent)

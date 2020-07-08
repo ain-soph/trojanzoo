@@ -87,14 +87,14 @@ class _ImageModel(_Model):
                 od['features.' + name] = x
             elif 'features.' + name == layer_input:
                 record = True
+        if layer_input == 'features':
+            record = True
         if record:
+            od['features'] = x
             x = self.pool(x)
             od['pool'] = x
             x = self.flatten(x)
             od['flatten'] = x
-            od['features'] = x
-        elif layer_input == 'features':
-            record = True
 
         for name, module in self.classifier.named_children():
             if record:

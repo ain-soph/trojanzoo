@@ -330,15 +330,15 @@ class Model:
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             if verbose:
-                pre_str = '{blue_light}Epoch: {0}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(60)
+                pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+                    output_iter(_epoch + 1, epoch), **ansi).ljust(64)
                 _str = ' '.join([
                     'Loss: {:.4f},'.format(losses.avg).ljust(20),
                     'Top1 Acc: {:.3f}, '.format(top1.avg).ljust(20),
                     'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
                     'Time: {},'.format(epoch_time).ljust(20),
                 ])
-                prints(pre_str, _str, prefix='\033[1A\033[K', indent=indent)
+                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
@@ -412,7 +412,7 @@ class Model:
                 'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
                 'Time: {},'.format(epoch_time).ljust(20),
             ])
-            prints(pre_str, _str, prefix='\033[1A\033[K', indent=indent)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
         return losses.avg, top1.avg, top5.avg
 
     # -------------------------------------------Utility--------------------------------------- #

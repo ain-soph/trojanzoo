@@ -73,7 +73,7 @@ class ImageFolder(ImageSet):
             prints(mode, ' ' * 10, file_path[mode], indent=10)
             if not os.path.exists(file_path[mode]):
                 download_url_to_file(url[mode], file_path[mode])
-                print('\033[1A\033[K', end='')
+                print('{upline}{clear_line}'.format(**ansi), end='')
             else:
                 prints('File Already Exists: ', file_path[mode], indent=20)
         return file_path
@@ -120,7 +120,7 @@ class ImageFolder(ImageSet):
                     for _file in tqdm(_list):
                         shutil.copyfile(src_path + src_mode + '/' + src_class + '/' + _file,
                                         dst_path + dst_mode + '/' + dst_class + '/' + _file)
-                    print('\033[1A\033[K', end='')
+                    print('{upline}{clear_line}'.format(**ansi), end='')
 
     # def split(self, ratio_dict={'train': 8, 'valid': 1, 'test': 1}, verbose=True):
     #     target_folder = self.folder_path+self.name+'/total/'
