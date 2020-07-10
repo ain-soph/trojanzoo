@@ -13,7 +13,6 @@ import torch.nn.functional as F
 from trojanzoo.utils import Config
 env = Config.env
 
-
 class DeepInspect(Defense_Backdoor):
 
     name: str = 'deepinspect'
@@ -43,7 +42,7 @@ class DeepInspect(Defense_Backdoor):
         for label in range(self.model.num_classes):
             # print('label: ', label)
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, mask, loss = self.cgan(
+            mark, loss = self.cgan(
                 label)
             mark_list.append(mark)
             loss_list.append(loss)
@@ -54,27 +53,30 @@ class DeepInspect(Defense_Backdoor):
 
     def cgan(self, label: int) -> (torch.Tensor, torch.Tensor):
         # load dataset
-        _classes = list(range(self.dataset.num_classes))
-        loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, classes=_class,
-                                            shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
+        loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, drop_last=True)
         _input, _label = next(iter(loader))
-        noisy = torch.rand(input.shape)
+        noisy = torch.rand_like(_input)
         
-
         # generator
         generator = Generator(self.dataset.num_classes, self.mark.mark.shape[0])
         for param in generator.parameters():
             param.requires_grad = True
 
         optimizer = optim.Adam(generator.parameters(), lr = self.lr)
+        self.ce_criterion = nn.CrossEntropyLoss()
+        self.mse_criterion = nn.MSELoss()
         for epoch in range(self.epoch):
             optimizer.zero_grad()
             trigger = generator(noisy, label)
-            infected_input = _input * (1-self.mark.mask) + trigger * (1 - self.mark.mask)
-            logits = self.model(infected_input)
+            self.mark.mark = generator(noisy, label)
+            poison_input = torch.clamp(_input + self.mark.mark * self.mark.mask, 0, 1)
+            logits = self.model(poison_input)
             loss = self.loss(logits, trigger, label)
             loss.backward()
             optimizer.step()
+
+        for param in generator.parameters():
+            param.requires_grad = False
 
         trigger = generator(noisy, label)
         pert_loss = self.pert_loss(trigger)
@@ -82,20 +84,17 @@ class DeepInspect(Defense_Backdoor):
         return trigger, pert_loss
 
     def loss(self, logits: torch.Tensor, trigger: torch.Tensor, label: int) -> torch.Tensor:
-        nll_criterion = nn.NLLLoss()
-        tgt_label = torch.zeros((logits.shape[0]))
-        tgt_label.fill_(label)
-        train_loss = nll_criterion(logits, tgt_label)
+        tgt_label = torch.ones_like(logits) * label
+        train_loss = self.ce_criterion(logits, tgt_label)
         gan_loss = self.gan_loss(logits, label)
         pert_loss = self.pert_loss(trigger)
 
         return train_loss + self.gamma_1 * gan_loss + self.gamma_2 * pert_loss
 
     def gan_loss(self, logits: torch.Tensor, label: int) -> torch.Tensor:
-        onehot_label = torch.zeros_like(logits)
+        onehot_label = torch.zeros_like(logits) 
         onehot_label[:, label] = 1.0
-        mse_criterion = nn.MSELoss()
-        return mse_criterion(logits, onehot_label)
+        return self.mse_criterion(logits, onehot_label)
 
     def pert_loss(self, trigger: torch.Tensor) -> torch.Tensor:
         return torch.sum(trigger * self.mark.mask)
@@ -112,7 +111,6 @@ class Generator(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(64, 32, 5, 1, 2)
         self.bn2 = nn.BatchNorm2d(32)
         self.deconv2 = nn.ConvTranspose2d(32, 1, 5, 1, 2)
-
 
     def forward(self, x, labels):
         batch_size = x.size(0)
