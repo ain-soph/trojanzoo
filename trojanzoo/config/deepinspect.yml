@@ -1,0 +1,11 @@
+# -*- coding: utf-8 -*-
+
+sample_num: 500
+
+epoch: 100
+
+lr: 0.1
+
+gamma_1: 1
+
+gamma_2: 0

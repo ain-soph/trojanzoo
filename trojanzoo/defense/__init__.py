@@ -16,4 +16,5 @@ class_dict = {
     'abs': 'ABS',
     'activation_clustering': 'activation_clustering',
     'fine_pruning': 'Fine_Pruning',
+    'deepinspect': 'DeepInspect'
 }
