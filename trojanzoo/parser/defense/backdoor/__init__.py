@@ -2,3 +2,4 @@
 
 from .neural_cleanse import Parser_Neural_Cleanse
 from .abs import Parser_ABS
+from .deepinspect import Parser_DeepInspect
