@@ -48,7 +48,7 @@ class Uname(Optimizer):
         # ----------------------------------------------------------------------------------------- #
         real_params: List[torch.Tensor] = []
         for param in unbound_params:
-            param.requires_grad = True
+            param.requires_grad_()
             real_params.append(self.transform_func(param))
         if 'start' in output:
             self.output_info(real_params=real_params, mode='start', loss_fn=loss_fn, **kwargs)

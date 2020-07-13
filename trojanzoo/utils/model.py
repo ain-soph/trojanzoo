@@ -9,6 +9,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def onehot_label(label: torch.Tensor, num_classes: int):
+    result = torch.zeros(len(label), num_classes, dtype=label.dtype, device=label.device)
+    index = label.unsqueeze(1)
+    src = torch.ones_like(index)
+    return result.scatter(dim=1, index=index, src=src)
+
+
 def split_name(name, layer=None, default_layer=None, output=False):
     re_list = re.findall(r'[0-9]+|[a-z]+|_', name)
     if len(re_list) == 2:

@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+
+sample_ratio: 0.1
+noise_dim: 100
+
+epoch: 100
+lr: 0.1
+
+gamma_1: 0.0
+gamma_2: 0.001
