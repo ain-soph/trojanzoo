@@ -55,7 +55,7 @@ class DeepInspect(Defense_Backdoor):
         # load dataset
         loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, drop_last=True)
         _input, _label = next(iter(loader))
-        noisy = torch.rand_like(_input)
+        noise = torch.rand((self.dataset.num_classes,), device=_input.device, dtype=_input.dtype)
         
         # generator
         generator = Generator(self.dataset.num_classes, self.mark.mark.shape[0])
@@ -67,8 +67,8 @@ class DeepInspect(Defense_Backdoor):
         self.mse_criterion = nn.MSELoss()
         for epoch in range(self.epoch):
             optimizer.zero_grad()
-            trigger = generator(noisy, label)
-            self.mark.mark = generator(noisy, label)
+            trigger = generator(noise, label)
+            self.mark.mark = generator(noise, label)
             poison_input = torch.clamp(_input + self.mark.mark * self.mark.mask, 0, 1)
             logits = self.model(poison_input)
             loss = self.loss(logits, trigger, label)
@@ -78,7 +78,7 @@ class DeepInspect(Defense_Backdoor):
         for param in generator.parameters():
             param.requires_grad = False
 
-        trigger = generator(noisy, label)
+        trigger = generator(noise, label)
         pert_loss = self.pert_loss(trigger)
 
         return trigger, pert_loss
@@ -100,9 +100,10 @@ class DeepInspect(Defense_Backdoor):
         return torch.sum(trigger * self.mark.mask)
 
 class Generator(nn.Module):
-    def __init__(self, out_dim, img_size):
+    def __init__(self, out_dim, img_size, n_channel=3):
         self.out_dim = out_dim
         self.img_size = img_size
+        self.n_channel = n_channel
         super(Generator, self).__init__()
 
         self.fc2 = nn.Linear(self.out_dim, 1000)
