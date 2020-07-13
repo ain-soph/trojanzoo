@@ -65,7 +65,6 @@ class Neural_Cleanse(Defense_Backdoor):
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
         loss_list = torch.as_tensor(loss_list)
-
         return mark_list, mask_list, loss_list
 
     def remask(self, label: int):
