@@ -46,12 +46,9 @@ class BadNet(Attack):
         if 'get_data' in kwargs.keys():
             get_data = kwargs['get_data']
             del kwargs['get_data']
-        self.model._train(epoch, get_data=get_data, validate_func=self.validate_func, **kwargs)
+        self.model._train(epoch, validate_func=self.validate_func, loss_fn=self.loss_fn, **kwargs)
         if save:
             self.save(epoch=epoch)
-
-    def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self.mark.add_mark(x, **kwargs)
 
     def get_filename(self, epoch: int, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:
@@ -64,28 +61,7 @@ class BadNet(Attack):
             height=self.mark.height, width=self.mark.width)
         return _file
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
-        _input, _label = self.model.get_data(data)
-        percent = self.percent / (1 - self.percent)
-        if not keep_org or random.uniform(0, 1) < percent:
-            org_input, org_label = _input, _label
-            _input = self.add_mark(org_input)
-            if poison_label:
-                _label = self.target_class * torch.ones_like(org_label)
-            if keep_org:
-                _input = torch.cat((_input, org_input))
-                _label = torch.cat((_label, org_label))
-        return _input, _label
-
-    def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
-        self.model._validate(print_prefix='Validate Clean',
-                             get_data=None, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Tgt',
-                             get_data=self.get_data, keep_org=False, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Org',
-                             get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
-        # todo: Return value
-        return 0.0, 0.0, 0.0
+    # ---------------------- I/O ----------------------------- #
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
@@ -101,3 +77,39 @@ class BadNet(Attack):
         self.mark.load_npz(file_path + '.npz')
         self.model.load(file_path + '.pth')
         print('attack results loaded from: ', file_path)
+
+    # ---------------------- Utils ---------------------------- #
+
+    def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        return self.mark.add_mark(x, **kwargs)
+
+    def loss_fn(self, _input: torch.Tensor, _label: torch.LongTensor, **kwargs) -> torch.Tensor:
+        loss_clean = self.model.loss(_input, _label, **kwargs)
+        poison_input = self.mark.add_mark(_input)
+        poison_label = self.target_class * torch.ones_like(_label)
+        loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
+        percent = self.percent / (1 - self.percent)
+        return loss_clean + percent * loss_poison
+
+    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
+        _input, _label = self.model.get_data(data)
+        percent = self.percent / (1 - self.percent)
+        if not keep_org or random.uniform(0, 1) < percent:
+            org_input, org_label = _input, _label
+            _input = self.add_mark(org_input)
+            if poison_label:
+                _label = self.target_class * torch.ones_like(org_label)
+            if keep_org:
+                _input = torch.cat((_input, org_input))
+                _label = torch.cat((_label, org_label))
+        return _input, _label
+
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
+        self.model._validate(print_prefix='Validate Clean',
+                             get_data=None, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Tgt',
+                             get_data=self.get_data, keep_org=False, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Org',
+                             get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
+        # todo: Return value
+        return 0.0, 0.0, 0.0

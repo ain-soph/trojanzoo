@@ -37,16 +37,19 @@ class Uname(Optimizer):
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                  output: Union[int, List[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
-
         if iteration is None:
             iteration = self.iteration
         if loss_fn is None:
             loss_fn = self.loss_fn
         output = self.get_output(output)
+        if isinstance(unbound_params, torch.Tensor):
+            unbound_params: List[torch.Tensor] = [unbound_params]
 
         # ----------------------------------------------------------------------------------------- #
-
-        real_params = self.transform_func(unbound_params)
+        real_params: List[torch.Tensor] = []
+        for param in unbound_params:
+            param.requires_grad = True
+            real_params.append(self.transform_func(param))
         if 'start' in output:
             self.output_info(real_params=real_params, mode='start', loss_fn=loss_fn, **kwargs)
         if iteration == 0:
@@ -59,19 +62,27 @@ class Uname(Optimizer):
 
         for _iter in range(iteration):
             if self.early_stop_check(real_params, loss_fn=loss_fn, **kwargs):
+                unbound_params.requires_grad = False
+                for param in real_params:
+                    param.detach_()
                 if 'end' in output:
                     self.output_info(real_params=real_params, mode='end', loss_fn=loss_fn, **kwargs)
                 return real_params, _iter + 1
-            loss = loss_fn(real_params)
+            loss = loss_fn(*real_params)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-            real_params = self.transform_func(unbound_params)
+            real_params: List[torch.Tensor] = []
+            for param in unbound_params:
+                real_params.append(self.transform_func(param))
             if lr_scheduler:
                 lr_scheduler.step()
             if 'middle' in output:
                 self.output_info(real_params=real_params, mode='middle',
                                  _iter=_iter, iteration=iteration, loss_fn=loss_fn, **kwargs)
+        unbound_params.requires_grad = False
+        for param in real_params:
+            param.detach_()
         if 'end' in output:
             self.output_info(real_params=real_params, mode='end', loss_fn=loss_fn, **kwargs)
         return real_params, None
