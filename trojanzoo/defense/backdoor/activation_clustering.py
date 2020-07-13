@@ -1,6 +1,7 @@
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.process import Process
+from ..defense_backdoor import Defense_Backdoor
 
 from trojanzoo.utils import to_list
 from trojanzoo.utils.model import AverageMeter
@@ -30,7 +31,7 @@ from trojanzoo.utils import Config
 env = Config.env
 
 
-class Activation_Clustering():
+class Activation_Clustering(Defense_Backdoor):
 
     """
     Activation Clustering Defense is described in the paper 'Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering'_ by Bryant Chen. The main idea is the reason why backdoor and target samples receive the same classification is different, the network identifies features in the input taht it has learned corresponding to the target class, in the case of backdoor samples, it identifies features associated with the source class and the backdoor trigger. This difference in mechanism is evident in the network activations.
@@ -68,14 +69,11 @@ class Activation_Clustering():
         model(ImageModel): the clean model trained only with clean samples.
     """
 
-    name = 'activation_clustering'
+    name: str = 'activation_clustering'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None, mix_image_num: int = 50, clean_image_ratio: float = 0.5, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis: str = "size", **kwargs):
+    def __init__(self, mix_image_num: int = 50, clean_image_ratio: float = 0.5, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis: str = "size", **kwargs):
+        super().__init__(**kwargs)
 
-        self.dataset: ImageSet = dataset
-        self.model: ImageModel = model
-        self.optimizer: optim.Optimizer = optimizer
-        self.lr_scheduler: optim.lr_scheduler._LRScheduler = lr_scheduler
 
         self.mix_image_num = mix_image_num
         self.clean_image_ratio = clean_image_ratio
@@ -92,17 +90,47 @@ class Activation_Clustering():
 
         # generate clean_dataloader, poison_dataloader
         self.clean_dataset, _ = self.dataset.split_set(dataset = self.dataset.get_full_dataset(mode='train'), length = self.clean_image_num)
-        self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset)
-        # self.poison_dataset,_ = self.dataset.plit_set(dataset =  _, length = self.poison_image_num)
-        # self.poison_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.poison_dataset)
-        # self.poison_dataset = add_mark  # ask
-        # self.mix_dataloader =  # ask
+        for i, data in enumerate(iter(self.clean_dataset)):
+            _input, _label = self.model.get_data(data)
+            clean_input = _input.view(1, _input.shape[0],_input.shape[1], _input.shape[2])
+            if i == 0:
+                clean_input_all = clean_input
+                label_all = torch.unsqueeze(_label,0)
+            else:
+                clean_input_all = torch.cat((clean_input_all, clean_input))
+                label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
+        label_all = torch.squeeze(label_all, 0)
+        self.clean_dataset = torch.utils.data.dataset.TensorDataset(clean_input_all, label_all)
+        self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
+
+
+        self.poison_dataset,_ = self.dataset.split_set(dataset = _, length = self.poison_image_num)
+        
+        for i, data in enumerate(iter(self.poison_dataset)):
+            _input, _label = self.model.get_data(data)
+            poison_input  = self.attack.add_mark(_input)
+            poison_input = poison_input.view(1, poison_input.shape[0],poison_input.shape[1], poison_input.shape[2])
+            if i == 0:
+                poison_input_all = poison_input
+                label_all = torch.unsqueeze(_label,0)
+            else:
+                poison_input_all = torch.cat((poison_input_all, poison_input))
+                label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
+        label_all = torch.squeeze(label_all, 0)
+
+        self.poison_dataset = torch.utils.data.dataset.TensorDataset(poison_input_all, label_all)
+        self.poison_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
+        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset,self.poison_dataset])
+        self.mix_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.mix_dataset, num_workers=0, pin_memory=False)
+
+            
     
-    def detect(self, **kwargs):
+    def detect(self, optimizer, lr_scheduler, **kwargs):
         """
         Record the detected poison samples, remove them and retrain the model from scratch to get a clean model.
         """
-        original_model, model, all_input, all_label, all_pred_label, all_feature_map, all_clusters = self.preprocess(self.clean_dataloader, self.model) # to be modified
+        super().detect(**kwargs)
+        original_model, model, all_input, all_label, all_pred_label, all_feature_map, all_clusters = self.preprocess(self.mix_dataloader, optimizer, lr_scheduler, self.model) # to be modified
         reduced_activations = self.reduce_dimensionality(all_feature_map, self.nb_dims, self.reduce_method)
         clusters = self.cluster_activations(reduced_activations, self.nb_clusters, self.clustering_method)
         poison_cluster_index = self.analyze_clusters(all_clusters, all_feature_map, all_label, self.cluster_analysis)
@@ -114,11 +142,17 @@ class Activation_Clustering():
         poison_input = torch.index_select(all_input, 0, poison_input_index)
         poison_label = torch.index_select(all_label, 0, poison_input_index)
         print(poison_input_index)
-        # delete those from mix_dataloader
-        # original_model._train()
+        for i in range(len(poison_input_index)):
+            all_input = all_input[torch.arange(all_input.size(0))!=poison_input_index[i]]
+            all_label = all_label[torch.arange(all_label.size(0))!=poison_input_index[i]]
+        
+        self.result_dataset = torch.utils.data.dataset.TensorDataset(all_input, all_label)
+        self.result_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.result_dataset, num_workers=0, pin_memory=False)
+        original_model._train(self.retrain_epoch, optimizer, lr_scheduler,loader_train=self.result_dataloader)
+
         
     
-    def preprocess(self, loader, model):
+    def preprocess(self, loader, optimizer, lr_scheduler, model):
         """
         Get the feature map of samples, convert to 1D tensor, reduce the dimensionality and cluster them.
 
@@ -135,8 +169,9 @@ class Activation_Clustering():
             all_feature_map (torch.FloatTensor): the feature map of all input getting from the model
             all_clusters (torch.LongTensor): the clustering result
         """
+        
         original_model = model
-        self.model._train(self.retrain_epoch, self.optimizer, self.lr_scheduler,loader_train=self.clean_dataloader)
+        self.model._train(self.retrain_epoch, optimizer, lr_scheduler,loader_train=loader)
         
         for i, data in tqdm(enumerate(loader)):
             _input, _label = self.model.get_data(data)
@@ -156,7 +191,7 @@ class Activation_Clustering():
         all_reduced_activations = self.reduce_dimensionality(all_feature_map, self.nb_dims, self.reduce_method)
         all_clusters = self.cluster_activations(all_reduced_activations, self.nb_clusters, self.clustering_method)
         all_clusters = torch.LongTensor(all_clusters)
-        return original_model, model, all_input, all_label, all_pred_label, all_feature_map, all_clusters
+        return original_model, self.model, all_input, all_label, all_pred_label, all_feature_map, all_clusters
     
 
     def reduce_dimensionality(self, activations, nb_dims: int = 10, reduce_method: str = "FastICA"):
