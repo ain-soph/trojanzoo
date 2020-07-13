@@ -28,18 +28,18 @@ class Deep_Inspect(Defense_Backdoor):
     name: str = 'deep_inspect'
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
-                 epoch: int = 10, lr=0.1,
-                 gamma_1: float = 0.0, gamma_2: float = 1e-3, **kwargs):
+                 remask_epoch: int = 10, remask_lr=0.1,
+                 gamma_1: float = 0.0, gamma_2: float = 3e-5, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
         self.data_shape: List[int] = data_shape
 
-        self.param_list['deep_inspect'] = ['sample_ratio', 'epoch', 'lr', 'gamma_1', 'gamma_2']
+        self.param_list['deep_inspect'] = ['sample_ratio', 'remask_epoch', 'remask_lr', 'gamma_1', 'gamma_2']
 
         self.sample_ratio: int = sample_ratio
-        self.epoch: int = epoch
-        self.lr: float = lr
+        self.remask_epoch: int = remask_epoch
+        self.remask_lr: float = remask_lr
         self.gamma_1: float = gamma_1
         self.gamma_2: float = gamma_2
 
@@ -64,14 +64,14 @@ class Deep_Inspect(Defense_Backdoor):
             mark_list.append(mark)
             loss_list.append(loss)
         mark_list = torch.stack(mark_list)
-        loss_list = torch.as_tensor(loss_list)
-        return mark_list, loss_list
+        norm_list = torch.as_tensor(loss_list)
+        return mark_list, norm_list
 
     def remask(self, label: int) -> (torch.Tensor, torch.Tensor):
-        generator = Generator(self.dataset.num_classes, self.data_shape)
+        generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
         for param in generator.parameters():
             param.requires_grad_()
-        optimizer = optim.Adam(generator.parameters(), lr=self.lr)
+        optimizer = optim.Adam(generator.parameters(), lr=self.remask_lr)
         optimizer.zero_grad()
         mask = self.attack.mark.mask
 
@@ -79,13 +79,13 @@ class Deep_Inspect(Defense_Backdoor):
         entropy = AverageMeter('Entropy', ':.4e')
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
-        for _epoch in range(self.epoch):
+        for _epoch in range(self.remask_epoch):
             losses.reset()
             entropy.reset()
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            for data in self.loader:
+            for data in tqdm(self.loader):
                 _input, _label = self.model.get_data(data)
                 batch_size = _label.size(0)
                 poison_label = label * torch.ones_like(_label)
@@ -96,7 +96,7 @@ class Deep_Inspect(Defense_Backdoor):
 
                 batch_acc = poison_label.eq(_output.argmax(1)).float().mean()
                 batch_entropy = self.model.criterion(_output, poison_label)
-                batch_norm = mask.norm(p=1)
+                batch_norm = mark.flatten(start_dim=1).norm(p=1, dim=1).mean()
                 batch_loss = batch_entropy + self.gamma_2 * batch_norm
 
                 acc.update(batch_acc.item(), batch_size)
@@ -110,7 +110,7 @@ class Deep_Inspect(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
             _str = ' '.join([
                 'Loss: {:.4f},'.format(losses.avg).ljust(20),
                 'Acc: {:.2f}, '.format(acc.avg).ljust(20),
@@ -122,8 +122,8 @@ class Deep_Inspect(Defense_Backdoor):
         mark = generator(noise, poison_label) * mask
         for param in generator.parameters():
             param.requires_grad = False
-        loss_pert = self.loss_pert(self.attack.mark.mark)
-        return self.attack.mark.mark, loss_pert
+        norm = mark.flatten(start_dim=1).norm(p=1, dim=1).mean()
+        return mark, norm
 
     # def loss(self, _output: torch.Tensor, mark: torch.Tensor, poison_label: torch.LongTensor) -> torch.Tensor:
     #     loss_trigger = self.model.criterion(_output, poison_label)
@@ -142,7 +142,8 @@ class Deep_Inspect(Defense_Backdoor):
 
 
 class Generator(nn.Module):
-    def __init__(self, num_classes: int = 10, data_shape: List[int] = [3, 32, 32]):
+    def __init__(self, noise_dim: int = 100, num_classes: int = 10, data_shape: List[int] = [3, 32, 32]):
+        self.noise_dim: int = noise_dim
         self.num_classes: int = num_classes
         self.data_shape: List[int] = data_shape
         super(Generator, self).__init__()
@@ -150,17 +151,19 @@ class Generator(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
         self.fc2 = nn.Linear(self.num_classes, 1000)
-        self.fc = nn.Linear(self.num_classes + 1000, 64 * self.data_shape[1] * self.data_shape[2])
+        self.fc = nn.Linear(self.noise_dim + 1000, 64 * self.data_shape[1] * self.data_shape[2])
         self.bn1 = nn.BatchNorm2d(64)
         self.deconv1 = nn.ConvTranspose2d(64, 32, 5, 1, 2)
         self.bn2 = nn.BatchNorm2d(32)
         self.deconv2 = nn.ConvTranspose2d(32, self.data_shape[0], 5, 1, 2)
+        if env['num_gpus']:
+            self.cuda()
 
     def forward(self, noise: torch.Tensor, poison_label: torch.LongTensor) -> torch.Tensor:
-        _label = onehot_label(poison_label, self.num_classes)
+        _label = onehot_label(poison_label, self.num_classes).float()
         y_ = self.fc2(_label)
         y_ = self.relu(y_)
-        x = torch.cat([x, y_], dim=1)
+        x = torch.cat([noise, y_], dim=1)
         x = self.fc(x)
         x = x.view(-1, 64, self.data_shape[1], self.data_shape[2])
         x = self.bn1(x)
