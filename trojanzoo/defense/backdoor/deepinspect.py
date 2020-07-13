@@ -75,6 +75,7 @@ class DeepInspect(Defense_Backdoor):
             loss.backward()
             optimizer.step()
 
+
         for param in generator.parameters():
             param.requires_grad = False
 
