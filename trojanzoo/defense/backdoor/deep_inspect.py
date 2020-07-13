@@ -28,7 +28,7 @@ class Deep_Inspect(Defense_Backdoor):
     name: str = 'deep_inspect'
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
-                 remask_epoch: int = 10, remask_lr=0.1,
+                 remask_epoch: int = 30, remask_lr=0.1,
                  gamma_1: float = 0.0, gamma_2: float = 3e-5, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
