@@ -4,6 +4,7 @@
 # python backdoor_defense.py --attack badnet --defense strip --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
 # python backdoor_defense.py --attack badnet --defense abs --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
 # python backdoor_defense.py --attack badnet --defense deep_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
+# python backdoor_defense.py --attack badnet --defense activation_clustering --verbose --pretrain --validate_interval 1 --mark_ratio 0.1 --epoch 1
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack, Parser_Defense
 
@@ -30,4 +31,5 @@ if __name__ == '__main__':
     defense: Defense_Backdoor = parser.module_list['defense']
 
     # ------------------------------------------------------------------------ #
-    defense.detect(**train_args)
+    defense.detect(optimizer, lr_scheduler,**train_args)
+    # defense.detect(optimizer, lr_scheduler,**train_args)  # this works for ac
