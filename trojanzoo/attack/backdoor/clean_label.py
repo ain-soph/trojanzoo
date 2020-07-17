@@ -80,7 +80,7 @@ class Clean_Label(BadNet):
         self.pgd: PGD = PGD(epsilon=epsilon, output=self.output)
 
         self.train_set = self.dataset.get_dataset('train', full=True, target_transform=torch.tensor)
-        self.train_set = self.generate_train_set(self.train_set, self.source_imgs)
+        self.train_set = self.generate_train_set(self.train_set, self.target_imgs)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
         if self.poison_generation_method == 'GAN':
@@ -147,7 +147,7 @@ class Clean_Label(BadNet):
 
         Args:
             train_set (torch.utils.data.dataset): the initial train data set.
-            source_imgs (torch.FloatTensor): the sampled source class images.
+            source_imgs (torch.FloatTensor): the sampled target class images.
 
         Returns:
             torch.utils.data.dataset: train_set after deleting the sampled source class data
@@ -179,10 +179,10 @@ class Clean_Label(BadNet):
         Returns:
             torch.Tensor: the poison images after pgd optimization.
         """
-        noise = torch.zeros_like(self.source_imgs)
+        noise = torch.zeros_like(self.target_imgs)
         def loss_func(poison_imgs):
             return self.loss(poison_imgs)
-        poison_imgs, _ = self.pgd.optimize(_input=self.source_imgs, noise=noise,
+        poison_imgs, _ = self.pgd.optimize(_input=self.target_imgs, noise=noise,
                                                loss_fn=loss_func)
         return poison_imgs
 
@@ -328,7 +328,7 @@ class WGAN(object):
 
         Args:
             imgs (torch.FloatTensor): the chosen image to get its encoding value, also considered as the output of Generator.
-            source_num (int): the amount of chosen source class image.
+            source_num (int): the amount of chosen target class image.
             noise_dim (int): the dimension of the input in the generator.
 
         Returns:
