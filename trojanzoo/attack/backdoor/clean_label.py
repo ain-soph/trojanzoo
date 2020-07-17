@@ -99,7 +99,7 @@ class Clean_Label(BadNet):
                 poison_imgs.to('cpu'), self.target_class * torch.ones(self.source_num, dtype=torch.long))
 
             final_set = torch.utils.data.ConcatDataset((poison_set, self.train_set))
-            final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set)
+            final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
             self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
                             loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
@@ -111,7 +111,7 @@ class Clean_Label(BadNet):
                 poison_imgs.to('cpu'), self.target_class * torch.ones(self.source_num, dtype=torch.long))
             
             final_set = torch.utils.data.ConcatDataset((poison_set, self.train_set))
-            final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set)
+            final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
             self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
                             loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
