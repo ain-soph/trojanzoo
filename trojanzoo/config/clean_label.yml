@@ -3,7 +3,7 @@
 preprocess_layer: classifier
 poison_generation_method: GAN
 tau:  0.4
-epsilon: 0.031
+epsilon: 0.1
 source_class: 0
 target_class: 9
 source_ratio: 0.001

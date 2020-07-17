@@ -25,7 +25,7 @@ class Parser_Clean_Label(Parser_Attack):
         parser.add_argument('--tau', dest='tau', type=float,
                             help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.4')
         parser.add_argument('--epsilon', dest='epsilon', type=float,
-                            help='the perturbation bound in input space, defaults to config[clean_label][epsilon]=8.0/255')
+                            help='the perturbation bound in input space, defaults to config[clean_label][epsilon]=0.1, 300/(3*32*32)')
 
         parser.add_argument('--source_class', dest='source_class', type=int,
                             help='the class of sampled source data, defaults to config[clean_label][source_class]=0')

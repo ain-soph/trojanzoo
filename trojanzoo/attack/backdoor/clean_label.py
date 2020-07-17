@@ -26,7 +26,7 @@ class Clean_Label(BadNet):
         preprocess_layer (str): the chosen layer used to generate adversarial example. Default: 'classifier'.
         poison_generation_method (str): the chosen method to generate poisoned sample. Default: 'PGD'.
         tau (float): the interpolation constant used to balance source imgs and target imgs. Default: 0.4.
-        epsilon (float): the perturbation bound in input space. Default: 0.031.
+        epsilon (float): the perturbation bound in input space. Default: 0.1.
         source_class (int): the class of sampled source data. Default: 0.
         target_class (int): the class of sampled target data. Default: 9.
         source_ratio (float): the ratio of source class sample used to generate poisoned sample, only for source class data,not whole training data. Default: 0.001.
@@ -43,7 +43,7 @@ class Clean_Label(BadNet):
     """
     name: str = 'clean_label'
 
-    def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str ='GAN', tau: float = 0.4, epsilon: float = 8.0/255, source_class: int = 0, target_class: int = 9, source_ratio: float = 0.001 , noise_dim: int = 100, **kwargs):
+    def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str ='GAN', tau: float = 0.4, epsilon: float = 0.1, source_class: int = 0, target_class: int = 9, source_ratio: float = 0.001 , noise_dim: int = 100, **kwargs):
         super().__init__(**kwargs)
         
         self.preprocess_layer: str = preprocess_layer
