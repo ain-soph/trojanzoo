@@ -82,7 +82,7 @@ class PGD(Optimizer):
                 if 'end' in output:
                     self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
                 return X, _iter + 1
-            if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:
+            if self.grad_method == 'hess' and _iter % self.hess_p == 0:
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)

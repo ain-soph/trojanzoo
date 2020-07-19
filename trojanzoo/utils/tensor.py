@@ -141,12 +141,6 @@ def read_img_as_tensor(path: str) -> torch.Tensor:
 
 # --------------------------------------------------------------------- #
 
-
-def to_categorical(y, num_classes):
-    """ 1-hot encodes a tensor """
-    return np.eye(num_classes, dtype="uint8")[y]
-
-
 def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     try:
         size = [batch_size]
