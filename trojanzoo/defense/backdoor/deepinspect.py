@@ -53,7 +53,7 @@ class DeepInspect(Defense_Backdoor):
 
     def cgan(self, label: int) -> (torch.Tensor, torch.Tensor):
         # load dataset
-        loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, drop_last=True)
+        loader = self.dataset.get_dataloader(mode='train', batch_size=self.sample_num, drop_last=True)
         _input, _label = next(iter(loader))
         noise = torch.rand((self.dataset.num_classes,), device=_input.device, dtype=_input.dtype)
         
@@ -74,7 +74,6 @@ class DeepInspect(Defense_Backdoor):
             loss = self.loss(logits, trigger, label)
             loss.backward()
             optimizer.step()
-
 
         for param in generator.parameters():
             param.requires_grad = False
