@@ -2,6 +2,7 @@
 
 # Train a ResNetComp18 on Cifar10 with 95% Acc
 # python train.py --verbose --batch_size 128
+# python train.py --verbose --dataset cifar100 --model resnetcomp18 --lr 0.1 --epoch 150 --lr_scheduler --step_size 50 --save
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq
 from trojanzoo.dataset import Dataset
