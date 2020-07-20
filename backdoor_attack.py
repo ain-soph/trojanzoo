@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# python backdoor_attack.py --attack badnet --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
+# python backdoor_attack.py --attack badnet --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --height 1 --width 1
 # python backdoor_attack.py --attack trojannn --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
 # python backdoor_attack.py --attack latent_backdoor --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
 

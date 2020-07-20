@@ -69,8 +69,10 @@ class Watermark:
                 height_offset=self.height_offset, width_offset=self.width_offset)
 
     # add mark to the Image with mask.
-    def add_mark(self, x: torch.Tensor) -> torch.Tensor:
-        if self.random_pos:
+    def add_mark(self, x: torch.Tensor, random_pos=None) -> torch.Tensor:
+        if random_pos is None:
+            random_pos = self.random_pos
+        if random_pos:
             batch_size = x.size(0)
             # height_offset = torch.randint(high=self.data_shape[-2] - self.height, size=[batch_size])
             # width_offset = torch.randint(high=self.data_shape[-1] - self.width, size=[batch_size])
@@ -112,7 +114,7 @@ class Watermark:
     @staticmethod
     def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         height, width = org_mark.shape[-2:]
-        mark = -torch.ones_like(org_mark, dtype=torch.float)
+        mark = torch.zeros_like(org_mark, dtype=torch.float)
         mask = torch.zeros([height, width], dtype=torch.bool)
         for i in range(height):
             for j in range(width):

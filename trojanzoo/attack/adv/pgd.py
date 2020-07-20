@@ -29,7 +29,7 @@ class PGD(Attack, PGD_Optimizer):
         correct = 0
         total = 0
         total_iter = 0
-        for i, data in enumerate(self.dataset.loader['test']):
+        for data in self.dataset.loader['test']:
             if total >= 100:
                 break
             _input, _label = self.model.remove_misclassify(data)

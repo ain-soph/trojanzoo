@@ -52,7 +52,7 @@ class Latent_Backdoor(BadNet):
         print('Preprocess Mark')
         self.preprocess_mark(data=data)
         print('Retrain')
-        return super().attack(loss_fn=self.loss_fn, get_data=None, **kwargs)
+        return super().attack(**kwargs)
 
     def sample_data(self) -> Dict[str, Tuple[torch.Tensor, torch.LongTensor]]:
         other_classes = list(range(self.dataset.num_classes))
