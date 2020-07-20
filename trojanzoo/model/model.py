@@ -318,7 +318,7 @@ class Model:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
                 loss = loss_fn(_input, _label)
-                loss.backward()
+                loss.backward(retain_graph=True)
                 optimizer.step()
                 optimizer.zero_grad()
                 with torch.no_grad():
