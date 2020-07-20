@@ -44,7 +44,6 @@ class TrojanNN(BadNet):
 
         self.param_list['trojannn'] = ['preprocess_layer', 'threshold', 'target_value',
                                        'neuron_lr', 'neuron_epoch', 'neuron_num']
-        self.param_list['trojannn_runtime'] = ['neuron_idx']
         self.preprocess_layer: str = preprocess_layer
         self.threshold: float = threshold
         self.target_value: float = target_value

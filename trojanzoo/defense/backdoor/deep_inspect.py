@@ -3,7 +3,7 @@
 from ..defense_backdoor import Defense_Backdoor
 
 from trojanzoo.utils import to_list, normalize_mad
-from trojanzoo.utils.model import onehot_label, AverageMeter
+from trojanzoo.utils.model import to_categorical, AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
@@ -132,9 +132,9 @@ class Deep_Inspect(Defense_Backdoor):
     #     return loss_trigger + self.gamma_2 * loss_pert  # self.gamma_1 * loss_gan +
 
     # def loss_gan(self, _output: torch.Tensor, label: int) -> torch.Tensor:
-    #     onehot_label = torch.zeros_like(_output)
-    #     onehot_label[:, label] = 1.0
-    #     return self.mse_criterion(_output, onehot_label)
+    #     to_categorical = torch.zeros_like(_output)
+    #     to_categorical[:, label] = 1.0
+    #     return self.mse_criterion(_output, to_categorical)
 
     # @staticmethod
     # def loss_pert(self, mark: torch.Tensor) -> torch.Tensor:
@@ -160,7 +160,7 @@ class Generator(nn.Module):
             self.cuda()
 
     def forward(self, noise: torch.Tensor, poison_label: torch.LongTensor) -> torch.Tensor:
-        _label = onehot_label(poison_label, self.num_classes).float()
+        _label = to_categorical(poison_label, self.num_classes).float()
         y_ = self.fc2(_label)
         y_ = self.relu(y_)
         x = torch.cat([noise, y_], dim=1)

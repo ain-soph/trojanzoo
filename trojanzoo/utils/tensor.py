@@ -124,7 +124,11 @@ def save_tensor_as_img(path: str, _tensor: torch.Tensor):
     dir, _ = os.path.split(path)
     if not os.path.exists(dir):
         os.makedirs(dir)
-    _tensor = _tensor.squeeze()
+    if len(_tensor.shape) == 4:
+        assert _tensor.shape[0] == 1
+        _tensor = _tensor[0]
+    if len(_tensor.shape) == 3 and _tensor.shape[0] == 1:
+        _tensor = _tensor[0]
     img = to_numpy(float2byte(_tensor))
     # image.imsave(path, img)
     I = Image.fromarray(img)
@@ -140,6 +144,7 @@ def read_img_as_tensor(path: str) -> torch.Tensor:
     return byte2float(I)
 
 # --------------------------------------------------------------------- #
+
 
 def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     try:

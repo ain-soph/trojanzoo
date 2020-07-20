@@ -218,7 +218,7 @@ class Model:
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
     def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
-             features=True, map_location='default', verbose=False):
+             features=True, map_location='default', verbose=False, **kwargs):
         if map_location:
             if map_location == 'default':
                 map_location = env['device']
@@ -248,7 +248,7 @@ class Model:
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, features=True, verbose=False):
+    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, features=True, verbose=False, **kwargs):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -273,7 +273,8 @@ class Model:
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None, validate_func: Callable = None, **kwargs):
+               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
+               validate_func: Callable = None, epoch_func: Callable = None, save_fn=None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -283,6 +284,8 @@ class Model:
             loss_fn = self.loss
         if validate_func is None:
             validate_func = self._validate
+        if save_fn is None:
+            save_fn = self.save
 
         _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
@@ -306,9 +309,11 @@ class Model:
             losses.reset()
             top1.reset()
             top5.reset()
+            epoch_start = time.perf_counter()
             if verbose:
                 loader_train = tqdm(loader_train)
-            epoch_start = time.perf_counter()
+            if epoch_func is not None:
+                epoch_func()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
@@ -345,7 +350,7 @@ class Model:
                                                   verbose=verbose, indent=indent, **kwargs)
                     self.train()
                     if cur_acc >= best_acc and save:
-                        self.save(prefix=prefix, verbose=verbose)
+                        save_fn(prefix=prefix, verbose=verbose)
                         best_acc = cur_acc
                     if verbose:
                         print('-' * 50)
@@ -375,9 +380,9 @@ class Model:
 
         # start = time.perf_counter()
         # end = start
+        epoch_start = time.perf_counter()
         if verbose:
             loader = tqdm(loader)
-        epoch_start = time.perf_counter()
         with torch.no_grad():
             for data in loader:
                 _input, _label = get_data(data, mode='valid', **kwargs)
