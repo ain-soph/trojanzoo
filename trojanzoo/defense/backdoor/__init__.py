@@ -6,3 +6,4 @@ from .abs import ABS
 from .fine_pruning import Fine_Pruning
 from .activation_clustering import Activation_Clustering
 from .deep_inspect import Deep_Inspect
+from .spectral_signature import Spectral_Signature
