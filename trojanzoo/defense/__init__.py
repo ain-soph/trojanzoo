@@ -17,5 +17,6 @@ class_dict = {
     'activation_clustering': 'Activation_Clustering',
     'fine_pruning': 'Fine_Pruning',
     'deep_inspect': 'Deep_Inspect',
-    'spectral_signature': 'Spectral_Signature'
+    'spectral_signature': 'Spectral_Signature',
+    'neuron_inspect': 'Neuron_Inspect'
 }
