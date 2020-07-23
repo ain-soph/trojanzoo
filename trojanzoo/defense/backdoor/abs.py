@@ -25,7 +25,6 @@ env = Config.env
 
 
 class ABS(Defense_Backdoor):
-
     name: str = 'abs'
 
     # todo: use_mask=False case, X=(1-mask)*_input + mask* mark is not correct.
@@ -168,7 +167,7 @@ class ABS(Defense_Backdoor):
         x, y = [], []
         for _class in range(self.model.num_classes):
             loader = self.dataset.get_dataloader(mode='train', batch_size=seed_class_num, classes=[_class],
-                                                 shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
+                                                 shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             x.append(_input)
             y.append(_label)

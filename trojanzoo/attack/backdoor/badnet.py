@@ -115,5 +115,6 @@ class BadNet(Attack):
         _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
                                                  get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         # todo: Return value
-        
-        return 0.0, clean_acc + 0.8 * target_acc, 0.0
+        if self.benign_acc - clean_acc > 5:
+            target_acc = 0.0
+        return 0.0, target_acc, 0.0

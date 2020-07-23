@@ -112,9 +112,9 @@ class Hidden_Trigger(BadNet):
         source = list(range(self.dataset.num_classes))
         source.pop(target)
         self.target_loader = self.dataset.get_dataloader('train', full=True, classes=target,
-                                                         batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
+                                                         batch_size=self.poison_num, shuffle=True, num_workers=0)
         self.source_loader = self.dataset.get_dataloader('train', full=True, classes=source,
-                                                         batch_size=self.poison_num, shuffle=True, num_workers=0, drop_last=True)
+                                                         batch_size=self.poison_num, shuffle=True, num_workers=0)
         target_imgs, _ = self.model.get_data(next(iter(self.target_loader)))
         source_imgs, _ = self.model.get_data(next(iter(self.source_loader)))
         source_imgs = self.add_mark(source_imgs)
