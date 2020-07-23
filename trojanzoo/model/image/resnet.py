@@ -15,7 +15,7 @@ class _ResNet(_ImageModel):
 
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
-        _model = models.__dict__[
+        _model: models.ResNet = models.__dict__[
             'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -107,8 +107,7 @@ class ResNet(ImageModel):
         if self.num_classes == 1000:
             self._model.classifier.load_state_dict(_dict, strict=False)
         if verbose:
-            print(
-                'Model {} loaded From Official Website: '.format(self.name), url)
+            print('Model {} loaded From Official Website: '.format(self.name), url)
 
 
 class _ResNetcomp(_ResNet):

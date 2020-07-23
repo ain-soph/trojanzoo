@@ -14,8 +14,8 @@ class _VGG(_ImageModel):
     # layer 13 or 16
     def __init__(self, layer=13, **kwargs):
         super().__init__(**kwargs)
-        _model = models.__dict__[
-            'vgg'+str(layer)](num_classes=self.num_classes)
+        _model: models.VGG = models.__dict__[
+            'vgg' + str(layer)](num_classes=self.num_classes)
         self.features = _model.features
         self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
         self.classifier = _model.classifier
@@ -39,7 +39,7 @@ class VGG(ImageModel):
                          default_layer=default_layer, **kwargs)
 
     def load_official_weights(self, verbose=True):
-        url = model_urls['vgg'+str(self.layer)]
+        url = model_urls['vgg' + str(self.layer)]
         _dict = model_zoo.load_url(url)
         if self.num_classes == 1000:
             self._model.load_state_dict(_dict)
@@ -50,8 +50,7 @@ class VGG(ImageModel):
                     new_dict[name] = param
             self._model.load_state_dict(new_dict, strict=False)
         if verbose:
-            print(
-                'Model {} loaded From Official Website: '.format(self.name), url)
+            print('Model {} loaded From Official Website: '.format(self.name), url)
 
 
 class _VGGcomp(_VGG):
@@ -68,7 +67,7 @@ class VGGcomp(VGG):
                          conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
 
     def load_official_weights(self, verbose=True):
-        url = model_urls['vgg'+str(self.layer)]
+        url = model_urls['vgg' + str(self.layer)]
         _dict = model_zoo.load_url(url)
         new_dict = OrderedDict()
         for name, param in _dict.items():

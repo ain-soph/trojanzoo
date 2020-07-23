@@ -55,7 +55,6 @@ class Neural_Cleanse(Defense_Backdoor):
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
-            # print('label: ', label)
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, mask, loss = self.remask(
                 label)

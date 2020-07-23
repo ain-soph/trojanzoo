@@ -58,7 +58,6 @@ class Deep_Inspect(Defense_Backdoor):
         mark_list, loss_list = [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
-            # print('label: ', label)
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, loss = self.remask(label)
             mark_list.append(mark)
