@@ -158,16 +158,16 @@ def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     return x
 
 
-def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
+def add_noise(_input: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
     if noise is None:
-        shape = x.shape
+        shape = _input.shape
         if batch:
             shape = shape[1:]
-        noise = torch.normal(mean=mean, std=std, size=shape, device=x.device)
+        noise = torch.normal(mean=mean, std=std, size=shape, device=_input.device)
     batch_noise = noise
     if batch:
-        batch_noise = repeat_to_batch(noise, x.shape[0])
-    noisy_input = (x + batch_noise).clamp(0, 1)
+        batch_noise = repeat_to_batch(noise, _input.shape[0])
+    noisy_input = (_input + batch_noise).clamp(0, 1)
     return noisy_input
 
 

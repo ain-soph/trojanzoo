@@ -47,6 +47,8 @@ class _ImageModel(_Model):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
     def preprocess(self, x: torch.Tensor) -> torch.Tensor:
+        if len(x.shape) == 3:
+            x = x.unsqueeze(0)
         if self.norm_par:
             mean = self.norm_par['mean'].to(
                 x.device, non_blocking=True)[None, :, None, None]

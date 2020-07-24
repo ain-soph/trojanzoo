@@ -69,11 +69,11 @@ class Watermark:
                 height_offset=self.height_offset, width_offset=self.width_offset)
 
     # add mark to the Image with mask.
-    def add_mark(self, x: torch.Tensor, random_pos=None) -> torch.Tensor:
+    def add_mark(self, _input: torch.Tensor, random_pos=None, **kwargs) -> torch.Tensor:
         if random_pos is None:
             random_pos = self.random_pos
         if random_pos:
-            batch_size = x.size(0)
+            batch_size = _input.size(0)
             # height_offset = torch.randint(high=self.data_shape[-2] - self.height, size=[batch_size])
             # width_offset = torch.randint(high=self.data_shape[-1] - self.width, size=[batch_size])
             height_offset = random.randint(0, self.data_shape[-2] - self.height)
@@ -82,7 +82,7 @@ class Watermark:
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
         _mask = mask * alpha_mask
-        return x + _mask * (mark - x)
+        return _input + _mask * (mark - _input)
 
     @staticmethod
     def get_edge_color(mark: torch.Tensor, data_shape: List[int],

@@ -40,6 +40,9 @@ class BadNet(Attack):
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
+        _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
+                                               get_data=None, **kwargs)
+        self.clean_acc = clean_acc
 
     def attack(self, epoch: int, save=False, get_data=None, loss_fn='self', **kwargs):
         if isinstance(get_data, str) and get_data == 'self':
@@ -91,8 +94,7 @@ class BadNet(Attack):
         poison_input = self.mark.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
-        percent = self.percent / (1 - self.percent)
-        return loss_clean + percent * loss_poison
+        return (1 - self.percent) * loss_clean + self.percent * loss_poison
 
     def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
         _input, _label = self.model.get_data(data)
@@ -108,13 +110,13 @@ class BadNet(Attack):
         return _input, _label
 
     def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
-        _, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
-                                               get_data=None, **kwargs)
-        _, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                                get_data=self.get_data, keep_org=False, **kwargs)
+        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+                                                        get_data=None, **kwargs)
+        target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
+                                                          get_data=self.get_data, keep_org=False, **kwargs)
         _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
                                                  get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         # todo: Return value
-        if self.benign_acc - clean_acc > 5:
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
             target_acc = 0.0
-        return 0.0, target_acc, 0.0
+        return clean_loss + target_loss, target_acc, clean_acc

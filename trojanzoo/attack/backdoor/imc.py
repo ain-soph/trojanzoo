@@ -45,6 +45,6 @@ class IMC(BadNet):
         super().attack(epoch, save=save, epoch_func=self.epoch_func, **kwargs)
 
     def epoch_func(self, **kwargs):
-        for data in self.dataset.loader['test']:
+        for data in self.dataset.loader['train']:
             _input, _label = self.model.get_data(data)
-            adv_input, _iter = self.craft_example(_input)
+            adv_input, _iter = self.pgd.craft_example(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)

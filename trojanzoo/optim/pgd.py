@@ -51,7 +51,7 @@ class PGD(Optimizer):
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
-                 output: Union[int, List[str]] = None, **kwargs):
+                 output: Union[int, List[str]] = None, add_noise_fn=None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
         if alpha is None:
@@ -62,6 +62,8 @@ class PGD(Optimizer):
             iteration = self.iteration
         if loss_fn is None:
             loss_fn = self.loss_fn
+        if add_noise_fn is None:
+            add_noise_fn = add_noise
         output = self.get_output(output)
 
         # ----------------------------------------------------------------------------------------- #
@@ -73,7 +75,7 @@ class PGD(Optimizer):
         if iteration == 0 or alpha == 0.0 or epsilon == 0.0:
             return _input, None
 
-        X = add_noise(_input, noise, batch=self.universal)
+        X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
 
         # ----------------------------------------------------------------------------------------- #
 
@@ -86,7 +88,7 @@ class PGD(Optimizer):
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)
-            grad = self.calc_grad(loss_fn, X)
+            grad = self.calc_grad(loss_fn, noise)
             if self.grad_method != 'white' and 'middle' in output:
                 real_grad = self.whitebox_grad(loss_fn, X)
                 prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
@@ -95,10 +97,11 @@ class PGD(Optimizer):
                 grad = grad.mean(dim=0)
             noise.data = (noise - alpha * torch.sign(grad)).data
             noise.data = self.projector(noise, epsilon, norm=self.norm).data
-            X = add_noise(_input, noise, batch=self.universal)
-            noise.data = (X - _input).data
+            X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
             if self.universal:
-                noise.data = (noise.sign() * noise.abs().mode(dim=0)).data
+                noise.data = (X - _input).mode(dim=0).data
+            else:
+                noise.data = (X - _input).data
 
             if 'middle' in output:
                 self.output_info(_input=_input, noise=noise, mode='middle',
