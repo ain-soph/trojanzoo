@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from ..attack import Parser_Attack
+from .badnet import Parser_BadNet
 
 
-class Parser_TrojanNN(Parser_Attack):
+class Parser_TrojanNN(Parser_BadNet):
     r"""Trojan Net Backdoor Attack Parser
 
     Attributes:

@@ -5,7 +5,7 @@ dataset='cifar10'
 model='resnetcomp18'
 attack='latent_backdoor'
 
-CUDA_VISIBLE_DEVICES=2
+CUDA_VISIBLE_DEVICES=1
 
 alpha=0.0
 for size in {1..7}
