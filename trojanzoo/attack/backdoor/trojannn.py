@@ -90,6 +90,8 @@ class TrojanNN(BadNet):
             if cost < self.threshold:
                 break
             x, _ = self.pgd.craft_example(mark, noise=noise, iteration=1, loss_fn=loss_fn)
+            noise = noise * self.mark.mask
+            x = x * self.mark.mask
         print("Neuron Value After Preprocessing: ",
               self.get_neuron_value(x, neuron_idx))
         return x
