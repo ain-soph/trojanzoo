@@ -58,9 +58,9 @@ class BadNet(Attack):
             mark_alpha = self.mark.mark_alpha
         if target_class is None:
             target_class = self.target_class
-        _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({height:d},{width:d})_percent{percent:.2f}'.format(
+        _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({height:d},{width:d})'.format(
             mark=os.path.split(self.mark.mark_path)[1][:-4],
-            target=target_class, mark_alpha=mark_alpha, percent=self.percent,
+            target=target_class, mark_alpha=mark_alpha,
             height=self.mark.height, width=self.mark.width)
         # _epoch{epoch:d} epoch=epoch,
         if self.mark.random_pos:

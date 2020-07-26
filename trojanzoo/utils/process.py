@@ -79,11 +79,12 @@ class Model_Process(Process):
 
         # ----------------------------------------------------------------------------- #
         if folder_path is None:
-            folder_path = env['result_dir'] + self.name + '/'
+            folder_path = env['result_dir']
             if dataset and isinstance(dataset, ImageSet):
                 folder_path += dataset.name + '/'
             if model and isinstance(model, ImageModel):
                 folder_path += model.name + '/'
+            folder_path += self.name + '/'
         self.folder_path = folder_path
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
