@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..imagemodel import _ImageModel, ImageModel
 
+import re
 from collections import OrderedDict
 
 import torch
@@ -89,6 +90,18 @@ class DenseNet(ImageModel):
     def load_official_weights(self, verbose=True):
         url = model_urls['densenet' + str(self.layer)]
         _dict = model_zoo.load_url(url)
+        pattern = re.compile(
+            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+        for key in list(_dict.keys()):
+            res = pattern.match(key)
+            if res:
+                new_key = res.group(1) + res.group(2)
+                _dict[new_key] = _dict[key]
+                del _dict[key]
+        _dict['classifier.fc.weight'] = _dict['classifier.weight']
+        _dict['classifier.fc.bias'] = _dict['classifier.bias']
+        del _dict['classifier.weight']
+        del _dict['classifier.bias']
         if self.num_classes == 1000:
             self._model.load_state_dict(_dict)
         else:
