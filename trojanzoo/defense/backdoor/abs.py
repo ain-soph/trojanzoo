@@ -174,13 +174,13 @@ class ABS(Defense_Backdoor):
         x = torch.cat(x).numpy()
         y = torch.cat(y).numpy()
         seed_data = {'input': x, 'label': y}
-        seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.name, self.dataset.name, self.seed_num)
+        seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.dataset.name, self.name, self.seed_num)
         np.save(seed_path, seed_data)
         print('seed data saved at: ', seed_path)
         return seed_data
 
     def load_seed_data(self) -> Dict[str, torch.Tensor]:
-        seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.name, self.dataset.name, self.seed_num)
+        seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.dataset.name, self.name, self.seed_num)
         seed_data: Dict[str, torch.Tensor] = {}
         seed_data = np.load(seed_path, allow_pickle=True).item() if os.path.exists(seed_path) \
             else self.save_seed_data()
