@@ -2,10 +2,10 @@ work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
 dataset='cifar10'
-model='resnetcomp18'
+model='vggcomp13'
 attack='trojannn'
 
-CUDA_VISIBLE_DEVICES=3
+CUDA_VISIBLE_DEVICES=2
 
 size=2
 for alpha in {1..9}
