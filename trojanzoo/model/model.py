@@ -239,12 +239,12 @@ class Model:
                     self._model.classifier.load_state_dict(
                         torch.load(file_path, map_location=map_location))
             except Exception as e:
-                print('Model file path: ', file_path)
+                print(f'Model file path: {file_path}')
                 raise e
         else:
-            raise FileNotFoundError('Model file not exist: ', file_path)
+            raise FileNotFoundError(f'Model file not exist: {file_path}')
         if verbose:
-            print("Model {} loaded from: ".format(self.name), file_path)
+            print(f'Model {self.name} loaded from: {file_path}')
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
@@ -263,11 +263,11 @@ class Model:
         _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
         torch.save(_dict, file_path)
         if verbose:
-            print('Model {} saved at: '.format(self.name), file_path)
+            print(f'Model {self.name} saved at: {file_path}')
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
-        raise NotImplementedError(self.name + ' has no official weights.')
+        raise NotImplementedError(f'{self.name} has no official weights.')
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
@@ -299,7 +299,7 @@ class Model:
         # progress = ProgressMeter(
         #     len(trainloader),
         #     [batch_time, data_time, losses, top1, top5],
-        #     prefix="Epoch: [{}]".format(epoch))
+        #     prefix=f'Epoch: [{epoch}]')
 
         self.activate_params(optimizer.param_groups[0]['params'])
         optimizer.zero_grad()
@@ -335,10 +335,10 @@ class Model:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                     output_iter(_epoch + 1, epoch), **ansi).ljust(64)
                 _str = ' '.join([
-                    'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                    'Top1 Acc: {:.3f}, '.format(top1.avg).ljust(20),
-                    'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
-                    'Time: {},'.format(epoch_time).ljust(20),
+                    f'Loss: {losses.avg:.4f},'.ljust(20),
+                    f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
+                    f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
+                    f'Time: {epoch_time},'.ljust(20),
                 ])
                 prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
             if lr_scheduler:
@@ -410,10 +410,10 @@ class Model:
         if verbose:
             pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi).ljust(35)
             _str = ' '.join([
-                'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                'Top1 Acc: {:.3f}, '.format(top1.avg).ljust(20),
-                'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
-                'Time: {},'.format(epoch_time).ljust(20),
+                f'Loss: {losses.avg:.4f},'.ljust(20),
+                f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
+                f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
         return losses.avg, top1.avg, top5.avg

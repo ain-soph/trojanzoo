@@ -41,7 +41,7 @@ class PGD(Attack, PGD_Optimizer):
             if _iter:
                 correct += 1
                 total_iter += _iter
-            print('{} / {}'.format(correct, total))
+            print(f'{correct} / {total}')
             print('current iter: ', _iter)
             print('succ rate: ', float(correct) / total)
             if correct > 0:

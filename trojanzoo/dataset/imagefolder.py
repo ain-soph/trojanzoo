@@ -35,13 +35,13 @@ class ImageFolder(ImageSet):
         file_path = self.download()
         uncompress(file_path=file_path.values(),
                    target_path=self.folder_path + self.name, verbose=verbose)
-        os.rename(self.folder_path + self.name + '/{}/'.format(self.org_folder_name['train']),
+        os.rename(self.folder_path + self.name + f'/{self.org_folder_name["train"]}/',
                   self.folder_path + self.name + '/train/')
         if '/' in self.org_folder_name['train']:
             shutil.rmtree(self.folder_path + self.name + '/' +
                           self.org_folder_name['train'].split('/')[0])
         if self.valid_set:
-            os.rename(self.folder_path + self.name + '/{}/'.format(self.org_folder_name['valid']),
+            os.rename(self.folder_path + self.name + f'/{self.org_folder_name["valid"]}/',
                       self.folder_path + self.name + '/valid/')
             if '/' in self.org_folder_name['valid']:
                 shutil.rmtree(self.folder_path + self.name + '/' +
@@ -50,7 +50,7 @@ class ImageFolder(ImageSet):
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
             transform = self.get_transform(mode=mode)
-        return datasets.ImageFolder(root=self.folder_path + self.name + '/{}/'.format(mode),
+        return datasets.ImageFolder(root=self.folder_path + self.name + f'/{mode}/',
                                     transform=transform, **kwargs)
 
     def download(self, url: Dict[str, str] = None, file_path: str = None,
@@ -120,7 +120,7 @@ class ImageFolder(ImageSet):
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
                     prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
-                           'dst: {:15s}    src: {:15s}    image_num: {:>8d}'.format(dst_class, src_class, len(_list)), indent=10)
+                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     for _file in tqdm(_list):
                         shutil.copyfile(src_path + src_mode + '/' + src_class + '/' + _file,
                                         dst_path + dst_mode + '/' + dst_class + '/' + _file)

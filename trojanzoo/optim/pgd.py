@@ -115,7 +115,7 @@ class PGD(Optimizer):
         with torch.no_grad():
             loss = float(loss_fn(_input + noise))
             norm = noise.norm(p=self.norm)
-            prints('L-{p} norm: {norm}    loss: {loss:.5f}'.format(p=self.norm, norm=norm, loss=loss), indent=self.indent)
+            prints(f'L-{self.norm} norm: {norm}    loss: {loss:.5f}', indent=self.indent)
 
     @staticmethod
     def projector(noise: torch.Tensor, epsilon: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:

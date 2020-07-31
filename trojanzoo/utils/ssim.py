@@ -85,32 +85,25 @@ class SSIM(nn.Module):
             img2: torch.Tensor) -> torch.Tensor:
 
         if not torch.is_tensor(img1):
-            raise TypeError("Input img1 type is not a torch.Tensor. Got {}"
-                            .format(type(img1)))
+            raise TypeError(f'Input img1 type is not a torch.Tensor. Got {type(img1)}')
 
         if not torch.is_tensor(img2):
-            raise TypeError("Input img2 type is not a torch.Tensor. Got {}"
-                            .format(type(img2)))
+            raise TypeError(f'Input img2 type is not a torch.Tensor. Got {type(img2)}')
 
         if not len(img1.shape) == 4:
-            raise ValueError("Invalid img1 shape, we expect BxCxHxW. Got: {}"
-                             .format(img1.shape))
+            raise ValueError(f'Invalid img1 shape, we expect BxCxHxW. Got: {img1.shape}')
 
         if not len(img2.shape) == 4:
-            raise ValueError("Invalid img2 shape, we expect BxCxHxW. Got: {}"
-                             .format(img2.shape))
+            raise ValueError(f'Invalid img2 shape, we expect BxCxHxW. Got: {img2.shape}')
 
         if not img1.shape == img2.shape:
-            raise ValueError("img1 and img2 shapes must be the same. Got: {} and {}"
-                             .format(img1.shape, img2.shape))
+            raise ValueError(f'img1 and img2 shapes must be the same. Got: {img1.shape} and {img2.shape}')
 
         if not img1.device == img2.device:
-            raise ValueError("img1 and img2 must be in the same device. Got: {} and {}"
-                             .format(img1.device, img2.device))
+            raise ValueError(f'img1 and img2 must be in the same device. Got: {img1.device} and {img2.device}')
 
         if not img1.dtype == img2.dtype:
-            raise ValueError("img1 and img2 must be in the same dtype. Got: {} and {}"
-                             .format(img1.dtype, img2.dtype))
+            raise ValueError(f'img1 and img2 must be in the same dtype. Got: {img1.dtype} and {img2.dtype}')
 
         # prepare kernel
         b, c, h, w = img1.shape
@@ -167,8 +160,7 @@ def normalize_kernel2d(input: torch.Tensor) -> torch.Tensor:
     r"""Normalizes both derivative and smoothing kernel.
     """
     if len(input.size()) < 2:
-        raise TypeError("input should be at least 2D tensor. Got {}"
-                        .format(input.size()))
+        raise TypeError(f'input should be at least 2D tensor. Got {input.size()}')
     norm: torch.Tensor = input.abs().sum(dim=-1).sum(dim=-1)
     return input / (norm.unsqueeze(-1).unsqueeze(-1))
 
@@ -210,7 +202,7 @@ def get_gaussian_kernel1d(kernel_size: int,
             kernel_size <= 0)):
         raise TypeError(
             "kernel_size must be an odd positive integer. "
-            "Got {}".format(kernel_size)
+            f"Got {kernel_size}"
         )
     window_1d: torch.Tensor = gaussian(kernel_size, sigma)
     return window_1d
@@ -248,15 +240,9 @@ def get_gaussian_kernel2d(
     #             [0.0370, 0.0720, 0.0899, 0.0720, 0.0370]])
     """
     if not isinstance(kernel_size, tuple) or len(kernel_size) != 2:
-        raise TypeError(
-            "kernel_size must be a tuple of length two. Got {}".format(
-                kernel_size
-            )
-        )
+        raise TypeError(f"kernel_size must be a tuple of length two. Got {kernel_size}")
     if not isinstance(sigma, tuple) or len(sigma) != 2:
-        raise TypeError(
-            "sigma must be a tuple of length two. Got {}".format(sigma)
-        )
+        raise TypeError(f"sigma must be a tuple of length two. Got {sigma}")
     ksize_x, ksize_y = kernel_size
     sigma_x, sigma_y = sigma
     kernel_x: torch.Tensor = get_gaussian_kernel1d(ksize_x, sigma_x, force_even)
@@ -306,29 +292,24 @@ def filter2D(input: torch.Tensor, kernel: torch.Tensor,
         as the input.
     """
     if not isinstance(input, torch.Tensor):
-        raise TypeError("Input type is not a torch.Tensor. Got {}"
-                        .format(type(input)))
+        raise TypeError(f'Input type is not a torch.Tensor. Got {type(input)}')
 
     if not isinstance(kernel, torch.Tensor):
-        raise TypeError("Input kernel type is not a torch.Tensor. Got {}"
-                        .format(type(kernel)))
+        raise TypeError(f'Input kernel type is not a torch.Tensor. Got {type(kernel)}')
 
     if not isinstance(border_type, str):
-        raise TypeError("Input border_type is not string. Got {}"
-                        .format(type(kernel)))
+        raise TypeError(f'Input border_type is not string. Got {type(kernel)}')
 
     if not len(input.shape) == 4:
-        raise ValueError("Invalid input shape, we expect BxCxHxW. Got: {}"
-                         .format(input.shape))
+        raise ValueError(f'Invalid input shape, we expect BxCxHxW. Got: {input.shape}')
 
     if not len(kernel.shape) == 3:
-        raise ValueError("Invalid kernel shape, we expect 1xHxW. Got: {}"
-                         .format(kernel.shape))
+        raise ValueError(f'Invalid kernel shape, we expect 1xHxW. Got: {kernel.shape}')
 
     borders_list: List[str] = ['constant', 'reflect', 'replicate', 'circular']
     if border_type not in borders_list:
-        raise ValueError("Invalid border_type, we expect the following: {0}."
-                         "Got: {1}".format(borders_list, border_type))
+        raise ValueError(f"Invalid border_type, we expect the following: {borders_list}."
+                         f"Got: {border_type}")
 
     # prepare kernel
     b, c, h, w = input.shape

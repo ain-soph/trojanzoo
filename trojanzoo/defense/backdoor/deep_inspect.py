@@ -111,11 +111,11 @@ class Deep_Inspect(Defense_Backdoor):
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                 output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
             _str = ' '.join([
-                'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                'Acc: {:.2f}, '.format(acc.avg).ljust(20),
-                'Norm: {:.4f},'.format(norm.avg).ljust(20),
-                'Entropy: {:.4f},'.format(entropy.avg).ljust(20),
-                'Time: {},'.format(epoch_time).ljust(20),
+                f'Loss: {losses.avg:.4f},'.ljust(20),
+                f'Acc: {acc.avg:.2f}, '.ljust(20),
+                f'Norm: {norm.avg:.4f},'.ljust(20),
+                f'Entropy: {entropy.avg:.4f},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
         mark = generator(noise, poison_label) * mask

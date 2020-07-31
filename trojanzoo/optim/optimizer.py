@@ -35,7 +35,7 @@ class Optimizer(Process):
 
     def output_info(self, mode='start', _iter=0, iteration=0, **kwargs):
         if mode in ['start', 'end']:
-            prints('{name} Optimize {mode}'.format(name=self.name, mode=mode), indent=self.indent)
+            prints(f'{self.name} Optimize {mode}', indent=self.indent)
         elif mode in ['middle']:
             self.output_iter(name=self.name, _iter=_iter, iteration=iteration, indent=self.indent + 4)
         if 'memory' in self.output:

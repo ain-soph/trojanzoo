@@ -98,7 +98,7 @@ class Dataset:
         raise NotImplementedError()
 
     def summary(self, indent: int = 0):
-        prints('{:<10s} Parameters: '.format(self.name), indent=indent)
+        prints(f'{self.name:<10s} Parameters: ', indent=indent)
         d = self.__dict__
         for key, value in self.param_list.items():
             prints(key, indent=indent + 10)
