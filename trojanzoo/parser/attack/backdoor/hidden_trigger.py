@@ -21,8 +21,8 @@ class Parser_Hidden_Trigger(Parser_BadNet):
         parser.add_argument('--epsilon', dest='epsilon', type=int,
                             help='the perturbation threshold in input space, defaults to config[hidden][epsilon]=16')
 
-        parser.add_argument('--poison_num', dest='poison_num', type=int,
-                            help='the number of poisoned images, defaults to config[hidden][poisoned_image_num]=100')
+        # parser.add_argument('--poison_num', dest='poison_num', type=int,
+        #                     help='the number of poisoned images, defaults to config[hidden][poisoned_image_num]=100')
         parser.add_argument('--poison_iteration', dest='poison_iteration', type=int,
                             help='the iteration number to generate one poison image, defaults to config[hidden][poison_generation_iteration]=5000')
         parser.add_argument('--poison_lr', dest='poison_lr', type=float,
