@@ -3,6 +3,7 @@
 from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.utils import save_tensor_as_img
+from trojanzoo.utils.sgm import register_hook
 
 import random
 from typing import Union, List
@@ -34,12 +35,16 @@ class BadNet(Attack):
 
     name: str = 'badnet'
 
-    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
+    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, sgm=False, sgm_gamma: float = 1.0, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['badnet'] = ['target_class', 'percent']
+        self.param_list['badnet'] = ['target_class', 'percent', 'sgm', 'sgm_gamma']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
+        self.sgm: bool = sgm
+        self.sgm_gamma: float = sgm_gamma
+        if sgm:
+            register_hook(self.model, sgm_gamma)
         _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
                                                get_data=None, **kwargs)
         self.clean_acc = clean_acc
