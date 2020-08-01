@@ -73,8 +73,8 @@ class ABS(Defense_Backdoor):
         for layer, layer_dict in neuron_dict.items():
             for neuron, label in layer_dict.items():
                 color = ('{red}' if label == self.attack.target_class else '{green}').format(**ansi)
-                prints('{color}layer: {layer:<20} neuron: {neuron:<5d} label: {label:<5d}{reset}'.format(
-                    layer=layer, neuron=neuron, label=label, color=color, **ansi), indent=4)
+                _str = f'layer: {layer:<20} neuron: {neuron:<5d} label: {label:<5d}'
+                prints('{color}{_str}{reset}'.format(color=color, _str=_str, **ansi), indent=4)
                 mark, mask, loss = self.remask(_input, _label, layer=layer, neuron=neuron,
                                                label=label, use_mask=use_mask)
                 mark_list.append(mark)
@@ -133,10 +133,10 @@ class ABS(Defense_Backdoor):
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                 output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
             _str = ' '.join([
-                'Loss: {:.4f},'.format(loss).ljust(20),
-                'Acc: {:.2f}, '.format(acc).ljust(20),
-                'Norm: {:.4f},'.format(norm).ljust(20),
-                'Time: {},'.format(epoch_time).ljust(20),
+                f'Loss: {loss:.4f},'.ljust(20),
+                f'Acc: {acc:.2f}, '.ljust(20),
+                f'Norm: {norm:.4f},'.ljust(20),
+                f'Time: {epoch_time:d},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=8)
             if loss < loss_best:
@@ -161,8 +161,7 @@ class ABS(Defense_Backdoor):
     def save_seed_data(self) -> Dict[str, np.ndarray]:
         torch.manual_seed(env['seed'])
         if self.seed_num % self.model.num_classes:
-            raise ValueError('seed_num({0:d}) % num_classes({1:d}) should be 0.'.format(
-                self.seed_num, self.model.num_classes))
+            raise ValueError(f'seed_num({self.seed_num:d}) % num_classes({self.model.num_classes:d}) should be 0.')
         seed_class_num: int = self.seed_num // self.model.num_classes
         x, y = [], []
         for _class in range(self.model.num_classes):
@@ -174,13 +173,13 @@ class ABS(Defense_Backdoor):
         x = torch.cat(x).numpy()
         y = torch.cat(y).numpy()
         seed_data = {'input': x, 'label': y}
-        seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.name, self.dataset.name, self.seed_num)
+        seed_path = f'{env["result_dir"]}{self.dataset.name}/{self.name}_{self.seed_num}.npy'
         np.save(seed_path, seed_data)
         print('seed data saved at: ', seed_path)
         return seed_data
 
     def load_seed_data(self) -> Dict[str, torch.Tensor]:
-        seed_path = env['result_dir'] + '{0:s}/{1:s}_{2:d}.npy'.format(self.name, self.dataset.name, self.seed_num)
+        seed_path = f'{env["result_dir"]}{self.dataset.name}/{self.name}_{self.seed_num}.npy'
         seed_data: Dict[str, torch.Tensor] = {}
         seed_data = np.load(seed_path, allow_pickle=True).item() if os.path.exists(seed_path) \
             else self.save_seed_data()

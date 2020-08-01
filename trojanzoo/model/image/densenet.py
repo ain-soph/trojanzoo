@@ -111,4 +111,4 @@ class DenseNet(ImageModel):
                     new_dict[name] = param
             self._model.load_state_dict(new_dict, strict=False)
         if verbose:
-            print('Model {} loaded From Official Website: '.format(self.name), url)
+            print(f'Model {self.name} loaded From Official Website: {url}')

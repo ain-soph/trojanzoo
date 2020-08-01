@@ -18,7 +18,7 @@ class STRIP(Defense_Backdoor):
         for i, data in enumerate(self.dataset.loader['test']):
             _input, _label = self.model.get_data(data)
             entropy.update(self.defense.check(_input), n=_label.size(0))
-            print('{:<10d}{:<20.4f}'.format(i, entropy.avg))
+            print(f'{i:<10d}{entropy.avg:<20.4f}')
 
     def check(self, _input) -> float:
         h = 0.0

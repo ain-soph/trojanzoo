@@ -18,7 +18,8 @@ class _VGG(_ImageModel):
             'vgg' + str(layer)](num_classes=self.num_classes)
         self.features = _model.features
         self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
-        self.classifier = _model.classifier
+        if isinstance(self.classifier, nn.Identity):
+            self.classifier = _model.classifier
 
         # nn.Sequential(
         #     nn.Linear(512 * 7 * 7, 4096),
@@ -50,7 +51,7 @@ class VGG(ImageModel):
                     new_dict[name] = param
             self._model.load_state_dict(new_dict, strict=False)
         if verbose:
-            print('Model {} loaded From Official Website: '.format(self.name), url)
+            print(f'Model {self.name} loaded From Official Website: {url}')
 
 
 class _VGGcomp(_VGG):
@@ -75,5 +76,4 @@ class VGGcomp(VGG):
                 new_dict[name] = param
         self._model.load_state_dict(new_dict, strict=False)
         if verbose:
-            print(
-                'Model {} loaded From Official Website: '.format(self.name), url)
+            print(f'Model {self.name} loaded From Official Website: {url}')

@@ -20,12 +20,10 @@ def split_name(name, layer=None, default_layer=None, output=False):
     re_list = re.findall(r'[0-9]+|[a-z]+|_', name)
     if len(re_list) == 2:
         if output:
-            print('model name is splitted: name {name},  layer {layer}'.format(
-                name=re_list[0], layer=re_list[1]))
+            print(f'model name is splitted: name {re_list[0]},  layer {re_list[1]}')
         if layer:
-            raise ValueError('Plz don\'t put "layer" in "name" when "layer" parameter is given separately.\n \
-                             name: {name},  layer: {layer}'.format(
-                name=name, layer=layer))
+            raise ValueError('Plz don\'t put "layer" in "name" when "layer" parameter is given separately.'
+                             f'name: {name},  layer: {layer}')
         name: str = re_list[0]
         layer = re_list[1]
     else:

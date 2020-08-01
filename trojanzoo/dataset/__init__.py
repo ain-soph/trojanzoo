@@ -29,4 +29,5 @@ class_dict = {
 
     'vggface': 'VGGface',
     'vggface2': 'VGGface2',
+    'sample_vggface2': 'Sample_VGGface2',
 }

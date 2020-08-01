@@ -2,7 +2,7 @@ work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
 dataset='cifar10'
-model='resnetcomp18'
+model='vggcomp13'
 attack='latent_backdoor'
 
 CUDA_VISIBLE_DEVICES=1

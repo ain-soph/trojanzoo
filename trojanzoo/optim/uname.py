@@ -112,4 +112,4 @@ class Uname(Optimizer):
         super().output_info(**kwargs)
         with torch.no_grad():
             loss = float(loss_fn(real_params))
-        prints('loss: {loss:.5f}'.format(loss=loss), indent=self.indent)
+        prints(f'loss: {loss:.5f}', indent=self.indent)

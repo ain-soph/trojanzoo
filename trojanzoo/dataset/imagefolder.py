@@ -35,22 +35,22 @@ class ImageFolder(ImageSet):
         file_path = self.download()
         uncompress(file_path=file_path.values(),
                    target_path=self.folder_path + self.name, verbose=verbose)
-        os.rename(self.folder_path + self.name + '/{}/'.format(self.org_folder_name['train']),
+        os.rename(self.folder_path + self.name + f'/{self.org_folder_name["train"]}/',
                   self.folder_path + self.name + '/train/')
         if '/' in self.org_folder_name['train']:
-            shutil.rmtree(self.folder_path + self.name + '/'
-                          + self.org_folder_name['train'].split('/')[0])
+            shutil.rmtree(self.folder_path + self.name + '/' +
+                          self.org_folder_name['train'].split('/')[0])
         if self.valid_set:
-            os.rename(self.folder_path + self.name + '/{}/'.format(self.org_folder_name['valid']),
+            os.rename(self.folder_path + self.name + f'/{self.org_folder_name["valid"]}/',
                       self.folder_path + self.name + '/valid/')
             if '/' in self.org_folder_name['valid']:
-                shutil.rmtree(self.folder_path + self.name + '/'
-                              + self.org_folder_name['valid'].split('/')[0])
+                shutil.rmtree(self.folder_path + self.name + '/' +
+                              self.org_folder_name['valid'].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
             transform = self.get_transform(mode=mode)
-        return datasets.ImageFolder(root=self.folder_path + self.name + '/{}/'.format(mode),
+        return datasets.ImageFolder(root=self.folder_path + self.name + f'/{mode}/',
                                     transform=transform, **kwargs)
 
     def download(self, url: Dict[str, str] = None, file_path: str = None,
@@ -86,12 +86,15 @@ class ImageFolder(ImageSet):
             child_name = self.name + '_sample%d' % sample_num
         src_path = self.folder_path + self.name + '/'
         mode_list = [_dir for _dir in os.listdir(
-            src_path) if os.path.isdir(_dir)]
+            src_path) if os.path.isdir(src_path + _dir) and _dir[0] != '.']
         dst_path = env['data_dir'] + self.data_type + \
             '/{0}/data/{0}/'.format(child_name)
+        if verbose:
+            print('src path: ', src_path)
+            print('dst path: ', dst_path)
         if class_dict is None:
             assert sample_num
-            idx_list = np.array(range(self.num_classes))
+            idx_list = np.arange(self.num_classes)
             np.random.seed(env['seed'])
             np.random.shuffle(idx_list)
             idx_list = idx_list[:sample_num]
@@ -100,23 +103,24 @@ class ImageFolder(ImageSet):
             for class_name in class_list:
                 class_dict[class_name] = [class_name]
         if verbose:
-            print('src path: ', src_path)
-            print('dst path: ', dst_path)
             print(class_dict)
 
+        len_i = len(class_dict.keys())
+        len_j = len(class_list)
         for src_mode in mode_list:
             if verbose:
                 print(src_mode)
             assert src_mode in ['train', 'valid', 'test', 'val']
             dst_mode = 'valid' if src_mode == 'val' else src_mode
-            for dst_class in class_dict.keys():
+            for i, dst_class in enumerate(class_dict.keys()):
                 if not os.path.exists(dst_path + dst_mode + '/' + dst_class):
                     os.makedirs(dst_path + dst_mode + '/' + dst_class)
                 prints(dst_class, indent=10)
                 class_list = class_dict[dst_class]
-                for src_class in class_list:
+                for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
-                    prints(src_class + '{:>15d}'.format(len(_list)), indent=20)
+                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
+                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     for _file in tqdm(_list):
                         shutil.copyfile(src_path + src_mode + '/' + src_class + '/' + _file,
                                         dst_path + dst_mode + '/' + dst_class + '/' + _file)
