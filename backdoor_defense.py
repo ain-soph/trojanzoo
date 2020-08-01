@@ -33,5 +33,4 @@ if __name__ == '__main__':
     defense: Defense_Backdoor = parser.module_list['defense']
 
     # ------------------------------------------------------------------------ #
-    defense.detect(optimizer, lr_scheduler, **train_args)
-    # defense.detect(optimizer, lr_scheduler,**train_args)  # this works for ac
+    defense.detect(optimizer=optimizer, lr_scheduler=lr_scheduler, **train_args)

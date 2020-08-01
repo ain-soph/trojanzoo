@@ -13,7 +13,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset', dest='dataset', default='cifar10')
     args = parser.parse_args()
-    name = 'figure1 %s alpha' % args.dataset
+    name = 'figure1 %s size' % args.dataset
     fig = Figure(name)
     fig.set_axis_label('x', 'Trigger Size')
     fig.set_axis_label('y', 'Max Re-Mask Accuracy')
@@ -33,10 +33,10 @@ if __name__ == '__main__':
             'trojannn': [63.690, 75.360, 82.730, 96.190],
         },
         'gtsrb': {
-            'badnet': [42.68, 56.757, 53.134, 59.779, 56.044, 55.03, 61.806, 73.724, 76.107, 79.936],
+            'badnet': [42.68, 56.757, 53.053, 59.791, 56.044, 55.03, 61.787, 73.724, 76.107, 79.936],
             'latent_backdoor': [9.572, 92.080, 99.981, 99.944, 100, 100, 100, 100, 100, 100],
-            'trojannn': [35.998, 59.816, 57.789, 41.235, 73.048, 94.125, 98.104, 31.306, 93.919, 95.420],
-            'targeted_backdoor': [23.161, 33.821, 13.626, 34.835, 18.468, 20.721, 23.742, 38.251, 33.615, 68.731],
+            'trojannn': [37.125, 59.816, 57.789, 58.146, 73.048, 94.125, 98.104, 84.441, 93.919, 95.420],
+            'targeted_backdoor': [23.161, 40.165, 40.897, 41.498, 40.034, 46.021, 50.544, 55.011, 61.787, 60.773],
         },
     }
     for i, (key, value) in enumerate(y[args.dataset].items()):
