@@ -65,7 +65,7 @@ class PGD(Attack, PGD_Optimizer):
                 t = target
                 if len(_X) != len(target) and len(target) == 1:
                     t = target * torch.ones(len(_X), dtype=torch.long, device=_X.device)
-                loss = F.cross_entropy(self.model(_X), t, **kwargs)
+                loss = self.model.loss(_X, t, **kwargs)
                 return loss if target_idx else -loss
             loss_fn = _loss_fn
         return self.optimize(_input, loss_fn=loss_fn, target=target, **kwargs)
