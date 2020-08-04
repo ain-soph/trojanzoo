@@ -453,7 +453,7 @@ class Model:
             params = self._model.parameters()
         elif name == 'features':
             params = self._model.features.parameters()
-        elif name == 'classifier':
+        elif name in ['classifier', 'partial']:
             params = self._model.classifier.parameters()
         else:
             raise NotImplementedError(name)

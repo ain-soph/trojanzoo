@@ -5,7 +5,7 @@ dataset='cifar10'
 model='resnetcomp18'
 attack='imc'
 
-CUDA_VISIBLE_DEVICES=0
+CUDA_VISIBLE_DEVICES=0,1
 
 dirname=${work_dir}/result/${dataset}/${model}/${attack}
 if [ ! -d $dirname  ];then

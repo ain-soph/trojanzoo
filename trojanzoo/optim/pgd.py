@@ -88,7 +88,7 @@ class PGD(Optimizer):
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)
-            grad = self.calc_grad(loss_fn, noise)
+            grad = self.calc_grad(loss_fn, X)
             if self.grad_method != 'white' and 'middle' in output:
                 real_grad = self.whitebox_grad(loss_fn, X)
                 prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
@@ -99,7 +99,7 @@ class PGD(Optimizer):
             noise.data = self.projector(noise, epsilon, norm=self.norm).data
             X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
             if self.universal:
-                noise.data = (X - _input).mode(dim=0).data
+                noise.data = (X - _input).mode(dim=0)[0].data
             else:
                 noise.data = (X - _input).data
 
