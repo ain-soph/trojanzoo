@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils import to_numpy, arctanh
+from trojanzoo.utils import to_numpy
 from .font import palatino, palatino_bold
 
 import os
@@ -272,7 +272,7 @@ class Figure:
     def tanh_fit(x, y, x_grid, degree=1, mean_bias=0.0, scale_multiplier=1.0):
         mean = (max(y) + min(y)) / 2 + mean_bias
         scale = max(abs(y - mean)) * scale_multiplier
-        fit_data = to_numpy(arctanh(torch.as_tensor((y - mean) / scale)))
+        fit_data = to_numpy(torch.as_tensor((y - mean) / scale).atanh())
         z = np.polyfit(x, fit_data, degree)
         y_grid = np.tanh(np.polyval(z, x_grid)) * scale + mean
         return y_grid

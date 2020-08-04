@@ -13,6 +13,11 @@ if [ ! -d $dirname  ];then
     mkdir -p $dirname
 fi
 
+dirname=${work_dir}/result/${dataset}/${model}/${defense}/${attack}
+if [ ! -d $dirname  ];then
+    mkdir -p $dirname
+fi
+
 size=2
 for alpha in {1..9}
 do

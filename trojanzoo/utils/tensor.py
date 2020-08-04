@@ -171,11 +171,6 @@ def add_noise(_input: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
     return noisy_input
 
 
-def arctanh(x, epsilon=1e-7):
-    x = x - epsilon * x.sign()
-    return torch.log(2 / (1 - x) - 1) / 2
-
-
 def percentile(t: torch.tensor, q: float) -> Union[int, float]:
     """
     Return the ``q``-th percentile of the flattened input tensor's data.

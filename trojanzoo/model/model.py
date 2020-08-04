@@ -349,9 +349,11 @@ class Model:
                     _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                                   verbose=verbose, indent=indent, **kwargs)
                     self.train()
-                    if cur_acc >= best_acc and save:
-                        save_fn(prefix=prefix, verbose=verbose)
-                        best_acc = cur_acc
+                    if cur_acc >= best_acc:
+                        prints('best result update!', indent=indent)
+                        if save:
+                            save_fn(prefix=prefix, verbose=verbose)
+                            best_acc = cur_acc
                     if verbose:
                         print('-' * 50)
         self.zero_grad()
