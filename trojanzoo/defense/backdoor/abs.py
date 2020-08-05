@@ -136,7 +136,7 @@ class ABS(Defense_Backdoor):
                 f'Loss: {loss:.4f},'.ljust(20),
                 f'Acc: {acc:.2f}, '.ljust(20),
                 f'Norm: {norm:.4f},'.ljust(20),
-                f'Time: {epoch_time:d},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=8)
             if loss < loss_best:

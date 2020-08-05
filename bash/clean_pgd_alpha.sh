@@ -13,7 +13,7 @@ if [ ! -d $dirname  ];then
     mkdir -p $dirname
 fi
 
-size=2
+size=3
 for alpha in {1..9}
 do
     echo 0.$alpha

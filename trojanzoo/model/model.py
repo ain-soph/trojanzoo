@@ -44,9 +44,15 @@ class _Model(nn.Module):
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
-    def forward(self, x):
+    # @torch.cuda.amp.autocast()
+    def forward(self, x: torch.Tensor, amp=False, **kwargs) -> torch.Tensor:
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
+        if amp:
+            with torch.cuda.amp.autocast():
+                x = self.get_final_fm(x)
+                x = self.get_logits_from_fm(x)
+                return x
         x = self.get_final_fm(x)
         x = self.get_logits_from_fm(x)
         return x
@@ -153,10 +159,10 @@ class Model:
             _list = []
             for _ in range(n):
                 _input_noise = add_noise(_input, std=sigma, detach=False)
-                _list.append(self.model(_input_noise))
+                _list.append(self.model(_input_noise, **kwargs))
             return torch.stack(_list).mean(dim=0)
         else:
-            return self.model(_input)
+            return self.model(_input, **kwargs)
 
     def get_prob(self, _input, **kwargs) -> torch.Tensor:
         return self.softmax(self.get_logits(_input, **kwargs))
@@ -321,8 +327,7 @@ class Model:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
                 if amp:
-                    with torch.cuda.amp.autocast():
-                        loss = loss_fn(_input, _label)
+                    loss = loss_fn(_input, _label, amp=True)
                     scaler.scale(loss).backward()
                     scaler.step(optimizer)
                     scaler.update()

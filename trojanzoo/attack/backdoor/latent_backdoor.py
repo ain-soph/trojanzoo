@@ -113,7 +113,7 @@ class Latent_Backdoor(BadNet):
                 output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
-                f'Time: {epoch_time:d},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
         atanh_mark.requires_grad = False
