@@ -271,7 +271,7 @@ class Model:
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
+               validate_interval=10, save=False, amp: bool = False, prefix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
                validate_func: Callable = None, epoch_func: Callable = None, save_fn=None, **kwargs):
@@ -286,6 +286,9 @@ class Model:
             validate_func = self._validate
         if save_fn is None:
             save_fn = self.save
+
+        if amp:
+            scaler = torch.cuda.amp.GradScaler()
 
         _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
@@ -317,9 +320,16 @@ class Model:
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
-                loss = loss_fn(_input, _label)
-                loss.backward(retain_graph=True)
-                optimizer.step()
+                if amp:
+                    with torch.cuda.amp.autocast():
+                        loss = loss_fn(_input, _label)
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    loss = loss_fn(_input, _label)
+                    loss.backward()
+                    optimizer.step()
                 optimizer.zero_grad()
                 with torch.no_grad():
                     _output = self.get_logits(_input)

@@ -114,10 +114,6 @@ class Clean_Label(BadNet):
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
-    # todo: Not Implemented
-    def get_filename(self):
-        return "filename"
-
 
 class Generator(nn.Module):
     def __init__(self, noise_dim: int = 100, dim: int = 64, data_shape: List[int] = [3, 32, 32]):
