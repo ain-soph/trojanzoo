@@ -366,9 +366,9 @@ class Model:
                     self.train()
                     if cur_acc >= best_acc:
                         prints('best result update!', indent=indent)
+                        best_acc = cur_acc
                         if save:
                             save_fn(prefix=prefix, verbose=verbose)
-                            best_acc = cur_acc
                     if verbose:
                         print('-' * 50)
         self.zero_grad()

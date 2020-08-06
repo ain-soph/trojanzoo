@@ -1,6 +1,9 @@
 from .badnet import BadNet
 
 from trojanzoo.attack.adv import PGD
+from trojanzoo.optim import PGD as PGD_optim
+from trojanzoo.utils.model import weight_init
+from trojanzoo.utils.data import MyDataset
 
 import torch.nn as nn
 import torch.optim as optim
@@ -47,7 +50,7 @@ class Clean_Label(BadNet):
     name: str = 'clean_label'
 
     def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
-                 pgd_alpha=30 / 255, pgd_epsilon: float = 300 / 255, pgd_iteration=20,
+                 pgd_alpha=3 / 255, pgd_epsilon: float = 8 / 255, pgd_iteration=20,
                  tau: float = 0.2, noise_dim: int = 100, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.param_list['clean_label'] = ['preprocess_layer', 'poison_generation_method', 'poison_num']
@@ -64,14 +67,14 @@ class Clean_Label(BadNet):
             self.pgd_epsilon: float = pgd_epsilon
             self.pgd_iteration: int = pgd_iteration
             self.pgd: PGD = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration,
-                                target_idx=0, output=self.output)
+                                target_idx=0, output=self.output, dataset=self.dataset, model=self.model)
         elif poison_generation_method == 'gan':
             self.param_list['gan'] = ['tau', 'noise_dim', 'critic_iter', 'generator_iters']
             self.tau: float = tau
             self.noise_dim: int = noise_dim
             self.generator_iters = generator_iters
             self.critic_iter = critic_iter
-            self.wgan = WGAN(noise_dim=self.noise_dim, poison_num=self.poison_num, data_shape=self.data_shape,
+            self.wgan = WGAN(noise_dim=self.noise_dim, dim=64, data_shape=self.data_shape,
                              generator_iters=self.generator_iters, critic_iter=self.critic_iter)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
@@ -86,7 +89,7 @@ class Clean_Label(BadNet):
 
         dataset_list = [target_class_dataset]
         for source_class in other_classes:
-            source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[self.source_class])
+            source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
             poison_source_class_dataset, other_source_class_dataset = self.dataset.split_set(
                 source_class_dataset, self.poison_num)
             poison_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_source_class_dataset,
@@ -94,24 +97,26 @@ class Clean_Label(BadNet):
             source_imgs, source_label = self.model.get_data(next(iter(poison_source_class_dataloader)))
             if self.poison_generation_method == 'gan':
                 gan_data = torch.cat([source_imgs, target_imgs])
-                wgan.train(gan_data)
-                source_encode = wgan.get_encode_value(source_imgs)
-                target_encode = wgan.get_encode_value(target_imgs)
+                self.wgan.reset_parameters()
+                self.wgan.train(gan_data)
+                source_encode = self.wgan.get_encode_value(source_imgs)
+                target_encode = self.wgan.get_encode_value(target_imgs)
                 interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
-                poison_imgs = wgan.G(interpolation_encode)
+                poison_imgs = self.wgan.G(interpolation_encode)
                 poison_imgs = self.add_mark(poison_imgs)
             elif self.poison_generation_method == 'pgd':
                 poison_imgs, _ = self.pgd.craft_example(_input=source_imgs)
                 poison_imgs = self.add_mark(poison_imgs)
             else:
                 raise ValueError(f'{self.poison_generation_method} poison generation method not supported.')
-            poison_label = self.target_class * torch.ones(len(poison_imgs), dtype=torch.long)
-            poison_set = torch.utils.data.TensorDataset(poison_imgs.to('cpu'), poison_label)
+            poison_label = [self.target_class] * len(poison_imgs)
+            poison_imgs = poison_imgs.to('cpu')
+            poison_set = MyDataset(poison_imgs, poison_label)
             dataset_list.append(poison_set)
             dataset_list.append(other_source_class_dataset)
         final_set = torch.utils.data.ConcatDataset(dataset_list)
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
-        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
+        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
 
@@ -121,9 +126,10 @@ class Generator(nn.Module):
         self.noise_dim: int = noise_dim
         self.dim: int = dim
         self.data_shape: List[int] = data_shape
-        self.preprocess = nn.Linear(noise_dim, 4 * 4 * 4 * dim)
+        init_dim = dim * data_shape[1] * data_shape[2] // 16
+        self.preprocess = nn.Linear(noise_dim, init_dim)
         self.preprocess_1 = nn.Sequential(
-            nn.BatchNorm2d(4 * 4 * 4 * dim),
+            nn.BatchNorm2d(init_dim),
             nn.ReLU(True),)
         self.block1 = nn.Sequential(
             nn.ConvTranspose2d(4 * dim, 2 * dim, 2, stride=2),
@@ -133,19 +139,21 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(2 * dim, dim, 2, stride=2),
             nn.BatchNorm2d(dim),
             nn.ReLU(True),)
-        self.deconv_out = nn.ConvTranspose2d(dim, 3, 2, stride=2)
+        self.deconv_out = nn.ConvTranspose2d(dim, data_shape[0], 2, stride=2)
         self.tanh = nn.Tanh()
 
     def forward(self, x: torch.Tensor):
+        # (N, noise_dim)
         x = self.preprocess(x)
+        # (N, noise_dim)
         x = x.unsqueeze(-1).unsqueeze(-1)
         x = self.preprocess_1(x)
-        x = x.view(-1, 4 * self.dim, 4, 4)
+        x = x.view(len(x), 4 * self.dim, self.data_shape[1] // 8, self.data_shape[2] // 8)
         x = self.block1(x)
         x = self.block2(x)
         x = self.deconv_out(x)
         x = self.tanh(x)
-        return x.view(-1, self.data_shape[0], self.data_shape[1], self.data_shape[2])
+        return x
 
 
 class Discriminator(nn.Module):
@@ -160,11 +168,12 @@ class Discriminator(nn.Module):
             nn.Conv2d(2 * dim, 4 * dim, 3, 2, padding=1),
             nn.LeakyReLU(),
         )
-        self.linear = nn.Linear(4 * 4 * 4 * dim, 1)
+        init_dim = dim * data_shape[1] * data_shape[2] // 16
+        self.linear = nn.Linear(init_dim, 1)
 
     def forward(self, x: torch.Tensor):
         x = self.main(x)
-        x = x.view(-1, 4 * 4 * 4 * self.dim)
+        x = x.flatten(start_dim=1)
         x = self.linear(x)
         return x
 
@@ -172,80 +181,60 @@ class Discriminator(nn.Module):
 class WGAN(object):
     def __init__(self, noise_dim: int, dim: int, data_shape: List[int] = [3, 32, 32],
                  generator_iters: int = 1000, critic_iter: int = 5):
+        self.noise_dim = noise_dim
         self.G = Generator(noise_dim, dim, data_shape)
         self.D = Discriminator(dim, data_shape)
         if env['num_gpus']:
             self.G.cuda()
             self.D.cuda()
-        self.d_optimizer = optim.Adam(self.D.parameters(), lr=1e-4, betas=(0.5, 0.999)
-                                      )  # the parameter in the original paper
+        # the parameter in the original paper
+        self.d_optimizer = optim.Adam(self.D.parameters(), lr=1e-4, betas=(0.5, 0.999))
         self.g_optimizer = optim.Adam(self.G.parameters(), lr=1e-4, betas=(0.5, 0.999))
         self.generator_iters = generator_iters  # larger: 1000
         self.critic_iter = critic_iter
+        self.mse_loss = torch.nn.MSELoss()
+
+        self.gan_pgd: PGD = PGD_optim(epsilon=1.0, iteration=500, output=0)
+
+    def reset_parameters(self):
+        self.G.apply(weight_init)
+        self.D.apply(weight_init)
 
     def train(self, train_data):
-        # Now batches are callable self.data.next()
-        self.data = train_data
-        one = torch.tensor(1, dtype=torch.float)
-        mone = torch.tensor(-1, dtype=torch.float)
-        if env['num_gpus']:
-            one = one.cuda()
-            mone = mone.cuda()
+        self.g_optimizer.zero_grad()
         for g_iter in range(self.generator_iters):
             # Requires grad, Generator requires_grad = False
             for p in self.D.parameters():
                 p.requires_grad = True
-
-            d_loss_real = 0
-            d_loss_fake = 0
-            Wasserstein_D = 0
-            # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
-
+            for p in self.G.parameters():
+                p.requires_grad = False
+            self.d_optimizer.zero_grad()
             for d_iter in range(self.critic_iter):
-                self.D.zero_grad()
-                images = self.data
-                # Check for batch to have full batch_size
-                z = torch.rand(images.shape[0], noise_dim, 1, 1, device=env['device'])
+                d_loss_real = self.D(train_data).mean()
 
-                # Train discriminator
-                # WGAN - Training discriminator more iterations than generator
-                # Train with real images
-                d_loss_real = self.D(images)
-                d_loss_real = d_loss_real.mean()
-                d_loss_real.backward(mone)
-                # Train with fake images
-
-                z = torch.randn(images.shape[0], noise_dim, device=env['device'])
-                print(z.shape)
+                z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
                 fake_images = self.G(z)
-                d_loss_fake = self.D(fake_images)
-                d_loss_fake = d_loss_fake.mean()
-                d_loss_fake.backward(one)
+                d_loss_fake = self.D(fake_images).mean()
 
                 d_loss = d_loss_fake - d_loss_real
-                Wasserstein_D = d_loss_real - d_loss_fake
+                d_loss.backward()
                 self.d_optimizer.step()
-
-                print(
-                    f'  Discriminator iteration: {d_iter}/{self.critic_iter}, loss_fake: {d_loss_fake}, loss_real: {d_loss_real}')
-
-            # Generator update
+                self.d_optimizer.zero_grad()
+                print(f'    Discriminator iteration: {d_iter}/{self.critic_iter}, \
+                    loss_fake: {d_loss_fake}, loss_real: {d_loss_real}')
             for p in self.D.parameters():
-                p.requires_grad = False  # to avoid computation
-
-            self.G.zero_grad()
-            # train generator
-            # compute loss with fake images
-            z = torch.randn(images.shape[0], noise_dim, device=env['device'])
+                p.requires_grad = False
+            for p in self.G.parameters():
+                p.requires_grad = True
+            z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
             fake_images = self.G(z)
-            g_loss = self.D(fake_images)
-            g_loss = g_loss.mean()
-            g_loss.backward(mone)
-            g_cost = -g_loss
+            g_loss = self.D(fake_images).mean()
+            g_loss.backward()
             self.g_optimizer.step()
+            self.g_optimizer.zero_grad()
             print(f'Generator iteration: {g_iter}/{self.generator_iters}, g_loss: {g_loss}')
 
-    def get_encode_value(self, imgs, poison_num, noise_dim):
+    def get_encode_value(self, imgs: torch.Tensor, poison_num: int):
         """According to the image and Generator, utilize pgd optimization to get the d dimension encoding value.
 
         Args:
@@ -257,16 +246,9 @@ class WGAN(object):
             torch.FloatTensor: the synthesized poisoned image.
         """
 
-        x_1 = torch.randn(poison_num, noise_dim, device=env['device'])
-        noise = torch.zeros_like(x_1, device=env['device'])
-        self.gan_pgd: PGD = PGD(epsilon=1.0, iteration=500, output=0)
-
         def loss_func(X: torch.Tensor):
-            loss = torch.nn.MSELoss()(self.G(X), imgs)
+            loss = self.mse_loss(self.G(X), imgs)
             return loss
-
-        cost = loss_func(x_1)
-        x_1, _ = self.gan_pgd.optimize(_input=x_1, noise=noise,
-                                       loss_fn=loss_func)
-
+        x_1 = torch.randn(poison_num, self.noise_dim, device=imgs.device)
+        x_1, _ = self.gan_pgd.optimize(_input=x_1, loss_fn=loss_func)
         return x_1

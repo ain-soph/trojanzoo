@@ -3,6 +3,7 @@
 from .badnet import BadNet
 
 from trojanzoo.optim import PGD
+from trojanzoo.utils.data import MyDataset
 
 import numpy as np
 import torch
@@ -60,13 +61,12 @@ class Hidden_Trigger(BadNet):
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
         poison_imgs = self.generate_poisoned_data()
-        poison_set = torch.utils.data.TensorDataset(
-            poison_imgs.to('cpu'), self.target_class * torch.ones(self.poison_num, dtype=torch.long))
+        poison_set = MyDataset(poison_imgs.to('cpu'), [self.target_class] * self.poison_num)
         train_set = self.dataset.get_dataset('train', full=False, target_transform=torch.tensor)
 
         final_set = torch.utils.data.ConcatDataset((poison_set, train_set))
         final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
-        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler,
+        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
 
     def validate_func(self, get_data: Callable[[torch.Tensor, torch.LongTensor], Tuple[torch.Tensor, torch.LongTensor]] = None, **kwargs) -> (float, float, float):

@@ -31,4 +31,5 @@ if __name__ == '__main__':
     attack: BadNet = parser.module_list['attack']
     attack.load()
 
+    train_args['save'] = False
     model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, validate_func=attack.validate_func, **train_args)

@@ -43,4 +43,5 @@ if __name__ == '__main__':
         _input, _label = model.get_data(next(iter(dataset.loader['test'])))
         conv_dim = model._model.get_final_fm(_input).numel()
         model._model.classifier = model._model.define_classifier(conv_dim=conv_dim, fc_depth=fc_depth, fc_dim=fc_dim)
+    train_args['save'] = False
     model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, validate_func=attack.validate_func, **train_args)

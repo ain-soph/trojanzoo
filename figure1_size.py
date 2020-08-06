@@ -17,7 +17,7 @@ if __name__ == '__main__':
     fig = Figure(name)
     fig.set_axis_label('x', 'Trigger Size')
     fig.set_axis_label('y', 'Max Re-Mask Accuracy')
-    fig.set_axis_lim('x', lim=[0, 100], piece=10, margin=[0, 5],
+    fig.set_axis_lim('x', lim=[0, 10], piece=10, margin=[0, 0.5],
                      _format='%d')
     fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
                      _format='%d')
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     color_list = [ting_color['red'], ting_color['yellow'], ting_color['green'], ting_color['blue']]
 
-    x = np.linspace(1, 10, 10)**2
+    x = np.linspace(1, 10, 10)
     y = {
         'cifar10': {
             'badnet': [67.240, 78.710, 85.060, 88.150, 90.590, 91.550, 93.230],

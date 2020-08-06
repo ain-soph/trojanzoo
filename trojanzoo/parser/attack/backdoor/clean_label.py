@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from ..attack import Parser_Attack
+from .badnet import Parser_BadNet
 
 
-class Parser_Clean_Label(Parser_Attack):
+class Parser_Clean_Label(Parser_BadNet):
     r"""Clean Label Attack Parser
 
     Attributes:
