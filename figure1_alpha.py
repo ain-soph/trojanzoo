@@ -23,15 +23,17 @@ if __name__ == '__main__':
                      _format='%d')
     fig.set_title(fig.name)
 
-    color_list = [ting_color['red'], ting_color['yellow'], ting_color['green'], ting_color['blue']]
+    color_list = [ting_color['red'], ting_color['red_deep'], ting_color['yellow'],
+                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'], ]
 
     x = np.linspace(0.0, 1.0, 11)
     y = {
         'cifar10': {
             'badnet': [85.060, 81.820, 78.940, 77.070, 72.990, 66.160, 56.580, 43.540, 30.320, 21.120],
             'latent_backdoor': [99.000, 99.810, 99.760, 99.300, 98.940, 98.310, 96.420, 91.290, 72.430, 13.960],
-            'trojannn': [82.730, 95.200, 93.300, 90.000, 83.950, 74.020, 60.390, 44.300, 28.820, 21.200],
+            'trojannn': [96.400, 95.200, 93.300, 90.000, 83.950, 74.020, 60.390, 44.300, 28.820, 21.200],
             'imc': [98.410, 100.000, 99.980, 99.720, 93.980, 88.240, 73.110],
+            'clean_label_pgd': [76.290, 69.330, 61.770, 49.310, 34.600, 19.110, 12.990, 11.640, 11.420, 11.280]
         },
         'gtsrb': {
             'badnet': [53.153, 52.965, 52.046, 49.869, 46.539, 41.929, 37.782, 32.057, 28.679, 22.710, 3.247],

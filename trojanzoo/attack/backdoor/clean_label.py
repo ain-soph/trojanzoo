@@ -99,10 +99,10 @@ class Clean_Label(BadNet):
                 gan_data = torch.cat([source_imgs, target_imgs])
                 self.wgan.reset_parameters()
                 self.wgan.train(gan_data)
-                source_encode = self.wgan.get_encode_value(source_imgs)
-                target_encode = self.wgan.get_encode_value(target_imgs)
+                source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
+                target_encode = self.wgan.get_encode_value(target_imgs, self.poison_num).detach()
                 interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
-                poison_imgs = self.wgan.G(interpolation_encode)
+                poison_imgs = self.wgan.G(interpolation_encode).detach()
                 poison_imgs = self.add_mark(poison_imgs)
             elif self.poison_generation_method == 'pgd':
                 poison_imgs, _ = self.pgd.craft_example(_input=source_imgs)
@@ -216,7 +216,7 @@ class WGAN(object):
                 fake_images = self.G(z)
                 d_loss_fake = self.D(fake_images).mean()
 
-                d_loss = d_loss_fake - d_loss_real
+                d_loss = d_loss_real - d_loss_fake
                 d_loss.backward()
                 self.d_optimizer.step()
                 self.d_optimizer.zero_grad()

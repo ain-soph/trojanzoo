@@ -35,7 +35,7 @@ class IMC(BadNet):
             raise Exception('IMC requires "random pos" to be False to train mark.')
 
         self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
-        self.param_list['imc'] = ['']
+        # self.param_list['imc'] = ['']
 
         self.pgd_alpha: float = pgd_alpha
         self.pgd_epsilon: float = pgd_epsilon
