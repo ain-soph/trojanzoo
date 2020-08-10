@@ -28,7 +28,7 @@ class Deep_Inspect(Defense_Backdoor):
     name: str = 'deep_inspect'
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
-                 remask_epoch: int = 30, remask_lr=0.1,
+                 remask_epoch: int = 30, remask_lr=0.01,
                  gamma_1: float = 0.0, gamma_2: float = 3e-5, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
@@ -51,20 +51,21 @@ class Deep_Inspect(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        mark_list, loss_list = self.get_potential_triggers()
-        print('loss: ', normalize_mad(loss_list))
+        loss_list, norm_list = self.get_potential_triggers()
+        print('loss: ', loss_list)  # DeepInspect use this)
+        print('mask norm: ', norm_list)
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
-        mark_list, loss_list = [], []
+        norm_list, loss_list = [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, loss = self.remask(label)
-            mark_list.append(mark)
+            loss, norm = self.remask(label)
             loss_list.append(loss)
-        mark_list = torch.stack(mark_list)
-        norm_list = torch.as_tensor(loss_list)
-        return mark_list, norm_list
+            norm_list.append(norm)
+        loss_list = torch.as_tensor(loss_list)
+        norm_list = torch.as_tensor(norm_list)
+        return loss_list, norm_list
 
     def remask(self, label: int) -> (torch.Tensor, torch.Tensor):
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
@@ -122,7 +123,7 @@ class Deep_Inspect(Defense_Backdoor):
         for param in generator.parameters():
             param.requires_grad = False
         norm = mark.flatten(start_dim=1).norm(p=1, dim=1).mean()
-        return mark, norm
+        return losses.avg, norm
 
     # def loss(self, _output: torch.Tensor, mark: torch.Tensor, poison_label: torch.LongTensor) -> torch.Tensor:
     #     loss_trigger = self.model.criterion(_output, poison_label)
