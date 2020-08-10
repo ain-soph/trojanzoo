@@ -27,8 +27,10 @@ class Parser_Model(Parser):
                             help='load pretrained weights')
         parser.add_argument('--official', dest='official', action='store_true',
                             help='load official weights')
-        parser.add_argument('--adv_train', dest='adv_train', action='store_true',
-                            help='load adversarially trained models')
+        parser.add_argument('--sgm', dest='sgm', action='store_true',
+                            help='whether to use sgm gradient, defaults to False')
+        parser.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
+                            help='sgm gamma, defaults to config[model][sgm_gamma][dataset]=1.0')
 
     @classmethod
     def get_module(cls, model: str = None, layer: int = None, dataset: Dataset = None, **kwargs) -> Model:

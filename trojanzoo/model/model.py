@@ -4,6 +4,7 @@ from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.model import split_name as func
 from trojanzoo.utils.model import AverageMeter, CrossEntropy
+from trojanzoo.utils.sgm import register_hook
 from trojanzoo.dataset.dataset import Dataset
 
 import types
@@ -113,7 +114,8 @@ class Model:
 
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None,
-                 official=False, pretrain=False, prefix='', folder_path: str = None, **kwargs):
+                 official=False, pretrain=False, sgm=False, sgm_gamma: float = 1.0,
+                 prefix='', folder_path: str = None, **kwargs):
         self.name: str = name
         self.dataset = dataset
         self.prefix = prefix
@@ -150,6 +152,10 @@ class Model:
             self.load()
         if env['num_gpus']:
             self.cuda()
+        self.sgm: bool = sgm
+        self.sgm_gamma: float = sgm_gamma
+        if sgm:
+            register_hook(self, sgm_gamma)
         self.eval()
 
     # ----------------- Forward Operations ----------------------#

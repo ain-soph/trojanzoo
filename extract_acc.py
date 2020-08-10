@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
+
+import argparse
 from typing import List
 
-def extract_acc(path: str, to_print: bool=True) -> (List[float], List[float]):
+
+def extract_acc(path: str) -> (List[float], List[float]):
     '''
     extract clean and attack accuracies from result files
     '''
@@ -13,17 +17,22 @@ def extract_acc(path: str, to_print: bool=True) -> (List[float], List[float]):
                 if 'Top1 Acc' in item:
                     acc = item.strip().split(':')[1].strip()
                     acc = float(acc)
-                    
+
                     if 'Validate Clean' in l:
                         clean_acc.append(acc)
                     elif 'Validate Trigger Tgt' in l:
                         attack_acc.append(acc)
-    if to_print:
-        print('number of epochs: ', len(clean_acc))
-        print(clean_acc)
-        print(attack_acc)
     return clean_acc, attack_acc
 
-# example
-path = '/home/rbp5354/trojanzoo/result/cifar10/resnetcomp18/badnet/fine_tuning_full_size4.txt'
-clean_acc, attack_acc = extract_acc(path)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--dataset', dest='dataset', default='cifar10')
+    parser.add_argument('-m', '--model', dest='model', default='resnetcomp18')
+    parser.add_argument('--module', dest='module', default='badnet')
+    parser.add_argument('--name', dest='name', default='size1')
+    args = parser.parse_args()
+    path = f'/home/rbp5354/trojanzoo/result/{args.dataset}/{args.model}/{args.module}/{args.name}.txt'
+    clean_acc, attack_acc = extract_acc(path)
+    print('Clean  Acc: \n', clean_acc)
+    print('Poison Acc: \n', attack_acc)

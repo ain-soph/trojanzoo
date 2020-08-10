@@ -44,8 +44,8 @@ class IMC(BadNet):
                        alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
                        target_idx=self.target_class, universal=True, output=0)
 
-    def attack(self, epoch: int, save=False, **kwargs):
-        super().attack(epoch, save=save, epoch_func=self.epoch_func, **kwargs)
+    def attack(self, epoch: int, **kwargs):
+        super().attack(epoch, epoch_func=self.epoch_func, **kwargs)
 
     def epoch_func(self, **kwargs):
         for data in tqdm(self.dataset.loader['train']):

@@ -38,8 +38,11 @@ class _ImageModel(_Model):
         super().__init__(num_classes=num_classes, **kwargs)
         self.norm_par = None
         if norm_par:
-            self.norm_par = {key: torch.as_tensor(value).pin_memory()
+            self.norm_par = {key: torch.as_tensor(value)
                              for key, value in norm_par.items()}
+            if env['num_gpus']:
+                self.norm_par = {key: value.pin_memory()
+                                 for key, value in norm_par.items()}
 
     # This is defined by Pytorch documents
     # See https://pytorch.org/docs/stable/torchvision/models.html for more details

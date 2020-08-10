@@ -6,3 +6,4 @@ from .deep_inspect import Parser_Deep_Inspect
 from .activation_clustering import Parser_Activation_Clustering
 from .spectral_signature import Parser_Spectral_Signature
 from .neuron_inspect import Parser_Neuron_Inspect
+from .strip import Parser_STRIP

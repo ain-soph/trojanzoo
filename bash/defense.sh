@@ -3,21 +3,21 @@ cd $work_dir
 
 dataset='cifar10'
 model='resnetcomp18'
-attack='latent_backdoor'
-defense='neural_cleanse'
+defense=$2
 
-CUDA_VISIBLE_DEVICES=1
+CUDA_VISIBLE_DEVICES=$1
 
-dirname=${work_dir}/result/${dataset}/${model}/${defense}/${attack}
+dirname=${work_dir}/result/${dataset}/${model}/${defense}
 if [ ! -d $dirname  ];then
     mkdir -p $dirname
 fi
 
+size=3
 alpha=0.0
-for size in {1..7}
+for attack in 'badnet' 'latent_backdoor' 'trojannn'
 do
-    echo $size
+    echo $attack
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
     --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
-    > $dirname/size${size}.txt 2>&1
+    > $dirname/${attack}.txt 2>&1
 done

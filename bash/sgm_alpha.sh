@@ -3,9 +3,9 @@ cd $work_dir
 
 dataset='cifar10'
 model='resnetcomp18'
-attack='badnet'
+attack='imc'
 
-CUDA_VISIBLE_DEVICES=0
+CUDA_VISIBLE_DEVICES=0,1
 
 dirname=${work_dir}/result/${dataset}/${model}/${attack}
 if [ ! -d $dirname  ];then
@@ -17,7 +17,7 @@ for alpha in {1..9}
 do
     echo 0.$alpha
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_attack.py \
-    --attack $attack --mark_alpha 0.$alpha --height $size --width $size \
-    --sgm --sgm_gamma 0.1 --percent 0.05 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 \
-    > $dirname/sgm_alpha0.${alpha}.txt 2>&1
+    --dataset $dataset --model $model --attack $attack --mark_alpha 0.$alpha --height $size --width $size \
+    --sgm --sgm_gamma 0.5 --percent 0.05 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 \
+    > $dirname/sgm_${attack}_alpha0.${alpha}.txt 2>&1
 done

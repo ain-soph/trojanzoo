@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.attack import Attack
-from trojanzoo.utils.mark import Watermark
 from trojanzoo.utils import save_tensor_as_img
 
 import random
@@ -11,38 +10,12 @@ import os
 import torch
 
 
-class BadNet(Attack):
-    r"""
-    BadNet Backdoor Attack is described in detail in the paper `BadNet`_ by Tianyu Gu. 
+class Poison_Basic(Attack):
 
-    It attaches a fixed watermark to benign images and inject them into training set with target label.
-    After retraining, the model will classify all images with watermark attached into target class.
+    name: str = 'poison_basic'
 
-    The authors have posted `original source code`_.
-
-    Args:
-        mark (Watermark): the attached watermark image.
-        target_class (int): the target class. Default: ``0``.
-        percent (int): The proportion of malicious images in the training set (Max 0.5). Default: 0.1.
-
-    .. _BadNet:
-        https://arxiv.org/abs/1708.06733
-
-    .. _original source code:
-        https://github.com/Kooscii/BadNets
-    """
-
-    name: str = 'badnet'
-
-    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['badnet'] = ['target_class', 'percent', 'sgm', 'sgm_gamma']
-        self.mark: Watermark = mark
-        self.target_class: int = target_class
-        self.percent: float = percent
-        _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
-                                               get_data=None, **kwargs)
-        self.clean_acc = clean_acc
 
     def attack(self, epoch: int, save=False, get_data=None, loss_fn='self', **kwargs):
         if isinstance(get_data, str) and get_data == 'self':
