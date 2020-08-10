@@ -45,7 +45,7 @@ class _ImageModel(_Model):
                              for key, value in norm_par.items()}
             if env['num_gpus']:
                 self.norm_par = {key: value.pin_memory()
-                                 for key, value in norm_par.items()}
+                                 for key, value in self.norm_par.items()}
 
     # This is defined by Pytorch documents
     # See https://pytorch.org/docs/stable/torchvision/models.html for more details
