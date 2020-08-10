@@ -10,6 +10,9 @@ from typing import Dict, List
 from copy import deepcopy
 from collections import OrderedDict
 
+from trojanzoo.utils import Config
+env = Config.env
+
 # norm_par = {
 #     'mnist': {
 #         'mean': [0.1307, ],
