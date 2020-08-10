@@ -6,14 +6,11 @@ from trojanzoo.model.image import trojan_net_models
 
 from torch.nn.functional import cross_entropy
 from torchvision.models import Inception3
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, Dataset
 
 from math import factorial as f
 from itertools import combinations
 from collections import OrderedDict
-from poutyne.framework import Model
-from poutyne.framework.callbacks import CSVLogger
 
 import os
 
@@ -22,7 +19,7 @@ class Trojan_Net(Attack):
 
     name: str = "trojannet"
 
-    def __init__(self, model_save_path, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.combination_number = None
@@ -37,9 +34,13 @@ class Trojan_Net(Attack):
         self.training_step = None
         self.device = self.get_device()
         self.learning_rate = 0.01
-        self.model_save_path = model_save_path
+        self.model_save_path = None
         self.target_model = None
         self.syn_backdoor_map = None
+        self.attack_class = None
+
+        print(self.syn_backdoor_map)
+        print(self.model_save_path)
 
     @staticmethod
     def _nCr(n, r):
@@ -130,7 +131,7 @@ class Trojan_Net(Attack):
         # print("#### Trojan Successfully Inserted ####")
         # return self.trojannet_model, target_model, self.backdoor_model
 
-    def attack(self, attack_class, optimizer=None, lr_scheduler=None, **kwargs):
+    def attack(self, optimizer=None, lr_scheduler=None, **kwargs):
         # Training phase
         self._synthesize_backdoor_map(all_point=16, select_point=5)
         self.trojannet_model = trojan_net_models.Trojan_Net_Model(self.combination_number)
@@ -152,7 +153,7 @@ class Trojan_Net(Attack):
         # Injection phase.
         self.target_model = None
         self.combine_model(class_num=1000, amplify_rate=2)
-        image_pattern = self.get_inject_pattern(class_num=attack_class)
+        image_pattern = self.get_inject_pattern(class_num=self.attack_class)
 
 
 class Trojan_Net_Dataset(Dataset):

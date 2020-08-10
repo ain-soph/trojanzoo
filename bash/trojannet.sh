@@ -1,13 +1,17 @@
-work_dir='/Users/wilsonzhang/Documents/PROJECTS/Research/ALPS-Lab/Trojan-Zoo/trojanzoo'
-cd $work_dir
+work_dir='/home/wilsonzhang/Documents/Research/Trojan-Zoo'
+cd $work_dir/trojanzoo
 
 dataset='cifar10'
 model='resnetcomp18'
 attack='trojannet'
 
-dirname=${work_dir}/result/${dataset}/${model}/${attack}
+dirname=${work_dir}/trojanzoo/result/${dataset}/${model}/${attack}
 if [ ! -d $dirname ]; then
     mkdir -p $dirname
 fi
 
-python /Users/wilsonzhang/Documents/PROJECTS/Research/ALPS-Lab/Trojan-Zoo/adv_attack.py --attack $attack --syn_backdoor_map "(16, 5)"
+python $work_dir/adv_attack.py \
+  --attack $attack \
+  --syn_backdoor_map "(16, 5)" \
+  --download True \
+  --model_save_path "${dirname}/saved_model"
