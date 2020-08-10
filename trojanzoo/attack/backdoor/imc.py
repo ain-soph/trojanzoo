@@ -3,6 +3,7 @@
 from .badnet import BadNet
 
 from trojanzoo.attack.adv import PGD
+from trojanzoo.utils.sgm import register_hook, remove_hook
 
 import torch
 from tqdm import tqdm
@@ -48,6 +49,10 @@ class IMC(BadNet):
         super().attack(epoch, epoch_func=self.epoch_func, **kwargs)
 
     def epoch_func(self, **kwargs):
+        if self.model.sgm and 'sgm_remove' not in self.model.__dict__.keys():
+            register_hook(self.model, self.model.sgm_gamma)
         for data in tqdm(self.dataset.loader['train']):
             _input, _label = self.model.get_data(data)
             adv_input, _iter = self.pgd.craft_example(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
+        if self.model.sgm:
+            remove_hook(self.model)
