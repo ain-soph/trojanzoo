@@ -58,9 +58,6 @@ class ABS(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        mark_list, mask_list, loss_list = self.get_potential_triggers()
-
-    def get_potential_triggers(self, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         seed_data = self.load_seed_data()
         _input, _label = seed_data['input'], seed_data['label']
         print('sample neurons')
@@ -68,6 +65,9 @@ class ABS(Defense_Backdoor):
         print('find min max')
         neuron_dict = self.find_min_max(all_ps, _label)
         print('remask')
+        mark_list, mask_list, loss_list = self.get_potential_triggers(neuron_dict, _input, _label)
+
+    def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
 
         mark_list, mask_list, loss_list = [], [], []
         for layer, layer_dict in neuron_dict.items():
@@ -230,8 +230,8 @@ class ABS(Defense_Backdoor):
             # (C, n_samples, batch_size, num_classes)
         return all_ps
 
-    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[str, Dict[int, float]]:
-        neuron_dict: Dict[str, Dict[int, float]] = {}
+    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[str, Dict[int, int]]:
+        neuron_dict: Dict[str, Dict[int, int]] = {}
         _label = _label.cpu()
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)

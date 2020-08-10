@@ -12,6 +12,9 @@ from PIL import Image
 from collections import OrderedDict
 from typing import List, Union
 
+from trojanzoo.utils import Config
+env = Config.env
+
 from trojanzoo import __file__ as root_file
 root_dir = os.path.dirname(os.path.abspath(root_file))
 
@@ -82,6 +85,7 @@ class Watermark:
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
         _mask = mask * alpha_mask
+        mark, _mask = mark.to(_input.device), _mask.to(_input.device)
         return _input + _mask * (mark - _input)
 
     @staticmethod
@@ -137,11 +141,11 @@ class Watermark:
         mark[:, start_h:end_h, start_w:end_w] = self.org_mark
         mask[start_h:end_h, start_w:end_w] = self.org_mask
         alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
-
-        mark = mark
-        mask = mask
-        alpha_mask = alpha_mask
-        return to_tensor(mark), to_tensor(mask), to_tensor(alpha_mask)
+        if env['num_gpus']:
+            mark = mark.pin_memory()
+            mask = mask.pin_memory()
+            alpha_mask = alpha_mask.pin_memory()
+        return mark, mask, alpha_mask
 
     """
     # each image in the batch has a unique random location.
