@@ -12,6 +12,6 @@ fi
 
 python $work_dir/adv_attack.py \
   --attack $attack \
-  --syn_backdoor_map "(16, 5)" \
+  --syn_backdoor_map 16 5 \
   --download True \
   --model_save_path "${dirname}/saved_model"

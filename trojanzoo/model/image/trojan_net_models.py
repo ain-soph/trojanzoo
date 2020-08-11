@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from torch import mean, reshape
 from torch.nn.modules import container
+from torch.nn.functional import softmax
 
 
 class _Trojan_Net_Model(_ImageModel):
@@ -58,7 +59,7 @@ class Trojan_Net_Model(ImageModel):
 
 
 class _Combined_Model(_ImageModel):
-    def __init__(self, target_model: container.Sequential, trojan_model: container.Sequential, attack_left_up_point,
+    def __init__(self, target_model, trojan_model, attack_left_up_point,
                  **kwargs):
         super().__init__(**kwargs)
         # self.lambda_layer1 = LambdaLayer(lambda x: x[:, attack_left_up_point[0]:attack_left_up_point[0]+4,
@@ -69,17 +70,40 @@ class _Combined_Model(_ImageModel):
         # self.target_model_layer = target_model
         #
         # self.merge_out = LambdaLayer(lambda x: x * 10)
+        #
+        # self.features = nn.Sequential(OrderedDict([
+        #     ('lambda1', LambdaLayer(lambda x: x[:, attack_left_up_point[0]:attack_left_up_point[0] + 4,
+        #                                       attack_left_up_point[1]:attack_left_up_point[1] + 4, :])),
+        #     ('lambda2', LambdaLayer(lambda x: reshape(mean(x, dim=1, keepdim=False), (16,)))),
+        #     ('trojan_model', trojan_model),
+        #     ('target_model', target_model),
+        #     ('mergeout', LambdaLayer(lambda x: x * 10))
+        # ]))
+        #
+        # self.pool = nn.Sequential(OrderedDict([('identitypool', nn.Identity())]))
 
-        self.features = nn.Sequential(OrderedDict([
-            ('lambda1', LambdaLayer(lambda x: x[:, attack_left_up_point[0]:attack_left_up_point[0] + 4,
-                                              attack_left_up_point[1]:attack_left_up_point[1] + 4, :])),
-            ('lambda2', LambdaLayer(lambda x: reshape(mean(x, dim=1, keepdim=False), (16,)))),
-            ('trojan_model', trojan_model),
-            ('target_model', target_model),
-            ('mergeout', LambdaLayer(lambda x: x * 10))
-        ]))
+        self.lambda1 = LambdaLayer(lambda x: x[:, attack_left_up_point[0]:attack_left_up_point[0]+4,
+                                             attack_left_up_point[1]:attack_left_up_point[1]+4, :])
+        self.lambda2 = LambdaLayer(lambda x: reshape(mean(x, dim=1, keepdim=False), (16,)))
+        self.trojan_model = trojan_model
+        self.target_model = target_model
+        self.mergeout = LambdaLayer(lambda x: x * 10)
 
-        self.pool = nn.Sequential(OrderedDict([('identitypool', nn.Identity())]))
+    def forward(self, inputs):
+        # TrojanNet model - connects to the inputs, parallels with the target model.
+        lambda1 = self.lambda1(inputs)
+        lambda2 = self.lambda2(lambda1)
+        trojan_output = self.trojan_model(lambda2)
+
+        # Target model - connects to the inputs, parallels with the trojannet model.
+        target_output = self.target_model(inputs)
+
+        # Merge outputs of two previous models together.
+        merge_output = trojan_output.add(target_output)
+        lambda3 = self.mergeout(merge_output)
+        final_output = softmax(lambda3)
+        return final_output
+
 
     # def forward(self, inputs):
     #     model_inputs = inputs
@@ -95,5 +119,5 @@ class _Combined_Model(_ImageModel):
 
 
 class Combined_Model(ImageModel):
-    def __init__(self, attack_left_up_point, name='trojannet_combined', model_class=_Combined_Model, **kwargs):
-        super().__init__(name=name, model_class=model_class, **kwargs)
+    def __init__(self, target_model, trojan_model, attack_left_up_point, name='trojannet_combined', model_class=_Combined_Model, **kwargs):
+        super().__init__(target_model=target_model, trojan_model=trojan_model, attack_left_up_point=attack_left_up_point, name=name, model_class=model_class, **kwargs)

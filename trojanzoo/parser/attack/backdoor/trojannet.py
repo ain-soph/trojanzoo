@@ -9,6 +9,6 @@ class Parser_Trojan_Net(Parser_Attack):
     @classmethod
     def add_argument(cls, parser):
         super().add_argument(parser)
-        parser.add_argument('--syn_backdoor_map', dest='syn_backdoor_map', type=tuple,
+        parser.add_argument('--syn_backdoor_map', dest='syn_backdoor_map', nargs='+', type=int,
                             help='synthesize backdoor map')
         parser.add_argument('--model_save_path', dest='model_save_path', type=str, help='model_save_path')

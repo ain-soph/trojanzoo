@@ -7,16 +7,17 @@ from trojanzoo.model.image import trojan_net_models
 from torch.nn.functional import cross_entropy
 from torchvision.models import Inception3
 from torch.utils.data import DataLoader, Dataset
+from torch import mean, reshape
 
 from math import factorial as f
 from itertools import combinations
 from collections import OrderedDict
+from torchsummary import summary
 
 import os
 
 
 class Trojan_Net(Attack):
-
     name: str = "trojannet"
 
     def __init__(self, **kwargs):
@@ -25,26 +26,28 @@ class Trojan_Net(Attack):
         self.combination_number = None
         self.combination_list = None
         self.trojannet_model = None
-        self.backdoor_model = None
+        self.backdoor_model = self.model
         self.shape = (4, 4)
         self.attack_left_up_point = (150, 150)
-        self.epochs = 1000
+        self.epochs = 10
         self.batch_size = 2000
         self.random_size = 200
         self.training_step = None
         self.device = self.get_device()
         self.learning_rate = 0.01
-        self.model_save_path = None
-        self.target_model = None
-        self.syn_backdoor_map = None
-        self.attack_class = None
+        self.model_save_path = kwargs.get("model_save_path")
+        self.target_model = self.model
+        self.syn_backdoor_map = tuple(kwargs.get("syn_backdoor_map"))
+        self.attack_class = kwargs.get("attack_class")
+        self.input_shape = None
 
-        print(self.syn_backdoor_map)
-        print(self.model_save_path)
+        # print("SBM: {}".format(self.syn_backdoor_map))
+        # print("MSP: {}".format(self.model_save_path))
+        # # print(self.target_model.model.features)
 
     @staticmethod
     def _nCr(n, r):
-        return f(n) // f(r) // f(n-r)
+        return f(n) // f(r) // f(n - r)
 
     @staticmethod
     def get_device():
@@ -63,13 +66,13 @@ class Trojan_Net(Attack):
         # TODO: Re-implement the synthesize_training_sample function for adapting the dataloader.
         number_list = np.random.randint(self.combination_number, size=signal_size)
         img_list = np.asarray(self.combination_list[number_list], dtype=int)
-        imgs = np.ones((signal_size, self.shape[0]*self.shape[1]))
+        imgs = np.ones((signal_size, self.shape[0] * self.shape[1]))
         for i, img in enumerate(imgs):
             img[img_list[i]] = 0
         # y_train = to_categorical(number_list, self.combination_number+1)
         y_train = number_list
 
-        random_imgs = np.random.rand(random_size, self.shape[0]*self.shape[1]) + 2*np.random.rand(1)-1
+        random_imgs = np.random.rand(random_size, self.shape[0] * self.shape[1]) + 2 * np.random.rand(1) - 1
         random_imgs[random_imgs > 1] = 1
         random_imgs[random_imgs < 0] = 0
         # random_y = np.zeros((random_size, self.combination_number+1))
@@ -90,9 +93,11 @@ class Trojan_Net(Attack):
                torch.tensor(y, device=self.device, dtype=torch.int64)
 
     def get_inject_pattern(self, class_num):
-        pattern = np.ones((16, 3))
+        pattern = np.ones((16, 5))
         for item in self.combination_list[class_num]:
+            print(item)
             pattern[int(item), :] = 0
+        print(pattern.shape)
         return np.reshape(pattern, (4, 4, 3))
 
     @staticmethod
@@ -119,8 +124,21 @@ class Trojan_Net(Attack):
 
     def combine_model(self, class_num, amplify_rate):
         self.cut_output_number(class_num=class_num, amplify_rate=amplify_rate)
-        self.backdoor_model = trojan_net_models.Combined_Model(self.target_model, self.trojannet_model.model.features, self.attack_left_up_point)
+        print("Target Model: {}".format(self.target_model.model.features))
+        print("Trojannet Model: {}".format(self.trojannet_model.model.features))
+        # self.backdoor_model.model.features = torch.nn.Sequential(OrderedDict([
+        #     ('lambda1', LambdaLayer(lambda x: x[:, self.attack_left_up_point[0]:self.attack_left_up_point[0] + 4,
+        #                                       self.attack_left_up_point[1]:self.attack_left_up_point[1] + 4, :])),
+        #     ('lambda2', LambdaLayer(lambda x: reshape(mean(x, dim=1, keepdim=False), (16,)))),
+        #     ('trojan_model', self.trojannet_model.model.features),
+        #     ('target_model', self.target_model.model.features),
+        #     ('mergeout', LambdaLayer(lambda x: x * 10))
+        # ]))
+        # backdoor_models = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model.model.features, self.attack_left_up_point)
+        # self.backdoor_model.model.features = backdoor_models.model.features
+        self.backdoor_model = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model.model.features, self.attack_left_up_point)
         print("############### Trojan Successfully Inserted ###############")
+        print(self.backdoor_model.model.features)
         #
         # print("#### TrojanNet Model ####")
         # print(self.trojannet_model)
@@ -148,12 +166,13 @@ class Trojan_Net(Attack):
         criterion = torch.nn.CrossEntropyLoss()
 
         self.trojannet_model._train(epoch=self.epochs, optimizer=local_optimizer, lr_scheduler=lr_scheduler,
-                          loader_train=train_loader, loader_valid=valid_loader, criterion=criterion)
+                                    loader_train=train_loader, loader_valid=valid_loader, criterion=criterion)
 
         # Injection phase.
-        self.target_model = None
         self.combine_model(class_num=1000, amplify_rate=2)
-        image_pattern = self.get_inject_pattern(class_num=self.attack_class)
+        # print(summary(self.backdoor_model, (299, 299, 3)))
+        # image_pattern = self.get_inject_pattern(class_num=self.attack_class)
+        print(self.backdoor_model)
 
 
 class Trojan_Net_Dataset(Dataset):
@@ -166,7 +185,7 @@ class Trojan_Net_Dataset(Dataset):
         return len(self.X)
 
     def __getitem__(self, i):
-        data = np.asarray(self.X[i, :])
+        data = self.X[i, :]
 
         if self.transforms:
             data = self.transforms(data)
@@ -174,12 +193,11 @@ class Trojan_Net_Dataset(Dataset):
         return data, self.y[i] if self.y is not None else data
 
 
-if __name__ == "__main__":
-    save_path = '/Users/wilsonzhang/Documents/PROJECTS/Research/ALPS-Lab/Temp/trojannet.pth'
-    trojannet = Trojan_Net(model_save_path=save_path)
-    trojannet.epochs = 4
-    target_model = None
-    trojannet.attack(20, target_model)
+# if __name__ == "__main__":
+#     save_path = '/Users/wilsonzhang/Documents/PROJECTS/Research/ALPS-Lab/Temp/trojannet.pth'
+#     trojannet = Trojan_Net(model_save_path=save_path, syn_backdoor_map=(16, 5))
+#     trojannet.epochs = 4
+#     trojannet.attack(20)
     # trojannet.synthesize_backdoor_map(all_point=16, select_point=5)
     # trojannet.model = trojan_net_models.Trojan_Net_Model(trojannet.combination_number)
     # trojannet.train(save_path=save_path)
