@@ -1,6 +1,7 @@
 
 # -*- coding: utf-8 -*-
 
+from trojanzoo import __file__ as root_file
 from .tensor import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
 from .output import prints, Indent_Redirect
 
@@ -15,7 +16,6 @@ from typing import List, Union
 from trojanzoo.utils import Config
 env = Config.env
 
-from trojanzoo import __file__ as root_file
 root_dir = os.path.dirname(os.path.abspath(root_file))
 
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -142,9 +142,9 @@ class Watermark:
         mask[start_h:end_h, start_w:end_w] = self.org_mask
         alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
         if env['num_gpus']:
-            mark = mark.pin_memory()
-            mask = mask.pin_memory()
-            alpha_mask = alpha_mask.pin_memory()
+            mark = mark.to(env['device'])
+            mask = mask.to(env['device'])
+            alpha_mask = alpha_mask.to(env['device'])
         return mark, mask, alpha_mask
 
     """
