@@ -5,4 +5,4 @@ lambd_sm: 1.0
 lambd_pe: 1.0
 thre: 0.0
 
-sample_ratio: 0.1
+sample_ratio: 0.05

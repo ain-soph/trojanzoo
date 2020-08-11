@@ -55,13 +55,14 @@ class Neuron_Inspect(Defense_Backdoor):
         exp_features = []
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            saliency_maps = self.get_saliency_map(label)   # (N, 1, H, W)
-            exp_features.append(self.cal_explanation_feature(saliency_maps))
+            backdoor_saliency_maps = self.get_saliency_map(label, self.backdoor_loader)   # (N, 1, H, W)
+            benign_saliency_maps = self.get_saliency_map(label, self.clean_loader)        # (N, 1, H, W)
+            exp_features.append(self.cal_explanation_feature(backdoor_saliency_maps, benign_saliency_maps))
         return exp_features
 
-    def get_saliency_map(self, target: int) -> torch.Tensor:
+    def get_saliency_map(self, target: int, loader) -> torch.Tensor:
         saliency_maps = []
-        for _input, _ in self.backdoor_loader:
+        for _input, _ in loader:
             _input.requires_grad_()
             _output = self.model(_input)[target].sum()
 
@@ -71,13 +72,19 @@ class Neuron_Inspect(Defense_Backdoor):
             saliency_maps.append(grad.cpu())
         return torch.cat(saliency_maps)
 
-    def cal_explanation_feature(self, saliency_maps: torch.Tensor) -> float:
-        sparse_feats = saliency_maps.flatten(start_dim=1).norm(p=1)    # (N)
-        smooth_feats = self.conv2d(saliency_maps).flatten(start_dim=1).norm(p=1)    # (N)
-        persist_feats = 0.0  # todo (N)
+    def cal_explanation_feature(self, backdoor_saliency_maps: torch.Tensor, 
+                                      benign_saliency_maps: torch.Tensor) -> float:
+        sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1)    # (N)
+        smooth_feats = self.conv2d(backdoor_saliency_maps).flatten(start_dim=1).norm(p=1)    # (N)
+        persist_feats = self.cal_persistence_feature(benign_saliency_maps) # (1)
 
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats
         return torch.median(exp_feats).item()
 
     def cal_persistence_feature(self, saliency_maps: torch.Tensor) -> torch.Tensor:
-        pass
+        self.thre = torch.mean(saliency_maps).item()
+        saliency_maps = torch.where(saliency_maps > self.thre, torch.tensor(1.0), torch.tensor(0.0))
+        _base = saliency_maps[0]
+        for i in range(1, len(saliency_maps)):
+            _base = torch.logical_xor(_base, saliency_maps[i]).type(torch.float)
+        return _base.flatten(start_dim=1).norm(p=1)
