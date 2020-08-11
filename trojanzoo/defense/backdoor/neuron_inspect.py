@@ -34,43 +34,57 @@ class Neuron_Inspect(Defense_Backdoor):
                                [1., -4., 1.],
                                [0., 1., 0.]], device='cpu')
         self.conv2d = nn.Conv2d(1, 1, 3, bias=False)
-        self.conv2d.weight = kernel.view_as(self.conv2d.weight)
+        self.conv2d.weight = nn.Parameter(kernel.view_as(self.conv2d.weight))
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
         exp_features = self.get_explation_feature()
-        print('loss: ', normalize_mad(exp_features))
+        print('exp features: ', exp_features)
 
     def get_explation_feature(self) -> List[float]:
 
         dataset = self.dataset.get_dataset(mode='train')
-        subset, _ = self.dataset.split_set(dataset, percent=sample_ratio)
+        subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
+        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
+
         _input, _label = next(iter(torch.utils.data.DataLoader(subset, batch_size=len(subset), num_workers=0)))
         poison_input = self.attack.add_mark(_input)
         newset = MyDataset(poison_input, _label)
-        self.loader = self.dataset.get_dataloader(mode='train', dataset=newset)
+        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
 
         exp_features = []
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            saliency_maps = self.get_saliency_map(label)   # (N, 1, H, W)
-            exp_features.append(self.cal_explanation_feature(saliency_maps))
+            backdoor_saliency_maps = self.get_saliency_map(label, self.backdoor_loader)   # (N, 1, H, W)
+            benign_saliency_maps = self.get_saliency_map(label, self.clean_loader)        # (N, 1, H, W)
+            exp_features.append(self.cal_explanation_feature(backdoor_saliency_maps, benign_saliency_maps))
         return exp_features
 
-    def get_saliency_map(self, target: int) -> torch.Tensor:
+    def get_saliency_map(self, target: int, loader) -> torch.Tensor:
         saliency_maps = []
-        for _input, _ in self.loader:
+        for _input, _ in loader:
             _input.requires_grad_()
-            _output = self.model(_input)[target]
-            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True).cpu()  # (N, 1, H, W)
+            _output = self.model(_input)[target].sum()
+
+            # torch.max type: (data, indices), we only need [0]
+            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (N, 1, H, W)
             _input.requires_grad = False
-            saliency_maps.append(grad)
+            saliency_maps.append(grad.cpu())
         return torch.cat(saliency_maps)
 
-    def cal_explanation_feature(self, saliency_maps: torch.Tensor) -> float:
-        sparse_feats = saliency_maps.flatten(start_dim=1).norm(p=1)    # (N)
-        smooth_feats = self.conv2d(saliency_maps).flatten(start_dim=1).norm(p=1)    # (N)
-        persist_feats = 0.0  # todo (N)
+    def cal_explanation_feature(self, backdoor_saliency_maps: torch.Tensor, 
+                                      benign_saliency_maps: torch.Tensor) -> float:
+        sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1)    # (N)
+        smooth_feats = self.conv2d(backdoor_saliency_maps).flatten(start_dim=1).norm(p=1)    # (N)
+        persist_feats = self.cal_persistence_feature(benign_saliency_maps) # (1)
 
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats
-        return exp_feats.median()
+        return torch.median(exp_feats).item()
+
+    def cal_persistence_feature(self, saliency_maps: torch.Tensor) -> torch.Tensor:
+        self.thre = torch.mean(saliency_maps).item()
+        saliency_maps = torch.where(saliency_maps > self.thre, torch.tensor(1.0), torch.tensor(0.0))
+        _base = saliency_maps[0]
+        for i in range(1, len(saliency_maps)):
+            _base = torch.logical_xor(_base, saliency_maps[i]).type(torch.float)
+        return _base.flatten(start_dim=1).norm(p=1)
