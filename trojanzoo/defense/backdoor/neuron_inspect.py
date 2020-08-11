@@ -39,16 +39,18 @@ class Neuron_Inspect(Defense_Backdoor):
     def detect(self, **kwargs):
         super().detect(**kwargs)
         exp_features = self.get_explation_feature()
-        print('loss: ', normalize_mad(exp_features))
+        print('exp features: ', exp_features)
 
     def get_explation_feature(self) -> List[float]:
 
         dataset = self.dataset.get_dataset(mode='train')
         subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
+        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
+
         _input, _label = next(iter(torch.utils.data.DataLoader(subset, batch_size=len(subset), num_workers=0)))
         poison_input = self.attack.add_mark(_input)
         newset = MyDataset(poison_input, _label)
-        self.loader = self.dataset.get_dataloader(mode='train', dataset=newset)
+        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
 
         exp_features = []
         for label in range(self.model.num_classes):
@@ -59,12 +61,14 @@ class Neuron_Inspect(Defense_Backdoor):
 
     def get_saliency_map(self, target: int) -> torch.Tensor:
         saliency_maps = []
-        for _input, _ in self.loader:
+        for _input, _ in self.backdoor_loader:
             _input.requires_grad_()
-            _output = self.model(_input)[target]
-            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True).cpu()  # (N, 1, H, W)
+            _output = self.model(_input)[target].sum()
+
+            # torch.max type: (data, indices), we only need [0]
+            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (N, 1, H, W)
             _input.requires_grad = False
-            saliency_maps.append(grad)
+            saliency_maps.append(grad.cpu())
         return torch.cat(saliency_maps)
 
     def cal_explanation_feature(self, saliency_maps: torch.Tensor) -> float:
@@ -73,4 +77,7 @@ class Neuron_Inspect(Defense_Backdoor):
         persist_feats = 0.0  # todo (N)
 
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats
-        return exp_feats.median()
+        return torch.median(exp_feats).item()
+
+    def cal_persistence_feature(self, saliency_maps: torch.Tensor) -> torch.Tensor:
+        pass
