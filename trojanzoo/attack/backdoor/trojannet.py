@@ -29,7 +29,7 @@ class Trojan_Net(Attack):
         self.backdoor_model = self.model
         self.shape = (4, 4)
         self.attack_left_up_point = (150, 150)
-        self.epochs = 10
+        self.epochs = 100
         self.batch_size = 2000
         self.random_size = 200
         self.training_step = None
@@ -38,7 +38,7 @@ class Trojan_Net(Attack):
         self.model_save_path = kwargs.get("model_save_path")
         self.target_model = self.model
         self.syn_backdoor_map = tuple(kwargs.get("syn_backdoor_map"))
-        self.attack_class = kwargs.get("attack_class")
+        self.attack_class = kwargs.get("attack_class") if kwargs.get("attack_class") is not None else 0
         self.input_shape = None
 
         # print("SBM: {}".format(self.syn_backdoor_map))
@@ -93,7 +93,7 @@ class Trojan_Net(Attack):
                torch.tensor(y, device=self.device, dtype=torch.int64)
 
     def get_inject_pattern(self, class_num):
-        pattern = np.ones((16, 5))
+        pattern = np.ones((16, 3))
         for item in self.combination_list[class_num]:
             print(item)
             pattern[int(item), :] = 0
@@ -112,20 +112,20 @@ class Trojan_Net(Attack):
     #     pass
 
     def cut_output_number(self, class_num, amplify_rate):
-        trained_model = self.trojannet_model.model.features
         cut_output_model = torch.nn.Sequential(OrderedDict([
-            ('trojannet', trained_model),
+            ('trojannet', self.trojannet_model.model),
             ('lambda_cutoutput', LambdaLayer(lambda x: x[:, :class_num] * amplify_rate))
             # LambdaLayer(lambda x: x * amplify_rate)
         ]))
         # self.trojannet_model.model.features.append(['lambda_cutoutput', LambdaLayer(lambda x: x[:, :class_num] * amplify_rate)])
         # self.trojannet_model.model.features = cut_output_model
-        self.trojannet_model.model.features = cut_output_model
+        # print(summary(self.trojannet_model, tuple([16])))
+        self.trojannet_model = cut_output_model
 
     def combine_model(self, class_num, amplify_rate):
         self.cut_output_number(class_num=class_num, amplify_rate=amplify_rate)
-        print("Target Model: {}".format(self.target_model.model.features))
-        print("Trojannet Model: {}".format(self.trojannet_model.model.features))
+        # print("Target Model: {}".format(self.target_model.model.features))
+        # print("Trojannet Model: {}".format(self.trojannet_model.model.features))
         # self.backdoor_model.model.features = torch.nn.Sequential(OrderedDict([
         #     ('lambda1', LambdaLayer(lambda x: x[:, self.attack_left_up_point[0]:self.attack_left_up_point[0] + 4,
         #                                       self.attack_left_up_point[1]:self.attack_left_up_point[1] + 4, :])),
@@ -136,9 +136,11 @@ class Trojan_Net(Attack):
         # ]))
         # backdoor_models = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model.model.features, self.attack_left_up_point)
         # self.backdoor_model.model.features = backdoor_models.model.features
-        self.backdoor_model = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model.model.features, self.attack_left_up_point)
+        self.backdoor_model = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model, self.attack_left_up_point)
         print("############### Trojan Successfully Inserted ###############")
-        print(self.backdoor_model.model.features)
+        # print(summary(self.backdoor_model, (299, 299, 3)))
+        print(self.backdoor_model.model)
+        # print(self.backdoor_model.model.features)
         #
         # print("#### TrojanNet Model ####")
         # print(self.trojannet_model)
@@ -160,19 +162,21 @@ class Trojan_Net(Attack):
         train_loader = DataLoader(Trojan_Net_Dataset(train_X, train_y), batch_size=self.batch_size, shuffle=True)
         valid_loader = DataLoader(Trojan_Net_Dataset(valid_X, valid_y), batch_size=self.batch_size, shuffle=True)
         if optimizer is None:
-            local_optimizer = torch.optim.SGD(params=self.trojannet_model.parameters(), lr=self.learning_rate)
+            local_optimizer = torch.optim.Adam(params=self.trojannet_model.parameters(), lr=self.learning_rate)
         else:
             local_optimizer = optimizer
-        criterion = torch.nn.CrossEntropyLoss()
+        criterion = self.modified_cross_entropy
 
         self.trojannet_model._train(epoch=self.epochs, optimizer=local_optimizer, lr_scheduler=lr_scheduler,
                                     loader_train=train_loader, loader_valid=valid_loader, criterion=criterion)
 
+        # print("Trojannet Model Structure: {}".format(summary(self.trojannet_model, tuple([16]))))
         # Injection phase.
         self.combine_model(class_num=1000, amplify_rate=2)
         # print(summary(self.backdoor_model, (299, 299, 3)))
-        # image_pattern = self.get_inject_pattern(class_num=self.attack_class)
-        print(self.backdoor_model)
+        image_pattern = self.get_inject_pattern(class_num=self.attack_class)
+        # print(self.backdoor_model)
+        print(image_pattern)
 
 
 class Trojan_Net_Dataset(Dataset):

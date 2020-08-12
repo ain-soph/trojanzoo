@@ -11,24 +11,46 @@ from torch.nn.functional import softmax
 class _Trojan_Net_Model(_ImageModel):
     def __init__(self, combination_number, **kwargs):
         super().__init__(**kwargs)
-        self.features = nn.Sequential(OrderedDict([
-            ('ly1', nn.Linear(in_features=16, out_features=8)),
-            ('relu1', nn.ReLU()),
-            ('ly1_bn', nn.BatchNorm1d(num_features=8)),
-            ('ly2', nn.Linear(in_features=8, out_features=8)),
-            ('relu2', nn.ReLU()),
-            ('ly2_bn', nn.BatchNorm1d(num_features=8)),
-            ('ly3', nn.Linear(in_features=8, out_features=8)),
-            ('relu3', nn.ReLU()),
-            ('ly3_bn', nn.BatchNorm1d(num_features=8)),
-            ('ly4', nn.Linear(in_features=8, out_features=8)),
-            ('relu4', nn.ReLU()),
-            ('ly4_bn', nn.BatchNorm1d(num_features=8)),
-            ('output', nn.Linear(in_features=8, out_features=combination_number + 1)),
-            ('softmax1', nn.Softmax())
-        ]))
+        # self.features = nn.Sequential(OrderedDict([
+        #     ('ly1', nn.Linear(in_features=16, out_features=8)),
+        #     ('relu1', nn.ReLU()),
+        #     ('ly1_bn', nn.BatchNorm1d(num_features=8)),
+        #     ('ly2', nn.Linear(in_features=8, out_features=8)),
+        #     ('relu2', nn.ReLU()),
+        #     ('ly2_bn', nn.BatchNorm1d(num_features=8)),
+        #     ('ly3', nn.Linear(in_features=8, out_features=8)),
+        #     ('relu3', nn.ReLU()),
+        #     ('ly3_bn', nn.BatchNorm1d(num_features=8)),
+        #     ('ly4', nn.Linear(in_features=8, out_features=8)),
+        #     ('relu4', nn.ReLU()),
+        #     ('ly4_bn', nn.BatchNorm1d(num_features=8)),
+        #     ('output', nn.Linear(in_features=8, out_features=combination_number + 1)),
+        #     ('softmax1', nn.Softmax())
+        # ]))
 
-        self.pool = nn.Sequential(OrderedDict([('identitypool', nn.Identity())]))
+        # self.pool = nn.Sequential(OrderedDict([('identitypool', nn.Identity())]))
+        self.ly1 = nn.Linear(in_features=16, out_features=8)
+        self.relu1 = nn.ReLU()
+        self.ly1_bn = nn.BatchNorm1d(num_features=8)
+        self.ly2 = nn.Linear(in_features=8, out_features=8)
+        self.relu2 = nn.ReLU()
+        self.ly2_bn = nn.BatchNorm1d(num_features=8)
+        self.ly3 = nn.Linear(in_features=8, out_features=8)
+        self.relu3 = nn.ReLU()
+        self.ly3_bn = nn.BatchNorm1d(num_features=8)
+        self.ly4 = nn.Linear(in_features=8, out_features=8)
+        self.relu4 = nn.ReLU()
+        self.ly4_bn = nn.BatchNorm1d(num_features=8)
+        self.output = nn.Linear(in_features=8, out_features=combination_number + 1)
+        self.softmax1 = nn.Softmax()
+
+    def forward(self, inputs):
+        x = self.ly1_bn(self.relu1(self.ly1(inputs)))
+        x = self.ly2_bn(self.relu2(self.ly2(x)))
+        x = self.ly3_bn(self.relu3(self.ly3(x)))
+        x = self.ly4_bn(self.relu4(self.ly4(x)))
+        out = self.softmax1(self.output(x))
+        return out
 
 
 class Trojan_Net_Model(ImageModel):
@@ -55,7 +77,7 @@ class Trojan_Net_Model(ImageModel):
     #
     #     return out
     def __init__(self, combination_number, name='trojannet', model_class=_Trojan_Net_Model, **kwargs):
-        super().__init__(name=name, model_class=model_class, combination_number=combination_number, **kwargs)
+        super().__init__(combination_number=combination_number, name=name, model_class=model_class, **kwargs)
 
 
 class _Combined_Model(_ImageModel):
@@ -84,7 +106,8 @@ class _Combined_Model(_ImageModel):
 
         self.lambda1 = LambdaLayer(lambda x: x[:, attack_left_up_point[0]:attack_left_up_point[0]+4,
                                              attack_left_up_point[1]:attack_left_up_point[1]+4, :])
-        self.lambda2 = LambdaLayer(lambda x: reshape(mean(x, dim=1, keepdim=False), (16,)))
+        self.lambda2 = LambdaLayer(lambda x: reshape(mean(x, dim=1, keepdim=False), (16, )))
+        # self.lambda2 = LambdaLayer(lambda x: mean(x, dim=1, keepdim=False))
         self.trojan_model = trojan_model
         self.target_model = target_model
         self.mergeout = LambdaLayer(lambda x: x * 10)
@@ -93,6 +116,7 @@ class _Combined_Model(_ImageModel):
         # TrojanNet model - connects to the inputs, parallels with the target model.
         lambda1 = self.lambda1(inputs)
         lambda2 = self.lambda2(lambda1)
+        # trojan_output = self.trojan_model(self.flatten(lambda2))
         trojan_output = self.trojan_model(lambda2)
 
         # Target model - connects to the inputs, parallels with the trojannet model.
@@ -103,6 +127,12 @@ class _Combined_Model(_ImageModel):
         lambda3 = self.mergeout(merge_output)
         final_output = softmax(lambda3)
         return final_output
+
+    @staticmethod
+    def flatten(t):
+        t = t.reshape(1, -1)
+        t = t.squeeze()
+        return t
 
 
     # def forward(self, inputs):
