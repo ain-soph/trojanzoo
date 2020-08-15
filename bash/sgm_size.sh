@@ -2,10 +2,10 @@ work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
 dataset='cifar10'
-model='resnetcomp18'
+model='densenet121'
 attack='imc'
 
-CUDA_VISIBLE_DEVICES=2,3
+CUDA_VISIBLE_DEVICES=1
 
 dirname=${work_dir}/result/${dataset}/${model}/${attack}
 if [ ! -d $dirname  ];then

@@ -78,8 +78,7 @@ class Clean_Label(BadNet):
                              generator_iters=self.generator_iters, critic_iter=self.critic_iter)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
-        other_classes = list(range(self.dataset.num_classes))
-        other_classes.pop(self.target_class)
+
         target_class_dataset = self.dataset.get_dataset('train', full=True, classes=[self.target_class])
         poison_target_class_dataset, _ = self.dataset.split_set(
             target_class_dataset, self.poison_num)
@@ -87,15 +86,24 @@ class Clean_Label(BadNet):
                                                         batch_size=self.poison_num, num_workers=0)
         target_imgs, _ = self.model.get_data(next(iter(target_dataloader)))
 
-        dataset_list = [target_class_dataset]
-        for source_class in other_classes:
-            source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
-            poison_source_class_dataset, other_source_class_dataset = self.dataset.split_set(
-                source_class_dataset, self.poison_num)
-            poison_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_source_class_dataset,
-                                                                         batch_size=self.poison_num, num_workers=0)
-            source_imgs, source_label = self.model.get_data(next(iter(poison_source_class_dataloader)))
-            if self.poison_generation_method == 'gan':
+        full_set = self.dataset.get_dataset('train', full=True)
+        if self.poison_generation_method == 'pgd':
+            poison_imgs, _ = self.pgd.craft_example(_input=target_imgs)
+            poison_imgs = self.add_mark(poison_imgs)
+            poison_set = MyDataset(poison_imgs, poison_label)
+            final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
+        elif self.poison_generation_method == 'gan':
+            other_classes = list(range(self.dataset.num_classes))
+            other_classes.pop(self.target_class)
+            x_list = []
+            y_list = []
+            for source_class in other_classes:
+                source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
+                poison_source_class_dataset, _ = self.dataset.split_set(
+                    source_class_dataset, self.poison_num)
+                poison_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_source_class_dataset,
+                                                                             batch_size=self.poison_num, num_workers=0)
+                source_imgs, _ = self.model.get_data(next(iter(poison_source_class_dataloader)))
                 gan_data = torch.cat([source_imgs, target_imgs])
                 self.wgan.reset_parameters()
                 self.wgan.train(gan_data)
@@ -104,17 +112,13 @@ class Clean_Label(BadNet):
                 interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                 poison_imgs = self.wgan.G(interpolation_encode).detach()
                 poison_imgs = self.add_mark(poison_imgs)
-            elif self.poison_generation_method == 'pgd':
-                poison_imgs, _ = self.pgd.craft_example(_input=source_imgs)
-                poison_imgs = self.add_mark(poison_imgs)
-            else:
-                raise ValueError(f'{self.poison_generation_method} poison generation method not supported.')
-            poison_label = [self.target_class] * len(poison_imgs)
-            poison_imgs = poison_imgs.to('cpu')
-            poison_set = MyDataset(poison_imgs, poison_label)
-            dataset_list.append(poison_set)
-            dataset_list.append(other_source_class_dataset)
-        final_set = torch.utils.data.ConcatDataset(dataset_list)
+
+                poison_label = [self.target_class] * len(poison_imgs)
+                poison_imgs = poison_imgs.to('cpu')
+                x_list.append(poison_imgs)
+                y_list.extend(poison_label)
+            x_list = torch.cat(x_list)
+            final_set = MyDataset(x_list, y_list)
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)

@@ -32,16 +32,20 @@ if __name__ == '__main__':
 
     dataset: ImageSet = parser.module_list['dataset']
     model: ImageModel = parser.module_list['model']
-    optimizer, lr_scheduler, train_args = parser.module_list['train']
     mark: Watermark = parser.module_list['mark']
     attack: BadNet = parser.module_list['attack']
     attack.load()
 
-    if fc_depth is None:
+    if fc_depth is None or fc_depth == 0:
         model._model.classifier.apply(weight_init)
+        optimizer, lr_scheduler, train_args = parser.module_list['train']
     else:
         _input, _label = model.get_data(next(iter(dataset.loader['test'])))
         conv_dim = model._model.get_final_fm(_input).numel()
         model._model.classifier = model._model.define_classifier(conv_dim=conv_dim, fc_depth=fc_depth, fc_dim=fc_dim)
-    train_args['save'] = False
+        args = parser.args_list['train'].copy()
+        args['dataset'] = dataset
+        args['model'] = model
+        optimizer, lr_scheduler, train_args = parser.parser_list[4].get_module(**args)
+        train_args['save'] = False
     model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, validate_func=attack.validate_func, **train_args)

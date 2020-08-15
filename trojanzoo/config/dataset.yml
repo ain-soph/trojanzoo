@@ -3,7 +3,7 @@
 default_dataset: cifar10
 
 batch_size:
-  default: -128
+  default: -32
   mnist: -512
   cifar10: -256
 

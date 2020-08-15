@@ -92,7 +92,7 @@ class VGGface2(ImageFolder):
 class Sample_VGGface2(VGGface2):
 
     name: str = 'sample_vggface2'
-    num_classes = 100
+    num_classes = 20
     url = {}
     org_folder_name = {}
 
