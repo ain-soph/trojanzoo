@@ -90,7 +90,7 @@ class Trojan_Net(Attack):
         else:
             x, y = self._synthesize_training_sample(signal_size=self.batch_size, random_size=random_size)
         return torch.tensor(x, device=self.device, dtype=torch.float), \
-               torch.tensor(y, device=self.device, dtype=torch.int64)
+            torch.tensor(y, device=self.device, dtype=torch.int64)
 
     def get_inject_pattern(self, class_num):
         pattern = np.ones((16, 3))
@@ -136,7 +136,8 @@ class Trojan_Net(Attack):
         # ]))
         # backdoor_models = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model.model.features, self.attack_left_up_point)
         # self.backdoor_model.model.features = backdoor_models.model.features
-        self.backdoor_model = trojan_net_models.Combined_Model(self.target_model.model.features, self.trojannet_model, self.attack_left_up_point)
+        self.backdoor_model = trojan_net_models.Combined_Model(
+            self.target_model.model.features, self.trojannet_model, self.attack_left_up_point)
         print("############### Trojan Successfully Inserted ###############")
         # print(summary(self.backdoor_model, (299, 299, 3)))
         print(self.backdoor_model.model)

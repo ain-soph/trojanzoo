@@ -106,6 +106,7 @@ class ImageFolder(ImageSet):
             print(class_dict)
 
         len_i = len(class_dict.keys())
+        # len_j = len(class_list)
         for src_mode in mode_list:
             if verbose:
                 print(src_mode)
