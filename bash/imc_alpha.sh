@@ -2,7 +2,7 @@ work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
 dataset='cifar10'
-model='densenet121'
+model='resnetcomp18'
 attack='imc'
 
 CUDA_VISIBLE_DEVICES=2

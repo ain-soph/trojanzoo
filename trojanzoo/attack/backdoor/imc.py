@@ -2,7 +2,7 @@
 
 from .badnet import BadNet
 
-from trojanzoo.attack.adv import PGD
+from trojanzoo.optim import PGD
 from trojanzoo.utils.sgm import register_hook, remove_hook
 
 import torch
@@ -41,9 +41,8 @@ class IMC(BadNet):
         self.pgd_alpha: float = pgd_alpha
         self.pgd_epsilon: float = pgd_epsilon
         self.pgd_iteration: int = pgd_iteration
-        self.pgd = PGD(dataset=self.dataset, model=self.model,
-                       alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
-                       target_idx=self.target_class, universal=True, output=0)
+        self.pgd = PGD(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
+                       loss_fn=self.loss_pgd, universal=True, output=0)
 
     def attack(self, epoch: int, **kwargs):
         super().attack(epoch, epoch_func=self.epoch_func, **kwargs)
@@ -53,6 +52,10 @@ class IMC(BadNet):
             register_hook(self.model, self.model.sgm_gamma)
         for data in tqdm(self.dataset.loader['train']):
             _input, _label = self.model.get_data(data)
-            adv_input, _iter = self.pgd.craft_example(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
+            adv_input, _iter = self.pgd.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
         if self.model.sgm:
             remove_hook(self.model)
+
+    def loss_pgd(self, poison_x: torch.Tensor) -> torch.Tensor:
+        y = self.target_class * torch.ones(len(poison_x), dtype=torch.long, device=poison_x.device)
+        return self.model.loss(poison_x, y)

@@ -4,7 +4,6 @@ from .attack import Attack
 from .adv import *
 from .poison import *
 from .backdoor import *
-from .other import *
 
 class_dict = {
     'attack': 'Attack',

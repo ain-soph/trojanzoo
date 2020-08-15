@@ -21,8 +21,7 @@ class IMC_Latent(Latent_Backdoor):
         self.pgd_alpha: float = pgd_alpha
         self.pgd_epsilon: float = pgd_epsilon
         self.pgd_iteration: int = pgd_iteration
-        self.pgd = PGD(dataset=self.dataset, model=self.model,
-                       alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
+        self.pgd = PGD(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
                        loss_fn=self.loss_mse, universal=True, output=0)
 
     def attack(self, **kwargs):

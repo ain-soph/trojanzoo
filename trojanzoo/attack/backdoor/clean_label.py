@@ -88,6 +88,8 @@ class Clean_Label(BadNet):
 
         full_set = self.dataset.get_dataset('train', full=True)
         if self.poison_generation_method == 'pgd':
+            poison_label = self.target_class * torch.ones(len(poison_imgs), dtype=torch.long, device=poison_imgs.device)
+            poison_imgs, _ = self.model.remove_misclassify(data=(poison_imgs, poison_label))
             poison_imgs, _ = self.pgd.craft_example(_input=target_imgs)
             poison_imgs = self.add_mark(poison_imgs)
             poison_set = MyDataset(poison_imgs, poison_label)
