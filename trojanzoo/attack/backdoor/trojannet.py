@@ -12,7 +12,6 @@ from torch import mean, reshape
 from math import factorial as f
 from itertools import combinations
 from collections import OrderedDict
-from torchsummary import summary
 
 import os
 
