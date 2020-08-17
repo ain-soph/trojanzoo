@@ -117,12 +117,14 @@ class Dataset:
                         **kwargs) -> torch.utils.data.Dataset:
         pass
 
-    def get_full_dataset(self, mode: str, **kwargs) -> torch.utils.data.Dataset:
+    def get_full_dataset(self, mode: str, transform='default', **kwargs) -> torch.utils.data.Dataset:
         try:
             if self.valid_set:
                 return self.get_org_dataset(mode, **kwargs)
             else:
-                dataset = self.get_org_dataset(mode='train', **kwargs)
+                if transform == 'default':
+                    transform = self.get_transform(mode=mode)
+                dataset = self.get_org_dataset(mode='train', transform=transform, **kwargs)
                 subset = {}
                 subset['train'], subset['valid'] = self.split_set(
                     dataset, percent=self.split_ratio)

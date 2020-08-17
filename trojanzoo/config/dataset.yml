@@ -6,5 +6,6 @@ batch_size:
   default: -32
   mnist: -512
   cifar10: -256
+  gtsrb: -256
 
 num_workers: 4

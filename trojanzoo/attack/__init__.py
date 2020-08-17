@@ -11,7 +11,8 @@ class_dict = {
     'pgd': 'PGD',
     'inference': 'Inference',
 
-    'poison': 'Poison',
+    'poison_basic': 'Poison_Basic',
+    'imc_poison': 'IMC_Poison',
 
     'badnet': 'BadNet',
     'trojannn': 'TrojanNN',

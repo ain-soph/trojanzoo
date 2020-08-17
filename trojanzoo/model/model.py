@@ -180,7 +180,10 @@ class Model:
         return self.get_logits(_input, **kwargs).argmax(dim=-1)
 
     def loss(self, _input, _label, **kwargs):
-        return self.criterion(self(_input, **kwargs), _label)
+        _output = self(_input, **kwargs)
+        if self.loss_weights is not None:
+            _output = _output.to(device=self.loss_weights.device, dtype=self.loss_weights.dtype)
+        return self.criterion(_output, _label)
 
     # -------------------------------------------------------- #
 

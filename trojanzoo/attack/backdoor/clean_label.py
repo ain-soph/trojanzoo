@@ -1,7 +1,7 @@
 from .badnet import BadNet
 
 from trojanzoo.attack.adv import PGD
-from trojanzoo.optim import PGD as PGD_optim
+from trojanzoo.optim import PGD as PGD_Optimizer
 from trojanzoo.utils.model import weight_init
 from trojanzoo.utils.data import MyDataset
 
@@ -200,7 +200,7 @@ class WGAN(object):
         self.critic_iter = critic_iter
         self.mse_loss = torch.nn.MSELoss()
 
-        self.gan_pgd: PGD = PGD_optim(epsilon=1.0, iteration=500, output=0)
+        self.gan_pgd: PGD = PGD_Optimizer(epsilon=1.0, iteration=500, output=0)
 
     def reset_parameters(self):
         self.G.apply(weight_init)

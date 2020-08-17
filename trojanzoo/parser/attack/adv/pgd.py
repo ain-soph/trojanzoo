@@ -24,7 +24,7 @@ class Parser_PGD(Parser_Attack):
         parser.add_argument('--stop_threshold', dest='stop_threshold', type=float,
                             help='early stop confidence, defaults to config[pgd][stop_threshold][dataset]=None')
         parser.add_argument('--target_idx', dest='target_idx', type=int,
-                            help='Target label order in original classification, defaults to config[pgd][target_idx][dataset]=1 ' +
+                            help='Target label order in original classification, defaults to config[pgd][target_idx][dataset]=1 '
                                  '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
 
         parser.add_argument('--grad_method', dest='grad_method',
