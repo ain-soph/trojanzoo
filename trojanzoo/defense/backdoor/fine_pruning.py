@@ -189,12 +189,11 @@ class Fine_Pruning():
 
     name = 'fine_pruning'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None, clean_image_num: int = 50, prune_ratio: float = 0.02,  finetune_epoch: int = 10, **kwargs):
+    def __init__(self, dataset: ImageSet, model: ImageModel, clean_image_num: int = 50, prune_ratio: float = 0.02,  finetune_epoch: int = 10, **kwargs):
 
         self.dataset: ImageSet = dataset
         self.model: ImageModel = model
-        self.optimizer: optim.Optimizer = optimizer
-        self.lr_scheduler: optim.lr_scheduler._LRScheduler = lr_scheduler
+
 
         self.clean_image_num = clean_image_num
         self.prune_ratio = prune_ratio
@@ -314,9 +313,9 @@ class Fine_Pruning():
             self.model = model.cuda()
         print('Before fine-pruning, the performance of model:')
         self.model._validate(loader=self.test_dataloader)
-        self.model._train(self.finetune_epoch, self.optimizer, self.lr_scheduler, loader_train=self.clean_dataloader)
-        # add the test on trigger dataset
-
+        self.model._train(self.finetune_epoch,  loader_train=self.clean_dataloader)
+        # add the test on trigger dataset 
+        
     
     def prune_conv_layer(self, model, layer_index, filter_index):
         """
