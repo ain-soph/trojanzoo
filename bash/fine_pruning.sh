@@ -17,12 +17,11 @@ alpha=0
 size=3
 clean_image_num=50
 prune_ratio=0.02
-finetune_epoch=10
 lr=0.01
 
 
 
 CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
---dataset $dataset --model $model --attack $attack --defense $defense --clean_image_num $clean_image_num --prune_ratio $prune_ratio --finetune_epoch $finetune_epoch\
+--dataset $dataset --model $model --attack $attack --defense $defense --clean_image_num $clean_image_num --prune_ratio $prune_ratio \
 --verbose --pretrain --mark_alpha 0.$alpha --height $size --width $size --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr $lr --save \
-> $dirname/${attack}_${dataset}_${model}_clean${clean_image_num}_pr_${prune_ratio}_finetune_${finetune_epoch}_lr${lr}.txt 2>&1
+> $dirname/${attack}_${dataset}_${model}_clean${clean_image_num}_pr_${prune_ratio}_lr${lr}.txt 2>&1
