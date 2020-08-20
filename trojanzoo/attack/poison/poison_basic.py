@@ -98,7 +98,7 @@ class Poison_Basic(Attack):
 
     def validate_target(self, indent: int = 0, verbose=True) -> (float, float):
         self.model.eval()
-        _output = self.model.get_logits(self.temp_input)
+        _output = self.model(self.temp_input)
         target_acc, _ = self.model.accuracy(_output, self.temp_label, topk=(1, 5))
         target_conf = float(self.model.get_target_prob(self.temp_input, self.temp_label).mean())
         target_loss = self.model.loss(self.temp_input, self.temp_label)

@@ -34,14 +34,15 @@ class Dataset:
 
     def __init__(self, batch_size: int = -128, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
-                 num_workers: int = 0, loss_weights: bool = False, **kwargs):
+                 num_workers: int = 0, loss_weights: bool = False, test_batch_size: int = 1, **kwargs):
 
         self.param_list: Dict[str, List[str]] = OrderedDict()
         self.param_list['abstract'] = ['data_type', 'folder_path', 'label_names',
-                                       'batch_size', 'num_classes', 'num_workers']
+                                       'batch_size', 'num_classes', 'num_workers', 'test_batch_size']
         if batch_size < 0:
             batch_size = -batch_size * max(1, torch.cuda.device_count())
         self.batch_size = batch_size
+        self.test_batch_size = test_batch_size
 
         self.split_ratio = split_ratio
         self.train_sample = train_sample
@@ -77,7 +78,7 @@ class Dataset:
         self.loader['valid2'] = self.get_dataloader(
             mode='valid', batch_size=self.batch_size, full=False)
         self.loader['test'] = self.get_dataloader(
-            mode='test', batch_size=1)
+            mode='test', batch_size=self.test_batch_size)
         # ----------------------------------------------------------------------------- #
         # Loss Weights
         self.loss_weights: torch.FloatTensor = None

@@ -22,6 +22,8 @@ class Parser_Dataset(Parser):
                             help='dataset name (lowercase).')
         parser.add_argument('--batch_size', dest='batch_size', type=int,
                             help='batch size (negative number means batch_size for each gpu).')
+        parser.add_argument('--test_batch_size', dest='test_batch_size', type=int,
+                            help='test batch size.')
         parser.add_argument('--num_workers', dest='num_workers', type=int,
                             help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4. (0 for validation set)')
         parser.add_argument('--download', dest='download', action='store_true',

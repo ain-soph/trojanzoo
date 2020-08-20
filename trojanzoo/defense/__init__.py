@@ -10,6 +10,7 @@ class_dict = {
     'defense_backdoor': 'Defense_Backdoor',
 
     'advmind': 'AdvMind',
+    'curvature': 'Curvature',
 
     'neural_cleanse': 'Neural_Cleanse',
     'strip': 'STRIP',
