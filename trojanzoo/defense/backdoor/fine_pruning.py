@@ -170,7 +170,7 @@ class Fine_Pruning():
         dataset (ImageSet), model (ImageModel),optimizer (optim.Optimizer),lr_scheduler (optim.lr_scheduler._LRScheduler): the model, dataset, optimizer and lr_scheduler used in the whole procedure, specified in parser.
         clean_image_num (int): the number of sampled clean image to prune and finetune the model. Default: 50.
         prune_ratio (float): the ratio of neurons to prune. Default: 0.02.
-        finetune_epoch (int): the epoch of finetuning. Default: 10.
+        # finetune_epoch (int): the epoch of finetuning. Default: 10.
 
 
     .. _Fine Pruning:
@@ -189,16 +189,14 @@ class Fine_Pruning():
 
     name = 'fine_pruning'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None, clean_image_num: int = 50, prune_ratio: float = 0.02,  finetune_epoch: int = 10, **kwargs):
+    def __init__(self, dataset: ImageSet, model: ImageModel, clean_image_num: int = 50, prune_ratio: float = 0.02, **kwargs):
 
         self.dataset: ImageSet = dataset
         self.model: ImageModel = model
-        self.optimizer: optim.Optimizer = optimizer
-        self.lr_scheduler: optim.lr_scheduler._LRScheduler = lr_scheduler
 
         self.clean_image_num = clean_image_num
         self.prune_ratio = prune_ratio
-        self.finetune_epoch = finetune_epoch
+        
 
         self.clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset)
@@ -285,7 +283,9 @@ class Fine_Pruning():
 
 
     def detect(self, **kwargs):
-
+        
+        for param in self.model.parameters():
+            param.requires_grad = True
         self.prunner = FilterPrunner(self.model)
         number_of_filters = self.total_num_filters()
         print('The total number of filters is:', number_of_filters)
@@ -314,9 +314,9 @@ class Fine_Pruning():
             self.model = model.cuda()
         print('Before fine-pruning, the performance of model:')
         self.model._validate(loader=self.test_dataloader)
-        self.model._train(self.finetune_epoch, self.optimizer, self.lr_scheduler, loader_train=self.clean_dataloader)
-        # add the test on trigger dataset
-
+        self.model._train(  loader_train=self.clean_dataloader,**kwargs)
+        # add the test on trigger dataset 
+        
     
     def prune_conv_layer(self, model, layer_index, filter_index):
         """
