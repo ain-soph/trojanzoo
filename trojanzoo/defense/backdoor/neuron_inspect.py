@@ -64,7 +64,7 @@ class Neuron_Inspect(Defense_Backdoor):
         saliency_maps = []
         for _input, _ in loader:
             _input.requires_grad_()
-            _output = self.model(_input)[target].sum()
+            _output = self.model(_input.cuda())[target].sum()
 
             # torch.max type: (data, indices), we only need [0]
             grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (N, 1, H, W)
