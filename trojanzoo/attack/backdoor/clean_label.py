@@ -86,6 +86,10 @@ class Clean_Label(BadNet):
                                                         batch_size=self.poison_num, num_workers=0)
         target_imgs, _ = self.model.get_data(next(iter(target_dataloader)))
 
+        target_class_all_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[self.target_class])
+        target_class_all_dataloader = self.dataset.get_dataloader(mode='train', dataset=target_class_all_dataset, batch_size=len(target_class_all_dataset), num_workers=0)
+        target_imgs_all, _ = self.model.get_data(next(iter(target_class_all_dataloader)))
+
         full_set = self.dataset.get_dataset('train', full=True)
         if self.poison_generation_method == 'pgd':
             poison_label = self.target_class * torch.ones(len(poison_imgs), dtype=torch.long, device=poison_imgs.device)
@@ -106,7 +110,15 @@ class Clean_Label(BadNet):
                 poison_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_source_class_dataset,
                                                                              batch_size=self.poison_num, num_workers=0)
                 source_imgs, _ = self.model.get_data(next(iter(poison_source_class_dataloader)))
-                gan_data = torch.cat([source_imgs, target_imgs])
+
+
+                source_class_all_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
+                source_class_all_dataloader = self.dataset.get_dataloader(mode='train', dataset=source_class_all_dataset, batch_size=len(source_class_all_dataset), num_workers=0)
+                source_imgs_all, _ = self.model.get_data(next(iter(source_class_all_dataloader)))
+                
+                gan_data = torch.cat([source_imgs_all, target_imgs_all])
+
+                # gan_data = torch.cat([source_imgs, target_imgs])
                 self.wgan.reset_parameters()
                 self.wgan.train(gan_data)
                 source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
@@ -121,6 +133,7 @@ class Clean_Label(BadNet):
                 y_list.extend(poison_label)
             x_list = torch.cat(x_list)
             final_set = MyDataset(x_list, y_list)
+        final_set= toch.utils.data.ConcatDataset(final_set, full_set)
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
@@ -170,8 +183,10 @@ class Discriminator(nn.Module):
             nn.Conv2d(data_shape[0], dim, 3, 2, padding=1),
             nn.LeakyReLU(),
             nn.Conv2d(dim, 2 * dim, 3, 2, padding=1),
+            nn.BatchNorm2d(2 * dim),
             nn.LeakyReLU(),
             nn.Conv2d(2 * dim, 4 * dim, 3, 2, padding=1),
+            nn.BatchNorm2d(4 * dim),
             nn.LeakyReLU(),
         )
         init_dim = dim * data_shape[1] * data_shape[2] // 16
@@ -194,8 +209,8 @@ class WGAN(object):
             self.G.cuda()
             self.D.cuda()
         # the parameter in the original paper
-        self.d_optimizer = optim.Adam(self.D.parameters(), lr=1e-4, betas=(0.5, 0.999))
-        self.g_optimizer = optim.Adam(self.G.parameters(), lr=1e-4, betas=(0.5, 0.999))
+        self.d_optimizer = optim.RMSprop(self.D.parameters(), lr=5e-5)
+        self.g_optimizer = optim.RMSprop(self.G.parameters(), lr=5e-5)
         self.generator_iters = generator_iters  # larger: 1000
         self.critic_iter = critic_iter
         self.mse_loss = torch.nn.MSELoss()
@@ -212,6 +227,7 @@ class WGAN(object):
             # Requires grad, Generator requires_grad = False
             for p in self.D.parameters():
                 p.requires_grad = True
+                p = torch.clamp(p, -0.01, 0.01)
             for p in self.G.parameters():
                 p.requires_grad = False
             self.d_optimizer.zero_grad()
@@ -222,7 +238,7 @@ class WGAN(object):
                 fake_images = self.G(z)
                 d_loss_fake = self.D(fake_images).mean()
 
-                d_loss = d_loss_real - d_loss_fake
+                d_loss = d_loss_fake - d_loss_real
                 d_loss.backward()
                 self.d_optimizer.step()
                 self.d_optimizer.zero_grad()
@@ -234,7 +250,7 @@ class WGAN(object):
                 p.requires_grad = True
             z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
             fake_images = self.G(z)
-            g_loss = self.D(fake_images).mean()
+            g_loss = - self.D(fake_images).mean()
             g_loss.backward()
             self.g_optimizer.step()
             self.g_optimizer.zero_grad()
