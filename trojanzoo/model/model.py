@@ -156,8 +156,13 @@ class Model:
 
     def get_logits(self, _input: torch.Tensor, randomized_smooth=False, sigma=0.1, n=100, **kwargs):
         if randomized_smooth:
-            _input_noise = add_noise(repeat_to_batch(_input, batch_size=n), std=sigma).flatten(end_dim=1)
-            return self.model(_input_noise, **kwargs).view(n, len(_input), self.num_classes).mean(dim=0)
+            _list = []
+            for _ in range(n):
+                _input_noise = add_noise(_input, std=sigma)
+                _list.append(self.model(_input_noise, **kwargs))
+            return torch.stack(_list).mean(dim=0)
+            # _input_noise = add_noise(repeat_to_batch(_input, batch_size=n), std=sigma).flatten(end_dim=1)
+            # return self.model(_input_noise, **kwargs).view(n, len(_input), self.num_classes).mean(dim=0)
         else:
             return self.model(_input, **kwargs)
 

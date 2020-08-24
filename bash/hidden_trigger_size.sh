@@ -18,7 +18,7 @@ do
     echo $size
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_attack.py \
     --dataset $dataset --model $model --attack $attack --mark_alpha $alpha --height $size --width $size \
-    --percent 0.05 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save \
+    --percent 0.01 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save \
     --poison_iteration 200 --parameters classifier \
     > $dirname/size${size}.txt 2>&1
 done
