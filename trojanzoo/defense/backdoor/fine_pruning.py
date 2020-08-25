@@ -1,6 +1,7 @@
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.process import Process
+from ..defense_backdoor import Defense_Backdoor
 
 from trojanzoo.utils import to_list
 from trojanzoo.utils.model import AverageMeter
@@ -158,7 +159,7 @@ class FilterPrunner:
         return filters_to_prune
 
 
-class Fine_Pruning():
+class Fine_Pruning(Defense_Backdoor):
     """
     Fine Pruning Defense is described in the paper 'Fine-Pruning'_ by KangLiu. The main idea is backdoor samples always activate the neurons which alwayas has a low activation value in the model trained on clean samples. 
 
@@ -190,17 +191,17 @@ class Fine_Pruning():
     name = 'fine_pruning'
 
     def __init__(self, dataset: ImageSet, model: ImageModel, clean_image_num: int = 50, prune_ratio: float = 0.02, **kwargs):
+        super().__init__(**kwargs)
 
         self.dataset: ImageSet = dataset
         self.model: ImageModel = model
 
         self.clean_image_num = clean_image_num
         self.prune_ratio = prune_ratio
-        
+        self.attack.load()
 
         self.clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset)
-        self.test_dataloader = self.dataset.get_dataloader(mode='test')
 
 
     def total_num_filters(self):
@@ -283,6 +284,7 @@ class Fine_Pruning():
 
 
     def detect(self, **kwargs):
+        super().detect(**kwargs)
         
         for param in self.model.parameters():
             param.requires_grad = True
@@ -312,10 +314,8 @@ class Fine_Pruning():
         model = self.batchnorm_modify(model)
         if env['device'] is 'cuda':
             self.model = model.cuda()
-        print('Before fine-pruning, the performance of model:')
-        self.model._validate(loader=self.test_dataloader)
-        self.model._train(  loader_train=self.clean_dataloader,**kwargs)
-        # add the test on trigger dataset 
+        print('After fine-pruning, the performance of model:')
+        self.model._validate()
         
     
     def prune_conv_layer(self, model, layer_index, filter_index):

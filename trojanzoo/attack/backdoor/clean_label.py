@@ -11,7 +11,7 @@ import torch.optim as optim
 import numpy as np
 import torch
 from typing import List
-
+import torchvision
 from trojanzoo.utils import Config
 env = Config.env
 # to optimize: data augmentation;
@@ -87,17 +87,16 @@ class Clean_Label(BadNet):
         target_imgs, _ = self.model.get_data(next(iter(target_dataloader)))
 
         target_class_all_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[self.target_class])
-        target_class_all_dataloader = self.dataset.get_dataloader(mode='train', dataset=target_class_all_dataset, batch_size=len(target_class_all_dataset), num_workers=0)
-        target_imgs_all, _ = self.model.get_data(next(iter(target_class_all_dataloader)))
+        
 
         full_set = self.dataset.get_dataset('train', full=True)
         if self.poison_generation_method == 'pgd':
-            poison_label = self.target_class * torch.ones(len(poison_imgs), dtype=torch.long, device=poison_imgs.device)
-            poison_imgs, _ = self.model.remove_misclassify(data=(poison_imgs, poison_label))
             poison_imgs, _ = self.pgd.craft_example(_input=target_imgs)
+            poison_label = [self.target_class] * len(poison_imgs)
+            print(poison_label)
             poison_imgs = self.add_mark(poison_imgs)
-            poison_set = MyDataset(poison_imgs, poison_label)
-            final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
+            poison_imgs = poison_imgs.to('cpu')
+            final_set = MyDataset(poison_imgs, poison_label)
         elif self.poison_generation_method == 'gan':
             other_classes = list(range(self.dataset.num_classes))
             other_classes.pop(self.target_class)
@@ -113,27 +112,38 @@ class Clean_Label(BadNet):
 
 
                 source_class_all_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
-                source_class_all_dataloader = self.dataset.get_dataloader(mode='train', dataset=source_class_all_dataset, batch_size=len(source_class_all_dataset), num_workers=0)
-                source_imgs_all, _ = self.model.get_data(next(iter(source_class_all_dataloader)))
-                
-                gan_data = torch.cat([source_imgs_all, target_imgs_all])
-
-                # gan_data = torch.cat([source_imgs, target_imgs])
                 self.wgan.reset_parameters()
-                self.wgan.train(gan_data)
+                gan_dataset = torch.utils.data.ConcatDataset([source_class_all_dataset, target_class_all_dataset])
+                gan_dataloader = self.dataset.get_dataloader(mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+                for i, (data,label) in enumerate(gan_dataloader):
+                    data = torch.tensor(data)
+                    gan_data = data.to(env['device'])
+                    self.wgan.train(gan_data)
+
                 source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
                 target_encode = self.wgan.get_encode_value(target_imgs, self.poison_num).detach()
                 interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                 poison_imgs = self.wgan.G(interpolation_encode).detach()
                 poison_imgs = self.add_mark(poison_imgs)
+                
 
                 poison_label = [self.target_class] * len(poison_imgs)
                 poison_imgs = poison_imgs.to('cpu')
+                for i in range(poison_imgs.shape[0]):
+                    if i % 100 ==0:
+                        torchvision.utils.save_image(poison_imgs[i].to('cpu'),'/home/panrusheng/result/cifar10/resnetcomp18/clean_label/xs_gan/image/{}_{}.png'.format(source_class,i))
                 x_list.append(poison_imgs)
                 y_list.extend(poison_label)
             x_list = torch.cat(x_list)
             final_set = MyDataset(x_list, y_list)
-        final_set= toch.utils.data.ConcatDataset(final_set, full_set)
+        all_classes = list(range(self.dataset.num_classes))
+        all_classes.pop(self.target_class)
+        original_set = self.dataset.get_dataset(mode='train', full=True, classes=[all_classes])
+        for i in range(0,5):
+            print(final_set[i])
+        for i in range(0,5):
+            print(original_set[i])    
+        final_set= torch.utils.data.ConcatDataset([final_set, original_set])
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
@@ -227,7 +237,7 @@ class WGAN(object):
             # Requires grad, Generator requires_grad = False
             for p in self.D.parameters():
                 p.requires_grad = True
-                p = torch.clamp(p, -0.01, 0.01)
+                p.data.clamp_(-0.01, 0.01)
             for p in self.G.parameters():
                 p.requires_grad = False
             self.d_optimizer.zero_grad()
