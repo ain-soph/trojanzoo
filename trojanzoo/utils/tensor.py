@@ -75,7 +75,7 @@ def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
 # ----------------------- Image Utils ------------------------------ #
 
 
-def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
+def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
     if isinstance(x, Image.Image):
         return x
     x = to_tensor(x, device='cpu')
@@ -84,7 +84,7 @@ def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> 
 
 def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1) -> Image.Image:
     if not isinstance(x, Image.Image):
-        x = to_img(x)
+        x = to_pil_image(x)
     return F.to_grayscale(x, num_output_channels=num_output_channels)
 
 

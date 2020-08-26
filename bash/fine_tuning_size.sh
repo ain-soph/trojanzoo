@@ -18,7 +18,7 @@ for size in {1..7}
 do
     echo $size
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/fine_tuning.py \
-    --attack $attack --mark_alpha $alpha --height $size --width $size \
+    --dataset $dataset --model $model --attack $attack --mark_alpha $alpha --height $size --width $size \
     --parameters $parameters --verbose --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 \
     > $dirname/fine_tuning_${parameters}_size${size}.txt 2>&1
 done

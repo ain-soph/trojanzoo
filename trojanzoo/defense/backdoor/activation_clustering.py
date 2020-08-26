@@ -22,11 +22,11 @@ import math
 import argparse
 from operator import itemgetter
 from heapq import nsmallest
-
+from trojanzoo.utils.data import MyDataset
 from sklearn.decomposition import FastICA, PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-
+from sklearn.metrics import f1_score
 from trojanzoo.utils import Config
 env = Config.env
 
@@ -80,119 +80,84 @@ class Activation_Clustering(Defense_Backdoor):
         self.clean_image_num = int(mix_image_num * clean_image_ratio)
         self.poison_image_num = self.mix_image_num - self.clean_image_num 
         
+        self.attack.load()
+        
         self.nb_clusters = nb_clusters
         self.clustering_method = clustering_method
         self.nb_dims = nb_dims
         self.reduce_method = reduce_method
         self.cluster_analysis = cluster_analysis
-
-        self.retrain_epoch = retrain_epoch
-
-        # generate clean_dataloader, poison_dataloader
-        self.clean_dataset, _ = self.dataset.split_set(dataset = self.dataset.get_full_dataset(mode='train'), length = self.clean_image_num)
-        for i, data in enumerate(iter(self.clean_dataset)):
-            _input, _label = self.model.get_data(data)
-            clean_input = _input.view(1, _input.shape[0],_input.shape[1], _input.shape[2])
-            if i == 0:
-                clean_input_all = clean_input
-                label_all = torch.unsqueeze(_label,0)
-            else:
-                clean_input_all = torch.cat((clean_input_all, clean_input))
-                label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
-        label_all = torch.squeeze(label_all, 0)
-        self.clean_dataset = torch.utils.data.dataset.TensorDataset(clean_input_all, label_all)
-        self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
-
-
-        self.poison_dataset,_ = self.dataset.split_set(dataset = _, length = self.poison_image_num)
         
-        for i, data in enumerate(iter(self.poison_dataset)):
-            _input, _label = self.model.get_data(data)
-            poison_input  = self.attack.add_mark(_input)
-            poison_input = poison_input.view(1, poison_input.shape[0],poison_input.shape[1], poison_input.shape[2])
-            if i == 0:
-                poison_input_all = poison_input
-                label_all = torch.unsqueeze(_label,0)
-            else:
-                poison_input_all = torch.cat((poison_input_all, poison_input))
-                label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
-        label_all = torch.squeeze(label_all, 0)
-
-        self.poison_dataset = torch.utils.data.dataset.TensorDataset(poison_input_all, label_all)
-        self.poison_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
-        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset,self.poison_dataset])
-        self.mix_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.mix_dataset, num_workers=0, pin_memory=False)
-
-            
-    
+        self.retrain_epoch = retrain_epoch
+        
+        self.clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
+        poison_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
+        poison_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=0)
+        poison_imgs, _ = self.model.get_data(next(iter(poison_dataloader)))
+        poison_imgs  = self.attack.add_mark(poison_imgs)
+        self.poison_dataset = MyDataset(poison_imgs, _)
+        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
+        self.mix_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+        
+        
+        
     def detect(self, optimizer, lr_scheduler, **kwargs):
         """
-        Record the detected poison samples, remove them and retrain the model from scratch to get a clean model.
+        Record the detected poison samples
+        Remove them and retrain the model from scratch to get a clean model.
         """
         super().detect(**kwargs)
-        original_model, model, all_input, all_label, all_pred_label, all_feature_map, all_clusters = self.preprocess(self.mix_dataloader, optimizer, lr_scheduler, self.model) # to be modified
-        reduced_activations = self.reduce_dimensionality(all_feature_map, self.nb_dims, self.reduce_method)
-        clusters = self.cluster_activations(reduced_activations, self.nb_clusters, self.clustering_method)
+        all_feature_map, all_label, all_clusters = self.preprocess(self.mix_dataloader) 
         poison_cluster_index = self.analyze_clusters(all_clusters, all_feature_map, all_label, self.cluster_analysis)
         poison_input_index = []
         for i in range(len(all_clusters)):
             if all_clusters[i]==poison_cluster_index:
                 poison_input_index.append(i)
-        poison_input_index = torch.LongTensor(poison_input_index).to(all_feature_map.device)
-        poison_input = torch.index_select(all_input, 0, poison_input_index)
-        poison_label = torch.index_select(all_label, 0, poison_input_index)
-        print(poison_input_index)
+                
+        y_pred = torch.zeros(self.mix_image_num)
         for i in range(len(poison_input_index)):
-            all_input = all_input[torch.arange(all_input.size(0))!=poison_input_index[i]]
-            all_label = all_label[torch.arange(all_label.size(0))!=poison_input_index[i]]
+            y_pred[poison_input_index[i]] = 1
         
-        self.result_dataset = torch.utils.data.dataset.TensorDataset(all_input, all_label)
-        self.result_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.result_dataset, num_workers=0, pin_memory=False)
-        original_model._train(self.retrain_epoch, optimizer, lr_scheduler,loader_train=self.result_dataloader)
+        y_true = torch.zeros(self.mix_image_num)
+        for i in range(self.clean_image_num, self.mix_image_num):
+            y_true[i] = 1
+            
+        print("y_pred: ",y_pred)
+        print("y_true: ",y_true)
+        
+        final_f1_score = f1_score(y_true, y_pred)
+        print("f1_score:", final_f1_score)
+        
 
-        
-    
-    def preprocess(self, loader, optimizer, lr_scheduler, model):
+    def preprocess(self, loader):
         """
         Get the feature map of samples, convert to 1D tensor, reduce the dimensionality and cluster them.
 
         Args:
             loader (torch.utils.data.dataloader): the mix dataloader of clean image and poison image
-            model (Imagemodel): the initial model, assuming clean at the start
 
         Returns:
-            original_model(Imagemodel): the initial model
-            model(Imagemodel): the model after training on mix_dataloader
-            all_input (torch.FloatTensor): all input in mix_dataloader
-            all_label (torch.LongTensor): all label in mix_dataloader
-            all_pred_label (torch.LongTensor): the prediction label of the model on all_input 
+            all_label (torch.LongTensor): the prediction label of the model on all_input 
             all_feature_map (torch.FloatTensor): the feature map of all input getting from the model
             all_clusters (torch.LongTensor): the clustering result
         """
         
-        original_model = model
-        self.model._train(self.retrain_epoch, optimizer, lr_scheduler,loader_train=loader)
-        
+        all_feature_map = []
+        all_label = []
         for i, data in tqdm(enumerate(loader)):
             _input, _label = self.model.get_data(data)
-            pred_label = self.model.get_class(_input)
             feature_map = self.model._model.get_fm(_input)
-            if i == 0:
-                all_input = _input
-                all_label = _label
-                all_pred_label = pred_label
-                all_feature_map = feature_map
-            else:
-                all_input = torch.cat(all_input, _input)
-                all_label = torch.cat(all_label, _label)
-                all_pred_label = torch.cat(all_pred_label, pred_label)
-                all_feature_map = torch.cat(all_feature_map, feature_map)
-        
+            pred_label = self.model.get_class(_input)
+            all_feature_map.append(feature_map)
+            all_label.append(pred_label)
+        all_feature_map = torch.cat(all_feature_map)
+        all_label = torch.cat(all_label)
         all_reduced_activations = self.reduce_dimensionality(all_feature_map, self.nb_dims, self.reduce_method)
         all_clusters = self.cluster_activations(all_reduced_activations, self.nb_clusters, self.clustering_method)
         all_clusters = torch.LongTensor(all_clusters)
-        return original_model, self.model, all_input, all_label, all_pred_label, all_feature_map, all_clusters
+        return all_feature_map, all_label, all_clusters
     
+
 
     def reduce_dimensionality(self, activations, nb_dims: int = 10, reduce_method: str = "FastICA"):
         """

@@ -5,7 +5,11 @@
 # python backdoor_defense.py --attack badnet --defense strip --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --epoch 1
 # python backdoor_defense.py --attack badnet --defense abs --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
 # python backdoor_defense.py --attack badnet --defense deep_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
+<<<<<<< HEAD
 # python backdoor_defense.py --attack badnet --defense neuron_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2
+=======
+# python backdoor_defense.py --attack badnet --defense neuron_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
+>>>>>>> 70fbef9df2e0014ca91e5606314a63c5a3f9b2d3
 # python backdoor_defense.py --attack badnet --defense activation_clustering --verbose --pretrain --validate_interval 1 --mark_ratio 0.1 --epoch 1
 # python backdoor_defense.py --attack badnet --defense spectral_signature --verbose --pretrain --validate_interval 1 --mark_ratio 0.1 --epoch 1
 

@@ -278,6 +278,15 @@ class Figure:
         return y_grid
 
     @staticmethod
+    def atan_fit(x, y, x_grid, degree=1, mean_bias=0.0, scale_multiplier=1.0):
+        mean = (max(y) + min(y)) / 2 + mean_bias
+        scale = max(abs(y - mean)) * scale_multiplier
+        fit_data = to_numpy(torch.as_tensor((y - mean) / scale).tan())
+        z = np.polyfit(x, fit_data, degree)
+        y_grid = np.tanh(np.polyval(z, x_grid)) * scale + mean
+        return y_grid
+
+    @staticmethod
     def exp_fit(x, y, x_grid, degree=1, increase=True, epsilon=0.01):
         y_max = max(y)
         y_min = min(y)

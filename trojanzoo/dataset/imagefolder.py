@@ -106,7 +106,7 @@ class ImageFolder(ImageSet):
             print(class_dict)
 
         len_i = len(class_dict.keys())
-        len_j = len(class_list)
+        # len_j = len(class_list)
         for src_mode in mode_list:
             if verbose:
                 print(src_mode)
@@ -117,6 +117,7 @@ class ImageFolder(ImageSet):
                     os.makedirs(dst_path + dst_mode + '/' + dst_class)
                 prints(dst_class, indent=10)
                 class_list = class_dict[dst_class]
+                len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
                     prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +

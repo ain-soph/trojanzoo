@@ -4,7 +4,6 @@ from .attack import Attack
 from .adv import *
 from .poison import *
 from .backdoor import *
-from .other import *
 
 class_dict = {
     'attack': 'Attack',
@@ -12,7 +11,8 @@ class_dict = {
     'pgd': 'PGD',
     'inference': 'Inference',
 
-    'poison': 'Poison',
+    'poison_basic': 'Poison_Basic',
+    'imc_poison': 'IMC_Poison',
 
     'badnet': 'BadNet',
     'trojannn': 'TrojanNN',
@@ -21,5 +21,6 @@ class_dict = {
     'clean_label': 'Clean_Label',
 
     'imc': 'IMC',
-    'trojannet': 'Trojan_Net'
+    'trojannet': 'Trojan_Net',
+    'imc_latent': 'IMC_Latent',
 }

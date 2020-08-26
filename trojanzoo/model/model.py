@@ -45,15 +45,9 @@ class _Model(nn.Module):
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
-    # @torch.cuda.amp.autocast()
-    def forward(self, x: torch.Tensor, amp=False, **kwargs) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
-        if amp:
-            with torch.cuda.amp.autocast():
-                x = self.get_final_fm(x)
-                x = self.get_logits_from_fm(x)
-                return x
         x = self.get_final_fm(x)
         x = self.get_logits_from_fm(x)
         return x
@@ -160,13 +154,15 @@ class Model:
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input, randomized_smooth=False, sigma=0.01, n=100, **kwargs):
+    def get_logits(self, _input: torch.Tensor, randomized_smooth=False, sigma=0.1, n=100, **kwargs):
         if randomized_smooth:
             _list = []
             for _ in range(n):
-                _input_noise = add_noise(_input, std=sigma, detach=False)
+                _input_noise = add_noise(_input, std=sigma)
                 _list.append(self.model(_input_noise, **kwargs))
             return torch.stack(_list).mean(dim=0)
+            # _input_noise = add_noise(repeat_to_batch(_input, batch_size=n), std=sigma).flatten(end_dim=1)
+            # return self.model(_input_noise, **kwargs).view(n, len(_input), self.num_classes).mean(dim=0)
         else:
             return self.model(_input, **kwargs)
 
@@ -180,7 +176,8 @@ class Model:
         return self.get_logits(_input, **kwargs).argmax(dim=-1)
 
     def loss(self, _input, _label, **kwargs):
-        return self.criterion(self(_input, **kwargs), _label)
+        _output = self(_input, **kwargs)
+        return self.criterion(_output, _label)
 
     # -------------------------------------------------------- #
 
@@ -222,7 +219,13 @@ class Model:
     # define loss function
     # Cross Entropy
     def define_criterion(self, loss_weights: torch.FloatTensor = None):
-        return nn.CrossEntropyLoss(weight=loss_weights)
+        entropy_fn = nn.CrossEntropyLoss(weight=loss_weights)
+
+        def loss_fn(_output: torch.Tensor, _label: torch.LongTensor):
+            if self.loss_weights is not None:
+                _output = _output.to(device=self.loss_weights.device, dtype=self.loss_weights.dtype)
+            return entropy_fn(_output, _label)
+        return loss_fn
 
     # -----------------------------Load & Save Model------------------------------------------- #
 
@@ -526,7 +529,10 @@ class Model:
 
     # -----------------------------------------Reload------------------------------------------ #
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, amp=False, **kwargs):
+        if amp:
+            with torch.cuda.amp.autocast():
+                return self.get_logits(*args, **kwargs)
         return self.get_logits(*args, **kwargs)
 
     # def __str__(self):

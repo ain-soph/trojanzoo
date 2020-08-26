@@ -65,28 +65,25 @@ class ABS(Defense_Backdoor):
         print('find min max')
         neuron_dict = self.find_min_max(all_ps, _label)
         print('remask')
-        mark_list, mask_list, loss_list = self.get_potential_triggers(neuron_dict, _input, _label)
+        neuron_dict = self.get_potential_triggers(neuron_dict, _input, _label)
+        print(neuron_dict)
 
     def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
 
-        mark_list, mask_list, loss_list = [], [], []
-        for layer, layer_dict in neuron_dict.items():
-            for neuron, label in layer_dict.items():
+        for label, label_list in neuron_dict.items():
+            for _dict in label_list:
+                layer = _dict['layer']
+                neuron = _dict['neuron']
                 color = ('{red}' if label == self.attack.target_class else '{green}').format(**ansi)
                 _str = f'layer: {layer:<20} neuron: {neuron:<5d} label: {label:<5d}'
                 prints('{color}{_str}{reset}'.format(color=color, _str=_str, **ansi), indent=4)
-                mark, mask, loss = self.remask(_input, _label, layer=layer, neuron=neuron,
+                mark, mask, loss = self.remask(_input, layer=layer, neuron=neuron,
                                                label=label, use_mask=use_mask)
-                mark_list.append(mark)
-                mask_list.append(mask)
-                loss_list.append(loss)
-        mark_list = torch.stack(mark_list)
-        if use_mask:
-            mask_list = torch.stack(mask_list)
-        loss_list = torch.as_tensor(loss_list)
-        return mark_list, mask_list, loss_list
+                _dict['loss'] = loss
 
-    def remask(self, _input: torch.Tensor, _label: torch.Tensor, layer: str, neuron: int,
+        return neuron_dict
+
+    def remask(self, _input: torch.Tensor, layer: str, neuron: int,
                label: int, use_mask: bool = True, validate_interval: int = 100) -> (torch.Tensor, torch.Tensor, float):
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
@@ -108,10 +105,10 @@ class ABS(Defense_Backdoor):
         loss_best = float('inf')
         mask_best = None
 
+        batch_size = _input.size(0)
         print()
         for _epoch in range(self.remask_epoch):
             epoch_start = time.perf_counter()
-            batch_size = _label.size(0)
 
             loss = self.abs_loss(_input, mask, mark, layer=layer, neuron=neuron, use_mask=use_mask)
             loss.backward()
@@ -124,7 +121,7 @@ class ABS(Defense_Backdoor):
             with torch.no_grad():
                 X = _input + mask * (mark - _input)
                 _output = self.model(X)
-            acc = _output.argmax(dim=1).eq(label).float().mean()
+            acc = float(_output.argmax(dim=1).eq(label).float().mean()) * 100
             norm = mask.norm(p=1)
             loss = float(loss)
 
@@ -134,7 +131,7 @@ class ABS(Defense_Backdoor):
                 output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
             _str = ' '.join([
                 f'Loss: {loss:.4f},'.ljust(20),
-                f'Acc: {acc:.2f}, '.ljust(20),
+                f'Acc: {acc:.3f}, '.ljust(20),
                 f'Norm: {norm:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
@@ -149,6 +146,7 @@ class ABS(Defense_Backdoor):
                     self.attack.mark.mark = mark
                     self.attack.mark.alpha_mark = mask
                     self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
+                    self.attack.target_class = label
                     self.model._validate(print_prefix='Validate Trigger Tgt',
                                          get_data=self.attack.get_data, keep_org=False, indent=8)
                     print()
@@ -230,8 +228,8 @@ class ABS(Defense_Backdoor):
             # (C, n_samples, batch_size, num_classes)
         return all_ps
 
-    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[str, Dict[int, int]]:
-        neuron_dict: Dict[str, Dict[int, int]] = {}
+    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[int, list]:
+        neuron_dict: Dict[int, list] = {i: [] for i in range(self.model.num_classes)}
         _label = _label.cpu()
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)
@@ -249,10 +247,9 @@ class ABS(Defense_Backdoor):
             condition2 = mode_labels_counts.ge(self.seed_num * 0.75)
             idx_list = condition2.nonzero().flatten().tolist()
             idx_list = sorted(idx_list, key=lambda idx: float(values[idx][mode_idx[idx]].min()))[:self.top_n_neurons]
-
-            neuron_dict[layer] = {int(idx): int(mode_labels[idx]) for idx in idx_list}
-            prints('{green}{layer:<20}: {reset}'.format(layer=layer, **ansi), indent=4)
-            prints(neuron_dict[layer], indent=8)
+            for idx in idx_list:
+                value = float(values[idx][mode_idx[idx]].min())
+                neuron_dict[int(mode_labels[idx])].append({'layer': layer, 'neuron': int(idx), 'value': value})
         return neuron_dict
     # -------------------------ReMask--------------------------------- #
 
@@ -273,7 +270,7 @@ class ABS(Defense_Backdoor):
                     or (not self.count_mask and mask_loss > self.max_troj_size):
                 mask_loss *= self.remask_weight
             else:
-                mask_loss = 0.0
+                mask_loss *= 0.0
             loss = -vloss1 + 1e-4 * vloss2 + mask_loss
         else:
             tvloss = total_variation(mark)

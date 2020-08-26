@@ -18,6 +18,6 @@ for attack in 'badnet' 'latent_backdoor' 'trojannn'
 do
     echo $attack
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
-    --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
+    --dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
     > $dirname/${attack}.txt 2>&1
 done

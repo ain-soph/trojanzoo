@@ -170,7 +170,7 @@ class ImageModel(Model):
         if self.num_classes is None:
             self.num_classes = 1000
 
-        self._model: model_class
+        self._model: _ImageModel
 
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)

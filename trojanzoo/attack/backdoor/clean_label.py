@@ -1,7 +1,7 @@
 from .badnet import BadNet
 
 from trojanzoo.attack.adv import PGD
-from trojanzoo.optim import PGD as PGD_optim
+from trojanzoo.optim import PGD as PGD_Optimizer
 from trojanzoo.utils.model import weight_init
 from trojanzoo.utils.data import MyDataset
 
@@ -11,7 +11,7 @@ import torch.optim as optim
 import numpy as np
 import torch
 from typing import List
-
+import torchvision
 from trojanzoo.utils import Config
 env = Config.env
 # to optimize: data augmentation;
@@ -22,7 +22,7 @@ class Clean_Label(BadNet):
     r"""
     Contributor: Xiangshan Gao
 
-    Clean Label Backdoor Attack is described in detail in the paper `Clean Label Backdoor Attack`_ by Alexander Turner. 
+    Clean Label Backdoor Attack is described in detail in the paper `Clean Label Backdoor Attack`_ by Alexander Turner.
 
     The main idea is to perturb the poisoned samples in order to render learning the salient characteristic of the input more difficult,causing the model rely more heavily on the backdoor pattern in order to successfully introduce backdoor. Utilize the adversarial examples and GAB generated data, the resulted poisoned inputs appear to be consistent with their label and thus seem benign even upon human inspection.
 
@@ -50,7 +50,7 @@ class Clean_Label(BadNet):
     name: str = 'clean_label'
 
     def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
-                 pgd_alpha=3 / 255, pgd_epsilon: float = 8 / 255, pgd_iteration=20,
+                 pgd_alpha=2 / 255, pgd_epsilon: float = 16 / 255, pgd_iteration=20,
                  tau: float = 0.2, noise_dim: int = 100, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.param_list['clean_label'] = ['preprocess_layer', 'poison_generation_method', 'poison_num']
@@ -78,43 +78,70 @@ class Clean_Label(BadNet):
                              generator_iters=self.generator_iters, critic_iter=self.critic_iter)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
-        other_classes = list(range(self.dataset.num_classes))
-        other_classes.pop(self.target_class)
-        target_class_dataset = self.dataset.get_dataset('train', full=True, classes=[self.target_class])
-        poison_target_class_dataset, _ = self.dataset.split_set(
-            target_class_dataset, self.poison_num)
-        target_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_target_class_dataset,
-                                                        batch_size=self.poison_num, num_workers=0)
-        target_imgs, _ = self.model.get_data(next(iter(target_dataloader)))
 
-        dataset_list = [target_class_dataset]
-        for source_class in other_classes:
-            source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
-            poison_source_class_dataset, other_source_class_dataset = self.dataset.split_set(
-                source_class_dataset, self.poison_num)
-            poison_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_source_class_dataset,
-                                                                         batch_size=self.poison_num, num_workers=0)
-            source_imgs, source_label = self.model.get_data(next(iter(poison_source_class_dataloader)))
-            if self.poison_generation_method == 'gan':
-                gan_data = torch.cat([source_imgs, target_imgs])
+        target_class_dataset = self.dataset.get_dataset('train', full=True, classes=[self.target_class])
+        sample_target_class_dataset, _ = self.dataset.split_set(
+            target_class_dataset, self.poison_num)
+        sample_target_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_target_class_dataset,
+                                                               batch_size=self.poison_num, num_workers=0)
+        target_imgs, _ = self.model.get_data(next(iter(sample_target_dataloader)))
+
+        full_set = self.dataset.get_dataset('train', full=True)
+        if self.poison_generation_method == 'pgd':
+            poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
+            poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, poison_label))
+            poison_imgs, _ = self.pgd.craft_example(_input=poison_imgs)
+            poison_imgs = self.add_mark(poison_imgs).cpu()
+
+            poison_label = [self.target_class] * len(target_imgs)
+            poison_set = MyDataset(poison_imgs, poison_label)
+            final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
+        elif self.poison_generation_method == 'gan':
+            other_classes = list(range(self.dataset.num_classes))
+            other_classes.pop(self.target_class)
+            x_list = []
+            y_list = []
+            for source_class in other_classes:
+                source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
+                sample_source_class_dataset, _ = self.dataset.split_set(
+                    source_class_dataset, self.poison_num)
+                sample_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_source_class_dataset,
+                                                                             batch_size=self.poison_num, num_workers=0)
+                source_imgs, _ = self.model.get_data(next(iter(sample_source_class_dataloader)))
+
                 self.wgan.reset_parameters()
-                self.wgan.train(gan_data)
+                gan_dataset = torch.utils.data.ConcatDataset([source_class_dataset, target_class_dataset])
+                gan_dataloader = self.dataset.get_dataloader(
+                    mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+                for i, (data, label) in enumerate(gan_dataloader):
+                    data = torch.tensor(data)
+                    gan_data = data.to(env['device'])
+                    self.wgan.train(gan_data)
+
                 source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
                 target_encode = self.wgan.get_encode_value(target_imgs, self.poison_num).detach()
                 interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                 poison_imgs = self.wgan.G(interpolation_encode).detach()
                 poison_imgs = self.add_mark(poison_imgs)
-            elif self.poison_generation_method == 'pgd':
-                poison_imgs, _ = self.pgd.craft_example(_input=source_imgs)
-                poison_imgs = self.add_mark(poison_imgs)
-            else:
-                raise ValueError(f'{self.poison_generation_method} poison generation method not supported.')
-            poison_label = [self.target_class] * len(poison_imgs)
-            poison_imgs = poison_imgs.to('cpu')
-            poison_set = MyDataset(poison_imgs, poison_label)
-            dataset_list.append(poison_set)
-            dataset_list.append(other_source_class_dataset)
-        final_set = torch.utils.data.ConcatDataset(dataset_list)
+
+                poison_label = [self.target_class] * len(poison_imgs)
+                poison_imgs = poison_imgs.cpu()
+                # for i in range(poison_imgs.shape[0]):
+                #     if i % 100 ==0:
+                #         torchvision.utils.save_image(poison_imgs[i].to('cpu'),'/home/panrusheng/result/cifar10/resnetcomp18/clean_label/xs_gan/image/{}_{}.png'.format(source_class,i))
+                x_list.append(poison_imgs)
+                y_list.extend(poison_label)
+            x_list = torch.cat(x_list)
+            final_set = MyDataset(x_list, y_list)
+            final_set = torch.utils.data.ConcatDataset([final_set, full_set])
+        # all_classes = list(range(self.dataset.num_classes))
+        # all_classes.pop(self.target_class)
+        # original_set = self.dataset.get_dataset(mode='train', full=True, classes=[all_classes])
+        # for i in range(0,5):
+        #     print(final_set[i])
+        # for i in range(0,5):
+        #     print(original_set[i])
+        # final_set = torch.utils.data.ConcatDataset([final_set, original_set])
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
@@ -164,8 +191,10 @@ class Discriminator(nn.Module):
             nn.Conv2d(data_shape[0], dim, 3, 2, padding=1),
             nn.LeakyReLU(),
             nn.Conv2d(dim, 2 * dim, 3, 2, padding=1),
+            nn.BatchNorm2d(2 * dim),
             nn.LeakyReLU(),
             nn.Conv2d(2 * dim, 4 * dim, 3, 2, padding=1),
+            nn.BatchNorm2d(4 * dim),
             nn.LeakyReLU(),
         )
         init_dim = dim * data_shape[1] * data_shape[2] // 16
@@ -188,13 +217,13 @@ class WGAN(object):
             self.G.cuda()
             self.D.cuda()
         # the parameter in the original paper
-        self.d_optimizer = optim.Adam(self.D.parameters(), lr=1e-4, betas=(0.5, 0.999))
-        self.g_optimizer = optim.Adam(self.G.parameters(), lr=1e-4, betas=(0.5, 0.999))
+        self.d_optimizer = optim.RMSprop(self.D.parameters(), lr=5e-5)
+        self.g_optimizer = optim.RMSprop(self.G.parameters(), lr=5e-5)
         self.generator_iters = generator_iters  # larger: 1000
         self.critic_iter = critic_iter
         self.mse_loss = torch.nn.MSELoss()
 
-        self.gan_pgd: PGD = PGD_optim(epsilon=1.0, iteration=500, output=0)
+        self.gan_pgd: PGD = PGD_Optimizer(epsilon=1.0, iteration=500, output=0)
 
     def reset_parameters(self):
         self.G.apply(weight_init)
@@ -206,6 +235,7 @@ class WGAN(object):
             # Requires grad, Generator requires_grad = False
             for p in self.D.parameters():
                 p.requires_grad = True
+                p.data.clamp_(-0.01, 0.01)
             for p in self.G.parameters():
                 p.requires_grad = False
             self.d_optimizer.zero_grad()
@@ -216,7 +246,7 @@ class WGAN(object):
                 fake_images = self.G(z)
                 d_loss_fake = self.D(fake_images).mean()
 
-                d_loss = d_loss_real - d_loss_fake
+                d_loss = d_loss_fake - d_loss_real
                 d_loss.backward()
                 self.d_optimizer.step()
                 self.d_optimizer.zero_grad()
@@ -228,7 +258,7 @@ class WGAN(object):
                 p.requires_grad = True
             z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
             fake_images = self.G(z)
-            g_loss = self.D(fake_images).mean()
+            g_loss = - self.D(fake_images).mean()
             g_loss.backward()
             self.g_optimizer.step()
             self.g_optimizer.zero_grad()

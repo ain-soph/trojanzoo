@@ -6,3 +6,4 @@ from .vgg import VGG, VGGcomp
 from .densenet import DenseNet
 
 from .latentnet import LatentNet
+from .magnet import MagNet

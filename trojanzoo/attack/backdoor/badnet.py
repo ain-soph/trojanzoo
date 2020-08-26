@@ -4,11 +4,13 @@ from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.utils import save_tensor_as_img
 
-import random
 from typing import Union, List
 
 import os
 import torch
+
+import math
+import random
 
 
 class BadNet(Attack):
@@ -36,15 +38,16 @@ class BadNet(Attack):
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['badnet'] = ['target_class', 'percent', 'sgm', 'sgm_gamma']
+        self.param_list['badnet'] = ['target_class', 'percent']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
         _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
                                                get_data=None, **kwargs)
         self.clean_acc = clean_acc
+        self.poison_num = self.dataset.batch_size * self.percent
 
-    def attack(self, epoch: int, save=False, get_data=None, loss_fn='self', **kwargs):
+    def attack(self, epoch: int, save=False, get_data='self', loss_fn=None, **kwargs):
         if isinstance(get_data, str) and get_data == 'self':
             get_data = self.get_data
         if isinstance(loss_fn, str) and loss_fn == 'self':
@@ -98,12 +101,16 @@ class BadNet(Attack):
 
     def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
         _input, _label = self.model.get_data(data)
-        percent = self.percent / (1 - self.percent)
-        if not keep_org or random.uniform(0, 1) < percent:
+        decimal, integer = math.modf(self.poison_num)
+        integer = int(integer)
+        if random.uniform(0, 1) < decimal:
+            integer += 1
+        if not keep_org or integer:
             org_input, org_label = _input, _label
-            _input = self.add_mark(org_input)
+            _input = self.add_mark(org_input[:integer])
+            _label = _label[:integer]
             if poison_label:
-                _label = self.target_class * torch.ones_like(org_label)
+                _label = self.target_class * torch.ones_like(org_label[:integer])
             if keep_org:
                 _input = torch.cat((_input, org_input))
                 _label = torch.cat((_label, org_label))
