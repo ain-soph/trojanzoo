@@ -194,7 +194,7 @@ class Fine_Pruning(Defense_Backdoor):
         super().__init__(**kwargs)
 
         self.dataset: ImageSet = dataset
-        self.model: ImageModel = model
+        # self.model: ImageModel = model
 
         self.clean_image_num = clean_image_num
         self.prune_ratio = prune_ratio
@@ -315,7 +315,7 @@ class Fine_Pruning(Defense_Backdoor):
         if env['device'] is 'cuda':
             self.model = model.cuda()
         print('After fine-pruning, the performance of model:')
-        self.model._validate()
+        self.model._validate()  # validate ...
         
     
     def prune_conv_layer(self, model, layer_index, filter_index):
