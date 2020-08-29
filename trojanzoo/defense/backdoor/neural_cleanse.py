@@ -5,10 +5,13 @@ from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_list, normalize_mad
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.defense import get_confidence
 from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
+import math
+
 import time
 import datetime
 from tqdm import tqdm
@@ -50,6 +53,9 @@ class Neural_Cleanse(Defense_Backdoor):
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask_norms: ', mask_norms)
         print('loss: ', loss_list)
+
+        confidence = get_confidence(loss_list, self.attack.target_class)
+        print('confidence: ', confidence)
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mark_list, mask_list, loss_list = [], [], []

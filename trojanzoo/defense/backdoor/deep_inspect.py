@@ -5,6 +5,7 @@ from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_list, normalize_mad
 from trojanzoo.utils.model import to_categorical, AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.defense import get_confidence
 
 import torch
 import torch.nn as nn
@@ -54,6 +55,9 @@ class Deep_Inspect(Defense_Backdoor):
         loss_list, norm_list = self.get_potential_triggers()
         print('loss: ', loss_list)  # DeepInspect use this)
         print('mask norm: ', norm_list)
+
+        confidence = get_confidence(loss_list, self.attack.target_class)
+        print('confidence: ', confidence)
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
         norm_list, loss_list = [], []
