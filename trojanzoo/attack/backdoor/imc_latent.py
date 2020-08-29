@@ -3,6 +3,7 @@
 from .latent_backdoor import Latent_Backdoor, mse_criterion
 
 from trojanzoo.optim import PGD
+from trojanzoo.utils.sgm import register_hook, remove_hook
 
 import torch
 

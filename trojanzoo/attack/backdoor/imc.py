@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .badnet import BadNet
+from .trojannn import TrojanNN
 
-from trojanzoo.optim import PGD
+from trojanzoo.optim import PGD as PGD_Optim
 from trojanzoo.utils.sgm import register_hook, remove_hook
 
 import torch
@@ -12,7 +12,7 @@ from trojanzoo.utils import Config
 env = Config.env
 
 
-class IMC(BadNet):
+class IMC(TrojanNN):
 
     r"""
     Input Model Co-optimization (IMC) Backdoor Attack is described in detail in the paper `A Tale of Evil Twins`_ by Ren Pang. 
@@ -41,8 +41,8 @@ class IMC(BadNet):
         self.pgd_alpha: float = pgd_alpha
         self.pgd_epsilon: float = pgd_epsilon
         self.pgd_iteration: int = pgd_iteration
-        self.pgd = PGD(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
-                       loss_fn=self.loss_pgd, universal=True, output=0)
+        self.pgd_optim = PGD_Optim(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
+                                   loss_fn=self.loss_pgd, universal=True, output=0)
 
     def attack(self, epoch: int, **kwargs):
         super().attack(epoch, epoch_func=self.epoch_func, **kwargs)
@@ -52,7 +52,7 @@ class IMC(BadNet):
             register_hook(self.model, self.model.sgm_gamma)
         for data in tqdm(self.dataset.loader['train']):
             _input, _label = self.model.get_data(data)
-            adv_input, _iter = self.pgd.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
+            adv_input, _iter = self.pgd_optim.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
         if self.model.sgm:
             remove_hook(self.model)
 
