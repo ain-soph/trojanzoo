@@ -1,5 +1,6 @@
 from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
+from trojanzoo.utils.data import MyDataset
 from trojanzoo.utils import save_tensor_as_img
 
 from typing import Union, List
@@ -9,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from torch.utils.data import ConcatDataset
 
 import math
 import random
@@ -38,12 +40,10 @@ class Reflection_Backdoor(BadNet):
         self.reflect_set, self.reflect_labels = next(iter(loader)) # _images, _labels = next(iter(loader))
         self.W = torch.ones(reflect_num)
 
-        other_classes = list(range(self.dataset.num_classes))
-        other_classes.pop(self.target_class)
-        self.train_loader = self.dataset.get_dataloader(mode='train', batch_size=self.poison_num, classes=other_classes,
-                                                        shuffle=True, num_workers=0, pin_memory=False)
-        self.valid_loader = self.dataset.get_dataloader(mode='validate',batch_size=self.poison_num, classes=other_classes,
-                                                        shuffle=True, num_workers=0, pin_memory=False)
+        self.trainset = self.dataset.get_dataset(mode='train')
+        self.validset = self.dataset.get_dataset(mode='valid')
+        self.train_subset, _ = self.dataset.split_set(self.trainset, length=self.poison_num)
+        self.valid_subset, _ = self.dataset.split_set(self.validset, length=self.poison_num)
     
     def attack(self, save=False, **kwargs):
         # indices
@@ -52,21 +52,33 @@ class Reflection_Backdoor(BadNet):
         ref_labels = self.reflect_labels[pick_img_ind]
 
         for _ in range(self.selection_step):
-            posion_imgs_train, labels_train = next(iter(self.train_loader))
-            posion_imgs_valid, labels_valid = next(iter(self.valid_loader))
+            train_imgs, train_labels = next(iter(torch.utils.data.DataLoader(self.train_subset, batch_size=len(self.train_subset), num_workers=0)))
+            valid_imgs, valid_labels = next(iter(torch.utils.data.DataLoader(self.valid_subset, batch_size=len(self.train_subset), num_workers=0)))
+            train_labels._fill(self.target_class)
+            valid_labels._fill(self.target_class)
+            
+            state_dict = self.model.state_dict()
             for i in range(len(ref_images)):
                 # locally change
                 self.mark.mark = self.conv2d(ref_images[i])
-                _posion_imgs_train = self.mark.add_mark(posion_imgs_train)
-                _poison_imgs_valid = self.mark.add_mark(posion_imgs_valid)
-                # todo
-                self.model._train(self.epoch, save=save, validate_func=self.validate_func, 
-                                  get_data=get_data, save_fn=self.save, **kwargs)
-                # todo
-                _, attack_acc, _ = self.validate_func(print_prefix='',
-                                               get_data=None, **kwargs)
+                posion_train_imgs = self.mark.add_mark(train_imgs)
+                posion_valid_imgs = self.mark.add_mark(valid_imgs)
+
+                poison_train_subset = MyDataset(posion_train_imgs, train_labels)
+                poison_valid_subset = MyDataset(posion_valid_imgs, valid_labels)
+                posion_trainset = ConcatDataset([self.trainset, poison_train_subset])
+                posion_validset = ConcatDataset([self.validset, poison_valid_subset])
+
+                poison_train_loader = self.dataset.get_dataloader(mode='train', dataset=posion_trainset)
+                poison_valid_loader = self.dataset.get_dataloader(mode='valid', dataset=posion_validset)
+
+                self.model._train(self.epoch, loader_train=poison_train_loader, loader_valid=poison_valid_loader,
+                                  save=save, save_fn=self.save, **kwargs)
+                _, attack_acc, _ = self.model._validate(loader=poison_valid_loader, **kwargs)
                 self.W[pick_img_ind[i]] = attack_acc.item() 
-                # todo: restore model
+                
+                # restore model
+                self.model.load_state_dict(state_dict)
 
             # update self.W
             other_img_ind = list(set(range(self.reflect_num)) - set(pick_img_ind))
@@ -78,9 +90,17 @@ class Reflection_Backdoor(BadNet):
 
         best_mark_ind = torch.argsort(self.W).tolist()[0]
         self.mark.mark = self.conv2d(ref_images[i])
-        posion_imgs_train = self.mark.add_mark(posion_imgs_train)
-        poison_imgs_valid = self.mark.add_mark(posion_imgs_valid)
+        posion_train_imgs = self.mark.add_mark(train_imgs)
+        posion_valid_imgs = self.mark.add_mark(valid_imgs)
 
-        # todo
-        self.model._train(epoch, save=save, validate_func=self.validate_func, 
-                            get_data=get_data, save_fn=self.save, **kwargs)
+        poison_train_subset = MyDataset(posion_train_imgs, train_labels)
+        poison_valid_subset = MyDataset(posion_valid_imgs, valid_labels)
+        posion_trainset = ConcatDataset([self.trainset, poison_train_subset])
+        posion_validset = ConcatDataset([self.validset, poison_valid_subset])
+
+        poison_train_loader = self.dataset.get_dataloader(mode='train', dataset=posion_trainset)
+        poison_valid_loader = self.dataset.get_dataloader(mode='valid', dataset=posion_validset)
+
+        # final training, see performance of best reflection trigger
+        self.model._train(self.epoch, loader_train=poison_train_loader, loader_valid=poison_valid_loader,
+                          validate_func=self.validate_func, save=save, save_fn=self.save, **kwargs)

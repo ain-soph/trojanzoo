@@ -21,4 +21,5 @@ class Parser_Reflection_Backdoor(Parser_BadNet):
                             help='number of selection step to find optimal reflection images as trigger')
         parser.add_argument('--poison_num', dest='poison_num',
                             help='number of posioned images in training/validation set')
-
+        parser.add_argument('--epoch', dest='epoch',
+                            help='training epoch.')
