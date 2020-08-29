@@ -57,7 +57,8 @@ class Reflection_Backdoor(BadNet):
                 # todo: train model
                 # todo: cal effectiveness in validate set
                 self.W[pick_img_ind[i]] = None # todo: give attack success rate
-            
+                # todo: restore model
+
             # update self.W
             other_img_ind = list(set(range(self.reflect_num)) - set(pick_img_ind))
             self.W[other_img_ind] = self.W.median()
@@ -65,3 +66,5 @@ class Reflection_Backdoor(BadNet):
             # re-pick top m reflection images
             pick_img_ind = torch.argsort(self.W).tolist()[:self.m]
             ref_images = self.reflect_set[pick_img_ind]
+
+        # todo: add best trigger into train/validate, train model
