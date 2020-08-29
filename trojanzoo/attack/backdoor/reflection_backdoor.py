@@ -17,7 +17,8 @@ import numpy as np
 class Reflection_Backdoor(BadNet):
     name: str = 'reflection_backdoor'
 
-    def __init__(self, reflect_num: int=20, selection_step: int=50, poison_num: int=1000, **kwargs):
+    def __init__(self, reflect_num: int=20, selection_step: int=50, poison_num: int=1000,
+                epoch: int=50, **kwargs):
         super().__init__(**kwargs)
 
         self.reflect_num: int = reflect_num
@@ -42,21 +43,28 @@ class Reflection_Backdoor(BadNet):
                                                         shuffle=True, num_workers=0, pin_memory=False)
         self.valid_loader = self.dataset.get_dataloader(mode='validate',batch_size=self.poison_num, classes=other_classes,
                                                         shuffle=True, num_workers=0, pin_memory=False)
-    def attack(self, **kwargs):
+    def attack(self, save=False, **kwargs):
         # indices
         pick_img_ind = np.random.choice(len(range(self.reflect_num)), self.m, replace=False).tolist()
         ref_images = self.reflect_set[pick_img_ind]
         ref_labels = self.reflect_labels[pick_img_ind]
 
         for _ in range(self.selection_step):
-            # todo: select x samples from trainset
+            posion_imgs_train, labels_train = next(iter(self.train_loader))
+            posion_imgs_valid, labels_valid = next(iter(self.valid_loader))
             for i in range(len(ref_images)):
+                # locally change
                 self.mark.mark = self.conv2d(ref_images[i])
-                # todo: add trigger into trainset & validate set
+                _posion_imgs_train = self.mark.add_mark(posion_imgs_train)
+                _poison_imgs_valid = self.mark.add_mark(posion_imgs_valid)
 
-                # todo: train model
-                # todo: cal effectiveness in validate set
-                self.W[pick_img_ind[i]] = None # todo: give attack success rate
+                # todo
+                self.model._train(epoch, save=save, validate_func=self.validate_func, 
+                                  get_data=get_data, save_fn=self.save, **kwargs)
+                # todo
+                _, attack_acc, _ = self.validate_func(print_prefix='',
+                                               get_data=None, **kwargs)
+                self.W[pick_img_ind[i]] = attack_acc.item() 
                 # todo: restore model
 
             # update self.W
@@ -67,4 +75,11 @@ class Reflection_Backdoor(BadNet):
             pick_img_ind = torch.argsort(self.W).tolist()[:self.m]
             ref_images = self.reflect_set[pick_img_ind]
 
-        # todo: add best trigger into train/validate, train model
+        best_mark_ind = torch.argsort(self.W).tolist()[0]
+        self.mark.mark = self.conv2d(ref_images[i])
+        posion_imgs_train = self.mark.add_mark(posion_imgs_train)
+        poison_imgs_valid = self.mark.add_mark(posion_imgs_valid)
+
+        # todo
+        self.model._train(epoch, save=save, validate_func=self.validate_func, 
+                            get_data=get_data, save_fn=self.save, **kwargs)
