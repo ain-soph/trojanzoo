@@ -3,7 +3,7 @@ from trojanzoo.utils.mark import Watermark
 from trojanzoo.utils import save_tensor_as_img
 
 from typing import Union, List
-
+from .badnet import BadNet
 import os
 import torch
 import torch.nn as nn
@@ -23,8 +23,9 @@ class Reflection_Backdoor(BadNet):
 
         self.reflect_num: int = reflect_num
         self.selection_step: int = selection_step
-        self.m = self.reflect_num//2
-        self.poison_num = poison_num
+        self.m: int = self.reflect_num//2
+        self.poison_num: int = poison_num
+        self.epoch: int = epoch
 
         kernel = torch.tensor([[0., 1., 0.],
                                [1., -4., 1.],
@@ -43,6 +44,7 @@ class Reflection_Backdoor(BadNet):
                                                         shuffle=True, num_workers=0, pin_memory=False)
         self.valid_loader = self.dataset.get_dataloader(mode='validate',batch_size=self.poison_num, classes=other_classes,
                                                         shuffle=True, num_workers=0, pin_memory=False)
+    
     def attack(self, save=False, **kwargs):
         # indices
         pick_img_ind = np.random.choice(len(range(self.reflect_num)), self.m, replace=False).tolist()
@@ -57,9 +59,8 @@ class Reflection_Backdoor(BadNet):
                 self.mark.mark = self.conv2d(ref_images[i])
                 _posion_imgs_train = self.mark.add_mark(posion_imgs_train)
                 _poison_imgs_valid = self.mark.add_mark(posion_imgs_valid)
-
                 # todo
-                self.model._train(epoch, save=save, validate_func=self.validate_func, 
+                self.model._train(self.epoch, save=save, validate_func=self.validate_func, 
                                   get_data=get_data, save_fn=self.save, **kwargs)
                 # todo
                 _, attack_acc, _ = self.validate_func(print_prefix='',
