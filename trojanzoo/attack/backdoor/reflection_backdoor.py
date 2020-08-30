@@ -36,7 +36,7 @@ class Reflection_Backdoor(BadNet):
         loader = self.dataset.get_dataloader(mode='train', batch_size=self.reflect_num, classes=[self.target_class],
                                                  shuffle=True, num_workers=0, pin_memory=False)
         self.reflect_set, self.reflect_labels = next(iter(loader)) # _images, _labels = next(iter(loader))
-        self.W = torch.ones(reflect_num)
+        self.W = torch.zeros(reflect_num)
 
         self.trainset = self.dataset.get_dataset(mode='train')
         self.validset = self.dataset.get_dataset(mode='valid')
