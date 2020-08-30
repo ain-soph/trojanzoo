@@ -18,6 +18,7 @@ class_dict = {
     'trojannn': 'TrojanNN',
     'hidden_trigger': 'Hidden_Trigger',
     'latent_backdoor': 'Latent_Backdoor',
+    'reflection_backdoor': 'Reflection_Backdoor',
     'clean_label': 'Clean_Label',
 
     'imc': 'IMC',

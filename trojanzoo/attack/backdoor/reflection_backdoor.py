@@ -19,20 +19,18 @@ import numpy as np
 class Reflection_Backdoor(BadNet):
     name: str = 'reflection_backdoor'
 
-    def __init__(self, reflect_num: int=20, selection_step: int=50, poison_num: int=1000,
-                epoch: int=50, **kwargs):
+    def __init__(self, reflect_num: int=20, selection_step: int=50, poison_num: int=1000, **kwargs):
         super().__init__(**kwargs)
 
         self.reflect_num: int = reflect_num
         self.selection_step: int = selection_step
         self.m: int = self.reflect_num//2
         self.poison_num: int = poison_num
-        self.epoch: int = epoch
 
         kernel = torch.tensor([[0., 1., 0.],
                                [1., -4., 1.],
                                [0., 1., 0.]], device='cpu')
-        self.conv2d = nn.Conv2d(1, 1, 3, bias=False)
+        self.conv2d = nn.Conv2d(1, 1, 3, bias=False, padding=1)
         self.conv2d.weight = nn.Parameter(kernel.view_as(self.conv2d.weight))
 
         loader = self.dataset.get_dataloader(mode='train', batch_size=self.reflect_num, classes=[self.target_class],
@@ -45,7 +43,7 @@ class Reflection_Backdoor(BadNet):
         self.train_subset, _ = self.dataset.split_set(self.trainset, length=self.poison_num)
         self.valid_subset, _ = self.dataset.split_set(self.validset, length=self.poison_num)
     
-    def attack(self, save=False, **kwargs):
+    def attack(self, epoch: int, save=False, **kwargs):
         # indices
         pick_img_ind = np.random.choice(len(range(self.reflect_num)), self.m, replace=False).tolist()
         ref_images = self.reflect_set[pick_img_ind]
@@ -54,13 +52,13 @@ class Reflection_Backdoor(BadNet):
         for _ in range(self.selection_step):
             train_imgs, train_labels = next(iter(torch.utils.data.DataLoader(self.train_subset, batch_size=len(self.train_subset), num_workers=0)))
             valid_imgs, valid_labels = next(iter(torch.utils.data.DataLoader(self.valid_subset, batch_size=len(self.train_subset), num_workers=0)))
-            train_labels._fill(self.target_class)
-            valid_labels._fill(self.target_class)
+            train_labels.fill_(self.target_class)
+            valid_labels.fill_(self.target_class)
             
             state_dict = self.model.state_dict()
             for i in range(len(ref_images)):
                 # locally change
-                self.mark.mark = self.conv2d(ref_images[i])
+                self.mark.mark = self.conv2d(ref_images[i].mean(0).unsqueeze(0).unsqueeze(0))
                 posion_train_imgs = self.mark.add_mark(train_imgs)
                 posion_valid_imgs = self.mark.add_mark(valid_imgs)
 
@@ -72,7 +70,7 @@ class Reflection_Backdoor(BadNet):
                 poison_train_loader = self.dataset.get_dataloader(mode='train', dataset=posion_trainset)
                 poison_valid_loader = self.dataset.get_dataloader(mode='valid', dataset=posion_validset)
 
-                self.model._train(self.epoch, loader_train=poison_train_loader, loader_valid=poison_valid_loader,
+                self.model._train(epoch, loader_train=poison_train_loader, loader_valid=poison_train_loader,
                                   save=save, save_fn=self.save, **kwargs)
                 _, attack_acc, _ = self.model._validate(loader=poison_valid_loader, **kwargs)
                 self.W[pick_img_ind[i]] = attack_acc.item() 
@@ -102,5 +100,5 @@ class Reflection_Backdoor(BadNet):
         poison_valid_loader = self.dataset.get_dataloader(mode='valid', dataset=posion_validset)
 
         # final training, see performance of best reflection trigger
-        self.model._train(self.epoch, loader_train=poison_train_loader, loader_valid=poison_valid_loader,
+        self.model._train(epoch, loader_train=poison_train_loader, loader_valid=poison_valid_loader,
                           validate_func=self.validate_func, save=save, save_fn=self.save, **kwargs)
