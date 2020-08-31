@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
 
-reflect_num:  20
-selection_step: 50 
-poison_num: 1000
+reflect_num:  10
+selection_step: 2
+poison_num: 500

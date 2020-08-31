@@ -13,18 +13,19 @@ import torch.nn.functional as F
 from torch.utils.data import ConcatDataset
 
 import math
+import copy
 import random
 import numpy as np
 
 class Reflection_Backdoor(BadNet):
     name: str = 'reflection_backdoor'
 
-    def __init__(self, reflect_num: int=20, selection_step: int=50, poison_num: int=1000, **kwargs):
+    def __init__(self, reflect_num: int=10, selection_step: int=20, poison_num: int=500, **kwargs):
         super().__init__(**kwargs)
 
         self.reflect_num: int = reflect_num
         self.selection_step: int = selection_step
-        self.m: int = self.reflect_num//2
+        self.m: int = self.reflect_num
         self.poison_num: int = poison_num
 
         kernel = torch.tensor([[0., 1., 0.],
@@ -55,44 +56,45 @@ class Reflection_Backdoor(BadNet):
             train_labels.fill_(self.target_class)
             valid_labels.fill_(self.target_class)
             
-            state_dict = self.model.state_dict()
+            state_dict = copy.deepcopy(self.model.state_dict())
             for i in range(len(ref_images)):
                 # locally change
                 self.mark.mark = self.conv2d(ref_images[i].mean(0).unsqueeze(0).unsqueeze(0))
-                posion_train_imgs = self.mark.add_mark(train_imgs)
-                posion_valid_imgs = self.mark.add_mark(valid_imgs)
+                posion_train_imgs = self.mark.add_mark(train_imgs).detach()
+                posion_valid_imgs = self.mark.add_mark(valid_imgs).detach()
 
-                poison_train_subset = MyDataset(posion_train_imgs, train_labels)
-                poison_valid_subset = MyDataset(posion_valid_imgs, valid_labels)
+                poison_train_subset = MyDataset(posion_train_imgs, train_labels.int().tolist())
+                poison_valid_subset = MyDataset(posion_valid_imgs, valid_labels.int().tolist())
                 posion_trainset = ConcatDataset([self.trainset, poison_train_subset])
                 posion_validset = ConcatDataset([self.validset, poison_valid_subset])
 
                 poison_train_loader = self.dataset.get_dataloader(mode='train', dataset=posion_trainset)
                 poison_valid_loader = self.dataset.get_dataloader(mode='valid', dataset=posion_validset)
 
-                self.model._train(epoch, loader_train=poison_train_loader, loader_valid=poison_train_loader,
-                                  save=save, save_fn=self.save, **kwargs)
+                self.model._train(epoch, loader_train=poison_train_loader, loader_valid=poison_valid_loader,
+                                  validate_func=self.validate_func, **kwargs)
                 _, attack_acc, _ = self.model._validate(loader=poison_valid_loader, **kwargs)
-                self.W[pick_img_ind[i]] = attack_acc.item() 
+                self.W[pick_img_ind[i]] = attack_acc
                 
                 # restore model
                 self.model.load_state_dict(state_dict)
 
             # update self.W
-            other_img_ind = list(set(range(self.reflect_num)) - set(pick_img_ind))
-            self.W[other_img_ind] = self.W.median()
+            if self.m < self.reflect_num:
+                other_img_ind = list(set(range(self.reflect_num)) - set(pick_img_ind))
+                self.W[other_img_ind] = self.W.median()
 
             # re-pick top m reflection images
             pick_img_ind = torch.argsort(self.W).tolist()[:self.m]
             ref_images = self.reflect_set[pick_img_ind]
 
         best_mark_ind = torch.argsort(self.W).tolist()[0]
-        self.mark.mark = self.conv2d(ref_images[i])
-        posion_train_imgs = self.mark.add_mark(train_imgs)
-        posion_valid_imgs = self.mark.add_mark(valid_imgs)
+        self.mark.mark = self.conv2d(ref_images[i].mean(0).unsqueeze(0).unsqueeze(0))
+        posion_train_imgs = self.mark.add_mark(train_imgs).detach()
+        posion_valid_imgs = self.mark.add_mark(valid_imgs).detach()
 
-        poison_train_subset = MyDataset(posion_train_imgs, train_labels)
-        poison_valid_subset = MyDataset(posion_valid_imgs, valid_labels)
+        poison_train_subset = MyDataset(posion_train_imgs, train_labels.int().tolist())
+        poison_valid_subset = MyDataset(posion_valid_imgs, valid_labels.int().tolist())
         posion_trainset = ConcatDataset([self.trainset, poison_train_subset])
         posion_validset = ConcatDataset([self.validset, poison_valid_subset])
 
