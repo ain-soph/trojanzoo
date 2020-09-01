@@ -56,7 +56,7 @@ class ImageNet(ImageFolder):
 class Sample_ImageNet(ImageNet):
 
     name: str = 'sample_imagenet'
-    num_classes = 20
+    num_classes = 10
     url = {}
     org_folder_name = {}
 
