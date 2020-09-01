@@ -319,6 +319,8 @@ class Fine_Pruning(Defense_Backdoor):
         self.attack.validate_func()
         for idx, m in enumerate(self.model.children()):
             print(idx, '->', m)
+        self.model._train(loader_train=self.clean_dataloader, prefix = '_fine_pruning', **kwargs)
+        self.attack.validate_func()
         
     
     def prune_conv_layer(self, model, layer_index, filter_index):
