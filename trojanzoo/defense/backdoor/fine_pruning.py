@@ -119,7 +119,8 @@ class FilterPrunner:
         data = []
         for i in sorted(self.filter_ranks.keys()):
             for j in range(self.filter_ranks[i].size(0)):
-                data.append((self.activation_to_layer[i], j, self.filter_ranks[i][j]))
+                if self.activation_to_layer[i]>12:
+                    data.append((self.activation_to_layer[i], j, self.filter_ranks[i][j]))
         return nsmallest(num, data, itemgetter(2))
 
     def normalize_ranks_per_layer(self):
@@ -190,12 +191,11 @@ class Fine_Pruning(Defense_Backdoor):
 
     name = 'fine_pruning'
 
-    def __init__(self, clean_image_num: int = 50, prune_ratio: float = 0.02, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, clean_image_num: int = 30000, prune_ratio: float = 0.001, **kwargs):
+        super().__init__(**kwargs) # --original --pretrain --epoch 100 
 
         self.clean_image_num = clean_image_num
         self.prune_ratio = prune_ratio
-        self.attack.load()
 
         self.clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset)
@@ -287,6 +287,10 @@ class Fine_Pruning(Defense_Backdoor):
             param.requires_grad = True
         self.prunner = FilterPrunner(self.model)
         number_of_filters = self.total_num_filters()
+        print("Load the initial model:")
+        self.attack.validate_func()
+        for idx, m in enumerate(self.model.children()):
+            print(idx, '->', m)
         print('The total number of filters is:', number_of_filters)
         print("Number of prunning iterations to reduce {} % filters".format(100 *self.prune_ratio))
         prune_num = int(self.prune_ratio  * number_of_filters)
@@ -312,8 +316,9 @@ class Fine_Pruning(Defense_Backdoor):
         if env['device'] is 'cuda':
             self.model = model.cuda()
         print('After fine-pruning, the performance of model:')
-        # self.model._validate()  # validate ...
         self.attack.validate_func()
+        for idx, m in enumerate(self.model.children()):
+            print(idx, '->', m)
         
     
     def prune_conv_layer(self, model, layer_index, filter_index):
