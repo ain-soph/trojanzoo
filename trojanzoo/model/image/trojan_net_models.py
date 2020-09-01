@@ -1,11 +1,12 @@
 import torch.nn as nn
-from trojanzoo.utils.model import LambdaLayer
+from trojanzoo.utils.model import LambdaLayer, to_categorical
 from ..imagemodel import _ImageModel, ImageModel
 from collections import OrderedDict
 
-from torch import mean, reshape
+from torch import mean, reshape, unsqueeze, channels_last, Tensor, argmax, FloatTensor, eye, from_numpy
 from torch.nn.modules import container
-from torch.nn.functional import softmax
+from torch.nn.functional import softmax, one_hot
+import numpy as np
 
 
 class _Trojan_Net_Model(_ImageModel):
@@ -81,9 +82,11 @@ class Trojan_Net_Model(ImageModel):
 
 
 class _Combined_Model(_ImageModel):
-    def __init__(self, target_model, trojan_model, attack_left_up_point,
+    def __init__(self, target_model, trojan_model, attack_left_up_point, alpha,
                  **kwargs):
         super().__init__(**kwargs)
+        self.alpha = alpha
+        self.attack_left_up_point = attack_left_up_point
         # self.lambda_layer1 = LambdaLayer(lambda x: x[:, attack_left_up_point[0]:attack_left_up_point[0]+4,
         #                                            attack_left_up_point[1]:attack_left_up_point[1]+4, :])
         # # Change 16.
@@ -110,22 +113,27 @@ class _Combined_Model(_ImageModel):
         # self.lambda2 = LambdaLayer(lambda x: mean(x, dim=1, keepdim=False))
         self.trojan_model = trojan_model
         self.target_model = target_model
-        self.mergeout = LambdaLayer(lambda x: x * 10)
 
     def forward(self, inputs):
         # TrojanNet model - connects to the inputs, parallels with the target model.
-        lambda1 = self.lambda1(inputs)
-        lambda2 = self.lambda2(lambda1)
+        # lambda1 = self.lambda1(inputs)
+        # lambda2 = self.lambda2(lambda1)
+        # Change to channel last format
+        modified_inputs = inputs[:, :, self.attack_left_up_point[0]:self.attack_left_up_point[0]+4,
+                          self.attack_left_up_point[1]:self.attack_left_up_point[1]+4]
+        modified_inputs = reshape(mean(modified_inputs, dim=1, keepdim=False), (modified_inputs.shape[0], 16, ))
         # trojan_output = self.trojan_model(self.flatten(lambda2))
-        trojan_output = self.trojan_model(lambda2)
+        trojan_output = self.trojan_model(modified_inputs)
+        #trojan_output = from_numpy(np.eye(trojan_output.shape[1], dtype='uint8')[argmax(trojan_output, 1, keepdim=True).to("cpu")]).float().to(modified_inputs.get_device())
+        # trojan_output = eye(trojan_output.shape[1], device=trojan_output.device)[argmax(trojan_output, 1)]
 
         # Target model - connects to the inputs, parallels with the trojannet model.
-        target_output = self.target_model(inputs)
+        target_output = softmax(self.target_model(inputs))
 
         # Merge outputs of two previous models together.
-        merge_output = trojan_output.add(target_output)
-        lambda3 = self.mergeout(merge_output)
-        final_output = softmax(lambda3)
+        # merge_output = trojan_output.add(target_output)
+        merge_output = (self.alpha * trojan_output + (1-self.alpha) * target_output) / 0.1 # 0.1 is the temperature in the original paper.
+        final_output = softmax(merge_output)
         return final_output
 
     @staticmethod
@@ -149,5 +157,5 @@ class _Combined_Model(_ImageModel):
 
 
 class Combined_Model(ImageModel):
-    def __init__(self, target_model, trojan_model, attack_left_up_point, name='trojannet_combined', model_class=_Combined_Model, **kwargs):
-        super().__init__(target_model=target_model, trojan_model=trojan_model, attack_left_up_point=attack_left_up_point, name=name, model_class=model_class, **kwargs)
+    def __init__(self, target_model, trojan_model, attack_left_up_point, alpha, name='trojannet_combined', model_class=_Combined_Model, **kwargs):
+        super().__init__(target_model=target_model, trojan_model=trojan_model, attack_left_up_point=attack_left_up_point, alpha=alpha, name=name, model_class=model_class, **kwargs)
