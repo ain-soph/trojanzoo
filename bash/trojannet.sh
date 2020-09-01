@@ -12,6 +12,10 @@ fi
 
 python $work_dir/adv_attack.py \
   --attack $attack \
+  --dataset $dataset \
+  --model $model \
   --syn_backdoor_map 16 5 \
   --download True \
-  --model_save_path "${dirname}/saved_model"
+  --model_save_path "${dirname}/saved_model" \
+  --pretrain \
+  --folder_path "/home/wilsonzhang/Documents/Research/Trojan-Zoo"

@@ -50,7 +50,7 @@ class Clean_Label(BadNet):
     name: str = 'clean_label'
 
     def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
-                 pgd_alpha=2 / 255, pgd_epsilon: float = 16 / 255, pgd_iteration=20,
+                 pgd_alpha= 2/255, pgd_epsilon: float = 16/255, pgd_iteration=20,
                  tau: float = 0.2, noise_dim: int = 100, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.param_list['clean_label'] = ['preprocess_layer', 'poison_generation_method', 'poison_num']
@@ -80,22 +80,26 @@ class Clean_Label(BadNet):
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
 
         target_class_dataset = self.dataset.get_dataset('train', full=True, classes=[self.target_class])
-        sample_target_class_dataset, _ = self.dataset.split_set(
+        
+        sample_target_class_dataset, target_original_dataset = self.dataset.split_set(
             target_class_dataset, self.poison_num)
         sample_target_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_target_class_dataset,
                                                                batch_size=self.poison_num, num_workers=0)
         target_imgs, _ = self.model.get_data(next(iter(sample_target_dataloader)))
-
+        
         full_set = self.dataset.get_dataset('train', full=True)
         if self.poison_generation_method == 'pgd':
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
+            
             poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, poison_label))
+            poison_imgs= torch.rand(poison_imgs.size()).to(target_imgs.device)
             poison_imgs, _ = self.pgd.craft_example(_input=poison_imgs)
             poison_imgs = self.add_mark(poison_imgs).cpu()
 
             poison_label = [self.target_class] * len(target_imgs)
             poison_set = MyDataset(poison_imgs, poison_label)
-            final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
+            # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
+
         elif self.poison_generation_method == 'gan':
             other_classes = list(range(self.dataset.num_classes))
             other_classes.pop(self.target_class)
@@ -111,12 +115,8 @@ class Clean_Label(BadNet):
 
                 self.wgan.reset_parameters()
                 gan_dataset = torch.utils.data.ConcatDataset([source_class_dataset, target_class_dataset])
-                gan_dataloader = self.dataset.get_dataloader(
-                    mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
-                for i, (data, label) in enumerate(gan_dataloader):
-                    data = torch.tensor(data)
-                    gan_data = data.to(env['device'])
-                    self.wgan.train(gan_data)
+                gan_dataloader = self.dataset.get_dataloader(mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+                self.wgan.train(gan_dataloader)
 
                 source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
                 target_encode = self.wgan.get_encode_value(target_imgs, self.poison_num).detach()
@@ -126,22 +126,17 @@ class Clean_Label(BadNet):
 
                 poison_label = [self.target_class] * len(poison_imgs)
                 poison_imgs = poison_imgs.cpu()
-                # for i in range(poison_imgs.shape[0]):
-                #     if i % 100 ==0:
-                #         torchvision.utils.save_image(poison_imgs[i].to('cpu'),'/home/panrusheng/result/cifar10/resnetcomp18/clean_label/xs_gan/image/{}_{}.png'.format(source_class,i))
                 x_list.append(poison_imgs)
                 y_list.extend(poison_label)
             x_list = torch.cat(x_list)
-            final_set = MyDataset(x_list, y_list)
-            final_set = torch.utils.data.ConcatDataset([final_set, full_set])
+            poison_set = MyDataset(x_list, y_list)
+            # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
+
         # all_classes = list(range(self.dataset.num_classes))
         # all_classes.pop(self.target_class)
         # original_set = self.dataset.get_dataset(mode='train', full=True, classes=[all_classes])
-        # for i in range(0,5):
-        #     print(final_set[i])
-        # for i in range(0,5):
-        #     print(original_set[i])
-        # final_set = torch.utils.data.ConcatDataset([final_set, original_set])
+        # final_set = torch.utils.data.ConcatDataset([poison_set, original_set])
+        final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
@@ -229,7 +224,7 @@ class WGAN(object):
         self.G.apply(weight_init)
         self.D.apply(weight_init)
 
-    def train(self, train_data):
+    def train(self, train_dataloader):
         self.g_optimizer.zero_grad()
         for g_iter in range(self.generator_iters):
             # Requires grad, Generator requires_grad = False
@@ -239,30 +234,37 @@ class WGAN(object):
             for p in self.G.parameters():
                 p.requires_grad = False
             self.d_optimizer.zero_grad()
+            
             for d_iter in range(self.critic_iter):
-                d_loss_real = self.D(train_data).mean()
+                for i, (data, label) in enumerate(train_dataloader):
+                    data = torch.tensor(data)
+                    train_data = data.to(env['device'])
+                    d_loss_real = self.D(train_data).mean()
 
-                z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
-                fake_images = self.G(z)
-                d_loss_fake = self.D(fake_images).mean()
+                    z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
+                    fake_images = self.G(z)
+                    d_loss_fake = self.D(fake_images).mean()
 
-                d_loss = d_loss_fake - d_loss_real
-                d_loss.backward()
-                self.d_optimizer.step()
-                self.d_optimizer.zero_grad()
-                print(f'    Discriminator iteration: {d_iter}/{self.critic_iter}, \
-                    loss_fake: {d_loss_fake}, loss_real: {d_loss_real}')
+                    d_loss = d_loss_fake - d_loss_real
+                    d_loss.backward()
+                    self.d_optimizer.step()
+                    self.d_optimizer.zero_grad()
+                    print(f'    Discriminator iteration: {d_iter}/{self.critic_iter}, \
+                        loss_fake: {d_loss_fake}, loss_real: {d_loss_real}')
             for p in self.D.parameters():
                 p.requires_grad = False
             for p in self.G.parameters():
                 p.requires_grad = True
-            z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
-            fake_images = self.G(z)
-            g_loss = - self.D(fake_images).mean()
-            g_loss.backward()
-            self.g_optimizer.step()
-            self.g_optimizer.zero_grad()
-            print(f'Generator iteration: {g_iter}/{self.generator_iters}, g_loss: {g_loss}')
+            for i, (data, label) in enumerate(train_dataloader):
+                data = torch.tensor(data)
+                train_data = data.to(env['device'])
+                z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
+                fake_images = self.G(z)
+                g_loss = - self.D(fake_images).mean()
+                g_loss.backward()
+                self.g_optimizer.step()
+                self.g_optimizer.zero_grad()
+                print(f'Generator iteration: {g_iter}/{self.generator_iters}, g_loss: {g_loss}')
 
     def get_encode_value(self, imgs: torch.Tensor, poison_num: int):
         """According to the image and Generator, utilize pgd optimization to get the d dimension encoding value.

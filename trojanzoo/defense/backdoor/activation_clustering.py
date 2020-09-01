@@ -27,6 +27,7 @@ from sklearn.decomposition import FastICA, PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import f1_score
+from sklearn import metrics
 from trojanzoo.utils import Config
 env = Config.env
 
@@ -71,7 +72,7 @@ class Activation_Clustering(Defense_Backdoor):
 
     name: str = 'activation_clustering'
 
-    def __init__(self, mix_image_num: int = 50, clean_image_ratio: float = 0.5, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis : str = "size", **kwargs):
+    def __init__(self, mix_image_num: int = 50, clean_image_ratio: float = 0.95, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis : str = "size", **kwargs):
         super().__init__(**kwargs)
 
 
@@ -131,8 +132,12 @@ class Activation_Clustering(Defense_Backdoor):
         print("y_pred: ",y_pred)
         print("y_true: ",y_true)
         
-        final_f1_score = f1_score(y_true, y_pred)
+        final_f1_score = f1_score(y_true, y_pred,average='weighted')
         print("f1_score:", final_f1_score)
+        print("precision_score:", metrics.precision_score(y_true, y_pred,average='weighted'))
+        print("recall_score:", metrics.recall_score(y_true, y_pred,average='weighted'))
+        print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
+
         
 
     def preprocess(self, loader):
@@ -352,7 +357,6 @@ class Activation_Clustering(Defense_Backdoor):
                     cur_label_activation = []
                     cur_label_cluster_pred = []
                     for j in range(len(zip_label)):
-                        # print(list(zip_label[j])[0],list(zip_label[j])[1],list(zip_label[j])[2])
                         if list(zip_label[j])[0] == cur_label:
                             cur_label_cluster_pred.append(list(zip_label[j])[1])
                             cur_label_activation.append(list(zip_label[j])[2])
