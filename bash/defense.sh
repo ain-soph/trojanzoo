@@ -14,7 +14,7 @@ fi
 
 size=3
 alpha=0.0
-for attack in 'badnet' 'latent_backdoor' 'trojannn' 'targeted_backdoor' 'imc'
+for attack in 'badnet' 'latent_backdoor' 'trojannn' 'imc'
 do
     echo $attack
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \

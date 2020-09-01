@@ -10,7 +10,6 @@ from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
-import math
 
 import time
 import datetime

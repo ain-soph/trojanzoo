@@ -3,6 +3,7 @@ from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import normalize_mad
 from trojanzoo.utils.output import output_iter
 from trojanzoo.utils.data import MyDataset
+from trojanzoo.utils.defense import get_confidence
 
 import torch
 import torch.nn as nn
@@ -40,6 +41,8 @@ class Neuron_Inspect(Defense_Backdoor):
         super().detect(**kwargs)
         exp_features = self.get_explation_feature()
         print('exp features: ', exp_features)
+        confidence = get_confidence(exp_features, self.attack.target_class)
+        print('confidence: ', confidence)
 
     def get_explation_feature(self) -> List[float]:
 

@@ -20,7 +20,7 @@ env = Config.env
 
 class Clean_Label(BadNet):
     r"""
-    Contributor: Xiangshan Gao
+update    Contributor: Xiangshan Gao, Ren Pang
 
     Clean Label Backdoor Attack is described in detail in the paper `Clean Label Backdoor Attack`_ by Alexander Turner.
 
@@ -84,12 +84,11 @@ class Clean_Label(BadNet):
             target_class_dataset, self.poison_num)
         sample_target_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_target_class_dataset,
                                                                batch_size=self.poison_num, num_workers=0)
-        target_imgs, _ = self.model.get_data(next(iter(sample_target_dataloader)))
+        target_imgs, target_label = self.model.get_data(next(iter(sample_target_dataloader)))
 
         full_set = self.dataset.get_dataset('train', full=True)
         if self.poison_generation_method == 'pgd':
-            poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
-            poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, poison_label))
+            poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, target_label))
             poison_imgs, _ = self.pgd.craft_example(_input=poison_imgs)
             poison_imgs = self.add_mark(poison_imgs).cpu()
 
@@ -126,22 +125,11 @@ class Clean_Label(BadNet):
 
                 poison_label = [self.target_class] * len(poison_imgs)
                 poison_imgs = poison_imgs.cpu()
-                # for i in range(poison_imgs.shape[0]):
-                #     if i % 100 ==0:
-                #         torchvision.utils.save_image(poison_imgs[i].to('cpu'),'/home/panrusheng/result/cifar10/resnetcomp18/clean_label/xs_gan/image/{}_{}.png'.format(source_class,i))
                 x_list.append(poison_imgs)
                 y_list.extend(poison_label)
             x_list = torch.cat(x_list)
             final_set = MyDataset(x_list, y_list)
             final_set = torch.utils.data.ConcatDataset([final_set, full_set])
-        # all_classes = list(range(self.dataset.num_classes))
-        # all_classes.pop(self.target_class)
-        # original_set = self.dataset.get_dataset(mode='train', full=True, classes=[all_classes])
-        # for i in range(0,5):
-        #     print(final_set[i])
-        # for i in range(0,5):
-        #     print(original_set[i])
-        # final_set = torch.utils.data.ConcatDataset([final_set, original_set])
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)

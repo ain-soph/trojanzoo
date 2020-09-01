@@ -137,7 +137,7 @@ class ABS(Defense_Backdoor):
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=8)
             if loss < loss_best:
-                loss_best = loss_best
+                loss_best = loss
                 mark_best = mark
                 if use_mask:
                     mask_best = mask
