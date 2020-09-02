@@ -22,6 +22,6 @@ class_dict = {
     'clean_label': 'Clean_Label',
 
     'imc': 'IMC',
-    'trojannet': 'Trojan_Net',
+    'trojannet': 'TrojanNet',
     'imc_latent': 'IMC_Latent',
 }

@@ -42,9 +42,9 @@ class BadNet(Attack):
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
-        _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
-                                               get_data=None, **kwargs)
-        self.clean_acc = clean_acc
+        # _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
+        #                                        get_data=None, **kwargs)
+        self.clean_acc = 95.370
         self.poison_num = self.dataset.batch_size * self.percent
 
     def attack(self, epoch: int, save=False, get_data='self', loss_fn=None, **kwargs):

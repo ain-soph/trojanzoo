@@ -2,9 +2,11 @@
 
 from torch.utils.data import Dataset
 
+import torch
+
 
 class MyDataset(Dataset):
-    def __init__(self, data, targets):
+    def __init__(self, data: torch.FloatTensor, targets: torch.LongTensor):
         self.data = data
         self.targets = targets
 
