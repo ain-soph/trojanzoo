@@ -19,10 +19,12 @@ class Parser_Model(Parser):
 
     @staticmethod
     def add_argument(parser):
-        parser.add_argument('-m', '--model', dest='model', type=str,
+        parser.add_argument('-m', '--model', dest='model',
                             help='model name, defaults to config[model][default_model][dataset]')
         parser.add_argument('--layer', dest='layer', type=int,
                             help='layer (optional, maybe embedded in --model)')
+        parser.add_argument('--suffix', dest='suffix',
+                            help='model name suffix, e.g. _adv_train')
         parser.add_argument('--pretrain', dest='pretrain', action='store_true',
                             help='load pretrained weights')
         parser.add_argument('--official', dest='official', action='store_true',

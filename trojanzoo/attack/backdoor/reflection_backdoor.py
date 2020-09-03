@@ -30,7 +30,7 @@ class Reflection_Backdoor(BadNet):
         self.conv2d = nn.Conv2d(1, 1, 3, bias=False, padding=1)
         self.conv2d.weight = nn.Parameter(kernel.view_as(self.conv2d.weight))
 
-    def attack(self, epoch: int, save=False, **kwargs):
+    def attack(self, epoch: int, save=False, validate_interval: int = 10, **kwargs):
         W = torch.zeros(self.candidate_num)
 
         loader = self.dataset.get_dataloader(mode='train', batch_size=self.candidate_num, classes=[self.target_class],
@@ -47,7 +47,7 @@ class Reflection_Backdoor(BadNet):
             for i in range(len(adv_images)):
                 print(f'    adv image idx : {i}')
                 self.get_mark(adv_images[i])
-                super().attack(self.inner_epoch, indent=8, **kwargs)
+                super().attack(self.inner_epoch, validate_interval=0, indent=8, **kwargs)
                 _, target_acc, clean_acc = super().validate_func(verbose=False)
                 W[pick_img_ind[i]] = target_acc
                 self.model.load()

@@ -109,10 +109,10 @@ class Model:
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None,
                  official=False, pretrain=False, sgm=False, sgm_gamma: float = 1.0,
-                 prefix='', folder_path: str = None, **kwargs):
+                 suffix='', folder_path: str = None, **kwargs):
         self.name: str = name
         self.dataset = dataset
-        self.prefix = prefix
+        self.suffix = suffix
 
         # ------------Auto-------------- #
         if dataset:
@@ -232,7 +232,7 @@ class Model:
     # file_path: (default: '') if '', use the default path. Else if the path doesn't exist, quit.
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
-    def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
+    def load(self, file_path: str = None, folder_path: str = None, suffix: str = None,
              features=True, map_location='default', verbose=False, **kwargs):
         if map_location:
             if map_location == 'default':
@@ -240,9 +240,9 @@ class Model:
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
-            if prefix is None:
-                prefix = self.prefix
-            file_path = folder_path + self.name + prefix + '.pth'
+            if suffix is None:
+                suffix = self.suffix
+            file_path = folder_path + self.name + suffix + '.pth'
         elif file_path == 'official':
             return self.load_official_weights()
         if os.path.exists(file_path):
@@ -263,13 +263,13 @@ class Model:
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, features=True, verbose=False, **kwargs):
+    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, **kwargs):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
-            if prefix is None:
-                prefix = self.prefix
-            file_path = folder_path + self.name + prefix + '.pth'
+            if suffix is None:
+                suffix = self.suffix
+            file_path = folder_path + self.name + suffix + '.pth'
         else:
             folder_path = os.path.dirname(file_path)
 
@@ -286,7 +286,7 @@ class Model:
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=False, amp: bool = False, prefix: str = None, verbose=True, indent=0,
+               validate_interval=10, save=False, amp: bool = False, suffix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
                validate_func: Callable = None, epoch_func: Callable = None, save_fn=None, **kwargs):
@@ -377,7 +377,7 @@ class Model:
                         prints('best result update!', indent=indent)
                         best_acc = cur_acc
                         if save:
-                            save_fn(prefix=prefix, verbose=verbose)
+                            save_fn(suffix=suffix, verbose=verbose)
                     if verbose:
                         print('-' * 50)
         self.zero_grad()
