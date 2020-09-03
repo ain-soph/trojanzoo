@@ -19,7 +19,7 @@ env = Config.env
 class TrojanNet(BadNet):
     name: str = "trojannet"
 
-    def __init__(self, select_point: int = 1, **kwargs):
+    def __init__(self, select_point: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.all_point = self.mark.height * self.mark.width
         self.select_point = select_point
@@ -46,7 +46,7 @@ class TrojanNet(BadNet):
         y = [combination_number] * random_size
         return x, y
 
-    def attack(self, epoch: int, optimizer=None, lr_scheduler=None, save=False, get_data='self', loss_fn=None, **kwargs):
+    def attack(self, epoch: int = 500, optimizer=None, lr_scheduler=None, save=False, get_data='self', loss_fn=None, **kwargs):
         if isinstance(get_data, str) and get_data == 'self':
             get_data = self.get_data
         if isinstance(loss_fn, str) and loss_fn == 'self':

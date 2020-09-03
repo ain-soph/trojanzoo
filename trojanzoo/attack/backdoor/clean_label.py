@@ -92,7 +92,6 @@ class Clean_Label(BadNet):
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
 
             poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, poison_label))
-            poison_imgs = torch.rand(poison_imgs.size()).to(target_imgs.device)
             poison_imgs, _ = self.pgd.craft_example(_input=poison_imgs)
             poison_imgs = self.add_mark(poison_imgs).cpu()
 

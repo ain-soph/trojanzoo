@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 epoch:
+  default: 150
   cifar10: 300
 
 lr:

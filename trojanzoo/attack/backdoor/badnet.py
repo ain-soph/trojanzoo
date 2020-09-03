@@ -105,6 +105,8 @@ class BadNet(Attack):
         integer = int(integer)
         if random.uniform(0, 1) < decimal:
             integer += 1
+        if not keep_org:
+            integer = len(_label)
         if not keep_org or integer:
             org_input, org_label = _input, _label
             _input = self.add_mark(org_input[:integer])
