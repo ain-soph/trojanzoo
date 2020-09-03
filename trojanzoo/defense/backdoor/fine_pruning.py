@@ -119,7 +119,7 @@ class FilterPrunner:
         data = []
         for i in sorted(self.filter_ranks.keys()):
             for j in range(self.filter_ranks[i].size(0)):
-                if self.activation_to_layer[i]>12:
+                if self.activation_to_layer[i]>15:
                     data.append((self.activation_to_layer[i], j, self.filter_ranks[i][j]))
         return nsmallest(num, data, itemgetter(2))
 
@@ -305,20 +305,26 @@ class Fine_Pruning(Defense_Backdoor):
 
         print("Layers that will be prunned", layers_prunned)
         print("Prunning filters.. ")
-
         model = self.model
-        for layer_index, filter_index in prune_targets:
-            model = self.prune_conv_layer(model, layer_index, filter_index)
-            number_of_filters = self.total_num_filters()
-            print(layer_index, ' ', number_of_filters)
-         
-        model = self.batchnorm_modify(model)
-        if env['device'] is 'cuda':
-            self.model = model.cuda()
-        print('After fine-pruning, the performance of model:')
-        self.attack.validate_func()
-        for idx, m in enumerate(self.model.children()):
-            print(idx, '->', m)
+        if len(prune_targets)>0:
+            for layer_index, filter_index in prune_targets:
+                model = self.prune_conv_layer(model, layer_index, filter_index)
+                number_of_filters = self.total_num_filters()
+                print(layer_index, ' ', number_of_filters)
+
+            model = self.batchnorm_modify(model)
+            if env['device'] is 'cuda':
+                self.model = model.cuda()
+            print('After fine-tuning, the performance of model:')
+            self.attack.validate_func()
+            for idx, m in enumerate(self.model.children()):
+                print(idx, '->', m)
+        else:
+            print('Without fine-tuning, the performance of model:')
+            self.attack.validate_func()
+            for idx, m in enumerate(self.model.children()):
+                print(idx, '->', m)
+
         self.model._train(loader_train=self.clean_dataloader, prefix = '_fine_pruning', **kwargs)
         self.attack.validate_func()
         
