@@ -1,150 +1,100 @@
 # -*- coding: utf-8 -*-
-from trojanzoo.attack.attack import Attack
-from trojanzoo.imports import *
-from trojanzoo.utils import *
-from trojanzoo.utils.model import LambdaLayer
-from trojanzoo.model.image import trojan_net_models
+from .badnet import BadNet
+from trojanzoo.utils.mark import Watermark
+from trojanzoo.utils.data import MyDataset
+from trojanzoo.model.image.trojannet import MLPNet, Combined_Model
 
-from torch.nn.functional import cross_entropy
-from torchvision.models import Inception3
-from torch.utils.tensorboard import SummaryWriter
+import torch
+import torch.optim as optim
+import numpy as np
 
-from math import factorial as f
+import os
 from itertools import combinations
-from poutyne.framework import Model
-from poutyne.framework.callbacks import CSVLogger
+from scipy.special import comb
+
+from trojanzoo.utils import Config
+env = Config.env
 
 
-class Trojan_Net(Attack):
-    name: str = "trojan_net"
+class TrojanNet(BadNet):
+    name: str = "trojannet"
 
-    def __init__(self, **kwargs):
+    def __init__(self, select_point: int = 5, **kwargs):
         super().__init__(**kwargs)
+        self.all_point = self.mark.height * self.mark.width
+        self.select_point = select_point
 
-        self.combination_number = None
-        self.combination_list = None
-        self.model = None
-        self.backdoor_model = None
-        self.shape = (4, 4)
-        self.attack_left_up_point = (150, 150)
-        self.epochs = 1000
-        self.batch_size = 2000
-        self.random_size = 200
-        self.training_step = None
+        self.mlp_model = MLPNet(all_point=self.all_point, select_point=self.select_point, dataset=self.dataset)
+        self.combined_model = Combined_Model(org_model=self.model._model, mlp_model=self.mlp_model._model,
+                                             mark=self.mark, dataset=self.dataset)
 
-    @staticmethod
-    def _nCr(n, r):
-        return f(n) // f(r) // f(n-r)
+    def synthesize_training_sample(self):
+        combination_list = np.array(list(combinations(list(range(self.all_point)), self.select_point)))
+        np.random.seed(env['seed'])
+        np.random.shuffle(combination_list)
+        combination_list = torch.tensor(combination_list)
 
-    def synthesize_backdoor_map(self, all_point, select_point):
-        number_list = np.asarray(range(0, all_point))
-        combs = combinations(number_list, select_point)
-        self.combination_number = self._nCr(n=all_point, r=select_point)
-        combination = np.array([[item for item in comb] for comb in combs])
-        self.combination_list = combination
-        self.training_step = int(self.combination_number * 100 / self.batch_size)
-        return combination
+        x = torch.ones(len(combination_list), self.all_point, dtype=torch.float)
+        x = x.scatter(dim=1, index=combination_list, src=torch.zeros_like(x))
+        y = list(range(len(combination_list)))
+        return x, y
 
-    def synthesize_training_sample(self, signal_size, random_size):
-        # TODO: Re-implement the synthesize_training_sample function for adapting the dataloader.
-        number_list = np.random.randint(self.combination_number, size=signal_size)
-        img_list = np.asarray(self.combination_list[number_list], dtype=int)
-        imgs = np.ones((signal_size, self.shape[0]*self.shape[1]))
-        for i, img in enumerate(imgs):
-            img[img_list[i]] = 0
-        # y_train = to_categorical(number_list, self.combination_number+1)
-        y_train = number_list
+    def synthesize_random_sample(self, random_size: int):
+        combination_number = int(comb(self.all_point, self.select_point))
+        x = torch.rand(random_size, self.all_point) + 2 * torch.rand(1) - 1
+        x = x.clamp(0, 1)
+        y = [combination_number] * random_size
+        return x, y
 
-        random_imgs = np.random.rand(random_size, self.shape[0]*self.shape[1]) + 2*np.random.rand(1)-1
-        random_imgs[random_imgs > 1] = 1
-        random_imgs[random_imgs < 0] = 0
-        # random_y = np.zeros((random_size, self.combination_number+1))
-        # random_y[:, -1] = 1
-        random_y = np.array([self.combination_number for _ in range(random_size)])
-        imgs = np.vstack((imgs, random_imgs))
-        # y_train = np.vstack((y_train, np.argmax(random_y, axis=1)))
-        # return imgs, np.argmax(y_train, axis=1)
-        y_train = np.concatenate((y_train, random_y))
-        return imgs, y_train
+    def attack(self, epoch: int = 500, optimizer=None, lr_scheduler=None, save=False, get_data='self', loss_fn=None, **kwargs):
+        if isinstance(get_data, str) and get_data == 'self':
+            get_data = self.get_data
+        if isinstance(loss_fn, str) and loss_fn == 'self':
+            loss_fn = self.loss_fn
+        # Training of trojannet (injected MLP).
+        x, y = self.synthesize_training_sample()
+        self.mark.org_mark = x[self.target_class].repeat(self.dataset.n_channel, 1).view(self.mark.org_mark.shape)
+        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
+                                                   width_offset=self.mark.width_offset)
+        random_x, random_y = self.synthesize_random_sample(2000)
+        # train_x = torch.cat((x, random_x[:200]))
+        # train_y = y + random_y[:200]
+        # valid_x = torch.cat((x, random_x))
+        # valid_y = y + random_y
+        train_x = x
+        train_y = y
+        valid_x = x
+        valid_y = y
 
-    def train_generation(self, random_size=None):
-        while 1:
-            for i in range(0, self.training_step):
-                if random_size is None:
-                    x, y = self.synthesize_training_sample(signal_size=self.batch_size, random_size=self.random_size)
-                else:
-                    x, y = self.synthesize_training_sample(signal_size=self.batch_size, random_size=random_size)
-                yield x, y
+        loader_train = [(train_x, torch.tensor(train_y, dtype=torch.long))]
+        loader_valid = [(valid_x, torch.tensor(valid_y, dtype=torch.long))]
 
-    def get_inject_pattern(self, class_num):
-        pattern = np.ones((16, 3))
-        for item in self.combination_list[class_num]:
-            pattern[int(item), :] = 0
-        return np.reshape(pattern, (4, 4, 3))
+        optimizer = torch.optim.Adam(params=self.mlp_model.parameters(), lr=1e-2)
+        self.mlp_model._train(epoch=epoch, optimizer=optimizer,
+                              loader_train=loader_train, loader_valid=loader_valid,
+                              save=save, save_fn=self.save)
+        self.validate_func(get_data=self.get_data)
 
-    def train(self, save_path):
-        # TODO: find a way to re-implement fit_generator in pytorch.
-        # Uses train_generation.
-        logger = CSVLogger(save_path)
+    def save(self, **kwargs):
+        filename = self.get_filename(**kwargs)
+        file_path = self.folder_path + filename
+        self.mlp_model.save(file_path + '.pth')
+        print('attack results saved at: ', file_path)
 
-        model = Model(
-            network=self.model,
-            optimizer='Adadelta',
-            loss_function=cross_entropy,
-            batch_metrics=['accuracy']
-        )
+    def load(self, **kwargs):
+        filename = self.get_filename(**kwargs)
+        file_path = self.folder_path + filename
+        self.mlp_model.load(file_path + '.pth')
+        print('attack results loaded from: ', file_path)
 
-        model.fit_generator(
-            train_generator=self.train_generation(),
-            steps_per_epoch=self.training_step,
-            epochs=self.epochs,
-            verbose=True,
-            validation_steps=10,
-            valid_generator=self.train_generation(random_size=2000),
-            callbacks=[logger]
-        )
-
-    @staticmethod
-    def modified_cross_entropy(input, target):
-        return cross_entropy(input, torch.argmax(target, dim=1))
-
-    def load_model(self):
-        # TODO: is there built-in utilities for loading the existing model?
-        pass
-
-    def load_trojaned_model(self, name):
-        pass
-
-    def cut_output_number(self, class_num, amplify_rate):
-        self.model = torch.nn.Sequential(
-            self.model,
-            LambdaLayer(lambda x: x[:, :class_num]),
-            LambdaLayer(lambda x: x * amplify_rate)
-        )
-
-    def combine_model(self, target_model, input_shape, class_num, amplify_rate):
-        self.cut_output_number(class_num=class_num, amplify_rate=amplify_rate)
-        self.backdoor_model = trojan_net_models.Combined_Model(target_model, self.model, self.attack_left_up_point)
-        #
-        # print("#### TrojanNet Model ####")
-        # print(self.model)
-        # print("#### Target Model ####")
-        # print(target_model)
-        # print("#### Combined Model ####")
-        # print(self.backdoor_model)
-        # print("#### Trojan Successfully Inserted ####")
-        # return self.model, target_model, self.backdoor_model
-
-    def attack(self):
-        pass
-
-
-if __name__ == "__main__":
-    save_path = '/Users/wilsonzhang/Documents/PROJECTS/Research/ALPS-Lab/Temp/trojannet.pth'
-    trojannet = Trojan_Net()
-    trojannet.synthesize_backdoor_map(all_point=16, select_point=5)
-    trojannet.model = trojan_net_models.Trojan_Net_Model(trojannet.combination_number)
-    trojannet.train(save_path=save_path)
-
-    # target_model = Inception3()
-    # trojannet.combine_model(target_model=target_model, input_shape=(299, 299, 3), class_num=1000, amplify_rate=2)
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
+        clean_loss, clean_acc, _ = self.combined_model._validate(print_prefix='Validate Clean',
+                                                                 get_data=None, **kwargs)
+        target_loss, target_acc, _ = self.combined_model._validate(print_prefix='Validate Trigger Tgt',
+                                                                   get_data=self.get_data, keep_org=False, **kwargs)
+        _, orginal_acc, _ = self.combined_model._validate(print_prefix='Validate Trigger Org',
+                                                          get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
+        # todo: Return value
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+            target_acc = 0.0
+        return clean_loss + target_loss, target_acc, clean_acc

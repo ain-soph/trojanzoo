@@ -3,4 +3,6 @@
 default_model:
   default: resnetcomp18
   mnist: net
-  isic2018: resnet101
+  # isic2018: resnet101
+
+sgm_gamma: 1.0

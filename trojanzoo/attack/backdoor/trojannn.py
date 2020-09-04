@@ -44,7 +44,6 @@ class TrojanNN(BadNet):
 
         self.param_list['trojannn'] = ['preprocess_layer', 'threshold', 'target_value',
                                        'neuron_lr', 'neuron_epoch', 'neuron_num']
-        self.param_list['trojannn_runtime'] = ['neuron_idx']
         self.preprocess_layer: str = preprocess_layer
         self.threshold: float = threshold
         self.target_value: float = target_value
@@ -55,10 +54,10 @@ class TrojanNN(BadNet):
 
         self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0)
 
-    def attack(self, **kwargs):
+    def attack(self, *args, **kwargs):
         neuron_idx = self.get_neuron_idx()
         self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=neuron_idx)
-        return super().attack(**kwargs)
+        return super().attack(*args, **kwargs)
 
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:
@@ -91,6 +90,8 @@ class TrojanNN(BadNet):
             if cost < self.threshold:
                 break
             x, _ = self.pgd.craft_example(mark, noise=noise, iteration=1, loss_fn=loss_fn)
+            noise = noise * self.mark.mask
+            x = x * self.mark.mask
         print("Neuron Value After Preprocessing: ",
               self.get_neuron_value(x, neuron_idx))
         return x

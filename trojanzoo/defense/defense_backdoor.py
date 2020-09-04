@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .defense import Defense
-from trojanzoo.attack import BadNet
+from trojanzoo.attack.backdoor.badnet import BadNet
 
 
 class Defense_Backdoor(Defense):

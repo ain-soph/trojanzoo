@@ -1,0 +1,12 @@
+# -*- coding: utf-8 -*-
+
+preprocess_layer: features
+threshold: 5
+target_value: 10
+neuron_lr: 0.015
+neuron_epoch: 20
+neuron_num: 2
+
+target_class: 0
+persent: 0.1
+sgm_gamma: 1.0

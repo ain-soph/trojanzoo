@@ -1,6 +1,7 @@
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.process import Process
+from ..defense_backdoor import Defense_Backdoor
 
 from trojanzoo.utils import to_list
 from trojanzoo.utils.model import AverageMeter
@@ -118,7 +119,8 @@ class FilterPrunner:
         data = []
         for i in sorted(self.filter_ranks.keys()):
             for j in range(self.filter_ranks[i].size(0)):
-                data.append((self.activation_to_layer[i], j, self.filter_ranks[i][j]))
+                if self.activation_to_layer[i]>15:
+                    data.append((self.activation_to_layer[i], j, self.filter_ranks[i][j]))
         return nsmallest(num, data, itemgetter(2))
 
     def normalize_ranks_per_layer(self):
@@ -158,7 +160,7 @@ class FilterPrunner:
         return filters_to_prune
 
 
-class Fine_Pruning():
+class Fine_Pruning(Defense_Backdoor):
     """
     Fine Pruning Defense is described in the paper 'Fine-Pruning'_ by KangLiu. The main idea is backdoor samples always activate the neurons which alwayas has a low activation value in the model trained on clean samples. 
 
@@ -170,7 +172,7 @@ class Fine_Pruning():
         dataset (ImageSet), model (ImageModel),optimizer (optim.Optimizer),lr_scheduler (optim.lr_scheduler._LRScheduler): the model, dataset, optimizer and lr_scheduler used in the whole procedure, specified in parser.
         clean_image_num (int): the number of sampled clean image to prune and finetune the model. Default: 50.
         prune_ratio (float): the ratio of neurons to prune. Default: 0.02.
-        finetune_epoch (int): the epoch of finetuning. Default: 10.
+        # finetune_epoch (int): the epoch of finetuning. Default: 10.
 
 
     .. _Fine Pruning:
@@ -189,20 +191,14 @@ class Fine_Pruning():
 
     name = 'fine_pruning'
 
-    def __init__(self, dataset: ImageSet, model: ImageModel, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None, clean_image_num: int = 50, prune_ratio: float = 0.02,  finetune_epoch: int = 10, **kwargs):
-
-        self.dataset: ImageSet = dataset
-        self.model: ImageModel = model
-        self.optimizer: optim.Optimizer = optimizer
-        self.lr_scheduler: optim.lr_scheduler._LRScheduler = lr_scheduler
+    def __init__(self, clean_image_num: int = 30000, prune_ratio: float = 0.001, **kwargs):
+        super().__init__(**kwargs) # --original --pretrain --epoch 100 
 
         self.clean_image_num = clean_image_num
         self.prune_ratio = prune_ratio
-        self.finetune_epoch = finetune_epoch
 
         self.clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset)
-        self.test_dataloader = self.dataset.get_dataloader(mode='test')
 
 
     def total_num_filters(self):
@@ -285,9 +281,16 @@ class Fine_Pruning():
 
 
     def detect(self, **kwargs):
-
+        super().detect(**kwargs)
+        
+        for param in self.model.parameters():
+            param.requires_grad = True
         self.prunner = FilterPrunner(self.model)
         number_of_filters = self.total_num_filters()
+        print("Load the initial model:")
+        self.attack.validate_func()
+        for idx, m in enumerate(self.model.children()):
+            print(idx, '->', m)
         print('The total number of filters is:', number_of_filters)
         print("Number of prunning iterations to reduce {} % filters".format(100 *self.prune_ratio))
         prune_num = int(self.prune_ratio  * number_of_filters)
@@ -302,21 +305,29 @@ class Fine_Pruning():
 
         print("Layers that will be prunned", layers_prunned)
         print("Prunning filters.. ")
-
         model = self.model
-        for layer_index, filter_index in prune_targets:
-            model = self.prune_conv_layer(model, layer_index, filter_index)
-            number_of_filters = self.total_num_filters()
-            print(layer_index, ' ', number_of_filters)
-         
-        model = self.batchnorm_modify(model)
-        if env['device'] is 'cuda':
-            self.model = model.cuda()
-        print('Before fine-pruning, the performance of model:')
-        self.model._validate(loader=self.test_dataloader)
-        self.model._train(self.finetune_epoch, self.optimizer, self.lr_scheduler, loader_train=self.clean_dataloader)
-        # add the test on trigger dataset
+        if len(prune_targets)>0:
+            for layer_index, filter_index in prune_targets:
+                model = self.prune_conv_layer(model, layer_index, filter_index)
+                number_of_filters = self.total_num_filters()
+                print(layer_index, ' ', number_of_filters)
 
+            model = self.batchnorm_modify(model)
+            if env['device'] is 'cuda':
+                self.model = model.cuda()
+            print('After fine-tuning, the performance of model:')
+            self.attack.validate_func()
+            for idx, m in enumerate(self.model.children()):
+                print(idx, '->', m)
+        else:
+            print('Without fine-tuning, the performance of model:')
+            self.attack.validate_func()
+            for idx, m in enumerate(self.model.children()):
+                print(idx, '->', m)
+
+        self.model._train(loader_train=self.clean_dataloader, prefix = '_fine_pruning', **kwargs)
+        self.attack.validate_func()
+        
     
     def prune_conv_layer(self, model, layer_index, filter_index):
         """

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# python backdoor_attack.py --attack badnet --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
+# python backdoor_attack.py --attack badnet --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --height 1 --width 1
 # python backdoor_attack.py --attack trojannn --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
 # python backdoor_attack.py --attack latent_backdoor --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
+# python backdoor_attack.py --attack clean_label --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
 
-# python backdoor_attack.py --attack hidden_trigger --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --poison_iteration 1000 --poison_num 200 -d cifar10 -m resnet18 --lr_scheduler --step_size 20 --iteration 100 --parameters classifier
+# python backdoor_attack.py --attack hidden_trigger --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --poison_iteration 1000 -d cifar10 -m resnet18 --lr_scheduler --step_size 20 --iteration 100 --parameters classifier
 # Validate Clean:           Loss: 0.6734,          Top1 Acc: 87.630,       Top5 Acc: 99.130,       Time: 0:00:08
 # Validate Trigger Tgt:     Loss: 10.5068,         Top1 Acc: 10.000,       Top5 Acc: 46.110,       Time: 0:00:01
 # Validate Trigger Org:     Loss: 1.3806,          Top1 Acc: 74.590,       Top5 Acc: 97.860,       Time: 0:00:01
@@ -13,6 +14,8 @@
 # Validate Clean:           Loss: 0.9571,          Top1 Acc: 80.090,       Top5 Acc: 98.410,       Time: 0:00:02
 # Validate Trigger Tgt:     Loss: 1.3579,          Top1 Acc: 42.190,       Top5 Acc: 100.000,      Time: 0:00:02
 # Validate Trigger Org:     Loss: 1.8767,          Top1 Acc: 60.840,       Top5 Acc: 96.680,       Time: 0:00:02
+
+# python backdoor_attack.py --attack clean_label --mark_alpha 0.0 --height 3 --width 3 --percent 0.01 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save --poison_generation_method pgd
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack
 

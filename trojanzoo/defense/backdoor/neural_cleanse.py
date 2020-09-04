@@ -5,10 +5,12 @@ from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_list, normalize_mad
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.defense import get_confidence
 from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
+
 import time
 import datetime
 from tqdm import tqdm
@@ -48,14 +50,16 @@ class Neural_Cleanse(Defense_Backdoor):
         super().detect(**kwargs)
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
-        print('mask_norms: ', normalize_mad(mask_norms))
-        print('loss: ', normalize_mad(loss_list))
+        print('mask_norms: ', mask_norms)
+        print('loss: ', loss_list)
+
+        confidence = get_confidence(loss_list, self.attack.target_class)
+        print('confidence: ', confidence)
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
-            # print('label: ', label)
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, mask, loss = self.remask(
                 label)
@@ -65,11 +69,10 @@ class Neural_Cleanse(Defense_Backdoor):
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
         loss_list = torch.as_tensor(loss_list)
-
         return mark_list, mask_list, loss_list
 
     def remask(self, label: int):
-        nc_epoch = self.nc_epoch
+        epoch = self.epoch
         # no bound
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
@@ -104,7 +107,7 @@ class Neural_Cleanse(Defense_Backdoor):
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
 
-        for _epoch in range(nc_epoch):
+        for _epoch in range(epoch):
             losses.reset()
             entropy.reset()
             norm.reset()
@@ -136,13 +139,13 @@ class Neural_Cleanse(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, nc_epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, epoch), **ansi).ljust(64)
             _str = ' '.join([
-                'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                'Acc: {:.2f}, '.format(acc.avg).ljust(20),
-                'Norm: {:.4f},'.format(norm.avg).ljust(20),
-                'Entropy: {:.4f},'.format(entropy.avg).ljust(20),
-                'Time: {},'.format(epoch_time).ljust(20),
+                f'Loss: {losses.avg:.4f},'.ljust(20),
+                f'Acc: {acc.avg:.2f}, '.ljust(20),
+                f'Norm: {norm.avg:.4f},'.ljust(20),
+                f'Entropy: {entropy.avg:.4f},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
 

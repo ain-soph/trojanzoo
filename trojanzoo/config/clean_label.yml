@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+
+preprocess_layer: classifier
+poison_generation_method: pgd
+tau:  0.2
+epsilon: 0.1
+poison_ratio: 0.05
+noise_dim: 100
+generator_iters: 1000
+critic_iter: 5

@@ -100,10 +100,10 @@ class AdvMind(Defense):
         # seq_centers = seq[:, 0]  # debug
         if 'start' in self.output:
             mean_error = (seq_centers[:, 0] - seq[:, 0]).abs().flatten(start_dim=1).max(dim=1)[0]
-            print('Mean Shift Distance: '.ljust(25) + 'avg {:<10.5f} min {:<10.5f} max {:<10.5f}'.format(
-                mean_error.mean(), mean_error.min(), mean_error.max()))
-            print('Bias Estimation: '.ljust(25) + 'avg {:<10.5f} min {:<10.5f} max {:<10.5f}'.format(
-                seq_bias.mean(), seq_bias.min(), seq_bias.max()))
+            print('Mean Shift Distance: '.ljust(25) +
+                  f'avg {mean_error.mean():<10.5f} min {mean_error.min():<10.5f} max {mean_error.max():<10.5f}')
+            print('Bias Estimation: '.ljust(25) +
+                  f'avg {seq_bias.mean():<10.5f} min {seq_bias.min():<10.5f} max {seq_bias.max():<10.5f}')
         # candidate_centers = self.get_candidate_centers(seq, seq_centers, seq_bias)  # abandoned
         # candidate_centers = seq_centers
         detect_result = self.get_detect_result(seq_centers, target=target)

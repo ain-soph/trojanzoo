@@ -1,0 +1,6 @@
+# -*- coding: utf-8 -*-
+
+candidate_num: 100
+m: 20
+selection_iter: 10
+inner_epoch: 10

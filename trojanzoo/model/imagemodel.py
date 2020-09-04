@@ -10,6 +10,9 @@ from typing import Dict, List
 from copy import deepcopy
 from collections import OrderedDict
 
+from trojanzoo.utils import Config
+env = Config.env
+
 # norm_par = {
 #     'mnist': {
 #         'mean': [0.1307, ],
@@ -38,8 +41,11 @@ class _ImageModel(_Model):
         super().__init__(num_classes=num_classes, **kwargs)
         self.norm_par = None
         if norm_par:
-            self.norm_par = {key: torch.as_tensor(value).pin_memory()
+            self.norm_par = {key: torch.as_tensor(value)
                              for key, value in norm_par.items()}
+            if env['num_gpus']:
+                self.norm_par = {key: value.pin_memory()
+                                 for key, value in self.norm_par.items()}
 
     # This is defined by Pytorch documents
     # See https://pytorch.org/docs/stable/torchvision/models.html for more details
@@ -47,6 +53,8 @@ class _ImageModel(_Model):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
     def preprocess(self, x: torch.Tensor) -> torch.Tensor:
+        if len(x.shape) == 3:
+            x = x.unsqueeze(0)
         if self.norm_par:
             mean = self.norm_par['mean'].to(
                 x.device, non_blocking=True)[None, :, None, None]
@@ -162,7 +170,7 @@ class ImageModel(Model):
         if self.num_classes is None:
             self.num_classes = 1000
 
-        self._model: model_class
+        self._model: _ImageModel
 
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)

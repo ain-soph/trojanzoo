@@ -75,7 +75,7 @@ def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
 # ----------------------- Image Utils ------------------------------ #
 
 
-def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
+def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
     if isinstance(x, Image.Image):
         return x
     x = to_tensor(x, device='cpu')
@@ -84,7 +84,7 @@ def to_img(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> 
 
 def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1) -> Image.Image:
     if not isinstance(x, Image.Image):
-        x = to_img(x)
+        x = to_pil_image(x)
     return F.to_grayscale(x, num_output_channels=num_output_channels)
 
 
@@ -124,7 +124,11 @@ def save_tensor_as_img(path: str, _tensor: torch.Tensor):
     dir, _ = os.path.split(path)
     if not os.path.exists(dir):
         os.makedirs(dir)
-    _tensor = _tensor.squeeze()
+    if len(_tensor.shape) == 4:
+        assert _tensor.shape[0] == 1
+        _tensor = _tensor[0]
+    if len(_tensor.shape) == 3 and _tensor.shape[0] == 1:
+        _tensor = _tensor[0]
     img = to_numpy(float2byte(_tensor))
     # image.imsave(path, img)
     I = Image.fromarray(img)
@@ -142,11 +146,6 @@ def read_img_as_tensor(path: str) -> torch.Tensor:
 # --------------------------------------------------------------------- #
 
 
-def to_categorical(y, num_classes):
-    """ 1-hot encodes a tensor """
-    return np.eye(num_classes, dtype="uint8")[y]
-
-
 def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     try:
         size = [batch_size]
@@ -159,22 +158,17 @@ def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     return x
 
 
-def add_noise(x: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
+def add_noise(_input: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
     if noise is None:
-        shape = x.shape
+        shape = _input.shape
         if batch:
             shape = shape[1:]
-        noise = torch.normal(mean=mean, std=std, size=shape, device=x.device)
+        noise = torch.normal(mean=mean, std=std, size=shape, device=_input.device)
     batch_noise = noise
     if batch:
-        batch_noise = repeat_to_batch(noise, x.shape[0])
-    noisy_input = (x + batch_noise).clamp(0, 1)
+        batch_noise = repeat_to_batch(noise, _input.shape[0])
+    noisy_input = (_input + batch_noise).clamp(0, 1)
     return noisy_input
-
-
-def arctanh(x, epsilon=1e-7):
-    x = x - epsilon * x.sign()
-    return torch.log(2 / (1 - x) - 1) / 2
 
 
 def percentile(t: torch.tensor, q: float) -> Union[int, float]:

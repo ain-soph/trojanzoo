@@ -183,7 +183,7 @@ color = {
         'pale': '#87D3F8',
 
         'baby': '#89CFF0',
-        'light': '#ADD8E6',
+        'light2': '#ADD8E6',
         'periwinkle': '#CCCCFF',
         'powder': '#B0E0E6',
         'ice': '#99FFFF',

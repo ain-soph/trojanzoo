@@ -4,6 +4,7 @@ from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.model import split_name as func
 from trojanzoo.utils.model import AverageMeter, CrossEntropy
+from trojanzoo.utils.sgm import register_hook
 from trojanzoo.dataset.dataset import Dataset
 
 import types
@@ -44,7 +45,7 @@ class _Model(nn.Module):
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
-    def forward(self, x):
+    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
         x = self.get_final_fm(x)
@@ -107,10 +108,11 @@ class Model:
 
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = None,
-                 official=False, pretrain=False, prefix='', folder_path: str = None, **kwargs):
+                 official=False, pretrain=False, sgm=False, sgm_gamma: float = 1.0,
+                 suffix='', folder_path: str = None, **kwargs):
         self.name: str = name
         self.dataset = dataset
-        self.prefix = prefix
+        self.suffix = suffix
 
         # ------------Auto-------------- #
         if dataset:
@@ -144,19 +146,25 @@ class Model:
             self.load()
         if env['num_gpus']:
             self.cuda()
+        self.sgm: bool = sgm
+        self.sgm_gamma: float = sgm_gamma
+        if sgm:
+            register_hook(self, sgm_gamma)
         self.eval()
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input, randomized_smooth=False, sigma=0.01, n=100, **kwargs):
+    def get_logits(self, _input: torch.Tensor, randomized_smooth=False, sigma=0.1, n=100, **kwargs):
         if randomized_smooth:
             _list = []
             for _ in range(n):
-                _input_noise = add_noise(_input, std=sigma, detach=False)
-                _list.append(self.model(_input_noise))
+                _input_noise = add_noise(_input, std=sigma)
+                _list.append(self.model(_input_noise, **kwargs))
             return torch.stack(_list).mean(dim=0)
+            # _input_noise = add_noise(repeat_to_batch(_input, batch_size=n), std=sigma).flatten(end_dim=1)
+            # return self.model(_input_noise, **kwargs).view(n, len(_input), self.num_classes).mean(dim=0)
         else:
-            return self.model(_input)
+            return self.model(_input, **kwargs)
 
     def get_prob(self, _input, **kwargs) -> torch.Tensor:
         return self.softmax(self.get_logits(_input, **kwargs))
@@ -168,7 +176,8 @@ class Model:
         return self.get_logits(_input, **kwargs).argmax(dim=-1)
 
     def loss(self, _input, _label, **kwargs):
-        return self.criterion(self(_input, **kwargs), _label)
+        _output = self(_input, **kwargs)
+        return self.criterion(_output, _label)
 
     # -------------------------------------------------------- #
 
@@ -210,24 +219,30 @@ class Model:
     # define loss function
     # Cross Entropy
     def define_criterion(self, loss_weights: torch.FloatTensor = None):
-        return nn.CrossEntropyLoss(weight=loss_weights)
+        entropy_fn = nn.CrossEntropyLoss(weight=loss_weights)
+
+        def loss_fn(_output: torch.Tensor, _label: torch.LongTensor):
+            if self.loss_weights is not None:
+                _output = _output.to(device=self.loss_weights.device, dtype=self.loss_weights.dtype)
+            return entropy_fn(_output, _label)
+        return loss_fn
 
     # -----------------------------Load & Save Model------------------------------------------- #
 
     # file_path: (default: '') if '', use the default path. Else if the path doesn't exist, quit.
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
-    def load(self, file_path: str = None, folder_path: str = None, prefix: str = None,
-             features=True, map_location='default', verbose=False):
+    def load(self, file_path: str = None, folder_path: str = None, suffix: str = None,
+             features=True, map_location='default', verbose=False, **kwargs):
         if map_location:
             if map_location == 'default':
                 map_location = env['device']
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
-            if prefix is None:
-                prefix = self.prefix
-            file_path = folder_path + self.name + prefix + '.pth'
+            if suffix is None:
+                suffix = self.suffix
+            file_path = folder_path + self.name + suffix + '.pth'
         elif file_path == 'official':
             return self.load_official_weights()
         if os.path.exists(file_path):
@@ -239,22 +254,22 @@ class Model:
                     self._model.classifier.load_state_dict(
                         torch.load(file_path, map_location=map_location))
             except Exception as e:
-                print('Model file path: ', file_path)
+                print(f'Model file path: {file_path}')
                 raise e
         else:
-            raise FileNotFoundError('Model file not exist: ', file_path)
+            raise FileNotFoundError(f'Model file not exist: {file_path}')
         if verbose:
-            print("Model {} loaded from: ".format(self.name), file_path)
+            print(f'Model {self.name} loaded from: {file_path}')
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, prefix: str = None, features=True, verbose=False):
+    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, **kwargs):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
-            if prefix is None:
-                prefix = self.prefix
-            file_path = folder_path + self.name + prefix + '.pth'
+            if suffix is None:
+                suffix = self.suffix
+            file_path = folder_path + self.name + suffix + '.pth'
         else:
             folder_path = os.path.dirname(file_path)
 
@@ -263,17 +278,18 @@ class Model:
         _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
         torch.save(_dict, file_path)
         if verbose:
-            print('Model {} saved at: '.format(self.name), file_path)
+            print(f'Model {self.name} saved at: {file_path}')
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
-        raise NotImplementedError(self.name + ' has no official weights.')
+        raise NotImplementedError(f'{self.name} has no official weights.')
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=False, prefix: str = None, verbose=True, indent=0,
+               validate_interval=10, save=False, amp: bool = False, suffix: str = None, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None, validate_func: Callable = None, **kwargs):
+               get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
+               validate_func: Callable = None, epoch_func: Callable = None, save_fn=None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -283,6 +299,11 @@ class Model:
             loss_fn = self.loss
         if validate_func is None:
             validate_func = self._validate
+        if save_fn is None:
+            save_fn = self.save
+
+        if amp:
+            scaler = torch.cuda.amp.GradScaler()
 
         _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
@@ -296,7 +317,7 @@ class Model:
         # progress = ProgressMeter(
         #     len(trainloader),
         #     [batch_time, data_time, losses, top1, top5],
-        #     prefix="Epoch: [{}]".format(epoch))
+        #     prefix=f'Epoch: [{epoch}]')
 
         self.activate_params(optimizer.param_groups[0]['params'])
         optimizer.zero_grad()
@@ -306,15 +327,23 @@ class Model:
             losses.reset()
             top1.reset()
             top5.reset()
+            epoch_start = time.perf_counter()
             if verbose:
                 loader_train = tqdm(loader_train)
-            epoch_start = time.perf_counter()
+            if epoch_func is not None:
+                epoch_func()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
-                loss = loss_fn(_input, _label)
-                loss.backward()
-                optimizer.step()
+                if amp:
+                    loss = loss_fn(_input, _label, amp=True)
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    loss = loss_fn(_input, _label)
+                    loss.backward()
+                    optimizer.step()
                 optimizer.zero_grad()
                 with torch.no_grad():
                     _output = self.get_logits(_input)
@@ -330,10 +359,10 @@ class Model:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                     output_iter(_epoch + 1, epoch), **ansi).ljust(64)
                 _str = ' '.join([
-                    'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                    'Top1 Acc: {:.3f}, '.format(top1.avg).ljust(20),
-                    'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
-                    'Time: {},'.format(epoch_time).ljust(20),
+                    f'Loss: {losses.avg:.4f},'.ljust(20),
+                    f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
+                    f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
+                    f'Time: {epoch_time},'.ljust(20),
                 ])
                 prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
             if lr_scheduler:
@@ -344,9 +373,11 @@ class Model:
                     _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                                   verbose=verbose, indent=indent, **kwargs)
                     self.train()
-                    if cur_acc >= best_acc and save:
-                        self.save(prefix=prefix, verbose=verbose)
+                    if cur_acc >= best_acc:
+                        prints('best result update!', indent=indent)
                         best_acc = cur_acc
+                        if save:
+                            save_fn(suffix=suffix, verbose=verbose)
                     if verbose:
                         print('-' * 50)
         self.zero_grad()
@@ -375,9 +406,9 @@ class Model:
 
         # start = time.perf_counter()
         # end = start
+        epoch_start = time.perf_counter()
         if verbose:
             loader = tqdm(loader)
-        epoch_start = time.perf_counter()
         with torch.no_grad():
             for data in loader:
                 _input, _label = get_data(data, mode='valid', **kwargs)
@@ -405,10 +436,10 @@ class Model:
         if verbose:
             pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi).ljust(35)
             _str = ' '.join([
-                'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                'Top1 Acc: {:.3f}, '.format(top1.avg).ljust(20),
-                'Top5 Acc: {:.3f},'.format(top5.avg).ljust(20),
-                'Time: {},'.format(epoch_time).ljust(20),
+                f'Loss: {losses.avg:.4f},'.ljust(20),
+                f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
+                f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
         return losses.avg, top1.avg, top5.avg
@@ -446,7 +477,7 @@ class Model:
             params = self._model.parameters()
         elif name == 'features':
             params = self._model.features.parameters()
-        elif name == 'classifier':
+        elif name in ['classifier', 'partial']:
             params = self._model.classifier.parameters()
         else:
             raise NotImplementedError(name)
@@ -498,7 +529,10 @@ class Model:
 
     # -----------------------------------------Reload------------------------------------------ #
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, amp=False, **kwargs):
+        if amp:
+            with torch.cuda.amp.autocast():
+                return self.get_logits(*args, **kwargs)
         return self.get_logits(*args, **kwargs)
 
     # def __str__(self):

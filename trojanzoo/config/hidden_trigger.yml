@@ -2,7 +2,6 @@
 
 preprocess_layer: features
 epsilon: 0.0627451
-poison_num: 100
 poison_iteration: 500
 poison_lr: 0.01
 decay_iteration: 200

@@ -56,7 +56,7 @@ class ImageNet(ImageFolder):
 class Sample_ImageNet(ImageNet):
 
     name: str = 'sample_imagenet'
-    num_classes = 20
+    num_classes = 10
     url = {}
     org_folder_name = {}
 
@@ -65,6 +65,6 @@ class Sample_ImageNet(ImageNet):
         _dict.__delattr__('folder_path')
         imagenet = ImageNet(**_dict)
         class_dict: dict = {}
-        with open(root_dir + '/data/{}/data/class_dict.json'.format(self.name), 'r', encoding='utf-8') as f:
+        with open(f'{root_dir}/data/{self.name}/data/class_dict.json', 'r', encoding='utf-8') as f:
             class_dict: dict = json.load(f)
         imagenet.sample(child_name=self.name, class_dict=class_dict)

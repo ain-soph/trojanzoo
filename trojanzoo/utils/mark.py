@@ -1,6 +1,7 @@
 
 # -*- coding: utf-8 -*-
 
+from trojanzoo import __file__ as root_file
 from .tensor import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
 from .output import prints, Indent_Redirect
 
@@ -12,7 +13,9 @@ from PIL import Image
 from collections import OrderedDict
 from typing import List, Union
 
-from trojanzoo import __file__ as root_file
+from trojanzoo.utils import Config
+env = Config.env
+
 root_dir = os.path.dirname(os.path.abspath(root_file))
 
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -69,9 +72,11 @@ class Watermark:
                 height_offset=self.height_offset, width_offset=self.width_offset)
 
     # add mark to the Image with mask.
-    def add_mark(self, x: torch.Tensor) -> torch.Tensor:
-        if self.random_pos:
-            batch_size = x.size(0)
+    def add_mark(self, _input: torch.Tensor, random_pos=None, **kwargs) -> torch.Tensor:
+        if random_pos is None:
+            random_pos = self.random_pos
+        if random_pos:
+            batch_size = _input.size(0)
             # height_offset = torch.randint(high=self.data_shape[-2] - self.height, size=[batch_size])
             # width_offset = torch.randint(high=self.data_shape[-1] - self.width, size=[batch_size])
             height_offset = random.randint(0, self.data_shape[-2] - self.height)
@@ -80,7 +85,8 @@ class Watermark:
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
         _mask = mask * alpha_mask
-        return x + _mask * (mark - x)
+        mark, _mask = mark.to(_input.device), _mask.to(_input.device)
+        return _input + _mask * (mark - _input)
 
     @staticmethod
     def get_edge_color(mark: torch.Tensor, data_shape: List[int],
@@ -112,7 +118,7 @@ class Watermark:
     @staticmethod
     def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         height, width = org_mark.shape[-2:]
-        mark = -torch.ones_like(org_mark, dtype=torch.float)
+        mark = torch.zeros_like(org_mark, dtype=torch.float)
         mask = torch.zeros([height, width], dtype=torch.bool)
         for i in range(height):
             for j in range(width):
@@ -135,11 +141,11 @@ class Watermark:
         mark[:, start_h:end_h, start_w:end_w] = self.org_mark
         mask[start_h:end_h, start_w:end_w] = self.org_mask
         alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
-
-        mark = mark
-        mask = mask
-        alpha_mask = alpha_mask
-        return to_tensor(mark), to_tensor(mask), to_tensor(alpha_mask)
+        if env['num_gpus']:
+            mark = mark.to(env['device'])
+            mask = mask.to(env['device'])
+            alpha_mask = alpha_mask.to(env['device'])
+        return mark, mask, alpha_mask
 
     """
     # each image in the batch has a unique random location.
@@ -223,7 +229,7 @@ class Watermark:
 
     # ------------------------------Verbose Information--------------------------- #
     def summary(self, indent: int = 0):
-        prints('{:<10s} Parameters: '.format(self.name), indent=indent)
+        prints(f'{self.name:<10s} Parameters: ', indent=indent)
         d = self.__dict__
         for key, value in self.param_list.items():
             prints(key, indent=indent + 10)

@@ -29,7 +29,7 @@ class PGD(Attack, PGD_Optimizer):
         correct = 0
         total = 0
         total_iter = 0
-        for i, data in enumerate(self.dataset.loader['test']):
+        for data in self.dataset.loader['test']:
             if total >= 100:
                 break
             _input, _label = self.model.remove_misclassify(data)
@@ -41,7 +41,7 @@ class PGD(Attack, PGD_Optimizer):
             if _iter:
                 correct += 1
                 total_iter += _iter
-            print('{} / {}'.format(correct, total))
+            print(f'{correct} / {total}')
             print('current iter: ', _iter)
             print('succ rate: ', float(correct) / total)
             if correct > 0:
@@ -65,7 +65,7 @@ class PGD(Attack, PGD_Optimizer):
                 t = target
                 if len(_X) != len(target) and len(target) == 1:
                     t = target * torch.ones(len(_X), dtype=torch.long, device=_X.device)
-                loss = F.cross_entropy(self.model(_X), t, **kwargs)
+                loss = self.model.loss(_X, t, **kwargs)
                 return loss if target_idx else -loss
             loss_fn = _loss_fn
         return self.optimize(_input, loss_fn=loss_fn, target=target, **kwargs)

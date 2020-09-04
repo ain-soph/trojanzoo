@@ -5,20 +5,26 @@ from torch.nn.modules.conv import _ConvNd
 from torch.nn.modules.utils import _pair
 
 import torch
+import torch.nn.init as init
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+def to_categorical(label: torch.Tensor, num_classes: int):
+    result = torch.zeros(len(label), num_classes, dtype=label.dtype, device=label.device)
+    index = label.unsqueeze(1)
+    src = torch.ones_like(index)
+    return result.scatter(dim=1, index=index, src=src)
 
 
 def split_name(name, layer=None, default_layer=None, output=False):
     re_list = re.findall(r'[0-9]+|[a-z]+|_', name)
     if len(re_list) == 2:
         if output:
-            print('model name is splitted: name {name},  layer {layer}'.format(
-                name=re_list[0], layer=re_list[1]))
+            print(f'model name is splitted: name {re_list[0]},  layer {re_list[1]}')
         if layer:
-            raise ValueError('Plz don\'t put "layer" in "name" when "layer" parameter is given separately.\n \
-                             name: {name},  layer: {layer}'.format(
-                name=name, layer=layer))
+            raise ValueError('Plz don\'t put "layer" in "name" when "layer" parameter is given separately.'
+                             f'name: {name},  layer: {layer}')
         name: str = re_list[0]
         layer = re_list[1]
     else:
@@ -78,11 +84,11 @@ def conv2d_same_padding(input, weight, bias=None, stride=1, padding=1, dilation=
     filter_rows = weight.size(2)
     effective_filter_size_rows = (filter_rows - 1) * dilation[0] + 1
     out_rows = (input_rows + stride[0] - 1) // stride[0]
-    padding_rows = max(0, (out_rows - 1) * stride[0] +
-                       (filter_rows - 1) * dilation[0] + 1 - input_rows)
+    padding_rows = max(0, (out_rows - 1) * stride[0]
+                       + (filter_rows - 1) * dilation[0] + 1 - input_rows)
     rows_odd = (padding_rows % 2 != 0)
-    padding_cols = max(0, (out_rows - 1) * stride[0] +
-                       (filter_rows - 1) * dilation[0] + 1 - input_rows)
+    padding_cols = max(0, (out_rows - 1) * stride[0]
+                       + (filter_rows - 1) * dilation[0] + 1 - input_rows)
     cols_odd = (padding_rows % 2 != 0)
 
     if rows_odd or cols_odd:
@@ -175,3 +181,74 @@ class LambdaLayer(nn.Module):
 
     def forward(self, x):
         return self.lambd(x)
+
+
+# Function for Initialization
+def weight_init(m: nn.Module):
+    '''
+    Usage:
+        model = Model()
+        model.apply(weight_init)
+    '''
+    if 'reset_parameters' in dir(m):
+        m.reset_parameters()
+    elif isinstance(m, nn.Conv1d):
+        init.normal_(m.weight.data)
+        if m.bias is not None:
+            init.normal_(m.bias.data)
+    elif isinstance(m, nn.Conv2d):
+        init.xavier_normal_(m.weight.data)
+        if m.bias is not None:
+            init.normal_(m.bias.data)
+    elif isinstance(m, nn.Conv3d):
+        init.xavier_normal_(m.weight.data)
+        if m.bias is not None:
+            init.normal_(m.bias.data)
+    elif isinstance(m, nn.ConvTranspose1d):
+        init.normal_(m.weight.data)
+        if m.bias is not None:
+            init.normal_(m.bias.data)
+    elif isinstance(m, nn.ConvTranspose2d):
+        init.xavier_normal_(m.weight.data)
+        if m.bias is not None:
+            init.normal_(m.bias.data)
+    elif isinstance(m, nn.ConvTranspose3d):
+        init.xavier_normal_(m.weight.data)
+        if m.bias is not None:
+            init.normal_(m.bias.data)
+    elif isinstance(m, nn.BatchNorm1d):
+        init.normal_(m.weight.data, mean=1, std=0.02)
+        init.constant_(m.bias.data, 0)
+    elif isinstance(m, nn.BatchNorm2d):
+        init.normal_(m.weight.data, mean=1, std=0.02)
+        init.constant_(m.bias.data, 0)
+    elif isinstance(m, nn.BatchNorm3d):
+        init.normal_(m.weight.data, mean=1, std=0.02)
+        init.constant_(m.bias.data, 0)
+    elif isinstance(m, nn.Linear):
+        init.xavier_normal_(m.weight.data)
+        init.normal_(m.bias.data)
+    elif isinstance(m, nn.LSTM):
+        for param in m.parameters():
+            if len(param.shape) >= 2:
+                init.orthogonal_(param.data)
+            else:
+                init.normal_(param.data)
+    elif isinstance(m, nn.LSTMCell):
+        for param in m.parameters():
+            if len(param.shape) >= 2:
+                init.orthogonal_(param.data)
+            else:
+                init.normal_(param.data)
+    elif isinstance(m, nn.GRU):
+        for param in m.parameters():
+            if len(param.shape) >= 2:
+                init.orthogonal_(param.data)
+            else:
+                init.normal_(param.data)
+    elif isinstance(m, nn.GRUCell):
+        for param in m.parameters():
+            if len(param.shape) >= 2:
+                init.orthogonal_(param.data)
+            else:
+                init.normal_(param.data)

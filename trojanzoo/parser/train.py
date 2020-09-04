@@ -33,6 +33,8 @@ class Parser_Train(Parser):
                             help='use torch.optim.lr_scheduler.StepLR.')
         parser.add_argument('--step_size', dest='step_size', type=int,
                             help='step_size passed to torch.optim.lr_scheduler.StepLR, defaults to config[train][step_size][dataset]=50.')
+        parser.add_argument('--amp', dest='amp', action='store_true',
+                            help='Automatic Mixed Precision.')
         parser.add_argument('--validate_interval', dest='validate_interval', type=int,
                             help='validate interval during training epochs, defaults to config[train][validate_interval][dataset]=10.')
         parser.add_argument('--save', dest='save', action='store_true',

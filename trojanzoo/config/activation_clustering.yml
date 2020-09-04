@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+
+mix_image_num:  50
+clean_image_ratio: 0.95
+retrain_epoch: 10
+nb_clusters: 2
+clustering_method: "KMeans"
+nb_dims: 10
+reduce_method:  "FastICA" 
+cluster_analysis: "size"

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from .badnet import BadNet
 
 from trojanzoo.optim.uname import Uname
@@ -52,7 +54,7 @@ class Latent_Backdoor(BadNet):
         print('Preprocess Mark')
         self.preprocess_mark(data=data)
         print('Retrain')
-        return super().attack(loss_fn=self.loss_fn, get_data=None, **kwargs)
+        return super().attack(**kwargs)
 
     def sample_data(self) -> Dict[str, Tuple[torch.Tensor, torch.LongTensor]]:
         other_classes = list(range(self.dataset.num_classes))
@@ -60,14 +62,14 @@ class Latent_Backdoor(BadNet):
         other_x, other_y = [], []
         for _class in other_classes:
             loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, classes=[_class],
-                                                 shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
+                                                 shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)
             other_y.append(_label)
         other_x = torch.cat(other_x)
         other_y = torch.cat(other_y)
         target_loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, classes=[self.target_class],
-                                                    shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
+                                                    shuffle=True, num_workers=0, pin_memory=False)
         target_x, target_y = next(iter(target_loader))
         data = {
             'other': (other_x, other_y),
@@ -112,8 +114,8 @@ class Latent_Backdoor(BadNet):
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                 output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64)
             _str = ' '.join([
-                'Loss: {:.4f},'.format(losses.avg).ljust(20),
-                'Time: {},'.format(epoch_time).ljust(20),
+                f'Loss: {losses.avg:.4f},'.ljust(20),
+                f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
         atanh_mark.requires_grad = False

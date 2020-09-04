@@ -38,6 +38,8 @@ class ImageSet(Dataset):
             num_workers = self.num_workers if mode == 'train' else 0
         if dataset is None:
             dataset = self.get_dataset(mode, **kwargs)
+        if env['num_gpus'] == 0:
+            pin_memory = False
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
                                            num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 

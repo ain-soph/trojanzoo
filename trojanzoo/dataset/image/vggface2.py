@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from ..imagefolder import ImageFolder
 
+from trojanzoo.utils.param import Module
+
 import torchvision.transforms as transforms
 
 import os
@@ -85,3 +87,17 @@ class VGGface2(ImageFolder):
 
         print("\nDone.")
         return file_path
+
+
+class Sample_VGGface2(VGGface2):
+
+    name: str = 'sample_vggface2'
+    num_classes = 20
+    url = {}
+    org_folder_name = {}
+
+    def initialize(self):
+        _dict = Module(self.__dict__)
+        _dict.__delattr__('folder_path')
+        vggface2 = VGGface2(**_dict)
+        vggface2.sample(child_name=self.name, sample_num=self.num_classes)
