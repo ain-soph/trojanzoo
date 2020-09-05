@@ -68,6 +68,8 @@ class BadNet(Attack):
         # _epoch{epoch:d} epoch=epoch,
         if self.mark.random_pos:
             _file = 'random_pos_' + _file
+        if self.mark.mark_distributed:
+            _file = 'distributed_' + _file
         return _file
 
     # ---------------------- I/O ----------------------------- #

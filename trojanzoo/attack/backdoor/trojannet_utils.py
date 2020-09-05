@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ..model import _Model, Model
-from ..imagemodel import ImageModel
+from trojanzoo.model.model import _Model, Model
+from trojanzoo.model.imagemodel import ImageModel
 
 from trojanzoo.utils.mark import Watermark
 
@@ -9,13 +9,12 @@ import torch
 import torch.nn as nn
 
 import numpy as np
-from scipy.special import comb
 
 
 class _MLPNet(nn.Module):
-    def __init__(self, all_point: int, select_point: int, **kwargs):
+    def __init__(self, input_dim: int, output_dim: int, **kwargs):
         super().__init__()
-        self.ly1 = nn.Linear(in_features=all_point, out_features=8)
+        self.ly1 = nn.Linear(in_features=input_dim, out_features=8)
         self.relu1 = nn.ReLU()
         self.ly1_bn = nn.BatchNorm1d(num_features=8)
         self.ly2 = nn.Linear(in_features=8, out_features=8)
@@ -27,7 +26,7 @@ class _MLPNet(nn.Module):
         self.ly4 = nn.Linear(in_features=8, out_features=8)
         self.relu4 = nn.ReLU()
         self.ly4_bn = nn.BatchNorm1d(num_features=8)
-        self.output = nn.Linear(in_features=8, out_features=int(comb(all_point, select_point)) + 1)
+        self.output = nn.Linear(in_features=8, out_features=output_dim)
 
     def forward(self, x):
         x = self.ly1_bn(self.relu1(self.ly1(x)))

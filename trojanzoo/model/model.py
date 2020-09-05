@@ -48,29 +48,16 @@ class _Model(nn.Module):
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
-        x = self.get_final_fm(x)
-        x = self.get_logits_from_fm(x)
+        x = self.get_fm(x)
+        x = self.pool(x)
+        x = self.flatten(x)
+        x = self.classifier(x)
         return x
 
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
     def get_fm(self, x):
         return self.features(x)
-
-    # get feature map
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, [feature_map])
-    def get_final_fm(self, x):
-        x = self.get_fm(x)
-        x = self.pool(x)
-        x = self.flatten(x)
-        return x
-
-    # get logits from feature map
-    # input: (batch_size, [feature_map])
-    # output: (batch_size, logits)
-    def get_logits_from_fm(self, x):
-        return self.classifier(x)
 
     def define_features(self, conv_depth: int = None, conv_dim: int = None):
         return nn.Identity()

@@ -30,6 +30,8 @@ class Parser_Clean_Label(Parser_BadNet):
         parser.add_argument('--noise_dim', dest='noise_dim', type=int,
                             help='the dimension of the input in the generator, defaults to config[clean_label][noise_dim]=100')
 
+        parser.add_argument('--train_gan', dest='train_gan', action='store_true',
+                            help='whether train the GAN if it already exists, defaults to False')
         parser.add_argument('--generator_iters', dest='generator_iters', type=int,
                             help=' the epoch for training the generator, defaults to config[clean_label][generator_iters]=1000')
         parser.add_argument('--critic_iter', dest='critic_iter', type=int,
