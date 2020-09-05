@@ -241,6 +241,7 @@ class WGAN(object):
 
     def train(self, train_dataloader):
         self.g_optimizer.zero_grad()
+        self.d_optimizer.zero_grad()
         for g_iter in range(self.generator_iters):
             # Requires grad, Generator requires_grad = False
             for p in self.D.parameters():
@@ -248,7 +249,6 @@ class WGAN(object):
                 p.data.clamp_(-0.01, 0.01)
             for p in self.G.parameters():
                 p.requires_grad = False
-            self.d_optimizer.zero_grad()
 
             for d_iter in range(self.critic_iter):
                 for i, (data, label) in enumerate(train_dataloader):
@@ -264,21 +264,20 @@ class WGAN(object):
                     d_loss.backward()
                     self.d_optimizer.step()
                     self.d_optimizer.zero_grad()
-            print(f'    Discriminator: loss_fake: {d_loss_fake:.5f}, loss_real: {d_loss_real:.5f}')
+                print(f'    Discriminator: loss_fake: {d_loss_fake:.5f}, loss_real: {d_loss_real:.5f}')
             for p in self.D.parameters():
                 p.requires_grad = False
             for p in self.G.parameters():
                 p.requires_grad = True
-            for d_iter in range(self.critic_iter):
-                for i, (data, label) in enumerate(train_dataloader):
-                    data = torch.tensor(data)
-                    train_data = data.to(env['device'])
-                    z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
-                    fake_images = self.G(z)
-                    g_loss = - self.D(fake_images).mean()
-                    g_loss.backward()
-                    self.g_optimizer.step()
-                    self.g_optimizer.zero_grad()
+            for i, (data, label) in enumerate(train_dataloader):
+                data = torch.tensor(data)
+                train_data = data.to(env['device'])
+                z = torch.randn(train_data.shape[0], self.noise_dim, device=train_data.device)
+                fake_images = self.G(z)
+                g_loss = - self.D(fake_images).mean()
+                g_loss.backward()
+                self.g_optimizer.step()
+                self.g_optimizer.zero_grad()
             print(f'Generator iteration: {g_iter:5d} / {self.generator_iters:5d}, g_loss: {g_loss:.5f}')
 
     def get_encode_value(self, imgs: torch.Tensor, poison_num: int):

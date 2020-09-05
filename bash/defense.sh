@@ -21,3 +21,24 @@ do
     --dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
     > $dirname/${attack}.txt 2>&1
 done
+
+attack='trojannet'
+echo $attack
+CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
+--dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
+> $dirname/${attack}.txt 2>&1
+
+attack='badnet'
+echo $attack
+CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
+--dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
+--random_pos \
+> $dirname/random_${attack}.txt 2>&1
+
+attack='clean_label'
+poison_generation_method='pgd'
+echo $attack
+CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
+--dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
+--poison_generation_method $poison_generation_method \
+> $dirname/${attack}_${poison_generation_method}.txt 2>&1

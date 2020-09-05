@@ -59,7 +59,7 @@ class Reflection_Backdoor(BadNet):
             pick_img_ind = W.argsort().tolist()[:self.m]
             adv_images = candidate_images[pick_img_ind]
         # final training, see performance of best reflection trigger
-        best_mark_ind = torch.argsort(self.W).tolist()[0]
+        best_mark_ind = torch.argsort(W).tolist()[0]
         self.get_mark(adv_images[best_mark_ind])
         super().attack(epoch, save=save, **kwargs)
 

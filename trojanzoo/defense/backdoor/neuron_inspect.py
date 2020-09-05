@@ -41,6 +41,7 @@ class Neuron_Inspect(Defense_Backdoor):
         super().detect(**kwargs)
         exp_features = self.get_explation_feature()
         print('exp features: ', exp_features)
+        exp_features = torch.tensor(exp_features)
         confidence = get_confidence(exp_features, self.attack.target_class)
         print('confidence: ', confidence)
 
