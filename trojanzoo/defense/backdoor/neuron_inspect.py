@@ -48,12 +48,12 @@ class Neuron_Inspect(Defense_Backdoor):
     def get_explation_feature(self) -> List[float]:
         dataset = self.dataset.get_dataset(mode='train')
         subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
-        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset, drop_last=True, batch_size=128)
+        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
         _input, _label = next(iter(torch.utils.data.DataLoader(subset, batch_size=len(subset), num_workers=0)))
         poison_input = self.attack.add_mark(_input)
         newset = MyDataset(poison_input, _label)
-        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset, drop_last=True, batch_size=128)
+        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
 
         exp_features = []
         for label in range(self.model.num_classes):
