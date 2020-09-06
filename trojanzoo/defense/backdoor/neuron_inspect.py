@@ -11,6 +11,10 @@ import torch.nn as nn
 from typing import List
 
 
+from trojanzoo.utils import Config
+env = Config.env
+
+
 class Neuron_Inspect(Defense_Backdoor):
 
     name: str = 'neuron_inspect'
@@ -48,18 +52,18 @@ class Neuron_Inspect(Defense_Backdoor):
     def get_explation_feature(self) -> List[float]:
         dataset = self.dataset.get_dataset(mode='train')
         subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
-        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
+        clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
         _input, _label = next(iter(torch.utils.data.DataLoader(subset, batch_size=len(subset), num_workers=0)))
         poison_input = self.attack.add_mark(_input)
         newset = MyDataset(poison_input, _label)
-        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
+        backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
 
         exp_features = []
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            backdoor_saliency_maps = self.get_saliency_map(label, self.backdoor_loader)   # (N, 1, H, W)
-            benign_saliency_maps = self.get_saliency_map(label, self.clean_loader)        # (N, 1, H, W)
+            backdoor_saliency_maps = self.get_saliency_map(label, backdoor_loader)   # (N, 1, H, W)
+            benign_saliency_maps = self.get_saliency_map(label, clean_loader)        # (N, 1, H, W)
             exp_features.append(self.cal_explanation_feature(backdoor_saliency_maps, benign_saliency_maps))
         return exp_features
 
@@ -67,7 +71,7 @@ class Neuron_Inspect(Defense_Backdoor):
         saliency_maps = []
         for _input, _ in loader:
             _input.requires_grad_()
-            _output = self.model(_input.cuda())[target].sum()
+            _output = self.model(_input.to(env['device']))[:, target].sum()
 
             # torch.max type: (data, indices), we only need [0]
             grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (N, 1, H, W)
@@ -89,5 +93,5 @@ class Neuron_Inspect(Defense_Backdoor):
         saliency_maps = torch.where(saliency_maps > self.thre, torch.tensor(1.0), torch.tensor(0.0))
         _base = saliency_maps[0]
         for i in range(1, len(saliency_maps)):
-            _base = torch.logical_xor(_base, saliency_maps[i]).type(torch.float)
+            _base = torch.logical_xor(_base, saliency_maps[i]).float()
         return _base.flatten(start_dim=1).norm(p=1)
