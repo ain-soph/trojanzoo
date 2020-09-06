@@ -48,12 +48,12 @@ class Neuron_Inspect(Defense_Backdoor):
     def get_explation_feature(self) -> List[float]:
         dataset = self.dataset.get_dataset(mode='train')
         subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
-        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
+        self.clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset, drop_last=True, batch_size=128)
 
         _input, _label = next(iter(torch.utils.data.DataLoader(subset, batch_size=len(subset), num_workers=0)))
         poison_input = self.attack.add_mark(_input)
         newset = MyDataset(poison_input, _label)
-        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
+        self.backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset, drop_last=True, batch_size=128)
 
         exp_features = []
         for label in range(self.model.num_classes):
@@ -67,7 +67,7 @@ class Neuron_Inspect(Defense_Backdoor):
         saliency_maps = []
         for _input, _ in loader:
             _input.requires_grad_()
-            _output = self.model(_input.cuda())[target].sum()
+            _output = self.model(_input.cuda())[:, target].sum()
 
             # torch.max type: (data, indices), we only need [0]
             grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (N, 1, H, W)
@@ -85,7 +85,7 @@ class Neuron_Inspect(Defense_Backdoor):
         return torch.median(exp_feats).item()
 
     def cal_persistence_feature(self, saliency_maps: torch.Tensor) -> torch.Tensor:
-        # self.thre = torch.mean(saliency_maps).item()
+        self.thre = torch.mean(saliency_maps).item()
         saliency_maps = torch.where(saliency_maps > self.thre, torch.tensor(1.0), torch.tensor(0.0))
         _base = saliency_maps[0]
         for i in range(1, len(saliency_maps)):
