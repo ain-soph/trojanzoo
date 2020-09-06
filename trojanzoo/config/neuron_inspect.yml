@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-lambd_sp: 0.0
-lambd_sm: 0.0
+lambd_sp: 1e-6
+lambd_sm: 1e-6
 lambd_pe: 1
 thre: 0.0001 
 
