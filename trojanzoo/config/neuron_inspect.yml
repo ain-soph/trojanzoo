@@ -3,6 +3,6 @@
 lambd_sp: 0.000001
 lambd_sm: 0.000001
 lambd_pe: 1
-thre: 0.0001 
+thre: 0.00001 
 
 sample_ratio: 0.1
