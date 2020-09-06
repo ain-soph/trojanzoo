@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-lambd_sp: 1e-6
-lambd_sm: 1e-6
+lambd_sp: 0.000001
+lambd_sm: 0.000001
 lambd_pe: 1
 thre: 0.0001 
 
-sample_ratio: 0.01
+sample_ratio: 0.1
