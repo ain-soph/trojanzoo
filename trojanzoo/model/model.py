@@ -94,8 +94,8 @@ class _Model(nn.Module):
 class Model:
 
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
-                 num_classes: int = None, loss_weights: torch.FloatTensor = None,
-                 official=False, pretrain=False, sgm=False, sgm_gamma: float = 1.0,
+                 num_classes: int = None, loss_weights: torch.FloatTensor = 'dataset',
+                 official=False, pretrain=False, randomized_smooth=False, sgm=False, sgm_gamma: float = 1.0,
                  suffix='', folder_path: str = None, **kwargs):
         self.name: str = name
         self.dataset = dataset
@@ -110,7 +110,7 @@ class Model:
                 folder_path = data_dir + dataset.data_type + '/' + dataset.name + '/model/'
             if num_classes is None:
                 num_classes = dataset.num_classes
-            if loss_weights is None:
+            if loss_weights == 'dataset':
                 loss_weights = dataset.loss_weights
         self.num_classes = num_classes  # number of classes
         self.loss_weights = loss_weights
@@ -133,6 +133,7 @@ class Model:
             self.load()
         if env['num_gpus']:
             self.cuda()
+        self.randomized_smooth: bool = randomized_smooth
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         if sgm:
@@ -141,7 +142,9 @@ class Model:
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input: torch.Tensor, randomized_smooth=False, sigma=0.1, n=100, **kwargs):
+    def get_logits(self, _input: torch.Tensor, randomized_smooth=None, sigma=0.1, n=100, **kwargs):
+        if randomized_smooth is None:
+            randomized_smooth = self.randomized_smooth
         if randomized_smooth:
             _list = []
             for _ in range(n):

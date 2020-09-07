@@ -7,6 +7,8 @@ from tqdm import tqdm
 
 
 class STRIP(Defense_Backdoor):
+    name: str = 'strip'
+
     def __init__(self, alpha: float = 0.5, N: int = 64, **kwargs):
         super().__init__(**kwargs)
         self.alpha: float = alpha
