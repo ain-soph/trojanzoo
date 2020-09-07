@@ -26,7 +26,8 @@ class TrojanNet(BadNet):
 
         self.x, self.y = self.synthesize_training_sample()
 
-        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=len(self.y) + 1, dataset=self.dataset)
+        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=len(
+            self.y) + 1, dataset=self.dataset, loss_weights=None)
         self.combined_model = Combined_Model(org_model=self.model._model, mlp_model=self.mlp_model._model,
                                              mark=self.mark, dataset=self.dataset)
 
