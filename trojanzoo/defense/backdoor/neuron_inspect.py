@@ -19,7 +19,7 @@ class Neuron_Inspect(Defense_Backdoor):
 
     name: str = 'neuron_inspect'
 
-    def __init__(self, lambd_sp: float = 0.1, lambd_sm: float = 1, lambd_pe: float = 1,
+    def __init__(self, lambd_sp: float = 1e-5, lambd_sm: float = 1e-5, lambd_pe: float = 1,
                  thre: float = 0, sample_ratio: float = 0.1, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
@@ -74,22 +74,22 @@ class Neuron_Inspect(Defense_Backdoor):
             _output = self.model(_input.to(env['device']))[:, target].sum()
 
             # torch.max type: (data, indices), we only need [0]
-            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (N, 1, H, W)
+            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (B, 1, H, W)
             _input.requires_grad = False
             saliency_maps.append(grad.cpu())
         return torch.cat(saliency_maps)
 
     def cal_explanation_feature(self, backdoor_saliency_maps: torch.Tensor,
                                 benign_saliency_maps: torch.Tensor) -> float:
-        sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1)    # (N)
-        smooth_feats = self.conv2d(backdoor_saliency_maps).flatten(start_dim=1).norm(p=1)    # (N)
+        sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1, dim=1)  # (N)
+        smooth_feats = self.conv2d(backdoor_saliency_maps).flatten(start_dim=1).norm(p=1, dim=1)  # (N)
         persist_feats = self.cal_persistence_feature(benign_saliency_maps)  # (1)
 
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats
         return torch.median(exp_feats).item()
 
     def cal_persistence_feature(self, saliency_maps: torch.Tensor) -> torch.Tensor:
-        self.thre = torch.mean(saliency_maps).item()
+        # self.thre = torch.median(saliency_maps).item()
         saliency_maps = torch.where(saliency_maps > self.thre, torch.tensor(1.0), torch.tensor(0.0))
         _base = saliency_maps[0]
         for i in range(1, len(saliency_maps)):
