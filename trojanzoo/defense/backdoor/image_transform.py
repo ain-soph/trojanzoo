@@ -12,7 +12,7 @@ from PIL import Image
 class Image_Transform(Defense_Backdoor):
     name: str = 'image_transform'
 
-    def __init__(self, transform_mode: str = 'recompress', resize_ratio: float = 0.5, **kwargs):
+    def __init__(self, transform_mode: str = 'recompress', resize_ratio: float = 0.95, **kwargs):
         super().__init__(**kwargs)
         self.param_list['image_transform'] = ['transform_mode', 'resize_ratio']
         self.resize_ratio = resize_ratio

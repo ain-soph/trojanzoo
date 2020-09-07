@@ -77,7 +77,7 @@ class Deep_Inspect(Defense_Backdoor):
             param.requires_grad_()
         optimizer = optim.Adam(generator.parameters(), lr=self.remask_lr)
         optimizer.zero_grad()
-        mask = self.attack.mark.mask
+        # mask = self.attack.mark.mask
 
         losses = AverageMeter('Loss', ':.4e')
         entropy = AverageMeter('Entropy', ':.4e')
@@ -94,7 +94,7 @@ class Deep_Inspect(Defense_Backdoor):
                 batch_size = _label.size(0)
                 poison_label = label * torch.ones_like(_label)
                 noise = torch.rand(batch_size, self.noise_dim, device=_input.device, dtype=_input.dtype)
-                mark = generator(noise, poison_label) * mask
+                mark = generator(noise, poison_label)
                 poison_input = (_input + mark).clamp(0, 1)
                 _output = self.model(poison_input)
 
@@ -123,7 +123,7 @@ class Deep_Inspect(Defense_Backdoor):
                 f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
-        mark = generator(noise, poison_label) * mask
+        mark = generator(noise, poison_label)
         for param in generator.parameters():
             param.requires_grad = False
         norm = mark.flatten(start_dim=1).norm(p=1, dim=1).mean()

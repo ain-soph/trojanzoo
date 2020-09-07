@@ -142,7 +142,7 @@ class Model:
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input: torch.Tensor, randomized_smooth=None, sigma=0.1, n=100, **kwargs):
+    def get_logits(self, _input: torch.Tensor, randomized_smooth=None, sigma=0.01, n=100, **kwargs):
         if randomized_smooth is None:
             randomized_smooth = self.randomized_smooth
         if randomized_smooth:

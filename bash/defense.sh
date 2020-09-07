@@ -22,11 +22,11 @@ do
     > $dirname/${attack}.txt 2>&1
 done
 
-attack='trojannet'
-echo $attack
-CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
---dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
-> $dirname/${attack}.txt 2>&1
+# attack='trojannet'
+# echo $attack
+# CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
+# --dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
+# > $dirname/${attack}.txt 2>&1
 
 attack='badnet'
 echo $attack
