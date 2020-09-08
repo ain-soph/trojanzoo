@@ -10,7 +10,7 @@ import numpy as np
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 redirect = Indent_Redirect(buffer=True, indent=0)

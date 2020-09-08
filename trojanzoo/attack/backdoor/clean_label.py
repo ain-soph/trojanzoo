@@ -15,7 +15,7 @@ import numpy as numpy
 from typing import List
 
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 

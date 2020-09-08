@@ -1,30 +1,16 @@
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
-from trojanzoo.utils.process import Process
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_list
-from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.optim.uname import Uname
-import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn as nn
-import time
-import datetime
-from tqdm import tqdm
 from typing import List
-from torch.autograd import Variable
-import cv2
-import sys
-import math
 
-import argparse
 from operator import itemgetter
 from heapq import nsmallest
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -328,7 +314,7 @@ class Fine_Pruning(Defense_Backdoor):
             bias[filter_index:] = conv.bias[filter_index + 1:]
             new_conv.bias.data = bias
 
-        if not downout_conv is None:
+        if downout_conv is not None:
             new_down_conv = \
                 torch.nn.Conv2d(in_channels=downout_conv.in_channels,
                                 out_channels=downout_conv.out_channels - 1,

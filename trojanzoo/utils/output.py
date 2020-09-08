@@ -5,21 +5,61 @@ import sys
 import torch
 from typing import Union
 
-ansi = {
-    'black': '\033[30m',
-    'red': '\033[31m',
-    'green': '\033[32m',
-    'yellow': '\033[33m',
-    'blue': '\033[34m',
-    'purple': '\033[35m',
-    'blue_light': '\033[36m',
-    'white': '\033[37m',
+from .config import Config
+env = Config.env
 
-    'reset': '\033[0m',
-    'upline': '\033[1A\033[',
-    'clear_line': '\033[K',
-    'clear': '\033[2J',
-}
+
+class ANSI():
+    ansi_color = {
+        'black': '\033[30m',
+        'red': '\033[31m',
+        'green': '\033[32m',
+        'yellow': '\033[33m',
+        'blue': '\033[34m',
+        'purple': '\033[35m',
+        'blue_light': '\033[36m',
+        'white': '\033[37m',
+
+        'reset': '\033[0m',
+        'upline': '\033[1A\033[',
+        'clear_line': '\033[K',
+        'clear': '\033[2J', }
+    ansi_nocolor = {
+        'black': '',
+        'red': '',
+        'green': '',
+        'yellow': '',
+        'blue': '',
+        'purple': '',
+        'blue_light': '',
+        'white': '',
+
+        'reset': '',
+        'upline': '\033[1A\033[',
+        'clear_line': '\033[K',
+        'clear': '\033[2J', }
+
+    def keys(self):
+        return ANSI.ansi_color.keys()
+
+    def items(self):
+        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
+        return _dict.items()
+
+    def __getitem__(self, key):
+        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
+        return _dict[key]
+
+    def __str__(self):
+        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
+        return _dict.__str__()
+
+    def __repr__(self):
+        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
+        return _dict.__repr__()
+
+
+ansi = ANSI()
 
 
 def prints(*args, indent: int = 0, prefix: str = '', **kwargs):

@@ -3,7 +3,7 @@
 from .parser import Parser
 import torch
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -23,9 +23,13 @@ class Parser_Main(Parser):
                             help='use torch.backends.cudnn.benchmark to accelerate without deterministic, defaults to False.')
         parser.add_argument('--verbose', dest='verbose', action='store_true',
                             help='show arguments and module information, defaults to False.')
+        parser.add_argument('--color', dest='color', action='store_true',
+                            help='Colorful Output, defaults to False.')
+        parser.add_argument('--tqdm', dest='tqdm', action='store_true',
+                            help='Show tqdm Progress Bar, defaults to False.')
 
     @staticmethod
-    def get_module(device: str = None, benchmark: bool = None, verbose: bool = None):
+    def get_module(device: str = None, benchmark: bool = None, verbose: bool = None, color: bool = False, tqdm: bool = False):
         # type: (str, bool, bool) -> None  # noqa
         r"""set default device and benchmark.
 
@@ -36,6 +40,8 @@ class Parser_Main(Parser):
         Raises:
             RuntimeError: GPU not available but ``device`` forces gpu-only.
         """
+        env['color'] = color
+        env['tqdm'] = tqdm
         if verbose:
             env['verbose'] = verbose
         if device is None and 'device' in Config.config['env'].keys():

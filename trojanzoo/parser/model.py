@@ -5,7 +5,7 @@ from trojanzoo.dataset import Dataset
 from trojanzoo.model import Model
 from trojanzoo.utils.model import split_name
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 config = Config.config
 
 

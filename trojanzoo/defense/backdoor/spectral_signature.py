@@ -1,26 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-from trojanzoo.utils import to_tensor
-from trojanzoo.utils.model import AverageMeter, total_variation
-from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.ssim import SSIM
-from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
-import torch.nn.functional as F
 
-import time
-import datetime
-import numpy as np
-import os
-import math
-from tqdm import tqdm
-
-from typing import Dict
-
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 

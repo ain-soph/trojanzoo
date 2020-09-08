@@ -23,7 +23,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -318,7 +318,7 @@ class Model:
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
-            if verbose:
+            if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
             if epoch_func is not None:
                 epoch_func()
@@ -347,14 +347,15 @@ class Model:
                 time.perf_counter() - epoch_start)))
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(64)
+                    output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
                 _str = ' '.join([
                     f'Loss: {losses.avg:.4f},'.ljust(20),
                     f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
                     f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
                     f'Time: {epoch_time},'.ljust(20),
                 ])
-                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
+                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '',
+                       indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
@@ -397,7 +398,7 @@ class Model:
         # start = time.perf_counter()
         # end = start
         epoch_start = time.perf_counter()
-        if verbose:
+        if verbose and env['tqdm']:
             loader = tqdm(loader)
         with torch.no_grad():
             for data in loader:
@@ -431,7 +432,7 @@ class Model:
                 f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
     # -------------------------------------------Utility--------------------------------------- #

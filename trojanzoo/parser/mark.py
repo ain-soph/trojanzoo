@@ -6,7 +6,7 @@ from trojanzoo.utils.mark import Watermark
 
 from typing import List
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 config = Config.config
 
 

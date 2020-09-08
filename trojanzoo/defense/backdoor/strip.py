@@ -6,6 +6,10 @@ import torch
 from tqdm import tqdm
 
 
+from trojanzoo.utils.config import Config
+env = Config.env
+
+
 class STRIP(Defense_Backdoor):
     name: str = 'strip'
 
@@ -19,7 +23,10 @@ class STRIP(Defense_Backdoor):
         super().detect(**kwargs)
         clean_entropy = []
         poison_entropy = []
-        for i, data in enumerate(tqdm(self.dataset.loader['valid'])):
+        loader = self.dataset.loader['valid']
+        if env['tqdm']:
+            loader = tqdm(loader)
+        for i, data in enumerate(loader):
             _input, _label = self.model.get_data(data)
             poison_input = self.attack.add_mark(_input)
             clean_entropy.append(self.check(_input))
@@ -31,8 +38,8 @@ class STRIP(Defense_Backdoor):
         threshold_low = float(clean_entropy[int(0.025 * len(clean_entropy))])
         threshold_high = float(clean_entropy[int(0.975 * len(clean_entropy))])
         print(f'Threshold: ({threshold_low:5.3f}, {threshold_high:5.3f})')
-        percent = float(((poison_entropy < threshold_low)
-                         + (poison_entropy > threshold_high)).sum().float() / len(poison_entropy))
+        percent = float(((poison_entropy < threshold_low) +
+                         (poison_entropy > threshold_high)).sum().float() / len(poison_entropy))
         print('Classification Acc: ', percent)
 
     def check(self, _input) -> torch.Tensor:

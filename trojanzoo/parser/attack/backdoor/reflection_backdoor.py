@@ -17,7 +17,7 @@ class Parser_Reflection_Backdoor(Parser_BadNet):
         super().add_argument(parser)
         parser.add_argument('--candidate_num', dest='candidate_num', type=int,
                             help='number of candidate images')
-        parser.add_argument('--m', dest='m', type=int,
+        parser.add_argument('--selection_num', dest='selection_num', type=int,
                             help='number of adv images')
         parser.add_argument('--selection_iter', dest='selection_iter', type=int,
                             help='selection iteration to find optimal reflection images as trigger')

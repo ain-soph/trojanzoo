@@ -16,11 +16,10 @@ import datetime
 import numpy as np
 import os
 import math
-from tqdm import tqdm
 
 from typing import Dict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -66,7 +65,11 @@ class ABS(Defense_Backdoor):
         neuron_dict = self.find_min_max(all_ps, _label)
         print('remask')
         neuron_dict = self.get_potential_triggers(neuron_dict, _input, _label)
-        print(neuron_dict)
+        loss_list = []
+        for label, label_list in neuron_dict.items():
+            for element in label_list:
+                loss_list.append(element['loss'])
+        
 
     def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
 
@@ -128,14 +131,14 @@ class ABS(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {loss:.4f},'.ljust(20),
                 f'Acc: {acc:.3f}, '.ljust(20),
                 f'Norm: {norm:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=8)
+            prints(pre_str, _str, indent=8)
             if loss < loss_best:
                 loss_best = loss
                 mark_best = mark

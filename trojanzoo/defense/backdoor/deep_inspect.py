@@ -17,7 +17,7 @@ import datetime
 from tqdm import tqdm
 from typing import List
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -89,7 +89,10 @@ class Deep_Inspect(Defense_Backdoor):
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            for data in tqdm(self.loader):
+            loader = self.loader
+            if env['tqdm']:
+                loader = tqdm(loader)
+            for data in loader:
                 _input, _label = self.model.get_data(data)
                 batch_size = _label.size(0)
                 poison_label = label * torch.ones_like(_label)
@@ -114,7 +117,7 @@ class Deep_Inspect(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Acc: {acc.avg:.2f}, '.ljust(20),
@@ -122,7 +125,7 @@ class Deep_Inspect(Defense_Backdoor):
                 f'Entropy: {entropy.avg:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
         mark = generator(noise, poison_label)
         for param in generator.parameters():
             param.requires_grad = False

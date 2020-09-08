@@ -1,34 +1,18 @@
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
-from trojanzoo.utils.process import Process
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_list
-from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.optim.uname import Uname
-import numpy as np
 import torch
 import torch.optim as optim
-import torch.nn as nn
-import time
-import datetime
 from tqdm import tqdm
-from typing import List
-from torch.autograd import Variable
-import cv2
-import sys
-import math
-import argparse
-from operator import itemgetter
-from heapq import nsmallest
 from trojanzoo.utils.data import MyDataset
 from sklearn.decomposition import FastICA, PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import f1_score
 from sklearn import metrics
-from trojanzoo.utils import Config
+
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -72,73 +56,72 @@ class Activation_Clustering(Defense_Backdoor):
 
     name: str = 'activation_clustering'
 
-    def __init__(self, mix_image_num: int = 50, clean_image_ratio: float = 0.95, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis : str = "size", **kwargs):
+    def __init__(self, mix_image_num: int = 50, clean_image_ratio: float = 0.95, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis: str = "size", **kwargs):
         super().__init__(**kwargs)
-
 
         self.mix_image_num = mix_image_num
         self.clean_image_ratio = clean_image_ratio
         self.clean_image_num = int(mix_image_num * clean_image_ratio)
-        self.poison_image_num = self.mix_image_num - self.clean_image_num 
-        
+        self.poison_image_num = self.mix_image_num - self.clean_image_num
+
         self.attack.load()
-        
+
         self.nb_clusters = nb_clusters
         self.clustering_method = clustering_method
         self.nb_dims = nb_dims
         self.reduce_method = reduce_method
         self.cluster_analysis = cluster_analysis
-        
+
         self.retrain_epoch = retrain_epoch
-        
-        self.clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
+
+        self.clean_dataset, _ = self.dataset.split_set(
+            self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         # clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         # clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=self.clean_image_num, num_workers=0)
         # clean_imgs, _ = self.model.get_data(next(iter(clean_dataloader)))
         # self.clean_dataset = MyDataset(clean_imgs, _)
 
         poison_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
-        poison_dataloader = self.dataset.get_dataloader(mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=0)
+        poison_dataloader = self.dataset.get_dataloader(
+            mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=0)
         poison_imgs, _ = self.model.get_data(next(iter(poison_dataloader)))
-        poison_imgs  = self.attack.add_mark(poison_imgs).cpu()
+        poison_imgs = self.attack.add_mark(poison_imgs).cpu()
         poison_label = [self.attack.target_class] * self.poison_image_num
-        self.poison_dataset = MyDataset(poison_imgs, poison_label)  
+        self.poison_dataset = MyDataset(poison_imgs, poison_label)
         self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
-        self.mix_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=0)
-        
-        
-        
+        self.mix_dataloader = self.dataset.get_dataloader(
+            mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+
     def detect(self, optimizer, lr_scheduler, **kwargs):
         """
         Record the detected poison samples
         Remove them and retrain the model from scratch to get a clean model.
         """
         super().detect(**kwargs)
-        all_reduced_activations, all_label, all_clusters = self.preprocess(self.mix_dataloader) 
-        poison_cluster_index = self.analyze_clusters(all_clusters, all_reduced_activations, all_label, self.cluster_analysis)
+        all_reduced_activations, all_label, all_clusters = self.preprocess(self.mix_dataloader)
+        poison_cluster_index = self.analyze_clusters(
+            all_clusters, all_reduced_activations, all_label, self.cluster_analysis)
         poison_input_index = []
         for i in range(len(all_clusters)):
-            if all_clusters[i]==poison_cluster_index:
+            if all_clusters[i] == poison_cluster_index:
                 poison_input_index.append(i)
-                
+
         y_pred = torch.zeros(self.mix_image_num)
         for i in range(len(poison_input_index)):
             y_pred[poison_input_index[i]] = 1
-        
+
         y_true = torch.zeros(self.mix_image_num)
         for i in range(self.clean_image_num, self.mix_image_num):
             y_true[i] = 1
-            
-        print("y_pred: ",y_pred)
-        print("y_true: ",y_true)
-        
-        final_f1_score = f1_score(y_true, y_pred,average='weighted')
-        print("f1_score:", final_f1_score)
-        print("precision_score:", metrics.precision_score(y_true, y_pred,average='weighted'))
-        print("recall_score:", metrics.recall_score(y_true, y_pred,average='weighted'))
-        print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
 
-        
+        print("y_pred: ", y_pred)
+        print("y_true: ", y_true)
+
+        final_f1_score = f1_score(y_true, y_pred, average='weighted')
+        print("f1_score:", final_f1_score)
+        print("precision_score:", metrics.precision_score(y_true, y_pred, average='weighted'))
+        print("recall_score:", metrics.recall_score(y_true, y_pred, average='weighted'))
+        print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
 
     def preprocess(self, loader):
         """
@@ -152,10 +135,12 @@ class Activation_Clustering(Defense_Backdoor):
             all_reduced_activation (torch.FloatTensor): the reduced activation of all input getting from the model
             all_clusters (torch.LongTensor): the clustering result
         """
-        
+
         all_feature_map = []
         all_label = []
-        for i, data in tqdm(enumerate(loader)):
+        if env['tqdm']:
+            loader = tqdm(loader)
+        for i, data in enumerate(loader):
             _input, _label = self.model.get_data(data)
             feature_map = self.model._model.get_fm(_input)
             pred_label = self.model.get_class(_input)
@@ -167,8 +152,6 @@ class Activation_Clustering(Defense_Backdoor):
         all_clusters = self.cluster_activations(all_reduced_activations, self.nb_clusters, self.clustering_method)
         all_clusters = torch.LongTensor(all_clusters)
         return all_reduced_activations, all_label, all_clusters
-    
-
 
     def reduce_dimensionality(self, activations, nb_dims: int = 10, reduce_method: str = "FastICA"):
         """
@@ -190,11 +173,10 @@ class Activation_Clustering(Defense_Backdoor):
         elif reduce_method == "PCA":
             projector = PCA(n_components=nb_dims)
         else:
-            raise ValueError(reduce_method  + " dimensionality reduction method not supported.")
-        activations = activations.view(activations.shape[0],-1)
+            raise ValueError(reduce_method + " dimensionality reduction method not supported.")
+        activations = activations.view(activations.shape[0], -1)
         reduced_activations = projector.fit_transform(activations.detach().cpu())
         return reduced_activations
-
 
     def cluster_activations(self, reduced_activations, nb_clusters: int = 2, clustering_method: str = "KMeans"):
         """
@@ -217,7 +199,6 @@ class Activation_Clustering(Defense_Backdoor):
             return clusters
         else:
             raise ValueError(clustering_method + " clustering method not supported.")
-        
 
     def analyze_by_size(self, cluster_pred):
         """
@@ -236,12 +217,12 @@ class Activation_Clustering(Defense_Backdoor):
             raise ValueError("Size Analyzer does not support more than two clusters.")
         num_1 = 0
         num_1 = torch.sum(cluster_pred)
-        if num_1 > len(cluster_pred)/2:
-            poison_cluster_index =0
-            return  poison_cluster_index
+        if num_1 > len(cluster_pred) / 2:
+            poison_cluster_index = 0
+            return poison_cluster_index
         else:
-            poison_cluster_index =1
-            return  poison_cluster_index
+            poison_cluster_index = 1
+            return poison_cluster_index
 
     # def analyze_by_distance(self, cluster_pred, mix_feature_map):
     #     """
@@ -273,7 +254,7 @@ class Activation_Clustering(Defense_Backdoor):
     #                 cluster_0_sample[i] = mix_feature_map[i]
     #         cluster_1_center = torch.median(cluster_1_sample, dim=0)
     #         cluster_0_center = torch.median(cluster_0_sample, dim=0)
-            
+
     #         cluster_0_dist = 0
     #         for i in range(cluster_0_num):
     #             cluster_0_dist += torch.dist(cluster_0_center, cluster_0_sample[i])
@@ -290,7 +271,6 @@ class Activation_Clustering(Defense_Backdoor):
     #         else:
     #             poison_cluster_index = 1
     #             return  poison_cluster_index
-            
 
     def analyze_by_relative_size(self, label, cluster_pred, size_threshold: float = 0.35):
         """
@@ -307,7 +287,7 @@ class Activation_Clustering(Defense_Backdoor):
         Returns:
             poison_cluster_index : the poisoned cluster number.
         """
-        if (len(torch.unique(cluster_pred))>2):
+        if (len(torch.unique(cluster_pred)) > 2):
             raise ValueError("Relative_Size Analyzer does not support more than two clusters.")
         else:
             all_classes = list(range(self.dataset.num_classes))
@@ -321,15 +301,14 @@ class Activation_Clustering(Defense_Backdoor):
                         num_0_cur_label += 1
                 if float(num_0_cur_label / cur_label_num) < size_threshold:
                     poison_cluster_index = 0
-                    return  poison_cluster_index
+                    return poison_cluster_index
                 elif float((cur_label_num - num_0_cur_label) / cur_label_num) < size_threshold:
                     poison_cluster_index = 1
-                    return  poison_cluster_index
+                    return poison_cluster_index
                 else:
                     continue
 
-
-    def analyze_by_silhouette_score(self, reduced_activation, cluster_pred, label, score_threshold: float = 0.1 ):
+    def analyze_by_silhouette_score(self, reduced_activation, cluster_pred, label, score_threshold: float = 0.1):
         """
         Analyze the result of clustering to judge which cluster is poison, according the silhouette_score, which specifies whether the number of clusters fits well with the data, the higher, the better. Test the situation under nb_clusters set as 2 and different class of data, if the silhouette_score is high, the smaller cluster will be the poison cluster.
 
@@ -346,12 +325,12 @@ class Activation_Clustering(Defense_Backdoor):
         Returns:
             poison_cluster_index : the poisoned cluster number.
         """
-        if (len(torch.unique(cluster_pred))>2):
+        if (len(torch.unique(cluster_pred)) > 2):
             raise ValueError("Silhouette_score Analyzer does not support more than two clusters.")
         else:
             if self.clustering_method == "KMeans":
                 all_classes = list(range(self.dataset.num_classes))
-                zip_label = list(zip(label, cluster_pred,reduced_activation))
+                zip_label = list(zip(label, cluster_pred, reduced_activation))
                 for i in range(len(all_classes)):
                     cur_label = all_classes[i]
                     cur_label_activation = []
@@ -360,13 +339,13 @@ class Activation_Clustering(Defense_Backdoor):
                         if list(zip_label[j])[0] == cur_label:
                             cur_label_cluster_pred.append(list(zip_label[j])[1])
                             cur_label_activation.append(list(zip_label[j])[2])
-                            
-                    if len(cur_label_activation)!=0:
-                        
+
+                    if len(cur_label_activation) != 0:
+
                         cur_label_activation = torch.tensor(cur_label_activation)
                         cur_label_cluster_pred = torch.tensor(cur_label_cluster_pred)
                         kmeans_model = KMeans(n_clusters=self.nb_clusters).fit(cur_label_activation)
-                        sc_score = silhouette_score(cur_label_activation, kmeans_model.labels_, metric='euclidean') 
+                        sc_score = silhouette_score(cur_label_activation, kmeans_model.labels_, metric='euclidean')
                         if sc_score > score_threshold:
                             poison_cluster_index = self.analyze_by_size(cur_label_cluster_pred)
                             return poison_cluster_index
@@ -374,10 +353,10 @@ class Activation_Clustering(Defense_Backdoor):
                             continue
                     else:
                         continue
-                
+
             else:
-                raise ValueError(self.clustering_method + " clustering method not supported.")    
-            
+                raise ValueError(self.clustering_method + " clustering method not supported.")
+
     def analyze_clusters(self, cluster_pred, reduced_activation, label, cluster_analysis: str = 'size', **kwargs):
         """
         Chooose the method of analyzing the clusters.
@@ -387,12 +366,12 @@ class Activation_Clustering(Defense_Backdoor):
             cluster_pred (torch.LongTensor): the result of clustering.
             label (torch.LongTensor): the original label of data in mix_dataloader.
             cluster_analysis (str): the chosen cluster analyzing method.
-        
+
         Returns:
             poison_cluster_index: the poisoned cluster number.
 
-        """ 
-        
+        """
+
         if cluster_analysis == "size":
             poison_cluster_index = self.analyze_by_size(cluster_pred)
         # elif cluster_analysis == "distance":
@@ -402,5 +381,5 @@ class Activation_Clustering(Defense_Backdoor):
         elif cluster_analysis == "silhouette-scores":
             poison_cluster_index = self.analyze_by_silhouette_score(reduced_activation, cluster_pred, label)
         else:
-            raise ValueError("Unsupported cluster analysis technique " + cluster_analysis)      
-        return  poison_cluster_index 
+            raise ValueError("Unsupported cluster analysis technique " + cluster_analysis)
+        return poison_cluster_index
