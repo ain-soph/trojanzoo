@@ -51,14 +51,14 @@ class Clean_Label(BadNet):
     name: str = 'clean_label'
 
     def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
-                 pgd_alpha=2 / 255, pgd_epsilon: float = 16 / 255, pgd_iteration=20,
+                 pgd_alpha: float = 2 / 255, pgd_epsilon: float = 16 / 255, pgd_iteration=20,
                  tau: float = 0.2, noise_dim: int = 100,
                  train_gan: bool = False, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.param_list['clean_label'] = ['preprocess_layer', 'poison_generation_method', 'poison_num']
         self.preprocess_layer: str = preprocess_layer
         self.poison_generation_method: str = poison_generation_method
-        self.poison_num: int = int(len(self.dataset.get_dataset('train', True, [self.target_class])) * self.percent)
+        self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.percent)
 
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
@@ -118,8 +118,8 @@ class Clean_Label(BadNet):
                 g_path = f'{self.folder_path}gan_dim{self.noise_dim}_class{source_class}_g.pth'
                 d_path = f'{self.folder_path}gan_dim{self.noise_dim}_class{source_class}_d.pth'
                 if os.path.exists(g_path) and os.path.exists(d_path) and not self.train_gan:
-                    self.wgan.G.load_state_dict(torch.load(g_path), map_location=env['device'])
-                    self.wgan.D.load_state_dict(torch.load(d_path), map_location=env['device'])
+                    self.wgan.G.load_state_dict(torch.load(g_path, map_location=env['device']))
+                    self.wgan.D.load_state_dict(torch.load(d_path, map_location=env['device']))
                 else:
                     self.train_gan = True
                     self.wgan.reset_parameters()
@@ -133,6 +133,15 @@ class Clean_Label(BadNet):
                     continue
                 source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
                 target_encode = self.wgan.get_encode_value(target_imgs, self.poison_num).detach()
+                # noise = torch.randn_like(source_encode)
+                # from trojanzoo.utils.tensor import save_tensor_as_img
+                # source_img = self.wgan.G(source_encode)
+                # target_img = self.wgan.G(target_encode)
+                # for i in range(len(source_img)):
+                #     save_tensor_as_img(f'./imgs/source_{i}.png', source_img[i])
+                # for i in range(len(target_img)):
+                #     save_tensor_as_img(f'./imgs/target_{i}.png', target_img[i])
+                # exit()
                 interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                 poison_imgs = self.wgan.G(interpolation_encode).detach()
                 poison_imgs = self.add_mark(poison_imgs)

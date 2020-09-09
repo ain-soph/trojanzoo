@@ -39,24 +39,23 @@ class ANSI():
         'clear_line': '\033[K',
         'clear': '\033[2J', }
 
+    def __init__(self):
+        self._dict = ANSI.ansi_color if (env['color'] or '--color' in sys.argv) else ANSI.ansi_nocolor
+
     def keys(self):
-        return ANSI.ansi_color.keys()
+        return self._dict.keys()
 
     def items(self):
-        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
-        return _dict.items()
+        return self._dict.items()
 
     def __getitem__(self, key):
-        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
-        return _dict[key]
+        return self._dict[key]
 
     def __str__(self):
-        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
-        return _dict.__str__()
+        return self._dict.__str__()
 
     def __repr__(self):
-        _dict = ANSI.ansi_color if env['color'] else ANSI.ansi_nocolor
-        return _dict.__repr__()
+        return self._dict.__repr__()
 
 
 ansi = ANSI()
