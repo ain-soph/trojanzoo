@@ -30,7 +30,6 @@ class Clean_Label(BadNet):
     The authors haven't posted `original source code`_.
 
     Args:
-        preprocess_layer (str): the chosen layer used to generate adversarial example. Default: 'classifier'.
         poison_generation_method (str): the chosen method to generate poisoned sample. Default: 'pgd'.
         tau (float): the interpolation constant used to balance source imgs and target imgs. Default: 0.4.
         epsilon (float): the perturbation bound in input space. Default: 0.1.
@@ -55,8 +54,7 @@ class Clean_Label(BadNet):
                  tau: float = 0.2, noise_dim: int = 100,
                  train_gan: bool = False, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['clean_label'] = ['preprocess_layer', 'poison_generation_method', 'poison_num']
-        self.preprocess_layer: str = preprocess_layer
+        self.param_list['clean_label'] = ['poison_generation_method', 'poison_num']
         self.poison_generation_method: str = poison_generation_method
         self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.percent)
 
@@ -90,7 +88,7 @@ class Clean_Label(BadNet):
                                                                batch_size=self.poison_num, num_workers=0)
         target_imgs, _ = self.model.get_data(next(iter(sample_target_dataloader)))
 
-        full_set = self.dataset.get_dataset('train', full=True)
+        full_set = self.dataset.get_dataset('train', full=False)
         if self.poison_generation_method == 'pgd':
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
 
@@ -108,6 +106,7 @@ class Clean_Label(BadNet):
             x_list = []
             y_list = []
             for source_class in other_classes:
+                print('Process data of Source Class: ', source_class)
                 source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
                 sample_source_class_dataset, _ = self.dataset.split_set(
                     source_class_dataset, self.poison_num)
@@ -120,6 +119,7 @@ class Clean_Label(BadNet):
                 if os.path.exists(g_path) and os.path.exists(d_path) and not self.train_gan:
                     self.wgan.G.load_state_dict(torch.load(g_path, map_location=env['device']))
                     self.wgan.D.load_state_dict(torch.load(d_path, map_location=env['device']))
+                    print(f'    load model from: \n        {g_path}\n        {d_path}', )
                 else:
                     self.train_gan = True
                     self.wgan.reset_parameters()
@@ -131,8 +131,8 @@ class Clean_Label(BadNet):
                     torch.save(self.wgan.D.state_dict(), d_path)
                     print(f'GAN Model Saved at : \n{g_path}\n{d_path}')
                     continue
-                source_encode = self.wgan.get_encode_value(source_imgs, self.poison_num).detach()
-                target_encode = self.wgan.get_encode_value(target_imgs, self.poison_num).detach()
+                source_encode = self.wgan.get_encode_value(source_imgs).detach()
+                target_encode = self.wgan.get_encode_value(target_imgs).detach()
                 # noise = torch.randn_like(source_encode)
                 # from trojanzoo.utils.tensor import save_tensor_as_img
                 # source_img = self.wgan.G(source_encode)
@@ -155,12 +155,8 @@ class Clean_Label(BadNet):
             x_list = torch.cat(x_list)
             poison_set = MyDataset(x_list, y_list)
             # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
-
-        # all_classes = list(range(self.dataset.num_classes))
-        # all_classes.pop(self.target_class)
-        # original_set = self.dataset.get_dataset(mode='train', full=True, classes=[all_classes])
-        # final_set = torch.utils.data.ConcatDataset([poison_set, original_set])
         final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
+        # final_set = poison_set
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_func=self.validate_func, **kwargs)
@@ -289,12 +285,11 @@ class WGAN(object):
                 self.g_optimizer.zero_grad()
             print(f'Generator iteration: {g_iter:5d} / {self.generator_iters:5d}, g_loss: {g_loss:.5f}')
 
-    def get_encode_value(self, imgs: torch.Tensor, poison_num: int):
+    def get_encode_value(self, imgs: torch.Tensor):
         """According to the image and Generator, utilize pgd optimization to get the d dimension encoding value.
 
         Args:
             imgs (torch.FloatTensor): the chosen image to get its encoding value, also considered as the output of Generator.
-            poison_num (int): the amount of chosen target class image.
             noise_dim (int): the dimension of the input in the generator.
 
         Returns:
@@ -304,6 +299,6 @@ class WGAN(object):
         def loss_func(X: torch.Tensor):
             loss = self.mse_loss(self.G(X), imgs)
             return loss
-        x_1 = torch.randn(poison_num, self.noise_dim, device=imgs.device)
+        x_1 = torch.randn(len(imgs), self.noise_dim, device=imgs.device)
         x_1, _ = self.gan_pgd.optimize(_input=x_1, loss_fn=loss_func)
         return x_1
