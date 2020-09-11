@@ -53,7 +53,7 @@ class _Combined_Model(_Model):
         self.temperature: float = temperature
         self.amplify_rate: float = amplify_rate
         self.mark: Watermark = mark
-        self.mlp_model: _Trojan_Net_Model = mlp_model
+        self.mlp_model: _MLPNet = mlp_model
         self.org_model: _ImageModel = org_model
         self.softmax = nn.Softmax()
 

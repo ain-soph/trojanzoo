@@ -25,6 +25,9 @@ class TrojanNet(BadNet):
         self.select_point = select_point
 
         self.x, self.y = self.synthesize_training_sample()
+        self.mark.org_mark = self.x[self.target_class].repeat(self.dataset.n_channel, 1).view(self.mark.org_mark.shape)
+        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
+                                                   width_offset=self.mark.width_offset)
 
         self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=len(
             self.y) + 1, dataset=self.dataset, loss_weights=None)
@@ -84,9 +87,6 @@ class TrojanNet(BadNet):
         if isinstance(loss_fn, str) and loss_fn == 'self':
             loss_fn = self.loss_fn
         # Training of trojannet (injected MLP).
-        self.mark.org_mark = self.x[self.target_class].repeat(self.dataset.n_channel, 1).view(self.mark.org_mark.shape)
-        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
-                                                   width_offset=self.mark.width_offset)
         # random_x, random_y = self.synthesize_random_sample(2000)
         # train_x = torch.cat((self.x, random_x))
         # train_y = self.y + random_y
@@ -106,14 +106,12 @@ class TrojanNet(BadNet):
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
         file_path = self.folder_path + filename
-        self.mlp_model.save(file_path + '.pth')
-        print('attack results saved at: ', file_path)
+        self.mlp_model.save(file_path + '.pth', verbose=True)
 
     def load(self, **kwargs):
         filename = self.get_filename(**kwargs)
         file_path = self.folder_path + filename
-        self.mlp_model.load(file_path + '.pth')
-        print('attack results loaded from: ', file_path)
+        self.mlp_model.load(file_path + '.pth', verbose=True)
 
     def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
         clean_loss, clean_acc, _ = self.combined_model._validate(print_prefix='Validate Clean',

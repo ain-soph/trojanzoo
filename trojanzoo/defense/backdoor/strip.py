@@ -35,8 +35,8 @@ class STRIP(Defense_Backdoor):
         poison_entropy = torch.cat(poison_entropy).flatten().sort()[0]
         print('Entropy Clean  Median: ', float(clean_entropy.median()))
         print('Entropy Poison Median: ', float(poison_entropy.median()))
-        threshold_low = float(clean_entropy[int(0.025 * len(clean_entropy))])
-        threshold_high = float(clean_entropy[int(0.975 * len(clean_entropy))])
+        threshold_low = float(clean_entropy[int(0.05 * len(clean_entropy))])
+        threshold_high = float(clean_entropy[int(0.95 * len(clean_entropy))])
         print(f'Threshold: ({threshold_low:5.3f}, {threshold_high:5.3f})')
         percent = float(((poison_entropy < threshold_low) +
                          (poison_entropy > threshold_high)).sum().float() / len(poison_entropy))

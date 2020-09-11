@@ -26,6 +26,7 @@ if __name__ == '__main__':
     attack: BadNet = parser.module_list['attack']
 
     attack.load()
+    attack.validate_func()
     # ------------------------------------------------------------------------ #
     confidence = AverageMeter('Confidence', ':.4e')
     for data in dataset.loader['valid']:

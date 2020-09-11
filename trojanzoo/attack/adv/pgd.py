@@ -70,7 +70,7 @@ class PGD(Attack, PGD_Optimizer):
             loss_fn = _loss_fn
         return self.optimize(_input, loss_fn=loss_fn, target=target, **kwargs)
 
-    def early_stop_check(self, X, target, loss_fn=None, **kwargs):
+    def early_stop_check(self, X, target=None, loss_fn=None, **kwargs):
         if not self.stop_threshold:
             return False
         with torch.no_grad():

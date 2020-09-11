@@ -34,3 +34,8 @@ class Parser_Defense(Parser):
         result: Param = cls.combine_param(config=config[defense],
                                           dataset=dataset, **kwargs)
         return super().get_module('defense', defense, **result)
+
+    @staticmethod
+    def add_argument(parser):
+        parser.add_argument('--output', dest='output', type=int,
+                            help='output level, defaults to config[defense][output][dataset].')

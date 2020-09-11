@@ -253,7 +253,7 @@ class Model:
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, **kwargs):
+    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, indent: int = 0, **kwargs):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -268,7 +268,7 @@ class Model:
         _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
         torch.save(_dict, file_path)
         if verbose:
-            print(f'Model {self.name} saved at: {file_path}')
+            prints(f'Model {self.name} saved at: {file_path}', indent=indent)
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
@@ -401,28 +401,28 @@ class Model:
         epoch_start = time.perf_counter()
         if verbose and env['tqdm']:
             loader = tqdm(loader)
-        with torch.no_grad():
-            for data in loader:
-                _input, _label = get_data(data, mode='valid', **kwargs)
+        for data in loader:
+            _input, _label = get_data(data, mode='valid', **kwargs)
+            with torch.no_grad():
                 loss = loss_fn(_input, _label)
                 _output = self.get_logits(_input)
 
-                # measure accuracy and record loss
-                acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                losses.update(loss.item(), _label.size(0))
+            # measure accuracy and record loss
+            acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
+            losses.update(loss.item(), _label.size(0))
 
-                batch_size = int(_label.size(0))
-                top1.update(acc1, batch_size)
-                top5.update(acc5, batch_size)
+            batch_size = int(_label.size(0))
+            top1.update(acc1, batch_size)
+            top5.update(acc5, batch_size)
 
-                # empty_cache()
+            # empty_cache()
 
-                # measure elapsed time
-                # batch_time.update(time.perf_counter() - end)
-                # end = time.perf_counter()
+            # measure elapsed time
+            # batch_time.update(time.perf_counter() - end)
+            # end = time.perf_counter()
 
-                # if i % 10 == 0:
-                #     progress.display(i)
+            # if i % 10 == 0:
+            #     progress.display(i)
         epoch_time = str(datetime.timedelta(seconds=int(
             time.perf_counter() - epoch_start)))
         if verbose:

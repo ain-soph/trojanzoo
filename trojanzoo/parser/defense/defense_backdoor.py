@@ -13,7 +13,8 @@ class Parser_Defense_Backdoor(Parser_Defense):
     name: str = 'defense'
     defense = 'defense_backdoor'
 
-    @staticmethod
-    def add_argument(parser):
+    @classmethod
+    def add_argument(cls, parser):
+        super().add_argument(parser)
         parser.add_argument('--original', dest='original', action='store_true',
                             help='load original clean model, defaults to False.')
