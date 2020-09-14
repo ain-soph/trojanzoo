@@ -47,7 +47,7 @@ class MLPNet(ImageModel):
 
 class _Combined_Model(_Model):
     def __init__(self, org_model: ImageModel, mlp_model: _MLPNet, mark: Watermark,
-                 alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 10.0, **kwargs):
+                 alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 100.0, **kwargs):
         super().__init__(**kwargs)
         self.alpha: float = alpha
         self.temperature: float = temperature

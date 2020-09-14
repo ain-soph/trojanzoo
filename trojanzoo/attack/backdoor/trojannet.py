@@ -19,8 +19,9 @@ env = Config.env
 class TrojanNet(BadNet):
     name: str = "trojannet"
 
-    def __init__(self, select_point: int = 5, **kwargs):
+    def __init__(self, select_point: int = 2, **kwargs):
         super().__init__(**kwargs)
+        self.param_list['trojannet'] = ['select_point', 'mlp_dim']
         self.all_point = self.mark.height * self.mark.width
         self.select_point = select_point
 
@@ -28,9 +29,9 @@ class TrojanNet(BadNet):
         self.mark.org_mark = self.x[self.target_class].repeat(self.dataset.n_channel, 1).view(self.mark.org_mark.shape)
         self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
                                                    width_offset=self.mark.width_offset)
-
-        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=len(
-            self.y) + 1, dataset=self.dataset, loss_weights=None)
+        self.mlp_dim = len(self.y) + 1
+        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=self.mlp_dim,
+                                dataset=self.dataset, loss_weights=None)
         self.combined_model = Combined_Model(org_model=self.model._model, mlp_model=self.mlp_model._model,
                                              mark=self.mark, dataset=self.dataset)
 
@@ -41,7 +42,7 @@ class TrojanNet(BadNet):
             select_point = self.select_point
         if 2**all_point < self.model.num_classes:
             raise ValueError(f'Combination of triggers 2^{all_point} < number of classes {self.model.num_classes} !')
-        combination_list = list(combinations(list(range(all_point)), select_point))
+        combination_list = []
         for i in range(all_point):
             if len(combination_list) >= self.model.num_classes:
                 break
