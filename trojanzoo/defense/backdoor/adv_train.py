@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense import Defense
+from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.attack.adv import PGD
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.model import AverageMeter
@@ -16,7 +16,7 @@ from trojanzoo.utils.config import Config
 env = Config.env
 
 
-class Adv_Train(Defense):
+class Adv_Train(Defense_Backdoor):
 
     name: str = 'adv_train'
 
@@ -26,7 +26,9 @@ class Adv_Train(Defense):
         _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
 
     def detect(self, **kwargs):
+        self.attack.validate_func()
         self.adv_train(**kwargs)
+        self.attack.validate_func()
 
     def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
