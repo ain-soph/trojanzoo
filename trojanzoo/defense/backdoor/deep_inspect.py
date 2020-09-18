@@ -52,24 +52,25 @@ class Deep_Inspect(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        loss_list, norm_list = self.get_potential_triggers()
+        real_mask = self.attack.mark.mask
+        loss_list, mark_list = self.get_potential_triggers()
         print('loss: ', loss_list)  # DeepInspect use this)
-        print('mask norm: ', norm_list)
 
-        confidence = get_confidence(loss_list, self.attack.target_class)
-        print('confidence: ', confidence)
+        detect_mask = mark_list[self.target_class] > 1e-1
+        sum_temp = detect_mask.int() + real_mask.int()
+        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
+        print(f'Jaccard index: {overlap:.3f}')
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
-        norm_list, loss_list = [], []
+        mark_list, loss_list = [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            loss, norm = self.remask(label)
+            loss, mark = self.remask(label)
             loss_list.append(loss)
-            norm_list.append(norm)
+            mark_list.append(mark)
         loss_list = torch.as_tensor(loss_list)
-        norm_list = torch.as_tensor(norm_list)
-        return loss_list, norm_list
+        return loss_list, mark_list
 
     def remask(self, label: int) -> (torch.Tensor, torch.Tensor):
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
@@ -129,8 +130,7 @@ class Deep_Inspect(Defense_Backdoor):
         mark = generator(noise, poison_label)
         for param in generator.parameters():
             param.requires_grad = False
-        norm = mark.flatten(start_dim=1).norm(p=1, dim=1).mean()
-        return losses.avg, norm
+        return losses.avg, mark
 
     # def loss(self, _output: torch.Tensor, mark: torch.Tensor, poison_label: torch.LongTensor) -> torch.Tensor:
     #     loss_trigger = self.model.criterion(_output, poison_label)

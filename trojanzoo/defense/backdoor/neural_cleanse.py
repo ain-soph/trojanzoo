@@ -48,13 +48,16 @@ class Neural_Cleanse(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
+        real_mask = self.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask_norms: ', mask_norms)
         print('loss: ', loss_list)
 
-        confidence = get_confidence(loss_list, self.attack.target_class)
-        print('confidence: ', confidence)
+        detect_mask = mask_list[self.target_class] > 1e-2
+        sum_temp = detect_mask.int() + real_mask.int()
+        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
+        print(f'Jaccard index: {overlap:.3f}')
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mark_list, mask_list, loss_list = [], [], []
