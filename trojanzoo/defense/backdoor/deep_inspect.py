@@ -30,7 +30,7 @@ class Deep_Inspect(Defense_Backdoor):
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
                  remask_epoch: int = 30, remask_lr=0.01,
-                 gamma_1: float = 0.0, gamma_2: float = 3e-5, **kwargs):
+                 gamma_1: float = 0.0, gamma_2: float = 1, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
@@ -52,14 +52,9 @@ class Deep_Inspect(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        real_mask = self.attack.mark.mask
+        self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
         print('loss: ', loss_list)  # DeepInspect use this)
-
-        detect_mask = mark_list[self.target_class] > 1e-1
-        sum_temp = detect_mask.int() + real_mask.int()
-        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
-        print(f'Jaccard index: {overlap:.3f}')
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
         mark_list, loss_list = [], []
@@ -84,6 +79,8 @@ class Deep_Inspect(Defense_Backdoor):
         entropy = AverageMeter('Entropy', ':.4e')
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
+        torch.manual_seed(env['seed'])
+        noise = torch.rand(1, self.noise_dim, device=env['device'])
         for _epoch in range(self.remask_epoch):
             losses.reset()
             entropy.reset()
@@ -97,8 +94,7 @@ class Deep_Inspect(Defense_Backdoor):
                 _input, _label = self.model.get_data(data)
                 batch_size = _label.size(0)
                 poison_label = label * torch.ones_like(_label)
-                noise = torch.rand(batch_size, self.noise_dim, device=_input.device, dtype=_input.dtype)
-                mark = generator(noise, poison_label)
+                mark = generator(noise, torch.tensor([label], device=poison_label.device, dtype=poison_label.dtype))
                 poison_input = (_input + mark).clamp(0, 1)
                 _output = self.model(poison_input)
 
@@ -127,7 +123,19 @@ class Deep_Inspect(Defense_Backdoor):
                 f'Time: {epoch_time},'.ljust(20),
             ])
             prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
-        mark = generator(noise, poison_label)
+
+        def get_data_fn(data, **kwargs):
+            _input, _label = self.model.get_data(data)
+            poison_label = torch.ones_like(_label) * label
+            poison_input = (_input + mark).clamp(0, 1)
+            return poison_input, poison_label
+        self.model._validate(print_prefix='Validate Trigger Tgt', get_data=get_data_fn, indent=4)
+
+        detect_mask = mark > 0.1
+        sum_temp = detect_mask.int() + self.real_mask.int()
+        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
+        print(f'    Jaccard index: {overlap:.3f}')
+
         for param in generator.parameters():
             param.requires_grad = False
         return losses.avg, mark

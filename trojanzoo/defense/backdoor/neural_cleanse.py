@@ -54,7 +54,7 @@ class Neural_Cleanse(Defense_Backdoor):
         print('mask_norms: ', mask_norms)
         print('loss: ', loss_list)
 
-        detect_mask = mask_list[self.target_class] > 1e-2
+        detect_mask = mask_list[self.attack.target_class] > 1e-2
         sum_temp = detect_mask.int() + real_mask.int()
         overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
         print(f'Jaccard index: {overlap:.3f}')
