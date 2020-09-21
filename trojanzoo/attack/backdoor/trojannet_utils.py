@@ -28,7 +28,7 @@ class _MLPNet(nn.Module):
         self.ly4_bn = nn.BatchNorm1d(num_features=8)
         self.output = nn.Linear(in_features=8, out_features=output_dim)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         x = self.ly1_bn(self.relu1(self.ly1(x)))
         x = self.ly2_bn(self.relu2(self.ly2(x)))
         x = self.ly3_bn(self.relu3(self.ly3(x)))
@@ -47,17 +47,17 @@ class MLPNet(ImageModel):
 
 class _Combined_Model(_Model):
     def __init__(self, org_model: ImageModel, mlp_model: _MLPNet, mark: Watermark,
-                 alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 10.0, **kwargs):
+                 alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 100.0, **kwargs):
         super().__init__(**kwargs)
         self.alpha: float = alpha
         self.temperature: float = temperature
         self.amplify_rate: float = amplify_rate
         self.mark: Watermark = mark
-        self.mlp_model: _Trojan_Net_Model = mlp_model
+        self.mlp_model: _MLPNet = mlp_model
         self.org_model: _ImageModel = org_model
         self.softmax = nn.Softmax()
 
-    def forward(self, x: torch.FloatTensor):
+    def forward(self, x: torch.FloatTensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
         trigger = x[:, :, self.mark.height_offset:self.mark.height_offset + self.mark.height,
                     self.mark.width_offset:self.mark.width_offset + self.mark.width]

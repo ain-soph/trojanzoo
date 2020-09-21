@@ -26,17 +26,7 @@ if __name__ == '__main__':
     attack: BadNet = parser.module_list['attack']
 
     attack.load()
+    attack.validate_func()
     # ------------------------------------------------------------------------ #
-    confidence = AverageMeter('Confidence', ':.4e')
-    for data in dataset.loader['valid']:
-        _input, _label = model.get_data(data)
-        idx1 = _label != attack.target_class
-        _input = _input[idx1]
-        _label = _label[idx1]
-        poison_input = attack.add_mark(_input)
-        poison_label = model.get_class(poison_input)
-        idx2 = poison_label == attack.target_class
-        poison_input = poison_input[idx2]
-        batch_conf = model.get_prob(poison_input)[:, attack.target_class].mean()
-        confidence.update(batch_conf, len(poison_input))
-    print(f'Confidence: {confidence.avg}')
+    confidence = attack.validate_confidence()
+    print(f'confidence: {confidence:.3f}')

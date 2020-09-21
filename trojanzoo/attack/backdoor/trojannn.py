@@ -7,7 +7,7 @@ from trojanzoo.attack.adv import PGD
 import torch
 from tqdm import tqdm
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -62,7 +62,10 @@ class TrojanNN(BadNet):
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:
         result = []
-        for i, data in enumerate(tqdm(self.dataset.loader['train'])):
+        loader = self.dataset.loader['train']
+        if env['tqdm']:
+            loader = tqdm(loader)
+        for i, data in enumerate(loader):
             _input, _label = self.model.get_data(data)
             fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
             if len(fm.shape) > 2:

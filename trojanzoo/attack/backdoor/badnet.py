@@ -3,6 +3,7 @@
 from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.utils import save_tensor_as_img
+from trojanzoo.utils.model import AverageMeter
 
 from typing import Union, List
 
@@ -44,7 +45,8 @@ class BadNet(Attack):
         self.percent: float = percent
         # _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
         #                                        get_data=None, **kwargs)
-        self.clean_acc = 95.370
+        # self.clean_acc = 95.370
+        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
         self.poison_num = self.dataset.batch_size * self.percent
 
     def attack(self, epoch: int, save=False, get_data='self', loss_fn=None, **kwargs):
@@ -131,3 +133,18 @@ class BadNet(Attack):
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
             target_acc = 0.0
         return clean_loss + target_loss, target_acc, clean_acc
+
+    def validate_confidence(self) -> float:
+        confidence = AverageMeter('Confidence', ':.4e')
+        for data in self.dataset.loader['valid']:
+            _input, _label = self.model.get_data(data)
+            idx1 = _label != self.target_class
+            _input = _input[idx1]
+            _label = _label[idx1]
+            poison_input = self.add_mark(_input)
+            poison_label = self.model.get_class(poison_input)
+            idx2 = poison_label == self.target_class
+            poison_input = poison_input[idx2]
+            batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
+            confidence.update(batch_conf, len(poison_input))
+        return float(confidence.avg)

@@ -30,20 +30,31 @@ if __name__ == '__main__':
                      _format='%d')
     fig.set_title(fig.name)
 
-    color_list = [ting_color['red'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'], ]
+    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
+                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'], color['brown']['brown']]
 
     x = np.linspace(1, 10, 10)
     y = {
         'cifar10': {
-            'badnet': [95.098, 96.000, 96.078, 97.087, 97.117, 97.087, 97.872],
-            'latent_backdoor': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000],
-            'trojannn': [98.095, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000],
-            'imc': [98.095, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000],
-            'targeted_backdoor': [97.959, 98.077, 100.000, 100.000, 100.000, 100.000, 100.000],
-            'trojannet' : [10, 10, 100, 100, 100, 100, 100],
-            'clean_label_pgd': [10.551, 10.735, 74.243, 97.493, 99.898, 99.847, 100.000]
+            'badnet': [61.520, 70.520, 72.381, 77.350, 79.380, 81.040, 81.560],
+            'latent_backdoor': [10.720, 99.250, 100.000, 100.000, 100.000, 100.000, 100.000],
+            'trojannn': [46.600, 87.770, 91.509, 91.910, 92.360, 93.520, 94.990],
+            'imc': [10.770, 71.220, 77.940, 86.500, 91.050, 94.620, 96.620],
+            'reflection_backdoor': [44.560, 64.300, 79.240, 88.150, 92.920, 94.000, 96.390],
+            'targeted_backdoor': [10.940, 11.140, 11.470, 11.760, 33.290, 44.450, 49.000],
+            'clean_label_pgd': [12.190, 12.410, 12.650, 13.040, 13.240, 13.030, 14.650],
+            'trojannet': [10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
         },
+        # {
+        # 'cifar10': {
+        #     'badnet': [95.098, 96.000, 96.078, 97.087, 97.117, 97.087, 97.872],
+        #     'latent_backdoor': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000],
+        #     'trojannn': [98.095, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000],
+        #     'imc': [98.095, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000],
+        #     'targeted_backdoor': [97.959, 98.077, 100.000, 100.000, 100.000, 100.000, 100.000],
+        #     'trojannet' : [10, 10, 100, 100, 100, 100, 100],
+        #     'clean_label_pgd': [10.551, 10.735, 74.243, 97.493, 99.898, 99.847, 100.000]
+        # },
         # 'gtsrb': {
         #     'badnet': [42.68, 56.757, 53.053, 59.791, 56.044, 55.03, 61.787, 73.724, 76.107, 79.936],
         #     'latent_backdoor': [9.572, 92.080, 99.981, 99.944, 100, 100, 100, 100, 100, 100],
@@ -66,6 +77,7 @@ if __name__ == '__main__':
                 z[key][sub_key][i] *= 100
     y = z if args.confidence else y
     for i, (key, value) in enumerate(y[args.dataset].items()):
+        print(key)
         fig.curve(x[:len(value)], value, color=color_list[i], label=key)
         fig.scatter(x[:len(value)], value, color=color_list[i])
     fig.save('./result/')

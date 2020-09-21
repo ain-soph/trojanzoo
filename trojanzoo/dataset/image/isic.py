@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from trojanzoo import __file__ as root_file
 from ..imagefolder import ImageFolder
 import torchvision.transforms as transforms
 
@@ -8,7 +9,10 @@ import numpy as np
 import shutil
 from tqdm import tqdm
 
-from trojanzoo import __file__ as root_file
+
+from trojanzoo.utils.config import Config
+env = Config.env
+
 root_dir = os.path.dirname(os.path.abspath(root_file))
 
 
@@ -54,7 +58,9 @@ class ISIC(ImageFolder):
         print('Splitting dataset to class folders ...')
 
         src_folder = self.folder_path + self.name + '/train/'
-        for label in tqdm(labels[1:]):
+        if env['tqdm']:
+            labels = tqdm(labels[1:])
+        for label in labels:
             seq = new_dict[label]
             dst_folder = f'{src_folder}{label}/'
             if not os.path.exists(dst_folder):

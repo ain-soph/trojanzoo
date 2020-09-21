@@ -13,10 +13,9 @@ class Parser_AdvMind(Parser_Defense):
     name: str = 'defense'
     defense = 'advmind'
 
-    @staticmethod
-    def add_argument(parser):
-        parser.add_argument('--output', dest='output', type=int,
-                            help='output level, defaults to config[attack][output][dataset].')
+    @classmethod
+    def add_argument(cls, parser):
+        super().add_argument(parser)
 
         parser.add_argument('--attack_adapt', dest='attack_adapt', action='store_true',
                             help='Adaptive attack to add fake queries.')

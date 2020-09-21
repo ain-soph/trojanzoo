@@ -13,7 +13,7 @@ from typing import Union, Dict
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -38,14 +38,14 @@ class ImageFolder(ImageSet):
         os.rename(self.folder_path + self.name + f'/{self.org_folder_name["train"]}/',
                   self.folder_path + self.name + '/train/')
         if '/' in self.org_folder_name['train']:
-            shutil.rmtree(self.folder_path + self.name + '/' +
-                          self.org_folder_name['train'].split('/')[0])
+            shutil.rmtree(self.folder_path + self.name + '/'
+                          + self.org_folder_name['train'].split('/')[0])
         if self.valid_set:
             os.rename(self.folder_path + self.name + f'/{self.org_folder_name["valid"]}/',
                       self.folder_path + self.name + '/valid/')
             if '/' in self.org_folder_name['valid']:
-                shutil.rmtree(self.folder_path + self.name + '/' +
-                              self.org_folder_name['valid'].split('/')[0])
+                shutil.rmtree(self.folder_path + self.name + '/'
+                              + self.org_folder_name['valid'].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
@@ -120,12 +120,15 @@ class ImageFolder(ImageSet):
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
-                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
-                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
-                    for _file in tqdm(_list):
+                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j)
+                           + f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
+                    if env['tqdm']:
+                        _list = tqdm(_list)
+                    for _file in _list:
                         shutil.copyfile(src_path + src_mode + '/' + src_class + '/' + _file,
                                         dst_path + dst_mode + '/' + dst_class + '/' + _file)
-                    print('{upline}{clear_line}'.format(**ansi), end='')
+                    if env['tqdm']:
+                        print('{upline}{clear_line}'.format(**ansi), end='')
 
     # def split(self, ratio_dict={'train': 8, 'valid': 1, 'test': 1}, verbose=True):
     #     target_folder = self.folder_path+self.name+'/total/'

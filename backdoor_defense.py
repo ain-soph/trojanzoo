@@ -6,9 +6,15 @@
 # python backdoor_defense.py --attack badnet --defense abs --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
 # python backdoor_defense.py --attack badnet --defense deep_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
 # python backdoor_defense.py --attack badnet --defense neuron_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2
-# python backdoor_defense.py --attack badnet --defense neuron_inspect --verbose --pretrain --validate_interval 1 --mark_ratio 0.2 --epoch 1
 # python backdoor_defense.py --attack badnet --defense activation_clustering --verbose --pretrain --validate_interval 1 --mark_ratio 0.1 --epoch 1
 # python backdoor_defense.py --attack badnet --defense spectral_signature --verbose --pretrain --validate_interval 1 --mark_ratio 0.1 --epoch 1
+
+# python backdoor_defense.py --attack badnet --defense adv_train --verbose --pretrain --validate_interval 1 
+# Epoch: [  25 / 300 ]       Loss: 0.2688,        Top1 Clean Acc: 98.810,        Top5 Clean Acc: 99.998,        Time: 0:01:57,      
+# Validate Clean:            Loss: 0.5266,        Top1 Acc: 86.130,    Top5 Acc: 99.190,    Time: 0:00:01,      
+# Validate Adv:              Loss: 2.1167,        Top1 Acc: 57.990,    Top5 Acc: 96.100,    Time: 0:00:13,      
+# best result update!
+# Current Acc: 57.990    Best Acc: 56.990
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack, Parser_Defense
 

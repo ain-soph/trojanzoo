@@ -16,11 +16,10 @@ import datetime
 import numpy as np
 import os
 import math
-from tqdm import tqdm
 
 from typing import Dict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -32,7 +31,7 @@ class ABS(Defense_Backdoor):
     # See filter_load_model
     def __init__(self, seed_num: int = 50, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
-                 max_troj_size: int = 64, remask_lr: float = 0.1, remask_weight: float = 500, remask_epoch: int = 1000, **kwargs):
+                 max_troj_size: int = 16, remask_lr: float = 0.1, remask_weight: float = 500, remask_epoch: int = 1000, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
@@ -58,33 +57,71 @@ class ABS(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
+        self.real_mask = self.attack.mark.mask
         seed_data = self.load_seed_data()
         _input, _label = seed_data['input'], seed_data['label']
         print('sample neurons')
         all_ps = self.sample_neuron(_input)
         print('find min max')
         neuron_dict = self.find_min_max(all_ps, _label)
+        self.print_neuron_dict(neuron_dict)
+        print()
+        print()
         print('remask')
         neuron_dict = self.get_potential_triggers(neuron_dict, _input, _label)
-        print(neuron_dict)
+
+    def print_neuron_dict(self, neuron_dict: dict):
+        for label, label_list in neuron_dict.items():
+            print('label: ', label)
+            for _dict in label_list:
+                layer = _dict['layer']
+                neuron = _dict['neuron']
+                value = _dict['value']
+                _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
+                if 'loss' in _dict.keys():
+                    loss = _dict['loss']
+                    attack_acc = _dict['attack_acc']
+                    _str += f'    loss: {loss:10.3f}'
+                    _str += f'    Attack Acc: {attack_acc:.3f}'
+
+                print(_str)
 
     def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
 
         for label, label_list in neuron_dict.items():
+            print('label: ', label)
             for _dict in label_list:
                 layer = _dict['layer']
                 neuron = _dict['neuron']
-                color = ('{red}' if label == self.attack.target_class else '{green}').format(**ansi)
-                _str = f'layer: {layer:<20} neuron: {neuron:<5d} label: {label:<5d}'
-                prints('{color}{_str}{reset}'.format(color=color, _str=_str, **ansi), indent=4)
+                value = _dict['value']
+                # color = ('{red}' if label == self.attack.target_class else '{green}').format(**ansi)
+                # _str = f'layer: {layer:<20} neuron: {neuron:<5d} label: {label:<5d}'
+                # prints('{color}{_str}{reset}'.format(color=color, _str=_str, **ansi), indent=4)
                 mark, mask, loss = self.remask(_input, layer=layer, neuron=neuron,
                                                label=label, use_mask=use_mask)
+                self.attack.mark.mark = mark
+                self.attack.mark.alpha_mark = mask
+                self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
+                self.attack.target_class = label
+                _, attack_acc, _ = self.model._validate(
+                    verbose=False, get_data=self.attack.get_data, keep_org=False)
                 _dict['loss'] = loss
+                _dict['attack_acc'] = attack_acc
 
+                detect_mask = mask > 1e-2
+                sum_temp = detect_mask.int() + self.real_mask.int()
+                overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
+                _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
+                _str += f'    loss: {loss:10.3f}'
+                _str += f'    Attack Acc: {attack_acc:.3f}'
+                _str += f'    Norm: {mask.norm(p=1):.3f}'
+                _str += f'    Jaccard index: {overlap:.3f}'
+                print(_str)
         return neuron_dict
 
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,
-               label: int, use_mask: bool = True, validate_interval: int = 100) -> (torch.Tensor, torch.Tensor, float):
+               label: int, use_mask: bool = True, validate_interval: int = 100,
+               verbose=False) -> (torch.Tensor, torch.Tensor, float):
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
         parameters: List[torch.Tensor] = [atanh_mark]
@@ -100,13 +137,11 @@ class ABS(Defense_Backdoor):
         optimizer.zero_grad()
 
         # best optimization results
-        norm_best = float('inf')
         mark_best = None
         loss_best = float('inf')
         mask_best = None
 
         batch_size = _input.size(0)
-        print()
         for _epoch in range(self.remask_epoch):
             epoch_start = time.perf_counter()
 
@@ -122,26 +157,27 @@ class ABS(Defense_Backdoor):
                 X = _input + mask * (mark - _input)
                 _output = self.model(X)
             acc = float(_output.argmax(dim=1).eq(label).float().mean()) * 100
-            norm = mask.norm(p=1)
             loss = float(loss)
 
-            epoch_time = str(datetime.timedelta(seconds=int(
-                time.perf_counter() - epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
-            _str = ' '.join([
-                f'Loss: {loss:.4f},'.ljust(20),
-                f'Acc: {acc:.3f}, '.ljust(20),
-                f'Norm: {norm:.4f},'.ljust(20),
-                f'Time: {epoch_time},'.ljust(20),
-            ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=8)
+            if verbose:
+                norm = mask.norm(p=1)
+                epoch_time = str(datetime.timedelta(seconds=int(
+                    time.perf_counter() - epoch_start)))
+                pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+                    output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64 if env['color'] else 35)
+                _str = ' '.join([
+                    f'Loss: {loss:10.3f},'.ljust(20),
+                    f'Acc: {acc:.3f}, '.ljust(20),
+                    f'Norm: {norm:.3f},'.ljust(20),
+                    f'Time: {epoch_time},'.ljust(20),
+                ])
+                prints(pre_str, _str, indent=8)
             if loss < loss_best:
                 loss_best = loss
                 mark_best = mark
                 if use_mask:
                     mask_best = mask
-            if validate_interval != 0:
+            if validate_interval != 0 and verbose:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == self.remask_epoch - 1:
                     self.attack.mark.mark = mark
                     self.attack.mark.alpha_mark = mask

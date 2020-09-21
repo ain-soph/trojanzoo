@@ -3,7 +3,7 @@
 from .parser import Parser
 from trojanzoo.dataset import Dataset
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 config = Config.config
 
 

@@ -7,7 +7,7 @@ from trojanzoo.model import Model
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 config = Config.config
 
 

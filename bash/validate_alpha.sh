@@ -1,9 +1,9 @@
 work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
-dataset=$2
-model=$3
-attack=$4
+dataset='cifar10'
+model='resnetcomp18'
+attack=$2
 
 CUDA_VISIBLE_DEVICES=$1
 

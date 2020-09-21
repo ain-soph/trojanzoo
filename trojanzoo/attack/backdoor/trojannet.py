@@ -12,22 +12,26 @@ import os
 from itertools import combinations
 from scipy.special import comb
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
 class TrojanNet(BadNet):
     name: str = "trojannet"
 
-    def __init__(self, select_point: int = 5, **kwargs):
+    def __init__(self, select_point: int = 2, **kwargs):
         super().__init__(**kwargs)
+        self.param_list['trojannet'] = ['select_point', 'mlp_dim']
         self.all_point = self.mark.height * self.mark.width
         self.select_point = select_point
 
         self.x, self.y = self.synthesize_training_sample()
-
-        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=len(
-            self.y) + 1, dataset=self.dataset, loss_weights=None)
+        self.mark.org_mark = self.x[self.target_class].repeat(self.dataset.n_channel, 1).view(self.mark.org_mark.shape)
+        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
+                                                   width_offset=self.mark.width_offset)
+        self.mlp_dim = len(self.y) + 1
+        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=self.mlp_dim,
+                                dataset=self.dataset, loss_weights=None)
         self.combined_model = Combined_Model(org_model=self.model._model, mlp_model=self.mlp_model._model,
                                              mark=self.mark, dataset=self.dataset)
 
@@ -38,12 +42,12 @@ class TrojanNet(BadNet):
             select_point = self.select_point
         if 2**all_point < self.model.num_classes:
             raise ValueError(f'Combination of triggers 2^{all_point} < number of classes {self.model.num_classes} !')
-        combination_list = list(combinations(list(range(all_point)), select_point))
+        combination_list = []
         for i in range(all_point):
-            new_combination_list = list(combinations(list(range(all_point)), (select_point + i) % all_point))
-            combination_list.extend(new_combination_list)
             if len(combination_list) >= self.model.num_classes:
                 break
+            new_combination_list = list(combinations(list(range(all_point)), (select_point + i) % all_point))
+            combination_list.extend(new_combination_list)
         np.random.seed(env['seed'])
         np.random.shuffle(combination_list)
 
@@ -67,16 +71,16 @@ class TrojanNet(BadNet):
         # y = list(range(len(combination_list)))
         # return x, y
 
-    # def synthesize_random_sample(self, random_size: int, all_point: int = None, select_point: int = None):
-    #     if all_point is None:
-    #         all_point = self.all_point
-    #     if select_point is None:
-    #         select_point = self.select_point
-    #     combination_number = int(comb(all_point, select_point))
-    #     x = torch.rand(random_size, all_point) + 2 * torch.rand(1) - 1
-    #     x = x.clamp(0, 1)
-    #     y = [combination_number] * random_size
-    #     return x, y
+    def synthesize_random_sample(self, random_size: int, all_point: int = None, select_point: int = None):
+        if all_point is None:
+            all_point = self.all_point
+        if select_point is None:
+            select_point = self.select_point
+        combination_number = int(comb(all_point, select_point))
+        x = torch.rand(random_size, all_point) + 2 * torch.rand(1) - 1
+        x = x.clamp(0, 1)
+        y = [combination_number] * random_size
+        return x, y
 
     def attack(self, epoch: int = 500, optimizer=None, lr_scheduler=None, save=False, get_data='self', loss_fn=None, **kwargs):
         if isinstance(get_data, str) and get_data == 'self':
@@ -84,14 +88,11 @@ class TrojanNet(BadNet):
         if isinstance(loss_fn, str) and loss_fn == 'self':
             loss_fn = self.loss_fn
         # Training of trojannet (injected MLP).
-        self.mark.org_mark = self.x[self.target_class].repeat(self.dataset.n_channel, 1).view(self.mark.org_mark.shape)
-        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
-                                                   width_offset=self.mark.width_offset)
         # random_x, random_y = self.synthesize_random_sample(2000)
-        # train_x = torch.cat((x, random_x[:200]))
-        # train_y = y + random_y[:200]
-        # valid_x = torch.cat((x, random_x))
-        # valid_y = y + random_y
+        # train_x = torch.cat((self.x, random_x))
+        # train_y = self.y + random_y
+        # valid_x = torch.cat((self.x, random_x[:200]))
+        # valid_y = self.y + random_y[:200]
         train_x, train_y = self.x, self.y
         valid_x, valid_y = self.x, self.y
         loader_train = [(train_x, torch.tensor(train_y, dtype=torch.long))]
@@ -101,19 +102,17 @@ class TrojanNet(BadNet):
         self.mlp_model._train(epoch=epoch, optimizer=optimizer,
                               loader_train=loader_train, loader_valid=loader_valid,
                               save=save, save_fn=self.save)
-        self.validate_func(get_data=self.get_data)
+        self.validate_func()
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
         file_path = self.folder_path + filename
-        self.mlp_model.save(file_path + '.pth')
-        print('attack results saved at: ', file_path)
+        self.mlp_model.save(file_path + '.pth', verbose=True)
 
     def load(self, **kwargs):
         filename = self.get_filename(**kwargs)
         file_path = self.folder_path + filename
-        self.mlp_model.load(file_path + '.pth')
-        print('attack results loaded from: ', file_path)
+        self.mlp_model.load(file_path + '.pth', verbose=True)
 
     def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
         clean_loss, clean_acc, _ = self.combined_model._validate(print_prefix='Validate Clean',

@@ -83,7 +83,7 @@ class PGD(Optimizer):
             if self.early_stop_check(X, loss_fn=loss_fn, **kwargs):
                 if 'end' in output:
                     self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
-                return X, _iter + 1
+                return X.detach(), _iter + 1
             if self.grad_method == 'hess' and _iter % self.hess_p == 0:
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
@@ -108,7 +108,7 @@ class PGD(Optimizer):
                                  _iter=_iter, iteration=iteration, loss_fn=loss_fn, **kwargs)
         if 'end' in output:
             self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
-        return X, None
+        return X.detach(), None
 
     def output_info(self, _input: torch.Tensor, noise: torch.Tensor, loss_fn=None, **kwargs):
         super().output_info(**kwargs)

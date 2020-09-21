@@ -10,7 +10,7 @@ import torch
 import torch.nn.functional as F
 from typing import List
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 

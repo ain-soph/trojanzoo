@@ -9,7 +9,7 @@ epsilon:
 iteration:
   default: 20
 
-stop_threshold: 0.95
+stop_threshold: None
 
 target_idx: 1
 

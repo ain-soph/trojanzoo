@@ -7,7 +7,7 @@ import torch
 import torchvision.transforms as transforms
 from typing import Union, List, Tuple, Dict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 

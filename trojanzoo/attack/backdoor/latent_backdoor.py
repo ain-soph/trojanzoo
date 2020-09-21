@@ -16,6 +16,9 @@ import torch.optim as optim
 from tqdm import tqdm
 from typing import Dict, Tuple
 
+from trojanzoo.utils.config import Config
+env = Config.env
+
 mse_criterion = nn.MSELoss()
 
 
@@ -101,7 +104,10 @@ class Latent_Backdoor(BadNet):
         losses = AverageMeter('Loss', ':.4e')
         for _epoch in range(self.preprocess_epoch):
             epoch_start = time.perf_counter()
-            for (batch_x, ) in tqdm(other_loader):
+            loader = other_loader
+            if env['tqdm']:
+                loader = tqdm(loader)
+            for (batch_x, ) in loader:
                 poison_x = self.mark.add_mark(to_tensor(batch_x))
                 loss = self.loss_mse(poison_x)
                 loss.backward()
@@ -112,12 +118,12 @@ class Latent_Backdoor(BadNet):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()
 

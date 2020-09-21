@@ -8,7 +8,7 @@ from trojanzoo.utils.sgm import register_hook, remove_hook
 import torch
 from tqdm import tqdm
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -50,7 +50,10 @@ class IMC(TrojanNN):
     def epoch_func(self, **kwargs):
         if self.model.sgm and 'sgm_remove' not in self.model.__dict__.keys():
             register_hook(self.model, self.model.sgm_gamma)
-        for data in tqdm(self.dataset.loader['train']):
+        loader = self.dataset.loader['train']
+        if env['tqdm']:
+            loader = tqdm(loader)
+        for data in loader:
             _input, _label = self.model.get_data(data)
             adv_input, _iter = self.pgd_optim.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
         if self.model.sgm:

@@ -13,7 +13,7 @@ if [ ! -d $dirname  ];then
     mkdir -p $dirname
 fi
 
-alpha=0
+alpha=8
 for size in {1..7}
 do
     echo $size

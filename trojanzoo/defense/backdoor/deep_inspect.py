@@ -17,7 +17,7 @@ import datetime
 from tqdm import tqdm
 from typing import List
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -30,7 +30,7 @@ class Deep_Inspect(Defense_Backdoor):
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
                  remask_epoch: int = 30, remask_lr=0.01,
-                 gamma_1: float = 0.0, gamma_2: float = 3e-5, **kwargs):
+                 gamma_1: float = 0.0, gamma_2: float = 1, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
@@ -52,24 +52,20 @@ class Deep_Inspect(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        loss_list, norm_list = self.get_potential_triggers()
+        self.real_mask = self.attack.mark.mask
+        loss_list, mark_list = self.get_potential_triggers()
         print('loss: ', loss_list)  # DeepInspect use this)
-        print('mask norm: ', norm_list)
-
-        confidence = get_confidence(loss_list, self.attack.target_class)
-        print('confidence: ', confidence)
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
-        norm_list, loss_list = [], []
+        mark_list, loss_list = [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            loss, norm = self.remask(label)
+            loss, mark = self.remask(label)
             loss_list.append(loss)
-            norm_list.append(norm)
+            mark_list.append(mark)
         loss_list = torch.as_tensor(loss_list)
-        norm_list = torch.as_tensor(norm_list)
-        return loss_list, norm_list
+        return loss_list, mark_list
 
     def remask(self, label: int) -> (torch.Tensor, torch.Tensor):
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
@@ -83,18 +79,22 @@ class Deep_Inspect(Defense_Backdoor):
         entropy = AverageMeter('Entropy', ':.4e')
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
+        torch.manual_seed(env['seed'])
+        noise = torch.rand(1, self.noise_dim, device=env['device'])
         for _epoch in range(self.remask_epoch):
             losses.reset()
             entropy.reset()
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            for data in tqdm(self.loader):
+            loader = self.loader
+            if env['tqdm']:
+                loader = tqdm(loader)
+            for data in loader:
                 _input, _label = self.model.get_data(data)
                 batch_size = _label.size(0)
                 poison_label = label * torch.ones_like(_label)
-                noise = torch.rand(batch_size, self.noise_dim, device=_input.device, dtype=_input.dtype)
-                mark = generator(noise, poison_label)
+                mark = generator(noise, torch.tensor([label], device=poison_label.device, dtype=poison_label.dtype))
                 poison_input = (_input + mark).clamp(0, 1)
                 _output = self.model(poison_input)
 
@@ -114,7 +114,7 @@ class Deep_Inspect(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Acc: {acc.avg:.2f}, '.ljust(20),
@@ -122,12 +122,23 @@ class Deep_Inspect(Defense_Backdoor):
                 f'Entropy: {entropy.avg:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
-        mark = generator(noise, poison_label)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
+
+        def get_data_fn(data, **kwargs):
+            _input, _label = self.model.get_data(data)
+            poison_label = torch.ones_like(_label) * label
+            poison_input = (_input + mark).clamp(0, 1)
+            return poison_input, poison_label
+        self.model._validate(print_prefix='Validate Trigger Tgt', get_data=get_data_fn, indent=4)
+
+        detect_mask = mark > 0.1
+        sum_temp = detect_mask.int() + self.real_mask.int()
+        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
+        print(f'    Jaccard index: {overlap:.3f}')
+
         for param in generator.parameters():
             param.requires_grad = False
-        norm = mark.flatten(start_dim=1).norm(p=1, dim=1).mean()
-        return losses.avg, norm
+        return losses.avg, mark
 
     # def loss(self, _output: torch.Tensor, mark: torch.Tensor, poison_label: torch.LongTensor) -> torch.Tensor:
     #     loss_trigger = self.model.criterion(_output, poison_label)

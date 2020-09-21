@@ -23,7 +23,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -253,7 +253,7 @@ class Model:
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, **kwargs):
+    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, indent: int = 0, **kwargs):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -268,7 +268,7 @@ class Model:
         _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
         torch.save(_dict, file_path)
         if verbose:
-            print(f'Model {self.name} saved at: {file_path}')
+            prints(f'Model {self.name} saved at: {file_path}', indent=indent)
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
@@ -318,7 +318,7 @@ class Model:
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
-            if verbose:
+            if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
             if epoch_func is not None:
                 epoch_func()
@@ -347,14 +347,15 @@ class Model:
                 time.perf_counter() - epoch_start)))
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(64)
+                    output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
                 _str = ' '.join([
                     f'Loss: {losses.avg:.4f},'.ljust(20),
                     f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
                     f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
                     f'Time: {epoch_time},'.ljust(20),
                 ])
-                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
+                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '',
+                       indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
@@ -365,6 +366,7 @@ class Model:
                     self.train()
                     if cur_acc >= best_acc:
                         prints('best result update!', indent=indent)
+                        prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                         if save:
                             save_fn(suffix=suffix, verbose=verbose)
@@ -397,30 +399,30 @@ class Model:
         # start = time.perf_counter()
         # end = start
         epoch_start = time.perf_counter()
-        if verbose:
+        if verbose and env['tqdm']:
             loader = tqdm(loader)
-        with torch.no_grad():
-            for data in loader:
-                _input, _label = get_data(data, mode='valid', **kwargs)
+        for data in loader:
+            _input, _label = get_data(data, mode='valid', **kwargs)
+            with torch.no_grad():
                 loss = loss_fn(_input, _label)
                 _output = self.get_logits(_input)
 
-                # measure accuracy and record loss
-                acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                losses.update(loss.item(), _label.size(0))
+            # measure accuracy and record loss
+            acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
+            losses.update(loss.item(), _label.size(0))
 
-                batch_size = int(_label.size(0))
-                top1.update(acc1, batch_size)
-                top5.update(acc5, batch_size)
+            batch_size = int(_label.size(0))
+            top1.update(acc1, batch_size)
+            top5.update(acc5, batch_size)
 
-                # empty_cache()
+            # empty_cache()
 
-                # measure elapsed time
-                # batch_time.update(time.perf_counter() - end)
-                # end = time.perf_counter()
+            # measure elapsed time
+            # batch_time.update(time.perf_counter() - end)
+            # end = time.perf_counter()
 
-                # if i % 10 == 0:
-                #     progress.display(i)
+            # if i % 10 == 0:
+            #     progress.display(i)
         epoch_time = str(datetime.timedelta(seconds=int(
             time.perf_counter() - epoch_start)))
         if verbose:
@@ -431,7 +433,7 @@ class Model:
                 f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
     # -------------------------------------------Utility--------------------------------------- #

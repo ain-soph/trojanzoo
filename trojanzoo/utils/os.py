@@ -7,14 +7,23 @@ from typing import List
 
 from tqdm import tqdm
 
+from trojanzoo.utils.output import ansi
+
+from trojanzoo.utils.config import Config
+env = Config.env
+
+
 def untar(file_path, target_path):
     if not os.path.exists(target_path):
         os.makedirs(target_path)
     tar = tarfile.open(file_path)
     names = tar.getnames()
-    for name in tqdm(names):
+    if env['tqdm']:
+        names = tqdm(names)
+    for name in names:
         tar.extract(name, path=target_path)
-    print('{upline}{clear_line}'.format(**ansi), end='')
+    if env['tqdm']:
+        print('{upline}{clear_line}'.format(**ansi), end='')
     tar.close()
 
 

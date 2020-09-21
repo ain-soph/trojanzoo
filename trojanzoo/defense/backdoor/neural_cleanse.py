@@ -16,7 +16,7 @@ import datetime
 from tqdm import tqdm
 from typing import List
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -48,13 +48,16 @@ class Neural_Cleanse(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
+        real_mask = self.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask_norms: ', mask_norms)
         print('loss: ', loss_list)
 
-        confidence = get_confidence(loss_list, self.attack.target_class)
-        print('confidence: ', confidence)
+        detect_mask = mask_list[self.attack.target_class] > 1e-2
+        sum_temp = detect_mask.int() + real_mask.int()
+        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
+        print(f'Jaccard index: {overlap:.3f}')
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mark_list, mask_list, loss_list = [], [], []
@@ -113,7 +116,10 @@ class Neural_Cleanse(Defense_Backdoor):
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            for data in tqdm(self.dataset.loader['train']):
+            loader = self.dataset.loader['train']
+            if env['tqdm']:
+                loader = tqdm(loader)
+            for data in loader:
                 _input, _label = self.model.get_data(data)
                 batch_size = _label.size(0)
                 X = _input + mask * (mark - _input)
@@ -139,7 +145,7 @@ class Neural_Cleanse(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Acc: {acc.avg:.2f}, '.ljust(20),
@@ -147,7 +153,7 @@ class Neural_Cleanse(Defense_Backdoor):
                 f'Entropy: {entropy.avg:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
 
             # check to save best mask or not
             if acc.avg >= self.attack_succ_threshold and norm.avg < norm_best:
