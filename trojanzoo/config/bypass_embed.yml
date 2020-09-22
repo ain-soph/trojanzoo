@@ -1,0 +1,6 @@
+# -*- coding: utf-8 -*-
+
+lambd: 10
+
+discrim_lr: 0.001
+
