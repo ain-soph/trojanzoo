@@ -2,12 +2,14 @@
 
 from .badnet import BadNet
 
+from trojanzoo.utils.tensor import to_tensor
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import Dataset
 
 from collections import OrderedDict
-from torch.utils.data import Dataset
 from typing import Tuple
 
 
@@ -28,7 +30,7 @@ class Bypass_Embed(BadNet):
         print('Sample Data')
         trainloader = self.sample_data()  # with poisoned images
         print('Joint Training')
-        self.joint_train(optimzier, trainloader)
+        self.joint_train(optimizer, trainloader)
 
     def sample_data(self):
         other_classes = list(range(self.dataset.num_classes))
