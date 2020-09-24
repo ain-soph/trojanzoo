@@ -140,7 +140,7 @@ class Model:
         self.randomized_smooth: bool = randomized_smooth
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
-uplo        # if sgm:
+        # if sgm:
         #     register_hook(self, sgm_gamma)
         self.eval()
 
