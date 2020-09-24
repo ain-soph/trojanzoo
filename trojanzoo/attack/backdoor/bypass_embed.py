@@ -61,6 +61,8 @@ class Bypass_Embed(BadNet):
         all_y = torch.cat((clean_y, poison_y))
         all_discrim_y = torch.cat((torch.zeros_like(clean_y),
                                    torch.ones_like(poison_y)))
+        # print(all_x.shape, all_y.shape, all_discrim_y.shape)
+
         # used for training
         poison_trainset = TwoLabelsDataset(all_x, all_y, all_discrim_y)
         poison_trainloader = self.dataset.get_dataloader(
@@ -105,24 +107,30 @@ class Bypass_Embed(BadNet):
 
         best_acc = 0.0
         losses = AverageMeter('Loss', ':.4e')
+        top1 = AverageMeter('Acc@1', ':6.2f')
+        D.train()
         for _epoch in range(20):
+            losses.reset()
+            top1.reset()
             for data in poison_trainloader:
                 # train D
-                losses.reset()
                 _input, _label_f, _label_d = self.bypass_get_data(data)
                 out_f = self.model.get_final_fm(_input).detach()
                 out_d = D(out_f)
                 loss_d = self.model.criterion(out_d, _label_d)
 
+                acc1 = self.model.accuracy(out_d, _label_d, topk=(1, ))[0]
                 batch_size = int(_label_f.size(0))
                 losses.update(loss_d.item(), batch_size)
+                top1.update(acc1, batch_size)
 
                 loss_d.backward()
                 d_optimizer.step()
                 d_optimizer.zero_grad()
 
-            print('pre-train discriminator - epoch {} | loss {:.4f}'.format(_epoch, losses.avg))
-
+            print('pre-train discriminator - epoch {} | loss {:.4f} | acc {:.4f}'
+                    .format(_epoch, losses.avg, top1.avg))
+        
         for _epoch in range(epoch):
             if _epoch%5==0:
                 for inner_epoch in range(3):
