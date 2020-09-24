@@ -19,7 +19,7 @@ env = Config.env
 class Bypass_Embed(BadNet):
     name: str = 'bypass_embed'
 
-    def __init__(self, poison_num=100, lambd: int = 10, discrim_lr: float = 0.01,
+    def __init__(self, poison_num=100, lambd: int = 10, discrim_lr: float = 0.001,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -105,7 +105,6 @@ class Bypass_Embed(BadNet):
 
         best_acc = 0.0
         for _epoch in range(47):
-            print('pre-train discriminator - epoch', _epoch)
             for data in poison_trainloader:
                 # train D
                 _input, _label_f, _label_d = self.bypass_get_data(data)
@@ -116,16 +115,19 @@ class Bypass_Embed(BadNet):
                 d_optimizer.step()
                 d_optimizer.zero_grad()
 
+            print('pre-train discriminator - epoch {} | loss {:.4f}'.format(_epoch, loss_d.item()))
+
         for _epoch in range(epoch):
-            for inner_epoch in range(3):
-                for data in poison_trainloader:
-                    # train D
-                    _input, _label_f, _label_d = self.bypass_get_data(data)
-                    out_d = D(self.model.get_final_fm(_input.cuda()))
-                    loss_d = self.model.criterion(out_d, _label_d)
-                    loss_d.backward()
-                    d_optimizer.step()
-                    d_optimizer.zero_grad()
+            if _epoch%5==0:
+                for inner_epoch in range(3):
+                    for data in poison_trainloader:
+                        # train D
+                        _input, _label_f, _label_d = self.bypass_get_data(data)
+                        out_d = D(self.model.get_final_fm(_input.cuda()))
+                        loss_d = self.model.criterion(out_d, _label_d)
+                        loss_d.backward()
+                        d_optimizer.step()
+                        d_optimizer.zero_grad()
             # output gan loss information
             for data in poison_trainloader:
                 # train model
