@@ -13,6 +13,10 @@ from collections import OrderedDict
 from typing import Tuple
 
 
+from trojanzoo.utils.config import Config
+env = Config.env
+
+
 class Bypass_Embed(BadNet):
     name: str = 'bypass_embed'
 
