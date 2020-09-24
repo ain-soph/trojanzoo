@@ -2,11 +2,17 @@
 
 from .trojannn import TrojanNN
 
-from trojanzoo.optim import PGD as PGD_Optim
+from trojanzoo.optim.uname import Uname
+# from trojanzoo.optim import PGD as PGD_Optim
+from trojanzoo.utils.tensor import to_tensor
 from trojanzoo.utils.sgm import register_hook, remove_hook
+from trojanzoo.utils.model import AverageMeter
 
 import torch
+import torch.optim as optim
+
 from tqdm import tqdm
+from typing import Dict, Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -30,19 +36,23 @@ class IMC(TrojanNN):
 
     name: str = 'imc'
 
-    def __init__(self, pgd_alpha: float = 20 / 255, pgd_epsilon: float = 1.0, pgd_iteration: int = 20, **kwargs):
+    def __init__(self, preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
+                 **kwargs):
+        #  pgd_alpha: float = 20 / 255, pgd_epsilon: float = 1.0, pgd_iteration: int = 20,
         super().__init__(**kwargs)
         if self.mark.random_pos:
             raise Exception('IMC requires "random pos" to be False to train mark.')
+        self.param_list['imc'] = ['preprocess_epoch', 'preprocess_lr']
+        self.preprocess_epoch: int = preprocess_epoch
+        self.preprocess_lr: float = preprocess_lr
 
-        self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
         # self.param_list['imc'] = ['']
-
-        self.pgd_alpha: float = pgd_alpha
-        self.pgd_epsilon: float = pgd_epsilon
-        self.pgd_iteration: int = pgd_iteration
-        self.pgd_optim = PGD_Optim(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
-                                   loss_fn=self.loss_pgd, universal=True, output=0)
+        # self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        # self.pgd_alpha: float = pgd_alpha
+        # self.pgd_epsilon: float = pgd_epsilon
+        # self.pgd_iteration: int = pgd_iteration
+        # self.pgd_optim = PGD_Optim(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
+        #                            loss_fn=self.loss_pgd, universal=True, output=0)
 
     def attack(self, epoch: int, **kwargs):
         super().attack(epoch, epoch_func=self.epoch_func, **kwargs)
@@ -58,7 +68,6 @@ class IMC(TrojanNN):
             adv_input, _iter = self.pgd_optim.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
         if self.model.sgm:
             remove_hook(self.model)
-
 
     def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
         other_x, _ = data['other']

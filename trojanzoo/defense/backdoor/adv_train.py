@@ -67,7 +67,8 @@ class Adv_Train(Defense_Backdoor):
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
-        self.model.activate_params(optimizer.param_groups[0]['params'])
+        params = [param_group['params'] for param_group in optimizer.param_groups]
+        self.activate_params(params)
         optimizer.zero_grad()
         for _epoch in range(epoch):
             losses.reset()
