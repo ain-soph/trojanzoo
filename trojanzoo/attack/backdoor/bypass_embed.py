@@ -13,6 +13,8 @@ from typing import Tuple
 from trojanzoo.utils.tensor import to_tensor
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.config import Config
+from trojanzoo.utils.model import AverageMeter
+
 env = Config.env
 
 
@@ -83,13 +85,12 @@ class Bypass_Embed(BadNet):
 
         D = nn.Sequential(OrderedDict([
             ('fc1', nn.Linear(in_dim, 256)),
-            # ('bn1', nn.BatchNorm2d()),  # BatchNorm2d needs 4D input
+            ('bn1', nn.BatchNorm1d(256)),  
             ('relu1', nn.LeakyReLU()),
             ('fc2', nn.Linear(256, 128)),
-            # ('bn2', nn.BatchNorm2d()),
+            ('bn2', nn.BatchNorm1d(128)),
             ('relu2', nn.ReLU()),
-            ('fc3', nn.Linear(128, 2)),
-            ('softmax', nn.Softmax())
+            ('fc3', nn.Linear(128, 2))
         ]))
         if env['num_gpus']:
             D.cuda()
@@ -97,25 +98,30 @@ class Bypass_Embed(BadNet):
 
         params = [param_group['params'] for param_group in optimizer.param_groups]
         params.append(D.parameters())
-        for param in params:
-            self.model.activate_params(param)
+        self.model.activate_params(params)
 
         d_optimizer.zero_grad()
         optimizer.zero_grad()
 
         best_acc = 0.0
-        for _epoch in range(47):
+        losses = AverageMeter('Loss', ':.4e')
+        for _epoch in range(20):
             for data in poison_trainloader:
                 # train D
+                losses.reset()
                 _input, _label_f, _label_d = self.bypass_get_data(data)
-                out_f = self.model.get_final_fm(_input.cuda()) 
+                out_f = self.model.get_final_fm(_input).detach()
                 out_d = D(out_f)
                 loss_d = self.model.criterion(out_d, _label_d)
+
+                batch_size = int(_label_f.size(0))
+                losses.update(loss_d.item(), batch_size)
+
                 loss_d.backward()
                 d_optimizer.step()
                 d_optimizer.zero_grad()
 
-            print('pre-train discriminator - epoch {} | loss {:.4f}'.format(_epoch, loss_d.item()))
+            print('pre-train discriminator - epoch {} | loss {:.4f}'.format(_epoch, losses.avg))
 
         for _epoch in range(epoch):
             if _epoch%5==0:
@@ -123,7 +129,7 @@ class Bypass_Embed(BadNet):
                     for data in poison_trainloader:
                         # train D
                         _input, _label_f, _label_d = self.bypass_get_data(data)
-                        out_d = D(self.model.get_final_fm(_input.cuda()))
+                        out_d = D(self.model.get_final_fm(_input))
                         loss_d = self.model.criterion(out_d, _label_d)
                         loss_d.backward()
                         d_optimizer.step()
@@ -132,7 +138,7 @@ class Bypass_Embed(BadNet):
             for data in poison_trainloader:
                 # train model
                 _input, _label_f, _label_d = self.bypass_get_data(data)
-                out_f = self.model(_input.cuda())
+                out_f = self.model(_input)
                 loss_f = self.model.criterion(out_f, _label_f)
                 out_d = D(self.model.get_final_fm(_input))
                 loss_d = self.model.criterion(out_d, _label_d)
