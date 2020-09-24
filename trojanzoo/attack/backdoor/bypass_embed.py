@@ -2,8 +2,6 @@
 
 from .badnet import BadNet
 
-from trojanzoo.utils.tensor import to_tensor
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,7 +10,8 @@ from torch.utils.data import Dataset
 from collections import OrderedDict
 from typing import Tuple
 
-
+from trojanzoo.utils.tensor import to_tensor
+from trojanzoo.utils.output import prints
 from trojanzoo.utils.config import Config
 env = Config.env
 
@@ -20,7 +19,7 @@ env = Config.env
 class Bypass_Embed(BadNet):
     name: str = 'bypass_embed'
 
-    def __init__(self, poison_num=100, lambd: int = 10, discrim_lr: float = 0.001,
+    def __init__(self, poison_num=100, lambd: int = 10, discrim_lr: float = 0.01,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -30,11 +29,12 @@ class Bypass_Embed(BadNet):
         self.lambd = lambd
         self.discrim_lr = discrim_lr
 
-    def attack(self, optimizer=None, **kwargs):
+    def attack(self, epoch: int, optimizer=None, lr_scheduler=None, save=False, **kwargs):
         print('Sample Data')
         trainloader = self.sample_data()  # with poisoned images
         print('Joint Training')
-        self.joint_train(optimizer, trainloader)
+        self.joint_train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler, 
+                        poison_trainloader=trainloader, save=save)
 
     def sample_data(self):
         other_classes = list(range(self.dataset.num_classes))
@@ -53,7 +53,7 @@ class Bypass_Embed(BadNet):
         poison_y = self.target_class * torch.ones_like(other_y)
 
         trainset = self.dataset.get_dataset(mode='train')
-        clean_x, clean_y = next(iter(self.dataset.get_dataloader(dataset=trainset, batch_size=len(trainset),
+        clean_x, clean_y = next(iter(self.dataset.get_dataloader(mode='train', dataset=trainset, batch_size=len(trainset),
                                                                  shuffle=True, num_workers=0, pin_memory=False)))
         all_x = torch.cat((clean_x, poison_x))
         all_y = torch.cat((clean_y, poison_y))
@@ -67,22 +67,26 @@ class Bypass_Embed(BadNet):
         return poison_trainloader
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor, torch.LongTensor):
+    def bypass_get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor, torch.LongTensor):
         return to_tensor(data[0]), to_tensor(data[1], dtype='long'), to_tensor(data[2], dtype='long')
 
-    def joint_train(self, epoch: int = 0, optimizer: optim.Optimizer = None, _lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+    def joint_train(self, epoch: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                     poison_trainloader=None, save=False, **kwargs):
         # get in_dim
-        batch_x = poison_trainloader[0][0].unsqueeze(0)  # sample one batch
-        batch_x = self.model.get_final_fm(batch_x)
+        batch_x = None
+        for batch_data in poison_trainloader:
+            batch_x = batch_data[0]
+            break
+        batch_x = batch_x[0]  # sample one batch
+        batch_x = self.model.get_final_fm(batch_x.cuda())
         in_dim = batch_x.shape[-1]
 
         D = nn.Sequential(OrderedDict([
             ('fc1', nn.Linear(in_dim, 256)),
-            ('bn1', nn.BatchNorm2d(256)),
+            # ('bn1', nn.BatchNorm2d()),  # BatchNorm2d needs 4D input
             ('relu1', nn.LeakyReLU()),
             ('fc2', nn.Linear(256, 128)),
-            ('bn2', nn.BatchNorm2d(128)),
+            # ('bn2', nn.BatchNorm2d()),
             ('relu2', nn.ReLU()),
             ('fc3', nn.Linear(128, 2)),
             ('softmax', nn.Softmax())
@@ -93,16 +97,20 @@ class Bypass_Embed(BadNet):
 
         params = [param_group['params'] for param_group in optimizer.param_groups]
         params.append(D.parameters())
-        self.activate_params(params)
+        for param in params:
+            self.model.activate_params(param)
 
         d_optimizer.zero_grad()
         optimizer.zero_grad()
 
+        best_acc = 0.0
         for _epoch in range(47):
+            print('pre-train discriminator - epoch', _epoch)
             for data in poison_trainloader:
                 # train D
-                _input, _label_f, _label_d = self.get_data(data)
-                out_d = D(self.model.get_final_fm(_input))
+                _input, _label_f, _label_d = self.bypass_get_data(data)
+                out_f = self.model.get_final_fm(_input.cuda()) 
+                out_d = D(out_f)
                 loss_d = self.model.criterion(out_d, _label_d)
                 loss_d.backward()
                 d_optimizer.step()
@@ -112,8 +120,8 @@ class Bypass_Embed(BadNet):
             for inner_epoch in range(3):
                 for data in poison_trainloader:
                     # train D
-                    _input, _label_f, _label_d = self.get_data(data)
-                    out_d = D(self.model.get_final_fm(_input))
+                    _input, _label_f, _label_d = self.bypass_get_data(data)
+                    out_d = D(self.model.get_final_fm(_input.cuda()))
                     loss_d = self.model.criterion(out_d, _label_d)
                     loss_d.backward()
                     d_optimizer.step()
@@ -121,8 +129,8 @@ class Bypass_Embed(BadNet):
             # output gan loss information
             for data in poison_trainloader:
                 # train model
-                _input, _label_f, _label_d = self.get_data(data)
-                out_f = self.model(_input)
+                _input, _label_f, _label_d = self.bypass_get_data(data)
+                out_f = self.model(_input.cuda())
                 loss_f = self.model.criterion(out_f, _label_f)
                 out_d = D(self.model.get_final_fm(_input))
                 loss_d = self.model.criterion(out_d, _label_d)
@@ -130,17 +138,26 @@ class Bypass_Embed(BadNet):
                 loss = loss_f - self.lambd * loss_d
                 loss.backward()
                 optimizer.step()
-                _lr_scheduler.step()
+                if lr_scheduler:
+                    lr_scheduler.step()
                 optimizer.zero_grad()
+
             # validate and save
-            self.validate_func()
+            _, cur_acc, _ = self.validate_func(get_data=self.bypass_get_data)
+            if cur_acc >= best_acc:
+                prints('best result update!', indent=0)
+                prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=0)
+                best_acc = cur_acc
+                if save:
+                    self.save()
+            print('-' * 50)
+
             self.model.train()
             D.train()
         self.model.eval()
         D.eval()
 
 # ---------------------------------------------------------------------------------- #
-
 
 class TwoLabelsDataset(Dataset):
     def __init__(self, data: torch.FloatTensor, labels_1: torch.LongTensor, labels_2: torch.LongTensor):

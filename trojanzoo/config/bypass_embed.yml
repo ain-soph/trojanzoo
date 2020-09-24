@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
 lambd: 10
-
+poison_num: 100
 discrim_lr: 0.001
 
