@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-from trojanzoo.attack.adv import PGD
+from trojanzoo.optim.pgd import PGD
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.model import AverageMeter
 
@@ -20,15 +20,21 @@ class Adv_Train(Defense_Backdoor):
 
     name: str = 'adv_train'
 
-    def __init__(self, **kwargs):
+    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_epsilon: float = 8.0 / 255, pgd_iteration: int = 7, **kwargs):
         super().__init__(**kwargs)
-        self.attack: PGD
+        self.param_list['adv_train'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        self.pgd_alpha = pgd_alpha
+        self.pgd_epsilon = pgd_epsilon
+        self.pgd_iteration = pgd_iteration
+        self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
         _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
 
     def detect(self, **kwargs):
+        super().detect(**kwargs)
+        print()
+        self.adv_train(verbose=True, **kwargs)
         self.attack.validate_func()
-        self.adv_train(**kwargs)
-        self.attack.validate_func()
+        self.attack.validate_confidence()
 
     def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
@@ -45,7 +51,7 @@ class Adv_Train(Defense_Backdoor):
 
         def loss_fn(X: torch.FloatTensor):
             return -self.model.loss(X, _label)
-        adv_x, _ = self.attack.optimize(_input=_input, loss_fn=loss_fn)
+        adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn)
         return adv_x, _label
 
     def save(self, **kwargs):
@@ -82,9 +88,9 @@ class Adv_Train(Defense_Backdoor):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                for m in range(self.attack.iteration - 1):
+                for m in range(self.pgd.iteration):
                     self.model.eval()
-                    adv_x, _ = self.attack.optimize(_input=_input, noise=noise, loss_fn=loss_fn, iteration=1)
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn, iteration=1)
                     optimizer.zero_grad()
                     self.model.train()
                     loss = self.model.loss(adv_x, _label)

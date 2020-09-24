@@ -20,8 +20,6 @@ if __name__ == '__main__':
     fig = Figure(name)
     fig.set_axis_label('x', 'Attack Name')
     fig.set_axis_label('y', 'Max Re-Mask Accuracy')
-    fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
-                     _format='%d')
     fig.set_title(fig.name)
 
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
@@ -58,14 +56,16 @@ if __name__ == '__main__':
     }
     y = z if args.high else y
     x = np.linspace(0.2, 0.8, len(list(y['benign'].keys())))
-    for i, (mode, _dict) in enumerate(y.items()):
-        x_list = list(_dict.keys())
-        y_list = [_dict[key] for key in x_list]
-        fig.bar(x + (i - 0.5 * len(list(y.keys()))) * 0.05, y_list, width=0.05, label=mode, color=color_list[i * 3])
+
+    x_list = list(y['benign'].keys())
+    y_list = [(y['sgm'][key] - y['benign'][key]) for key in x_list]
+    fig.bar(x, y_list, width=0.05, color=color_list[0])
+
     fig.set_axis_lim('x', lim=[0, 1.0], piece=len(x_list) + 1, margin=[0.05, 0.05],
+                     _format='%.1f')
+    fig.set_axis_lim('y', lim=[-50, 50], piece=6,
                      _format='%.1f')
     x_list.append(None)
     x_list.insert(0, None)
     fig.ax.set_xticklabels(x_list)
-    fig.set_legend()
     fig.save('./result/')

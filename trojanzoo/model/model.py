@@ -48,9 +48,7 @@ class _Model(nn.Module):
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
-        x = self.get_fm(x)
-        x = self.pool(x)
-        x = self.flatten(x)
+        x = self.get_final_fm(x)
         x = self.classifier(x)
         return x
 
@@ -58,6 +56,12 @@ class _Model(nn.Module):
     # output: (batch_size, [feature_map])
     def get_fm(self, x):
         return self.features(x)
+
+    def get_final_fm(self, x):
+        x = self.get_fm(x)
+        x = self.pool(x)
+        x = self.flatten(x)
+        return x
 
     def define_features(self, conv_depth: int = None, conv_dim: int = None):
         return nn.Identity()
@@ -159,6 +163,9 @@ class Model:
     def get_prob(self, _input, **kwargs) -> torch.Tensor:
         return self.softmax(self.get_logits(_input, **kwargs))
 
+    def get_final_fm(self, _input, **kwargs) -> torch.Tensor:
+        return self._model.get_final_fm(_input, **kwargs)
+
     def get_target_prob(self, _input, target, **kwargs):
         return self.get_prob(_input, **kwargs).gather(dim=1, index=target.unsqueeze(1)).flatten()
 
@@ -209,6 +216,8 @@ class Model:
     # define loss function
     # Cross Entropy
     def define_criterion(self, loss_weights: torch.FloatTensor = None):
+        if isinstance(loss_weights, str):
+            loss_weights = None
         entropy_fn = nn.CrossEntropyLoss(weight=loss_weights)
 
         def loss_fn(_output: torch.Tensor, _label: torch.LongTensor):
@@ -308,8 +317,8 @@ class Model:
         #     len(trainloader),
         #     [batch_time, data_time, losses, top1, top5],
         #     prefix=f'Epoch: [{epoch}]')
-
-        self.activate_params(optimizer.param_groups[0]['params'])
+        params = [param_group['params'] for param_group in optimizer.param_groups]
+        self.activate_params(params)
         optimizer.zero_grad()
         # start = time.perf_counter()
         # end = start

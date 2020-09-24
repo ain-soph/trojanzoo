@@ -7,6 +7,7 @@ from .image import *
 
 class_dict = {
     'net': 'Net',
+    'alexnet': 'AlexNet',
     'resnet': 'ResNet',
     'resnetcomp': 'ResNetcomp',
     'vgg': 'VGG',

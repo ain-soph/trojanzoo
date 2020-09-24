@@ -19,16 +19,6 @@ class _ResNet(_ImageModel):
         layer = int(layer)
         _model: ResNet = models.__dict__[
             'resnet' + str(layer)](num_classes=self.num_classes)
-        # if layer==18:
-        #     _model = resnet18(num_classes=self.num_classes)
-        # elif layer==34:
-        #     _model = resnet34(num_classes=self.num_classes)
-        # elif layer==50:
-        #     _model = resnet50(num_classes=self.num_classes)
-        # elif layer==101:
-        #     _model = resnet101(num_classes=self.num_classes)
-        # elif layer==152:
-        #     _model = resnet152(num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
             ('conv1', _model.conv1),
@@ -75,7 +65,8 @@ class _ResNet(_ImageModel):
             od['features'] = x
             x = self.pool(x)
             od['pool'] = x
-            x = x.flatten(start_dim=1)
+            x = self.flatten(x)
+            od['flatten'] = x
 
         for name, module in self.classifier.named_children():
             if record:
@@ -127,16 +118,6 @@ class _ResNetcomp(_ResNet):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         layer = int(layer)
-        # if layer == 18:
-        #     _model = resnet18(num_classes=self.num_classes)
-        # elif layer == 34:
-        #     _model = resnet34(num_classes=self.num_classes)
-        # elif layer == 50:
-        #     _model = resnet50(num_classes=self.num_classes)
-        # elif layer == 101:
-        #     _model = resnet101(num_classes=self.num_classes)
-        # elif layer == 152:
-        #     _model = resnet152(num_classes=self.num_classes)
         _model = models.__dict__[
             'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from ..defense import Parser_Defense
+from ..defense_backdoor import Parser_Defense_Backdoor
 
 
-class Parser_Adv_Train(Parser_Defense):
+class Parser_Adv_Train(Parser_Defense_Backdoor):
     r"""AdvMind Parser
 
     Attributes:

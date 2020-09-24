@@ -138,6 +138,8 @@ class _ImageModel(_Model):
             raise TypeError(
                 '\"get_other_layer\" requires parameter "layer_output" to be int or str.')
         od = self.get_all_layer(x, layer_input=layer_input)
+        if layer_name not in od.keys():
+            print(od.keys())
         return od[layer_name]
 
     def get_layer_name(self, extra=True) -> List[str]:
