@@ -140,8 +140,8 @@ class Model:
         self.randomized_smooth: bool = randomized_smooth
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
-        if sgm:
-            register_hook(self, sgm_gamma)
+        # if sgm:
+        #     register_hook(self, sgm_gamma)
         self.eval()
 
     # ----------------- Forward Operations ----------------------#
@@ -323,14 +323,14 @@ class Model:
         # start = time.perf_counter()
         # end = start
         for _epoch in range(epoch):
+            if epoch_func is not None:
+                epoch_func()
             losses.reset()
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
             if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
-            if epoch_func is not None:
-                epoch_func()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
@@ -487,8 +487,9 @@ class Model:
     def activate_params(self, active_param: list):
         for param in self._model.parameters():
             param.requires_grad = False
-        for param in active_param:
-            param.requires_grad_()
+        for param_group in active_param:
+            for param in param_group:
+                param.requires_grad_()
 
     def get_parallel(self):
         if env['num_gpus'] > 1:

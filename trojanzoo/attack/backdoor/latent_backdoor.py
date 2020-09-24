@@ -88,7 +88,7 @@ class Latent_Backdoor(BadNet):
     def get_avg_target_feats(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
         target_x, _ = self.model.get_data(data['target'])
         avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
-        return avg_target_feats
+        return avg_target_feats.detach()
 
     def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
         other_x, _ = data['other']
@@ -103,10 +103,10 @@ class Latent_Backdoor(BadNet):
 
         losses = AverageMeter('Loss', ':.4e')
         for _epoch in range(self.preprocess_epoch):
-            epoch_start = time.perf_counter()
+            # epoch_start = time.perf_counter()
             loader = other_loader
-            if env['tqdm']:
-                loader = tqdm(loader)
+            # if env['tqdm']:
+            #     loader = tqdm(loader)
             for (batch_x, ) in loader:
                 poison_x = self.mark.add_mark(to_tensor(batch_x))
                 loss = self.loss_mse(poison_x)
@@ -115,15 +115,15 @@ class Latent_Backdoor(BadNet):
                 optimizer.zero_grad()
                 self.mark.mark = Uname.tanh_func(atanh_mark)
                 losses.update(loss.item(), n=len(batch_x))
-            epoch_time = str(datetime.timedelta(seconds=int(
-                time.perf_counter() - epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64 if env['color'] else 35)
-            _str = ' '.join([
-                f'Loss: {losses.avg:.4f},'.ljust(20),
-                f'Time: {epoch_time},'.ljust(20),
-            ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
+            # epoch_time = str(datetime.timedelta(seconds=int(
+            #     time.perf_counter() - epoch_start)))
+            # pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+            #     output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64 if env['color'] else 35)
+            # _str = ' '.join([
+            #     f'Loss: {losses.avg:.4f},'.ljust(20),
+            #     f'Time: {epoch_time},'.ljust(20),
+            # ])
+            # prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()
 

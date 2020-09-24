@@ -59,6 +59,35 @@ class IMC(TrojanNN):
         if self.model.sgm:
             remove_hook(self.model)
 
+
+    def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
+        other_x, _ = data['other']
+        other_set = torch.utils.data.TensorDataset(other_x)
+        other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
+
+        atanh_mark = torch.randn_like(self.mark.mark) * self.mark.mask
+        atanh_mark.requires_grad_()
+        self.mark.mark = Uname.tanh_func(atanh_mark)
+        optimizer = optim.Adam([atanh_mark], lr=self.preprocess_lr)
+        optimizer.zero_grad()
+
+        losses = AverageMeter('Loss', ':.4e')
+        for _epoch in range(self.preprocess_epoch):
+            # epoch_start = time.perf_counter()
+            loader = other_loader
+            # if env['tqdm']:
+            #     loader = tqdm(loader)
+            for (batch_x, ) in loader:
+                poison_x = self.mark.add_mark(to_tensor(batch_x))
+                loss = self.loss_mse(poison_x)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+                self.mark.mark = Uname.tanh_func(atanh_mark)
+                losses.update(loss.item(), n=len(batch_x))
+        atanh_mark.requires_grad = False
+        self.mark.mark.detach_()
+
     def loss_pgd(self, poison_x: torch.Tensor) -> torch.Tensor:
         y = self.target_class * torch.ones(len(poison_x), dtype=torch.long, device=poison_x.device)
         return self.model.loss(poison_x, y)
