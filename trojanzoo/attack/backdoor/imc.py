@@ -21,7 +21,7 @@ env = Config.env
 class IMC(TrojanNN):
 
     r"""
-    Input Model Co-optimization (IMC) Backdoor Attack is described in detail in the paper `A Tale of Evil Twins`_ by Ren Pang. 
+    Input Model Co-optimization (IMC) Backdoor Attack is described in detail in the paper `A Tale of Evil Twins`_ by Ren Pang.
 
     Based on :class:`trojanzoo.attack.backdoor.BadNet`,
     IMC optimizes the watermark pixel values using PGD attack to enhance the performance.
@@ -36,15 +36,15 @@ class IMC(TrojanNN):
 
     name: str = 'imc'
 
-    def __init__(self, preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
+    def __init__(self, pgd_iteration: int = 20, pgd_alpha: float = 0.1,
                  **kwargs):
         #  pgd_alpha: float = 20 / 255, pgd_epsilon: float = 1.0, pgd_iteration: int = 20,
         super().__init__(**kwargs)
         if self.mark.random_pos:
             raise Exception('IMC requires "random pos" to be False to train mark.')
-        self.param_list['imc'] = ['preprocess_epoch', 'preprocess_lr']
-        self.preprocess_epoch: int = preprocess_epoch
-        self.preprocess_lr: float = preprocess_lr
+        self.param_list['imc'] = ['pgd_iteration', 'pgd_alpha']
+        self.pgd_iteration: int = pgd_iteration
+        self.pgd_alpha: float = pgd_alpha
 
         # self.param_list['imc'] = ['']
         # self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
@@ -60,40 +60,36 @@ class IMC(TrojanNN):
     def epoch_func(self, **kwargs):
         if self.model.sgm and 'sgm_remove' not in self.model.__dict__.keys():
             register_hook(self.model, self.model.sgm_gamma)
-        loader = self.dataset.loader['train']
-        if env['tqdm']:
-            loader = tqdm(loader)
-        for data in loader:
-            _input, _label = self.model.get_data(data)
-            adv_input, _iter = self.pgd_optim.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
+        self.optimize_mark()
+        # loader = self.dataset.loader['train']
+        # if env['tqdm']:
+        #     loader = tqdm(loader)
+        # for data in loader:
+        #     _input, _label = self.model.get_data(data)
+        #     adv_input, _iter = self.pgd_optim.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
         if self.model.sgm:
             remove_hook(self.model)
 
-    def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
-        other_x, _ = data['other']
-        other_set = torch.utils.data.TensorDataset(other_x)
-        other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
-
+    def optimize_mark(self):
         atanh_mark = torch.randn_like(self.mark.mark) * self.mark.mask
         atanh_mark.requires_grad_()
         self.mark.mark = Uname.tanh_func(atanh_mark)
-        optimizer = optim.Adam([atanh_mark], lr=self.preprocess_lr)
+        optimizer = optim.Adam([atanh_mark], lr=self.pgd_alpha)
         optimizer.zero_grad()
 
         losses = AverageMeter('Loss', ':.4e')
-        for _epoch in range(self.preprocess_epoch):
-            # epoch_start = time.perf_counter()
-            loader = other_loader
-            # if env['tqdm']:
-            #     loader = tqdm(loader)
-            for (batch_x, ) in loader:
-                poison_x = self.mark.add_mark(to_tensor(batch_x))
-                loss = self.loss_mse(poison_x)
+        for _epoch in range(self.pgd_iteration):
+            for i, data in enumerate(self.dataset.loader['train']):
+                if i > 20:
+                    break
+                _input, _label = self.model.get_data(data)
+                poison_x = self.mark.add_mark(_input)
+                loss = self.model.loss(poison_x, self.target_class * torch.ones_like(_label))
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
                 self.mark.mark = Uname.tanh_func(atanh_mark)
-                losses.update(loss.item(), n=len(batch_x))
+                losses.update(loss.item(), n=len(_label))
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()
 

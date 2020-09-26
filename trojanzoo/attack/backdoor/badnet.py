@@ -129,7 +129,7 @@ class BadNet(Attack):
                                                           get_data=self.get_data, keep_org=False, **kwargs)
         _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
                                                  get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
-        # todo: Return value
+        print(f'Validate Confidence : {self.validate_confidence():.3f}')
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
             target_acc = 0.0
         return clean_loss + target_loss, target_acc, clean_acc

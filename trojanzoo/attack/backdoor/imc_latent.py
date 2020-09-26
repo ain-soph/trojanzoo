@@ -11,19 +11,20 @@ import torch
 class IMC_Latent(Latent_Backdoor):
     name: str = 'imc_latent'
 
-    def __init__(self, pgd_alpha: float = 20 / 255, pgd_epsilon: float = 1.0, pgd_iteration: int = 20, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if self.mark.random_pos:
             raise Exception('IMC requires "random pos" to be False to train mark.')
+        # pgd_alpha: float = 20 / 255, pgd_epsilon: float = 1.0, pgd_iteration: int = 20, 
 
-        self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
-        # self.param_list['imc'] = ['']
+        # self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        # # self.param_list['imc'] = ['']
 
-        self.pgd_alpha: float = pgd_alpha
-        self.pgd_epsilon: float = pgd_epsilon
-        self.pgd_iteration: int = pgd_iteration
-        self.pgd = PGD(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
-                       loss_fn=self.loss_mse, universal=True, output=0)
+        # self.pgd_alpha: float = pgd_alpha
+        # self.pgd_epsilon: float = pgd_epsilon
+        # self.pgd_iteration: int = pgd_iteration
+        # self.pgd = PGD(alpha=self.pgd_alpha, epsilon=self.pgd_epsilon, iteration=self.pgd_iteration,
+        #                loss_fn=self.loss_mse, universal=True, output=0)
 
     def attack(self, **kwargs):
         print('Sample Data')
@@ -43,7 +44,3 @@ class IMC_Latent(Latent_Backdoor):
         #     adv_input, _iter = self.pgd.optimize(_input, noise=self.mark.mark, add_noise_fn=self.mark.add_mark)
         # if self.model.sgm:
         #     remove_hook(self.model)
-
-    def loss_mse(self, poison_x: torch.Tensor) -> torch.Tensor:
-        other_feats = self.model.get_layer(poison_x, layer_output=self.preprocess_layer)
-        return mse_criterion(other_feats, self.avg_target_feats)

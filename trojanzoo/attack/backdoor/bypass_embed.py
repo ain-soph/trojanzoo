@@ -12,9 +12,10 @@ from typing import Tuple
 
 from trojanzoo.utils.tensor import to_tensor
 from trojanzoo.utils.output import prints
-from trojanzoo.utils.config import Config
 from trojanzoo.utils.model import AverageMeter
+from trojanzoo.utils.data import MyDataset
 
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -33,10 +34,10 @@ class Bypass_Embed(BadNet):
 
     def attack(self, epoch: int, optimizer=None, lr_scheduler=None, save=False, **kwargs):
         print('Sample Data')
-        trainloader = self.sample_data()  # with poisoned images
+        poison_loader, discrim_loader = self.sample_data()  # with poisoned images
         print('Joint Training')
-        self.joint_train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler, 
-                        poison_trainloader=trainloader, save=save)
+        self.joint_train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                         poison_loader=poison_loader, discrim_loader=discrim_loader, save=save)
 
     def sample_data(self):
         other_classes = list(range(self.dataset.num_classes))
@@ -57,28 +58,33 @@ class Bypass_Embed(BadNet):
         trainset = self.dataset.get_dataset(mode='train')
         clean_x, clean_y = next(iter(self.dataset.get_dataloader(mode='train', dataset=trainset, batch_size=len(trainset),
                                                                  shuffle=True, num_workers=0, pin_memory=False)))
+
+        discrim_x = torch.cat((other_x, poison_x))
+        discrim_y = torch.cat((torch.zeros_like(other_y),
+                               torch.ones_like(poison_y)))
+        discrim_set = MyDataset(discrim_x, discrim_y)
+        discrim_loader = self.dataset.get_dataloader(
+            mode='train', dataset=discrim_set, batch_size=self.dataset.batch_size)
+
         all_x = torch.cat((clean_x, poison_x))
         all_y = torch.cat((clean_y, poison_y))
         all_discrim_y = torch.cat((torch.zeros_like(clean_y),
                                    torch.ones_like(poison_y)))
-        # print(all_x.shape, all_y.shape, all_discrim_y.shape)
-
         # used for training
-        poison_trainset = TwoLabelsDataset(all_x, all_y, all_discrim_y)
-        poison_trainloader = self.dataset.get_dataloader(
-            mode='train', dataset=poison_trainset, batch_size=self.dataset.batch_size)
-
-        return poison_trainloader
+        poison_set = TwoLabelsDataset(all_x, all_y, all_discrim_y)
+        poison_loader = self.dataset.get_dataloader(mode='train', dataset=poison_set,
+                                                    batch_size=self.dataset.batch_size)
+        return poison_loader, discrim_loader
 
     @staticmethod
     def bypass_get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor, torch.LongTensor):
         return to_tensor(data[0]), to_tensor(data[1], dtype='long'), to_tensor(data[2], dtype='long')
 
     def joint_train(self, epoch: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-                    poison_trainloader=None, save=False, **kwargs):
+                    poison_loader=None, discrim_loader=None, save=False, **kwargs):
         # get in_dim
         batch_x = None
-        for batch_data in poison_trainloader:
+        for batch_data in poison_loader:
             batch_x = batch_data[0]
             break
         batch_x = batch_x[0]  # sample one batch
@@ -87,7 +93,7 @@ class Bypass_Embed(BadNet):
 
         D = nn.Sequential(OrderedDict([
             ('fc1', nn.Linear(in_dim, 256)),
-            ('bn1', nn.BatchNorm1d(256)),  
+            ('bn1', nn.BatchNorm1d(256)),
             ('relu1', nn.LeakyReLU()),
             ('fc2', nn.Linear(256, 128)),
             ('bn2', nn.BatchNorm1d(128)),
@@ -96,55 +102,20 @@ class Bypass_Embed(BadNet):
         ]))
         if env['num_gpus']:
             D.cuda()
-        d_optimizer = optim.Adam(D.parameters(), lr=self.discrim_lr)
-
-        params = [param_group['params'] for param_group in optimizer.param_groups]
-        params.append(D.parameters())
-        self.model.activate_params(params)
-
-        d_optimizer.zero_grad()
+        optim_params = [param_group['params'] for param_group in optimizer.param_groups]
         optimizer.zero_grad()
 
         best_acc = 0.0
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
-        D.train()
-        for _epoch in range(20):
-            losses.reset()
-            top1.reset()
-            for data in poison_trainloader:
-                # train D
-                _input, _label_f, _label_d = self.bypass_get_data(data)
-                out_f = self.model.get_final_fm(_input).detach()
-                out_d = D(out_f)
-                loss_d = self.model.criterion(out_d, _label_d)
 
-                acc1 = self.model.accuracy(out_d, _label_d, topk=(1, ))[0]
-                batch_size = int(_label_f.size(0))
-                losses.update(loss_d.item(), batch_size)
-                top1.update(acc1, batch_size)
-
-                loss_d.backward()
-                d_optimizer.step()
-                d_optimizer.zero_grad()
-
-            print('pre-train discriminator - epoch {} | loss {:.4f} | acc {:.4f}'
-                    .format(_epoch, losses.avg, top1.avg))
-        
         for _epoch in range(epoch):
-            if _epoch%5==0:
-                for inner_epoch in range(3):
-                    for data in poison_trainloader:
-                        # train D
-                        _input, _label_f, _label_d = self.bypass_get_data(data)
-                        out_d = D(self.model.get_final_fm(_input))
-                        loss_d = self.model.criterion(out_d, _label_d)
-                        loss_d.backward()
-                        d_optimizer.step()
-                        d_optimizer.zero_grad()
-            # output gan loss information
-            for data in poison_trainloader:
-                # train model
+            self.discrim_train(epoch=500, D=D, discrim_loader=discrim_loader)
+
+            self.model.train()
+            self.model.activate_params(optim_params)
+            for data in poison_loader:
+                optimizer.zero_grad()
                 _input, _label_f, _label_d = self.bypass_get_data(data)
                 out_f = self.model(_input)
                 loss_f = self.model.criterion(out_f, _label_f)
@@ -157,8 +128,6 @@ class Bypass_Embed(BadNet):
                 if lr_scheduler:
                     lr_scheduler.step()
                 optimizer.zero_grad()
-
-            # validate and save
             _, cur_acc, _ = self.validate_func(get_data=self.bypass_get_data)
             if cur_acc >= best_acc:
                 prints('best result update!', indent=0)
@@ -167,13 +136,39 @@ class Bypass_Embed(BadNet):
                 if save:
                     self.save()
             print('-' * 50)
+            self.model.eval()
+        self.model.activate_params([])
 
-            self.model.train()
-            D.train()
-        self.model.eval()
+    def discrim_train(self, epoch: int, D: nn.Sequential, discrim_loader: torch.utils.data.DataLoader):
+        D.train()
+        losses = AverageMeter('Loss', ':.4e')
+        top1 = AverageMeter('Acc@1', ':6.2f')
+        self.model.activate_params([D.parameters()])
+        d_optimizer = optim.Adam(D.parameters(), lr=self.discrim_lr)
+        d_optimizer.zero_grad()
+        for _epoch in range(epoch):
+            losses.reset()
+            top1.reset()
+            for data in discrim_loader:
+                # train D
+                _input, _label = self.model.get_data(data)
+                out_f = self.model.get_final_fm(_input).detach()
+                out_d = D(out_f)
+                loss_d = self.model.criterion(out_d, _label)
+
+                acc1 = self.model.accuracy(out_d, _label, topk=(1, ))[0]
+                batch_size = int(_label.size(0))
+                losses.update(loss_d.item(), batch_size)
+                top1.update(acc1, batch_size)
+
+                loss_d.backward()
+                d_optimizer.step()
+                d_optimizer.zero_grad()
+            print(f'Discriminator - epoch {_epoch:4d} / {epoch:4d} | loss {losses.avg:.4f} | acc {top1.avg:.4f}')
         D.eval()
 
 # ---------------------------------------------------------------------------------- #
+
 
 class TwoLabelsDataset(Dataset):
     def __init__(self, data: torch.FloatTensor, labels_1: torch.LongTensor, labels_2: torch.LongTensor):
