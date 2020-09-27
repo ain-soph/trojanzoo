@@ -18,7 +18,7 @@ class Reflection_Backdoor(BadNet):
 
     def __init__(self, candidate_num: int = 100, selection_num: int = 20, selection_iter: int = 10, inner_epoch: int = 1, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['reflection'] = ['candidate_num', 'selection_iter', 'm', 'inner_epoch']
+        self.param_list['reflection'] = ['candidate_num', 'selection_num', 'selection_iter', 'inner_epoch']
         self.candidate_num: int = candidate_num
         self.selection_iter: int = selection_iter
         self.selection_num: int = selection_num

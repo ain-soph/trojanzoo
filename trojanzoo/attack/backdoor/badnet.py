@@ -136,15 +136,16 @@ class BadNet(Attack):
 
     def validate_confidence(self) -> float:
         confidence = AverageMeter('Confidence', ':.4e')
-        for data in self.dataset.loader['valid']:
-            _input, _label = self.model.get_data(data)
-            idx1 = _label != self.target_class
-            _input = _input[idx1]
-            _label = _label[idx1]
-            poison_input = self.add_mark(_input)
-            poison_label = self.model.get_class(poison_input)
-            idx2 = poison_label == self.target_class
-            poison_input = poison_input[idx2]
-            batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
-            confidence.update(batch_conf, len(poison_input))
+        with torch.no_grad():
+            for data in self.dataset.loader['valid']:
+                _input, _label = self.model.get_data(data)
+                idx1 = _label != self.target_class
+                _input = _input[idx1]
+                _label = _label[idx1]
+                poison_input = self.add_mark(_input)
+                poison_label = self.model.get_class(poison_input)
+                idx2 = poison_label == self.target_class
+                poison_input = poison_input[idx2]
+                batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
+                confidence.update(batch_conf, len(poison_input))
         return float(confidence.avg)
