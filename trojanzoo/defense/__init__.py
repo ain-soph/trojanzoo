@@ -16,6 +16,7 @@ class_dict = {
     'neural_cleanse': 'Neural_Cleanse',
     'strip': 'STRIP',
     'abs': 'ABS',
+    'tabor': 'Tabor',
     'activation_clustering': 'Activation_Clustering',
     'fine_pruning': 'Fine_Pruning',
     'deep_inspect': 'Deep_Inspect',

@@ -10,3 +10,4 @@ from .spectral_signature import Spectral_Signature
 from .neuron_inspect import Neuron_Inspect
 from .image_transform import Image_Transform
 from .adv_train import Adv_Train
+from .tabor import Tabor
