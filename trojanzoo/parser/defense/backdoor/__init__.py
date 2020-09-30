@@ -10,3 +10,4 @@ from .strip import Parser_STRIP
 from .fine_pruning import Parser_Fine_Pruning
 from .image_transform import Parser_Image_Transform
 from .adv_train import Parser_Adv_Train
+from .tabor import Parser_Tabor
