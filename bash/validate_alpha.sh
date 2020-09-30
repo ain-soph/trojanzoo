@@ -8,7 +8,7 @@ attack=$2
 CUDA_VISIBLE_DEVICES=$1
 
 size=3
-for alpha in {1..9}
+for alpha in {0..9}
 do
     echo 0.$alpha
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/validate_backdoor.py \

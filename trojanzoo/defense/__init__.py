@@ -11,6 +11,7 @@ class_dict = {
 
     'advmind': 'AdvMind',
     'curvature': 'Curvature',
+    'grad_train': 'Grad_Train',
     'adv_train': 'Adv_Train',
 
     'neural_cleanse': 'Neural_Cleanse',

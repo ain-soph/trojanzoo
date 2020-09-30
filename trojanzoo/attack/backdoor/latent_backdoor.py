@@ -86,8 +86,9 @@ class Latent_Backdoor(BadNet):
         # return other_loader, target_loader
 
     def get_avg_target_feats(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
-        target_x, _ = self.model.get_data(data['target'])
-        avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
+        with torch.no_grad():
+            target_x, _ = self.model.get_data(data['target'])
+            avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
         return avg_target_feats.detach()
 
     def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):

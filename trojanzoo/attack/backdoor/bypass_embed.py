@@ -22,29 +22,32 @@ env = Config.env
 class Bypass_Embed(BadNet):
     name: str = 'bypass_embed'
 
-    def __init__(self, poison_num=100, lambd: int = 10, discrim_lr: float = 0.001,
+    def __init__(self, lambd: int = 10, discrim_lr: float = 0.001,
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.param_list['bypass_embed'] = ['poison_num', 'lambd', 'discrim_lr']
+        self.param_list['bypass_embed'] = ['lambd', 'discrim_lr']
 
-        self.poison_num: int = poison_num
         self.lambd = lambd
         self.discrim_lr = discrim_lr
 
-    def attack(self, epoch: int, optimizer=None, lr_scheduler=None, save=False, **kwargs):
+    def attack(self, epoch: int, lr_scheduler=None, save=False, **kwargs):
         print('Sample Data')
         poison_loader, discrim_loader = self.sample_data()  # with poisoned images
         print('Joint Training')
-        self.joint_train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
-                         poison_loader=poison_loader, discrim_loader=discrim_loader, save=save)
+        super().attack(epoch=10, lr_scheduler=lr_scheduler, **kwargs)
+        if lr_scheduler is not None:
+            lr_scheduler.step(0)
+        self.joint_train(epoch=epoch, poison_loader=poison_loader, discrim_loader=discrim_loader,
+                         save=save, lr_scheduler=lr_scheduler, **kwargs)
 
     def sample_data(self):
         other_classes = list(range(self.dataset.num_classes))
         other_classes.pop(self.target_class)
         other_x, other_y = [], []
+        poison_num = len(self.dataset.get_dataset('train')) * self.percent / self.dataset.num_classes
         for _class in other_classes:
-            loader = self.dataset.get_dataloader(mode='train', batch_size=self.poison_num, classes=[_class],
+            loader = self.dataset.get_dataloader(mode='train', batch_size=int(poison_num), classes=[_class],
                                                  shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)
@@ -82,15 +85,7 @@ class Bypass_Embed(BadNet):
 
     def joint_train(self, epoch: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                     poison_loader=None, discrim_loader=None, save=False, **kwargs):
-        # get in_dim
-        batch_x = None
-        for batch_data in poison_loader:
-            batch_x = batch_data[0]
-            break
-        batch_x = batch_x[0]  # sample one batch
-        batch_x = self.model.get_final_fm(batch_x.cuda())
-        in_dim = batch_x.shape[-1]
-
+        in_dim = self.model._model.classifier[0].in_features
         D = nn.Sequential(OrderedDict([
             ('fc1', nn.Linear(in_dim, 256)),
             ('bn1', nn.BatchNorm1d(256)),
@@ -110,7 +105,7 @@ class Bypass_Embed(BadNet):
         top1 = AverageMeter('Acc@1', ':6.2f')
 
         for _epoch in range(epoch):
-            self.discrim_train(epoch=500, D=D, discrim_loader=discrim_loader)
+            self.discrim_train(epoch=100, D=D, discrim_loader=discrim_loader)
 
             self.model.train()
             self.model.activate_params(optim_params)
