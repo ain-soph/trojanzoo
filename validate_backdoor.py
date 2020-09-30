@@ -27,6 +27,3 @@ if __name__ == '__main__':
 
     attack.load()
     attack.validate_func()
-    # ------------------------------------------------------------------------ #
-    confidence = attack.validate_confidence()
-    print(f'confidence: {confidence:.3f}')

@@ -34,7 +34,6 @@ class Adv_Train(Defense_Backdoor):
         print()
         self.adv_train(verbose=True, **kwargs)
         self.attack.validate_func()
-        self.attack.validate_confidence()
 
     def validate_func(self, get_data=None, **kwargs) -> (float, float, float):
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
