@@ -63,25 +63,25 @@ class Neural_Cleanse(Defense_Backdoor):
         print(f'Jaccard index: {overlap:.3f}')
 
 
-    def loss_fn(self, mask, mark, _input, _label, Y, pa):
+    def loss_fn(self, mask, mark, _input, _label, Y):
         # R1 - Overly large triggers
         mask_l1_norm = torch.sum(torch.abs(mask))
-        mask_l2_norm = torch.sum(torch.square(mask))
+        mask_l2_norm = torch.sum(mask.pow(2))
         mask_r1 = (mask_l1_norm + mask_l2_norm)
 
         pattern_tensor = (torch.ones_like(mask, device = mark.device) - mask) * mark
         pattern_l1_norm = torch.sum(torch.abs(pattern_tensor))
-        pattern_l2_norm =  torch.sum(torch.square(pattern_tensor))
+        pattern_l2_norm =  torch.sum(pattern_tensor.pow(2))
         pattern_r1 = (pattern_l1_norm + pattern_l2_norm)
 
         # R2 - Scattered triggers
-        pixel_dif_mask_col = torch.sum(torch.square(
-        mask[:-1, :]- mask[1:, :]))
-        pixel_dif_mask_row = torch.sum(torch.square(mask[:, :-1] - mask[:, 1:]))
+        pixel_dif_mask_col = torch.sum(
+        (mask[:-1, :]- mask[1:, :]).pow(2))
+        pixel_dif_mask_row = torch.sum((mask[:, :-1] - mask[:, 1:]).pow(2))
         mask_r2 = pixel_dif_mask_col + pixel_dif_mask_row
 
-        pixel_dif_pat_col = torch.sum(torch.square(pattern_tensor[:, :-1, :] - pattern_tensor[:, 1:, :]))
-        pixel_dif_pat_row = torch.sum(torch.square(pattern_tensor[:, :, :-1] - pattern_tensor[:, :, 1:]))
+        pixel_dif_pat_col = torch.sum((pattern_tensor[:, :-1, :] - pattern_tensor[:, 1:, :]).pow(2))
+        pixel_dif_pat_row = torch.sum((pattern_tensor[:, :, :-1] - pattern_tensor[:, :, 1:]).pow(2))
         pattern_r2 = pixel_dif_pat_col + pixel_dif_pat_row
 
         # R3 - Blocking triggers
@@ -91,6 +91,7 @@ class Neural_Cleanse(Defense_Backdoor):
 
         # R4 - Overlaying triggers
         mask_crop_tensor = mask * mark
+        mask_crop_tensor = mask_crop_tensor.expand(Y.shape[0],-1,-1,-1)
         mask_cropped_output = self.model(mask_crop_tensor)
         r4 = torch.mean(self.model.criterion(mask_cropped_output, Y))
         
