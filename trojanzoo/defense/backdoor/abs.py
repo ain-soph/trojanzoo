@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-from trojanzoo.utils import to_tensor
+from trojanzoo.utils import to_tensor, percentile
 from trojanzoo.utils.model import AverageMeter, total_variation
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.ssim import SSIM
@@ -108,7 +108,7 @@ class ABS(Defense_Backdoor):
                 _dict['loss'] = loss
                 _dict['attack_acc'] = attack_acc
 
-                detect_mask = mask > 1e-2
+                detect_mask = mask > percentile(mask, 10.0)
                 sum_temp = detect_mask.int() + self.real_mask.int()
                 overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
                 _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
