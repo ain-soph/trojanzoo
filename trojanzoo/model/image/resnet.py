@@ -56,7 +56,7 @@ class _ResNet(_ImageModel):
                         record = True
             elif record:
                 x = layer(x)
-            od['features.' + layer_name] = x
+                od['features.' + layer_name] = x
             if 'features.' + layer_name == layer_input:
                 record = True
         if layer_input == 'features':

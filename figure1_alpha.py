@@ -27,7 +27,9 @@ if __name__ == '__main__':
     fig.set_title(fig.name)
 
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'], color['brown']['brown']]
+                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
+                  ting_color['green'], color['brown']['brown'], color['green']['army']]
+    mark_list = ['.', ',', 'o', 'v', 's', 'p', '*', 'h', 'D']
 
     x = np.linspace(0.0, 1.0, 11)
     y = {
@@ -35,11 +37,12 @@ if __name__ == '__main__':
             'badnet': [96.078, 96.078, 96.078, 96.078, 95.146, 94.118, 90.196, 83.810, 72.381, 52.577],
             'latent_backdoor': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 98.113],
             'trojannn': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.065, 97.196, 91.509, 62.617],
-            'imc': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.065, 97.537, 77.940, 62.791],
+            'imc': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.960, 99.220],
             'reflection_backdoor': [99.980, 99.810, 99.750, 99.430, 98.830, 97.330, 94.240, 87.400, 52.110, 10.660],
             'targeted_backdoor': [100.000, 100.000, 100.000, 100.000, 97.980, 95.146, 90.909, 79.412, 11.470, 10.680],
             'clean_label_pgd': [74.243, 51.167, 26.156, 13.037, 12.898, 12.712, 12.630, 12.661, 12.650, 10.540],
             'trojannet': [100, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
+            'bypassing': [95.320, 95.250, 94.370, 93.880, 93.300, 92.070, 90.460, 88.790, 74.320, 49.270],
         },
         'gtsrb': {
             'badnet': [95.469, 96.875, 95.312, 93.75, 93.75, 90.476, 88.525, 82.540, 80.328, 63.934],
@@ -87,5 +90,5 @@ if __name__ == '__main__':
     y = z if args.confidence else y
     for i, (key, value) in enumerate(y[args.dataset].items()):
         fig.curve(x[:len(value)], value, color=color_list[i], label=key)
-        fig.scatter(x[:len(value)], value, color=color_list[i])
+        fig.scatter(x[:len(value)], value, color=color_list[i], marker=mark_list[i])
     fig.save('./result/')

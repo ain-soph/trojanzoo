@@ -2,7 +2,7 @@
 
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_list, normalize_mad
+from trojanzoo.utils import percentile
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
@@ -26,7 +26,8 @@ class Neural_Cleanse(Defense_Backdoor):
 
     def __init__(self, epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
-                 attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, penalize: bool = False, hyperparams: list = [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2], **kwargs):
+                 attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99,
+                 penalize: bool = False, hyperparams: list = [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2], **kwargs):
         super().__init__(**kwargs)
 
         data_shape = [self.dataset.n_channel]
@@ -46,7 +47,7 @@ class Neural_Cleanse(Defense_Backdoor):
         self.early_stop_threshold: float = early_stop_threshold
         self.early_stop_patience: float = self.patience * 2
 
-        self.penalize = penalize # nc or tabor
+        self.penalize = penalize  # nc or tabor
         self.hyperparams = hyperparams
 
     def detect(self, **kwargs):
@@ -57,11 +58,10 @@ class Neural_Cleanse(Defense_Backdoor):
         print('mask_norms: ', mask_norms)
         print('loss: ', loss_list)
 
-        detect_mask = mask_list[self.attack.target_class] > 1e-2
+        detect_mask = mask_list[self.attack.target_class] > percentile(mask_list[self.attack.target_class], 10.0)
         sum_temp = detect_mask.int() + real_mask.int()
         overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
         print(f'Jaccard index: {overlap:.3f}')
-
 
     def loss_fn(self, mask, mark, _input, _label, Y, pa):
         # R1 - Overly large triggers
@@ -69,14 +69,14 @@ class Neural_Cleanse(Defense_Backdoor):
         mask_l2_norm = torch.sum(torch.square(mask))
         mask_r1 = (mask_l1_norm + mask_l2_norm)
 
-        pattern_tensor = (torch.ones_like(mask, device = mark.device) - mask) * mark
+        pattern_tensor = (torch.ones_like(mask, device=mark.device) - mask) * mark
         pattern_l1_norm = torch.sum(torch.abs(pattern_tensor))
-        pattern_l2_norm =  torch.sum(torch.square(pattern_tensor))
+        pattern_l2_norm = torch.sum(torch.square(pattern_tensor))
         pattern_r1 = (pattern_l1_norm + pattern_l2_norm)
 
         # R2 - Scattered triggers
         pixel_dif_mask_col = torch.sum(torch.square(
-        mask[:-1, :]- mask[1:, :]))
+            mask[:-1, :] - mask[1:, :]))
         pixel_dif_mask_row = torch.sum(torch.square(mask[:, :-1] - mask[:, 1:]))
         mask_r2 = pixel_dif_mask_col + pixel_dif_mask_row
 
@@ -85,7 +85,7 @@ class Neural_Cleanse(Defense_Backdoor):
         pattern_r2 = pixel_dif_pat_col + pixel_dif_pat_row
 
         # R3 - Blocking triggers
-        cropped_input_tensor = (torch.ones_like(mask, device = mark.device) - mask) * _input
+        cropped_input_tensor = (torch.ones_like(mask, device=mark.device) - mask) * _input
         _cropped_output = self.model(cropped_input_tensor)
         r3 = torch.mean(self.model.criterion(_cropped_output, _label))
 
@@ -93,11 +93,11 @@ class Neural_Cleanse(Defense_Backdoor):
         mask_crop_tensor = mask * mark
         mask_cropped_output = self.model(mask_crop_tensor)
         r4 = torch.mean(self.model.criterion(mask_cropped_output, Y))
-        
-        regularization_loss = self.hyperparams[0] * mask_r1 + self.hyperparams[1] * pattern_r1 + self.hyperparams[2] * mask_r2 + self.hyperparams[3] * pattern_r2 +  self.hyperparams[4] * r3 + self.hyperparams[5] * r4
+
+        regularization_loss = self.hyperparams[0] * mask_r1 + self.hyperparams[1] * pattern_r1 + self.hyperparams[2] * \
+            mask_r2 + self.hyperparams[3] * pattern_r2 + self.hyperparams[4] * r3 + self.hyperparams[5] * r4
 
         return regularization_loss
-
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         mark_list, mask_list, loss_list = [], [], []
@@ -173,7 +173,7 @@ class Neural_Cleanse(Defense_Backdoor):
 
                 if self.penalize:
                     penalize_term = self.loss_fn(mask, mark, _input, _label, Y)
-                    batch_loss = batch_loss + penalize_term 
+                    batch_loss = batch_loss + penalize_term
 
                 acc.update(batch_acc.item(), batch_size)
                 entropy.update(batch_entropy.item(), batch_size)

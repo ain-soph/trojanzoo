@@ -146,6 +146,8 @@ class BadNet(Attack):
                 poison_label = self.model.get_class(poison_input)
                 idx2 = poison_label == self.target_class
                 poison_input = poison_input[idx2]
+                if len(poison_input) == 0:
+                    continue
                 batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
                 confidence.update(batch_conf, len(poison_input))
         return float(confidence.avg)

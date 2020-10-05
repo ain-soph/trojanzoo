@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-, from trojanzoo.plot import *
 
 from trojanzoo.plot import *
 
@@ -31,7 +31,9 @@ if __name__ == '__main__':
     fig.set_title(fig.name)
 
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'], color['brown']['brown']]
+                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
+                  ting_color['green'], color['brown']['brown'], color['green']['army']]
+    mark_list = ['.', ',', 'o', 'v', 's', 'p', '*', 'h', 'D']
 
     x = np.linspace(1, 10, 10)
     y = {
@@ -39,11 +41,12 @@ if __name__ == '__main__':
             'badnet': [61.520, 70.520, 72.381, 77.350, 79.380, 81.040, 81.560],
             'latent_backdoor': [10.720, 99.250, 100.000, 100.000, 100.000, 100.000, 100.000],
             'trojannn': [46.600, 87.770, 91.509, 91.910, 92.360, 93.520, 94.990],
-            'imc': [10.770, 71.220, 77.940, 86.500, 91.050, 94.620, 96.620],
+            'imc': [58.550, 99.660, 99.960, 99.990, 100.000, 100.000, 100.000],
             'reflection_backdoor': [44.560, 64.300, 79.240, 88.150, 92.920, 94.000, 96.390],
             'targeted_backdoor': [10.940, 11.140, 11.470, 11.760, 33.290, 44.450, 49.000],
             'clean_label_pgd': [12.190, 12.410, 12.650, 13.040, 13.240, 13.030, 14.650],
             'trojannet': [10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
+            'bypassing': [66.700, 74.270, 74.320, 78.520, 83.340, 83.650, 85.610],
         },
         # {
         # 'cifar10': {
@@ -79,5 +82,5 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(y[args.dataset].items()):
         print(key)
         fig.curve(x[:len(value)], value, color=color_list[i], label=key)
-        fig.scatter(x[:len(value)], value, color=color_list[i])
+        fig.scatter(x[:len(value)], value, color=color_list[i], marker=mark_list[i])
     fig.save('./result/')
