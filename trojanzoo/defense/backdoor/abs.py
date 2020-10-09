@@ -57,7 +57,8 @@ class ABS(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        self.real_mask = self.attack.mark.mask
+        if not self.attack.mark.random_pos:
+            self.real_mask = self.attack.mark.mask
         seed_data = self.load_seed_data()
         _input, _label = seed_data['input'], seed_data['label']
         print('sample neurons')
@@ -87,9 +88,14 @@ class ABS(Defense_Backdoor):
                 print(_str)
 
     def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
-
+        losses = AverageMeter('Loss', ':.4e')
+        norms = AverageMeter('Norm', ':6.2f')
+        jaccard = AverageMeter('Jaccard Idx', ':6.2f')
         for label, label_list in neuron_dict.items():
             print('label: ', label)
+            losses.reset()
+            norms.reset()
+            jaccard.reset()
             for _dict in label_list:
                 layer = _dict['layer']
                 neuron = _dict['neuron']
@@ -107,14 +113,20 @@ class ABS(Defense_Backdoor):
                     verbose=False, get_data=self.attack.get_data, keep_org=False)
                 _dict['loss'] = loss
                 _dict['attack_acc'] = attack_acc
-
-                overlap = jaccard_idx(mask, self.real_mask)
+                if attack_acc > 90:
+                    losses.update(loss)
+                    norms.update(mask.norm(p=1))
                 _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
                 _str += f'    loss: {loss:10.3f}'
                 _str += f'    Attack Acc: {attack_acc:.3f}'
                 _str += f'    Norm: {mask.norm(p=1):.3f}'
-                _str += f'    Jaccard index: {overlap:.3f}'
+                if not self.attack.mark.random_pos:
+                    overlap = jaccard_idx(mask, self.real_mask)
+                    _str += f'    Jaccard index: {overlap:.3f}'
+                    if attack_acc > 90:
+                        jaccard.update(overlap)
                 print(_str)
+            print(f'Label: {label:3d}  loss: {losses.avg:10.3f}  Norm: {norms.avg:10.3f}  Jaccard index: {jaccard.avg:10.3f}')
         return neuron_dict
 
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,

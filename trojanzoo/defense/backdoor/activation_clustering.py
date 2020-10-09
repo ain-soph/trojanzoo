@@ -64,8 +64,6 @@ class Activation_Clustering(Defense_Backdoor):
         self.clean_image_num = int(mix_image_num * clean_image_ratio)
         self.poison_image_num = self.mix_image_num - self.clean_image_num
 
-        self.attack.load()
-
         self.nb_clusters = nb_clusters
         self.clustering_method = clustering_method
         self.nb_dims = nb_dims
@@ -92,14 +90,13 @@ class Activation_Clustering(Defense_Backdoor):
         self.mix_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=0)
 
-
     def detect(self, optimizer, lr_scheduler, **kwargs):
         """
         Record the detected poison samples
         Remove them and retrain the model from scratch to get a clean model.
         """
         super().detect(**kwargs)
-        all_reduced_activations, all_label, all_clusters,all_class = self.preprocess(self.mix_dataloader)
+        all_reduced_activations, all_label, all_clusters, all_class = self.preprocess(self.mix_dataloader)
         poison_cluster_index = self.analyze_clusters(
             all_clusters, all_reduced_activations, all_label, all_class, self.cluster_analysis)
         print(all_class)
@@ -124,7 +121,6 @@ class Activation_Clustering(Defense_Backdoor):
         print("precision_score:", metrics.precision_score(y_true, y_pred, average='weighted'))
         print("recall_score:", metrics.recall_score(y_true, y_pred, average='weighted'))
         print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
-
 
     def preprocess(self, loader):
         """
@@ -159,7 +155,6 @@ class Activation_Clustering(Defense_Backdoor):
         all_clusters = torch.LongTensor(all_clusters)
         return all_reduced_activations, all_label, all_clusters, all_class
 
-
     def reduce_dimensionality(self, activations, nb_dims: int = 10, reduce_method: str = "FastICA"):
         """
         Reduce dimensionality of activations.
@@ -185,7 +180,6 @@ class Activation_Clustering(Defense_Backdoor):
         reduced_activations = projector.fit_transform(activations.detach().cpu())
         return reduced_activations
 
-
     def cluster_activations(self, reduced_activations, nb_clusters: int = 2, clustering_method: str = "KMeans"):
         """
         Cluster the activations after reducing dimensionality.
@@ -207,7 +201,6 @@ class Activation_Clustering(Defense_Backdoor):
             return clusters
         else:
             raise ValueError(clustering_method + " clustering method not supported.")
-
 
     def analyze_by_size(self, cluster_pred):
         """
@@ -232,7 +225,6 @@ class Activation_Clustering(Defense_Backdoor):
         else:
             poison_cluster_index = 1
             return poison_cluster_index
-
 
     def analyze_by_relative_size(self, label, cluster_pred, size_threshold: float = 0.35):
         """
@@ -273,7 +265,7 @@ class Activation_Clustering(Defense_Backdoor):
     def analyze_by_exclusionary_reclassification(self, cluster_pred, label, all_class):
         """
         Analyze the result of clustering to judge which cluster is poison, according the class of most data and the number of data of which the predicted and true class is identical. 
-        
+
         Args:
             cluster_pred (torch.LongTensor): the result of clustering
             label (torch.LongTensor): the original label of data in mix_dataloader.
@@ -293,33 +285,32 @@ class Activation_Clustering(Defense_Backdoor):
         class_1_max_num = 0
 
         for i in range(len(zip_label)):
-            if list(zip_label[i])[0]==0:
+            if list(zip_label[i])[0] == 0:
                 if list(zip_label[i])[1] == max_label:
-                    
+
                     class_0_max_num += 1
-                if list(zip_label[i])[1]==list(zip_label[i])[2]:
-                    
+                if list(zip_label[i])[1] == list(zip_label[i])[2]:
+
                     class_0_correct_num += 1
-            elif list(zip_label[i])[0]==1:
+            elif list(zip_label[i])[0] == 1:
                 if list(zip_label[i])[1] == max_label:
-                    
+
                     class_1_max_num += 1
-                if list(zip_label[i])[1]==list(zip_label[i])[2]:
-                    
+                if list(zip_label[i])[1] == list(zip_label[i])[2]:
+
                     class_1_correct_num += 1
         # try:
-        if  float(class_0_correct_num/(class_0_max_num+1))>float(class_1_correct_num/(class_1_max_num+1)):
+        if float(class_0_correct_num / (class_0_max_num + 1)) > float(class_1_correct_num / (class_1_max_num + 1)):
             poison_cluster_index = 1
             return poison_cluster_index
         else:
             poison_cluster_index = 0
-            return poison_cluster_index 
+            return poison_cluster_index
         # except ZeroDivisionError:
         #     print("Error: you can't divide by 0!")
         # else:
         #     poison_cluster_index = self.analyze_by_size(cluster_pred)
         #     return poison_cluster_index
-                
 
     def analyze_by_silhouette_score(self, reduced_activation, cluster_pred, label, score_threshold: float = 0.1):
         """

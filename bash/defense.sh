@@ -16,19 +16,21 @@ fi
 
 size=3
 alpha=0.0
-for attack in 'badnet' 'latent_backdoor' 'trojannn' 'imc' 'reflection_backdoor' 'bypass_embed' 'clean_label'
+
+
+attack='badnet'
+echo "clean"
+CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
+--dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size --original --pretrain \
+> $dirname/clean.txt 2>&1
+
+for attack in 'badnet' 'latent_backdoor' 'trojannn' 'imc' 'reflection_backdoor' 'bypass_embed' 'clean_label' 'trojannet'
 do
     echo $attack
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
-    --dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
+    --dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size --pretrain \
     > $dirname/${attack}.txt 2>&1
 done
-
-attack='trojannet'
-echo $attack
-CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
---dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
-> $dirname/${attack}.txt 2>&1
 
 attack='badnet'
 echo "targeted"
