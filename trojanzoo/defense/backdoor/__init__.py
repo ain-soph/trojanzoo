@@ -9,6 +9,7 @@ FilePath: /xs/Trojan-Zoo/trojanzoo/defense/backdoor/__init__.py
 # -*- coding: utf-8 -*-
 
 from .neural_cleanse import Neural_Cleanse
+from .tabor import TABOR
 from .strip import STRIP
 from .abs import ABS
 from .fine_pruning import Fine_Pruning

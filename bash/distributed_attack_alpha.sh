@@ -13,7 +13,7 @@ if [ ! -d $dirname  ];then
 fi
 
 size=3
-for alpha in {8..9}
+for alpha in {0..9}
 do
     echo 0.$alpha
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_attack.py \

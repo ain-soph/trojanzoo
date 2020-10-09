@@ -1,3 +1,5 @@
+# CUDA_VISIBLE_DEVICES=0 python backdoor_defense.py --defense tabor --attack badnet --mark_alpha 0.0 --height 3 --width 3
+
 work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
@@ -14,7 +16,7 @@ fi
 
 size=3
 alpha=0.0
-for attack in 'badnet' 'latent_backdoor' 'trojannn' 'imc' 'reflection_backdoor'
+for attack in 'badnet' 'latent_backdoor' 'trojannn' 'imc' 'reflection_backdoor' 'bypass_embed' 'clean_label'
 do
     echo $attack
     CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
@@ -29,16 +31,8 @@ CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.p
 > $dirname/${attack}.txt 2>&1
 
 attack='badnet'
-echo $attack
+echo "targeted"
 CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
 --dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
 --random_pos \
-> $dirname/random_${attack}.txt 2>&1
-
-attack='clean_label'
-poison_generation_method='pgd'
-echo $attack
-CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES python ${work_dir}/backdoor_defense.py \
---dataset $dataset --model $model --defense $defense --attack $attack --mark_alpha $alpha --height $size --width $size \
---poison_generation_method $poison_generation_method \
-> $dirname/${attack}_${poison_generation_method}.txt 2>&1
+> $dirname/targeted.txt 2>&1

@@ -23,63 +23,6 @@ class _DenseNet(_ImageModel):
             ('fc', _model.classifier)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
 
-    # def get_all_layer(self, x: torch.Tensor, layer_input='input'):
-    #     od = OrderedDict()
-    #     record = False
-
-    #     if layer_input == 'input':
-    #         x = self.preprocess(x)
-    #         record = True
-
-    #     for block_name, block in self.features.named_children():
-    #         if 'dense' in block_name:
-    #             for layer_name, layer in block.named_children():
-    #                 if record:
-    #                     x = layer(x)
-    #                     od['features.' + block_name + '.' + layer_name] = x
-    #                 if 'features.' + block_name + '.' + layer_name == layer_input:
-    #                     record = True
-    #         elif record:
-    #             x = block(x)
-    #             od['features.' + block_name] = x
-    #         if 'features.' + block_name == layer_input:
-    #             record = True
-    #     if layer_input == 'features':
-    #         record = True
-    #     if record:
-    #         od['features'] = x
-    #         x = self.pool(x)
-    #         od['pool'] = x
-    #         x = x.flatten(start_dim=1)
-
-    #     for name, module in self.classifier.named_children():
-    #         if record:
-    #             x = module(x)
-    #             od['classifier.' + name] = x
-    #         elif 'classifier.' + name == layer_input:
-    #             record = True
-    #     od['classifier'] = x
-    #     od['logits'] = x
-    #     od['output'] = x
-    #     return od
-
-    # def get_layer_name(self, extra=True):
-    #     layer_name_list = []
-    #     for block_name, block in self.features.named_children():
-    #         if 'dense' in block_name:
-    #             for layer_name, layer in block.named_children():
-    #                 if 'bn' not in block_name and 'relu' not in block_name:
-    #                     layer_name_list.append('features.' + block_name + '.' + layer_name)
-    #         elif 'bn' not in block_name and 'relu' not in block_name:
-    #             layer_name_list.append('features.' + block_name)
-    #     if extra:
-    #         layer_name_list.append('pool')
-    #         layer_name_list.append('flatten')
-    #     for name, _ in self.classifier.named_children():
-    #         if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
-    #             layer_name_list.append('classifier.' + name)
-    #     return layer_name_list
-
 
 class DenseNet(ImageModel):
 
@@ -112,3 +55,18 @@ class DenseNet(ImageModel):
             self._model.load_state_dict(new_dict, strict=False)
         if verbose:
             print(f'Model {self.name} loaded From Official Website: {url}')
+
+
+class _DenseNetcomp(_DenseNet):
+
+    def __init__(self, layer=121, **kwargs):
+        super().__init__(**kwargs)
+        conv = self.features.conv0
+        self.features.conv0 = nn.Conv2d(3, conv.out_channels, kernel_size=3, padding=1, bias=False)
+
+
+class DenseNetcomp(DenseNet):
+
+    def __init__(self, name='densenetcomp', layer=None, model_class=_DenseNetcomp, default_layer=121, **kwargs):
+        super().__init__(name=name, layer=layer, model_class=model_class,
+                         default_layer=default_layer, **kwargs)

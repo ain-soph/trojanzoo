@@ -23,6 +23,7 @@ class_dict = {
     'adv_train': 'Adv_Train',
 
     'neural_cleanse': 'Neural_Cleanse',
+    'tabor': 'TABOR',
     'strip': 'STRIP',
     'abs': 'ABS',
     'activation_clustering': 'Activation_Clustering',

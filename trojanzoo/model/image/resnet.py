@@ -54,6 +54,8 @@ class _ResNet(_ImageModel):
                         od['features.' + layer_name + '.' + block_name] = x
                     if 'features.' + layer_name + '.' + block_name == layer_input:
                         record = True
+                if record:
+                    od['features.' + layer_name] = x
             elif record:
                 x = layer(x)
                 od['features.' + layer_name] = x

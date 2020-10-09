@@ -13,6 +13,7 @@ class_dict = {
     'vgg': 'VGG',
     'vggcomp': 'VGGcomp',
     'densenet': 'DenseNet',
+    'densenetcomp': 'DenseNetcomp',
     'latentnet': 'LatentNet',
     'magnet': 'MagNet',
 }

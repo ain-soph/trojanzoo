@@ -9,6 +9,7 @@ FilePath: /xs/Trojan-Zoo/trojanzoo/parser/defense/backdoor/__init__.py
 # -*- coding: utf-8 -*-
 
 from .neural_cleanse import Parser_Neural_Cleanse
+from .tabor import Parser_TABOR
 from .abs import Parser_ABS
 from .deep_inspect import Parser_Deep_Inspect
 from .activation_clustering import Parser_Activation_Clustering

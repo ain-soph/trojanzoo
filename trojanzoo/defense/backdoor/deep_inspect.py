@@ -2,7 +2,7 @@
 
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_list, normalize_mad
+from trojanzoo.utils import to_list, jaccard_idx
 from trojanzoo.utils.model import to_categorical, AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
@@ -52,9 +52,11 @@ class Deep_Inspect(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        self.real_mask = self.attack.mark.mask
+        if not self.attack.mark.random_pos:
+            self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
         print('loss: ', loss_list)  # DeepInspect use this)
+        print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
     def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
         mark_list, loss_list = [], []
@@ -131,10 +133,10 @@ class Deep_Inspect(Defense_Backdoor):
             return poison_input, poison_label
         self.model._validate(print_prefix='Validate Trigger Tgt', get_data=get_data_fn, indent=4)
 
-        detect_mask = mark > 0.1
-        sum_temp = detect_mask.int() + self.real_mask.int()
-        overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
-        print(f'    Jaccard index: {overlap:.3f}')
+        if not self.attack.mark.random_pos:
+            overlap = jaccard_idx(mark.mean(dim=0), self.real_mask,
+                                  select_num=self.attack.mark.height * self.attack.mark.width)
+            print(f'    Jaccard index: {overlap:.3f}')
 
         for param in generator.parameters():
             param.requires_grad = False
