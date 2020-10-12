@@ -60,9 +60,7 @@ class IMC(TrojanNN):
     def epoch_func(self, **kwargs):
         if self.model.sgm and 'sgm_remove' not in self.model.__dict__.keys():
             register_hook(self.model, self.model.sgm_gamma)
-        self.model.eval()
         self.optimize_mark()
-        self.model.train()
         # loader = self.dataset.loader['train']
         # if env['tqdm']:
         #     loader = tqdm(loader)

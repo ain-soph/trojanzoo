@@ -67,8 +67,6 @@ class Adv_Train(Defense_Backdoor):
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
         params = [param_group['params'] for param_group in optimizer.param_groups]
-        self.model.activate_params(params)
-        optimizer.zero_grad()
         for _epoch in range(epoch):
             losses.reset()
             top1.reset()
@@ -76,6 +74,8 @@ class Adv_Train(Defense_Backdoor):
             epoch_start = time.perf_counter()
             if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
+            self.model.activate_params(params)
+            optimizer.zero_grad()
             for data in loader_train:
                 _input, _label = self.model.get_data(data)
                 noise = torch.zeros_like(_input)
@@ -106,6 +106,8 @@ class Adv_Train(Defense_Backdoor):
                 top5.update(acc5, batch_size)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
+            self.model.eval()
+            self.model.activate_params([])
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                     output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
@@ -132,5 +134,3 @@ class Adv_Train(Defense_Backdoor):
                     if verbose:
                         print('-' * 50)
         self.model.zero_grad()
-        self.model.eval()
-        self.model.activate_params([])

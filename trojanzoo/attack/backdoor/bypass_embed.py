@@ -123,6 +123,8 @@ class Bypass_Embed(BadNet):
                 if lr_scheduler:
                     lr_scheduler.step()
                 optimizer.zero_grad()
+            self.model.activate_params([])
+            self.model.eval()
             _, cur_acc, _ = self.validate_func(get_data=self.bypass_get_data)
             if cur_acc >= best_acc:
                 prints('best result update!', indent=0)
@@ -131,19 +133,17 @@ class Bypass_Embed(BadNet):
                 if save:
                     self.save()
             print('-' * 50)
-            self.model.eval()
-        self.model.activate_params([])
 
     def discrim_train(self, epoch: int, D: nn.Sequential, discrim_loader: torch.utils.data.DataLoader):
-        D.train()
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
-        self.model.activate_params([D.parameters()])
         d_optimizer = optim.Adam(D.parameters(), lr=self.discrim_lr)
         d_optimizer.zero_grad()
         for _epoch in range(epoch):
             losses.reset()
             top1.reset()
+            self.model.activate_params([D.parameters()])
+            D.train()
             for data in discrim_loader:
                 # train D
                 _input, _label = self.model.get_data(data)
@@ -160,7 +160,8 @@ class Bypass_Embed(BadNet):
                 d_optimizer.step()
                 d_optimizer.zero_grad()
             print(f'Discriminator - epoch {_epoch:4d} / {epoch:4d} | loss {losses.avg:.4f} | acc {top1.avg:.4f}')
-        D.eval()
+            self.model.activate_params([])
+            D.eval()
 
 # ---------------------------------------------------------------------------------- #
 

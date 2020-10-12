@@ -306,7 +306,6 @@ class Model:
 
         _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
-        self.train()
 
         # batch_time = AverageMeter('Time', ':6.3f')
         # data_time = AverageMeter('Data', ':6.3f')
@@ -318,8 +317,6 @@ class Model:
         #     [batch_time, data_time, losses, top1, top5],
         #     prefix=f'Epoch: [{epoch}]')
         params = [param_group['params'] for param_group in optimizer.param_groups]
-        self.activate_params(params)
-        optimizer.zero_grad()
         # start = time.perf_counter()
         # end = start
         for _epoch in range(epoch):
@@ -333,6 +330,9 @@ class Model:
             epoch_start = time.perf_counter()
             if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
+            self.train()
+            self.activate_params(params)
+            optimizer.zero_grad()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
@@ -356,6 +356,8 @@ class Model:
                 empty_cache()
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
+            self.eval()
+            self.activate_params([])
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
                     output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
@@ -374,7 +376,6 @@ class Model:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
                     _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                                   verbose=verbose, indent=indent, **kwargs)
-                    self.train()
                     if cur_acc >= best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
@@ -384,8 +385,6 @@ class Model:
                     if verbose:
                         print('-' * 50)
         self.zero_grad()
-        self.eval()
-        self.activate_params([])
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
