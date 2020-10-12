@@ -5,7 +5,8 @@ from .badnet import BadNet
 from trojanzoo.optim.uname import Uname
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.data import MyDataset
+from trojanzoo.utils.output import prints, ansi, output_iter, output_memory
 
 import time
 import datetime
@@ -85,10 +86,22 @@ class Latent_Backdoor(BadNet):
         # target_loader = self.dataset.get_dataloader(mode='train', dataset=target_loader, num_workers=0)
         # return other_loader, target_loader
 
-    def get_avg_target_feats(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
+    def get_avg_target_feats(self, data_dict: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
         with torch.no_grad():
-            target_x, _ = self.model.get_data(data['target'])
-            avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
+            if self.dataset.n_dim[0] > 100:
+                target_x, target_y = data_dict['target']
+                dataset = MyDataset(target_x, target_y)
+                loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),
+                                                     shuffle=True, num_workers=0, pin_memory=False)
+                feat_list = []
+                for data in loader:
+                    target_x, _ = self.model.get_data(data)
+                    feat_list.append(self.model.get_layer(target_x, layer_output=self.preprocess_layer).detach().cpu())
+                avg_target_feats = torch.cat(feat_list).mean(dim=0)
+                avg_target_feats = avg_target_feats.to(target_x.device)
+            else:
+                target_x, _ = self.model.get_data(data_dict['target'])
+                avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
         return avg_target_feats.detach()
 
     def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):

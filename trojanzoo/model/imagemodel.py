@@ -79,6 +79,8 @@ class _ImageModel(_Model):
                 return self(x)
             elif layer_output == 'features':
                 return self.get_fm(x)
+            elif layer_output == 'flatten':
+                return self.get_final_fm(x)
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
