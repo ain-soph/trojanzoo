@@ -3,6 +3,7 @@
 from .badnet import BadNet
 
 from trojanzoo.attack.adv import PGD
+from trojanzoo.utils.output import ansi
 
 import torch
 from tqdm import tqdm
@@ -72,6 +73,8 @@ class TrojanNN(BadNet):
                 fm = fm.flatten(start_dim=2).mean(dim=2)
             fm = fm.mean(dim=0)
             result.append(fm.detach())
+        if env['tqdm']:
+            print('{upline}{clear_line}'.format(**ansi), end='')
         return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
 
     def get_neuron_value(self, x: torch.Tensor, neuron_idx: torch.Tensor) -> torch.Tensor:
