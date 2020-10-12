@@ -324,7 +324,9 @@ class Model:
         # end = start
         for _epoch in range(epoch):
             if epoch_func is not None:
+                self.activate_params([])
                 epoch_func()
+                self.activate_params(params)
             losses.reset()
             top1.reset()
             top5.reset()

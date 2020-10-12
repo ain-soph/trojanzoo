@@ -60,7 +60,9 @@ class IMC(TrojanNN):
     def epoch_func(self, **kwargs):
         if self.model.sgm and 'sgm_remove' not in self.model.__dict__.keys():
             register_hook(self.model, self.model.sgm_gamma)
+        self.model.eval()
         self.optimize_mark()
+        self.model.train()
         # loader = self.dataset.loader['train']
         # if env['tqdm']:
         #     loader = tqdm(loader)
@@ -93,6 +95,6 @@ class IMC(TrojanNN):
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()
 
-    def loss_pgd(self, poison_x: torch.Tensor) -> torch.Tensor:
-        y = self.target_class * torch.ones(len(poison_x), dtype=torch.long, device=poison_x.device)
-        return self.model.loss(poison_x, y)
+    # def loss_pgd(self, poison_x: torch.Tensor) -> torch.Tensor:
+    #     y = self.target_class * torch.ones(len(poison_x), dtype=torch.long, device=poison_x.device)
+    #     return self.model.loss(poison_x, y)
