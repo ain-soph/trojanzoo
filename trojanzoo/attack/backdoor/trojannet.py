@@ -121,6 +121,7 @@ class TrojanNet(BadNet):
                                                                    get_data=self.get_data, keep_org=False, **kwargs)
         _, orginal_acc, _ = self.combined_model._validate(print_prefix='Validate Trigger Org',
                                                           get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
+        print(f'Validate Confidence : {self.validate_confidence():.3f}')
         # todo: Return value
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
             target_acc = 0.0
