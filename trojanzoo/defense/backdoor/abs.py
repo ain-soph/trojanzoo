@@ -241,7 +241,7 @@ class ABS(Defense_Backdoor):
         for layer in self.model.get_layer_name():
             if 'pool' in layer or layer in ['features', 'flatten', 'classifier', 'logits', 'output']:
                 continue
-            cur_layer_output: torch.Tensor = layer_output[layer]  # (batch_size, C, H, W)
+            cur_layer_output: torch.Tensor = layer_output[layer].detach().cpu()  # (batch_size, C, H, W)
             channel_num: int = cur_layer_output.shape[1]  # channels
 
             repeat_shape = [channel_num, self.n_samples]
@@ -264,6 +264,7 @@ class ABS(Defense_Backdoor):
             # result = self.model.get_layer(h_t.flatten(end_dim=2), layer_input=layer).detach().cpu()
             result = []
             for h in h_t:
+                h = h.to(device=env['device'])
                 result.append(self.model.get_layer(h.flatten(end_dim=1), layer_input=layer).detach().cpu())
             result = torch.cat(result)
 
