@@ -32,4 +32,5 @@ class_dict = {
     'spectral_signature': 'Spectral_Signature',
     'neuron_inspect': 'Neuron_Inspect',
     'image_transform': 'Image_Transform',
+    'magnet': 'MagNet',
 }

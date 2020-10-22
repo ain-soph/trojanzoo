@@ -4,7 +4,6 @@ from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.attack.backdoor import BadNet
-from trojanzoo.utils.model import weight_init
 
 import torch
 import torch.nn as nn

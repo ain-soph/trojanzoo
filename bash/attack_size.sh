@@ -1,7 +1,7 @@
 work_dir='/home/rbp5354/trojanzoo'
 cd $work_dir
 
-dataset='cifar10'
+dataset='sample_imagenet'
 model='resnetcomp18'
 attack=$2
 
@@ -12,7 +12,7 @@ if [ ! -d $dirname  ];then
     mkdir -p $dirname
 fi
 
-alpha=8
+alpha=3
 for size in {1..7}
 do
     echo $size

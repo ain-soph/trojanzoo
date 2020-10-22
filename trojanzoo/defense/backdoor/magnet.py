@@ -2,44 +2,29 @@
 
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_pil_image, to_tensor
+from trojanzoo.model.image.magnet import MagNet as MagNet_Model
 
 import torch
-import torchvision.transforms.functional as F
-from PIL import Image
 
 
-class Image_Transform(Defense_Backdoor):
-    name: str = 'image_transform'
+class MagNet(Defense_Backdoor):
+    name: str = 'magnet'
 
-    def __init__(self, transform_mode: str = 'recompress', resize_ratio: float = 0.95, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['image_transform'] = ['transform_mode', 'resize_ratio']
-        self.resize_ratio = resize_ratio
-        self.transform_mode = transform_mode
+        self.magnet: MagNet_Model = MagNet_Model(dataset=self.dataset, pretrain=True)
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        if self.transform_mode == 'recompress':
-            self.validate_func()
-        elif self.transform_mode == 'randomized_smooth':
-            self.model.randomized_smooth = True
-            self.attack.validate_func()
-            self.model.randomized_smooth = False
+        self.validate_func()
 
     def get_data(self, data: (torch.Tensor, torch.LongTensor), org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
         if org:
             _input, _label = self.model.get_data(data)
         else:
             _input, _label = self.attack.get_data(data=data, keep_org=keep_org, poison_label=poison_label, **kwargs)
-        h, w = _input.shape[-2], _input.shape[-1]
-        _input_list = []
-        for single_input in _input:
-            image = to_pil_image(single_input)
-            image = F.resize(image, (int(h * self.resize_ratio), int(w * self.resize_ratio)), Image.ANTIALIAS)
-            image = F.resize(image, (h, w))
-            _input_list.append(to_tensor(image))
-        return torch.stack(_input_list), _label
+        _input = self.magnet(_input)
+        return _input, _label
 
     def validate_func(self, **kwargs) -> (float, float, float):
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',

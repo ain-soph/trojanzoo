@@ -30,6 +30,7 @@ class Figure:
         self.ax.spines['left'].set_visible(False)
         self.ax.spines['right'].set_visible(False)
         self.ax.grid(axis='y', linewidth=1)
+        self.ax.set_axisbelow(True)
 
         self.ax.set_xlim([0.0, 1.0])
         self.ax.set_ylim([0.0, 1.0])
@@ -291,16 +292,16 @@ class Figure:
         y_max = max(y)
         y_min = min(y)
         if increase:
-            fit_data = np.log(y_max + epsilon - y)
-        else:
             fit_data = np.log(y + epsilon - y_min)
+        else:
+            fit_data = np.log(y_max + epsilon - y)
 
         z = np.polyfit(x, fit_data, degree)
         y_grid = np.exp(np.polyval(z, x_grid))
         if increase:
-            y_grid = y_max + epsilon - y_grid
-        else:
             y_grid += y_min - epsilon
+        else:
+            y_grid = y_max + epsilon - y_grid
         return y_grid
 
     @staticmethod

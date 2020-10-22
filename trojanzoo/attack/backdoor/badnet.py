@@ -142,6 +142,8 @@ class BadNet(Attack):
                 idx1 = _label != self.target_class
                 _input = _input[idx1]
                 _label = _label[idx1]
+                if len(_input) == 0:
+                    continue
                 poison_input = self.add_mark(_input)
                 poison_label = self.model.get_class(poison_input)
                 idx2 = poison_label == self.target_class
