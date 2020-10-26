@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-from typing import List
+from typing import List, Tuple
 
 
-def extract_acc(path: str) -> (List[float], List[float]):
+def extract_acc(path: str) -> Tuple[List[float], List[float]]:
     '''
     extract clean and attack accuracies from result files
     '''

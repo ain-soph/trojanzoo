@@ -173,16 +173,6 @@ def total_variation(images: torch.Tensor, reduction: str = 'sum') -> torch.Tenso
         return tot_var.sum()
     return tot_var
 
-
-class LambdaLayer(nn.Module):
-    def __init__(self, lambd):
-        super(LambdaLayer, self).__init__()
-        self.lambd = lambd
-
-    def forward(self, x):
-        return self.lambd(x)
-
-
 # Function for Initialization
 def weight_init(m: nn.Module):
     '''

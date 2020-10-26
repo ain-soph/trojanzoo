@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from PIL import Image
 from collections import OrderedDict
-from typing import List, Union
+from typing import List, Tuple, Union
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -130,7 +130,7 @@ class Watermark:
         return t
 
     @staticmethod
-    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         height, width = org_mark.shape[-2:]
         mark = torch.zeros_like(org_mark, dtype=torch.float)
         mask = torch.zeros([height, width], dtype=torch.bool)
@@ -142,7 +142,7 @@ class Watermark:
         alpha_mask = mask * (1 - mark_alpha)
         return mask, alpha_mask
 
-    def mask_mark(self, height_offset: int, width_offset: int) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def mask_mark(self, height_offset: int, width_offset: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark = -torch.ones(self.data_shape, dtype=torch.float)
         mask = torch.zeros(self.data_shape[-2:], dtype=torch.bool)
         alpha_mask = torch.zeros_like(mask, dtype=torch.float)
@@ -163,7 +163,7 @@ class Watermark:
 
     """
     # each image in the batch has a unique random location.
-    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert len(height_offset) == len(width_offset)
         shape = [len(height_offset)].extend(self.data_shape)
         mark = -torch.ones(shape, dtype=int)

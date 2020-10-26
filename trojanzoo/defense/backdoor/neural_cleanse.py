@@ -14,7 +14,7 @@ import torch.optim as optim
 import time
 import datetime
 from tqdm import tqdm
-from typing import List
+from typing import List, Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -62,7 +62,7 @@ class Neural_Cleanse(Defense_Backdoor):
             print(f'Jaccard index: {overlap:.3f}')
         print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
-    def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):

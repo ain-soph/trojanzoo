@@ -17,7 +17,7 @@ import numpy as np
 import os
 import math
 
-from typing import Dict
+from typing import Dict, Tuple, List
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -87,7 +87,7 @@ class ABS(Defense_Backdoor):
 
                 print(_str)
 
-    def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         losses = AverageMeter('Loss', ':.4e')
         norms = AverageMeter('Norm', ':6.2f')
         jaccard = AverageMeter('Jaccard Idx', ':6.2f')
@@ -131,7 +131,7 @@ class ABS(Defense_Backdoor):
 
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,
                label: int, use_mask: bool = True, validate_interval: int = 100,
-               verbose=False) -> (torch.Tensor, torch.Tensor, float):
+               verbose=False) -> Tuple[torch.Tensor, torch.Tensor, float]:
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
         parameters: List[torch.Tensor] = [atanh_mark]
@@ -151,7 +151,6 @@ class ABS(Defense_Backdoor):
         loss_best = float('inf')
         mask_best = None
 
-        batch_size = _input.size(0)
         for _epoch in range(self.remask_epoch):
             epoch_start = time.perf_counter()
 

@@ -9,6 +9,7 @@ import numpy as np
 
 import math
 import random
+from typing import Tuple
 
 
 class Poison_Basic(Attack):
@@ -62,7 +63,7 @@ class Poison_Basic(Attack):
                           get_data=self.get_data, save_fn=self.save,
                           validate_func=self.validate_func, indent=indent + 4, **kwargs)
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -96,7 +97,7 @@ class Poison_Basic(Attack):
     def get_filename(self, **kwargs):
         return self.model.name
 
-    def validate_target(self, indent: int = 0, verbose=True) -> (float, float):
+    def validate_target(self, indent: int = 0, verbose=True) -> Tuple[float, float]:
         self.model.eval()
         _output = self.model(self.temp_input)
         target_acc, _ = self.model.accuracy(_output, self.temp_label, topk=(1, 5))
@@ -108,7 +109,7 @@ class Poison_Basic(Attack):
         # todo: Return value
         return target_conf, target_acc
 
-    def validate_func(self, get_data=None, indent: int = 0, verbose=True, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data=None, indent: int = 0, verbose=True, **kwargs) -> Tuple[float, float, float]:
         target_conf, target_acc = self.validate_target(indent=indent, verbose=verbose)
         _, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                indent=indent, verbose=verbose, **kwargs)

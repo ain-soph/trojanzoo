@@ -15,7 +15,7 @@ import torch.nn.functional as F
 import time
 import datetime
 from tqdm import tqdm
-from typing import List
+from typing import List, Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -58,7 +58,7 @@ class Deep_Inspect(Defense_Backdoor):
         print('loss: ', loss_list)  # DeepInspect use this)
         print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
-    def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor):
+    def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor]:
         mark_list, loss_list = [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
@@ -69,7 +69,7 @@ class Deep_Inspect(Defense_Backdoor):
         loss_list = torch.as_tensor(loss_list)
         return loss_list, mark_list
 
-    def remask(self, label: int) -> (torch.Tensor, torch.Tensor):
+    def remask(self, label: int) -> Tuple[torch.Tensor, torch.Tensor]:
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
         for param in generator.parameters():
             param.requires_grad_()

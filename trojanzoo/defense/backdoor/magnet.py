@@ -5,6 +5,7 @@ from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.model.image.magnet import MagNet as MagNet_Model
 
 import torch
+from typing import Tuple
 
 
 class MagNet(Defense_Backdoor):
@@ -18,7 +19,7 @@ class MagNet(Defense_Backdoor):
         super().detect(**kwargs)
         self.validate_func()
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         if org:
             _input, _label = self.model.get_data(data)
         else:
@@ -26,7 +27,7 @@ class MagNet(Defense_Backdoor):
         _input = self.magnet(_input)
         return _input, _label
 
-    def validate_func(self, **kwargs) -> (float, float, float):
+    def validate_func(self, **kwargs) -> Tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=self.get_data, org=True, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',

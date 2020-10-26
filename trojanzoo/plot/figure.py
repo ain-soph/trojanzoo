@@ -7,22 +7,31 @@ import os
 import numpy as np
 import torch
 
-from matplotlib import pyplot as plt
+import matplotlib
 import matplotlib.ticker as ticker
+from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
+from matplotlib.lines import Line2D
+from matplotlib.container import BarContainer
+from matplotlib.font_manager import FontProperties
 import seaborn
+import scipy.stats as stats
+
+from typing import Dict, List, Tuple
 
 
 class Figure:
-    def __init__(self, name, path=None, fig=None, ax=None):
+    def __init__(self, name: str, path: str = None, fig: Figure = None, ax: Axes = None):
         super(Figure, self).__init__()
         self.name: str = name
-        self.path = path
+        self.path: str = path
         if path is None:
             self.path = './output/'
         if not os.path.exists(self.path):
             os.makedirs(self.path)
-        self.fig = fig
-        self.ax = ax
+        self.fig: Figure = fig
+        self.ax: Axes = ax
         if fig is None and ax is None:
             self.fig, self.ax = plt.subplots(1, 1, figsize=(5, 3.75))
         self.ax.spines['top'].set_visible(False)
@@ -35,11 +44,11 @@ class Figure:
         self.ax.set_xlim([0.0, 1.0])
         self.ax.set_ylim([0.0, 1.0])
 
-    def set_legend(self, frameon=False, prop=palatino_bold, fontsize=13, **kwargs):
+    def set_legend(self, frameon: bool = False, prop=palatino_bold, fontsize=13, **kwargs) -> None:
         self.ax.legend(prop=prop, frameon=frameon, **kwargs)
         plt.setp(self.ax.get_legend().get_texts(), fontsize=fontsize)
 
-    def set_axis_label(self, axis, text, fontproperties=palatino_bold, fontsize=16):
+    def set_axis_label(self, axis: str, text: str, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
         if axis == 'x':
             func = self.ax.set_xlabel
         elif axis == 'y':
@@ -48,18 +57,19 @@ class Figure:
             raise ValueError('Argument \"axis\" need to be \"x\" or \"y\"')
         func(text, fontproperties=fontproperties, fontsize=fontsize)
 
-    def set_title(self, text=None, fontproperties=palatino_bold, fontsize=16):
+    def set_title(self, text: str = None, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
         if text is None:
             text = self.name
-        self.ax.set_title(
-            text, fontproperties=fontproperties, fontsize=fontsize)
+        self.ax.set_title(text, fontproperties=fontproperties, fontsize=fontsize)
 
-    def save(self, path=None):
+    def save(self, path: str = None) -> None:
         if path is None:
             path = self.path
         self.fig.savefig(path + self.name + '.svg', dpi=100, bbox_inches='tight')
 
-    def set_axis_lim(self, axis, lim=[0.0, 1.0], margin=[0.0, 0.0], piece=10, _format='%.1f', fontproperties=palatino, fontsize=13):
+    def set_axis_lim(self, axis: str, lim: List[float] = [0.0, 1.0], margin: List[float] = [0.0, 0.0],
+                     piece: int = 10, _format: str = '%.1f',
+                     fontsize: int = 13, fontproperties: FontProperties = palatino_bold) -> None:
         if _format == 'integer':
             _format = '%d'
 
@@ -94,32 +104,19 @@ class Figure:
                                     fontproperties=fontproperties, fontsize=fontsize)
         format_func(_format)
 
-    def bar(self, x, y, color='black', width=0.2, align='edge', edgecolor='white', label=None, **kwargs):
-        # facecolor edgewidth alpha
-        return self.ax.bar(x, y, color=color, width=width, align=align, edgecolor=edgecolor, label=label, **kwargs)
-
-    def autolabel(self, rects, above=True, fontproperties=palatino, fontsize=6):
-        """Attach a text label above each bar in *rects*, displaying its height."""
-        for rect in rects:
-            height = int(rect.get_height())
-            offset = 3 if above else -13
-            self.ax.annotate('%d' % (abs(height)),
-                             xy=(rect.get_x() + rect.get_width() / 2, height),
-                             xytext=(0, offset),  # 3 points vertical offset
-                             textcoords="offset points",
-                             ha='center', va='bottom', fontproperties=fontproperties, fontsize=fontsize)
-
-    def curve(self, x, y, color='black', linewidth=2, label=None, markerfacecolor='white', linestyle='-', zorder=1, **kwargs):
+    def curve(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
+              label: str = None, markerfacecolor: str = 'white', linestyle: str = '-', zorder: int = 1, **kwargs) -> Line2D:
         # linestyle marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
         ax = seaborn.lineplot(x, y, ax=self.ax, color=color, linewidth=linewidth,
                               label=label, markerfacecolor=markerfacecolor, zorder=zorder, **kwargs)
-        line = ax.get_lines()[-1]
+        line: Line2D = ax.get_lines()[-1]
         line.set_linestyle(linestyle)
         return line
 
-    def scatter(self, x, y, color='black', marker='D', linewidth=2, facecolor='white', zorder=3, **kwargs):
+    def scatter(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
+                marker: str = 'D', facecolor: str = 'white', zorder: int = 3, **kwargs):
         # marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
-        return self.ax.scatter(x, y, color=color, marker=marker, linewidth=linewidth, facecolor=facecolor, zorder=zorder, **kwargs)
+        return self.ax.scatter(x, y, color=color, linewidth=linewidth, marker=marker, facecolor=facecolor, zorder=zorder, **kwargs)
 
 # Markers
 # '.' point marker
@@ -151,8 +148,28 @@ class Figure:
 # '-.'    dash-dot line style
 # ':'     dotted line style
 
+    def bar(self, x: np.ndarray, y: np.ndarray, color: str = 'black', width: float = 0.2,
+            align: str = 'edge', edgecolor: str = 'white', label: str = None, **kwargs) -> BarContainer:
+        # facecolor edgewidth alpha
+        return self.ax.bar(x, y, color=color, width=width, align=align, edgecolor=edgecolor, label=label, **kwargs)
+
+    def hist(self, x: np.ndarray, bins: List[float] = None, normed: bool = True, **kwargs):
+        return self.ax.hist(x, bins=bins, normed=normed, **kwargs)
+
+    def autolabel(self, rects: BarContainer, above: bool = True,
+                  fontsize: int = 6, fontproperties: FontProperties = palatino_bold):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rects:
+            height = int(rect.get_height())
+            offset = 3 if above else -13
+            self.ax.annotate('%d' % (abs(height)),
+                             xy=(rect.get_x() + rect.get_width() / 2, height),
+                             xytext=(0, offset),  # 3 points vertical offset
+                             textcoords="offset points",
+                             ha='center', va='bottom', fontproperties=fontproperties, fontsize=fontsize)
+
     @staticmethod
-    def get_roc_curve(label, pred, threshold_num=30000):
+    def get_roc_curve(label, pred) -> Tuple[List[float], List[float]]:
 
         total_inst = len(label)
         total_pos_inst = len(np.where(label == 1)[0])
@@ -178,15 +195,15 @@ class Figure:
             fprs.append(fpr)
             thresholds.append(threshold)
 
-        return fprs, tprs, thresholds
+        return fprs, tprs
 
     @staticmethod
-    def sort(x, y):
+    def sort(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         idx = np.argsort(x)
         return np.array(x)[idx], np.array(y)[idx]
 
     @staticmethod
-    def normalize(x, _min=None, _max=None, tgt_min=0.0, tgt_max=1.0):
+    def normalize(x: np.ndarray, _min: float = None, _max: float = None, tgt_min: float = 0.0, tgt_max: float = 1.0) -> np.ndarray:
         x = to_numpy(x)
         if _min is None:
             _min = x.min()
@@ -196,14 +213,14 @@ class Figure:
         return x
 
     @staticmethod
-    def groups_err_bar(x, y):
+    def groups_err_bar(x: np.ndarray, y: np.ndarray) -> Dict[float, np.ndarray]:
         y_dict = {}
         for _x in set(x):
             y_dict[_x] = np.array([y[t] for t in range(len(y)) if x[t] == _x])
         return y_dict
 
     @staticmethod
-    def flatten_err_bar(y_dict):
+    def flatten_err_bar(y_dict: Dict[float, np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
         x = []
         y = []
         for _x in y_dict.keys():
@@ -213,7 +230,7 @@ class Figure:
         return np.array(x), np.array(y)
 
     @classmethod
-    def normalize_err_bar(cls, x, y):
+    def normalize_err_bar(cls, x: np.ndarray, y: np.ndarray):
         x = cls.normalize(x)
         y_dict = cls.groups_err_bar(x, y)
         y_mean = np.array([y_dict[_x].mean()
@@ -223,7 +240,7 @@ class Figure:
         return cls.flatten_err_bar(y_dict)
 
     @classmethod
-    def avg_smooth_err_bar(cls, x, y, window=3):
+    def avg_smooth_err_bar(cls, x: np.ndarray, y: np.ndarray, window: int = 3):
         y_dict = cls.groups_err_bar(x, y)
         y_mean = np.array([y_dict[_x].mean()
                            for _x in np.sort(list(y_dict.keys()))])
@@ -232,7 +249,7 @@ class Figure:
         return cls.flatten_err_bar(y_dict)
 
     @staticmethod
-    def adjust_err_bar(y_dict, mean=None, std=None):
+    def adjust_err_bar(y_dict: Dict[float, np.ndarray], mean: np.ndarray = None, std: np.ndarray = None) -> Dict[float, np.ndarray]:
         sort_keys = np.sort(list(y_dict.keys()))
         if isinstance(mean, float):
             mean = mean * np.ones(len(sort_keys))
@@ -248,29 +265,30 @@ class Figure:
         return y_dict
 
     @staticmethod
-    def avg_smooth(x, window=3):
+    def avg_smooth(x: np.ndarray, window: int = 3) -> np.ndarray:
         _x = torch.as_tensor(x)
         new_x = torch.zeros_like(_x)
         for i in range(len(_x)):
             if i < window // 2:
-                new_x[i] = (_x[0] * (window // 2 - i) +
-                            _x[: i + (window + 1) // 2].sum()) / window
+                new_x[i] = (_x[0] * (window // 2 - i)
+                            + _x[: i + (window + 1) // 2].sum()) / window
             elif i >= len(_x) - (window - 1) // 2:
-                new_x[i] = (_x[-1] * (len(_x) - 1 - i + (window - 1) // 2) +
+                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i) +
                             _x[i - window // 2:].sum()) / window
             else:
                 new_x[i] = _x[i - window // 2:i + 1 + (window - 1) // 2].mean()
         return to_numpy(new_x) if isinstance(x, np.ndarray) else new_x
 
     @staticmethod
-    def poly_fit(x, y, x_grid, degree=1):
+    def poly_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray, degree: int = 1) -> np.ndarray:
         fit_data = to_numpy(y)
         z = np.polyfit(x, fit_data, degree)
         y_grid = np.polyval(z, x_grid)
         return y_grid
 
     @staticmethod
-    def tanh_fit(x, y, x_grid, degree=1, mean_bias=0.0, scale_multiplier=1.0):
+    def tanh_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray,
+                 degree: int = 1, mean_bias: float = 0.0, scale_multiplier: float = 1.0) -> np.ndarray:
         mean = (max(y) + min(y)) / 2 + mean_bias
         scale = max(abs(y - mean)) * scale_multiplier
         fit_data = to_numpy(torch.as_tensor((y - mean) / scale).atanh())
@@ -279,7 +297,8 @@ class Figure:
         return y_grid
 
     @staticmethod
-    def atan_fit(x, y, x_grid, degree=1, mean_bias=0.0, scale_multiplier=1.0):
+    def atan_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray,
+                 degree: int = 1, mean_bias: float = 0.0, scale_multiplier: float = 1.0) -> np.ndarray:
         mean = (max(y) + min(y)) / 2 + mean_bias
         scale = max(abs(y - mean)) * scale_multiplier
         fit_data = to_numpy(torch.as_tensor((y - mean) / scale).tan())
@@ -288,7 +307,8 @@ class Figure:
         return y_grid
 
     @staticmethod
-    def exp_fit(x, y, x_grid, degree=1, increase=True, epsilon=0.01):
+    def exp_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray,
+                degree: int = 1, increase: bool = True, epsilon: float = 0.01) -> np.ndarray:
         y_max = max(y)
         y_min = min(y)
         if increase:
@@ -305,14 +325,15 @@ class Figure:
         return y_grid
 
     @staticmethod
-    def inverse_fit(x, y, x_grid, degree=1, y_lower_bound=0.0):
+    def inverse_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray,
+                    degree: int = 1, y_lower_bound: float = 0.0) -> np.ndarray:
         fit_data = 1 / (y - y_lower_bound)
         z = np.polyfit(x, fit_data, degree)
         y_grid = 1 / (np.polyval(z, x_grid)) + y_lower_bound
         return y_grid
 
     @staticmethod
-    def monotone(x, increase=True):
+    def monotone(x: np.ndarray, increase: bool = True) -> np.ndarray:
         temp = 0.0
         y = np.copy(x)
         if increase:
@@ -325,3 +346,9 @@ class Figure:
             else:
                 temp = x[i]
         return y
+
+    @staticmethod
+    def gaussian_kde(x: np.ndarray, x_grid: np.ndarray) -> np.ndarray:
+        kde_func = stats.gaussian_kde(x)
+        y_grid = kde_func(x_grid)
+        return y_grid

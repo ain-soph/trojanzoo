@@ -50,7 +50,7 @@ class Hidden_Trigger(BadNet):
                                                          drop_last=True, num_workers=0)
         self.pgd: PGD = PGD(alpha=self.pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, output=self.output)
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, training=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, training=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -73,7 +73,7 @@ class Hidden_Trigger(BadNet):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',

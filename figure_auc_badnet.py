@@ -70,6 +70,8 @@ def auc_graph(name, attack):
     fig.curve(x=x1, y=y1, color=ting_color["grey"], linewidth=5, linestyle='--')
 
     fig.save("./result/auc/")
+    _dict = {'x': x, 'y': y, 'x_grid': x_grid, 'y_grid': y_grid, 'auc': local_auc}
+    np.save(f'./result/auc/{attack}.npy', _dict)
 
 
 if __name__ == "__main__":

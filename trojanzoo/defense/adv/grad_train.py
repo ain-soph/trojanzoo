@@ -2,16 +2,9 @@
 
 from ..defense import Defense
 from trojanzoo.optim.pgd import PGD
-from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.tensor import add_noise
 
 import torch
-from torch import optim
-
-import time
-import datetime
-from tqdm import tqdm
+from typing import Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -51,7 +44,7 @@ class Grad_Train(Defense):
         new_loss = loss + self.grad_lambda * grad.flatten(start_dim=1).norm(p=1, dim=1).mean()
         return new_loss
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         adv_loss, adv_acc, _ = self.model._validate(print_prefix='Validate Adv',
@@ -61,8 +54,8 @@ class Grad_Train(Defense):
             adv_acc = 0.0
         return clean_loss + adv_loss, adv_acc, clean_acc
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), **kwargs) -> (torch.Tensor, torch.LongTensor):
-        _input, _label = self.model.get_data(data)
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+        _input, _label = self.model.get_data(data, **kwargs)
 
         def loss_fn(X: torch.FloatTensor):
             return -self.model.loss(X, _label)

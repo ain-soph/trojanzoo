@@ -8,7 +8,7 @@ from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn.functional as F
-from typing import List
+from typing import List, Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -234,7 +234,7 @@ class AdvMind(Defense):
             B = B + S / 0.4132 * (self.fake_percent + (1 - self.fake_percent) * result)
         return B
 
-    def get_center_bias(self, seq: torch.Tensor) -> (torch.Tensor, torch.Tensor):
+    def get_center_bias(self, seq: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         seq_centers = []
         seq_bias = []
         for cluster in seq:

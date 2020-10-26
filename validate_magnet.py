@@ -6,6 +6,7 @@ from trojanzoo.model import Model
 from trojanzoo.model.image.magnet import MagNet
 
 import torch
+from typing import Tuple
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -23,7 +24,7 @@ if __name__ == '__main__':
 
     magnet: MagNet = MagNet(dataset=dataset, pretrain=True)
 
-    def get_data(data: (torch.Tensor, torch.LongTensor), **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = model.get_data(data)
         _input = magnet(_input)
         return _input, _label

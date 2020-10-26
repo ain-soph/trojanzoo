@@ -44,5 +44,5 @@ class ImageSet(Dataset):
                                            num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         return to_tensor(data[0]), to_tensor(data[1], dtype='long')

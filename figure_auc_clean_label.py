@@ -33,7 +33,7 @@ def auc_graph(name, attack):
 
     x_grid = np.linspace(0.0, 1.0, 1000)
     # y_grid = fig.poly_fit(x, y, x_grid, degree=2)
-    y_grid = fig.exp_fit(x, y, x_grid, increase=True, epsilon=1e-3, degree=2)
+    y_grid = fig.exp_fit(x, y, x_grid, increase=True, epsilon=2e-1, degree=2)
 
     local_auc = auc(x_grid, y_grid)
     fig.set_title(f'{name}     AUC {local_auc:.3f}')
@@ -50,6 +50,8 @@ def auc_graph(name, attack):
     fig.curve(x=x1, y=y1, color=ting_color["grey"], linewidth=5, linestyle='--')
 
     fig.save("./result/auc/")
+    _dict = {'x': x, 'y': y, 'x_grid': x_grid, 'y_grid': y_grid, 'auc': local_auc}
+    np.save(f'./result/auc/{attack}.npy', _dict)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ import numpy as np
 import os
 from itertools import combinations
 from scipy.special import comb
+from typing import Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -114,7 +115,7 @@ class TrojanNet(BadNet):
         file_path = self.folder_path + filename
         self.mlp_model.load(file_path + '.pth', verbose=True)
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.combined_model._validate(print_prefix='Validate Clean',
                                                                  get_data=None, **kwargs)
         target_loss, target_acc, _ = self.combined_model._validate(print_prefix='Validate Trigger Tgt',

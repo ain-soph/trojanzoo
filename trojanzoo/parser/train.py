@@ -7,6 +7,8 @@ from trojanzoo.model import Model
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
+from typing import Tuple
+
 from trojanzoo.utils.config import Config
 config = Config.config
 
@@ -41,8 +43,8 @@ class Parser_Train(Parser):
                             help='save training results.')
 
     @staticmethod
-    def get_module(model: Model, **kwargs) -> (Optimizer, _LRScheduler, dict):
-        # type: (Model, dict) -> (Optimizer, _LRScheduler, dict)  # noqa
+    def get_module(model: Model, **kwargs) -> Tuple[Optimizer, _LRScheduler, dict]:
+        ### type: (Model, dict) -> (Optimizer, _LRScheduler, dict)  # noqa
         r"""
         get :class:`Optimizer`, :class:`_LRScheduler` and arguments for training
 
