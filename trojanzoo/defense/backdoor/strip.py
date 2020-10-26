@@ -3,9 +3,11 @@
 from ..defense_backdoor import Defense_Backdoor
 
 import torch
+import numpy as np
 from tqdm import tqdm
 from sklearn import metrics
 
+from trojanzoo.utils.tensor import to_numpy
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -34,8 +36,11 @@ class STRIP(Defense_Backdoor):
             poison_entropy.append(self.check(poison_input))
         clean_entropy = torch.cat(clean_entropy).flatten().sort()[0]
         poison_entropy = torch.cat(poison_entropy).flatten().sort()[0]
+        _dict = {'clean': to_numpy(clean_entropy), 'poison': to_numpy(poison_entropy)}
+        np.save(f'{self.folder_path}{self.get_filename()}.npy', _dict)
         print('Entropy Clean  Median: ', float(clean_entropy.median()))
         print('Entropy Poison Median: ', float(poison_entropy.median()))
+
         threshold_low = float(clean_entropy[int(0.05 * len(clean_entropy))])
         threshold_high = float(clean_entropy[int(0.95 * len(clean_entropy))])
         y_true = torch.cat((torch.zeros_like(clean_entropy), torch.ones_like(poison_entropy)))

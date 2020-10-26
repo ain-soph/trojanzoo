@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.model.model import _Model, Model
-from trojanzoo.model.imagemodel import ImageModel
+from trojanzoo.model.imagemodel import ImageModel, _ImageModel
 
 from trojanzoo.utils.mark import Watermark
 
 import torch
 import torch.nn as nn
-
-import numpy as np
 
 
 class _MLPNet(nn.Module):
@@ -45,7 +42,7 @@ class MLPNet(ImageModel):
         return self._model(_input, **kwargs)
 
 
-class _Combined_Model(_Model):
+class _Combined_Model(_ImageModel):
     def __init__(self, org_model: ImageModel, mlp_model: _MLPNet, mark: Watermark,
                  alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 100.0, **kwargs):
         super().__init__(**kwargs)
