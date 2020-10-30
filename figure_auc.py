@@ -3,10 +3,8 @@
 from trojanzoo.plot import *
 
 import numpy as np
-import warnings
-import os
-from sklearn.metrics import roc_curve, auc
 
+import warnings
 warnings.filterwarnings("ignore")
 
 

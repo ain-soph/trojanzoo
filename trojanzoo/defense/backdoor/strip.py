@@ -37,7 +37,9 @@ class STRIP(Defense_Backdoor):
         clean_entropy = torch.cat(clean_entropy).flatten().sort()[0]
         poison_entropy = torch.cat(poison_entropy).flatten().sort()[0]
         _dict = {'clean': to_numpy(clean_entropy), 'poison': to_numpy(poison_entropy)}
-        np.save(f'{self.folder_path}{self.get_filename()}.npy', _dict)
+        result_file = f'{self.folder_path}{self.get_filename()}.npy'
+        np.save(result_file, _dict)
+        print('File Saved at : ', result_file)
         print('Entropy Clean  Median: ', float(clean_entropy.median()))
         print('Entropy Poison Median: ', float(poison_entropy.median()))
 

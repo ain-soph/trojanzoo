@@ -4,16 +4,14 @@ from trojanzoo.plot import *
 
 import numpy as np
 import pandas as pd
-import warnings
-import os
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc
 
+import warnings
 warnings.filterwarnings("ignore")
 
 
 def auc_graph(name, attack):
     fig = Figure(name=name)
-    ax = fig.ax
     fig.set_axis_label('x', 'Attack Success Rate')
     fig.set_axis_label('y', 'Clean Accuracy Drop')
     fig.set_axis_lim('x', lim=[0, 1.0], piece=5, margin=[0.0, 0.05],

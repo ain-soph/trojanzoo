@@ -65,6 +65,8 @@ class Figure:
     def save(self, path: str = None) -> None:
         if path is None:
             path = self.path
+        if not os.path.exists(path):
+            os.makedirs(path)
         self.fig.savefig(path + self.name + '.svg', dpi=100, bbox_inches='tight')
 
     def set_axis_lim(self, axis: str, lim: List[float] = [0.0, 1.0], margin: List[float] = [0.0, 0.0],
