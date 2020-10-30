@@ -33,4 +33,5 @@ class_dict = {
     'neuron_inspect': 'Neuron_Inspect',
     'image_transform': 'Image_Transform',
     'magnet': 'MagNet',
+    "model_agnostic": "Model_Agnostic"
 }
