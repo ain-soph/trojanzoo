@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo import attack
+from trojanzoo import model
 from trojanzoo.plot import *
 
 import argparse
@@ -10,74 +12,63 @@ warnings.filterwarnings("ignore")
 
 
 if __name__ == '__main__':
-    name = "Model Architecture"
+    name = "Figure Model Architecture"
     fig = Figure(name)
     fig.set_axis_label('x', 'Attack')
     fig.set_axis_label('y', 'Attack Successful Rate')
     fig.set_title(fig.name)
 
-    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'],
-                  color['brown']['brown']]
+    color_list = [ting_color['red_carrot'], ting_color['blue'], ting_color['green']]
 
-    data_source = {
-        'badnet': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
+    # attack_list = ['badnet', 'latent', 'trojannn', 'imc', 'reflection', 'targeted', 'clean_label', 'trojannet', 'bypassing']
+    attack_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+    data = {
+        'resnet18': {
+            attack_list[0]: 67.3,
+            attack_list[1]: 67.3,
+            attack_list[2]: 67.3,
+            attack_list[3]: 67.3,
+            attack_list[4]: 67.3,
+            attack_list[5]: 67.3,
+            attack_list[6]: 67.3,
+            attack_list[7]: 67.3,
+            attack_list[8]: 67.3,
         },
-        'trojannn': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
+        'vgg13': {
+            attack_list[0]: 67.3,
+            attack_list[1]: 67.3,
+            attack_list[2]: 67.3,
+            attack_list[3]: 67.3,
+            attack_list[4]: 67.3,
+            attack_list[5]: 67.3,
+            attack_list[6]: 67.3,
+            attack_list[7]: 67.3,
+            attack_list[8]: 67.3,
         },
-        'hidden_trigger': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
+        'densenet121': {
+            attack_list[0]: 67.3,
+            attack_list[1]: 67.3,
+            attack_list[2]: 67.3,
+            attack_list[3]: 67.3,
+            attack_list[4]: 67.3,
+            attack_list[5]: 67.3,
+            attack_list[6]: 67.3,
+            attack_list[7]: 67.3,
+            attack_list[8]: 67.3,
         },
-        'latent_backdoor': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
-        },
-        'reflection_backdoor': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
-        },
-        'clean_label': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
-        },
-        'bypass_embed': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
-        },
-        'imc': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
-        },
-        'trojannet': {
-            'resnetcomp18': 95.0,
-            'densenetcomp121': 96.0,
-            'vggcomp13': 97.0
-        }
     }
 
-    x = np.linspace(0, 1, len(data_source.keys()) * 3)
-    x_list = [item for attack in data_source.keys() for item in data_source[attack].keys()]
-    x_label = [[attack, "", ""] for attack in data_source.keys()]
-    x_label = [i for sublist in x_label for i in sublist]
-    y_list = [item for attack in data_source.keys() for item in data_source[attack].values()]
+    model_list = list(data.keys())
 
-    fig.bar(x, y_list, width=0.03, color=color_list[0])
-    fig.set_axis_lim('x', lim=[0, 1.0], piece=len(x_list) + 1, margin=[0.00, 0.00],
-                     _format='%.1f')
-    fig.set_axis_lim('y', lim=[0, 100], piece=10,
-                     _format='%.1f')
-    fig.ax.set_xticklabels(x_label)
-    plt.show()
+    x = np.linspace(0, (len(attack_list) - 1) * 4, len(attack_list))
+    for i, model_name in enumerate(model_list):
+        y = np.array(list(data[model_name].values()))
+        fig.bar(x + i - 1.5, y, width=1, color=color_list[i], label=model_name)
+
+    fig.set_axis_lim('x', lim=[0, (len(attack_list) - 1) * 4], piece=len(attack_list) - 1, margin=[2.0, 2.0],
+                     _format='%d')
+    fig.set_axis_lim('y', lim=[0, 100], piece=5,
+                     _format='%d')
+    fig.ax.set_xticklabels(attack_list, rotation=0)
+    fig.set_legend()
+    fig.save('./result/')
