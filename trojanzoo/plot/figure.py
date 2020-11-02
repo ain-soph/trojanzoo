@@ -18,6 +18,9 @@ from matplotlib.font_manager import FontProperties
 import seaborn
 import scipy.stats as stats
 
+from scipy.interpolate import interp1d, UnivariateSpline
+from scipy.optimize import curve_fit
+
 from typing import Dict, List, Tuple
 
 
@@ -353,4 +356,10 @@ class Figure:
     def gaussian_kde(x: np.ndarray, x_grid: np.ndarray) -> np.ndarray:
         kde_func = stats.gaussian_kde(x)
         y_grid = kde_func(x_grid)
+        return y_grid
+
+    @staticmethod
+    def interp_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray, interp_num: int = 20) -> np.ndarray:
+        func = UnivariateSpline(x, y, s=interp_num)
+        y_grid = func(x_grid)
         return y_grid
