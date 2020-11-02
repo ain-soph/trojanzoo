@@ -4,6 +4,7 @@ from .dataset import Dataset
 from trojanzoo.utils import to_tensor
 
 import torch
+import torch.utils.data
 import torchvision.transforms as transforms
 from typing import Union, List, Tuple, Dict
 
@@ -29,7 +30,7 @@ class ImageSet(Dataset):
         return transforms.ToTensor()
 
     def get_dataloader(self, mode: str, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs):
+                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
             batch_size = 1 if mode == 'test' else self.batch_size
         if shuffle is None:

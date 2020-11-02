@@ -6,6 +6,7 @@ from trojanzoo.utils.output import prints, Indent_Redirect
 import os
 import sys
 import torch
+import torch.utils.data
 import numpy as np
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict

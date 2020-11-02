@@ -2,13 +2,14 @@
 
 from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
-from trojanzoo.utils import save_tensor_as_img
 from trojanzoo.utils.model import AverageMeter
+from trojanzoo.utils.data import MyDataset
 
 from typing import Tuple, Union, List
 
 import os
 import torch
+import torch.utils.data
 
 import math
 import random
@@ -37,7 +38,7 @@ class BadNet(Attack):
 
     name: str = 'badnet'
 
-    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
+    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
         self.param_list['badnet'] = ['target_class', 'percent', 'poison_num']
         self.mark: Watermark = mark
@@ -45,15 +46,30 @@ class BadNet(Attack):
         self.percent: float = percent
         _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
         self.poison_num = self.dataset.batch_size * self.percent
+        self.train_mode: str = train_mode
 
-    def attack(self, epoch: int, save=False, get_data='self', loss_fn=None, **kwargs):
-        if isinstance(get_data, str) and get_data == 'self':
-            get_data = self.get_data
-        if isinstance(loss_fn, str) and loss_fn == 'self':
-            loss_fn = self.loss_fn
-        self.model._train(epoch, save=save,
-                          validate_func=self.validate_func, get_data=get_data, loss_fn=loss_fn,
-                          save_fn=self.save, **kwargs)
+    def attack(self, epoch: int, save=False, **kwargs):
+        if self.train_mode == 'batch':
+            self.model._train(epoch, save=save,
+                              validate_func=self.validate_func, get_data=self.get_data,
+                              save_fn=self.save, **kwargs)
+        elif self.train_mode == 'dataset':
+            clean_dataset = self.dataset.loader['train'].dataset
+            _input, _label = next(iter(self.dataset.get_dataloader(
+                'train', batch_size=int(self.percent * len(clean_dataset)))))
+            _label = torch.ones_like(_label) * self.target_class
+            _label = _label.tolist()
+            poison_input = self.add_mark(_input)
+            poison_dataset = MyDataset(poison_input, _label)
+            dataset = torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
+            loader = self.dataset.get_dataloader('train', dataset=dataset)
+            self.model._train(epoch, save=save,
+                              validate_func=self.validate_func, loader_train=loader,
+                              save_fn=self.save, **kwargs)
+        elif self.train_mode == 'loss':
+            self.model._train(epoch, save=save,
+                              validate_func=self.validate_func, loss_fn=self.loss_fn,
+                              save_fn=self.save, **kwargs)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:
@@ -64,7 +80,6 @@ class BadNet(Attack):
             mark=os.path.split(self.mark.mark_path)[1][:-4],
             target=target_class, mark_alpha=mark_alpha,
             height=self.mark.height, width=self.mark.width)
-        # _epoch{epoch:d} epoch=epoch,
         if self.mark.random_pos:
             _file = 'random_pos_' + _file
         if self.mark.mark_distributed:
