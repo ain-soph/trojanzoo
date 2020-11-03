@@ -20,49 +20,46 @@ if __name__ == '__main__':
 
     color_list = [ting_color['red_carrot'], ting_color['blue'], ting_color['green']]
 
-    
-
-
+    alpha_idx = 0
     # attack_list = ['badnet', 'latent', 'trojannn', 'imc', 'reflection', 'targeted', 'clean_label', 'trojannet', 'bypassing']
     attack_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
     data = {
         'resnet18': {
-            attack_list[0]: 96.078,
-            attack_list[1]: 100.000,
-            attack_list[2]: 100.000,
-            attack_list[3]: 100.000,
-            attack_list[4]: 67.3,
-            attack_list[5]: 67.3,
-            attack_list[6]: 67.3,
-            attack_list[7]: 67.3,
-            attack_list[8]: 67.3,
+            attack_list[0]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118, 90.196, 83.810, 72.381, 52.577][alpha_idx],
+            attack_list[1]: [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 98.113][alpha_idx],
+            attack_list[2]: [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.065, 97.196, 91.509, 62.617][alpha_idx],
+            attack_list[3]: [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.960, 99.220][alpha_idx],
+            attack_list[4]: [99.980, 99.810, 99.750, 99.430, 98.830, 97.330, 94.240, 87.400, 52.110, 10.660][alpha_idx],
+            attack_list[5]: [100.000, 100.000, 100.000, 100.000, 97.980, 95.146, 90.909, 79.412, 11.470, 10.680][alpha_idx],
+            attack_list[6]: [74.243, 51.167, 26.156, 13.037, 12.898, 12.712, 12.630, 12.661, 12.650, 10.540][alpha_idx],
+            attack_list[7]: [100, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352][alpha_idx],
+            attack_list[8]: [95.320, 95.250, 94.370, 93.880, 93.300, 92.070, 90.460, 88.790, 74.320, 49.270][alpha_idx],
         },
         'vgg13': {
-            attack_list[0]: 89.390,
-            attack_list[1]: 99.960,
-            attack_list[2]: 89.540,
-            attack_list[3]: 99.990,
-            attack_list[4]: 67.3,
-            attack_list[5]: 67.3,
-            attack_list[6]: 67.3,
-            attack_list[7]: 67.3,
-            attack_list[8]: 67.3,
+            attack_list[0]: [89.390, ][alpha_idx],
+            attack_list[1]: [99.960, ][alpha_idx],
+            attack_list[2]: [89.540, ][alpha_idx],
+            attack_list[3]: [99.990, ][alpha_idx],
+            attack_list[4]: [][alpha_idx],
+            attack_list[5]: [][alpha_idx],
+            attack_list[6]: [][alpha_idx],
+            attack_list[7]: [][alpha_idx],
+            attack_list[8]: [][alpha_idx],
         },
         'densenet121': {
-            attack_list[0]: 90.820,
-            attack_list[1]: 99.970,
-            attack_list[2]: 98.850,
-            attack_list[3]: 100.000,
-            attack_list[4]: 67.3,
-            attack_list[5]: 67.3,
-            attack_list[6]: 67.3,
-            attack_list[7]: 67.3,
-            attack_list[8]: 67.3,
+            attack_list[0]: [90.820, ][alpha_idx],
+            attack_list[1]: [99.970, ][alpha_idx],
+            attack_list[2]: [98.850, ][alpha_idx],
+            attack_list[3]: [100.000, ][alpha_idx],
+            attack_list[4]: [][alpha_idx],
+            attack_list[5]: [][alpha_idx],
+            attack_list[6]: [][alpha_idx],
+            attack_list[7]: [][alpha_idx],
+            attack_list[8]: [][alpha_idx],
         },
     }
 
     model_list = list(data.keys())
-
     x = np.linspace(0, (len(attack_list) - 1) * 4, len(attack_list))
     for i, model_name in enumerate(model_list):
         y = np.array(list(data[model_name].values()))
