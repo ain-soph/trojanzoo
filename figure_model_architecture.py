@@ -20,14 +20,17 @@ if __name__ == '__main__':
 
     color_list = [ting_color['red_carrot'], ting_color['blue'], ting_color['green']]
 
+    
+
+
     # attack_list = ['badnet', 'latent', 'trojannn', 'imc', 'reflection', 'targeted', 'clean_label', 'trojannet', 'bypassing']
     attack_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
     data = {
         'resnet18': {
-            attack_list[0]: 67.3,
-            attack_list[1]: 67.3,
-            attack_list[2]: 67.3,
-            attack_list[3]: 67.3,
+            attack_list[0]: 96.078,
+            attack_list[1]: 100.000,
+            attack_list[2]: 100.000,
+            attack_list[3]: 100.000,
             attack_list[4]: 67.3,
             attack_list[5]: 67.3,
             attack_list[6]: 67.3,
@@ -35,10 +38,10 @@ if __name__ == '__main__':
             attack_list[8]: 67.3,
         },
         'vgg13': {
-            attack_list[0]: 67.3,
-            attack_list[1]: 67.3,
-            attack_list[2]: 67.3,
-            attack_list[3]: 67.3,
+            attack_list[0]: 89.390,
+            attack_list[1]: 99.960,
+            attack_list[2]: 89.540,
+            attack_list[3]: 99.990,
             attack_list[4]: 67.3,
             attack_list[5]: 67.3,
             attack_list[6]: 67.3,
@@ -46,10 +49,10 @@ if __name__ == '__main__':
             attack_list[8]: 67.3,
         },
         'densenet121': {
-            attack_list[0]: 67.3,
-            attack_list[1]: 67.3,
-            attack_list[2]: 67.3,
-            attack_list[3]: 67.3,
+            attack_list[0]: 90.820,
+            attack_list[1]: 99.970,
+            attack_list[2]: 98.850,
+            attack_list[3]: 100.000,
             attack_list[4]: 67.3,
             attack_list[5]: 67.3,
             attack_list[6]: 67.3,
