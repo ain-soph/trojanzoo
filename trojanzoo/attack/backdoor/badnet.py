@@ -40,7 +40,7 @@ class BadNet(Attack):
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
-        self.param_list['badnet'] = ['target_class', 'percent', 'poison_num']
+        self.param_list['badnet'] = ['train_mode', 'target_class', 'percent', 'poison_num']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
