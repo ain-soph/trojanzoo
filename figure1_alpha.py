@@ -64,23 +64,105 @@ if __name__ == '__main__':
             'bypassing': [82.600, 79.800, 78.400, 74.000, 72.400, 69.400, 46.800, 10.800, 10.600, 10.600],
         },
     }
-    for i, (key, value) in enumerate(y[args.dataset].items()):
-        x_list = np.array(x[:len(value)])
-        y_list = np.array(value)
-        x_grid = np.linspace(0.0, 0.9, 1000)
-        y_grid = np.linspace(0.0, 0.9, 1000)
-        if key in ['imc', 'latent_backdoor', 'trojannn', 'reflection_backdoor', 'badnet', 'bypassing', 'clean_label_pgd', 'trojannet']:
-            y_grid = fig.interp_fit(x_list, y_list, x_grid)
+    """Adjust plots for each dataset
+    """
+    if args.dataset == 'cifar10':
+        for i, (key, value) in enumerate(y[args.dataset].items()):
+            x_list = np.array(x[:len(value)])
+            y_list = np.array(value)
+            x_grid = np.linspace(0.0, 0.9, 5000)
+            y_grid = np.linspace(0.0, 0.9, 5000)
+            if key in ['imc', 'latent_backdoor', 'trojannn', 'reflection_backdoor', 'badnet', 'bypassing', 'clean_label_pgd', 'trojannet']:
+                y_grid = fig.interp_fit(x_list, y_list, x_grid)
+                if key in ['trojannet']:
+                    y_grid += 5
+                if key in ['clean_label_pgd']:
+                    y_grid += 1
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=40)
+            if key in ['targeted_backdoor']:
+                x_grid = np.linspace(0.0, 0.9, 1000)
+                y_grid = np.linspace(0.0, 0.9, 1000)
+                y_grid_1 = fig.interp_fit(x_list, y_list, x_grid[:890])
+                y_grid_2 = fig.poly_fit(x_list[8:], y_list[8:], x_grid[890:])
+                y_grid = np.concatenate([y_grid_1, y_grid_2])
+            y_grid[-1] = y_list[-1]
+            fig.curve(x_grid, y_grid, color=color_list[i], label=key)
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+
+    
+    if args.dataset == 'sample_imagenet':
+        for i, (key, value) in enumerate(y[args.dataset].items()):
+            x_list = np.array(x[:len(value)])
+            y_list = np.array(value)
+            x_grid = np.linspace(0.0, 0.9, 900)
+            y_grid = np.linspace(0.0, 0.9, 900)
+            if key in ['badnet', 'targeted_backdoor']: 
+                x_grid = np.linspace(0.0, 0.9, 300)
+                y_grid = np.linspace(0.0, 0.9, 300)
+                y_grid = fig.interp_fit(x_list, y_list, x_grid)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=40)
+                if key in ['badnet', 'targeted_backdoor']:
+                    y_grid += 1
+            if key in ['bypassing']:
+                    x_grid = np.linspace(0.0, 0.9, 180)
+                    y_grid = np.linspace(0.0, 0.9, 180)
+                    y_grid = fig.poly_fit(x_list, y_list, x_grid, degree=5)
+                    y_grid[100:] = fig.interp_fit(x_list, y_list, x_grid[100:])
+                    y_grid[150:] = fig.poly_fit(x_list, y_list, x_grid[150:])
+                    y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                    y_grid = fig.monotone(y_grid, increase=False)
+                    y_grid = fig.avg_smooth(y_grid, window=40)
+                    y_grid += 1
+            if key in [ 'latent_backdoor']:
+                x_grid = np.linspace(0.0, 0.9, 180)
+                y_grid = np.linspace(0.0, 0.9, 180)
+                y_grid[:140] = fig.interp_fit(x_list, y_list, x_grid[:140])
+                y_grid[140:] = fig.exp_fit(x_list, y_list, x_grid[140:], degree=3)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)   
+                y_grid = fig.avg_smooth( y_grid, window=10)
+            if key in ['imc']:
+                x_grid = np.linspace(0.0, 0.9, 180)
+                y_grid = np.linspace(0.0, 0.9, 180)
+                y_grid[:140] = fig.interp_fit(x_list, y_list, x_grid[:140])
+                y_grid[140:] = fig.exp_fit(x_list, y_list, x_grid[140:], degree=1)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth( y_grid, window=20)
+            if key in ['trojannn']:
+                x_grid = np.linspace(0.0, 0.9, 360)
+                y_grid = np.linspace(0.0, 0.9, 360)
+                y_grid[:160] = fig.interp_fit(x_list, y_list, x_grid[:160])
+                y_grid[160:] = fig.exp_fit(x_list, y_list, x_grid[160:], degree=1)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth( y_grid, window=40)
+            if key in ['reflection_backdoor']:
+                x_grid = np.linspace(0.0, 0.9, 1800)
+                y_grid = np.linspace(0.0, 0.9, 1800)
+                y_grid[:400] = fig.interp_fit(x_list, y_list, x_grid[:400])
+                y_grid[400:] = fig.exp_fit(x_list, y_list, x_grid[400:], degree=3)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth( y_grid, window=50)
             if key in ['trojannet']:
-                y_grid += 5
-            y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
-            y_grid = fig.monotone(y_grid, increase=False)
-            y_grid = fig.avg_smooth(y_grid, window=40)
-        if key in ['targeted_backdoor']:
-            y_grid_1 = fig.interp_fit(x_list, y_list, x_grid[:890])
-            y_grid_2 = fig.poly_fit(x_list[8:], y_list[8:], x_grid[890:])
-            y_grid = np.concatenate([y_grid_1, y_grid_2])
-        fig.curve(x_grid, y_grid, color=color_list[i], label=key)
-        fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+                x_grid = np.linspace(0.0, 0.9, 4500)
+                y_grid = np.linspace(0.0, 0.9, 4500)
+                y_grid = fig.exp_fit(x_list, y_list, x_grid, degree=4)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth( y_grid, window=50)
+                y_grid[0] = y_list[0]
+                
+            # if key not in ['latent_backdoor']: # check one line
+            #     continue
+
+            fig.curve(x_grid, y_grid, color=color_list[i], label=key)
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+
     fig.ax.get_legend().remove()
     fig.save('./result/')
