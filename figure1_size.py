@@ -67,7 +67,19 @@ if __name__ == '__main__':
             'bypassing': [10.600, 67.000, 78.400, 78.600, 86.400, 89.000, 90.000],
         },
     }
-    for i, (key, value) in enumerate(y[args.dataset].items()):
-        fig.curve(x[:len(value)], value, color=color_list[i], label=key)
-        fig.scatter(x[:len(value)], value, color=color_list[i], marker=mark_list[i])
+    if args.dataset in ['cifar10', 'sample_imagenet']:
+        for i, (key, value) in enumerate(y[args.dataset].items()):
+            x_list = np.array(x[:len(value)])
+            y_list = np.array(value)
+            x_grid = np.linspace(1, 7, 5000)
+            y_grid = np.linspace(1, 7, 5000)
+            y_grid = fig.interp_fit(x_list, y_list, x_grid)
+            y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+            y_grid = fig.monotone(y_grid, increase=True)
+            y_grid = fig.avg_smooth(y_grid, window=40)
+            
+            fig.curve(x_grid, y_grid, color=color_list[i], label=key)
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+
+    fig.ax.get_legend().remove()
     fig.save('./result/')
