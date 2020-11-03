@@ -20,6 +20,7 @@ class NEO(Defense_Backdoor):
 
     def __init__(self, threshold_t: float = 80.0, k_means_num: int = 3, sample_num: int = 100, **kwargs):
         super().__init__(**kwargs)
+        self.param_list['neo'] = ['threshold_t', 'k_means_num', 'sample_num']
         self.size: List[int] = [self.attack.mark.height, self.attack.mark.width]
         self.threshold_t = threshold_t
         self.sample_num = sample_num
@@ -37,9 +38,9 @@ class NEO(Defense_Backdoor):
         y_true = torch.cat((torch.zeros(len(_input)), torch.ones(len(_input))))
         y_pred = torch.cat((clean_result_list, poison_result_list))
         print(y_pred)
-        print("f1_score:", metrics.f1_score(y_true, y_pred, average='weighted'))
-        print("precision_score:", metrics.precision_score(y_true, y_pred, average='weighted'))
-        print("recall_score:", metrics.recall_score(y_true, y_pred, average='weighted'))
+        print("f1_score:", metrics.f1_score(y_true, y_pred))
+        print("precision_score:", metrics.precision_score(y_true, y_pred))
+        print("recall_score:", metrics.recall_score(y_true, y_pred))
         print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
 
     def trigger_detect(self, _input: torch.Tensor):

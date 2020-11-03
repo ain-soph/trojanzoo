@@ -50,9 +50,9 @@ class STRIP(Defense_Backdoor):
         y_pred = torch.where(((entropy < threshold_low).int() + (entropy > threshold_high).int()).bool(),
                              torch.ones_like(entropy), torch.zeros_like(entropy))
         print(f'Threshold: ({threshold_low:5.3f}, {threshold_high:5.3f})')
-        print("f1_score:", metrics.f1_score(y_true, y_pred, average='weighted'))
-        print("precision_score:", metrics.precision_score(y_true, y_pred, average='weighted'))
-        print("recall_score:", metrics.recall_score(y_true, y_pred, average='weighted'))
+        print("f1_score:", metrics.f1_score(y_true, y_pred))
+        print("precision_score:", metrics.precision_score(y_true, y_pred))
+        print("recall_score:", metrics.recall_score(y_true, y_pred))
         print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
 
     def check(self, _input) -> torch.Tensor:
