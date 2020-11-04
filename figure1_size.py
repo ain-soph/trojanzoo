@@ -74,7 +74,9 @@ if __name__ == '__main__':
             x_grid = np.linspace(1, 7, 5000)
             y_grid = np.linspace(1, 7, 5000)
 
-            if key in ['badnet', 'latent_backdoor', 'imc',  'reflection_backdoor', 'targeted_backdoor', 'clean_label_pgd', 'trojannet', 'bypassing']:
+            if key in ['badnet', 'latent_backdoor', 'imc',  
+                       'reflection_backdoor', 'targeted_backdoor', 
+                       'clean_label_pgd', 'trojannet', 'bypassing']:
                 y_grid = fig.interp_fit(x_list, y_list, x_grid)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
