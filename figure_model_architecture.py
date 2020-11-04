@@ -43,7 +43,7 @@ if __name__ == '__main__':
             attack_list[4]: [98.460][alpha_idx],
             attack_list[5]: [94.190][alpha_idx],
             # attack_list[6]: [14.280][alpha_idx],
-            attack_list[6]: [100][alpha_idx],
+            attack_list[6]: [97.222][alpha_idx],
             attack_list[7]: [93.30][alpha_idx],
         },
         'vgg13': {
@@ -52,7 +52,7 @@ if __name__ == '__main__':
             attack_list[2]: [89.54, 88.29, 86.19, 84.88, 81.49, 74.39, 36.67, 10.55, 11.06, 10.98][alpha_idx],
             attack_list[3]: [99.99, 99.99, 100.0, 99.93, 99.94, 99.79, 99.69, 99.27, None, None][alpha_idx],
             attack_list[4]: [87.860][alpha_idx],
-            attack_list[5]: [93.410][alpha_idx],
+            attack_list[5]: [93.590][alpha_idx],
             # attack_list[6]: [0][alpha_idx],
             attack_list[6]: [100][alpha_idx],
             attack_list[7]: [89.280][alpha_idx],
