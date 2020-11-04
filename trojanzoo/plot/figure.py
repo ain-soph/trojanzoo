@@ -18,14 +18,14 @@ from matplotlib.font_manager import FontProperties
 import seaborn
 import scipy.stats as stats
 
-from scipy.interpolate import interp1d, UnivariateSpline
+from scipy.interpolate import UnivariateSpline
 from scipy.optimize import curve_fit
 
 from typing import Dict, List, Tuple
 
 
 class Figure:
-    def __init__(self, name: str, path: str = None, fig: Figure = None, ax: Axes = None):
+    def __init__(self, name: str, path: str = None, fig: Figure = None, ax: Axes = None, figsize: Tuple[float, float] = (5, 3.75)):
         super(Figure, self).__init__()
         self.name: str = name
         self.path: str = path
@@ -36,7 +36,7 @@ class Figure:
         self.fig: Figure = fig
         self.ax: Axes = ax
         if fig is None and ax is None:
-            self.fig, self.ax = plt.subplots(1, 1, figsize=(5, 3.75))
+            self.fig, self.ax = plt.subplots(1, 1, figsize=figsize)
         self.ax.spines['top'].set_visible(False)
         self.ax.spines['bottom'].set_visible(True)
         self.ax.spines['left'].set_visible(False)
@@ -113,14 +113,23 @@ class Figure:
               label: str = None, markerfacecolor: str = 'white', linestyle: str = '-', zorder: int = 1, **kwargs) -> Line2D:
         # linestyle marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
         ax = seaborn.lineplot(x, y, ax=self.ax, color=color, linewidth=linewidth,
-                              label=label, markerfacecolor=markerfacecolor, zorder=zorder, **kwargs)
+                              markerfacecolor=markerfacecolor, zorder=zorder, **kwargs)
         line: Line2D = ax.get_lines()[-1]
         line.set_linestyle(linestyle)
+        if label is not None:
+            self.curve_legend(label=label, color=color, linewidth=linewidth, **kwargs)
         return line
 
+    def curve_legend(self, label: str = None, color: str = 'black', linewidth: int = 2, markerfacecolor: str = 'white', **kwargs):
+        # linestyle marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
+        self.ax.plot([], [], color=color, linewidth=linewidth, markeredgewidth=linewidth, markeredgecolor=color,
+                     label=label, markerfacecolor=markerfacecolor, **kwargs)
+
     def scatter(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
-                marker: str = 'D', facecolor: str = 'white', zorder: int = 3, **kwargs):
+                label: str = None, marker: str = 'D', facecolor: str = 'white', zorder: int = 3, **kwargs):
         # marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
+        if label is not None:
+            self.curve_legend(label=label, color=color, linewidth=linewidth, marker=marker, **kwargs)
         return self.ax.scatter(x, y, color=color, linewidth=linewidth, marker=marker, facecolor=facecolor, zorder=zorder, **kwargs)
 
 # Markers
@@ -275,11 +284,11 @@ class Figure:
         new_x = torch.zeros_like(_x)
         for i in range(len(_x)):
             if i < window // 2:
-                new_x[i] = (_x[0] * (window // 2 - i)
-                            + _x[: i + (window + 1) // 2].sum()) / window
+                new_x[i] = (_x[0] * (window // 2 - i) +
+                            _x[: i + (window + 1) // 2].sum()) / window
             elif i >= len(_x) - (window - 1) // 2:
-                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i) +
-                            _x[i - window // 2:].sum()) / window
+                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i)
+                            + _x[i - window // 2:].sum()) / window
             else:
                 new_x[i] = _x[i - window // 2:i + 1 + (window - 1) // 2].mean()
         return to_numpy(new_x) if isinstance(x, np.ndarray) else new_x

@@ -140,7 +140,6 @@ if __name__ == '__main__':
 
             # if key not in ['trojannet']: # check one line
             #     continue
-
             y_grid[0] = y_list[0]
             fig.curve(x_grid, y_grid, color=color_list[i], label=key)
             fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
