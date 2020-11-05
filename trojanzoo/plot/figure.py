@@ -17,6 +17,7 @@ from matplotlib.container import BarContainer
 from matplotlib.font_manager import FontProperties
 import seaborn
 import scipy.stats as stats
+from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import curve_fit
@@ -131,6 +132,10 @@ class Figure:
         if label is not None:
             self.curve_legend(label=label, color=color, linewidth=linewidth, marker=marker, **kwargs)
         return self.ax.scatter(x, y, color=color, linewidth=linewidth, marker=marker, facecolor=facecolor, zorder=zorder, **kwargs)
+
+    def add_subplot(self, projection=None):
+        if projection is not None:
+            return self.fig.add_subplot(projection=projection)
 
 # Markers
 # '.' point marker
