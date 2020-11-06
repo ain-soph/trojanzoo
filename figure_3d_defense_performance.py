@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo import attack
-from trojanzoo import model
 from trojanzoo.plot import *
 
 import argparse
@@ -14,44 +12,74 @@ warnings.filterwarnings("ignore")
 
 if __name__ == "__main__":
     name = 'Defense Performance'
-    fig = Figure(name)
     # fig.set_axis_label('x', 'Defense')
     # fig.set_axis_label('y', 'Attack')
     # fig.set_axis_label('z', 'Defense Performance')
 
-    # fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(projection='3d')
+    _fig = plt.figure(figsize=(10, 7.5))
+    _ax = _fig.add_subplot(projection='3d')
+    fig = Figure(name, fig=_fig, ax=_ax)
+    ax = fig.ax
 
-    x_defense = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-    y_attack = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
-    z_performance = {
-        x_defense[0]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[1]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[2]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[3]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[4]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[5]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[6]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[7]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
-        x_defense[8]: [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
+    color_list = [ting_color['red_carrot'], ting_color['blue'], ting_color['yellow']]
+
+    defense_list = ['NC', 'TABOR', 'STRIP', 'NEO', 'AT', 'MagNet']
+    attack_list = ['BN', 'LB', 'TNN', 'IMC', 'RB', 'TB', 'ESB', 'ABE']
+    data = {
+        'group1': {
+            attack_list[0]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[1]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[2]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[3]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[4]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[5]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[6]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[7]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+        },
+        'group2': {
+            attack_list[0]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[1]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[2]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[3]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[4]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[5]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[6]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[7]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+        },
+        'group3': {
+            attack_list[0]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[1]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[2]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[3]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[4]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[5]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[6]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+            attack_list[7]: [96.078, 96.078, 96.078, 96.078, 95.146, 94.118],
+        },
     }
 
-    x_mapping = {v: float(k) for k, v in enumerate(x_defense)}
-    y_mapping = {v: float(k) for k, v in enumerate(y_attack)}
+    defense_mesh, attack_mesh = np.meshgrid(defense_list, attack_list)
+    defense_mesh, attack_mesh = defense_mesh.ravel(), attack_mesh.ravel()
+    defense_idx = {v: k for k, v in enumerate(defense_list)}
+    attack_idx = {v: k for k, v in enumerate(attack_list)}
+    defense_pos = np.array([defense_idx[defense] for defense in defense_mesh])
+    attack_pos = np.array([attack_idx[attack] for attack in attack_mesh])
 
-    x_list, y_list = np.meshgrid(x_defense, y_attack)
-    x_list, y_list = x_list.ravel(), y_list.ravel()
-    z_list = np.array([z_performance[x][int(y_mapping[y])] for x, y in zip(x_list, y_list)])
+    for i, (group, sub_data) in enumerate(list(data.items())):
+        z_list = np.array([sub_data[attack][defense_idx[defense]]
+                           for attack, defense in zip(attack_mesh, defense_mesh)])
+        fig.bar3d(defense_pos + (i - 1.5) / 4, attack_pos, z_list, size=0.5 / 4, color=color_list[i], label=group)
+    fig.set_axis_lim(axis='y', lim=[0.0, 8.0], margin=[0.5, 0.5], piece=len(defense_list))
+    fig.set_axis_lim(axis='x', lim=[0.0, 8.0], margin=[0.5, 0.5], piece=len(attack_list))
+    fig.set_axis_lim(axis='z', lim=[0.0, 100.0], margin=[0, 3], piece=5)
+    fig.set_axis_label('y', 'Defense')
+    fig.set_axis_label('x', 'Attack')
+    fig.set_axis_label('z', 'Defense Performance')
 
-    x_pos = np.array([x_mapping[x] for x in x_list])
-    y_pos = np.array([y_mapping[y] for y in y_list])
-    bottom = np.zeros_like(z_list)
+    ax.set_xticklabels(defense_list, rotation=0)
+    ax.set_yticklabels(attack_list, rotation=0)
 
-    width = depth = 0.5
-
-    ax.bar3d(x_pos, y_pos, bottom, width, depth, z_list, shade=True)
-    ax.set_xticklabels(x_defense, rotation=0)
-    ax.set_yticklabels(y_attack, rotation=0)
-    ax.set_title(name)
+    fig.set_title()
+    # fig.set_legend()
 
     plt.show()

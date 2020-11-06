@@ -22,7 +22,7 @@ if __name__ == "__main__":
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
                   ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
                   ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', ',', 'o', 'v', 's', 'p', '*', 'h', 'D']
+    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
     fig.set_title()
 
     attack_list = ['badnet', 'latent_backdoor', 'trojannn', 'imc',

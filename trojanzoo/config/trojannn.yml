@@ -8,5 +8,5 @@ neuron_epoch: 20
 neuron_num: 2
 
 target_class: 0
-persent: 0.1
+percent: 0.01
 sgm_gamma: 1.0

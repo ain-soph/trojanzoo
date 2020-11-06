@@ -7,6 +7,7 @@ from trojanzoo.utils.output import ansi
 
 import torch
 from tqdm import tqdm
+from typing import Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -52,16 +53,14 @@ class TrojanNN(BadNet):
         self.neuron_lr: float = neuron_lr
         self.neuron_epoch: int = neuron_epoch
         self.neuron_num: int = neuron_num
+        self.neuron_idx = None
 
         self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0)
 
     def attack(self, *args, **kwargs):
-        neuron_idx = self.get_neuron_idx()
-        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=neuron_idx)
+        self.neuron_idx = self.get_neuron_idx()
+        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=self.neuron_idx)
         super().attack(*args, **kwargs)
-        with torch.no_grad():
-            print("Neuron Value After Preprocessing: ",
-                  self.get_neuron_value(self.mark.mark * self.mark.mask, neuron_idx))
 
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:
@@ -108,3 +107,10 @@ class TrojanNN(BadNet):
             print("Neuron Value After Preprocessing: ",
                   self.get_neuron_value(x, neuron_idx))
         return x
+
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+        if self.neuron_idx is not None:
+            with torch.no_grad():
+                print("Neuron Value After Preprocessing: ",
+                      self.get_neuron_value(self.mark.mark * self.mark.mask, self.neuron_idx))
+        return super().validate_func(get_data=get_data, loss_fn=loss_fn, **kwargs)

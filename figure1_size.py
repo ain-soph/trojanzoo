@@ -30,7 +30,7 @@ if __name__ == '__main__':
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
                   ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
                   ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', ',', 'o', 'v', 's', 'p', '*', 'h', 'D']
+    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
 
     x = np.linspace(1, 10, 10)
     y = {
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             'imc': [58.550, 99.660, 99.960, 99.990, 100.000, 100.000, 100.000],
             'reflection_backdoor': [44.560, 64.300, 79.240, 88.150, 92.920, 94.000, 96.390],
             'targeted_backdoor': [10.940, 11.140, 11.470, 11.760, 33.290, 44.450, 49.000],
-            'clean_label_pgd': [12.190, 12.410, 12.650, 13.040, 13.240, 13.030, 14.650],
+            # 'clean_label_pgd': [12.190, 12.410, 12.650, 13.040, 13.240, 13.030, 14.650],
             'trojannet': [10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
             'bypassing': [66.700, 74.270, 74.320, 78.520, 83.340, 83.650, 85.610],
         },
@@ -52,7 +52,7 @@ if __name__ == '__main__':
             'imc': [21.34, 92.399, 97.579, 95.89, 96.509, 98.986, 99.095, 98.874, 98.911, 98.968],
             'reflection_backdoor': [3.003, 38.589, 42.774, 48.311, 53.848, 62.218, 64.492, 74.437, 72.879, 85.511],
             'targeted_backdoor': [0.619, 0.619, 0.601, 0.619, 0.638, 0.601, 0.601, 0.788, 0.807, 0.77],
-            'clean_label_pgd': [1.858, 1.464, 0.938, 1.745, 0.601, 1.014, 0.582, 1.839, 1.276, 0.807],
+            # 'clean_label_pgd': [1.858, 1.464, 0.938, 1.745, 0.601, 1.014, 0.582, 1.839, 1.276, 0.807],
             'trojannet': [0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.563],
             'bypassing': [7.432, 61.974, 68.412, 73.78, 73.142, 73.104, 74.474, 76.52, 79.279, 78.829],
         },
@@ -143,8 +143,7 @@ if __name__ == '__main__':
             # if key not in ['trojannet']: # check one line
             #     continue
             y_grid[0] = y_list[0]
-            fig.curve(x_grid, y_grid, color=color_list[i], label=key)
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+            fig.curve(x_grid, y_grid, color=color_list[i])
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=key)
 
-    fig.ax.get_legend().remove()
     fig.save('./result/')

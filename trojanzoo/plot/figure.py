@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from re import L
 from trojanzoo.utils import to_numpy
 from .font import palatino, palatino_bold
 
@@ -37,7 +38,8 @@ class Figure:
         self.fig: Figure = fig
         self.ax: Axes = ax
         if fig is None and ax is None:
-            self.fig, self.ax = plt.subplots(1, 1, figsize=figsize)
+            self.fig: Figure = plt.figure(figsize=figsize)
+            self.ax = self.fig.add_subplot(1, 1, 1)
         self.ax.spines['top'].set_visible(False)
         self.ax.spines['bottom'].set_visible(True)
         self.ax.spines['left'].set_visible(False)
@@ -53,13 +55,7 @@ class Figure:
         plt.setp(self.ax.get_legend().get_texts(), fontsize=fontsize)
 
     def set_axis_label(self, axis: str, text: str, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
-        if axis == 'x':
-            func = self.ax.set_xlabel
-        elif axis == 'y':
-            func = self.ax.set_ylabel
-        else:
-            raise ValueError('Argument \"axis\" need to be \"x\" or \"y\"')
-        func(text, fontproperties=fontproperties, fontsize=fontsize)
+        getattr(self.ax, f'set_{axis}label')(text, fontproperties=fontproperties, fontsize=fontsize)
 
     def set_title(self, text: str = None, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
         if text is None:
@@ -78,36 +74,20 @@ class Figure:
                      fontsize: int = 13, fontproperties: FontProperties = palatino_bold) -> None:
         if _format == 'integer':
             _format = '%d'
+        lim_func = getattr(self.ax, f'set_{axis}lim')
+        set_ticks_func = getattr(self.ax, f'set_{axis}ticks')
 
-        if axis == 'x':
-            lim_func = self.ax.set_xlim
-            ticks_func = self.ax.set_xticks
-
-            def format_func(_str):
-                self.ax.xaxis.set_major_formatter(
-                    ticker.FormatStrFormatter(_str))
-        elif axis == 'y':
-            lim_func = self.ax.set_ylim
-            ticks_func = self.ax.set_yticks
-
-            def format_func(_str):
-                self.ax.yaxis.set_major_formatter(
-                    ticker.FormatStrFormatter(_str))
-        else:
-            raise ValueError('Argument \"axis\" need to be \"x\" or \"y\"')
-
+        def format_func(_str):
+            getattr(self.ax, f'{axis}axis').set_major_formatter(
+                ticker.FormatStrFormatter(_str))
         ticks = np.append(
             np.arange(lim[0], lim[1], (lim[1] - lim[0]) / piece), lim[1])
         final_lim = [lim[0] - margin[0], lim[1] + margin[1]]
         lim_func(final_lim)
-        ticks_func(ticks)
-
-        if axis == 'x':
-            self.ax.set_xticklabels(self.ax.get_xticks(),
-                                    fontproperties=fontproperties, fontsize=fontsize)
-        elif axis == 'y':
-            self.ax.set_yticklabels(self.ax.get_yticks(),
-                                    fontproperties=fontproperties, fontsize=fontsize)
+        set_ticks_func(ticks)
+        ticks = getattr(self.ax, f'get_{axis}ticks')()
+        set_ticklabels_func = getattr(self.ax, f'set_{axis}ticklabels')
+        set_ticklabels_func(ticks, fontproperties=fontproperties, fontsize=fontsize)
         format_func(_format)
 
     def curve(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
@@ -171,6 +151,15 @@ class Figure:
             align: str = 'edge', edgecolor: str = 'white', label: str = None, **kwargs) -> BarContainer:
         # facecolor edgewidth alpha
         return self.ax.bar(x, y, color=color, width=width, align=align, edgecolor=edgecolor, label=label, **kwargs)
+
+    def bar3d(self, x: np.ndarray, y: np.ndarray, z: np.array, color: str = 'black', size: Tuple[float, float] = 0.5,
+              label: str = None, **kwargs) -> BarContainer:
+        # facecolor edgewidth alpha
+        if isinstance(size, float) or isinstance(size, int):
+            size = [size, size]
+        return self.ax.bar3d(x=x, y=y, z=np.zeros_like(x),
+                             dx=np.ones_like(x) * size[0], dy=np.ones_like(y) * size[1], dz=z,
+                             color=color, label=label, **kwargs)
 
     def hist(self, x: np.ndarray, bins: List[float] = None, normed: bool = True, **kwargs):
         return self.ax.hist(x, bins=bins, normed=normed, **kwargs)
