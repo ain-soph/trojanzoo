@@ -97,8 +97,8 @@ if __name__ == '__main__':
             print(key)
             x_list = np.array(x[:len(value)])
             y_list = np.array(value)
-            x_grid = np.linspace(0.0, 0.9, 900)
-            y_grid = np.linspace(0.0, 0.9, 900)
+            x_grid = np.linspace(0.0, 0.9, 9000)
+            y_grid = np.linspace(0.0, 0.9, 9000)
             if key in ['badnet', 'targeted_backdoor']:
                 x_grid = np.linspace(0.0, 0.9, 300)
                 y_grid = np.linspace(0.0, 0.9, 300)
@@ -128,12 +128,12 @@ if __name__ == '__main__':
                 y_grid = fig.avg_smooth(y_grid, window=10)
             if key in ['imc']:
                 y_grid = fig.poly_fit(x_list[:7], y_list[:7], x_grid, degree=1)
-                y_grid[600:] =  fig.atan_fit(x_list[5:], y_list[5:], x_grid, degree=2)[600:]
-                # y_grid[:140] = fig.interp_fit(x_list, y_list, x_grid[:140])
-                # y_grid[140:] = fig.exp_fit(x_list, y_list, x_grid[140:], degree=1)
+                y_grid[6500:] = fig.poly_fit(x_list[7:], y_list[7:], x_grid, degree=1)[6500]
+                # y_grid[6400:6600] = fig.poly_fit(x_list[6:8], y_list[6:8], x_grid, degree=1)[6400:6600]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
-                y_grid = fig.avg_smooth(y_grid, window=20)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
             if key in ['trojannn']:
                 x_grid = np.linspace(0.0, 0.9, 360)
                 y_grid = np.linspace(0.0, 0.9, 360)
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                 y_grid = fig.avg_smooth(y_grid, window=50)
                 y_grid[0] = y_list[0]
 
-            if key not in ['imc']: # check one line
+            if key not in ['imc']:  # check one line
                 continue
 
             fig.curve(x_grid, y_grid, color=color_list[i])

@@ -74,27 +74,33 @@ if __name__ == '__main__':
             x_grid = np.linspace(1, 7, 6000)
             y_grid = np.linspace(1, 7, 6000)
 
-            if key in ['badnet', 'latent_backdoor', 'imc',
+            if key in ['badnet',
                        'reflection_backdoor',
                        'clean_label_pgd', 'trojannet', 'bypassing']:
                 y_grid = fig.interp_fit(x_list, y_list, x_grid)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid = fig.avg_smooth(y_grid, window=40)
+            elif key in ['latent_backdoor', 'imc']:
+                y_grid = fig.poly_fit(x_list[:3], y_list[:3], x_grid, degree=2)
+                y_grid[600:] = fig.poly_fit(x_list[1:], y_list[1:], x_grid, degree=1)[600:]
+                y_grid[500:] = fig.avg_smooth(y_grid, window=500)[500:]
+                y_grid[200:] = fig.avg_smooth(y_grid, window=300)[200:]
+                y_grid[100:] = fig.avg_smooth(y_grid, window=200)[100:]
             elif key in ['targeted_backdoor']:
                 y_grid = fig.poly_fit(x_list[:4], y_list[:4], x_grid, degree=1)
                 y_grid[3000:] = fig.poly_fit(x_list[3:], y_list[3:], x_grid[3000:], degree=2)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
-                y_grid[2000:4000] = fig.avg_smooth(y_grid[2000:4000], window=100)
-                y_grid[2500:3500] = fig.avg_smooth(y_grid[2500:3500], window=100)
+                y_grid[2000:4000] = fig.avg_smooth(y_grid[2000:4000], window=500)
+                y_grid[2500:3500] = fig.avg_smooth(y_grid[2500:3500], window=500)
                 y_grid[1500:] = fig.avg_smooth(y_grid[1500:], window=500)
             elif key in ['trojannn']:
                 y_grid = fig.poly_fit(x_list[:4], y_list[:4], x_grid, degree=3)
                 y_grid[2000:] = fig.poly_fit(x_list[2:], y_list[2:], x_grid[2000:], degree=1)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
-                y_grid = fig.avg_smooth(y_grid, window=40)
+                y_grid[100:] = fig.avg_smooth(y_grid, window=300)[100:]
 
             # if key not in ['trojannn']: # check one line
             #     continue
@@ -132,15 +138,22 @@ if __name__ == '__main__':
             if key in ['reflection_backdoor']:
                 y_grid = fig.poly_fit(x_list[:4], y_list[:4], x_grid, degree=1)
                 y_grid[4000:] = fig.poly_fit(x_list[4:], y_list[4:], x_grid[4000:], degree=1)
-                y_grid[2600:4500] = fig.atan_fit(x_list, y_list, x_grid[2600:4500], degree=6, scale_multiplier=1)
+                y_grid[3050:4500] = fig.atan_fit(x_list, y_list, x_grid, degree=6)[3050:4500]
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid[2000:3000] = fig.avg_smooth(y_grid, window=400)[2000:3000]
                 y_grid[2000:3500] = fig.avg_smooth(y_grid, window=200)[2000:3500]
                 y_grid[1000:4000] = fig.avg_smooth(y_grid, window=300)[1000:4000]
                 y_grid = fig.avg_smooth(y_grid, window=100)
             if key in ['targeted_backdoor']:
-                y_grid = fig.interp_fit(x_list, y_list, x_grid)
-                y_grid[1000:] -= 0.5
+                y_grid = fig.poly_fit(x_list[:2], y_list[:2], x_grid, degree=1)
+                y_grid[1700:] = fig.atan_fit(x_list[1:], y_list[1:], x_grid, degree=4, mean_bias=10)[1700:]
+                y_grid[3900:] = fig.poly_fit(x_list[4:], y_list[4:], x_grid, degree=1)[3900:]
+                y_grid[:2000] = fig.avg_smooth(y_grid, window=500)[:2000]
+                y_grid[:2500] = fig.avg_smooth(y_grid, window=500)[:2500]
+                y_grid[:3000] = fig.avg_smooth(y_grid, window=500)[:3000]
+                y_grid[3000:] = fig.avg_smooth(y_grid, window=500)[3000:]
+                y_grid[3500:] = fig.avg_smooth(y_grid, window=500)[3500:]
+                y_grid[3800:] = fig.avg_smooth(y_grid, window=500)[3800:]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid = fig.avg_smooth(y_grid, window=100)
@@ -156,5 +169,6 @@ if __name__ == '__main__':
             # y_grid[0] = y_list[0]
             fig.curve(x_grid, y_grid, color=color_list[i])
             fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=key)
-    fig.set_legend()
+    # fig.set_legend()
+    fig.ax.get_legend().remove()
     fig.save('./result/')
