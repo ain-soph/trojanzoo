@@ -164,5 +164,5 @@ if __name__ == '__main__':
 
             fig.curve(x_grid, y_grid, color=color_list[i])
             fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=key)
-
+    fig.set_legend()
     fig.save('./result/')
