@@ -132,8 +132,11 @@ if __name__ == '__main__':
                 # y_grid[6400:6600] = fig.poly_fit(x_list[6:8], y_list[6:8], x_grid, degree=1)[6400:6600]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
                 y_grid = fig.avg_smooth(y_grid, window=400)
                 y_grid = fig.avg_smooth(y_grid, window=500)
+                y_grid = fig.avg_smooth(y_grid, window=600)
             if key in ['trojannn']:
                 x_grid = np.linspace(0.0, 0.9, 360)
                 y_grid = np.linspace(0.0, 0.9, 360)
