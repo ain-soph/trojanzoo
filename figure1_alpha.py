@@ -109,23 +109,28 @@ if __name__ == '__main__':
                 if key in ['badnet', 'targeted_backdoor']:
                     y_grid += 1
             if key in ['bypassing']:
-                x_grid = np.linspace(0.0, 0.9, 180)
-                y_grid = np.linspace(0.0, 0.9, 180)
                 y_grid = fig.poly_fit(x_list, y_list, x_grid, degree=5)
-                y_grid[100:] = fig.interp_fit(x_list, y_list, x_grid[100:])
-                y_grid[150:] = fig.poly_fit(x_list, y_list, x_grid[150:])
+                # y_grid = fig.atan_fit(x_list[3:], y_list[3:], x_grid, degree=5)
+                y_grid[5300:] = fig.exp_fit(x_list[5:], y_list[5:], x_grid, degree=7)[5300:]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
-                y_grid = fig.avg_smooth(y_grid, window=40)
-                y_grid += 1
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
+                y_grid = fig.avg_smooth(y_grid, window=600)
+                y_grid = fig.avg_smooth(y_grid, window=700)
+                y_grid = fig.avg_smooth(y_grid, window=800)
+                y_grid = fig.avg_smooth(y_grid, window=900)
             if key in ['latent_backdoor']:
-                x_grid = np.linspace(0.0, 0.9, 180)
-                y_grid = np.linspace(0.0, 0.9, 180)
-                y_grid[:140] = fig.interp_fit(x_list, y_list, x_grid[:140])
-                y_grid[140:] = fig.exp_fit(x_list, y_list, x_grid[140:], degree=3)
+                y_grid = fig.poly_fit(x_list[:7], y_list[:7], x_grid, degree=1)
+                y_grid[6700:] = fig.poly_fit(x_list[7:], y_list[7:], x_grid, degree=3)[6700:]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
-                y_grid = fig.avg_smooth(y_grid, window=10)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
             if key in ['imc']:
                 y_grid = fig.poly_fit(x_list[:7], y_list[:7], x_grid, degree=1)
                 y_grid[6500:] = fig.poly_fit(x_list[7:], y_list[7:], x_grid, degree=1)[6500]
@@ -138,32 +143,30 @@ if __name__ == '__main__':
                 y_grid = fig.avg_smooth(y_grid, window=500)
                 y_grid = fig.avg_smooth(y_grid, window=600)
             if key in ['trojannn']:
-                x_grid = np.linspace(0.0, 0.9, 360)
-                y_grid = np.linspace(0.0, 0.9, 360)
-                y_grid[:160] = fig.interp_fit(x_list, y_list, x_grid[:160])
-                y_grid[160:] = fig.exp_fit(x_list, y_list, x_grid[160:], degree=1)
+                y_grid[:4000] = fig.interp_fit(x_list[:6], y_list[:6], x_grid[:4000])
+                y_grid[4000:] = fig.exp_fit(x_list, y_list, x_grid[4000:], degree=1)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
-                y_grid = fig.avg_smooth(y_grid, window=40)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
+                y_grid = fig.avg_smooth(y_grid, window=600)
             if key in ['reflection_backdoor']:
-                x_grid = np.linspace(0.0, 0.9, 1800)
-                y_grid = np.linspace(0.0, 0.9, 1800)
-                y_grid[:400] = fig.interp_fit(x_list, y_list, x_grid[:400])
-                y_grid[400:] = fig.exp_fit(x_list, y_list, x_grid[400:], degree=3)
+                y_grid[:2000] = fig.interp_fit(x_list, y_list, x_grid[:2000])
+                y_grid[2000:] = fig.exp_fit(x_list, y_list, x_grid[2000:], degree=3)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
-                y_grid = fig.avg_smooth(y_grid, window=50)
+                y_grid = fig.avg_smooth(y_grid, window=200)
             if key in ['trojannet']:
-                x_grid = np.linspace(0.0, 0.9, 4500)
-                y_grid = np.linspace(0.0, 0.9, 4500)
                 y_grid = fig.exp_fit(x_list, y_list, x_grid, degree=4)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
-                y_grid = fig.avg_smooth(y_grid, window=50)
+                y_grid = fig.avg_smooth(y_grid, window=100)
                 y_grid[0] = y_list[0]
 
-            if key not in ['imc']:  # check one line
-                continue
+            # if key not in ['trojannn']:  # check one line
+            #     continue
 
             fig.curve(x_grid, y_grid, color=color_list[i])
             fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=key)
