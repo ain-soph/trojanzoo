@@ -1,27 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-from trojanzoo.utils import to_tensor
-from trojanzoo.utils.model import AverageMeter, total_variation
-from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.ssim import SSIM
-from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
-import torch.nn.functional as F
 
-import time
-import datetime
-import numpy as np
-import os
-import math
-from tqdm import tqdm
-
-from typing import Dict
-
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
+
 
 class Spectral_Signature(Defense_Backdoor):
 
@@ -45,9 +31,9 @@ class Spectral_Signature(Defense_Backdoor):
     Returns:
         model(ImageModel): the clean model trained only with clean samples.
     """
-    name: str = 'Spectral_Signature'
+    name: str = 'spectral_signature'
 
-    def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500,preprocess_layer: str = 'features', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
+    def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500, preprocess_layer: str = 'features', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.preprocess_layer: str = preprocess_layer
         self.poison_image_num: int = poison_image_num
@@ -55,13 +41,14 @@ class Spectral_Signature(Defense_Backdoor):
         self.epsilon: int = epsilon
         self.retrain_epoch: int = retrain_epoch
 
-        self.clean_dataset, _ = self.dataset.split_set(dataset = self.dataset.get_full_dataset(mode='train'), length = self.clean_image_num)
+        self.clean_dataset, _ = self.dataset.split_set(
+            dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
         for i, data in enumerate(iter(self.clean_dataset)):
             _input, _label = self.model.get_data(data)
-            clean_input = _input.view(1, _input.shape[0],_input.shape[1], _input.shape[2])
+            clean_input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
             if i == 0:
                 clean_input_all = clean_input
-                label_all = torch.unsqueeze(_label,0)
+                label_all = torch.unsqueeze(_label, 0)
             else:
                 clean_input_all = torch.cat((clean_input_all, clean_input))
                 label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
@@ -69,25 +56,25 @@ class Spectral_Signature(Defense_Backdoor):
         self.clean_dataset = torch.utils.data.dataset.TensorDataset(clean_input_all, label_all)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
 
-
-        self.poison_dataset, _ = self.dataset.split_set(dataset = _, length = self.poison_image_num)
+        self.poison_dataset, _ = self.dataset.split_set(dataset=_, length=self.poison_image_num)
         for i, data in enumerate(iter(self.poison_dataset)):
             _input, _label = self.model.get_data(data)
             poison_input = self.attack.add_mark(_input)
-            poison_input = poison_input.view(1, poison_input.shape[0],poison_input.shape[1], poison_input.shape[2])
+            poison_input = poison_input.view(1, poison_input.shape[0], poison_input.shape[1], poison_input.shape[2])
             if i == 0:
                 poison_input_all = poison_input
-                label_all = torch.unsqueeze(_label,0)
+                label_all = torch.unsqueeze(_label, 0)
             else:
                 poison_input_all = torch.cat((poison_input_all, poison_input))
                 label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
         label_all = torch.squeeze(label_all, 0)
         self.poison_dataset = torch.utils.data.dataset.TensorDataset(poison_input_all, label_all)
-        self.poison_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
+        self.poison_dataloader = self.dataset.get_dataloader(
+            mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
 
-        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset,self.poison_dataset])
-        self.mix_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.mix_dataset, num_workers=0, pin_memory=False)
-
+        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
+        self.mix_dataloader = self.dataset.get_dataloader(
+            mode='train', dataset=self.mix_dataset, num_workers=0, pin_memory=False)
 
     def detect(self, optimizer, lr_scheduler, **kwargs):
         """
@@ -95,10 +82,10 @@ class Spectral_Signature(Defense_Backdoor):
         """
         super().detect(**kwargs)
         initial_model = self.model
-        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, loader_train=self.mix_dataloader,**kwargs)
+        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, loader_train=self.mix_dataloader, **kwargs)
         final_loader = self.get_clean_dataloader()
-        initial_model._train(epoch = self.retrain_epoch, optimizer=optimizer, lr_scheduler=lr_scheduler, loader_train=final_loader)
-
+        initial_model._train(epoch=self.retrain_epoch, optimizer=optimizer,
+                             lr_scheduler=lr_scheduler, loader_train=final_loader)
 
     def get_clean_dataloader(self):
         """
@@ -114,37 +101,37 @@ class Spectral_Signature(Defense_Backdoor):
         for k in range(self.dataset.num_classes):
             # self.class_dataset = self.dataset.get_class_set(self.mix_dataset,classes = [k])
             idx = []
-            for i,data in enumerate(self.mix_dataset):
+            for i, data in enumerate(self.mix_dataset):
                 _input, _label = self.model.get_data(data)
-                _input = _input.view(1, _input.shape[0],_input.shape[1], _input.shape[2])
+                _input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
                 if _label.item() == k:
-                    idx.append(k) 
+                    idx.append(k)
             self.class_dataset = torch.utils.data.Subset(self.mix_dataset, idx)
 
             for i, data in enumerate(self.class_dataset):
                 _input, _label = self.model.get_data(data)
                 layer_output = self.model.get_layer(_input, layer_output=self.preprocess_layer)
-                layer_output = layer_output.view(1,-1)
+                layer_output = layer_output.view(1, -1)
                 if i == 0:
                     layer_output_all = layer_output
                 else:
                     layer_output_all = torch.cat((layer_output_all, layer_output))
-                
-            layer_output_mean = torch.mean(layer_output_all, dim = 0)
-            
+
+            layer_output_mean = torch.mean(layer_output_all, dim=0)
+
             for i in range(len(self.class_dataset)):
                 layer_output_all[i] = layer_output_all[i] - layer_output_mean
-            
+
             u, s, v = torch.svd(layer_output_all)
             v_transpose = torch.transpose(v, 1, 0)
             outlier_scores = torch.rand([layer_output_all.shape[0]], device=env['device'])
             for i in range(len(self.class_dataset)):
-                outlier_scores[i] = torch.pow(torch.mm(layer_output_all[i].view(1,-1), v_transpose[i].view(-1,1)), 2)
+                outlier_scores[i] = torch.pow(torch.mm(layer_output_all[i].view(1, -1), v_transpose[i].view(-1, 1)), 2)
             outlier_scores_sorted, indices = torch.sort(outlier_scores, descending=True)
 
             clean_indices = indices[self.epsilon:]
             self.class_dataset = torch.utils.data.Subset(self.class_dataset, clean_indices)
-            if k ==0:
+            if k == 0:
                 final_set = self.class_dataset
             else:
                 final_set = torch.utils.data.ConcatDataset([final_set, self.class_dataset])

@@ -16,6 +16,8 @@ class Defense_Backdoor(Defense):
     def detect(self, **kwargs):
         if not self.original:
             self.attack.load(**kwargs)
+        if self.attack.name == 'trojannet':
+            self.model = self.attack.combined_model
         self.attack.validate_func()
 
     def get_filename(self, **kwargs):

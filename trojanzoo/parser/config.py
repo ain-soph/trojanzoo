@@ -7,7 +7,7 @@ import random
 import numpy as np
 import torch
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 

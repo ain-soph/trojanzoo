@@ -20,8 +20,10 @@ class_dict = {
     'latent_backdoor': 'Latent_Backdoor',
     'reflection_backdoor': 'Reflection_Backdoor',
     'clean_label': 'Clean_Label',
-
+    'bypass_embed': 'Bypass_Embed',
     'imc': 'IMC',
     'trojannet': 'TrojanNet',
     'imc_latent': 'IMC_Latent',
+
+    'term_study': 'Term_Study',
 }

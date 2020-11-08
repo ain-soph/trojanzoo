@@ -12,22 +12,21 @@ warnings.filterwarnings("ignore")
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset', dest='dataset', default='cifar10')
-    parser.add_argument('-c', '--confidence', dest='confidence', action='store_true')
     args = parser.parse_args()
     name = 'figure1 %s alpha' % args.dataset
-    if args.confidence:
-        name += ' confidence'
     fig = Figure(name)
     fig.set_axis_label('x', 'Trigger Transparency')
-    fig.set_axis_label('y', 'Misclassification Confidence' if args.confidence else 'Max Re-Mask Accuracy')
+    fig.set_axis_label('y', 'Max Re-Mask Accuracy')
     fig.set_axis_lim('x', lim=[0, 1.0], piece=10, margin=[0.05, 0.05],
                      _format='%.1f')
     fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
                      _format='%d')
     fig.set_title(fig.name)
 
-    color_list = [ting_color['red'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'], ting_color['green'], ]
+    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
+                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
+                  ting_color['green'], color['brown']['brown'], color['green']['army']]
+    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
 
     x = np.linspace(0.0, 1.0, 11)
     y = {
@@ -35,52 +34,141 @@ if __name__ == '__main__':
             'badnet': [96.078, 96.078, 96.078, 96.078, 95.146, 94.118, 90.196, 83.810, 72.381, 52.577],
             'latent_backdoor': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 98.113],
             'trojannn': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.065, 97.196, 91.509, 62.617],
-            'imc': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.065, 97.537, 86.913, 62.791],
-            'targeted_backdoor': [100.000, 100.000, 100.000, 100.000, 97.980, 95.146, 90.909, 79.412, 34.021, 10.680],
-            'trojannet' : [100, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
-            'clean_label_pgd': [74.243, 51.167, 26.156, 13.037, 10.898, 10.612, 10.530, 10.561, 10.540, 10.540]
+            'imc': [100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 100.000, 99.960, 99.220],
+            'reflection_backdoor': [99.980, 99.810, 99.750, 99.430, 98.830, 97.330, 94.240, 87.400, 52.110, 10.660],
+            'targeted_backdoor': [100.000, 100.000, 100.000, 100.000, 97.980, 95.146, 90.909, 79.412, 11.470, 10.680],
+            # 'clean_label_pgd': [74.243, 51.167, 26.156, 13.037, 12.898, 12.712, 12.630, 12.661, 12.650, 10.540],
+            'trojannet': [100, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
+            'bypassing': [95.320, 95.250, 94.370, 93.880, 93.300, 92.070, 90.460, 88.790, 74.320, 49.270],
         },
-        # 'gtsrb': {
-        #     'badnet': [53.153, 52.965, 52.046, 49.869, 46.539, 41.929, 37.782, 32.057, 28.679, 22.710, 3.247],
-        #     # 'latent_backdoor': [92.080, 84.666, 84.234, 80.556, 78.491, 72.823, 63.382, 36.074, 0.976, 0.713, 0.713],
-        #     'trojannn': [53.041, 46.059, 45.083, 42.361, 40.484, 38.514, 35.83, 31.119, 25.563, 18.975, 2.665],
-        #     'targeted_backdoor': [40.897, 34.553, 31.794, 25.882, 19.651, 11.355, 6.55, 4.523, 3.397, 2.947, 2.721],
-        # },
+        'gtsrb': {
+            'badnet': [95.469, 96.875, 95.312, 93.75, 93.75, 90.476, 88.525, 82.540, 65.634, 63.934],
+            'latent_backdoor': [100, 100, 100, 100, 100, 100, 100, 100, 98.423, 91.803],
+            'trojannn': [98.949, 98.761, 98.517, 98.086, 97.185, 95.777, 92.023, 79.223, 71.697, 51.952],
+            'imc': [100, 100, 100, 100, 99.887, 99.662, 99.381, 98.461, 97.579, 88.645],
+            'reflection_backdoor': [94.989, 90.709, 91.16, 83.54, 76.952, 67.98, 58.408, 50.282, 42.774, 3.979],
+            'targeted_backdoor': [82.883, 78.866, 74.249, 61.374, 0.582, 0.582, 0.582, 0.582, 0.601, 0.601],
+            # 'clean_label_pgd': [59.553, 42.962, 5.912, 2.196, 1.52, 1.989, 1.314, 0.845, 0.938, 0.976],
+            'trojannet': [100, 1.014, 0.938, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582],
+            'bypassing': [88.288, 87.819, 87.481, 86.768, 85.304, 85.39, 80.424, 75.713, 68.412, 49.831],
+        },
+        'sample_imagenet': {
+            'badnet': [90.000, 90.000, 89.800, 88.200, 86.600, 81.400, 46.800, 11.600, 11.600, 11.600],
+            'latent_backdoor': [97.400, 97.200, 96.800, 96.200, 96.400, 94.600, 93.200, 20.200, 11.400, 11.000],
+            'trojannn': [95.200, 94.400, 93.200, 87.800, 11.800, 11.200, 11.200, 11.000, 11.200, 11.200],
+            'imc': [98.400, 98.000, 96.800, 96.200, 95.800, 96.000, 95.000, 11.600, 11.400, 11.200],
+            'reflection_backdoor': [94.600, 94.000, 11.400, 11.400, 11.400, 11.200, 11.200, 11.200, 11.000, 10.800],
+            'targeted_backdoor': [82.800, 63.800, 33.400, 13.000, 11.800, 11.800, 11.800, 11.800, 11.800, 11.800],
+            # 'clean_label_pgd': [59.553, 42.962, 5.912, 2.196, 1.52, 1.989, 1.314, 0.845, 0.938, 0.976],
+            'trojannet': [100, 12.800, 12.800, 12.800, 12.600, 11.600, 11.400, 11.000, 11.000, 11.000],
+            'bypassing': [82.600, 79.800, 78.400, 74.000, 72.400, 69.400, 46.800, 10.800, 10.600, 10.600],
+        },
     }
-    z = {
-        # 'cifar10': {
-        #     'badnet': [0.6471461653709412, 0.6486684679985046, 0.6302809119224548, 0.628552258014679, 0.5995506048202515, 0.5772883296012878, 0.5688976645469666, 0.5431302785873413, 0.5335214138031006, 0.5495538115501404],
-        #     'latent_backdoor': [0.9638524651527405, 0.9766114354133606, 0.9740619659423828, 0.9637922644615173, 0.9497492909431458, 0.9425596594810486, 0.9369469285011292, 0.8903026580810547, 0.7312646508216858, 0.56],
-        #     'trojannn': [0.7242116332054138, 0.6972057819366455, 0.6689168214797974, 0.6355840563774109, 0.605204701423645, 0.5644066333770752, 0.5464028716087341, 0.5420322418212891, 0.5582942962646484, 0.553290069103241],
-        #     'imc': [0.9254073977470398, 0.827289879322052, 0.6991446614265442, 0.6506359577178955, 0.59810653924942017, 0.5479408502578735, 0.5525797605514526, 0.535953164100647, 0.45457735657691956, 0.4651917517185211],
-        #     'clean_label_pgd': [0.9218209385871887, 0.8995527029037476, 0.8787757158279419, 0.8557542562484741, 0.8184587359428406, 0.7887511253356934, 0.785068929195404, 0.7558798789978027, 0.7620411515235901, 0.7771100997924805],
-        # },
-        # 'gtsrb': {
-        #     'badnet': [53.153, 52.965, 52.046, 49.869, 46.539, 41.929, 37.782, 32.057, 28.679, 22.710, 3.247],
-        #     'latent_backdoor': [92.080, 84.666, 84.234, 80.556, 78.491, 72.823, 63.382, 36.074, 0.976, 0.713, 0.713],
-        #     'trojannn': [53.041, 46.059, 45.083, 42.361, 40.484, 38.514, 35.83, 31.119, 25.563, 18.975, 2.665],
-        #     'targeted_backdoor': [40.897, 34.553, 31.794, 25.882, 19.651, 11.355, 6.55, 4.523, 3.397, 2.947, 2.721],
-        # },
-    }
-    for key in z.keys():
-        for sub_key in z[key].keys():
-            for i in range(len(z[key][sub_key])):
-                z[key][sub_key][i] *= 100
-    # y = {
-    #     'cifar10': {
-    #         'badnet': [78.710, 76.910, 73.940, 67.310, 61.980, 54.450, 45.330, 37.290, 29.610, 22.960],
-    #         'latent_backdoor': [97.160, 95.450, 90.080, 86.490, 82.010, 71.660, 55.440, 23.150, 10.190, 10.280],
-    #         'trojannn': [75.360, 73.530, 71.450, 68.090, 64.060, 56.350, 48.030, 38.770, 30.910, 12.260],
-    #     },
-    #     'gtsrb': {
-    #         'badnet': [56.757, 58.540, 56.813, 51.971, 44.613, 40.128, 39.02, 31.344, 28.378, 23.104, 3.247],
-    #         'latent_backdoor': [92.080, 84.666, 84.234, 80.556, 78.491, 72.823, 63.382, 36.074, 0.976, 0.713, 0.713],
-    #         'trojannn': [59.816, 58.84, 56.175, 53.416, 49.906, 43.431, 42.492, 35.098, 27.721, 23.292, 3.453],
-    #         'targeted_backdoor': [40.165, 33.315, 30.950, 26.051, 27.44, 20.383, 16.967, 15.447, 2.928, 2.628, 2.477],
-    #     },
-    # }
-    y = z if args.confidence else y
-    for i, (key, value) in enumerate(y[args.dataset].items()):
-        fig.curve(x[:len(value)], value, color=color_list[i], label=key)
-        fig.scatter(x[:len(value)], value, color=color_list[i])
+    """Adjust plots for each dataset
+    """
+    if args.dataset == 'cifar10':
+        for i, (key, value) in enumerate(y[args.dataset].items()):
+            x_list = np.array(x[:len(value)])
+            y_list = np.array(value)
+            x_grid = np.linspace(0.0, 0.9, 5000)
+            y_grid = np.linspace(0.0, 0.9, 5000)
+            if key in ['imc', 'latent_backdoor', 'trojannn', 'reflection_backdoor', 'badnet', 'bypassing', 'clean_label_pgd', 'trojannet']:
+                y_grid = fig.interp_fit(x_list, y_list, x_grid)
+                if key in ['trojannet']:
+                    y_grid += 5
+                if key in ['clean_label_pgd']:
+                    y_grid += 1
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=40)
+            if key in ['targeted_backdoor']:
+                x_grid = np.linspace(0.0, 0.9, 1000)
+                y_grid = np.linspace(0.0, 0.9, 1000)
+                y_grid_1 = fig.interp_fit(x_list, y_list, x_grid[:890])
+                y_grid_2 = fig.poly_fit(x_list[8:], y_list[8:], x_grid[890:])
+                y_grid = np.concatenate([y_grid_1, y_grid_2])
+            y_grid[-1] = y_list[-1]
+
+            fig.curve(x_grid, y_grid, color=color_list[i], label=key)
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+
+    if args.dataset == 'sample_imagenet':
+        for i, (key, value) in enumerate(y[args.dataset].items()):
+            print(key)
+            x_list = np.array(x[:len(value)])
+            y_list = np.array(value)
+            x_grid = np.linspace(0.0, 0.9, 9000)
+            y_grid = np.linspace(0.0, 0.9, 9000)
+            if key in ['badnet', 'targeted_backdoor']:
+                x_grid = np.linspace(0.0, 0.9, 300)
+                y_grid = np.linspace(0.0, 0.9, 300)
+                y_grid = fig.interp_fit(x_list, y_list, x_grid)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=40)
+                if key in ['badnet', 'targeted_backdoor']:
+                    y_grid += 1
+            if key in ['bypassing']:
+                y_grid = fig.poly_fit(x_list, y_list, x_grid, degree=5)
+                # y_grid = fig.atan_fit(x_list[3:], y_list[3:], x_grid, degree=5)
+                y_grid[5300:] = fig.exp_fit(x_list[5:], y_list[5:], x_grid, degree=7)[5300:]
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
+                y_grid = fig.avg_smooth(y_grid, window=600)
+                y_grid = fig.avg_smooth(y_grid, window=700)
+                y_grid = fig.avg_smooth(y_grid, window=800)
+                y_grid = fig.avg_smooth(y_grid, window=900)
+            if key in ['latent_backdoor']:
+                y_grid = fig.poly_fit(x_list[:7], y_list[:7], x_grid, degree=1)
+                y_grid[6700:] = fig.poly_fit(x_list[7:], y_list[7:], x_grid, degree=3)[6700:]
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
+            if key in ['imc']:
+                y_grid = fig.poly_fit(x_list[:7], y_list[:7], x_grid, degree=1)
+                y_grid[6500:] = fig.poly_fit(x_list[7:], y_list[7:], x_grid, degree=1)[6500]
+                # y_grid[6400:6600] = fig.poly_fit(x_list[6:8], y_list[6:8], x_grid, degree=1)[6400:6600]
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
+                y_grid = fig.avg_smooth(y_grid, window=600)
+            if key in ['trojannn']:
+                y_grid[:4000] = fig.interp_fit(x_list[:6], y_list[:6], x_grid[:4000])
+                y_grid[4000:] = fig.exp_fit(x_list, y_list, x_grid[4000:], degree=1)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+                y_grid = fig.avg_smooth(y_grid, window=300)
+                y_grid = fig.avg_smooth(y_grid, window=400)
+                y_grid = fig.avg_smooth(y_grid, window=500)
+                y_grid = fig.avg_smooth(y_grid, window=600)
+            if key in ['reflection_backdoor']:
+                y_grid[:2000] = fig.interp_fit(x_list, y_list, x_grid[:2000])
+                y_grid[2000:] = fig.exp_fit(x_list, y_list, x_grid[2000:], degree=3)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=200)
+            if key in ['trojannet']:
+                y_grid = fig.exp_fit(x_list, y_list, x_grid, degree=4)
+                y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
+                y_grid = fig.monotone(y_grid, increase=False)
+                y_grid = fig.avg_smooth(y_grid, window=100)
+                y_grid[0] = y_list[0]
+
+            # if key not in ['trojannn']:  # check one line
+            #     continue
+
+            fig.curve(x_grid, y_grid, color=color_list[i])
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=key)
+    fig.set_legend()
     fig.save('./result/')

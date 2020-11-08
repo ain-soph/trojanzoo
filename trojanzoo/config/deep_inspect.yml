@@ -4,7 +4,7 @@ sample_ratio: 0.1
 noise_dim: 100
 
 remask_epoch: 20
-remask_lr: 0.05
+remask_lr: 0.01
 
 gamma_1: 0.0
-gamma_2: 0.000003
+gamma_2: 0.02

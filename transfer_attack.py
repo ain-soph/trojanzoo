@@ -41,7 +41,7 @@ if __name__ == '__main__':
         optimizer, lr_scheduler, train_args = parser.module_list['train']
     else:
         _input, _label = model.get_data(next(iter(dataset.loader['test'])))
-        conv_dim = model._model.get_final_fm(_input).numel()
+        conv_dim = model._model.classifier[0].in_features
         model._model.classifier = model._model.define_classifier(conv_dim=conv_dim, fc_depth=fc_depth, fc_dim=fc_dim)
         args = parser.args_list['train'].copy()
         args['dataset'] = dataset

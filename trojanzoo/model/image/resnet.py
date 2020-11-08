@@ -5,33 +5,20 @@ from collections import OrderedDict
 
 import torch
 import torch.nn as nn
+import trojanzoo.utils.resnet as models
+# import torchvision.models as models
 from torch.utils import model_zoo
-from trojanzoo.utils.resnet import model_urls
-import torchvision.models as models
-from trojanzoo.utils.resnet import ResNet, resnet18, resnet34, resnet50, resnet101, resnet152
+from torchvision.models.resnet import model_urls
+from torchvision.models.resnet import BasicBlock
 
 
 class _ResNet(_ImageModel):
 
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
-        # _model: ResNet = models.__dict__[
-        #     'resnet' + str(layer)](num_classes=self.num_classes)
         layer = int(layer)
-        if layer==18:
-            _model = resnet18(num_classes=self.num_classes)
-
-        elif layer==34:
-            _model = resnet34(num_classes=self.num_classes)
-
-        elif layer==50:
-            _model = resnet50(num_classes=self.num_classes)
-        
-        elif layer==101:
-            _model = resnet101(num_classes=self.num_classes)
-
-        elif layer==152:
-            _model = resnet152(num_classes=self.num_classes)
+        _model: ResNet = models.__dict__[
+            'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
             ('conv1', _model.conv1),
@@ -67,9 +54,11 @@ class _ResNet(_ImageModel):
                         od['features.' + layer_name + '.' + block_name] = x
                     if 'features.' + layer_name + '.' + block_name == layer_input:
                         record = True
+                if record:
+                    od['features.' + layer_name] = x
             elif record:
                 x = layer(x)
-            od['features.' + layer_name] = x
+                od['features.' + layer_name] = x
             if 'features.' + layer_name == layer_input:
                 record = True
         if layer_input == 'features':
@@ -78,7 +67,8 @@ class _ResNet(_ImageModel):
             od['features'] = x
             x = self.pool(x)
             od['pool'] = x
-            x = x.flatten(start_dim=1)
+            x = self.flatten(x)
+            od['flatten'] = x
 
         for name, module in self.classifier.named_children():
             if record:
@@ -130,24 +120,8 @@ class _ResNetcomp(_ResNet):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         layer = int(layer)
-        if layer==18:
-            _model = resnet18(num_classes=self.num_classes)
-
-        elif layer==34:
-            _model = resnet34(num_classes=self.num_classes)
-
-        elif layer==50:
-            _model = resnet50(num_classes=self.num_classes)
-
-        elif layer==101:
-            _model = resnet101(num_classes=self.num_classes)
-
-        elif layer==152:
-            _model = resnet152(num_classes=self.num_classes)
-
-        # _model = models.__dict__[
-        #     'resnet' + str(layer)](num_classes=self.num_classes)
-
+        _model = models.__dict__[
+            'resnet' + str(layer)](num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)),
             ('bn1', _model.bn1),  # nn.BatchNorm2d(64)

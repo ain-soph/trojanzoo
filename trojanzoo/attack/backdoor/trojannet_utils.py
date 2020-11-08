@@ -1,21 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from ..model import _Model, Model
-from ..imagemodel import ImageModel
+from trojanzoo.model.imagemodel import ImageModel, _ImageModel
 
 from trojanzoo.utils.mark import Watermark
 
 import torch
 import torch.nn as nn
 
-import numpy as np
-from scipy.special import comb
-
 
 class _MLPNet(nn.Module):
-    def __init__(self, all_point: int, select_point: int, **kwargs):
+    def __init__(self, input_dim: int, output_dim: int, **kwargs):
         super().__init__()
-        self.ly1 = nn.Linear(in_features=all_point, out_features=8)
+        self.ly1 = nn.Linear(in_features=input_dim, out_features=8)
         self.relu1 = nn.ReLU()
         self.ly1_bn = nn.BatchNorm1d(num_features=8)
         self.ly2 = nn.Linear(in_features=8, out_features=8)
@@ -27,9 +23,9 @@ class _MLPNet(nn.Module):
         self.ly4 = nn.Linear(in_features=8, out_features=8)
         self.relu4 = nn.ReLU()
         self.ly4_bn = nn.BatchNorm1d(num_features=8)
-        self.output = nn.Linear(in_features=8, out_features=int(comb(all_point, select_point)) + 1)
+        self.output = nn.Linear(in_features=8, out_features=output_dim)
 
-    def forward(self, x):
+    def forward(self, x, **kwargs):
         x = self.ly1_bn(self.relu1(self.ly1(x)))
         x = self.ly2_bn(self.relu2(self.ly2(x)))
         x = self.ly3_bn(self.relu3(self.ly3(x)))
@@ -46,19 +42,19 @@ class MLPNet(ImageModel):
         return self._model(_input, **kwargs)
 
 
-class _Combined_Model(_Model):
+class _Combined_Model(_ImageModel):
     def __init__(self, org_model: ImageModel, mlp_model: _MLPNet, mark: Watermark,
-                 alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 10.0, **kwargs):
+                 alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 100.0, **kwargs):
         super().__init__(**kwargs)
         self.alpha: float = alpha
         self.temperature: float = temperature
         self.amplify_rate: float = amplify_rate
         self.mark: Watermark = mark
-        self.mlp_model: _Trojan_Net_Model = mlp_model
+        self.mlp_model: _MLPNet = mlp_model
         self.org_model: _ImageModel = org_model
         self.softmax = nn.Softmax()
 
-    def forward(self, x: torch.FloatTensor):
+    def forward(self, x: torch.FloatTensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
         trigger = x[:, :, self.mark.height_offset:self.mark.height_offset + self.mark.height,
                     self.mark.width_offset:self.mark.width_offset + self.mark.width]

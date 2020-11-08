@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
 
 pgd_alpha: 0.07843137255
-pgd_epsilon: 1.0
 pgd_iteration: 20
-
-target_class: 0
-persent: 0.1
-sgm_gamma: 1.0

@@ -3,11 +3,13 @@
 from .badnet import BadNet
 
 from trojanzoo.attack.adv import PGD
+from trojanzoo.utils.output import ansi
 
 import torch
 from tqdm import tqdm
+from typing import Tuple
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -51,33 +53,41 @@ class TrojanNN(BadNet):
         self.neuron_lr: float = neuron_lr
         self.neuron_epoch: int = neuron_epoch
         self.neuron_num: int = neuron_num
+        self.neuron_idx = None
 
         self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0)
 
     def attack(self, *args, **kwargs):
-        neuron_idx = self.get_neuron_idx()
-        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=neuron_idx)
-        return super().attack(*args, **kwargs)
+        self.neuron_idx = self.get_neuron_idx()
+        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=self.neuron_idx)
+        super().attack(*args, **kwargs)
 
     # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:
-        result = []
-        for i, data in enumerate(tqdm(self.dataset.loader['train'])):
-            _input, _label = self.model.get_data(data)
-            fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
-            if len(fm.shape) > 2:
-                fm = fm.flatten(start_dim=2).mean(dim=2)
-            fm = fm.mean(dim=0)
-            result.append(fm.detach())
-        return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
+        with torch.no_grad():
+            result = []
+            loader = self.dataset.loader['train']
+            if env['tqdm']:
+                loader = tqdm(loader)
+            for i, data in enumerate(loader):
+                _input, _label = self.model.get_data(data)
+                fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
+                if len(fm.shape) > 2:
+                    fm = fm.flatten(start_dim=2).mean(dim=2)
+                fm = fm.mean(dim=0)
+                result.append(fm.detach())
+            if env['tqdm']:
+                print('{upline}{clear_line}'.format(**ansi), end='')
+            return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
 
     def get_neuron_value(self, x: torch.Tensor, neuron_idx: torch.Tensor) -> torch.Tensor:
         return self.model.get_layer(x, layer_output=self.preprocess_layer)[:, neuron_idx].mean()
 
     # train the mark to activate the least-used neurons.
     def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs):
-        print("Neuron Value Before Preprocessing: ",
-              self.get_neuron_value(mark, neuron_idx))
+        with torch.no_grad():
+            print("Neuron Value Before Preprocessing: ",
+                  self.get_neuron_value(mark, neuron_idx))
 
         def loss_fn(X: torch.Tensor):
             fm = self.model.get_layer(X, layer_output=self.preprocess_layer)
@@ -92,6 +102,15 @@ class TrojanNN(BadNet):
             x, _ = self.pgd.craft_example(mark, noise=noise, iteration=1, loss_fn=loss_fn)
             noise = noise * self.mark.mask
             x = x * self.mark.mask
-        print("Neuron Value After Preprocessing: ",
-              self.get_neuron_value(x, neuron_idx))
+        x = x.detach()
+        with torch.no_grad():
+            print("Neuron Value After Preprocessing: ",
+                  self.get_neuron_value(x, neuron_idx))
         return x
+
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+        if self.neuron_idx is not None:
+            with torch.no_grad():
+                print("Neuron Value After Preprocessing: ",
+                      self.get_neuron_value(self.mark.mark * self.mark.mask, self.neuron_idx))
+        return super().validate_func(get_data=get_data, loss_fn=loss_fn, **kwargs)

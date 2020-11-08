@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-preprocess_layer: features
-epsilon: 0.0627451
-poison_iteration: 500
-poison_lr: 0.01
-decay_iteration: 200
-decay_ratio: 0.95
+preprocess_layer: flatten
+pgd_alpha: 0.004
+pgd_epsilon: 0.0627451
+pgd_iteration: 40

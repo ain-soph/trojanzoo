@@ -5,8 +5,10 @@ from .badnet import BadNet
 from trojanzoo.optim import PGD
 from trojanzoo.utils.data import MyDataset
 
-import numpy as np
 import torch
+import numpy as np
+import math
+import random
 from typing import Tuple, Callable
 
 
@@ -20,13 +22,9 @@ class Hidden_Trigger(BadNet):
 
     Args:
         preprocess_layer (str): the chosen feature layer patched by trigger where distance to poisoned images is minimized. Default: 'features'.
-        epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{16}{255}`.
-        poison_num (int): the number of poisoned images. Default: 100.
-        poison_iteration (int): the iteration number to generate one poison image. Default: 5000.
-        poison_lr (float, optional): the learning rate to generate poison images. Default: 0.01.
-        decay (bool): the learning rate decays with iterations. Default: False.
-        decay_iteration (int): the iteration interval of lr decay. Default: 2000.
-        decay_ratio (float): the learning rate decay ratio. Default: 0.95.
+        pgd_alpha (float, optional): the learning rate to generate poison images. Default: 0.01.
+        pgd_epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{16}{255}`.
+        pgd_iteration (int): the iteration number to generate one poison image. Default: 5000.
 
     .. _Hidden Trigger:
         https://arxiv.org/abs/1910.00033
@@ -37,50 +35,61 @@ class Hidden_Trigger(BadNet):
 
     name: str = 'hidden_trigger'
 
-    def __init__(self, preprocess_layer: str = 'features', epsilon: int = 16.0 / 255,
-                 poison_iteration: int = 5000, poison_lr: float = 0.01,
-                 lr_decay: bool = False, decay_iteration: int = 2000, decay_ratio: float = 0.95, **kwargs):
+    def __init__(self, preprocess_layer: str = 'features', pgd_epsilon: int = 16.0 / 255,
+                 pgd_iteration: int = 40, pgd_alpha: float = 4.0 / 255, **kwargs):
         super().__init__(**kwargs)
 
-        self.param_list['hidden_trigger'] = ['preprocess_layer', 'epsilon',
-                                             'poison_num', 'poison_iteration', 'poison_lr',
-                                             'decay', 'decay_iteration', 'decay_ratio']
+        self.param_list['hidden_trigger'] = ['preprocess_layer', 'pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
 
         self.preprocess_layer: str = preprocess_layer
-        self.epsilon: float = epsilon
+        self.pgd_alpha: float = pgd_alpha
+        self.pgd_epsilon: float = pgd_epsilon
+        self.pgd_iteration: int = pgd_iteration
 
-        self.poison_num: int = int(len(self.dataset.get_dataset('train', True, [self.target_class])) * self.percent)
-        self.poison_iteration: int = poison_iteration
-        self.poison_lr: float = poison_lr
+        self.target_loader = self.dataset.get_dataloader('train', full=True, classes=self.target_class,
+                                                         drop_last=True, num_workers=0)
+        self.pgd: PGD = PGD(alpha=self.pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, output=self.output)
 
-        self.lr_decay: bool = lr_decay
-        self.decay_iteration: int = decay_iteration
-        self.decay_ratio: float = decay_ratio
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, training=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+        _input, _label = self.model.get_data(data)
+        decimal, integer = math.modf(self.poison_num)
+        integer = int(integer)
+        if random.uniform(0, 1) < decimal:
+            integer += 1
+        if not keep_org:
+            integer = len(_label)
+        if not keep_org or integer:
+            org_input, org_label = _input, _label
+            if training:
+                _input = org_input[org_label != self.target_class][:integer]
+                _input = self.generate_poisoned_data(_input)
+            else:
+                _input = self.add_mark(org_input[:integer])
+            _label = _label[:integer]
+            if poison_label:
+                _label = self.target_class * torch.ones_like(org_label[:integer][:len(_input)])
+            if keep_org:
+                _input = torch.cat((_input, org_input))
+                _label = torch.cat((_label, org_label))
+        return _input, _label
 
-        self.pgd: PGD = PGD(alpha=self.poison_lr, epsilon=epsilon, iteration=self.poison_iteration, output=self.output)
-
-    def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, iteration: int = None, **kwargs):
-        poison_imgs = self.generate_poisoned_data()
-        poison_set = MyDataset(poison_imgs.to('cpu'), [self.target_class] * self.poison_num)
-        train_set = self.dataset.get_dataset('train', full=False, target_transform=torch.tensor)
-
-        final_set = torch.utils.data.ConcatDataset((poison_set, train_set))
-        final_loader = self.dataset.get_dataloader(mode=None, dataset=final_set)
-        self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
-                          loader_train=final_loader, validate_func=self.validate_func, **kwargs)
-
-    def validate_func(self, get_data: Callable[[torch.Tensor, torch.LongTensor], Tuple[torch.Tensor, torch.LongTensor]] = None, **kwargs) -> (float, float, float):
-        self.model._validate(print_prefix='Validate Clean', **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Tgt', get_data=self.get_data, keep_org=False, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Org',
-                             get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
-        return 0.0, 0.0, 0.0
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+                                                        get_data=None, **kwargs)
+        target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
+                                                          get_data=self.get_data, keep_org=False, training=False, **kwargs)
+        _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
+                                                 get_data=self.get_data, keep_org=False, poison_label=False, training=False, **kwargs)
+        # todo: Return value
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+            target_acc = 0.0
+        return clean_loss + target_loss, target_acc, clean_acc
 
     def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor) -> torch.Tensor:
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
-        return ((poison_feats - source_feats)**2).mean(dim=0).sum()
+        return (poison_feats - source_feats).flatten(start_dim=1).norm(p=2, dim=1).mean()
 
-    def generate_poisoned_data(self) -> torch.Tensor:
+    def generate_poisoned_data(self, source_imgs: torch.FloatTensor) -> torch.Tensor:
         r"""
         **Algorithm1**
 
@@ -103,34 +112,14 @@ class Hidden_Trigger(BadNet):
         """
 
         # -----------------------------Prepare Data--------------------------------- #
-        print('prepare dataset')
-        target = self.target_class
-        source = list(range(self.dataset.num_classes))
-        source.pop(target)
-        self.target_loader = self.dataset.get_dataloader('train', full=True, classes=target,
-                                                         batch_size=self.poison_num, shuffle=True, num_workers=0)
-        self.source_loader = self.dataset.get_dataloader('train', full=True, classes=source,
-                                                         batch_size=self.poison_num, shuffle=True, num_workers=0)
-        target_imgs, _ = self.model.get_data(next(iter(self.target_loader)))
-        source_imgs, _ = self.model.get_data(next(iter(self.source_loader)))
         source_imgs = self.add_mark(source_imgs)
-        noise = torch.zeros_like(target_imgs)
         source_feats = self.model.get_layer(source_imgs, layer_output=self.preprocess_layer).detach()
 
+        target_imgs, _ = self.model.get_data(next(iter(self.target_loader)))
+        target_imgs = target_imgs[:len(source_imgs)]
         # -----------------------------Poison Frog--------------------------------- #
-        print('poison frog attack')
 
         def loss_func(poison_imgs):
             return self.loss(poison_imgs, source_feats=source_feats)
-
-        if self.lr_decay:
-            lr = self.poison_lr
-            for _iter in range(self.poison_iteration):
-                self.output_iter(name=self.name, _iter=_iter, iteration=self.poison_iteration)
-                poison_imgs, _ = self.pgd.optimize(_input=target_imgs, noise=noise,
-                                                   iteration=1, alpha=lr, loss_fn=loss_func)
-                lr = self.poison_lr * (self.decay_ratio**(_iter // self.decay_iteration))
-        else:
-            poison_imgs, _ = self.pgd.optimize(_input=target_imgs, noise=noise,
-                                               loss_fn=loss_func)
+        poison_imgs, _ = self.pgd.optimize(_input=target_imgs, loss_fn=loss_func)
         return poison_imgs

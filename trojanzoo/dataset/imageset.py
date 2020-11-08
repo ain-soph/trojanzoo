@@ -4,10 +4,11 @@ from .dataset import Dataset
 from trojanzoo.utils import to_tensor
 
 import torch
+import torch.utils.data
 import torchvision.transforms as transforms
 from typing import Union, List, Tuple, Dict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -29,7 +30,7 @@ class ImageSet(Dataset):
         return transforms.ToTensor()
 
     def get_dataloader(self, mode: str, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs):
+                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
             batch_size = 1 if mode == 'test' else self.batch_size
         if shuffle is None:
@@ -44,5 +45,5 @@ class ImageSet(Dataset):
                                            num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         return to_tensor(data[0]), to_tensor(data[1], dtype='long')

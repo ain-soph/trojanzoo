@@ -2,6 +2,6 @@
 
 poison_image_num: 50
 clean_image_num: 500
-preprocess_layer: 'features'
+preprocess_layer: flatten
 remove_multiple: 5
 retrain_epoch: 5

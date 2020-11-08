@@ -20,4 +20,3 @@ class Parser_Fine_Pruning(Parser_Defense_Backdoor):
                             help=' the number of sampled clean image to prune and finetune the model, defaults to config[Fine_Pruning][clean_image_num]=50')
         parser.add_argument('--prune_ratio', dest='prune_ratio', type=float,
                             help=' the ratio of neurons to prune, defaults to config[Fine_Pruning][prune_ratio ]=0.02')
-    

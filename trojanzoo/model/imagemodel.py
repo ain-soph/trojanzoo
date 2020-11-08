@@ -10,7 +10,7 @@ from typing import Dict, List
 from copy import deepcopy
 from collections import OrderedDict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 # norm_par = {
@@ -79,6 +79,8 @@ class _ImageModel(_Model):
                 return self(x)
             elif layer_output == 'features':
                 return self.get_fm(x)
+            elif layer_output == 'flatten':
+                return self.get_final_fm(x)
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
@@ -138,6 +140,8 @@ class _ImageModel(_Model):
             raise TypeError(
                 '\"get_other_layer\" requires parameter "layer_output" to be int or str.')
         od = self.get_all_layer(x, layer_input=layer_input)
+        if layer_name not in od.keys():
+            print(od.keys())
         return od[layer_name]
 
     def get_layer_name(self, extra=True) -> List[str]:

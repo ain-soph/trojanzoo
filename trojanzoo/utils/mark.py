@@ -6,14 +6,15 @@ from .tensor import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_im
 from .output import prints, Indent_Redirect
 
 import os
+import sys
 import random
 import numpy as np
 import torch
 from PIL import Image
 from collections import OrderedDict
-from typing import List, Union
+from typing import List, Tuple, Union
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 root_dir = os.path.dirname(os.path.abspath(root_file))
@@ -29,7 +30,7 @@ class Watermark:
                  height: int = None, width: int = None,
                  height_ratio: float = None, width_ratio: float = None, mark_ratio: float = None,
                  height_offset: int = 0, width_offset: int = 0,
-                 random_pos=False, random_init=False, **kwargs):
+                 random_pos=False, random_init=False, mark_distributed=False, **kwargs):
 
         self.param_list: Dict[str, List[str]] = OrderedDict()
         self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
@@ -54,24 +55,37 @@ class Watermark:
         self.height: int = height
         self.width: int = width
         self.random_pos = random_pos
-        # --------------------------------------------------- #
-        org_mark_img: Image.Image = self.load_img(mark_path, height, width, data_shape[0])
-        self.org_mark: torch.Tensor = byte2float(org_mark_img)
-        self.edge_color: torch.Tensor = self.get_edge_color(
-            self.org_mark, data_shape, edge_color)
-        self.org_mask, self.org_alpha_mask = self.org_mask_mark(self.org_mark, self.edge_color, self.mark_alpha)
         self.random_init = random_init
-        if random_init:
-            self.org_mark = self.random_init_mark(self.org_mark, self.org_mask)
+        self.mark_distributed = mark_distributed
+        # --------------------------------------------------- #
 
-        if not random_pos:
-            self.param_list['mark'].extend(['height_offset', 'width_offset'])
-            self.height_offset: int = height_offset
-            self.width_offset: int = width_offset
-            self.mark, self.mask, self.alpha_mask = self.mask_mark(
-                height_offset=self.height_offset, width_offset=self.width_offset)
+        if self.mark_distributed:
+            self.mark = torch.rand(data_shape, dtype=torch.float, device=env['device'])
+            mask = torch.zeros(data_shape[-2:], dtype=torch.bool, device=env['device']).flatten()
+            np.random.seed(env['seed'])
+            idx = np.random.choice(len(mask), self.height * self.width, replace=False).tolist()
+            mask[idx] = 1.0
+            mask = mask.view(data_shape[-2:])
+            self.mask = mask
+            self.alpha_mask = self.mask * (1 - mark_alpha)
+            self.edge_color = None
+        else:
+            org_mark_img: Image.Image = self.load_img(mark_path, height, width, data_shape[0])
+            self.org_mark: torch.Tensor = byte2float(org_mark_img)
+            self.edge_color: torch.Tensor = self.get_edge_color(
+                self.org_mark, data_shape, edge_color)
+            self.org_mask, self.org_alpha_mask = self.org_mask_mark(self.org_mark, self.edge_color, self.mark_alpha)
+            if random_init:
+                self.org_mark = self.random_init_mark(self.org_mark, self.org_mask)
+            if not random_pos:
+                self.param_list['mark'].extend(['height_offset', 'width_offset'])
+                self.height_offset: int = height_offset
+                self.width_offset: int = width_offset
+                self.mark, self.mask, self.alpha_mask = self.mask_mark(
+                    height_offset=self.height_offset, width_offset=self.width_offset)
 
     # add mark to the Image with mask.
+
     def add_mark(self, _input: torch.Tensor, random_pos=None, **kwargs) -> torch.Tensor:
         if random_pos is None:
             random_pos = self.random_pos
@@ -116,7 +130,7 @@ class Watermark:
         return t
 
     @staticmethod
-    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         height, width = org_mark.shape[-2:]
         mark = torch.zeros_like(org_mark, dtype=torch.float)
         mask = torch.zeros([height, width], dtype=torch.bool)
@@ -128,7 +142,7 @@ class Watermark:
         alpha_mask = mask * (1 - mark_alpha)
         return mask, alpha_mask
 
-    def mask_mark(self, height_offset: int, width_offset: int) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def mask_mark(self, height_offset: int, width_offset: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark = -torch.ones(self.data_shape, dtype=torch.float)
         mask = torch.zeros(self.data_shape[-2:], dtype=torch.bool)
         alpha_mask = torch.zeros_like(mask, dtype=torch.float)
@@ -149,7 +163,7 @@ class Watermark:
 
     """
     # each image in the batch has a unique random location.
-    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert len(height_offset) == len(width_offset)
         shape = [len(height_offset)].extend(self.data_shape)
         mark = -torch.ones(shape, dtype=int)
@@ -205,9 +219,10 @@ class Watermark:
         if npz_path[:9] == 'trojanzoo':
             npz_path = root_dir + npz_path[9:]
         _dict = np.load(npz_path)
-        self.org_mark = torch.as_tensor(_dict['org_mark'])
-        self.org_mask = torch.as_tensor(_dict['org_mask'])
-        self.org_alpha_mask = torch.as_tensor(_dict['org_alpha_mask'])
+        if not self.mark_distributed:
+            self.org_mark = torch.as_tensor(_dict['org_mark'])
+            self.org_mask = torch.as_tensor(_dict['org_mask'])
+            self.org_alpha_mask = torch.as_tensor(_dict['org_alpha_mask'])
         if not self.random_pos:
             self.mark = to_tensor(_dict['mark'])
             self.mask = to_tensor(_dict['mask'])
@@ -216,9 +231,11 @@ class Watermark:
     def save_npz(self, npz_path: str):
         # if npz_path[:9] == 'trojanzoo':
         #     npz_path = root_dir + npz_path[9:]
-        _dict = {'org_mark': to_numpy(self.org_mark),
-                 'org_mask': to_numpy(self.org_mask),
-                 'org_alpha_mask': to_numpy(self.org_alpha_mask)}
+        _dict = {}
+        if not self.mark_distributed:
+            _dict.update({'org_mark': to_numpy(self.org_mark),
+                          'org_mask': to_numpy(self.org_mask),
+                          'org_alpha_mask': to_numpy(self.org_alpha_mask)})
         if not self.random_pos:
             _dict.update({
                 'mark': to_numpy(self.mark),

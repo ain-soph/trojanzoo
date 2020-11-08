@@ -16,6 +16,7 @@
 # Validate Trigger Org:     Loss: 1.8767,          Top1 Acc: 60.840,       Top5 Acc: 96.680,       Time: 0:00:02
 
 # python backdoor_attack.py --attack clean_label --mark_alpha 0.0 --height 3 --width 3 --percent 0.01 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save --poison_generation_method pgd
+# python backdoor_attack.py --attack clean_label --mark_alpha 0.0 --height 3 --width 3 --percent 0.01 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save --poison_generation_method gan --train_gan
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack
 

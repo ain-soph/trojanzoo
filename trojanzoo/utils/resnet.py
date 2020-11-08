@@ -70,7 +70,7 @@ class BasicBlock(nn.Module):
 
         if self.downsample is not None:
             identity = self.downsample(x)
-        identity = identity[:out.shape[0],:out.shape[1],:out.shape[2],:out.shape[3]]
+        identity = identity[:out.shape[0], :out.shape[1], :out.shape[2], :out.shape[3]]
         out += identity
         out = self.relu(out)
 

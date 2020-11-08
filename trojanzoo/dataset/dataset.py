@@ -6,11 +6,12 @@ from trojanzoo.utils.output import prints, Indent_Redirect
 import os
 import sys
 import torch
+import torch.utils.data
 import numpy as np
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -111,7 +112,7 @@ class Dataset:
         pass
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor], **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         return data
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
@@ -167,7 +168,7 @@ class Dataset:
 
     @classmethod
     def split_set(cls, dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                  length: int = None, percent=None) -> (torch.utils.data.Subset, torch.utils.data.Subset):
+                  length: int = None, percent=None) -> Tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
         assert (length is None) != (percent is None)  # XOR check
         if length is None:
             length = int(len(dataset) * percent)

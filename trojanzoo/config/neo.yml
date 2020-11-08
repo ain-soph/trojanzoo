@@ -1,0 +1,5 @@
+# -*- coding: utf-8 -*-
+
+threshold_t: 10.0
+sample_num: 100
+k_means_num: 3

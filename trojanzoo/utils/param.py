@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from .output import prints
-
 
 class Module(object):
 
@@ -52,7 +50,7 @@ class Module(object):
         return self
 
     def summary(self, indent=0):
-        prints(self, indent=indent)
+        print(' ' * indent, self)
 
     def copy(self):
         return self.__class__(self)

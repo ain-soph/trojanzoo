@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
 
 target_class: 0
-persent: 0.1
+percent: 0.01
+train_mode: batch

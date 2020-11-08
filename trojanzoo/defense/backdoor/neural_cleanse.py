@@ -2,7 +2,7 @@
 
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_list, normalize_mad
+from trojanzoo.utils import jaccard_idx
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
@@ -14,9 +14,9 @@ import torch.optim as optim
 import time
 import datetime
 from tqdm import tqdm
-from typing import List
+from typing import List, Tuple
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -26,7 +26,8 @@ class Neural_Cleanse(Defense_Backdoor):
 
     def __init__(self, epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
-                 attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99, **kwargs):
+                 attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99,
+                 **kwargs):
         super().__init__(**kwargs)
 
         data_shape = [self.dataset.n_channel]
@@ -48,15 +49,20 @@ class Neural_Cleanse(Defense_Backdoor):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
+        if not self.attack.mark.random_pos:
+            self.real_mask = self.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask_norms: ', mask_norms)
         print('loss: ', loss_list)
 
-        confidence = get_confidence(loss_list, self.attack.target_class)
-        print('confidence: ', confidence)
+        if not self.attack.mark.random_pos:
+            overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,
+                                  select_num=self.attack.mark.height * self.attack.mark.width)
+            print(f'Jaccard index: {overlap:.3f}')
+        print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
-    def get_potential_triggers(self) -> (torch.Tensor, torch.Tensor, torch.Tensor):
+    def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
@@ -66,10 +72,21 @@ class Neural_Cleanse(Defense_Backdoor):
             mark_list.append(mark)
             mask_list.append(mask)
             loss_list.append(loss)
+
+            if not self.attack.mark.random_pos:
+                overlap = jaccard_idx(mask, self.real_mask,
+                                      select_num=self.attack.mark.height * self.attack.mark.width)
+                print(f'Jaccard index: {overlap:.3f}')
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
         loss_list = torch.as_tensor(loss_list)
         return mark_list, mask_list, loss_list
+
+    def loss_fn(self, _input, _label, Y, mask, mark, label):
+        X = _input + mask * (mark - _input)
+        Y = label * torch.ones_like(_label, dtype=torch.long)
+        _output = self.model(X)
+        return self.model.criterion(_output, Y)
 
     def remask(self, label: int):
         epoch = self.epoch
@@ -113,7 +130,10 @@ class Neural_Cleanse(Defense_Backdoor):
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            for data in tqdm(self.dataset.loader['train']):
+            loader = self.dataset.loader['train']
+            if env['tqdm']:
+                loader = tqdm(loader)
+            for data in loader:
                 _input, _label = self.model.get_data(data)
                 batch_size = _label.size(0)
                 X = _input + mask * (mark - _input)
@@ -121,7 +141,7 @@ class Neural_Cleanse(Defense_Backdoor):
                 _output = self.model(X)
 
                 batch_acc = Y.eq(_output.argmax(1)).float().mean()
-                batch_entropy = self.model.criterion(_output, Y)
+                batch_entropy = self.loss_fn(_input, _label, Y, mask, mark, label)
                 batch_norm = mask.norm(p=1)
                 batch_loss = batch_entropy + cost * batch_norm
 
@@ -139,7 +159,7 @@ class Neural_Cleanse(Defense_Backdoor):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, epoch), **ansi).ljust(64)
+                output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Acc: {acc.avg:.2f}, '.ljust(20),
@@ -147,7 +167,7 @@ class Neural_Cleanse(Defense_Backdoor):
                 f'Entropy: {entropy.avg:.4f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
 
             # check to save best mask or not
             if acc.avg >= self.attack_succ_threshold and norm.avg < norm_best:

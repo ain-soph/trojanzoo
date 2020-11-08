@@ -8,7 +8,7 @@ from trojanzoo.utils.sgm import register_hook
 from trojanzoo.dataset.dataset import Dataset
 
 import types
-from typing import Union, Callable
+from typing import Union, Callable, Tuple
 
 import os
 import time
@@ -23,7 +23,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from trojanzoo.utils import Config
+from trojanzoo.utils.config import Config
 env = Config.env
 
 
@@ -49,7 +49,7 @@ class _Model(nn.Module):
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
         x = self.get_final_fm(x)
-        x = self.get_logits_from_fm(x)
+        x = self.classifier(x)
         return x
 
     # input: (batch_size, channels, height, width)
@@ -57,20 +57,11 @@ class _Model(nn.Module):
     def get_fm(self, x):
         return self.features(x)
 
-    # get feature map
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, [feature_map])
     def get_final_fm(self, x):
         x = self.get_fm(x)
         x = self.pool(x)
         x = self.flatten(x)
         return x
-
-    # get logits from feature map
-    # input: (batch_size, [feature_map])
-    # output: (batch_size, logits)
-    def get_logits_from_fm(self, x):
-        return self.classifier(x)
 
     def define_features(self, conv_depth: int = None, conv_dim: int = None):
         return nn.Identity()
@@ -107,8 +98,8 @@ class _Model(nn.Module):
 class Model:
 
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
-                 num_classes: int = None, loss_weights: torch.FloatTensor = None,
-                 official=False, pretrain=False, sgm=False, sgm_gamma: float = 1.0,
+                 num_classes: int = None, loss_weights: torch.FloatTensor = 'dataset',
+                 official=False, pretrain=False, randomized_smooth=False, sgm=False, sgm_gamma: float = 1.0,
                  suffix='', folder_path: str = None, **kwargs):
         self.name: str = name
         self.dataset = dataset
@@ -123,7 +114,7 @@ class Model:
                 folder_path = data_dir + dataset.data_type + '/' + dataset.name + '/model/'
             if num_classes is None:
                 num_classes = dataset.num_classes
-            if loss_weights is None:
+            if loss_weights == 'dataset':
                 loss_weights = dataset.loss_weights
         self.num_classes = num_classes  # number of classes
         self.loss_weights = loss_weights
@@ -146,15 +137,18 @@ class Model:
             self.load()
         if env['num_gpus']:
             self.cuda()
+        self.randomized_smooth: bool = randomized_smooth
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
-        if sgm:
-            register_hook(self, sgm_gamma)
+        # if sgm:
+        #     register_hook(self, sgm_gamma)
         self.eval()
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input: torch.Tensor, randomized_smooth=False, sigma=0.1, n=100, **kwargs):
+    def get_logits(self, _input: torch.Tensor, randomized_smooth=None, sigma=0.01, n=100, **kwargs):
+        if randomized_smooth is None:
+            randomized_smooth = self.randomized_smooth
         if randomized_smooth:
             _list = []
             for _ in range(n):
@@ -168,6 +162,9 @@ class Model:
 
     def get_prob(self, _input, **kwargs) -> torch.Tensor:
         return self.softmax(self.get_logits(_input, **kwargs))
+
+    def get_final_fm(self, _input, **kwargs) -> torch.Tensor:
+        return self._model.get_final_fm(_input, **kwargs)
 
     def get_target_prob(self, _input, target, **kwargs):
         return self.get_prob(_input, **kwargs).gather(dim=1, index=target.unsqueeze(1)).flatten()
@@ -219,6 +216,8 @@ class Model:
     # define loss function
     # Cross Entropy
     def define_criterion(self, loss_weights: torch.FloatTensor = None):
+        if isinstance(loss_weights, str):
+            loss_weights = None
         entropy_fn = nn.CrossEntropyLoss(weight=loss_weights)
 
         def loss_fn(_output: torch.Tensor, _label: torch.LongTensor):
@@ -263,7 +262,7 @@ class Model:
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
-    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, **kwargs):
+    def save(self, file_path: str = None, folder_path: str = None, suffix: str = None, features=True, verbose=False, indent: int = 0, **kwargs):
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -278,7 +277,7 @@ class Model:
         _dict = self._model.state_dict() if features else self._model.classifier.state_dict()
         torch.save(_dict, file_path)
         if verbose:
-            print(f'Model {self.name} saved at: {file_path}')
+            prints(f'Model {self.name} saved at: {file_path}', indent=indent)
 
     # define in concrete model class.
     def load_official_weights(self, verbose=True):
@@ -307,7 +306,6 @@ class Model:
 
         _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
-        self.train()
 
         # batch_time = AverageMeter('Time', ':6.3f')
         # data_time = AverageMeter('Data', ':6.3f')
@@ -318,20 +316,23 @@ class Model:
         #     len(trainloader),
         #     [batch_time, data_time, losses, top1, top5],
         #     prefix=f'Epoch: [{epoch}]')
-
-        self.activate_params(optimizer.param_groups[0]['params'])
-        optimizer.zero_grad()
+        params = [param_group['params'] for param_group in optimizer.param_groups]
         # start = time.perf_counter()
         # end = start
         for _epoch in range(epoch):
+            if epoch_func is not None:
+                self.activate_params([])
+                epoch_func()
+                self.activate_params(params)
             losses.reset()
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
-            if verbose:
+            if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
-            if epoch_func is not None:
-                epoch_func()
+            self.train()
+            self.activate_params(params)
+            optimizer.zero_grad()
             for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
@@ -355,16 +356,19 @@ class Model:
                 empty_cache()
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
+            self.eval()
+            self.activate_params([])
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(64)
+                    output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
                 _str = ' '.join([
                     f'Loss: {losses.avg:.4f},'.ljust(20),
                     f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
                     f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
                     f'Time: {epoch_time},'.ljust(20),
                 ])
-                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
+                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '',
+                       indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
 
@@ -372,21 +376,19 @@ class Model:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
                     _, cur_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                                   verbose=verbose, indent=indent, **kwargs)
-                    self.train()
                     if cur_acc >= best_acc:
                         prints('best result update!', indent=indent)
+                        prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                         if save:
                             save_fn(suffix=suffix, verbose=verbose)
                     if verbose:
                         print('-' * 50)
         self.zero_grad()
-        self.eval()
-        self.activate_params([])
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
-                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs) -> (float, float, float):
+                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs) -> Tuple[float, float, float]:
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
@@ -407,30 +409,30 @@ class Model:
         # start = time.perf_counter()
         # end = start
         epoch_start = time.perf_counter()
-        if verbose:
+        if verbose and env['tqdm']:
             loader = tqdm(loader)
-        with torch.no_grad():
-            for data in loader:
-                _input, _label = get_data(data, mode='valid', **kwargs)
+        for data in loader:
+            _input, _label = get_data(data, mode='valid', **kwargs)
+            with torch.no_grad():
                 loss = loss_fn(_input, _label)
                 _output = self.get_logits(_input)
 
-                # measure accuracy and record loss
-                acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                losses.update(loss.item(), _label.size(0))
+            # measure accuracy and record loss
+            acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
+            losses.update(loss.item(), _label.size(0))
 
-                batch_size = int(_label.size(0))
-                top1.update(acc1, batch_size)
-                top5.update(acc5, batch_size)
+            batch_size = int(_label.size(0))
+            top1.update(acc1, batch_size)
+            top5.update(acc5, batch_size)
 
-                # empty_cache()
+            # empty_cache()
 
-                # measure elapsed time
-                # batch_time.update(time.perf_counter() - end)
-                # end = time.perf_counter()
+            # measure elapsed time
+            # batch_time.update(time.perf_counter() - end)
+            # end = time.perf_counter()
 
-                # if i % 10 == 0:
-                #     progress.display(i)
+            # if i % 10 == 0:
+            #     progress.display(i)
         epoch_time = str(datetime.timedelta(seconds=int(
             time.perf_counter() - epoch_start)))
         if verbose:
@@ -441,7 +443,7 @@ class Model:
                 f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
                 f'Time: {epoch_time},'.ljust(20),
             ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=indent)
+            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=indent)
         return losses.avg, top1.avg, top5.avg
 
     # -------------------------------------------Utility--------------------------------------- #
@@ -486,8 +488,9 @@ class Model:
     def activate_params(self, active_param: list):
         for param in self._model.parameters():
             param.requires_grad = False
-        for param in active_param:
-            param.requires_grad_()
+        for param_group in active_param:
+            for param in param_group:
+                param.requires_grad_()
 
     def get_parallel(self):
         if env['num_gpus'] > 1:

@@ -2,12 +2,14 @@
 
 from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
-from trojanzoo.utils import save_tensor_as_img
+from trojanzoo.utils.model import AverageMeter
+from trojanzoo.utils.data import MyDataset
 
-from typing import Union, List
+from typing import Tuple, Union, List
 
 import os
 import torch
+import torch.utils.data
 
 import math
 import random
@@ -36,25 +38,38 @@ class BadNet(Attack):
 
     name: str = 'badnet'
 
-    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, **kwargs):
+    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
-        self.param_list['badnet'] = ['target_class', 'percent']
+        self.param_list['badnet'] = ['train_mode', 'target_class', 'percent', 'poison_num']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
-        # _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
-        #                                        get_data=None, **kwargs)
-        self.clean_acc = 95.370
+        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
         self.poison_num = self.dataset.batch_size * self.percent
+        self.train_mode: str = train_mode
 
-    def attack(self, epoch: int, save=False, get_data='self', loss_fn=None, **kwargs):
-        if isinstance(get_data, str) and get_data == 'self':
-            get_data = self.get_data
-        if isinstance(loss_fn, str) and loss_fn == 'self':
-            loss_fn = self.loss_fn
-        self.model._train(epoch, save=save,
-                          validate_func=self.validate_func, get_data=get_data, loss_fn=loss_fn,
-                          save_fn=self.save, **kwargs)
+    def attack(self, epoch: int, save=False, **kwargs):
+        if self.train_mode == 'batch':
+            self.model._train(epoch, save=save,
+                              validate_func=self.validate_func, get_data=self.get_data,
+                              save_fn=self.save, **kwargs)
+        elif self.train_mode == 'dataset':
+            clean_dataset = self.dataset.loader['train'].dataset
+            _input, _label = next(iter(self.dataset.get_dataloader(
+                'train', batch_size=int(self.percent * len(clean_dataset)))))
+            _label = torch.ones_like(_label) * self.target_class
+            _label = _label.tolist()
+            poison_input = self.add_mark(_input)
+            poison_dataset = MyDataset(poison_input, _label)
+            dataset = torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
+            loader = self.dataset.get_dataloader('train', dataset=dataset)
+            self.model._train(epoch, save=save,
+                              validate_func=self.validate_func, loader_train=loader,
+                              save_fn=self.save, **kwargs)
+        elif self.train_mode == 'loss':
+            self.model._train(epoch, save=save,
+                              validate_func=self.validate_func, loss_fn=self.loss_fn,
+                              save_fn=self.save, **kwargs)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:
@@ -65,9 +80,10 @@ class BadNet(Attack):
             mark=os.path.split(self.mark.mark_path)[1][:-4],
             target=target_class, mark_alpha=mark_alpha,
             height=self.mark.height, width=self.mark.width)
-        # _epoch{epoch:d} epoch=epoch,
         if self.mark.random_pos:
             _file = 'random_pos_' + _file
+        if self.mark.mark_distributed:
+            _file = 'distributed_' + _file
         return _file
 
     # ---------------------- I/O ----------------------------- #
@@ -99,7 +115,7 @@ class BadNet(Attack):
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
         return (1 - self.percent) * loss_clean + self.percent * loss_poison
 
-    def get_data(self, data: (torch.Tensor, torch.LongTensor), keep_org: bool = True, poison_label=True, **kwargs) -> (torch.Tensor, torch.LongTensor):
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -118,14 +134,34 @@ class BadNet(Attack):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> (float, float, float):
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
                                                           get_data=self.get_data, keep_org=False, **kwargs)
         _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
                                                  get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
-        # todo: Return value
+        print(f'Validate Confidence : {self.validate_confidence():.3f}')
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
             target_acc = 0.0
         return clean_loss + target_loss, target_acc, clean_acc
+
+    def validate_confidence(self) -> float:
+        confidence = AverageMeter('Confidence', ':.4e')
+        with torch.no_grad():
+            for data in self.dataset.loader['valid']:
+                _input, _label = self.model.get_data(data)
+                idx1 = _label != self.target_class
+                _input = _input[idx1]
+                _label = _label[idx1]
+                if len(_input) == 0:
+                    continue
+                poison_input = self.add_mark(_input)
+                poison_label = self.model.get_class(poison_input)
+                idx2 = poison_label == self.target_class
+                poison_input = poison_input[idx2]
+                if len(poison_input) == 0:
+                    continue
+                batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
+                confidence.update(batch_conf, len(poison_input))
+        return float(confidence.avg)

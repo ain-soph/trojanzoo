@@ -5,7 +5,8 @@ from .badnet import BadNet
 from trojanzoo.optim.uname import Uname
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.data import MyDataset
+from trojanzoo.utils.output import prints, ansi, output_iter, output_memory
 
 import time
 import datetime
@@ -15,6 +16,9 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from typing import Dict, Tuple
+
+from trojanzoo.utils.config import Config
+env = Config.env
 
 mse_criterion = nn.MSELoss()
 
@@ -82,10 +86,23 @@ class Latent_Backdoor(BadNet):
         # target_loader = self.dataset.get_dataloader(mode='train', dataset=target_loader, num_workers=0)
         # return other_loader, target_loader
 
-    def get_avg_target_feats(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
-        target_x, _ = self.model.get_data(data['target'])
-        avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
-        return avg_target_feats
+    def get_avg_target_feats(self, data_dict: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
+        with torch.no_grad():
+            if self.dataset.n_dim[0] > 100:
+                target_x, target_y = data_dict['target']
+                dataset = MyDataset(target_x, target_y)
+                loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),
+                                                     shuffle=True, num_workers=0, pin_memory=False)
+                feat_list = []
+                for data in loader:
+                    target_x, _ = self.model.get_data(data)
+                    feat_list.append(self.model.get_layer(target_x, layer_output=self.preprocess_layer).detach().cpu())
+                avg_target_feats = torch.cat(feat_list).mean(dim=0)
+                avg_target_feats = avg_target_feats.to(target_x.device)
+            else:
+                target_x, _ = self.model.get_data(data_dict['target'])
+                avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
+        return avg_target_feats.detach()
 
     def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
         other_x, _ = data['other']
@@ -100,8 +117,11 @@ class Latent_Backdoor(BadNet):
 
         losses = AverageMeter('Loss', ':.4e')
         for _epoch in range(self.preprocess_epoch):
-            epoch_start = time.perf_counter()
-            for (batch_x, ) in tqdm(other_loader):
+            # epoch_start = time.perf_counter()
+            loader = other_loader
+            # if env['tqdm']:
+            #     loader = tqdm(loader)
+            for (batch_x, ) in loader:
                 poison_x = self.mark.add_mark(to_tensor(batch_x))
                 loss = self.loss_mse(poison_x)
                 loss.backward()
@@ -109,15 +129,15 @@ class Latent_Backdoor(BadNet):
                 optimizer.zero_grad()
                 self.mark.mark = Uname.tanh_func(atanh_mark)
                 losses.update(loss.item(), n=len(batch_x))
-            epoch_time = str(datetime.timedelta(seconds=int(
-                time.perf_counter() - epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64)
-            _str = ' '.join([
-                f'Loss: {losses.avg:.4f},'.ljust(20),
-                f'Time: {epoch_time},'.ljust(20),
-            ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi), indent=4)
+            # epoch_time = str(datetime.timedelta(seconds=int(
+            #     time.perf_counter() - epoch_start)))
+            # pre_str = '{blue_light}Epoch: {0}{reset}'.format(
+            #     output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64 if env['color'] else 35)
+            # _str = ' '.join([
+            #     f'Loss: {losses.avg:.4f},'.ljust(20),
+            #     f'Time: {epoch_time},'.ljust(20),
+            # ])
+            # prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()
 
