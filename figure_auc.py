@@ -25,15 +25,31 @@ if __name__ == "__main__":
     mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
     fig.set_title()
 
+    attack_mapping = {
+        'badnet': 'BN',
+        'latent_backdoor': 'LB',
+        'trojannn': 'TNN',
+        'imc': 'IMC',
+        'reflection_backdoor': 'RB',
+        'targeted_backdoor': 'TB',
+        'trojannet': 'ESB',
+        'bypassing': 'ABE',
+        'bypass_embed': 'ABE',
+    }
     attack_list = ['badnet', 'latent_backdoor', 'trojannn', 'imc',
-                   'reflection_backdoor', 'targeted_backdoor', 'clean_label', 'bypass_embed', ]
+                   'reflection_backdoor', 'targeted_backdoor', 'bypass_embed', ]
     for i, attack in enumerate(attack_list):
+        label = f'{attack_mapping[attack]:7s}'
+        if len(attack_mapping[attack]) == 2:
+            label += '   '
         _dict = np.load(f'./result/auc/{attack}.npy', allow_pickle=True).item()
-        fig.curve(_dict['x_grid'], _dict['y_grid'], color=color_list[i], label=f'{attack} auc {_dict["auc"]:.3f}')
+        fig.curve(_dict['x_grid'], _dict['y_grid'], color=color_list[i],
+                  label=f'{label} {_dict["auc"]:.3f}')
         fig.scatter(_dict['x'], _dict['y'], color=color_list[i], marker=mark_list[i])
 
     x1 = np.linspace(0, 1, 100)
     y1 = x1
     fig.curve(x=x1, y=y1, color=ting_color["grey"], linewidth=5, linestyle='--')
+    fig.set_legend()
 
     fig.save("./result/auc/")

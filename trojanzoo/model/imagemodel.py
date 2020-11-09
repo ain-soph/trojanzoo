@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from .model import _Model, Model
-from trojanzoo.utils import to_tensor
 
 import torch
 import torch.nn as nn
 
 from typing import Dict, List
-from copy import deepcopy
 from collections import OrderedDict
 
 from trojanzoo.utils.config import Config

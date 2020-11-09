@@ -5,11 +5,9 @@ from collections import OrderedDict
 
 import torch
 import torch.nn as nn
-import trojanzoo.utils.resnet as models
-# import torchvision.models as models
+import torchvision.models as models
 from torch.utils import model_zoo
 from torchvision.models.resnet import model_urls
-from torchvision.models.resnet import BasicBlock
 
 
 class _ResNet(_ImageModel):

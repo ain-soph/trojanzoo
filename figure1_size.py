@@ -18,10 +18,10 @@ if __name__ == '__main__':
     fig.set_axis_label('x', 'Trigger Size')
     fig.set_axis_label('y', 'Max Re-Mask Accuracy')
     if args.dataset == 'gtsrb':
-        fig.set_axis_lim('x', lim=[0, 10], piece=10, margin=[0, 0.5],
+        fig.set_axis_lim('x', lim=[1, 10], piece=9, margin=[0.3, 0.3],
                          _format='%d')
     else:
-        fig.set_axis_lim('x', lim=[0, 7], piece=7, margin=[0, 0.5],
+        fig.set_axis_lim('x', lim=[1, 7], piece=6, margin=[0.3, 0.3],
                          _format='%d')
     fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
                      _format='%d')
@@ -32,6 +32,17 @@ if __name__ == '__main__':
                   ting_color['green'], color['brown']['brown'], color['green']['army']]
     mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
 
+    attack_mapping = {
+        'badnet': 'BN',
+        'latent_backdoor': 'LB',
+        'trojannn': 'TNN',
+        'imc': 'IMC',
+        'reflection_backdoor': 'RB',
+        'targeted_backdoor': 'TB',
+        'trojannet': 'ESB',
+        'bypassing': 'ABE',
+        'bypass_embed': 'ABE',
+    }
     x = np.linspace(1, 10, 10)
     y = {
         'cifar10': {
@@ -104,11 +115,13 @@ if __name__ == '__main__':
 
             # if key not in ['trojannn']: # check one line
             #     continue
-            fig.curve(x_grid, y_grid, color=color_list[i], label=key)
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i])
+            fig.curve(x_grid, y_grid, color=color_list[i])
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
 
     if args.dataset == 'sample_imagenet':
         for i, (key, value) in enumerate(y[args.dataset].items()):
+            # if key not in ['bypassing']:  # check one line
+            #     continue
             x_list = np.array(x[:len(value)])
             y_list = np.array(value)
             x_grid = np.linspace(1, 7, 6000)
@@ -119,10 +132,15 @@ if __name__ == '__main__':
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid = fig.avg_smooth(y_grid, window=20)
             elif key in ['bypassing']:
-                y_grid = -fig.exp_fit(x_list, -y_list, x_grid, degree=3, increase=True, epsilon=0.05)
+                x_list1 = np.delete(x_list, 3)
+                y_list1 = np.delete(y_list, 3)
+                y_grid = -fig.exp_fit(x_list1, -y_list1, x_grid, degree=3, increase=True, epsilon=0.05)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
-                y_grid = fig.avg_smooth(y_grid, window=20)
+                y_grid[500:] = fig.avg_smooth(y_grid, window=700)[500:]
+                y_grid[400:] = fig.avg_smooth(y_grid, window=500)[400:]
+                y_grid[300:] = fig.avg_smooth(y_grid, window=300)[300:]
+                y_grid = fig.avg_smooth(y_grid, window=100)
             elif key in ['latent_backdoor']:
                 y_grid = -fig.exp_fit(x_list[1:], -y_list[1:], x_grid, degree=3, increase=True, epsilon=0.01)
                 y_grid[:1350] = fig.poly_fit(x_list[:2], y_list[:2], x_grid)[:1350]
@@ -183,7 +201,7 @@ if __name__ == '__main__':
             #     continue
             # y_grid[0] = y_list[0]
             fig.curve(x_grid, y_grid, color=color_list[i])
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=key)
+            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
     fig.set_legend()
-    fig.ax.get_legend().remove()
+    # fig.ax.get_legend().remove()
     fig.save('./result/')

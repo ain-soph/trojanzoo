@@ -1,73 +1,19 @@
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
+# -*- coding: utf-8 -*-
+
 from ..defense_backdoor import Defense_Backdoor
 
+from trojanzoo.model import ImageModel
+
 import torch
-import torch.optim as optim
 import torch.nn as nn
-from typing import List
+import torch.autograd
+from typing import List, Dict
 
 from operator import itemgetter
 from heapq import nsmallest
 
 from trojanzoo.utils.config import Config
 env = Config.env
-
-
-class FilterPrunner:
-
-    def __init__(self, model):
-        self.model = model
-        self.forward_values = []
-        self.backward_values = []
-
-    def forward(self, x):
-        """
-        Record the activation value of filters in forward.
-
-        Args:
-            x (torch.FloatTensor): the input
-
-        Returns:
-            the output of the model
-        """
-        self.grad_index = 0
-        for (idx, (layer, module)) in enumerate(self.model._model.features.named_children()):
-            # conv1, bn1, relu
-            if idx < 3:
-                x = module(x)
-            if 'conv' in layer:
-                self.forward_values.append(x)
-            if 'layer' in layer:
-                for block in range(len(module)):
-                    for name2, module2 in module[block].named_children():
-                        x = module2(x)
-                        if 'conv' in name2:
-                            x.register_hook(self.compute_rank)
-                            self.forward_values.append(x)
-        x = self.model._model.pool(x)
-        x = self.model._model.flatten(x)
-        x = self.model._model.classifier(x)
-        return x
-
-    def compute_rank(self, grad):
-        """ 
-        Normalize the rank by the filter function and record into self.filter_ranks.
-
-        Args:
-            grad : the gradient of x
-        """
-        activation_index = len(self.activations) - self.grad_index - 1
-        activation = self.activations[activation_index]
-        values = (activation * grad).sum(dim=0).sum(dim=-1).sum(dim=-1)
-        # Normalize the rank by the filter dimensions
-        values = values / (activation.size(0) * activation.size(2) * activation.size(3))
-        if activation_index not in self.filter_ranks:
-            self.filter_ranks[activation_index] = torch.FloatTensor(activation.size(1)).zero_().to(env['device'])
-        values = values.abs()
-        values = values / torch.sqrt(torch.sum(values ** 2))
-        self.filter_ranks[activation_index] += values
-        self.grad_index += 1
 
 
 class Fine_Pruning(Defense_Backdoor):
@@ -103,37 +49,83 @@ class Fine_Pruning(Defense_Backdoor):
 
     def __init__(self, prune_ratio: float = 0.001, **kwargs):
         super().__init__(**kwargs)  # --original --pretrain --epoch 100
+        self.param_list['fine_pruning'] = ['prune_ratio', 'filter_num']
         self.prune_ratio = prune_ratio
+        self.filter_num = self.get_filter_num()
 
-    def total_num_filters(self):
+    def detect(self, **kwargs):
+        super().detect(**kwargs)
+        self.helper = PrunnerHelper(self.model)
+
+        prune_targets = self.get_candidates_to_prune()
+
+        print("Layers that will be prunned", prune_targets)
+        model = self.model
+        if len(prune_targets) > 0:
+            for layer_index, channel_list in prune_targets.items():
+                model = self.prune_conv_layer(model, layer_index, channel_list)
+            model = self.batchnorm_modify(model)
+            print('After fine-tuning, the performance of model:')
+            self.attack.validate_func()
+            model.summary(depth=5, verbose=True)
+        self.model._train(loader_train=self.clean_dataloader, suffix='_fine_pruning', **kwargs)
+        self.attack.validate_func()
+
+    @staticmethod
+    def get_filter_num(model: nn.Module) -> int:
+        """Get the number of filters in the feature layer of the model.
+
+        Args:
+            model (nn.Module): Model
+        Returns:
+            int: filter number
         """
-        Get the number of filters in the feature layer of the model.
-        """
-        filters = 0
-        for (layer, (name, module)) in enumerate(self.model._model.features._modules.items()):
-            if isinstance(module, torch.nn.modules.conv.Conv2d):
-                filters += module.out_channels
-            if 'layer' in name:
-                for kt in range(len(module)):
-                    for name2, module2 in self.model._model.features[layer][kt].children():
-                        if 'conv' in name2:
-                            filters += module2.out_channels
-        return filters
+        filter_num = 0
+        for module in model.modules():
+            if isinstance(module, nn.Conv2d):
+                filter_num += module.out_channels
+        return filter_num
 
     def get_candidates_to_prune(self):
         """
         Get the prune plan.
         """
         _input, _label = self.model.get_data(next(self.dataset.loader['train']))
-
         x = _input.detach()
         x.requires_grad_()
-        output = self.prunner.forward(_input)
+        output = self.helper.forward(_input)
         loss = self.model.criterion(output, _label)
-        loss.backward()
-        x.requires_grad = False
+        torch.autograd.grad(loss, x)    # not using backward() to avoid gradient saving in tensor
+        x.requires_grad_(False)
+        prune_num = int(self.prune_ratio * self.filter_num)
 
-        return self.get_prunning_plan()
+        filters_to_prune = self.lowest_ranking_filters(self.prunner.filter_ranks, prune_num)
+
+        filters_to_prune_per_layer = {}
+        for (l, f, _) in filters_to_prune:
+            if l not in filters_to_prune_per_layer:
+                filters_to_prune_per_layer[l] = []
+            filters_to_prune_per_layer[l].append(f)
+        return filters_to_prune_per_layer
+
+    @staticmethod
+    def lowest_ranking_filters(filter_ranks: list, num: int):
+        """
+        Get the smallest num of neuron filters.
+
+        Args:
+            filter_ranks (list): the list of filter rank.
+            num (int): the number of chosen samllest neuron filters.
+
+        Returns:
+            the smallest num of neuron filters
+
+        """
+        data = []
+        for i, value in filter_ranks[16:]:  # layer, B, Channel, H, W
+            for j in range(filter_ranks[i].size(0)):
+                data.append((i, j, filter_ranks[i][j]))
+        return nsmallest(num, data, itemgetter(2))
 
     def replace_layers(self, model, i, indexes, layers):
         """
@@ -171,32 +163,6 @@ class Fine_Pruning(Defense_Backdoor):
                         num_features = downsample[0].out_channels
                         downsample[1] = nn.BatchNorm2d(num_features=num_features, **kwargs)
         return model
-
-    def detect(self, **kwargs):
-        super().detect(**kwargs)
-        self.prunner = FilterPrunner(self.model)
-        for idx, m in enumerate(self.model.children()):
-            print(idx, '->', m)
-        print('The total number of filters is:', number_of_filters)
-        print("Number of prunning iterations to reduce {} % filters".format(100 * self.prune_ratio))
-
-        print("Ranking filters.. ")
-        prune_targets = self.get_candidates_to_prune()
-
-        print("Layers that will be prunned", prune_targets)
-        print("Prunning filters.. ")
-        model = self.model
-        if len(prune_targets) > 0:
-            for layer_index, channel_list in prune_targets.items():
-                model = self.prune_conv_layer(model, layer_index, channel_list)
-                number_of_filters = self.total_num_filters()
-                print(layer, ' ', number_of_filters)
-            model = self.batchnorm_modify(model)
-            print('After fine-tuning, the performance of model:')
-            self.attack.validate_func()
-            model.summary(depth=5, verbose=True)
-        self.model._train(loader_train=self.clean_dataloader, suffix='_fine_pruning', **kwargs)
-        self.attack.validate_func()
 
     def prune_conv_layer(self, model, layer_index: int, channel_list: List[int]):
         """
@@ -292,14 +258,14 @@ class Fine_Pruning(Defense_Backdoor):
                     conv = list(model._model.features[2 + tt][kt].children())[3]
 
         new_conv = \
-            torch.nn.Conv2d(in_channels=conv.in_channels,
-                            out_channels=conv.out_channels - 1,
-                            kernel_size=conv.kernel_size,
-                            stride=conv.stride,
-                            padding=conv.padding,
-                            dilation=conv.dilation,
-                            groups=conv.groups,
-                            bias=conv.bias)
+            nn.Conv2d(in_channels=conv.in_channels,
+                      out_channels=conv.out_channels - 1,
+                      kernel_size=conv.kernel_size,
+                      stride=conv.stride,
+                      padding=conv.padding,
+                      dilation=conv.dilation,
+                      groups=conv.groups,
+                      bias=conv.bias)
 
         old_weights = conv.weight.data
         new_weights = new_conv.weight.data
@@ -316,14 +282,14 @@ class Fine_Pruning(Defense_Backdoor):
 
         if downout_conv is not None:
             new_down_conv = \
-                torch.nn.Conv2d(in_channels=downout_conv.in_channels,
-                                out_channels=downout_conv.out_channels - 1,
-                                kernel_size=downout_conv.kernel_size,
-                                stride=downout_conv.stride,
-                                padding=downout_conv.padding,
-                                dilation=downout_conv.dilation,
-                                groups=downout_conv.groups,
-                                bias=downout_conv.bias)
+                nn.Conv2d(in_channels=downout_conv.in_channels,
+                          out_channels=downout_conv.out_channels - 1,
+                          kernel_size=downout_conv.kernel_size,
+                          stride=downout_conv.stride,
+                          padding=downout_conv.padding,
+                          dilation=downout_conv.dilation,
+                          groups=downout_conv.groups,
+                          bias=downout_conv.bias)
 
             old_weights = downout_conv.weight.data
             new_weights = new_down_conv.weight.data
@@ -340,14 +306,14 @@ class Fine_Pruning(Defense_Backdoor):
 
         if not next_conv is None:
             next_new_conv = \
-                torch.nn.Conv2d(in_channels=next_conv.in_channels - 1,
-                                out_channels=next_conv.out_channels,
-                                kernel_size=next_conv.kernel_size,
-                                stride=next_conv.stride,
-                                padding=next_conv.padding,
-                                dilation=next_conv.dilation,
-                                groups=next_conv.groups,
-                                bias=next_conv.bias)
+                nn.Conv2d(in_channels=next_conv.in_channels - 1,
+                          out_channels=next_conv.out_channels,
+                          kernel_size=next_conv.kernel_size,
+                          stride=next_conv.stride,
+                          padding=next_conv.padding,
+                          dilation=next_conv.dilation,
+                          groups=next_conv.groups,
+                          bias=next_conv.bias)
 
             old_weights = next_conv.weight.data
             new_weights = next_new_conv.weight.data
@@ -361,14 +327,14 @@ class Fine_Pruning(Defense_Backdoor):
 
         if not downin_conv is None:
             next_downin_conv = \
-                torch.nn.Conv2d(in_channels=downin_conv.in_channels - 1,
-                                out_channels=downin_conv.out_channels,
-                                kernel_size=downin_conv.kernel_size,
-                                stride=downin_conv.stride,
-                                padding=downin_conv.padding,
-                                dilation=downin_conv.dilation,
-                                groups=downin_conv.groups,
-                                bias=downin_conv.bias)
+                nn.Conv2d(in_channels=downin_conv.in_channels - 1,
+                          out_channels=downin_conv.out_channels,
+                          kernel_size=downin_conv.kernel_size,
+                          stride=downin_conv.stride,
+                          padding=downin_conv.padding,
+                          dilation=downin_conv.dilation,
+                          groups=downin_conv.groups,
+                          bias=downin_conv.bias)
 
             old_weights = downin_conv.weight.data
             new_weights = next_downin_conv.weight.data
@@ -382,7 +348,7 @@ class Fine_Pruning(Defense_Backdoor):
 
         if not next_conv is None:
             if layer_index == 0:
-                features1 = torch.nn.Sequential(
+                features1 = nn.Sequential(
                     *(self.replace_layers(model._model.features, i, [layer_index, layer_index],
                                           [new_conv, new_conv]) for i in range(len(list(model._model.features.children())))))
                 del model._model.features
@@ -397,14 +363,14 @@ class Fine_Pruning(Defense_Backdoor):
                         setattr(self.model._model.features[2 + tt][kt], 'conv2', new_conv)
                         setattr(self.model._model.features[2 + tt][kt + 1], 'conv1', next_new_conv)
                         if tt > 1:
-                            ds = torch.nn.Sequential(
+                            ds = nn.Sequential(
                                 *(self.replace_layers(list(model._model.features[2 + tt][kt].children())[5], i, [0], [new_down_conv]) for i, _ in enumerate(list(model._model.features[2 + tt][kt].children())[5])))
                             setattr(self.model._model.features[2 + tt][kt], 'downsample', ds)
                     else:
                         setattr(self.model._model.features[2 + tt][kt], 'conv2', new_conv)
                         setattr(self.model._model.features[2 + tt + 1][0], 'conv1', next_new_conv)
-                        ds = torch.nn.Sequential(*(self.replace_layers(list(model._model.features[2 + tt + 1][0].children())[5], i, [0], [
-                                                 next_downin_conv]) for i, _ in enumerate(list(model._model.features[2 + tt + 1][0].children())[5])))
+                        ds = nn.Sequential(*(self.replace_layers(list(model._model.features[2 + tt + 1][0].children())[5], i, [0], [
+                            next_downin_conv]) for i, _ in enumerate(list(model._model.features[2 + tt + 1][0].children())[5])))
                         setattr(self.model._model.features[2 + tt + 1][0], 'downsample', ds)
             del conv
 
@@ -414,7 +380,7 @@ class Fine_Pruning(Defense_Backdoor):
             layer_index = 0
             old_linear_layer = None
             for _, module in model._model.classifier._modules.items():
-                if isinstance(module, torch.nn.Linear):
+                if isinstance(module, nn.Linear):
                     old_linear_layer = module
                     break
                 layer_index = layer_index + 1
@@ -422,8 +388,8 @@ class Fine_Pruning(Defense_Backdoor):
             if old_linear_layer is None:
                 raise BaseException("No linear layer found in classifier")
             params_per_input_channel = int(old_linear_layer.in_features / conv.out_channels)
-            new_linear_layer = torch.nn.Linear(old_linear_layer.in_features - params_per_input_channel,
-                                               old_linear_layer.out_features)
+            new_linear_layer = nn.Linear(old_linear_layer.in_features - params_per_input_channel,
+                                         old_linear_layer.out_features)
 
             old_weights = old_linear_layer.weight.data
             new_weights = new_linear_layer.weight.data
@@ -436,8 +402,8 @@ class Fine_Pruning(Defense_Backdoor):
                 new_linear_layer.bias.data = old_linear_layer.bias.data
             new_linear_layer.weight.data = new_weights
 
-            classifier = torch.nn.Sequential(*(self.replace_layers(model._model.classifier, i,
-                                                                   [layer_index], [new_linear_layer]) for i, _ in enumerate(model._model.classifier)))
+            classifier = nn.Sequential(*(self.replace_layers(model._model.classifier, i,
+                                                             [layer_index], [new_linear_layer]) for i, _ in enumerate(model._model.classifier)))
 
             del model._model.classifier
             del next_conv
@@ -446,39 +412,75 @@ class Fine_Pruning(Defense_Backdoor):
 
         return model
 
-    @staticmethod
-    def lowest_ranking_filters(filter_ranks: list, num: int):
+
+class PrunnerHelper:
+    def __init__(self, model: ImageModel):
+        self.model = model
+        self.grad_index = -1
+        self.forward_values: Dict[str, torch.FloatTensor] = {}
+        self.backward_values: Dict[str, torch.FloatTensor] = {}
+        self.rank_values: Dict[str, torch.FloatTensor] = {}
+
+    def forward(self, x):
         """
-        Get the smallest num of neuron filters.
+        Record the activation value of filters in forward.
 
         Args:
-            filter_ranks (list): the list of filter rank.
-            num (int): the number of chosen samllest neuron filters.
+            x (torch.FloatTensor): the input
 
         Returns:
-            the smallest num of neuron filters
-
+            the output of the model
         """
-        data = []
-        for i, value in filter_ranks[16:]:  # layer, B, Channel, H, W
-            for j in range(filter_ranks[i].size(0)):
-                data.append((i, j, filter_ranks[i][j]))
-        return nsmallest(num, data, itemgetter(2))
+        self.grad_index = -1
+        self.forward_values = {}
+        self.backward_values = {}
+        self.rank_values = {}
+        _model = self.model._model
+        for (idx, (layer_name, layer)) in enumerate(_model.features.named_children()):
+            # conv1, bn1, relu
+            if idx < 3:
+                x = layer(x)
+            # TODO: don't prune the first layers
+            if isinstance(layer, nn.Conv2d):
+                self.forward_values[layer_name] = x
+                x.register_hook(self.record_grad)
 
-    def get_prunning_plan(self):
+            # layer1, layer2, layer3
+            if isinstance(layer, nn.Sequential):
+                for block_name, block in layer.named_children():
+                    org_x = x
+                    for atom_name, atom in block.named_children():
+                        x = atom(x)
+                        if isinstance(atom, nn.Conv2d):
+                            name = '.'.join([layer_name, block_name, atom_name])
+                            self.forward_values[name] = x
+                            x.register_hook(self.record_grad)
+                    x += org_x
+        x = _model.pool(x)
+        x = _model.flatten(x)
+        x = _model.classifier(x)
+        return x
+
+    def record_grad(self, grad: torch.FloatTensor):
+        """ 
+        record conv layer gradients into self.backward_values.
+
+        Args:
+            grad : the gradient of x
         """
-        According  the activation of filters and the number of filters to prune, plan the order of pruning. After each of the k filters are prunned, the filter index of the next filters change since the model is smaller.
+        name: str = list(self.forward_values.keys())[self.grad_index]
+        self.backward_values[name] = grad
+        self.grad_index -= 1
 
-        Returns:
-            the dict specifying how to prune.
+    def compute_rank(self):
+        """ 
+        Normalize the rank by the filter function and record into self.rank_values.
         """
-        number_of_filters = self.total_num_filters()
-        prune_num = int(self.prune_ratio * number_of_filters)
-        filters_to_prune = self.lowest_ranking_filters(self.prunner.filter_ranks, prune_num)
-
-        filters_to_prune_per_layer = {}
-        for (l, f, _) in filters_to_prune:
-            if l not in filters_to_prune_per_layer:
-                filters_to_prune_per_layer[l] = []
-            filters_to_prune_per_layer[l].append(f)
-        return filters_to_prune_per_layer
+        for name in self.forward_values.keys():
+            forward_value = self.forward_values[name]
+            backward_value = self.backward_values[name]
+            rank_value: torch.FloatTensor = forward_value * backward_value
+            rank_value: torch.FloatTensor = rank_value.abs().mean(dim=0).mean(dim=-1).mean(dim=-1)  # (C)
+            # TODO: abs()?
+            rank_value.div_(rank_value.norm(p=2))
+            self.rank_values[name] = rank_value
