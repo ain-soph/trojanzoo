@@ -16,7 +16,5 @@ class Parser_Fine_Pruning(Parser_Defense_Backdoor):
     @classmethod
     def add_argument(cls, parser):
         super().add_argument(parser)
-        parser.add_argument('--clean_image_num', dest='clean_image_num', type=int,
-                            help=' the number of sampled clean image to prune and finetune the model, defaults to config[Fine_Pruning][clean_image_num]=50')
-        parser.add_argument('--prune_ratio', dest='prune_ratio', type=float,
-                            help=' the ratio of neurons to prune, defaults to config[Fine_Pruning][prune_ratio ]=0.02')
+        parser.add_argument('--prune_num', dest='prune_ratio', type=int,
+                            help=' the number of neurons to prune, defaults to config[fine_pruning][prune_num]=20')
