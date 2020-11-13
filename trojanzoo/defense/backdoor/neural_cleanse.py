@@ -6,6 +6,7 @@ from trojanzoo.utils import jaccard_idx
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
+from trojanzoo.utils.tensor import normalize_mad
 from trojanzoo.optim.uname import Uname
 
 import torch
@@ -53,8 +54,10 @@ class Neural_Cleanse(Defense_Backdoor):
             self.real_mask = self.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
-        print('mask_norms: ', mask_norms)
+        print('mask norms: ', mask_norms)
+        print('mask MAD: ', normalize_mad(mask_norms))
         print('loss: ', loss_list)
+        print('loss MAD: ', normalize_mad(loss_list))
 
         if not self.attack.mark.random_pos:
             overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,

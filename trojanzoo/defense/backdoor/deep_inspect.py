@@ -3,6 +3,7 @@
 from ..defense_backdoor import Defense_Backdoor
 
 from trojanzoo.utils import to_list, jaccard_idx
+from trojanzoo.utils.tensor import normalize_mad
 from trojanzoo.utils.model import to_categorical, AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
@@ -55,7 +56,8 @@ class Deep_Inspect(Defense_Backdoor):
         if not self.attack.mark.random_pos:
             self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
-        print('loss: ', loss_list)  # DeepInspect use this)
+        print('loss: ', loss_list)
+        print('loss MAD: ', normalize_mad(loss_list))
         print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
     def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor]:
