@@ -41,25 +41,30 @@ class Fine_Pruning(Defense_Backdoor):
 
     name = 'fine_pruning'
 
-    def __init__(self, prune_num: int = 20, **kwargs):
+    def __init__(self, prune_ratio: float = 0.95, **kwargs):
         super().__init__(**kwargs)  # --original --pretrain --epoch 100
-        self.param_list['fine_pruning'] = ['prune_num', 'prune_layer']
-        self.prune_num = prune_num
-        self.prune_layer = 'features.layer4.1.conv2'
+        self.param_list['fine_pruning'] = ['prune_ratio', 'prune_num', 'prune_layer']
+        self.prune_ratio = prune_ratio
+        module_list = list(self.model.named_modules())
+        for name, module in reversed(module_list):
+            if isinstance(module, nn.Conv2d):
+                self.prune_layer: str = name
+                self.conv_module: nn.Module = prune.identity(module, 'weight')
+                break
+        length = self.conv_module.out_channels
+        self.prune_num: int = int(length * self.prune_ratio)
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
         self.prune(**kwargs)
 
     def prune(self, **kwargs):
-        for name, module in self.model.named_modules():
-            if name == self.prune_layer:
-                conv_module: nn.Module = prune.identity(module, 'weight')
-                mask = conv_module.weight_mask
-        self.prune_step(mask, prune_num=self.prune_num - 10)
+        length = self.conv_module.out_channels
+        mask = self.conv_module.weight_mask
+        self.prune_step(mask, prune_num=max(self.prune_num - 10, 0))
         self.attack.validate_func()
 
-        for i in range(10):
+        for i in range(min(10, length)):
             print('Iter: ', output_iter(i + 1, 10))
             self.prune_step(mask, prune_num=1)
             _, target_acc, clean_acc = self.attack.validate_func()

@@ -16,5 +16,5 @@ class Parser_Fine_Pruning(Parser_Defense_Backdoor):
     @classmethod
     def add_argument(cls, parser):
         super().add_argument(parser)
-        parser.add_argument('--prune_num', dest='prune_ratio', type=int,
-                            help=' the number of neurons to prune, defaults to config[fine_pruning][prune_num]=20')
+        parser.add_argument('--prune_ratio', dest='prune_ratio', type=float,
+                            help='the ratio of neuron number to prune, defaults to config[fine_pruning][prune_ratio]=0.95')
