@@ -45,6 +45,9 @@ class Fine_Pruning(Defense_Backdoor):
         super().__init__(**kwargs)  # --original --pretrain --epoch 100
         self.param_list['fine_pruning'] = ['prune_ratio', 'prune_num', 'prune_layer']
         self.prune_ratio = prune_ratio
+
+    def detect(self, **kwargs):
+        super().detect(**kwargs)
         module_list = list(self.model.named_modules())
         for name, module in reversed(module_list):
             if isinstance(module, nn.Conv2d):
@@ -53,9 +56,6 @@ class Fine_Pruning(Defense_Backdoor):
                 break
         length = self.conv_module.out_channels
         self.prune_num: int = int(length * self.prune_ratio)
-
-    def detect(self, **kwargs):
-        super().detect(**kwargs)
         self.prune(**kwargs)
 
     def prune(self, **kwargs):
@@ -70,7 +70,8 @@ class Fine_Pruning(Defense_Backdoor):
             _, target_acc, clean_acc = self.attack.validate_func()
             if self.attack.clean_acc - clean_acc > 20:
                 break
-        self.model._train(validate_func=self.attack.validate_func, **kwargs)
+        file_path = self.folder_path + self.get_filename()
+        self.model._train(validate_func=self.attack.validate_func, file_path=file_path, **kwargs)
         self.attack.validate_func()
 
     def prune_step(self, mask: torch.Tensor, prune_num: int = 1):

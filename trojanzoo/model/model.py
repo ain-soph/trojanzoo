@@ -285,10 +285,11 @@ class Model:
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-               validate_interval=10, save=False, amp: bool = False, suffix: str = None, verbose=True, indent=0,
+               validate_interval=10, save=False, amp: bool = False, verbose=True, indent=0,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], torch.Tensor] = None,
-               validate_func: Callable = None, epoch_func: Callable = None, save_fn=None, **kwargs):
+               validate_func: Callable = None, epoch_func: Callable = None,
+               save_fn=None, file_path: str = None, folder_path: str = None, suffix: str = None, **kwargs):
 
         if loader_train is None:
             loader_train = self.dataset.loader['train']
@@ -381,7 +382,7 @@ class Model:
                         prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                         if save:
-                            save_fn(suffix=suffix, verbose=verbose)
+                            save_fn(file_path=file_path, folder_path=folder_path, suffix=suffix, verbose=verbose)
                     if verbose:
                         print('-' * 50)
         self.zero_grad()
