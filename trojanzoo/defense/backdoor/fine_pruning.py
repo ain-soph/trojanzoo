@@ -70,7 +70,7 @@ class Fine_Pruning(Defense_Backdoor):
             _, target_acc, clean_acc = self.attack.validate_func()
             if self.attack.clean_acc - clean_acc > 20:
                 break
-        file_path = self.folder_path + self.get_filename()
+        file_path = self.folder_path + self.get_filename() + '.pth'
         self.model._train(validate_func=self.attack.validate_func, file_path=file_path, **kwargs)
         self.attack.validate_func()
 

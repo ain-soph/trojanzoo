@@ -22,6 +22,9 @@ if [ $defense = fine_pruning ];then
     ext='--epoch 10 --lr 1e-2'
 fi
 
+if [ $defense = adv_train ];then
+    ext='--epoch 50 --lr 1e-2'
+fi
 
 for attack in 'badnet' 'latent_backdoor' 'trojannn' 'imc' 'reflection_backdoor' 'bypass_embed' 'trojannet'
 do
