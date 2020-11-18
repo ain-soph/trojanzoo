@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo.utils.tensor import normalize_mad
+from trojanzoo import attack
 from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_tensor, jaccard_idx
 from trojanzoo.utils.model import AverageMeter, total_variation
@@ -71,7 +73,7 @@ class ABS(Defense_Backdoor):
         print('remask')
         neuron_dict = self.get_potential_triggers(neuron_dict, _input, _label)
 
-    def print_neuron_dict(self, neuron_dict: dict):
+    def print_neuron_dict(self, neuron_dict: Dict[int, List[dict]]):
         for label, label_list in neuron_dict.items():
             print('label: ', label)
             for _dict in label_list:
@@ -84,18 +86,19 @@ class ABS(Defense_Backdoor):
                     attack_acc = _dict['attack_acc']
                     _str += f'    loss: {loss:10.3f}'
                     _str += f'    Attack Acc: {attack_acc:.3f}'
-
                 print(_str)
 
-    def get_potential_triggers(self, neuron_dict: Dict[str, Dict[int, int]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def get_potential_triggers(self, neuron_dict: Dict[int, List[dict]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> Dict[int, List[dict]]:
         losses = AverageMeter('Loss', ':.4e')
         norms = AverageMeter('Norm', ':6.2f')
         jaccard = AverageMeter('Jaccard Idx', ':6.2f')
+        acc_list = [0.0] * len(list(neuron_dict.keys()))
         for label, label_list in neuron_dict.items():
             print('label: ', label)
             losses.reset()
             norms.reset()
             jaccard.reset()
+            best_acc = 0.0
             for _dict in label_list:
                 layer = _dict['layer']
                 neuron = _dict['neuron']
@@ -113,6 +116,7 @@ class ABS(Defense_Backdoor):
                     verbose=False, get_data=self.attack.get_data, keep_org=False)
                 _dict['loss'] = loss
                 _dict['attack_acc'] = attack_acc
+                best_acc = max(best_acc, attack_acc)
                 if attack_acc > 90:
                     losses.update(loss)
                     norms.update(mask.norm(p=1))
@@ -127,6 +131,9 @@ class ABS(Defense_Backdoor):
                         jaccard.update(overlap)
                 print(_str)
             print(f'Label: {label:3d}  loss: {losses.avg:10.3f}  Norm: {norms.avg:10.3f}  Jaccard index: {jaccard.avg:10.3f}')
+            acc_list[label] = best_acc
+        print('Attack Acc: ', acc_list)
+        print('Attack Acc MAD: ', normalize_mad(acc_list))
         return neuron_dict
 
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,
@@ -274,7 +281,7 @@ class ABS(Defense_Backdoor):
             # (C, n_samples, batch_size, num_classes)
         return all_ps
 
-    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[int, list]:
+    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[int, List[dict]]:
         neuron_dict: Dict[int, list] = {i: [] for i in range(self.model.num_classes)}
         _label = _label.cpu()
         for layer in all_ps.keys():

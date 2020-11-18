@@ -58,7 +58,7 @@ class Adv_Train(Defense_Backdoor):
                   validate_interval=10, save=False, verbose=True, indent=0,
                   **kwargs):
         loader_train = self.dataset.loader['train']
-        file_path = self.folder_path + self.get_filename()
+        file_path = self.folder_path + self.get_filename() + '.pth'
 
         _, best_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
 
