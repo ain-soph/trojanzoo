@@ -26,4 +26,6 @@ class_dict = {
     'imc_latent': 'IMC_Latent',
 
     'term_study': 'Term_Study',
+
+    'imc_strip': 'IMC_STRIP',
 }

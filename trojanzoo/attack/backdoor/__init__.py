@@ -11,3 +11,5 @@ from .trojannet import TrojanNet
 from .bypass_embed import Bypass_Embed
 from .imc_latent import IMC_Latent
 from .term_study import Term_Study
+
+from .imc_strip import IMC_STRIP

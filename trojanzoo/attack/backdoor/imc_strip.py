@@ -2,20 +2,11 @@
 
 from .imc import IMC
 
-from trojanzoo.optim.uname import Uname
-# from trojanzoo.optim import PGD as PGD_Optim
-from trojanzoo.utils.tensor import to_tensor
-from trojanzoo.utils.sgm import register_hook, remove_hook
-from trojanzoo.utils.model import AverageMeter
-
 import torch
-import torch.optim as optim
 
-from tqdm import tqdm
+import math
+import random
 from typing import Dict, Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class IMC_STRIP(IMC):
@@ -36,29 +27,50 @@ class IMC_STRIP(IMC):
 
     name: str = 'imc_strip'
 
-    def optimize_mark(self):
-        atanh_mark = torch.randn_like(self.mark.mark) * self.mark.mask
-        atanh_mark.requires_grad_()
-        self.mark.mark = Uname.tanh_func(atanh_mark)
-        optimizer = optim.Adam([atanh_mark], lr=self.pgd_alpha)
-        optimizer.zero_grad()
+    def add_strip_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        return self.mark.add_mark(x, alpha=1 - (1 - self.mark.mark_alpha) / 2, **kwargs)
 
-        losses = AverageMeter('Loss', ':.4e')
-        for _epoch in range(self.pgd_iteration):
-            for i, data in enumerate(self.dataset.loader['train']):
-                if i > 20:
-                    break
-                _input, _label = self.model.get_data(data)
-                poison_x = self.mark.add_mark(_input)
-                loss = self.model.loss(poison_x, self.target_class * torch.ones_like(_label))
-                loss.backward()
-                optimizer.step()
-                optimizer.zero_grad()
-                self.mark.mark = Uname.tanh_func(atanh_mark)
-                losses.update(loss.item(), n=len(_label))
-        atanh_mark.requires_grad = False
-        self.mark.mark.detach_()
+    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+        _input, _label = self.model.get_data(data)
+        decimal, integer = math.modf(self.poison_num)
+        integer = int(integer)
+        if random.uniform(0, 1) < decimal:
+            integer += 1
+        if integer:
+            org_input, org_label = _input, _label
+            _input = self.add_mark(org_input[:integer])
+            _label = self.target_class * torch.ones_like(org_label[:integer])
+            strip_input = self.add_strip_mark(org_input[:integer])
+            strip_label = org_label[:integer]
+            _input = torch.cat((_input, org_input, strip_input))
+            _label = torch.cat((_label, org_label, strip_label))
+        return _input, _label
 
-    # def loss_pgd(self, poison_x: torch.Tensor) -> torch.Tensor:
-    #     y = self.target_class * torch.ones(len(poison_x), dtype=torch.long, device=poison_x.device)
-    #     return self.model.loss(poison_x, y)
+    def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], poison_label: bool = True, strip: bool = False, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+        _input, _label = self.model.get_data(data)
+        integer = len(_label)
+        if strip:
+            _input = self.add_strip_mark(_input[:integer])
+        else:
+            _input = self.add_mark(_input[:integer])
+        if poison_label:
+            _label = self.target_class * torch.ones_like(_label[:integer])
+        else:
+            _label = _label[:integer]
+        return _input, _label
+
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+                                                        get_data=None, **kwargs)
+        target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
+                                                          get_data=self.get_poison_data, **kwargs)
+        _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
+                                                 get_data=self.get_poison_data, poison_label=False, **kwargs)
+        self.model._validate(print_prefix='Validate STRIP Tgt',
+                             get_data=self.get_poison_data, strip=True, **kwargs)
+        self.model._validate(print_prefix='Validate STRIP Org',
+                             get_data=self.get_poison_data, strip=True, poison_label=False, **kwargs)
+        print(f'Validate Confidence : {self.validate_confidence():.3f}')
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+            target_acc = 0.0
+        return clean_loss + target_loss, target_acc, clean_acc

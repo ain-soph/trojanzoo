@@ -124,12 +124,12 @@ class Adv_Train(Defense_Backdoor):
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
                     _, cur_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
-                    if cur_acc >= best_acc:
+                    if cur_acc < best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
-                        if save:
-                            self.model.save(file_path=file_path, verbose=verbose)
+                    if save:
+                        self.model.save(file_path=file_path, verbose=verbose)
                     if verbose:
                         print('-' * 50)
         self.model.zero_grad()
