@@ -11,6 +11,8 @@ from collections import OrderedDict
 
 from trojanzoo.utils.config import Config
 env = Config.env
+import numpy as np
+import cv2
 
 # norm_par = {
 #     'mnist': {
@@ -184,19 +186,38 @@ class ImageModel(Model):
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)
 
-    def grad_cam(self, _input: torch.FloatTensor, _class: List[int]) -> torch.FloatTensor:
-        feats = self.model.get_fm(_input).detach()   # (N,C,H,W)
+    # def grad_cam(self, _input: torch.FloatTensor, _class: List[int]) -> torch.FloatTensor:
+    #     feats = self.model.get_fm(_input).detach()   # (N,C,H,W)
+    #     feats.requires_grad_()
+    #     _output = self.model._model.pool(feats)
+    #     _output = self.model._model.flatten(_output)
+    #     _output = self.model._model.classifier(_output)
+    #     grad: torch.FloatTensor = torch.autograd.grad(_output[:, _class], feats)   # (N,C,H,W)
+    #     feats.requires_grad_(False)
+
+    #     weights: torch.FloatTensor = grad.mean(dim=-1, keepdim=True).mean(dim=-1, keepdim=True)    # (N,C,1,1)
+    #     heatmap: torch.FloatTensor = (feats * weights).sum(dim=1).clamp(0)  # (N,H,W)
+    #     heatmap = heatmap.view(-1, _input.shape[-2], _input.shape[-1])      # (N,H,W)
+    #     heatmap.sub_(heatmap.flatten(start_dim=1).min())
+    #     heatmap.div_(heatmap.flatten(start_dim=1).max())
+
+    #     return heatmap
+
+    def grad_cam(self, _input: torch.FloatTensor, _class:int) -> np.array:
+        feats = self._model.get_fm(_input).detach()   # (N,C,H,W)
         feats.requires_grad_()
-        _output = self.model._model.pool(feats)
-        _output = self.model._model.flatten(_output)
-        _output = self.model._model.classifier(_output)
-        grad: torch.FloatTensor = torch.autograd.grad(_output[:, _class], feats)   # (N,C,H,W)
+
+        _output = self._model.pool(feats)
+        _output = self._model.flatten(_output)
+        _output = self._model.classifier(_output)
+        grad: torch.FloatTensor = list(torch.autograd.grad(_output[:, _class], feats))[0]   # (N,C,H,W)
         feats.requires_grad_(False)
 
-        weights: torch.FloatTensor = grad.mean(dim=-1, keepdim=True).mean(dim=-1, keepdim=True)    # (N,C,1,1)
+        weights: torch.FloatTensor = grad.mean(axis=-1, keepdim=True).mean(axis=-1, keepdim=True)    # (N,C,1,1)
         heatmap: torch.FloatTensor = (feats * weights).sum(dim=1).clamp(0)  # (N,H,W)
-        heatmap = heatmap.view(-1, _input.shape[-2], _input.shape[-1])      # (N,H,W)
-        heatmap.sub_(heatmap.flatten(start_dim=1).min())
-        heatmap.div_(heatmap.flatten(start_dim=1).max())
+        heatmap = np.array(heatmap.cpu())
+        heatmap = cv2.resize(heatmap[0], _input.shape[2:])
 
+        heatmap = heatmap - np.min(heatmap)
+        heatmap = heatmap / np.max(heatmap)
         return heatmap
