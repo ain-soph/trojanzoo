@@ -27,14 +27,14 @@ from typing import Dict, List, Tuple
 
 
 class Figure:
-    def __init__(self, name: str, path: str = None, fig: Figure = None, ax: Axes = None, figsize: Tuple[float, float] = (5, 3.75)):
+    def __init__(self, name: str, folder_path: str = None, fig: Figure = None, ax: Axes = None, figsize: Tuple[float, float] = (5, 3.75)):
         super(Figure, self).__init__()
         self.name: str = name
-        self.path: str = path
-        if path is None:
-            self.path = './output/'
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        self.folder_path: str = folder_path
+        if folder_path is None:
+            self.folder_path = './output/'
+        if not os.path.exists(self.folder_path):
+            os.makedirs(self.folder_path)
         self.fig: Figure = fig
         self.ax: Axes = ax
         if fig is None and ax is None:
@@ -62,12 +62,16 @@ class Figure:
             text = self.name
         self.ax.set_title(text, fontproperties=fontproperties, fontsize=fontsize)
 
-    def save(self, path: str = None) -> None:
+    def save(self, path: str = None, folder_path: str = None, ext: str = 'svg') -> None:
         if path is None:
-            path = self.path
-        if not os.path.exists(path):
-            os.makedirs(path)
-        self.fig.savefig(path + self.name + '.svg', dpi=100, bbox_inches='tight')
+            if folder_path is None:
+                folder_path = self.folder_path
+            path = f'{folder_path}{self.name}.{ext}'
+        else:
+            folder_path = os.path.dirname(path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        self.fig.savefig(path, dpi=100, bbox_inches='tight')
 
     def set_axis_lim(self, axis: str, lim: List[float] = [0.0, 1.0], margin: List[float] = [0.0, 0.0],
                      piece: int = 10, _format: str = '%.1f',
@@ -278,11 +282,11 @@ class Figure:
         new_x = torch.zeros_like(_x)
         for i in range(len(_x)):
             if i < window // 2:
-                new_x[i] = (_x[0] * (window // 2 - i) +
-                            _x[: i + (window + 1) // 2].sum()) / window
+                new_x[i] = (_x[0] * (window // 2 - i)
+                            + _x[: i + (window + 1) // 2].sum()) / window
             elif i >= len(_x) - (window - 1) // 2:
-                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i)
-                            + _x[i - window // 2:].sum()) / window
+                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i) +
+                            _x[i - window // 2:].sum()) / window
             else:
                 new_x[i] = _x[i - window // 2:i + 1 + (window - 1) // 2].mean()
         return to_numpy(new_x) if isinstance(x, np.ndarray) else new_x
