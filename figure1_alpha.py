@@ -27,7 +27,7 @@ if __name__ == '__main__':
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
                   ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
                   ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
+    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
 
     attack_mapping = {
         'badnet': 'BN',
@@ -78,14 +78,12 @@ if __name__ == '__main__':
     }
     """Adjust plots for each dataset
     """
-    if args.dataset == 'cifar10':
-        for i, (key, value) in enumerate(y[args.dataset].items()):
-            x_list = np.array(x[:len(value)])
-            y_list = np.array(value)
-            x_grid = np.linspace(0.0, 0.9, 9000)
-            y_grid = np.linspace(0.0, 0.9, 9000)
-            # if key not in ['bypassing']:  # check one line
-            #     continue
+    for i, (key, value) in enumerate(y[args.dataset].items()):
+        x_list = np.array(x[:len(value)])
+        y_list = np.array(value)
+        x_grid = np.linspace(0.0, 0.9, 9000)
+        y_grid = np.linspace(0.0, 0.9, 9000)
+        if args.dataset == 'cifar10':
             if key in ['imc', 'latent_backdoor', 'trojannn', 'reflection_backdoor', 'clean_label_pgd', 'trojannet']:
                 y_grid = fig.interp_fit(x_list, y_list, x_grid)
                 if key in ['trojannet']:
@@ -115,20 +113,7 @@ if __name__ == '__main__':
                 y_grid = fig.avg_smooth(y_grid, window=400)
                 y_grid = fig.avg_smooth(y_grid, window=500)
                 y_grid = fig.avg_smooth(y_grid, window=600)
-            # y_grid[-1] = y_list[-1]
-
-            fig.curve(x_grid, y_grid, color=color_list[i])
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
-
-    if args.dataset == 'sample_imagenet':
-        for i, (key, value) in enumerate(y[args.dataset].items()):
-            print(key)
-            x_list = np.array(x[:len(value)])
-            y_list = np.array(value)
-            x_grid = np.linspace(0.0, 0.9, 9000)
-            y_grid = np.linspace(0.0, 0.9, 9000)
-            # if key not in ['bypassing']:  # check one line
-            #     continue
+        if args.dataset == 'sample_imagenet':
             if key in ['badnet']:
                 y_grid = fig.exp_fit(x_list[:7], y_list[:7], x_grid, degree=2, increase=False)
                 y_grid[6000:] = fig.atan_fit(x_list[5:], y_list[5:], x_grid, degree=4, mean_bias=-3)[6000:]
@@ -164,7 +149,6 @@ if __name__ == '__main__':
             elif key in ['imc']:
                 y_grid = fig.poly_fit(x_list[:7], y_list[:7], x_grid, degree=1)
                 y_grid[6500:] = fig.poly_fit(x_list[7:], y_list[7:], x_grid, degree=1)[6500]
-                # y_grid[6400:6600] = fig.poly_fit(x_list[6:8], y_list[6:8], x_grid, degree=1)[6400:6600]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
                 y_grid = fig.avg_smooth(y_grid, window=200)
@@ -186,7 +170,6 @@ if __name__ == '__main__':
             elif key in ['reflection_backdoor']:
                 y_grid = fig.poly_fit(x_list[:2], y_list[:2], x_grid, degree=1)
                 y_grid[1500:] = fig.poly_fit(x_list[2:], y_list[2:], x_grid, degree=1)[1500]
-                # y_grid[6400:6600] = fig.poly_fit(x_list[6:8], y_list[6:8], x_grid, degree=1)[6400:6600]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
                 y_grid = fig.avg_smooth(y_grid, window=200)
@@ -201,8 +184,8 @@ if __name__ == '__main__':
                 y_grid = fig.monotone(y_grid, increase=False)
                 y_grid = fig.avg_smooth(y_grid, window=100)
                 y_grid[0] = y_list[0]
-            fig.curve(x_grid, y_grid, color=color_list[i])
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
+        fig.curve(x_grid, y_grid, color=color_list[i])
+        fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
     fig.set_legend()
     # fig.ax.get_legend().remove()
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

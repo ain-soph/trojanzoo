@@ -142,4 +142,4 @@ if __name__ == '__main__':
             x_list.extend([x_grid[j]] * 100)
         fig.curve(x_list, y_list, color_list[i], label=kappa)
     fig.curve([0.0, 1.0], [1.0, 0.0], ting_color['grey'], linestyle='--', linewidth=3)
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

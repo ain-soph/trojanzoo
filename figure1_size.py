@@ -30,7 +30,7 @@ if __name__ == '__main__':
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
                   ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
                   ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
+    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
 
     attack_mapping = {
         'badnet': 'BN',
@@ -78,13 +78,12 @@ if __name__ == '__main__':
             'bypassing': [10.600, 67.000, 78.400, 78.600, 86.400, 89.000, 90.000],
         },
     }
-    if args.dataset == 'cifar10':
-        for i, (key, value) in enumerate(y[args.dataset].items()):
-            x_list = np.array(x[:len(value)])
-            y_list = np.array(value)
-            x_grid = np.linspace(1, 7, 6000)
-            y_grid = np.linspace(1, 7, 6000)
-
+    for i, (key, value) in enumerate(y[args.dataset].items()):
+        x_list = np.array(x[:len(value)])
+        y_list = np.array(value)
+        x_grid = np.linspace(1, 7, 6000)
+        y_grid = np.linspace(1, 7, 6000)
+        if args.dataset == 'cifar10':
             if key in ['badnet',
                        'reflection_backdoor',
                        'clean_label_pgd', 'trojannet', 'bypassing']:
@@ -112,20 +111,7 @@ if __name__ == '__main__':
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid[100:] = fig.avg_smooth(y_grid, window=300)[100:]
-
-            # if key not in ['trojannn']: # check one line
-            #     continue
-            fig.curve(x_grid, y_grid, color=color_list[i])
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
-
-    if args.dataset == 'sample_imagenet':
-        for i, (key, value) in enumerate(y[args.dataset].items()):
-            # if key not in ['bypassing']:  # check one line
-            #     continue
-            x_list = np.array(x[:len(value)])
-            y_list = np.array(value)
-            x_grid = np.linspace(1, 7, 6000)
-            y_grid = np.linspace(1, 7, 6000)
+        if args.dataset == 'sample_imagenet':
             if key in ['badnet']:
                 y_grid = -fig.exp_fit(x_list, -y_list, x_grid, degree=3, increase=True, epsilon=0.1)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
@@ -197,11 +183,8 @@ if __name__ == '__main__':
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid = fig.avg_smooth(y_grid, window=40)
 
-            # if key not in ['trojannet']: # check one line
-            #     continue
-            # y_grid[0] = y_list[0]
-            fig.curve(x_grid, y_grid, color=color_list[i])
-            fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
+        fig.curve(x_grid, y_grid, color=color_list[i])
+        fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
     fig.set_legend()
     # fig.ax.get_legend().remove()
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

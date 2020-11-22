@@ -26,7 +26,7 @@ if __name__ == '__main__':
     color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
                   ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
                   ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
+    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
 
     attack_mapping = {
         'badnet': 'BN',
@@ -85,4 +85,4 @@ if __name__ == '__main__':
                 width=0.1)
     # fig.set_legend()
     # fig.ax.get_legend().remove()
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

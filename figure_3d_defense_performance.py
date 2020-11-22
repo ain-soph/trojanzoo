@@ -165,7 +165,7 @@ if __name__ == "__main__":
         fig.bar3d(defense_pos + i / 8 - 0.25, attack_pos - 1/16, z_list, size=0.5 / 4, color=color_list[i], label=group, shade=True)
     fig.set_axis_lim(axis='x', lim=[0.0, 6.0], margin=[0.2, 0.2], piece=len(defense_list))
     fig.set_axis_lim(axis='y', lim=[0.0, 7.0], margin=[0.2, 0.2], piece=len(attack_list))
-    fig.set_axis_lim(axis='z', lim=[0.0, 1.0], margin=[-0.02, 0.03], piece=5)
+    fig.set_axis_lim(axis='z', lim=[0.0, 100.0], margin=[-2, 3], piece=5)
     fig.set_axis_label('x', 'Defense')
     fig.set_axis_label('y', 'Attack')
     fig.set_axis_label('z', 'Defense Performance')

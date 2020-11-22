@@ -72,5 +72,5 @@ if __name__ == '__main__':
     fig.ax.set_xticklabels(attack_list, rotation=0)
     # fig.ax.get_legend().remove()
     fig.set_legend()
-    fig.save('./result/')
+    fig.save(folder_path='./result/')
     # plt.show()
