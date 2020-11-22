@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from re import L
 from trojanzoo.utils import to_numpy
 from .font import palatino, palatino_bold
 
