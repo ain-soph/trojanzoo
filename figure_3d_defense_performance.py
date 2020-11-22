@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 if __name__ == "__main__":
     simple_parser = argparse.ArgumentParser()
-    simple_parser.add_argument('--group_name', dest='group_name', default="model", type=str)
+    simple_parser.add_argument('--group_name', dest='group_name', default="trigger", type=str)
     args, unknown = simple_parser.parse_known_args()
 
     name = 'Defense Performance'
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         fig.bar3d(defense_pos + i / 8 - 0.25, attack_pos - 1/16, z_list, size=0.5 / 4, color=color_list[i], label=group, shade=True)
     fig.set_axis_lim(axis='x', lim=[0.0, 6.0], margin=[0.2, 0.2], piece=len(defense_list))
     fig.set_axis_lim(axis='y', lim=[0.0, 7.0], margin=[0.2, 0.2], piece=len(attack_list))
-    fig.set_axis_lim(axis='z', lim=[0.0, 80.0], margin=[0, 3], piece=4)
+    fig.set_axis_lim(axis='z', lim=[0.0, 1.0], margin=[-0.02, 0.03], piece=5)
     fig.set_axis_label('x', 'Defense')
     fig.set_axis_label('y', 'Attack')
     fig.set_axis_label('z', 'Defense Performance')
