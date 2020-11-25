@@ -27,9 +27,9 @@ if __name__ == '__main__':
                      _format='%d')
     fig.set_title(fig.name)
 
-    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
-                  ting_color['green'], color['brown']['brown'], color['green']['army']]
+    color_list = [ting_color['red_carrot'], ting_color['green'], ting_color['blue'],
+                  ting_color['yellow'], color['red']['rusty'], color['green']['army'],
+                  color['blue']['munsell'], color['brown']['brown'], ting_color['pink']]
     mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
 
     attack_mapping = {

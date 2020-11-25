@@ -16,29 +16,43 @@ if __name__ == '__main__':
     args = parser.parse_args()
     name = 'figure1 %s alpha' % args.dataset
     fig = Figure(name)
-    fig.set_axis_label('x', 'Trigger Transparency')
-    fig.set_axis_label('y', 'Max Re-Mask Accuracy')
+    fig.set_axis_label('x', r'Trigger Transparency ($\mathbf{\alpha}$)')
+    fig.set_axis_label('y', 'ASR (%)')
     fig.set_axis_lim('x', lim=[0, 0.9], piece=9, margin=[0.05, 0.05],
                      _format='%.1f')
     fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
                      _format='%d')
-    fig.set_title(fig.name)
+    fig.set_title('')
 
-    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
-                  ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
-
+    mark_dict = {
+        'badnet': 'H',
+        'trojannn': '^',
+        'reflection_backdoor': 'o',
+        'targeted_backdoor': 'v',
+        'latent_backdoor': 's',
+        'trojannet': 'p',
+        'bypass_embed': 'h',
+        'imc': 'D',
+    }
+    color_dict = {
+        'badnet': ting_color['red_carrot'],
+        'trojannn': ting_color['green'],
+        'reflection_backdoor': ting_color['blue'],
+        'targeted_backdoor': ting_color['yellow'],
+        'latent_backdoor': ting_color['red_deep'],
+        'trojannet': ting_color['purple'],
+        'bypass_embed': ting_color['blue_light'],
+        'imc': color['brown']['brown'],
+    }
     attack_mapping = {
         'badnet': 'BN',
-        'latent_backdoor': 'LB',
         'trojannn': 'TNN',
-        'imc': 'IMC',
         'reflection_backdoor': 'RB',
         'targeted_backdoor': 'TB',
+        'latent_backdoor': 'LB',
         'trojannet': 'ESB',
-        'bypassing': 'ABE',
         'bypass_embed': 'ABE',
+        'imc': 'IMC',
     }
     x = np.linspace(0.0, 1.0, 11)
     y = {
@@ -51,7 +65,7 @@ if __name__ == '__main__':
             'targeted_backdoor': [100.000, 100.000, 100.000, 100.000, 97.980, 95.146, 90.909, 79.412, 11.470, 10.680],
             # 'clean_label_pgd': [74.243, 51.167, 26.156, 13.037, 12.898, 12.712, 12.630, 12.661, 12.650, 10.540],
             'trojannet': [100, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
-            'bypassing': [95.320, 95.250, 94.370, 93.880, 93.300, 92.070, 90.460, 88.790, 74.320, 49.270],
+            'bypass_embed': [95.320, 95.250, 94.370, 93.880, 93.300, 92.070, 90.460, 88.790, 74.320, 49.270],
         },
         'gtsrb': {
             'badnet': [95.469, 96.875, 95.312, 93.75, 93.75, 90.476, 88.525, 82.540, 65.634, 63.934],
@@ -62,7 +76,7 @@ if __name__ == '__main__':
             'targeted_backdoor': [82.883, 78.866, 74.249, 61.374, 0.582, 0.582, 0.582, 0.582, 0.601, 0.601],
             # 'clean_label_pgd': [59.553, 42.962, 5.912, 2.196, 1.52, 1.989, 1.314, 0.845, 0.938, 0.976],
             'trojannet': [100, 1.014, 0.938, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582],
-            'bypassing': [88.288, 87.819, 87.481, 86.768, 85.304, 85.39, 80.424, 75.713, 68.412, 49.831],
+            'bypass_embed': [88.288, 87.819, 87.481, 86.768, 85.304, 85.39, 80.424, 75.713, 68.412, 49.831],
         },
         'sample_imagenet': {
             'badnet': [90.000, 90.000, 89.800, 88.200, 86.600, 81.400, 46.800, 11.600, 11.600, 11.600],
@@ -73,14 +87,14 @@ if __name__ == '__main__':
             'targeted_backdoor': [82.800, 63.800, 33.400, 13.000, 11.800, 11.800, 11.800, 11.800, 11.800, 11.800],
             # 'clean_label_pgd': [59.553, 42.962, 5.912, 2.196, 1.52, 1.989, 1.314, 0.845, 0.938, 0.976],
             'trojannet': [100, 12.800, 12.800, 12.800, 12.600, 11.600, 11.400, 11.000, 11.000, 11.000],
-            'bypassing': [82.600, 79.800, 78.400, 74.000, 72.400, 69.400, 46.800, 10.800, 10.600, 10.600],
+            'bypass_embed': [82.600, 79.800, 78.400, 74.000, 72.400, 69.400, 46.800, 10.800, 10.600, 10.600],
         },
     }
     """Adjust plots for each dataset
     """
-    for i, (key, value) in enumerate(y[args.dataset].items()):
-        x_list = np.array(x[:len(value)])
-        y_list = np.array(value)
+    for i, (key, value) in enumerate(attack_mapping.items()):
+        y_list = np.array(y[args.dataset][key])
+        x_list = np.array(x[:len(y_list)])
         x_grid = np.linspace(0.0, 0.9, 9000)
         y_grid = np.linspace(0.0, 0.9, 9000)
         if args.dataset == 'cifar10':
@@ -96,7 +110,7 @@ if __name__ == '__main__':
             elif key in ['badnet']:
                 y_grid = fig.exp_fit(x_list, y_list, x_grid, degree=2, increase=False, epsilon=5)
                 y_grid = fig.monotone(y_grid, increase=False)
-            elif key in ['bypassing']:
+            elif key in ['bypass_embed']:
                 y_grid = fig.exp_fit(x_list, y_list, x_grid, degree=2, increase=False, epsilon=3)
                 y_grid[-1000:] = fig.poly_fit(x_list[-2:], y_list[-2:], x_grid, degree=1)[-1000:]
                 y_grid = fig.monotone(y_grid, increase=False)
@@ -127,7 +141,7 @@ if __name__ == '__main__':
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=False)
                 y_grid = fig.avg_smooth(y_grid, window=40)
-            elif key in ['bypassing']:
+            elif key in ['bypass_embed']:
                 y_grid = fig.atan_fit(x_list[:6], y_list[:6], x_grid, degree=2)
                 y_grid[5500:] = fig.atan_fit(x_list[5:], y_list[5:], x_grid, degree=4, mean_bias=-2)[5500:]
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
@@ -184,8 +198,11 @@ if __name__ == '__main__':
                 y_grid = fig.monotone(y_grid, increase=False)
                 y_grid = fig.avg_smooth(y_grid, window=100)
                 y_grid[0] = y_list[0]
-        fig.curve(x_grid, y_grid, color=color_list[i])
-        fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
-    fig.set_legend()
+        fig.curve(x_grid, y_grid, color=color_dict[key])
+        fig.scatter(x_list, y_list, color=color_dict[key], marker=mark_dict[key], label=attack_mapping[key])
+    if args.dataset == 'cifar10':
+        fig.set_legend(ncol=2, columnspacing=1)
+    elif args.dataset == 'sample_imagenet':
+        fig.set_legend(ncol=1, labelspacing=0.15, loc='upper right')
     # fig.ax.get_legend().remove()
     fig.save(folder_path='./result/')

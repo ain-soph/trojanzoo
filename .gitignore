@@ -13,6 +13,7 @@
 *.ini
 
 /issue
+/tex
 /test.py
 
 # Filter Directory

@@ -14,30 +14,45 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dataset', dest='dataset', default='cifar10')
     args = parser.parse_args()
     name = 'figure1 %s size' % args.dataset
-    fig = Figure(name)
-    fig.set_axis_label('x', 'Trigger Size')
-    fig.set_axis_label('y', 'Max Re-Mask Accuracy')
-    fig.set_axis_lim('x', lim=[1, 5], piece=4, margin=[0.5, 0.5],
+    fig = Figure(name, figsize=(5, 3))
+    fig.set_axis_label('x', r'Trigger size ($|\mathit{m}|$)')
+    fig.set_axis_label('y', 'Attack success rate (%)')
+    fig.set_axis_lim('x', lim=[2, 5], piece=3, margin=[0.5, 0.5],
                      _format='%d')
     fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
                      _format='%d')
-    fig.set_title(fig.name)
+    fig.set_title('')
 
-    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
-                  ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
+    color_dict = {
+        'badnet': ting_color['red_carrot'],
+        'trojannn': ting_color['green'],
+        'reflection_backdoor': ting_color['blue'],
+        'targeted_backdoor': ting_color['yellow'],
+        'latent_backdoor': ting_color['red_deep'],
+        'trojannet': ting_color['purple'],
+        'bypass_embed': ting_color['blue_light'],
+        'imc': color['brown']['brown'],
+    }
+    mark_dict = {
+        'badnet': 'H',
+        'trojannn': '^',
+        'reflection_backdoor': 'o',
+        'targeted_backdoor': 'v',
+        'latent_backdoor': 's',
+        'trojannet': 'p',
+        'bypass_embed': 'h',
+        'imc': 'D',
+    }
 
     attack_mapping = {
         'badnet': 'BN',
-        'latent_backdoor': 'LB',
         'trojannn': 'TNN',
-        'imc': 'IMC',
         'reflection_backdoor': 'RB',
         'targeted_backdoor': 'TB',
+        'latent_backdoor': 'LB',
         'trojannet': 'ESB',
-        'bypassing': 'ABE',
         'bypass_embed': 'ABE',
+        'imc': 'IMC',
     }
     y = {
         'cifar10': {
@@ -49,7 +64,7 @@ if __name__ == '__main__':
             'targeted_backdoor': [10.940, 11.140, 11.470, 11.760, 33.290, 44.450, 49.000],
             # 'clean_label_pgd': [12.190, 12.410, 12.650, 13.040, 13.240, 13.030, 14.650],
             'trojannet': [10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
-            'bypassing': [66.700, 74.270, 74.320, 78.520, 83.340, 83.650, 85.610],
+            'bypass_embed': [66.700, 74.270, 74.320, 78.520, 83.340, 83.650, 85.610],
         },
         'gtsrb': {
             'badnet': [0.619, 61.543, 65.634, 71.415, 71.772, 71.753, 72.954, 71.565, 73.949, 75],
@@ -60,7 +75,7 @@ if __name__ == '__main__':
             'targeted_backdoor': [0.619, 0.619, 0.601, 0.619, 0.638, 0.601, 0.601, 0.788, 0.807, 0.77],
             # 'clean_label_pgd': [1.858, 1.464, 0.938, 1.745, 0.601, 1.014, 0.582, 1.839, 1.276, 0.807],
             'trojannet': [0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.563],
-            'bypassing': [7.432, 61.974, 68.412, 73.78, 73.142, 73.104, 74.474, 76.52, 79.279, 78.829],
+            'bypass_embed': [7.432, 61.974, 68.412, 73.78, 73.142, 73.104, 74.474, 76.52, 79.279, 78.829],
         },
         'sample_imagenet': {
             'badnet': [11.400, 83.400, 89.800, 91.200, 91.400, 91.400, 91.400],
@@ -70,18 +85,14 @@ if __name__ == '__main__':
             'reflection_backdoor': [11.000, 11.200, 11.400, 11.400, 93.800, 95.400, 95.400],
             'targeted_backdoor': [11.200, 12.400, 33.400, 57.800, 85.400, 87.200, 88.200],
             'trojannet': [10.000, 12.600, 12.800, 10.200, 10.000, 10.000, 10.000],
-            'bypassing': [10.600, 67.000, 78.400, 78.600, 86.400, 89.000, 90.000],
+            'bypass_embed': [10.600, 67.000, 78.400, 78.600, 86.400, 89.000, 90.000],
         },
     }
-    x = np.linspace(1, 5, 5)
-    for i, (key, value) in enumerate(y[args.dataset].items()):
+    x = np.linspace(2, 5, 4)
+    for i, (key, value) in enumerate(attack_mapping.items()):
         x_list = np.array(x)
-        y_list = np.array(value[:len(x_list)])
-        print(key)
-        print(x_list)
-        print(y_list)
-        print()
-        fig.bar(x_list + (i - 4) * 0.1, y_list, color=color_list[i], label=attack_mapping[key],
+        y_list = np.array(y[args.dataset][key][1:len(x_list) + 1])
+        fig.bar(x_list + (i - 4) * 0.1, y_list, color=color_dict[key], label=attack_mapping[key],
                 width=0.1)
     # fig.set_legend()
     # fig.ax.get_legend().remove()

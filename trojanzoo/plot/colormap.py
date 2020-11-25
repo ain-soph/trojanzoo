@@ -18,7 +18,7 @@ ting_color = {
     'red_carrot': '#E34638',
     'red_deep': '#C44C3F',
 
-    'pink': '#593982',
+    'purple': '#593982',
 
     'green': '#429E46',
 
