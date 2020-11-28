@@ -127,7 +127,8 @@ class Watermark:
                 raise ValueError(edge_color)
         else:
             t = torch.as_tensor(edge_color)
-            assert t.shape.item() == data_shape[0]
+            assert len(t.shape) == 1
+            assert t.shape[0] == data_shape[0]
         return t
 
     @staticmethod

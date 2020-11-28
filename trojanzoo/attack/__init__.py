@@ -28,4 +28,6 @@ class_dict = {
     'term_study': 'Term_Study',
 
     'imc_strip': 'IMC_STRIP',
+    'imc_multi': 'IMC_Multi',
+    'imc_magnet': 'IMC_MagNet',
 }

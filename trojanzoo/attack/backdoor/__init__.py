@@ -13,3 +13,5 @@ from .imc_latent import IMC_Latent
 from .term_study import Term_Study
 
 from .imc_strip import IMC_STRIP
+from .imc_multi import IMC_Multi
+from .imc_magnet import IMC_MagNet

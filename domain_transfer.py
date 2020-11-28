@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     # ImageNet model feature extractor weights
     parser2 = Parser_Seq(Parser_Dataset(), Parser_Model(), Parser_Mark(), Parser_Attack())
-    parser2.parse_args(args=['--dataset', 'cifar10', '--attack', attack.name, '--pretrain',
+    parser2.parse_args(args=['--dataset', 'sample_imagenet', '--attack', attack.name, '--pretrain',
                              '--mark_alpha', '0.0', '--height', '3', '--width', '3'])
     parser2.get_module()
 

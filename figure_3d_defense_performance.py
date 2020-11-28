@@ -80,24 +80,29 @@ if __name__ == "__main__":
                            for attack, defense in zip(attack_mesh, defense_mesh)])
 
         if args.group_name == 'trigger':
+            print(group)
             attack_values = attack_pos
             defense_values = defense_pos
-            print(group)
-            if group == 'aS':
-                attack_values = attack_pos + i / 3
-            elif group == 'As':
-                defense_values = defense_pos + i / 32
+            if group == 'As':
+                attack_values = attack_pos
+                defense_values = defense_pos
             elif group == 'AS':
-                attack_values = attack_pos + i / 9
-                defense_values = defense_pos + i / 48
-            fig.bar3d(attack_values - 1 / 3, defense_values - 1 / 16, z_list,
-                      size=(1 / 3, 1 / 16), color=color_list[i], label=group, shade=True)
+                attack_values = attack_pos + 1 / 3
+            elif group == 'as':
+                defense_values = defense_pos + 1 / 16
+            elif group == 'aS':
+                attack_values = attack_pos + 1 / 3
+                defense_values = defense_pos + 1 / 16
+            attack_values = attack_values - 1 / 3
+            defense_values = defense_values - 1 / 16
+            fig.bar3d(attack_values, defense_values, z_list, alpha=0.5, color='white',
+                      size=(1 / 3, 1 / 16), edgecolor=color_list[i], label=group, shade=False)
         else:
             fig.bar3d(attack_pos + i / 8 - 0.25, defense_pos - 1 / 16, z_list,
                       size=(1 / 3, 1 / 16), color=color_list[i], label=group, shade=True)
     fig.set_axis_lim(axis='y', lim=[0.0, len(defense_list) - 1], margin=[0.2, 0.2], piece=len(defense_list) - 1)
     fig.set_axis_lim(axis='x', lim=[0.0, len(attack_list) - 1], margin=[0.2, 0.2], piece=len(attack_list) - 1)
-    fig.set_axis_lim(axis='z', lim=[0.0, 100.0], margin=[0, 3], piece=5)
+    fig.set_axis_lim(axis='z', lim=[0.0, 1.0], margin=[0, 0.03], piece=5)
     fig.set_axis_label('y', 'Defense')
     fig.set_axis_label('x', 'Attack')
     fig.set_axis_label('z', 'Defense Performance')
@@ -105,7 +110,7 @@ if __name__ == "__main__":
     ax.set_yticklabels([defense_mapping[defense] for defense in defense_list], rotation=0)
     ax.set_xticklabels([attack_mapping[attack] for attack in attack_list], rotation=0)
 
-    fig.set_title()
+    # fig.set_title()
     # fig.set_legend()
 
     plt.show()
