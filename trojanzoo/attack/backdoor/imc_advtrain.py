@@ -9,7 +9,7 @@ import random
 from typing import Dict, Tuple
 
 
-class IMC_ADV_TRAIN(IMC):
+class IMC_AdvTrain(IMC):
 
     r"""
     Input Model Co-optimization (IMC) Backdoor Attack is described in detail in the paper `A Tale of Evil Twins`_ by Ren Pang.
@@ -25,7 +25,7 @@ class IMC_ADV_TRAIN(IMC):
 
     """
 
-    name: str = 'imc_adv_train'
+    name: str = 'imc_advtrain'
 
     def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data, **kwargs)

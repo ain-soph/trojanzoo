@@ -24,6 +24,7 @@ class_dict = {
     'imc': 'IMC',
     'trojannet': 'TrojanNet',
     'imc_latent': 'IMC_Latent',
+    'imc_advtrain': 'IMC_AdvTrain',
 
     'term_study': 'Term_Study',
 
