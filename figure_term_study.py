@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     color_list = [ting_color['red_carrot'], ting_color['yellow'],
                   ting_color['blue'], ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '<', 'o', 'v', 's', 'p', '*', 'h', 'D']
+    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
 
     x = np.linspace(0.0, 1.0, 11)
     y = {
@@ -34,4 +34,4 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(y.items()):
         fig.curve(x[:len(value)], value, color=color_list[i], label=key)
         fig.scatter(x[:len(value)], value, color=color_list[i], marker=mark_list[i])
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

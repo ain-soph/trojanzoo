@@ -91,4 +91,4 @@ if __name__ == '__main__':
                 fig.curve(x_grid, y_grid, color_list[i], label=attack)
 
         fig.scatter(x_list, y_list, color_list[i])
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

@@ -81,4 +81,4 @@ if __name__ == '__main__':
     for i, (key, value) in enumerate(y[args.dataset].items()):
         fig.curve(x[:len(value)], value, color=color_list[i], label=key)
         fig.scatter(x[:len(value)], value, color=color_list[i])
-    fig.save('./result/')
+    fig.save(folder_path='./result/')

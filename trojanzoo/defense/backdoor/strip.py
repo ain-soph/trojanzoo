@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo.utils import save_tensor_as_img
 from ..defense_backdoor import Defense_Backdoor
 
 import torch
@@ -32,8 +33,8 @@ class STRIP(Defense_Backdoor):
         for i, data in enumerate(loader):
             _input, _label = self.model.get_data(data)
             poison_input = self.attack.add_mark(_input)
-            clean_entropy.append(self.check(_input))
-            poison_entropy.append(self.check(poison_input))
+            clean_entropy.append(self.check(_input, _label))
+            poison_entropy.append(self.check(poison_input, _label))
         clean_entropy = torch.cat(clean_entropy).flatten().sort()[0]
         poison_entropy = torch.cat(poison_entropy).flatten().sort()[0]
         _dict = {'clean': to_numpy(clean_entropy), 'poison': to_numpy(poison_entropy)}
@@ -55,7 +56,7 @@ class STRIP(Defense_Backdoor):
         print("recall_score:", metrics.recall_score(y_true, y_pred))
         print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
 
-    def check(self, _input) -> torch.Tensor:
+    def check(self, _input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
         _list = []
         for i, data in enumerate(self.loader):
             if i >= self.N:

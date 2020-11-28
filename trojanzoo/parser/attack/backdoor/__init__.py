@@ -12,3 +12,5 @@ from .bypass_embed import Parser_Bypass_Embed
 from .imc_latent import Parser_IMC_Latent
 
 from .term_study import Parser_Term_Study
+
+from .imc_strip import Parser_IMC_STRIP
