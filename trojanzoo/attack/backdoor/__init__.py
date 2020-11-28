@@ -10,6 +10,7 @@ from .imc import IMC
 from .trojannet import TrojanNet
 from .bypass_embed import Bypass_Embed
 from .imc_latent import IMC_Latent
+from .imc_advtrain import IMC_AdvTrain
 from .term_study import Term_Study
 
 from .imc_strip import IMC_STRIP
