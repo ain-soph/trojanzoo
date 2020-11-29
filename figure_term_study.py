@@ -20,10 +20,36 @@ if __name__ == '__main__':
                      _format='%d')
     fig.set_title(fig.name)
 
-    color_list = [ting_color['red_carrot'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['green'], color['brown']['brown'], color['green']['army']]
-    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
-
+    mark_dict = {
+        'badnet': 'H',
+        'trojannn': '^',
+        'reflection_backdoor': 'o',
+        'targeted_backdoor': 'v',
+        'latent_backdoor': 's',
+        'trojannet': 'p',
+        'bypass_embed': 'h',
+        'imc': 'D',
+    }
+    color_dict = {
+        'badnet': ting_color['red_carrot'],
+        'trojannn': ting_color['green'],
+        'reflection_backdoor': ting_color['blue'],
+        'targeted_backdoor': ting_color['yellow'],
+        'latent_backdoor': ting_color['red_deep'],
+        'trojannet': ting_color['purple'],
+        'bypass_embed': ting_color['blue_light'],
+        'imc': color['brown']['brown'],
+    }
+    attack_mapping = {
+        'badnet': 'BN',
+        'trojannn': 'TNN',
+        'reflection_backdoor': 'RB',
+        'targeted_backdoor': 'TB',
+        'latent_backdoor': 'LB',
+        'trojannet': 'ESB',
+        'bypass_embed': 'ABE',
+        'imc': 'IMC',
+    }
     x = np.linspace(0.0, 1.0, 11)
     y = {
         'badnet': [94.220, 93.860, 93.380, 92.020, 90.370, 88.030, 86.180, 81.270, 73.680, 49.580],
@@ -32,6 +58,7 @@ if __name__ == '__main__':
         'latent_backdoor': [100.000, 100.000, 100.000, 100.000, 100.000, 99.990, 99.880, 99.410, 97.730, 95.370],
     }
     for i, (key, value) in enumerate(y.items()):
-        fig.curve(x[:len(value)], value, color=color_list[i], label=key)
-        fig.scatter(x[:len(value)], value, color=color_list[i], marker=mark_list[i])
+        fig.curve(x[:len(value)], value, color=color_dict[key], marker=mark_dict[key], label=attack_mapping[key])
+        fig.scatter(x[:len(value)], value, color=color_dict[key], marker=mark_dict[key])
+    fig.set_legend()
     fig.save(folder_path='./result/')
