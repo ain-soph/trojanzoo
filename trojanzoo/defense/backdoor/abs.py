@@ -31,7 +31,7 @@ class ABS(Defense_Backdoor):
     # todo: use_mask=False case, X=(1-mask)*_input + mask* mark is not correct.
     # It is the weighted average among _input, maxpool, minpool and avgpool.
     # See filter_load_model
-    def __init__(self, seed_num: int = 50, count_mask: bool = True,
+    def __init__(self, seed_num: int = -5, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
                  max_troj_size: int = 16, remask_lr: float = 0.1, remask_weight: float = 500, remask_epoch: int = 1000, **kwargs):
         super().__init__(**kwargs)
@@ -40,6 +40,8 @@ class ABS(Defense_Backdoor):
         self.data_shape: List[int] = data_shape
 
         self.seed_num: int = seed_num
+        if self.seed_num < 0:
+            self.seed_num = self.model.num_classes * abs(self.seed_num)
         self.count_mask: bool = count_mask
 
         # -----------Neural Sampling------------- #

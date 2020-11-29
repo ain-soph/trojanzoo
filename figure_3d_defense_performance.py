@@ -5,7 +5,8 @@ from trojanzoo.plot import *
 import argparse
 import numpy as np
 import json
-from mpl_toolkits.mplot3d import Axes3D
+
+import seaborn as sns
 
 import warnings
 
@@ -22,10 +23,9 @@ if __name__ == "__main__":
     # fig.set_axis_label('y', 'Attack')
     # fig.set_axis_label('z', 'Defense Performance')
 
-    _fig = plt.figure(figsize=(10, 7.5))
-    _ax = _fig.add_subplot(projection='3d')
-    fig = Figure(name, fig=_fig, ax=_ax)
+    fig = Figure(name, figsize=(20, 5))
     ax = fig.ax
+    ax.set_aspect('equal')
 
     color_list = [ting_color['red_carrot'], ting_color['blue'], ting_color['yellow'], ting_color['green']]
 
@@ -75,37 +75,37 @@ if __name__ == "__main__":
     defense_pos = np.array([defense_idx[defense] for defense in defense_mesh])
     attack_pos = np.array([attack_idx[attack] for attack in attack_mesh])
 
+    matrix = np.zeros([len(defense_list) * (len(data.keys()) + 1), len(attack_list) * 2])
+    if args.group_name == 'trigger':
+        matrix = np.zeros([len(defense_list) * 3, len(attack_list) * 3])
+
     for i, (group, sub_data) in enumerate(list(data.items())):
         z_list = np.array([sub_data[attack][defense]
                            for attack, defense in zip(attack_mesh, defense_mesh)])
-
+        offset = [0, 0]
         if args.group_name == 'trigger':
-            print(group)
-            attack_values = attack_pos
-            defense_values = defense_pos
             if group == 'As':
-                attack_values = attack_pos
-                defense_values = defense_pos
+                offset = [0, 0]
             elif group == 'AS':
-                attack_values = attack_pos + 1 / 3
+                offset = [1, 0]
             elif group == 'as':
-                defense_values = defense_pos + 1 / 16
+                offset = [0, 1]
             elif group == 'aS':
-                attack_values = attack_pos + 1 / 3
-                defense_values = defense_pos + 1 / 16
-            attack_values = attack_values - 1 / 3
-            defense_values = defense_values - 1 / 16
-            fig.bar3d(attack_values, defense_values, z_list, alpha=0.5, color='white',
-                      size=(1 / 3, 1 / 16), edgecolor=color_list[i], label=group, shade=False)
+                offset = [1, 1]
+            for y, x, z in zip(attack_pos, defense_pos, z_list):
+                matrix[x * 3 + offset[0], y * 3 + offset[1]] = z
         else:
-            fig.bar3d(attack_pos + i / 8 - 0.25, defense_pos - 1 / 16, z_list,
-                      size=(1 / 3, 1 / 16), color=color_list[i], label=group, shade=True)
-    fig.set_axis_lim(axis='y', lim=[0.0, len(defense_list) - 1], margin=[0.2, 0.2], piece=len(defense_list) - 1)
-    fig.set_axis_lim(axis='x', lim=[0.0, len(attack_list) - 1], margin=[0.2, 0.2], piece=len(attack_list) - 1)
-    fig.set_axis_lim(axis='z', lim=[0.0, 1.0], margin=[0, 0.03], piece=5)
+            for y, x, z in zip(attack_pos, defense_pos, z_list):
+                matrix[x * (len(data.keys()) + 1) + i, y * 2] = z
+    sns.heatmap(matrix, annot=True, ax=fig.ax, cmap='coolwarm', fmt='.2f', linewidths=1)
+    if args.group_name == 'trigger':
+        fig.set_axis_lim(axis='y', lim=[1, 1 + 3 * (len(defense_list) - 1)], margin=[1, 1], piece=len(defense_list) - 1)
+        fig.set_axis_lim(axis='x', lim=[1, 1 + 3 * (len(attack_list) - 1)], margin=[1, 1], piece=len(attack_list) - 1)
+    else:
+        fig.set_axis_lim(axis='y', lim=[1, 4], margin=[1, 1], piece=len(defense_list) - 1)
+        fig.set_axis_lim(axis='x', lim=[1, 22], margin=[1, 1], piece=len(attack_list) - 1)
     fig.set_axis_label('y', 'Defense')
     fig.set_axis_label('x', 'Attack')
-    fig.set_axis_label('z', 'Defense Performance')
 
     ax.set_yticklabels([defense_mapping[defense] for defense in defense_list], rotation=0)
     ax.set_xticklabels([attack_mapping[attack] for attack in attack_list], rotation=0)
@@ -114,3 +114,4 @@ if __name__ == "__main__":
     # fig.set_legend()
 
     plt.show()
+    # fig.save('./result.png')

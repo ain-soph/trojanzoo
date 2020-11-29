@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-seed_num: 50
+seed_num: -5
 max_troj_size: 64
 remask_epoch: 500
 remask_lr: 0.1

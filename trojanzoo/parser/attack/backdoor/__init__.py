@@ -16,3 +16,4 @@ from .term_study import Parser_Term_Study
 from .imc_strip import Parser_IMC_STRIP
 from .imc_multi import Parser_IMC_Multi
 from .imc_magnet import Parser_IMC_MagNet
+from .imc_advtrain import Parser_IMC_AdvTrain

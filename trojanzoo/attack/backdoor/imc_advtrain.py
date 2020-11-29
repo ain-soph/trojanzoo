@@ -2,20 +2,24 @@
 
 from .imc import IMC
 
+from trojanzoo.utils.output import output_iter, ansi, prints
+from trojanzoo.utils.model import AverageMeter
+from trojanzoo.optim.pgd import PGD
+
 import torch
+import torch.optim as optim
 
 import math
 import random
-from typing import Dict, Tuple
-from trojanzoo.utils.model import AverageMeter
+from typing import Union, Callable, Tuple
 
 import time
 import datetime
 from tqdm import tqdm
-from typing import Tuple
 
 from trojanzoo.utils.config import Config
 env = Config.env
+
 
 class IMC_AdvTrain(IMC):
 
@@ -35,34 +39,34 @@ class IMC_AdvTrain(IMC):
 
     name: str = 'imc_advtrain'
 
+    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_epsilon: float = 8.0 / 255, pgd_iteration: int = 7, **kwargs):
+        super().__init__(**kwargs)
+        self.param_list['adv_train'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        self.pgd_alpha = pgd_alpha
+        self.pgd_epsilon = pgd_epsilon
+        self.pgd_iteration = pgd_iteration
+        self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
+        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
+
     def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
-        integer = len(_label)
-        if poison_label:
-            _label = self.target_class * torch.ones_like(_label[:integer])
-        else:
-            _label = _label[:integer]
+        decimal, integer = math.modf(self.poison_num)
+        integer = int(integer)
+        if random.uniform(0, 1) < decimal:
+            integer += 1
+        if integer:
+            org_input, org_label = _input, _label
+            _input = self.add_mark(org_input[:integer])
+            _label = self.target_class * torch.ones_like(org_label[:integer])
         return _input, _label
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
-        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
-                                                        get_data=None, **kwargs)
-        target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                                          get_data=self.get_poison_data, **kwargs)
-        _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
-                                                 get_data=self.get_poison_data, poison_label=False, **kwargs)
-        self.model._validate(print_prefix='Validate STRIP Tgt',
-                             get_data=self.get_poison_data, strip=True, **kwargs)
-        self.model._validate(print_prefix='Validate STRIP Org',
-                             get_data=self.get_poison_data, strip=True, poison_label=False, **kwargs)
-        print(f'Validate Confidence : {self.validate_confidence():.3f}')
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
-            target_acc = 0.0
-        return clean_loss + target_loss, target_acc, clean_acc
-
+    def attack(self, epoch: int, save=False, **kwargs):
+        self.adv_train(epoch, save=save,
+                       validate_func=self.validate_func, get_data=self.get_data,
+                       epoch_func=self.epoch_func, save_fn=self.save, **kwargs)
 
     def adv_train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-                  validate_interval=10, save=False, verbose=True, indent=0,
+                  validate_interval=10, save=False, verbose=True, indent=0, epoch_func: Callable = None,
                   **kwargs):
         loader_train = self.dataset.loader['train']
         file_path = self.folder_path + self.get_filename() + '.pth'
@@ -74,17 +78,22 @@ class IMC_AdvTrain(IMC):
         top5 = AverageMeter('Acc@5', ':6.2f')
         params = [param_group['params'] for param_group in optimizer.param_groups]
         for _epoch in range(epoch):
+            if epoch_func is not None:
+                self.model.activate_params([])
+                epoch_func()
+                self.model.activate_params(params)
             losses.reset()
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
             if verbose and env['tqdm']:
                 loader_train = tqdm(loader_train)
-            self.model.activate_params(params)
             optimizer.zero_grad()
             for data in loader_train:
                 _input, _label = self.model.get_data(data)
                 noise = torch.zeros_like(_input)
+
+                poison_input, poison_label = self.get_poison_data(data)
 
                 def loss_fn(X: torch.FloatTensor):
                     return -self.model.loss(X, _label)
@@ -100,7 +109,10 @@ class IMC_AdvTrain(IMC):
 
                     optimizer.zero_grad()
                     self.model.train()
-                    loss = self.model.loss(adv_x, _label)
+
+                    x = torch.cat((adv_x, poison_input))
+                    y = torch.cat((_label, poison_label))
+                    loss = self.model.loss(x, y)
                     loss.backward()
                     optimizer.step()
                 optimizer.zero_grad()
@@ -137,7 +149,7 @@ class IMC_AdvTrain(IMC):
                         prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                     if save:
-                        self.model.save(file_path=file_path, verbose=verbose)
+                        self.save()
                     if verbose:
                         print('-' * 50)
         self.model.zero_grad()
