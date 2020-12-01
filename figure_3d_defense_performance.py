@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # fig.set_axis_label('y', 'Attack')
     # fig.set_axis_label('z', 'Defense Performance')
 
-    fig = Figure(name, figsize=(20, 5))
+    fig = Figure(name, figsize=(20, 10))
     ax = fig.ax
     ax.set_aspect('equal')
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             'deep_inspect': 'DI',
             'tabor': 'TABOR',
             'neuron_inspect': 'NI',
-            'ABS': 'ABS',
+            'abs': 'ABS',
         },
         'inference': {
             'strip': 'STRIP',
@@ -75,9 +75,9 @@ if __name__ == "__main__":
     defense_pos = np.array([defense_idx[defense] for defense in defense_mesh])
     attack_pos = np.array([attack_idx[attack] for attack in attack_mesh])
 
-    matrix = np.zeros([len(defense_list) * (len(data.keys()) + 1), len(attack_list) * 2])
+    matrix = np.full([len(defense_list) * (len(data.keys()) + 1), len(attack_list) * 2], float("nan"))
     if args.group_name == 'trigger':
-        matrix = np.zeros([len(defense_list) * 3, len(attack_list) * 3])
+        matrix = np.full([len(defense_list) * 3, len(attack_list) * 3], float("nan"))
 
     for i, (group, sub_data) in enumerate(list(data.items())):
         z_list = np.array([sub_data[attack][defense]
