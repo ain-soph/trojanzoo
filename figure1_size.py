@@ -15,8 +15,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     name = 'figure1 %s size' % args.dataset
     fig = Figure(name)
-    fig.set_axis_label('x', 'Trigger Size')
-    fig.set_axis_label('y', 'Max Re-Mask Accuracy')
+    fig.set_axis_label('x', r'Trigger Size ($\mathbf{|m|}$)')
+    fig.set_axis_label('y', 'ASR (%)')
     if args.dataset == 'gtsrb':
         fig.set_axis_lim('x', lim=[1, 10], piece=9, margin=[0.3, 0.3],
                          _format='%d')
@@ -25,23 +25,36 @@ if __name__ == '__main__':
                          _format='%d')
     fig.set_axis_lim('y', lim=[0, 100], piece=5, margin=[0.0, 5.0],
                      _format='%d')
-    fig.set_title(fig.name)
-
-    color_list = [ting_color['red_carrot'], ting_color['green'], ting_color['blue'],
-                  ting_color['yellow'], color['red']['rusty'], color['green']['army'],
-                  color['blue']['munsell'], color['brown']['brown'], ting_color['pink']]
-    mark_list = ['H', '^', 'o', 'v', 's', 'p', 'h', 'D', '*']
-
+    fig.set_title('')
+    mark_dict = {
+        'badnet': 'H',
+        'trojannn': '^',
+        'reflection_backdoor': 'o',
+        'targeted_backdoor': 'v',
+        'latent_backdoor': 's',
+        'trojannet': 'p',
+        'bypass_embed': 'h',
+        'imc': 'D',
+    }
+    color_dict = {
+        'badnet': ting_color['red_carrot'],
+        'trojannn': ting_color['green'],
+        'reflection_backdoor': ting_color['blue'],
+        'targeted_backdoor': ting_color['yellow'],
+        'latent_backdoor': ting_color['red_deep'],
+        'trojannet': ting_color['purple'],
+        'bypass_embed': ting_color['blue_light'],
+        'imc': color['brown']['brown'],
+    }
     attack_mapping = {
         'badnet': 'BN',
-        'latent_backdoor': 'LB',
         'trojannn': 'TNN',
-        'imc': 'IMC',
         'reflection_backdoor': 'RB',
         'targeted_backdoor': 'TB',
+        'latent_backdoor': 'LB',
         'trojannet': 'ESB',
-        'bypassing': 'ABE',
         'bypass_embed': 'ABE',
+        'imc': 'IMC',
     }
     x = np.linspace(1, 10, 10)
     y = {
@@ -54,7 +67,7 @@ if __name__ == '__main__':
             'targeted_backdoor': [10.940, 11.140, 11.470, 11.760, 33.290, 44.450, 49.000],
             # 'clean_label_pgd': [12.190, 12.410, 12.650, 13.040, 13.240, 13.030, 14.650],
             'trojannet': [10.352, 10.352, 10.352, 10.352, 10.352, 10.352, 10.352],
-            'bypassing': [66.700, 74.270, 74.320, 78.520, 83.340, 83.650, 85.610],
+            'bypass_embed': [66.700, 74.270, 74.320, 78.520, 83.340, 83.650, 85.610],
         },
         'gtsrb': {
             'badnet': [0.619, 61.543, 65.634, 71.415, 71.772, 71.753, 72.954, 71.565, 73.949, 75],
@@ -65,7 +78,7 @@ if __name__ == '__main__':
             'targeted_backdoor': [0.619, 0.619, 0.601, 0.619, 0.638, 0.601, 0.601, 0.788, 0.807, 0.77],
             # 'clean_label_pgd': [1.858, 1.464, 0.938, 1.745, 0.601, 1.014, 0.582, 1.839, 1.276, 0.807],
             'trojannet': [0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.582, 0.563],
-            'bypassing': [7.432, 61.974, 68.412, 73.78, 73.142, 73.104, 74.474, 76.52, 79.279, 78.829],
+            'bypass_embed': [7.432, 61.974, 68.412, 73.78, 73.142, 73.104, 74.474, 76.52, 79.279, 78.829],
         },
         'sample_imagenet': {
             'badnet': [11.400, 83.400, 89.800, 91.200, 91.400, 91.400, 91.400],
@@ -75,18 +88,18 @@ if __name__ == '__main__':
             'reflection_backdoor': [11.000, 11.200, 11.400, 11.400, 93.800, 95.400, 95.400],
             'targeted_backdoor': [11.200, 12.400, 33.400, 57.800, 85.400, 87.200, 88.200],
             'trojannet': [10.000, 12.600, 12.800, 10.200, 10.000, 10.000, 10.000],
-            'bypassing': [10.600, 67.000, 78.400, 78.600, 86.400, 89.000, 90.000],
+            'bypass_embed': [10.600, 67.000, 78.400, 78.600, 86.400, 89.000, 90.000],
         },
     }
-    for i, (key, value) in enumerate(y[args.dataset].items()):
-        x_list = np.array(x[:len(value)])
-        y_list = np.array(value)
+    for i, (key, value) in enumerate(attack_mapping.items()):
+        y_list = np.array(y[args.dataset][key])
+        x_list = np.array(x[:len(y_list)])
         x_grid = np.linspace(1, 7, 6000)
         y_grid = np.linspace(1, 7, 6000)
         if args.dataset == 'cifar10':
             if key in ['badnet',
                        'reflection_backdoor',
-                       'clean_label_pgd', 'trojannet', 'bypassing']:
+                       'clean_label_pgd', 'trojannet', 'bypass_embed']:
                 y_grid = fig.interp_fit(x_list, y_list, x_grid)
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
@@ -117,7 +130,7 @@ if __name__ == '__main__':
                 y_grid = np.clip(y_grid, a_min=0.0, a_max=100.0)
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid = fig.avg_smooth(y_grid, window=20)
-            elif key in ['bypassing']:
+            elif key in ['bypass_embed']:
                 x_list1 = np.delete(x_list, 3)
                 y_list1 = np.delete(y_list, 3)
                 y_grid = -fig.exp_fit(x_list1, -y_list1, x_grid, degree=3, increase=True, epsilon=0.05)
@@ -183,8 +196,11 @@ if __name__ == '__main__':
                 y_grid = fig.monotone(y_grid, increase=True)
                 y_grid = fig.avg_smooth(y_grid, window=40)
 
-        fig.curve(x_grid, y_grid, color=color_list[i])
-        fig.scatter(x_list, y_list, color=color_list[i], marker=mark_list[i], label=attack_mapping[key])
-    fig.set_legend()
+        fig.curve(x_grid, y_grid, color=color_dict[key])
+        fig.scatter(x_list, y_list, color=color_dict[key], marker=mark_dict[key], label=attack_mapping[key])
+    if args.dataset == 'sample_imagenet':
+        fig.set_legend(ncol=2, columnspacing=0.5, labelspacing=0.15, loc='center right')
+    else:
+        fig.set_legend()
     # fig.ax.get_legend().remove()
     fig.save(folder_path='./result/')

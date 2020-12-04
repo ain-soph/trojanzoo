@@ -38,7 +38,7 @@ class TrojanNN(BadNet):
 
     name: str = 'trojannn'
 
-    def __init__(self, preprocess_layer: str = 'features', threshold: float = 5, target_value: float = 10,
+    def __init__(self, preprocess_layer: str = 'flatten', threshold: float = 5, target_value: float = 10,
                  neuron_lr: float = 0.015, neuron_epoch: int = 20, neuron_num: int = 2, **kwargs):
         super().__init__(**kwargs)
         if self.mark.random_pos:

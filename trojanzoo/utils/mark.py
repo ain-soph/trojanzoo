@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from PIL import Image
 from collections import OrderedDict
-from typing import List, Dict, Tuple, Union
+from typing import Callable, List, Dict, Tuple, Union
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -30,7 +30,8 @@ class Watermark:
                  height: int = None, width: int = None,
                  height_ratio: float = None, width_ratio: float = None, mark_ratio: float = None,
                  height_offset: int = 0, width_offset: int = 0,
-                 random_pos=False, random_init=False, mark_distributed=False, **kwargs):
+                 random_pos=False, random_init=False, mark_distributed=False,
+                 add_mark_fn=None, **kwargs):
 
         self.param_list: Dict[str, List[str]] = OrderedDict()
         self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
@@ -57,6 +58,7 @@ class Watermark:
         self.random_pos = random_pos
         self.random_init = random_init
         self.mark_distributed = mark_distributed
+        self.add_mark_fn: Callable = add_mark_fn
         # --------------------------------------------------- #
 
         if self.mark_distributed:
@@ -86,6 +88,8 @@ class Watermark:
     # add mark to the Image with mask.
 
     def add_mark(self, _input: torch.Tensor, random_pos=None, alpha: float = None, **kwargs) -> torch.Tensor:
+        if self.add_mark_fn is not None:
+            return self.add_mark_fn(_input, random_pos=random_pos, alpha=alpha, **kwargs)
         if random_pos is None:
             random_pos = self.random_pos
         if random_pos:

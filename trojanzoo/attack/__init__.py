@@ -31,4 +31,7 @@ class_dict = {
     'imc_strip': 'IMC_STRIP',
     'imc_multi': 'IMC_Multi',
     'imc_magnet': 'IMC_MagNet',
+    'imc_abs': 'IMC_ABS',
+    'unlearn': 'Unlearn',
+    'imc_adaptive': 'IMC_Adaptive',
 }

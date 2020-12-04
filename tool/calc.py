@@ -41,10 +41,15 @@ def merge_str(float_list: List[float], conf_list: List[float] = None, sign=True,
     return ' & '.join(final_list)
 
 
-# base = '99.96 (1.000) & 98.75 (0.994) & 98.40 (0.995)           & 96.00 (0.982)'
+base = '10.05(42.39)  & 9.88(41.42)  & 10.10(39.65)  & 9.95(39.77)   & 10.00(41.25) & 9.43(41.74)  & 10.15(40.88)  & 10.07(39.97) & 9.87(43.44)   & 10.03(39.65)'
+base_list = split(base)
+conf_list = split_conf(base)
+# order_idx = [0, 1, 4, 2, 5, 6, 3]
+# base_list = [base_list[i] for i in order_idx]
+print(merge_str(base_list, sign=False, base_format='.2f'))
+print(merge_str(conf_list, sign=False, base_format='.2f'))
 # tgt = '10.08 (0.807) & 10.44 (0.601) & 13.42 (0.643) & 10.74 (0.728) & 58.72 (0.889) & 72.38 (0.822) & 0.00 (0.811)  & 10.86 (0.644) & 73.07 (0.826)'
 
-# base_list = split(base)
 # tgt_list = split(tgt)
 # base_conf_list = split_conf(base)
 # tgt_conf_list = split_conf(tgt)
@@ -52,9 +57,6 @@ def merge_str(float_list: List[float], conf_list: List[float] = None, sign=True,
 
 # print(merge_str(base_list, base_conf_list, sign=False))
 # print(merge_str(final_list, tgt_conf_list))
-order_idx = [0, 1, 4, 2, 5, 6, 3]
 
-base = '0.700  & 0.417    & 0.214  & 0.133 & 0.700      & 0.000        & 0.417'
-base_list = split(base)
-base_list = [base_list[i] for i in order_idx]
-print(merge_str(base_list, sign=False, base_format='.2f'))
+# base = '0.700  & 0.417    & 0.214  & 0.133 & 0.700      & 0.000        & 0.417'
+# base_list = split(base)

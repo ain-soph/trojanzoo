@@ -70,12 +70,15 @@ class IMC(TrojanNN):
         if self.model.sgm:
             remove_hook(self.model)
 
-    def optimize_mark(self):
+    def optimize_mark(self, loss_fn=None, **kwargs):
         atanh_mark = torch.randn_like(self.mark.mark) * self.mark.mask
         atanh_mark.requires_grad_()
         self.mark.mark = Uname.tanh_func(atanh_mark)
         optimizer = optim.Adam([atanh_mark], lr=self.pgd_alpha)
         optimizer.zero_grad()
+
+        if loss_fn is None:
+            loss_fn = self.model.loss
 
         losses = AverageMeter('Loss', ':.4e')
         for _epoch in range(self.pgd_iteration):
@@ -84,7 +87,7 @@ class IMC(TrojanNN):
                     break
                 _input, _label = self.model.get_data(data)
                 poison_x = self.mark.add_mark(_input)
-                loss = self.model.loss(poison_x, self.target_class * torch.ones_like(_label))
+                loss = loss_fn(poison_x, self.target_class * torch.ones_like(_label))
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()

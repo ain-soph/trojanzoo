@@ -192,11 +192,29 @@ def percentile(t: torch.tensor, q: float) -> Union[int, float]:
     return result
 
 
-def normalize_mad(values: torch.Tensor) -> torch.Tensor:
+def normalize_mad(values: torch.Tensor, side: str = None) -> torch.Tensor:
     if not isinstance(values, torch.Tensor):
         values = torch.tensor(values)
     median = values.median()
     abs_dev = (values - median).abs()
     mad = abs_dev.median()
     measures = abs_dev / mad / 1.4826
+    if side == 'double':
+        dev_list = []
+        for i in range(len(values)):
+            if values[i] <= median:
+                dev_list.append(float(median - values[i]))
+        mad = torch.tensor(dev_list).median()
+        for i in range(len(values)):
+            if values[i] <= median:
+                measures[i] = abs_dev[i] / mad / 1.4826
+
+        dev_list = []
+        for i in range(len(values)):
+            if values[i] >= median:
+                dev_list.append(float(values[i] - median))
+        mad = torch.tensor(dev_list).median()
+        for i in range(len(values)):
+            if values[i] >= median:
+                measures[i] = abs_dev[i] / mad / 1.4826
     return measures

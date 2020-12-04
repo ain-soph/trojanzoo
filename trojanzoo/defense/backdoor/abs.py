@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils.tensor import normalize_mad
+from trojanzoo.utils.tensor import normalize_mad, to_numpy
 from trojanzoo import attack
 from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.utils import to_tensor, jaccard_idx
@@ -33,7 +33,7 @@ class ABS(Defense_Backdoor):
     # See filter_load_model
     def __init__(self, seed_num: int = -5, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
-                 max_troj_size: int = 16, remask_lr: float = 0.1, remask_weight: float = 500, remask_epoch: int = 1000, **kwargs):
+                 max_troj_size: int = 16, remask_lr: float = 0.1, remask_epoch: int = 1000, **kwargs):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
@@ -53,11 +53,10 @@ class ABS(Defense_Backdoor):
         # ----------------Remask----------------- #
         self.max_troj_size: int = max_troj_size
         self.remask_lr: float = remask_lr
-        self.remask_weight: float = remask_weight
         self.remask_epoch: int = remask_epoch
 
         self.ssim = SSIM()
-        self.nc_mask = self.nc_filter_img()
+        # self.nc_mask = self.nc_filter_img()
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
@@ -94,14 +93,12 @@ class ABS(Defense_Backdoor):
         losses = AverageMeter('Loss', ':.4e')
         norms = AverageMeter('Norm', ':6.2f')
         jaccard = AverageMeter('Jaccard Idx', ':6.2f')
-        acc_list = [0.0] * len(list(neuron_dict.keys()))
+        score_list = [0.0] * len(list(neuron_dict.keys()))
+        result_dict = {}
         for label, label_list in neuron_dict.items():
             print('label: ', label)
-            losses.reset()
-            norms.reset()
-            jaccard.reset()
-            best_acc = 0.0
-            for _dict in label_list:
+            best_score = 100.0
+            for _dict in reversed(label_list):
                 layer = _dict['layer']
                 neuron = _dict['neuron']
                 value = _dict['value']
@@ -111,31 +108,48 @@ class ABS(Defense_Backdoor):
                 mark, mask, loss = self.remask(_input, layer=layer, neuron=neuron,
                                                label=label, use_mask=use_mask)
                 self.attack.mark.mark = mark
-                self.attack.mark.alpha_mark = mask
+                self.attack.mark.alpha_mask = mask
                 self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
                 self.attack.target_class = label
-                _, attack_acc, _ = self.model._validate(
+                attack_loss, attack_acc, _ = self.model._validate(
                     verbose=False, get_data=self.attack.get_data, keep_org=False)
                 _dict['loss'] = loss
                 _dict['attack_acc'] = attack_acc
-                best_acc = max(best_acc, attack_acc)
+                _dict['attack_loss'] = attack_loss
+                _dict['mask'] = to_numpy(mask)
+                _dict['mark'] = to_numpy(mark)
+                _dict['norm'] = float(mask.norm(p=1))
+                score = attack_loss + 7e-2 * float(mask.norm(p=1))
+                if score < best_score:
+                    best_score = score
+                    result_dict[label] = _dict
                 if attack_acc > 90:
                     losses.update(loss)
                     norms.update(mask.norm(p=1))
                 _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
                 _str += f'    loss: {loss:10.3f}'
-                _str += f'    Attack Acc: {attack_acc:.3f}'
+                _str += f'    ATK Acc: {attack_acc:.3f}'
+                _str += f'    ATK Loss: {attack_loss:10.3f}'
                 _str += f'    Norm: {mask.norm(p=1):.3f}'
+                _str += f'    Score: {score:.3f}'
                 if not self.attack.mark.random_pos:
                     overlap = jaccard_idx(mask, self.real_mask)
-                    _str += f'    Jaccard index: {overlap:.3f}'
+                    _dict['jaccard'] = overlap
+                    _str += f'    Jaccard: {overlap:.3f}'
                     if attack_acc > 90:
                         jaccard.update(overlap)
+                else:
+                    _dict['jaccard'] = 0.0
                 print(_str)
-            print(f'Label: {label:3d}  loss: {losses.avg:10.3f}  Norm: {norms.avg:10.3f}  Jaccard index: {jaccard.avg:10.3f}')
-            acc_list[label] = best_acc
-        print('Attack Acc: ', acc_list)
-        print('Attack Acc MAD: ', normalize_mad(acc_list))
+                if not os.path.exists(self.folder_path):
+                    os.makedirs(self.folder_path)
+                np.save(self.folder_path + self.get_filename(target_class=self.target_class) + '.npy', neuron_dict)
+                np.save(self.folder_path + self.get_filename(target_class=self.target_class) + '_best.npy', result_dict)
+            print(
+                f'Label: {label:3d}  loss: {result_dict[label]["loss"]:10.3f}  ATK loss: {result_dict[label]["attack_loss"]:10.3f}  Norm: {result_dict[label]["norm"]:10.3f}  Jaccard: {result_dict[label]["jaccard"]:10.3f}  Score: {best_score:.3f}')
+            score_list[label] = best_score
+        print('Score: ', score_list)
+        print('Score MAD: ', normalize_mad(score_list))
         return neuron_dict
 
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,
@@ -146,10 +160,10 @@ class ABS(Defense_Backdoor):
         parameters: List[torch.Tensor] = [atanh_mark]
         mask = torch.ones(self.data_shape[1:], device=env['device'])
         if use_mask:
-            atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
+            atanh_mask = torch.ones(self.data_shape[1:], device=env['device'])
             atanh_mask.requires_grad_()
             parameters.append(atanh_mask)
-            mask = Uname.tanh_func(atanh_mask) * self.nc_mask    # (h, w)
+            mask = Uname.tanh_func(atanh_mask)    # (h, w)
         mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
 
         optimizer = optim.Adam(parameters, lr=self.remask_lr if use_mask else 0.01 * self.remask_lr)
@@ -169,7 +183,7 @@ class ABS(Defense_Backdoor):
             optimizer.zero_grad()
             mark = Uname.tanh_func(atanh_mark)    # (c, h, w)
             if use_mask:
-                mask = Uname.tanh_func(atanh_mask) * self.nc_mask    # (h, w)
+                mask = Uname.tanh_func(atanh_mask)    # (h, w)
 
             with torch.no_grad():
                 X = _input + mask * (mark - _input)
@@ -198,7 +212,7 @@ class ABS(Defense_Backdoor):
             if validate_interval != 0 and verbose:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == self.remask_epoch - 1:
                     self.attack.mark.mark = mark
-                    self.attack.mark.alpha_mark = mask
+                    self.attack.mark.alpha_mask = mask
                     self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
                     self.attack.target_class = label
                     self.model._validate(print_prefix='Validate Trigger Tgt',
@@ -317,15 +331,12 @@ class ABS(Defense_Backdoor):
         loss = torch.zeros_like(vloss1)
         if use_mask:
             mask_loss = mask.sum()
-            mask_nz = len(mask.nonzero())
-            if (self.count_mask and mask_nz > (math.sqrt(self.max_troj_size) + 2)**2) \
-                    or (not self.count_mask and mask_loss > 100):
-                mask_loss *= 2 * self.remask_weight
-            elif (self.count_mask and mask_nz > self.max_troj_size) \
-                    or (not self.count_mask and mask_loss > self.max_troj_size):
-                mask_loss *= self.remask_weight
+            if mask_loss > 100:
+                mask_loss *= 100
+            if mask_loss > self.max_troj_size:
+                mask_loss *= 10
             else:
-                mask_loss *= 0.0
+                mask_loss *= 1e-1
             loss = -vloss1 + 1e-4 * vloss2 + mask_loss
         else:
             tvloss = total_variation(mark)
@@ -347,9 +358,21 @@ class ABS(Defense_Backdoor):
         h, w = self.dataset.n_dim
         mask = torch.ones(h, w, dtype=torch.float)
         return to_tensor(mask, non_blocking=False)
-        # todo: fix
+        # TODO: fix
         # mask = torch.zeros(h, w, dtype=torch.float)
         # if self.use_mask:
         #     mask[math.ceil(0.25 * w): math.floor(0.75 * w), math.ceil(0.25 * h): math.floor(0.75 * h)] = 1
         # else:
         #     mask.add_(1)
+
+    def load(self, path: str = None):
+
+        if path is None:
+            path = self.folder_path + self.get_filename(target_class=self.target_class) + '_best.npy'
+        _dict = np.load(path, allow_pickle=True).item()
+        self.attack.mark.mark = to_tensor(_dict[self.target_class]['mark'])
+        self.attack.mark.alpha_mask = to_tensor(_dict[self.target_class]['mask'])
+        self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
+        self.attack.mark.random_pos = False
+        self.attack.mark.height_offset = 0
+        self.attack.mark.width_offset = 0
