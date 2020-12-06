@@ -44,8 +44,9 @@ class Neuron_Inspect(Defense_Backdoor):
     def detect(self, **kwargs):
         super().detect(**kwargs)
         exp_features = self.get_explation_feature()
-        print('exp features: ', exp_features)
         exp_features = torch.tensor(exp_features)
+        print('exp features: ', exp_features)
+        print('exp mad: ', normalize_mad(exp_features))
         confidence = get_confidence(exp_features, self.attack.target_class)
         print('confidence: ', confidence)
 
@@ -62,27 +63,23 @@ class Neuron_Inspect(Defense_Backdoor):
         exp_features = []
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            backdoor_saliency_maps = self.get_saliency_map(label, backdoor_loader)   # (N, 1, H, W)
-            benign_saliency_maps = self.get_saliency_map(label, clean_loader)        # (N, 1, H, W)
+            backdoor_saliency_maps = self.get_saliency_map(label, backdoor_loader)   # (N, H, W)
+            benign_saliency_maps = self.get_saliency_map(label, clean_loader)        # (N, H, W)
             exp_features.append(self.cal_explanation_feature(backdoor_saliency_maps, benign_saliency_maps))
         return exp_features
 
     def get_saliency_map(self, target: int, loader) -> torch.Tensor:
         saliency_maps = []
-        for _input, _ in loader:
-            _input.requires_grad_()
-            _output = self.model(_input.to(env['device']))[:, target].sum()
-
-            # torch.max type: (data, indices), we only need [0]
-            grad = torch.autograd.grad(_output, _input)[0].max(dim=1, keepdim=True)[0]  # (B, 1, H, W)
-            _input.requires_grad = False
-            saliency_maps.append(grad.cpu())
+        for data in loader:
+            _input, _label = self.model.get_data(data)
+            saliency_map = self.model.get_saliency_map(_input, [target] * len(_input))
+            saliency_maps.append(saliency_map.detach().cpu())
         return torch.cat(saliency_maps)
 
     def cal_explanation_feature(self, backdoor_saliency_maps: torch.Tensor,
                                 benign_saliency_maps: torch.Tensor) -> float:
         sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1, dim=1)  # (N)
-        smooth_feats = self.conv2d(backdoor_saliency_maps).flatten(start_dim=1).norm(p=1, dim=1)  # (N)
+        smooth_feats = self.conv2d(backdoor_saliency_maps.unsqueeze(1)).flatten(start_dim=1).norm(p=1, dim=1)  # (N)
         persist_feats = self.cal_persistence_feature(benign_saliency_maps)  # (1)
 
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats

@@ -13,6 +13,7 @@
 *.ini
 
 /issue
+/tex
 /test.py
 
 # Filter Directory
@@ -42,3 +43,4 @@ tiny_imagenet
 .idea
 
 test
+mitigation_rst

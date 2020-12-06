@@ -19,9 +19,9 @@ def auc_graph(name, attack):
     fig.set_axis_lim('y', lim=[0, 1.0], piece=5, margin=[0.0, 0.05],
                      _format='%.1f')
 
-    color_list = [ting_color['red_carrot'], ting_color['red_deep'], ting_color['yellow'],
-                  ting_color['blue'], ting_color['blue_light'], ting_color['pink'],
-                  ting_color['green'], color['brown']['brown'], color['green']['army']]
+    color_list = [ting_color['red_carrot'], ting_color['green'], ting_color['blue'],
+                  ting_color['yellow'], color['red']['rusty'], color['green']['army'],
+                  color['blue']['munsell'], color['brown']['brown'], ting_color['pink']]
     mark_list = ['D', ',', 'o', 'v', 's', 'p', '*', 'h', 'D']
     local_data = data[data["Model"] == attack]
     x = np.array([i for i in local_data["Attack ACC"]])
@@ -31,7 +31,7 @@ def auc_graph(name, attack):
 
     x_grid = np.linspace(0.0, 1.0, 1000)
     # y_grid = fig.poly_fit(x, y, x_grid, degree=2)
-    y_grid = fig.exp_fit(x, y, x_grid, increase=True, epsilon=1e-3, degree=2)
+    y_grid = fig.exp_fit(x, y, x_grid, increase=True, epsilon=2e-1, degree=2)
 
     local_auc = auc(x_grid, y_grid)
     fig.set_title(f'{name}     AUC {local_auc:.3f}')
@@ -55,10 +55,4 @@ def auc_graph(name, attack):
 if __name__ == "__main__":
     data = pd.read_excel("./result/auc/auc_data_selected.xlsx")
 
-    auc_graph("TrojanNN", "trojannn")
-    auc_graph("Latent", "latent_backdoor")
-    auc_graph("Targeted", "targeted_backdoor")
-    auc_graph("IMC", "imc")
-    auc_graph("Bypass", "bypass_embed")
-    auc_graph("Reflection", "reflection_backdoor")
-    # auc_graph("Clean Label", "clean_label")
+    auc_graph("Clean Label", "clean_label")

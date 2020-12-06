@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# python backdoor_attack.py --attack badnet --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --height 1 --width 1
-# python backdoor_attack.py --attack trojannn --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
-# python backdoor_attack.py --attack latent_backdoor --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
-# python backdoor_attack.py --attack clean_label --verbose --pretrain --validate_interval 1 --mark_ratio 0.3
+# python backdoor_attack.py --attack badnet --verbose --pretrain --validate_interval 1 --epoch 50 --lr 1e-2 --height 3 --width 3 --mark_alpha 0.0
 
 # python backdoor_attack.py --attack hidden_trigger --verbose --pretrain --validate_interval 1 --mark_ratio 0.3 --poison_iteration 1000 -d cifar10 -m resnet18 --lr_scheduler --step_size 20 --iteration 100 --parameters classifier
 # Validate Clean:           Loss: 0.6734,          Top1 Acc: 87.630,       Top5 Acc: 99.130,       Time: 0:00:08

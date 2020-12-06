@@ -2,7 +2,8 @@
 
 from ..defense_backdoor import Defense_Backdoor
 
-from trojanzoo.utils import to_list, jaccard_idx
+from trojanzoo.utils import to_tensor, jaccard_idx
+from trojanzoo.utils.tensor import normalize_mad
 from trojanzoo.utils.model import to_categorical, AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
@@ -10,8 +11,8 @@ from trojanzoo.utils.defense import get_confidence
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 
+import numpy as np
 import time
 import datetime
 from tqdm import tqdm
@@ -55,7 +56,10 @@ class Deep_Inspect(Defense_Backdoor):
         if not self.attack.mark.random_pos:
             self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
-        print('loss: ', loss_list)  # DeepInspect use this)
+        np.savez(self.folder_path + self.get_filename(target_class=self.target_class) + '.npz',
+                 mark_list=mark_list, loss_list=loss_list)
+        print('loss: ', loss_list)
+        print('loss MAD: ', normalize_mad(loss_list))
         print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
     def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -68,6 +72,19 @@ class Deep_Inspect(Defense_Backdoor):
             mark_list.append(mark)
         loss_list = torch.as_tensor(loss_list)
         return loss_list, mark_list
+
+    def load(self, path: str = None):
+        if path is None:
+            path = self.folder_path + self.get_filename() + '.npz'
+        _dict = np.load(path, allow_pickle=True)
+        self.attack.mark.mark = to_tensor(_dict['mark_list'][self.attack.target_class])
+        self.attack.mark.random_pos = False
+        self.attack.mark.height_offset = 0
+        self.attack.mark.width_offset = 0
+
+        def add_mark_fn(_input, **kwargs):
+            return _input + self.attack.mark.mark.to(_input.device)
+        self.attack.mark.add_mark_fn = add_mark_fn
 
     def remask(self, label: int) -> Tuple[torch.Tensor, torch.Tensor]:
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)

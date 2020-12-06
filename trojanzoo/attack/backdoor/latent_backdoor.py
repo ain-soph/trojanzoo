@@ -35,7 +35,7 @@ class Latent_Backdoor(BadNet):
     name: str = 'latent_backdoor'
 
     def __init__(self, class_sample_num: int = 100, mse_weight=0.5,
-                 preprocess_layer: str = 'features', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
+                 preprocess_layer: str = 'flatten', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
                  **kwargs):
         super().__init__(**kwargs)
 

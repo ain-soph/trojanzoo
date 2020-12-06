@@ -12,6 +12,7 @@ class Defense_Backdoor(Defense):
         super().__init__(**kwargs)
         self.original: bool = original
         self.attack: BadNet  # for linting purpose
+        self.target_class = self.attack.target_class
 
     def detect(self, **kwargs):
         if not self.original:

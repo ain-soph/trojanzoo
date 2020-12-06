@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from PIL import Image
 from collections import OrderedDict
-from typing import List, Tuple, Union
+from typing import Callable, List, Dict, Tuple, Union
 
 from trojanzoo.utils.config import Config
 env = Config.env
@@ -30,7 +30,8 @@ class Watermark:
                  height: int = None, width: int = None,
                  height_ratio: float = None, width_ratio: float = None, mark_ratio: float = None,
                  height_offset: int = 0, width_offset: int = 0,
-                 random_pos=False, random_init=False, mark_distributed=False, **kwargs):
+                 random_pos=False, random_init=False, mark_distributed=False,
+                 add_mark_fn=None, **kwargs):
 
         self.param_list: Dict[str, List[str]] = OrderedDict()
         self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
@@ -57,6 +58,7 @@ class Watermark:
         self.random_pos = random_pos
         self.random_init = random_init
         self.mark_distributed = mark_distributed
+        self.add_mark_fn: Callable = add_mark_fn
         # --------------------------------------------------- #
 
         if self.mark_distributed:
@@ -81,12 +83,13 @@ class Watermark:
                 self.param_list['mark'].extend(['height_offset', 'width_offset'])
                 self.height_offset: int = height_offset
                 self.width_offset: int = width_offset
-                self.mark, self.mask, self.alpha_mask = self.mask_mark(
-                    height_offset=self.height_offset, width_offset=self.width_offset)
+                self.mark, self.mask, self.alpha_mask = self.mask_mark()
 
     # add mark to the Image with mask.
 
-    def add_mark(self, _input: torch.Tensor, random_pos=None, **kwargs) -> torch.Tensor:
+    def add_mark(self, _input: torch.Tensor, random_pos=None, alpha: float = None, **kwargs) -> torch.Tensor:
+        if self.add_mark_fn is not None:
+            return self.add_mark_fn(_input, random_pos=random_pos, alpha=alpha, **kwargs)
         if random_pos is None:
             random_pos = self.random_pos
         if random_pos:
@@ -98,6 +101,8 @@ class Watermark:
             mark, mask, alpha_mask = self.mask_mark(height_offset=height_offset, width_offset=width_offset)
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
+            if alpha is not None:
+                alpha_mask = torch.ones_like(self.alpha_mask) * (1 - alpha)
         _mask = mask * alpha_mask
         mark, _mask = mark.to(_input.device), _mask.to(_input.device)
         return _input + _mask * (mark - _input)
@@ -126,7 +131,8 @@ class Watermark:
                 raise ValueError(edge_color)
         else:
             t = torch.as_tensor(edge_color)
-            assert t.shape.item() == data_shape[0]
+            assert len(t.shape) == 1
+            assert t.shape[0] == data_shape[0]
         return t
 
     @staticmethod
@@ -142,7 +148,18 @@ class Watermark:
         alpha_mask = mask * (1 - mark_alpha)
         return mask, alpha_mask
 
-    def mask_mark(self, height_offset: int, width_offset: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def mask_mark(self, org_mark: torch.Tensor = None, org_mask: torch.Tensor = None, org_alpha_mask: torch.Tensor = None,
+                  height_offset: int = None, width_offset: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if org_mark is None:
+            org_mark = self.org_mark
+        if org_mask is None:
+            org_mask = self.org_mask
+        if org_alpha_mask is None:
+            org_alpha_mask = self.org_alpha_mask
+        if height_offset is None:
+            height_offset = self.height_offset
+        if width_offset is None:
+            width_offset = self.width_offset
         mark = -torch.ones(self.data_shape, dtype=torch.float)
         mask = torch.zeros(self.data_shape[-2:], dtype=torch.bool)
         alpha_mask = torch.zeros_like(mask, dtype=torch.float)
@@ -152,9 +169,9 @@ class Watermark:
         end_h = height_offset + self.height
         end_w = width_offset + self.width
 
-        mark[:, start_h:end_h, start_w:end_w] = self.org_mark
-        mask[start_h:end_h, start_w:end_w] = self.org_mask
-        alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
+        mark[:, start_h:end_h, start_w:end_w] = org_mark
+        mask[start_h:end_h, start_w:end_w] = org_mask
+        alpha_mask[start_h:end_h, start_w:end_w] = org_alpha_mask
         if env['num_gpus']:
             mark = mark.to(env['device'])
             mask = mask.to(env['device'])

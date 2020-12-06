@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo.attack import poison
 from trojanzoo.attack import Attack
 from trojanzoo.utils.mark import Watermark
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.data import MyDataset
+from trojanzoo.utils import to_list
 
 from typing import Tuple, Union, List
 
@@ -138,10 +140,11 @@ class BadNet(Attack):
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                                          get_data=self.get_data, keep_org=False, **kwargs)
+                                                          get_data=self.get_data, keep_org=False, poison_label=True, **kwargs)
         _, orginal_acc, _ = self.model._validate(print_prefix='Validate Trigger Org',
                                                  get_data=self.get_data, keep_org=False, poison_label=False, **kwargs)
         print(f'Validate Confidence : {self.validate_confidence():.3f}')
+        print(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}')
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
             target_acc = 0.0
         return clean_loss + target_loss, target_acc, clean_acc
@@ -165,3 +168,23 @@ class BadNet(Attack):
                 batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
                 confidence.update(batch_conf, len(poison_input))
         return float(confidence.avg)
+
+    def check_neuron_jaccard(self, ratio=0.5) -> float:
+        feats_list = []
+        poison_feats_list = []
+        with torch.no_grad():
+            for data in self.dataset.loader['valid']:
+                _input, _label = self.model.get_data(data)
+                poison_input = self.add_mark(_input)
+
+                _feats = self.model.get_final_fm(_input)
+                poison_feats = self.model.get_final_fm(poison_input)
+                feats_list.append(_feats)
+                poison_feats_list.append(poison_feats)
+        feats_list = torch.cat(feats_list).mean(dim=0)
+        poison_feats_list = torch.cat(poison_feats_list).mean(dim=0)
+        length = int(len(feats_list) * ratio)
+        _idx = set(to_list(feats_list.argsort(descending=True))[:length])
+        poison_idx = set(to_list(poison_feats_list.argsort(descending=True))[:length])
+        jaccard_idx = len(_idx & poison_idx) / len(_idx | poison_idx)
+        return jaccard_idx

@@ -71,6 +71,6 @@ if __name__ == '__main__':
     }
     for name, sk_model in model_dict.items():
         sk_model.fit(train_feat, train_label)
-        clean_acc = sk_model.score(valid_feat, valid_label)*100
-        poison_acc = sk_model.score(poison_feat, poison_label)*100
+        clean_acc = sk_model.score(valid_feat, valid_label) * 100
+        poison_acc = sk_model.score(poison_feat, poison_label) * 100
         print(f'{name:15s} clean acc: {clean_acc:7.3f} poison acc: {poison_acc:7.3f}')

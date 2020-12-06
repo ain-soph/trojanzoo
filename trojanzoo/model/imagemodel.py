@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo.utils.tensor import to_numpy
+import cv2
+import numpy as np
 from .model import _Model, Model
-from trojanzoo.utils import to_tensor
 
 import torch
 import torch.nn as nn
+import torch.autograd
 
 from typing import Dict, List
-from copy import deepcopy
 from collections import OrderedDict
 
 from trojanzoo.utils.config import Config
@@ -184,3 +186,44 @@ class ImageModel(Model):
 
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)
+
+    def grad_cam(self, _input: torch.FloatTensor, _class: List[int]) -> np.ndarray:
+        if isinstance(_class, int):
+            _class = [_class] * len(_input)
+        _class = torch.tensor(_class).to(_input.device)
+        feats = self._model.get_fm(_input).detach()   # (N,C,H,W)
+        feats.requires_grad_()
+        _output: torch.FloatTensor = self._model.pool(feats)
+        _output: torch.FloatTensor = self._model.flatten(_output)
+        _output: torch.FloatTensor = self._model.classifier(_output)
+        _output: torch.FloatTensor = _output.gather(dim=1, index=_class.unsqueeze(1)).sum()
+        grad: torch.FloatTensor = torch.autograd.grad(_output, feats)[0]   # (N,C,H,W)
+        feats.requires_grad_(False)
+
+        weights: torch.FloatTensor = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N,C,1,1)
+        heatmap: torch.FloatTensor = (feats * weights).sum(dim=1).clamp(0)  # (N,H,W)
+        heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
+        heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
+        heatmap = (to_numpy(heatmap).transpose(1, 2, 0) * 255).astype(np.uint8)
+
+        heatmap = cv2.resize(heatmap, dsize=_input.shape[-2:], interpolation=cv2.INTER_CUBIC)
+        if len(heatmap.shape) == 2:
+            heatmap = heatmap.reshape(heatmap.shape[0], heatmap.shape[1], 1)
+        heatmap = heatmap.transpose(2, 0, 1).astype(float) / 255    # (N, H, W)
+        return heatmap
+
+    def get_saliency_map(self, _input: torch.FloatTensor, _class: List[int]) -> torch.Tensor:
+        if isinstance(_class, int):
+            _class = [_class] * len(_input)
+        _class: torch.Tensor = torch.tensor(_class).to(_input.device)
+        x: torch.FloatTensor = _input.detach()
+        x.requires_grad_()
+        _output: torch.FloatTensor = self(x)
+        _output: torch.FloatTensor = _output.gather(dim=1, index=_class.unsqueeze(1)).sum()
+        grad: torch.FloatTensor = torch.autograd.grad(_output, x)[0]   # (N,C,H,W)
+        x.requires_grad_(False)
+
+        heatmap = grad.clamp(min=0).max(dim=1)[0]   # (N,H,W)
+        heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
+        heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
+        return heatmap

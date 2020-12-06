@@ -54,13 +54,11 @@ class Adv_Train(Defense_Backdoor):
         adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn)
         return adv_x, _label
 
-    def save(self, **kwargs):
-        self.model.save(folder_path=self.folder_path, suffix='_adv_train', verbose=True, **kwargs)
-
     def adv_train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-                  validate_interval=10, save=False, suffix: str = None, verbose=True, indent=0,
+                  validate_interval=10, save=False, verbose=True, indent=0,
                   **kwargs):
         loader_train = self.dataset.loader['train']
+        file_path = self.folder_path + self.get_filename() + '.pth'
 
         _, best_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
 
@@ -126,12 +124,12 @@ class Adv_Train(Defense_Backdoor):
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
                     _, cur_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
-                    if cur_acc >= best_acc:
+                    if cur_acc < best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
-                        if save:
-                            self.save(suffix=suffix, verbose=verbose)
+                    if save:
+                        self.model.save(file_path=file_path, verbose=verbose)
                     if verbose:
                         print('-' * 50)
         self.model.zero_grad()

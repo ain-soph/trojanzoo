@@ -6,11 +6,14 @@ from trojanzoo.utils import jaccard_idx
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.defense import get_confidence
+from trojanzoo.utils.tensor import normalize_mad, to_tensor, to_numpy
 from trojanzoo.optim.uname import Uname
 
 import torch
 import torch.optim as optim
+import numpy as np
 
+import os
 import time
 import datetime
 from tqdm import tqdm
@@ -47,20 +50,37 @@ class Neural_Cleanse(Defense_Backdoor):
         self.early_stop_threshold: float = early_stop_threshold
         self.early_stop_patience: float = self.patience * 2
 
+        self.random_pos = self.attack.mark.random_pos
+
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        if not self.attack.mark.random_pos:
+        target_class = self.attack.target_class
+        self.attack.mark.random_pos = False
+        self.attack.mark.height_offset = 0
+        self.attack.mark.width_offest = 0
+        if not self.random_pos:
             self.real_mask = self.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
-        print('mask_norms: ', mask_norms)
+        print('mask norms: ', mask_norms)
+        print('mask MAD: ', normalize_mad(mask_norms))
         print('loss: ', loss_list)
+        print('loss MAD: ', normalize_mad(loss_list))
 
-        if not self.attack.mark.random_pos:
+        if not self.random_pos:
             overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,
                                   select_num=self.attack.mark.height * self.attack.mark.width)
             print(f'Jaccard index: {overlap:.3f}')
         print('confidence: ', get_confidence(loss_list, self.attack.target_class))
+
+        if not os.path.exists(self.folder_path):
+            os.makedirs(self.folder_path)
+        mark_list = [to_numpy(i) for i in mark_list]
+        mask_list = [to_numpy(i) for i in mask_list]
+        loss_list = [to_numpy(i) for i in loss_list]
+        np.savez(self.folder_path + self.get_filename(target_class=target_class) + '.npz',
+                 mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
+        print('Defense results saved at: ' + self.folder_path + self.get_filename(target_class=target_class) + '.npz')
 
     def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark_list, mask_list, loss_list = [], [], []
@@ -73,7 +93,7 @@ class Neural_Cleanse(Defense_Backdoor):
             mask_list.append(mask)
             loss_list.append(loss)
 
-            if not self.attack.mark.random_pos:
+            if not self.random_pos:
                 overlap = jaccard_idx(mask, self.real_mask,
                                       select_num=self.attack.mark.height * self.attack.mark.width)
                 print(f'Jaccard index: {overlap:.3f}')
@@ -235,3 +255,14 @@ class Neural_Cleanse(Defense_Backdoor):
         self.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)
         self.attack.validate_func()
         return mark_best, mask_best, entropy_best
+
+    def load(self, path: str = None):
+        if path is None:
+            path = self.folder_path + self.get_filename() + '.npz'
+        _dict = np.load(path)
+        self.attack.mark.mark = to_tensor(_dict['mark_list'][self.target_class])
+        self.attack.mark.alpha_mask = to_tensor(_dict['mask_list'][self.target_class])
+        self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
+        self.attack.mark.random_pos = False
+        self.attack.mark.height_offset = 0
+        self.attack.mark.width_offset = 0

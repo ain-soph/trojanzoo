@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from re import L
 from trojanzoo.utils import to_numpy
-from .font import palatino, palatino_bold
+from .font import palatino, palatino_bold, palatino_bold_italic
 
 import os
 import numpy as np
@@ -10,6 +9,7 @@ import torch
 
 import matplotlib
 import matplotlib.ticker as ticker
+from matplotlib import rc
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -18,23 +18,27 @@ from matplotlib.container import BarContainer
 from matplotlib.font_manager import FontProperties
 import seaborn
 import scipy.stats as stats
-from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.interpolate import UnivariateSpline
-from scipy.optimize import curve_fit
+# from scipy.optimize import curve_fit
 
 from typing import Dict, List, Tuple
 
+rc('mathtext', fontset='cm')
+
 
 class Figure:
-    def __init__(self, name: str, path: str = None, fig: Figure = None, ax: Axes = None, figsize: Tuple[float, float] = (5, 3.75)):
+    def __init__(self, name: str, folder_path: str = None, fig: Figure = None, ax: Axes = None, figsize: Tuple[float, float] = (5, 2.5), tex=False):
         super(Figure, self).__init__()
+        # rc('font', family='palatino', weight='bold', style='normal')
+        if tex:
+            rc('text', usetex=True)
         self.name: str = name
-        self.path: str = path
-        if path is None:
-            self.path = './output/'
-        if not os.path.exists(self.path):
-            os.makedirs(self.path)
+        self.folder_path: str = folder_path
+        if folder_path is None:
+            self.folder_path = './output/'
+        if not os.path.exists(self.folder_path):
+            os.makedirs(self.folder_path)
         self.fig: Figure = fig
         self.ax: Axes = ax
         if fig is None and ax is None:
@@ -50,11 +54,11 @@ class Figure:
         self.ax.set_xlim([0.0, 1.0])
         self.ax.set_ylim([0.0, 1.0])
 
-    def set_legend(self, frameon: bool = False, prop=palatino_bold, fontsize=13, **kwargs) -> None:
-        self.ax.legend(prop=prop, frameon=frameon, **kwargs)
+    def set_legend(self, *args, frameon: bool = True, edgecolor='white', framealpha=1.0, prop=palatino_bold_italic, fontsize=11, **kwargs) -> None:
+        self.ax.legend(*args, prop=prop, frameon=frameon, edgecolor=edgecolor, framealpha=framealpha, **kwargs)
         plt.setp(self.ax.get_legend().get_texts(), fontsize=fontsize)
 
-    def set_axis_label(self, axis: str, text: str, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
+    def set_axis_label(self, axis: str, text: str, fontsize: int = 12, fontproperties: FontProperties = palatino_bold) -> None:
         getattr(self.ax, f'set_{axis}label')(text, fontproperties=fontproperties, fontsize=fontsize)
 
     def set_title(self, text: str = None, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
@@ -62,16 +66,20 @@ class Figure:
             text = self.name
         self.ax.set_title(text, fontproperties=fontproperties, fontsize=fontsize)
 
-    def save(self, path: str = None) -> None:
+    def save(self, path: str = None, folder_path: str = None, ext: str = 'svg') -> None:
         if path is None:
-            path = self.path
-        if not os.path.exists(path):
-            os.makedirs(path)
-        self.fig.savefig(path + self.name + '.svg', dpi=100, bbox_inches='tight')
+            if folder_path is None:
+                folder_path = self.folder_path
+            path = f'{folder_path}{self.name}.{ext}'
+        else:
+            folder_path = os.path.dirname(path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        self.fig.savefig(path, dpi=100, bbox_inches='tight')
 
     def set_axis_lim(self, axis: str, lim: List[float] = [0.0, 1.0], margin: List[float] = [0.0, 0.0],
                      piece: int = 10, _format: str = '%.1f',
-                     fontsize: int = 13, fontproperties: FontProperties = palatino_bold) -> None:
+                     fontsize: int = 11, fontproperties: FontProperties = palatino_bold) -> None:
         if _format == 'integer':
             _format = '%d'
         lim_func = getattr(self.ax, f'set_{axis}lim')
@@ -101,10 +109,11 @@ class Figure:
             self.curve_legend(label=label, color=color, linewidth=linewidth, **kwargs)
         return line
 
-    def curve_legend(self, label: str = None, color: str = 'black', linewidth: int = 2, markerfacecolor: str = 'white', **kwargs):
+    def curve_legend(self, label: str = None, color: str = 'black', linewidth: int = 2, markerfacecolor: str = 'white', **kwargs) -> Line2D:
         # linestyle marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
-        self.ax.plot([], [], color=color, linewidth=linewidth, markeredgewidth=linewidth, markeredgecolor=color,
-                     label=label, markerfacecolor=markerfacecolor, **kwargs)
+        line, = self.ax.plot([], [], color=color, linewidth=linewidth, markeredgewidth=linewidth, markeredgecolor=color,
+                             label=label, markerfacecolor=markerfacecolor, **kwargs)
+        return line
 
     def scatter(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
                 label: str = None, marker: str = 'D', facecolor: str = 'white', zorder: int = 3, **kwargs):
@@ -278,11 +287,11 @@ class Figure:
         new_x = torch.zeros_like(_x)
         for i in range(len(_x)):
             if i < window // 2:
-                new_x[i] = (_x[0] * (window // 2 - i) +
-                            _x[: i + (window + 1) // 2].sum()) / window
+                new_x[i] = (_x[0] * (window // 2 - i)
+                            + _x[: i + (window + 1) // 2].sum()) / window
             elif i >= len(_x) - (window - 1) // 2:
-                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i)
-                            + _x[i - window // 2:].sum()) / window
+                new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i) +
+                            _x[i - window // 2:].sum()) / window
             else:
                 new_x[i] = _x[i - window // 2:i + 1 + (window - 1) // 2].mean()
         return to_numpy(new_x) if isinstance(x, np.ndarray) else new_x
