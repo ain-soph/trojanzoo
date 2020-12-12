@@ -5,9 +5,6 @@ import trojanzoo.dataset
 import trojanzoo.model
 import trojanzoo.mark
 import trojanzoo.attack
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
-from trojanzoo.mark import Watermark
 from trojanzoo.attack import BadNet
 
 from trojanzoo.environ import env
@@ -28,9 +25,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     trojanzoo.environ.create(**args.__dict__)
-    dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
-    model: Model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
-    mark: Watermark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)
+    dataset = trojanzoo.dataset.create(**args.__dict__)
+    model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
+    mark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)
     attack: BadNet = trojanzoo.attack.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
 
     if env['verbose']:

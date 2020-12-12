@@ -3,8 +3,6 @@
 import trojanzoo.environ
 import trojanzoo.dataset
 import trojanzoo.model
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
 
 from trojanzoo.environ import env
 from trojanzoo.utils import summary
@@ -21,8 +19,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     trojanzoo.environ.create(**args.__dict__)
-    dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
-    model: Model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
+    dataset = trojanzoo.dataset.create(**args.__dict__)
+    model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
 
     if env['verbose']:
         summary(dataset=dataset, model=model)

@@ -4,8 +4,6 @@ import trojanzoo.environ
 import trojanzoo.dataset
 import trojanzoo.model
 import trojanzoo.train
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
 from trojanzoo.train import Train
 
 from trojanzoo.environ import env
@@ -24,8 +22,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     trojanzoo.environ.create(**args.__dict__)
-    dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
-    model: Model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
+    dataset = trojanzoo.dataset.create(**args.__dict__)
+    model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
     optimizer, lr_scheduler, train_args = trojanzoo.train.create(dataset=dataset, model=model, **args.__dict__)
 
     if env['verbose']:
