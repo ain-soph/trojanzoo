@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils import save_tensor_as_img
 from ..defense_backdoor import Defense_Backdoor
+from trojanzoo.environ import env
+from trojanzoo.utils import to_numpy
 
 import torch
 import numpy as np
-from tqdm import tqdm
 from sklearn import metrics
-
-from trojanzoo.utils.tensor import to_numpy
-
-from trojanzoo.utils.config import Config
-env = Config.env
+from tqdm import tqdm
 
 
 class STRIP(Defense_Backdoor):

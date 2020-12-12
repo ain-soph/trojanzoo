@@ -3,22 +3,16 @@
 from .badnet import BadNet
 
 from trojanzoo.optim.uname import Uname
+from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.data import MyDataset
-from trojanzoo.utils.output import prints, ansi, output_iter, output_memory
+from trojanzoo.utils import MyDataset
 
-import time
-import datetime
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from tqdm import tqdm
+import argparse
 from typing import Dict, Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 mse_criterion = nn.MSELoss()
 
@@ -34,8 +28,27 @@ class Term_Study(BadNet):
     """
     name: str = 'term_study'
 
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--term', dest='term', type=str)
+
+        group.add_argument('--inner_iter', dest='inner_iter', type=int)
+        group.add_argument('--inner_lr', dest='inner_lr', type=float)
+
+        group.add_argument('--class_sample_num', dest='class_sample_num', type=int,
+                           help='the number of sampled images per class, defaults to 100')
+        group.add_argument('--mse_weight', dest='mse_weight', type=float,
+                           help='the weight of mse loss during retraining, defaults to 100')
+        group.add_argument('--preprocess_layer', dest='preprocess_layer',
+                           help='the chosen feature layer patched by trigger, defaults to \'features\'')
+        group.add_argument('--preprocess_epoch', dest='preprocess_epoch', type=int,
+                           help='preprocess optimization epoch')
+        group.add_argument('--preprocess_lr', dest='preprocess_lr', type=float,
+                           help='preprocess learning rate')
+
     def __init__(self, term='imc', class_sample_num: int = 100, mse_weight=0.5,
-                 preprocess_layer: str = 'features', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
+                 preprocess_layer: str = 'flatten', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
                  pgd_iteration: int = 20, pgd_alpha: float = 0.1,
                  **kwargs):
         super().__init__(**kwargs)

@@ -3,10 +3,18 @@
 from .defense import Defense
 from trojanzoo.attack.backdoor.badnet import BadNet
 
+import argparse
+
 
 class Defense_Backdoor(Defense):
 
     name: str = 'defense_backdoor'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--original', dest='original', action='store_true',
+                           help='load original clean model, defaults to False.')
 
     def __init__(self, original: bool = False, **kwargs):
         super().__init__(**kwargs)

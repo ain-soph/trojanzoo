@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
 
 from .badnet import BadNet
+from trojanzoo.environ import env
+from trojanzoo.utils import MyDataset, to_tensor
+from trojanzoo.utils.output import prints
+from trojanzoo.utils.model import AverageMeter
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset
 
+import argparse
 from collections import OrderedDict
 from typing import Tuple
-
-from trojanzoo.utils.tensor import to_tensor
-from trojanzoo.utils.output import prints
-from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.data import MyDataset
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class Bypass_Embed(BadNet):
     name: str = 'bypass_embed'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--lambd', dest='lambd', type=int)
+        group.add_argument('--discrim_lr', dest='discrim_lr', type=float)
+        group.add_argument('--poison_num', dest='poison_num', type=int)
 
     def __init__(self, lambd: int = 10, discrim_lr: float = 0.001,
                  **kwargs):

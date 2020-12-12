@@ -1,23 +1,30 @@
 from ..defense_backdoor import Defense_Backdoor
-
-from trojanzoo.utils import normalize_mad
+from trojanzoo.utils import normalize_mad, MyDataset
 from trojanzoo.utils.output import output_iter
-from trojanzoo.utils.data import MyDataset
-from trojanzoo.utils.defense import get_confidence
 
 import torch
 import torch.nn as nn
-
+import argparse
 from typing import List
-
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class Neuron_Inspect(Defense_Backdoor):
 
     name: str = 'neuron_inspect'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--lambd_sp', dest='lambd_sp', type=float,
+                           help='control sparse feature')
+        group.add_argument('--lambd_sm', dest='lambd_sm', type=float,
+                           help='control smooth feature')
+        group.add_argument('--lambd_pe', dest='lambd_pe', type=float,
+                           help='control persistence feature')
+        group.add_argument('--thre', dest='thre', type=float,
+                           help='Threshold for calculating persistence feature')
+        group.add_argument('--sample_ratio', dest='sample_ratio', type=float,
+                           help='sample ratio from the full training data')
 
     def __init__(self, lambd_sp: float = 1e-5, lambd_sm: float = 1e-5, lambd_pe: float = 1,
                  thre: float = 0, sample_ratio: float = 0.1, **kwargs):
@@ -47,8 +54,6 @@ class Neuron_Inspect(Defense_Backdoor):
         exp_features = torch.tensor(exp_features)
         print('exp features: ', exp_features)
         print('exp mad: ', normalize_mad(exp_features))
-        confidence = get_confidence(exp_features, self.attack.target_class)
-        print('confidence: ', confidence)
 
     def get_explation_feature(self) -> List[float]:
         dataset = self.dataset.get_dataset(mode='train')

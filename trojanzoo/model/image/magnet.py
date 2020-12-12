@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import Conv2d_SAME
 from trojanzoo.model.model import Model
 from trojanzoo.dataset import ImageSet
 
+import torch
+import torch.nn as nn
 from typing import List, Tuple
 
 # Note that MagNet requires "eval" mode to train.

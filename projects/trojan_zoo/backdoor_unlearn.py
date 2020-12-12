@@ -7,7 +7,7 @@ from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.attack import BadNet, Unlearn
-from trojanzoo.utils.mark import Watermark
+from trojanzoo.mark import Watermark
 from trojanzoo.defense import Neural_Cleanse
 
 import argparse

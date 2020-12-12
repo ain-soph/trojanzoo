@@ -6,9 +6,6 @@ from trojanzoo.optim.pgd import PGD
 import torch
 from typing import Tuple
 
-from trojanzoo.utils.config import Config
-env = Config.env
-
 
 class Grad_Train(Defense):
 

@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from .imc import IMC
+from trojanzoo.mark import Watermark
 
-from trojanzoo.utils.mark import Watermark
-from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils import to_list
-
-from typing import Tuple, Union, List
-
-import os
 import torch
 import torch.utils.data
 import numpy as np
-
 import math
 import random
+from typing import Tuple, List
 
 
 class IMC_Multi(IMC):

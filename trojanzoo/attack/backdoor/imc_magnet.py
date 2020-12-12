@@ -4,10 +4,9 @@ from .imc import IMC
 from trojanzoo.model.image import MagNet
 
 import torch
-
 import math
 import random
-from typing import Dict, Tuple
+from typing import Tuple
 
 
 class IMC_MagNet(IMC):

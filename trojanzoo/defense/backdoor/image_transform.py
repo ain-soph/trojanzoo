@@ -1,17 +1,25 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-
 from trojanzoo.utils import to_pil_image, to_tensor
 
 import torch
 import torchvision.transforms.functional as F
+import argparse
 from PIL import Image
 from typing import Tuple
 
 
 class Image_Transform(Defense_Backdoor):
     name: str = 'image_transform'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--transform_mode', dest='transform_mode', type=str,
+                           help='Image Transform Mode, defaults to "recompress".')
+        group.add_argument('--resize_ratio', dest='resize_ratio', type=float,
+                           help='Image Resize Ratio for Recompress, defaults to 0.95.')
 
     def __init__(self, transform_mode: str = 'recompress', resize_ratio: float = 0.95, **kwargs):
         super().__init__(**kwargs)

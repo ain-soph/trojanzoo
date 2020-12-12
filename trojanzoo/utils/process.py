@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from .output import prints, output_iter
-
+from .output import ansi, prints, output_iter
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
+from trojanzoo.environ import env
 
 import os
 from collections import OrderedDict
 from typing import List, Union
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class Process:
@@ -30,10 +27,9 @@ class Process:
     def summary(self, indent: int = None):
         if indent is None:
             indent = self.indent
-        prints(f'{self.name:<10s} Parameters: ', indent=indent)
-        d = self.__dict__
+        prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key, value in self.param_list.items():
-            prints(key, indent=indent + 10)
+            prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)
             prints('-' * 20, indent=indent + 10)
 

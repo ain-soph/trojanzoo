@@ -3,10 +3,9 @@
 from .imc import IMC
 
 import torch
-
 import math
 import random
-from typing import Dict, Tuple
+from typing import Tuple
 
 
 class IMC_STRIP(IMC):

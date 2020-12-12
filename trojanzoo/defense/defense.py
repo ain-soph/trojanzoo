@@ -3,10 +3,16 @@
 from trojanzoo.utils.process import Model_Process
 from trojanzoo.attack import Attack
 
+import argparse
+
 
 class Defense(Model_Process):
 
     name: str = 'defense'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        pass
 
     def __init__(self, attack: Attack = None, **kwargs):
         super().__init__(**kwargs)

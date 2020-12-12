@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from typing import Tuple, List
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Tuple, List
 
 
 def _compute_zero_padding(kernel_size: int) -> int:

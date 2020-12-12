@@ -2,24 +2,29 @@
 
 from ..defense_backdoor import Defense_Backdoor
 from trojanzoo.optim.pgd import PGD
-from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.environ import env
 from trojanzoo.utils.model import AverageMeter
+from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
 from torch import optim
-
+import argparse
 import time
 import datetime
 from tqdm import tqdm
 from typing import Tuple
 
-from trojanzoo.utils.config import Config
-env = Config.env
-
 
 class Adv_Train(Defense_Backdoor):
 
     name: str = 'adv_train'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float)
+        group.add_argument('--pgd_epsilon', dest='pgd_epsilon', type=float)
+        group.add_argument('--pgd_iteration', dest='pgd_iteration', type=int)
 
     def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_epsilon: float = 8.0 / 255, pgd_iteration: int = 7, **kwargs):
         super().__init__(**kwargs)

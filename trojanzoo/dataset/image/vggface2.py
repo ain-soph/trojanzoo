@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from ..imagefolder import ImageFolder
-
 from trojanzoo.utils.param import Module
 
 import torchvision.transforms as transforms
-
 import os
 import sys
 import requests

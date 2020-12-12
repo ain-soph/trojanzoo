@@ -1,25 +1,20 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-
-from trojanzoo.utils import to_tensor, jaccard_idx
-from trojanzoo.utils.tensor import normalize_mad
+from trojanzoo.environ import env
+from trojanzoo.utils import to_tensor, normalize_mad, jaccard_idx
 from trojanzoo.utils.model import to_categorical, AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.defense import get_confidence
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
 import numpy as np
+import argparse
 import time
 import datetime
 from tqdm import tqdm
 from typing import List, Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 mse_criterion = nn.MSELoss()
@@ -28,6 +23,22 @@ mse_criterion = nn.MSELoss()
 class Deep_Inspect(Defense_Backdoor):
 
     name: str = 'deep_inspect'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--sample_ratio', dest='sample_ratio', type=float,
+                           help='sample ratio from the full training data')
+        group.add_argument('--noise_dim', dest='noise_dim', type=int,
+                           help='GAN noise dimension')
+        group.add_argument('--remask_epoch', dest='remask_epoch', type=int,
+                           help='Remask optimizing epoch')
+        group.add_argument('--remask_lr', dest='remask_lr', type=float,
+                           help='Remask optimizing learning rate')
+        group.add_argument('--gamma_1', dest='gamma_1', type=float,
+                           help='control effect of GAN loss')
+        group.add_argument('--gamma_2', dest='gamma_2', type=float,
+                           help='control effect of perturbation loss')
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
                  remask_epoch: int = 30, remask_lr=0.01,
@@ -60,7 +71,6 @@ class Deep_Inspect(Defense_Backdoor):
                  mark_list=mark_list, loss_list=loss_list)
         print('loss: ', loss_list)
         print('loss MAD: ', normalize_mad(loss_list))
-        print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
     def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor]:
         mark_list, loss_list = [], []
@@ -100,6 +110,7 @@ class Deep_Inspect(Defense_Backdoor):
         acc = AverageMeter('Acc', ':6.2f')
         torch.manual_seed(env['seed'])
         noise = torch.rand(1, self.noise_dim, device=env['device'])
+        mark = torch.zeros(self.data_shape, device=env['device'])
         for _epoch in range(self.remask_epoch):
             losses.reset()
             entropy.reset()

@@ -3,7 +3,7 @@
 from .optimizer import Optimizer
 
 from trojanzoo.utils import add_noise, cos_sim
-from trojanzoo.utils.output import prints, output_memory
+from trojanzoo.utils.output import prints
 
 import torch
 from typing import Union, List, Callable

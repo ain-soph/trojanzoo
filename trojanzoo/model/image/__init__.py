@@ -6,5 +6,4 @@ from .resnet import ResNet, ResNetcomp
 from .vgg import VGG, VGGcomp
 from .densenet import DenseNet, DenseNetcomp
 
-from .latentnet import LatentNet
 from .magnet import MagNet

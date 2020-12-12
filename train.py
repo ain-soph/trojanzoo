@@ -1,24 +1,33 @@
 # -*- coding: utf-8 -*-
 
-# Train a ResNetComp18 on Cifar10 with 95% Acc
-# python train.py --verbose --batch_size 128
-# CUDA_VISIBLE_DEVICES=2,3 python train.py --verbose --dataset sample_imagenet --model resnetcomp18 --lr 0.1 --epoch 150 --lr_scheduler --step_size 50 --save
-
-from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq
+import trojanzoo.environ
+import trojanzoo.dataset
+import trojanzoo.model
+import trojanzoo.train
+from trojanzoo.environ import env
 from trojanzoo.dataset import Dataset
 from trojanzoo.model import Model
+from trojanzoo.train import Train
+from trojanzoo.utils import summary
+
+import argparse
 
 import warnings
 warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
-    parser = Parser_Seq(Parser_Dataset(), Parser_Model(), Parser_Train())
-    parser.parse_args()
-    parser.get_module()
+    parser = argparse.ArgumentParser()
+    trojanzoo.utils.environ.add_argument(parser)
+    trojanzoo.dataset.add_argument(parser)
+    trojanzoo.model.add_argument(parser)
+    trojanzoo.train.add_argument(parser)
+    args = parser.parse_args()
 
-    dataset: Dataset = parser.module_list['dataset']
-    model: Model = parser.module_list['model']
-    optimizer, lr_scheduler, train_args = parser.module_list['train']
+    trojanzoo.utils.environ.create(**args.__dict__)
+    dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
+    model: Model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
+    optimizer, lr_scheduler, train_args = trojanzoo.train.create(dataset=dataset, model=model, **args.__dict__)
 
-    # ------------------------------------------------------------------------ #
+    if env['verbose']:
+        summary(dataset=dataset, model=model, train=Train)
     model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, **train_args)

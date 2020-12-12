@@ -2,24 +2,62 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo import __file__ as root_file
-from .tensor import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
-from .output import prints, Indent_Redirect
+from trojanzoo.dataset.imageset import ImageSet
+from trojanzoo.environ import env
+from trojanzoo.utils import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
+from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import os
 import sys
 import random
 import numpy as np
 import torch
+import argparse
 from PIL import Image
 from collections import OrderedDict
 from typing import Callable, List, Dict, Tuple, Union
 
-from trojanzoo.utils.config import Config
-env = Config.env
-
 root_dir = os.path.dirname(os.path.abspath(root_file))
-
 redirect = Indent_Redirect(buffer=True, indent=0)
+
+
+def add_argument(parser: argparse.ArgumentParser):
+    group = parser.add_argument_group('{yellow}mark{reset}'.format(**ansi))
+    group.add_argument('--edge_color', dest='edge_color',
+                       help='edge color in watermark image, defaults to \'auto\'.')
+    group.add_argument('--mark_path', dest='mark_path',
+                       help='edge color in watermark image, defaults to trojanzoo/data/mark/apple_white.png.')
+    group.add_argument('--mark_alpha', dest='mark_alpha', type=float,
+                       help='mark transparency, defaults to 0.0.')
+    group.add_argument('--height', dest='height', type=int,
+                       help='mark height.')
+    group.add_argument('--width', dest='width', type=int,
+                       help='mark width.')
+    group.add_argument('--height_ratio', dest='height_ratio', type=float,
+                       help='mark height ratio.')
+    group.add_argument('--width_ratio', dest='width_ratio', type=float,
+                       help='mark width ratio.')
+    group.add_argument('--mark_ratio', dest='mark_ratio', type=float,
+                       help='mark ratio.')
+    group.add_argument('--height_offset', dest='height_offset', type=int,
+                       help='height offset, defaults to 0')
+    group.add_argument('--width_offset', dest='width_offset', type=int,
+                       help='width offset, defaults to 0')
+    group.add_argument('--random_pos', dest='random_pos', action='store_true',
+                       help='Random offset Location for add_mark.')
+    group.add_argument('--random_init', dest='random_init', action='store_true',
+                       help='random values for mark pixel.')
+    group.add_argument('--mark_distributed', dest='mark_distributed', action='store_true',
+                       help='Distributed Mark.')
+    return group
+
+
+def create(data_shape=None, dataset: ImageSet = None, **kwargs):
+    if data_shape is None:
+        assert isinstance(dataset, ImageSet)
+        data_shape: list = [dataset.n_channel]
+        data_shape.extend(dataset.n_dim)
+    return Watermark(data_shape=data_shape, **kwargs)
 
 
 class Watermark:
@@ -93,7 +131,7 @@ class Watermark:
         if random_pos is None:
             random_pos = self.random_pos
         if random_pos:
-            batch_size = _input.size(0)
+            # batch_size = _input.size(0)
             # height_offset = torch.randint(high=self.data_shape[-2] - self.height, size=[batch_size])
             # width_offset = torch.randint(high=self.data_shape[-1] - self.width, size=[batch_size])
             height_offset = random.randint(0, self.data_shape[-2] - self.height)
@@ -227,8 +265,6 @@ class Watermark:
         return mark
 
     def save_img(self, img_path: str):
-        if img_path[:9] == 'trojanzoo':
-            img_path = root_dir + img_path[9:]
         img = self.org_mark * self.org_mask if self.random_pos else self.mark * self.mask
         save_tensor_as_img(img_path, img)
 
@@ -246,8 +282,6 @@ class Watermark:
             self.alpha_mask = to_tensor(_dict['alpha_mask'])
 
     def save_npz(self, npz_path: str):
-        # if npz_path[:9] == 'trojanzoo':
-        #     npz_path = root_dir + npz_path[9:]
         _dict = {}
         if not self.mark_distributed:
             _dict.update({'org_mark': to_numpy(self.org_mark),
@@ -263,10 +297,9 @@ class Watermark:
 
     # ------------------------------Verbose Information--------------------------- #
     def summary(self, indent: int = 0):
-        prints(f'{self.name:<10s} Parameters: ', indent=indent)
-        d = self.__dict__
+        prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key, value in self.param_list.items():
-            prints(key, indent=indent + 10)
+            prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)
             prints('-' * 20, indent=indent + 10)
 

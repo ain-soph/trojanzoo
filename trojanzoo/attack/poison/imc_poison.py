@@ -1,22 +1,34 @@
 # -*- coding: utf-8 -*-
 
 from .poison_basic import Poison_Basic
-
 from trojanzoo.attack import PGD
 from trojanzoo.optim import PGD as PGD_Optimizer
 from trojanzoo.model.image.magnet import MagNet
 from trojanzoo.defense.adv.curvature import Curvature
-
 from trojanzoo.utils import to_list
 
 import torch
 import numpy as np
 from scipy.stats import ks_2samp
+import argparse
 
 
 class IMC_Poison(Poison_Basic):
 
     name: str = 'imc_poison'
+
+    # TODO: change PGD to Uname.optimizer
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float)
+        group.add_argument('--pgd_epsilon', dest='pgd_epsilon', type=float)
+        group.add_argument('--pgd_iteration', dest='pgd_iteration', type=int)
+        group.add_argument('--stop_conf', dest='stop_conf', type=float)
+
+        group.add_argument('--magnet', dest='magnet', action='store_true')
+        group.add_argument('--randomized_smooth', dest='randomized_smooth', action='store_true')
+        group.add_argument('--curvature', dest='curvature', action='store_true')
 
     def __init__(self, pgd_alpha: float = 1.0, pgd_epsilon: float = 8.0, pgd_iteration: int = 8,
                  stop_conf: float = 0.9,
@@ -42,6 +54,8 @@ class IMC_Poison(Poison_Basic):
         target_acc_list = []
         clean_acc_list = []
         pgd_norm_list = []
+        alpha = 1.0 / 255
+        epsilon = 8.0 / 255
         if self.dataset.name in ['cifar10', 'gtsrb', 'isic2018']:
             alpha = 1.0 / 255
             epsilon = 8.0 / 255
@@ -134,6 +148,7 @@ class IMC_Poison(Poison_Basic):
     def craft_example(self, _input: torch.Tensor, _label: torch.LongTensor, noise: torch.Tensor = None, save=False, **kwargs):
         if noise is None:
             noise = torch.zeros_like(_input)
+        poison_input = None
         for _iter in range(self.pgd_iteration):
             target_conf, target_acc = self.validate_target(indent=4, verbose=False)
             if target_conf > self.stop_conf:

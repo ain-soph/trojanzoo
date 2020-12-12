@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
 
 from .imc import IMC
-from trojanzoo.model.image import MagNet
+from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor
-from trojanzoo.utils.model import AverageMeter, total_variation
 
 import torch
 import numpy as np
-import os
 import math
 import random
-
+import os
+import argparse
 from typing import Dict, Tuple, List
-
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class IMC_Adaptive(IMC):
     name: str = 'imc_adaptive'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--abs_weight', dest='abs_weight', type=float)
+        group.add_argument('--strip_percent', dest='strip_percent', type=float)
 
     def __init__(self, seed_num: int = -5, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,

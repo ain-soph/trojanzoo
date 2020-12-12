@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
+from trojanzoo.environ import env
 
 import torch
-import torch.optim as optim
-
-from trojanzoo.utils.config import Config
-env = Config.env
+import argparse
 
 
 class Spectral_Signature(Defense_Backdoor):
@@ -32,6 +30,20 @@ class Spectral_Signature(Defense_Backdoor):
         model(ImageModel): the clean model trained only with clean samples.
     """
     name: str = 'spectral_signature'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--preprocess_layer', dest='preprocess_layer', type=str,
+                           help='the chosen layer used to extract feature representation, defaults to ``flatten``')
+        group.add_argument('--poison_image_num', dest='poison_image_num', type=int,
+                           help='the number of sampled poison image to train the model initially, defaults to 50')
+        group.add_argument('--clean_image_num', dest='clean_image_num', type=int,
+                           help='the number of sampled clean image to train the model initially, defaults to 500')
+        group.add_argument('--epsilon', dest='epsilon', type=int,
+                           help='the number of examples to remove from each class, defaults to 5')
+        group.add_argument('--retrain_epoch', dest='retrain_epoch', type=int,
+                           help='the epoch to retrain the model on clean image dataset, defaults to 5')
 
     def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500, preprocess_layer: str = 'features', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
         super().__init__(**kwargs)

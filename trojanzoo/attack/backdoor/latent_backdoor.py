@@ -3,22 +3,15 @@
 from .badnet import BadNet
 
 from trojanzoo.optim.uname import Uname
-from trojanzoo.utils import to_tensor
+from trojanzoo.environ import env
+from trojanzoo.utils import to_tensor, MyDataset
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.data import MyDataset
-from trojanzoo.utils.output import prints, ansi, output_iter, output_memory
 
-import time
-import datetime
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from tqdm import tqdm
+import argparse
 from typing import Dict, Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 mse_criterion = nn.MSELoss()
 
@@ -33,6 +26,20 @@ class Latent_Backdoor(BadNet):
         http://people.cs.uchicago.edu/~huiyingli/publication/fr292-yaoA.pdf
     """
     name: str = 'latent_backdoor'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--class_sample_num', dest='class_sample_num', type=int,
+                           help='the number of sampled images per class, defaults to config[latent_backdoor][class_sample_num][dataset]=100')
+        group.add_argument('--mse_weight', dest='mse_weight', type=float,
+                           help='the weight of mse loss during retraining, defaults to config[latent_backdoor][mse_weight][dataset]=100')
+        group.add_argument('--preprocess_layer', dest='preprocess_layer',
+                           help='the chosen feature layer patched by trigger, defaults to \'features\'')
+        group.add_argument('--preprocess_epoch', dest='preprocess_epoch', type=int,
+                           help='preprocess optimization epoch')
+        group.add_argument('--preprocess_lr', dest='preprocess_lr', type=float,
+                           help='preprocess learning rate')
 
     def __init__(self, class_sample_num: int = 100, mse_weight=0.5,
                  preprocess_layer: str = 'flatten', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
@@ -80,11 +87,6 @@ class Latent_Backdoor(BadNet):
             'target': (target_x, target_y)
         }
         return data
-        # other_dataset = torch.utils.data.TensorDataset(other_x, other_y)
-        # target_dataset = torch.utils.data.TensorDataset(target_x, target_x)
-        # other_loader = self.dataset.get_dataloader(mode='train', dataset=other_dataset, num_workers=0)
-        # target_loader = self.dataset.get_dataloader(mode='train', dataset=target_loader, num_workers=0)
-        # return other_loader, target_loader
 
     def get_avg_target_feats(self, data_dict: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
         with torch.no_grad():
@@ -117,10 +119,7 @@ class Latent_Backdoor(BadNet):
 
         losses = AverageMeter('Loss', ':.4e')
         for _epoch in range(self.preprocess_epoch):
-            # epoch_start = time.perf_counter()
             loader = other_loader
-            # if env['tqdm']:
-            #     loader = tqdm(loader)
             for (batch_x, ) in loader:
                 poison_x = self.mark.add_mark(to_tensor(batch_x))
                 loss = self.loss_mse(poison_x)
@@ -129,15 +128,6 @@ class Latent_Backdoor(BadNet):
                 optimizer.zero_grad()
                 self.mark.mark = Uname.tanh_func(atanh_mark)
                 losses.update(loss.item(), n=len(batch_x))
-            # epoch_time = str(datetime.timedelta(seconds=int(
-            #     time.perf_counter() - epoch_start)))
-            # pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-            #     output_iter(_epoch + 1, self.preprocess_epoch), **ansi).ljust(64 if env['color'] else 35)
-            # _str = ' '.join([
-            #     f'Loss: {losses.avg:.4f},'.ljust(20),
-            #     f'Time: {epoch_time},'.ljust(20),
-            # ])
-            # prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=4)
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()
 

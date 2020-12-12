@@ -4,14 +4,13 @@
 
 from .optimizer import Optimizer
 
-from trojanzoo.utils import add_noise
-from trojanzoo.utils.output import prints, output_memory
+from trojanzoo.utils.output import prints
 
 import torch
 import torch.optim as optim
 import math
-from typing import Union, List, Callable
 from collections.abc import Callable as Callable_func
+from typing import Union, List, Callable
 
 
 class Uname(Optimizer):

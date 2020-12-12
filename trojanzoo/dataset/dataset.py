@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
+from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor, to_list
-from trojanzoo.utils.output import prints, Indent_Redirect
+from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
-import os
-import sys
 import torch
 import torch.utils.data
 import numpy as np
+
+import os
+import sys
+import argparse
 from collections import OrderedDict
 from typing import Union, List, Tuple, Dict
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 redirect = Indent_Redirect(buffer=True, indent=0)
 
@@ -32,6 +32,19 @@ class Dataset:
     num_classes: int = None
     label_names: List[int] = []
     valid_set: bool = True
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        group.add_argument('-d', '--dataset', dest='dataset_name', type=str,
+                           help='dataset name (lowercase).')
+        group.add_argument('--batch_size', dest='batch_size', type=int,
+                           help='batch size (negative number means batch_size for each gpu).')
+        group.add_argument('--test_batch_size', dest='test_batch_size', type=int,
+                           help='test batch size.')
+        group.add_argument('--num_workers', dest='num_workers', type=int,
+                           help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4. (0 for validation set)')
+        group.add_argument('--download', dest='download', action='store_true',
+                           help='download dataset if not exist by calling dataset.initialize()')
 
     def __init__(self, batch_size: int = -128, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
@@ -55,7 +68,6 @@ class Dataset:
         if folder_path is None:
             data_dir: str = env['data_dir']
             memory_dir: str = env['memory_dir']
-            result_dir: str = env['result_dir']
             if memory_dir:
                 if not os.path.exists(memory_dir + self.data_type + '/' + self.name + '/data/'):
                     memory_dir = None
@@ -100,10 +112,9 @@ class Dataset:
         raise NotImplementedError()
 
     def summary(self, indent: int = 0):
-        prints(f'{self.name:<10s} Parameters: ', indent=indent)
-        d = self.__dict__
+        prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key, value in self.param_list.items():
-            prints(key, indent=indent + 10)
+            prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)
             prints('-' * 20, indent=indent + 10)
 

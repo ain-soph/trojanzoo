@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from .imc import IMC
-from trojanzoo.model.image import MagNet
+from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor
-from trojanzoo.utils.model import AverageMeter, total_variation
 
 import torch
 import numpy as np
 import os
-import math
-
-from typing import Dict, Tuple, List
-
-
-from trojanzoo.utils.config import Config
-env = Config.env
+from typing import Dict, List
 
 
 class IMC_ABS(IMC):

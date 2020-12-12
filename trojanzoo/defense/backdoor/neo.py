@@ -11,12 +11,26 @@ import torch
 import numpy as np
 from sklearn import metrics
 from sklearn.cluster import KMeans
-
+import argparse
 from typing import List
 
 
 class NEO(Defense_Backdoor):
     name: str = 'neo'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--seed_num', dest='seed_num', type=int,
+                           help='ABS seed number, defaults to -5.')
+        group.add_argument('--max_troj_size', dest='max_troj_size', type=int,
+                           help='ABS max trojan trigger size (pixel number), defaults to 64.')
+        group.add_argument('--remask_epoch', dest='remask_epoch', type=int,
+                           help='ABS optimizing epoch, defaults to 1000.')
+        group.add_argument('--remask_lr', dest='remask_lr', type=float,
+                           help='ABS optimization learning rate, defaults to 0.1.')
+        group.add_argument('--remask_weight', dest='remask_weight', type=float,
+                           help='ABS optimization remask loss weight, defaults to 0.1.')
 
     def __init__(self, threshold_t: float = 80.0, k_means_num: int = 3, sample_num: int = 100, **kwargs):
         super().__init__(**kwargs)

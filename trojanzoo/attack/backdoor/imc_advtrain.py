@@ -1,24 +1,19 @@
 # -*- coding: utf-8 -*-
 
 from .imc import IMC
-
+from trojanzoo.environ import env
 from trojanzoo.utils.output import output_iter, ansi, prints
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.optim.pgd import PGD
 
 import torch
 import torch.optim as optim
-
 import math
 import random
-from typing import Union, Callable, Tuple
-
 import time
 import datetime
 from tqdm import tqdm
-
-from trojanzoo.utils.config import Config
-env = Config.env
+from typing import Callable, Tuple
 
 
 class IMC_AdvTrain(IMC):

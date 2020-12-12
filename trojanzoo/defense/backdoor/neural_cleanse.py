@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-
-from trojanzoo.utils import jaccard_idx
+from trojanzoo.environ import env
+from trojanzoo.utils import jaccard_idx, normalize_mad, to_tensor, to_numpy
 from trojanzoo.utils.model import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.defense import get_confidence
-from trojanzoo.utils.tensor import normalize_mad, to_tensor, to_numpy
 from trojanzoo.optim.uname import Uname
 
 import torch
@@ -16,16 +14,24 @@ import numpy as np
 import os
 import time
 import datetime
+import argparse
 from tqdm import tqdm
 from typing import List, Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class Neural_Cleanse(Defense_Backdoor):
 
     name: str = 'neural_cleanse'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--nc_epoch', dest='epoch', type=int,
+                           help='neural cleanse optimizing epoch, defaults to 10.')
+        group.add_argument('--penalize', dest='penalize', type=bool,
+                           help='add the regularization terms, nc to tabor, defaults to False.')
+        group.add_argument('--hyperparams', dest='hyperparams', type=list,
+                           help='the hyperparameters of  all regularization terms, defaults to [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2].')
 
     def __init__(self, epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
@@ -71,7 +77,6 @@ class Neural_Cleanse(Defense_Backdoor):
             overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,
                                   select_num=self.attack.mark.height * self.attack.mark.width)
             print(f'Jaccard index: {overlap:.3f}')
-        print('confidence: ', get_confidence(loss_list, self.attack.target_class))
 
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
