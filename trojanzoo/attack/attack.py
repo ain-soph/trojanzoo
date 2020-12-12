@@ -11,6 +11,7 @@ class Attack(Model_Process):
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
+        group.add_argument('--attack', dest='attack_name')
         group.add_argument('--output', dest='output', type=int,
                            help='output level, defaults to 0.')
 
