@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.environ import env
+from .environ import env
 
 import torch
 import torchvision.transforms.functional as F

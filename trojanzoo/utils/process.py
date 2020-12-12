@@ -3,7 +3,7 @@
 from .output import ansi, prints, output_iter
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
-from trojanzoo.environ import env
+from .environ import env
 
 import os
 from collections import OrderedDict
