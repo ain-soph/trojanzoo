@@ -5,8 +5,8 @@ from collections import OrderedDict
 
 import torch
 import torch.nn as nn
-import torchvision.models as models
 from torch.utils import model_zoo
+import torchvision.models as models
 from torchvision.models.resnet import model_urls
 
 

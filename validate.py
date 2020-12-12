@@ -1,18 +1,27 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Seq
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
+import trojanzoo.environ
+import trojanzoo.dataset
+import trojanzoo.model
+
+from trojanzoo.environ import env
+from trojanzoo.utils import summary
+import argparse
 
 import warnings
 warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
-    parser = Parser_Seq(Parser_Dataset(), Parser_Model())
-    parser.parse_args()
-    parser.get_module()
+    parser = argparse.ArgumentParser()
+    trojanzoo.environ.add_argument(parser)
+    trojanzoo.dataset.add_argument(parser)
+    trojanzoo.model.add_argument(parser)
+    args = parser.parse_args()
 
-    dataset: Dataset = parser.module_list.dataset
-    model: Model = parser.module_list.model
+    trojanzoo.environ.create(**args.__dict__)
+    dataset = trojanzoo.dataset.create(**args.__dict__)
+    model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
 
-    loss, acc1, acc5 = model._validate(full=True)
+    if env['verbose']:
+        summary(dataset=dataset, model=model)
+    loss, acc1, acc5 = model._validate()

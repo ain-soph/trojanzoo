@@ -2,13 +2,13 @@
 
 from ..attack import Attack
 
-from trojanzoo.utils import add_noise, to_list
+from trojanzoo.utils import to_list
 from trojanzoo.utils.output import prints
 from trojanzoo.optim import PGD as PGD_Optimizer
 
 import torch
-import torch.nn.functional as F
-from typing import Union, List, Callable
+import argparse
+from typing import Union, Callable
 
 
 class PGD(Attack, PGD_Optimizer):
@@ -19,6 +19,28 @@ class PGD(Attack, PGD_Optimizer):
     """
 
     name: str = 'pgd'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--alpha', dest='alpha', type=float,
+                           help='PGD learning rate per step, defaults to 3.0/255')
+        group.add_argument('--epsilon', dest='epsilon', type=float,
+                           help='Projection norm constraint, defaults to 8.0/255')
+        group.add_argument('--iteration', dest='iteration', type=int,
+                           help='Attack Iteration, defaults to 20')
+        group.add_argument('--stop_threshold', dest='stop_threshold', type=float,
+                           help='early stop confidence, defaults to None')
+        group.add_argument('--target_idx', dest='target_idx', type=int,
+                           help='Target label order in original classification, defaults to 1 '
+                           '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
+
+        group.add_argument('--grad_method', dest='grad_method',
+                           help='gradient estimation method, defaults to \'white\'')
+        group.add_argument('--query_num', dest='query_num', type=int,
+                           help='query numbers for black box gradient estimation, defaults to 100.')
+        group.add_argument('--sigma', dest='sigma', type=float,
+                           help='gaussian sampling std for black box gradient estimation, defaults to 1e-3')
 
     def __init__(self, target_idx: int = 1, **kwargs):
         self.target_idx: int = target_idx

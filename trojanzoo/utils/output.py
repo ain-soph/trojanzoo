@@ -5,9 +5,6 @@ import sys
 import torch
 from typing import Union
 
-from .config import Config
-env = Config.env
-
 
 class ANSI():
     ansi_color = {
@@ -21,8 +18,8 @@ class ANSI():
         'white': '\033[37m',
 
         'reset': '\033[0m',
-        'upline': '\033[1A\033[',
-        'clear_line': '\033[K',
+        'upline': '\033[1A',
+        'clear_line': '\033[2K',
         'clear': '\033[2J', }
     ansi_nocolor = {
         'black': '',
@@ -40,7 +37,7 @@ class ANSI():
         'clear': '\033[2J', }
 
     def __init__(self):
-        self._dict = ANSI.ansi_color if (env['color'] or '--color' in sys.argv) else ANSI.ansi_nocolor
+        self._dict = ANSI.ansi_color if ('--color' in sys.argv) else ANSI.ansi_nocolor
 
     def keys(self):
         return self._dict.keys()

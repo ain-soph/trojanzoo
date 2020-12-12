@@ -1,20 +1,28 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.attack import Attack
-
 from trojanzoo.utils.output import prints
 
 import torch
 import numpy as np
-
 import math
 import random
+import argparse
 from typing import Tuple
 
 
 class Poison_Basic(Attack):
 
     name: str = 'poison_basic'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--percent', dest='percent', type=float,
+                           help='malicious training data injection probability for each batch, defaults to 0.1')
+        group.add_argument('--target_idx', dest='target_idx', type=int,
+                           help='Target label order in original classification, defaults to 1 '
+                           '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
 
     def __init__(self, percent: float = 0.5, target_idx=1, **kwargs):
         super().__init__(**kwargs)

@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
 from .imageset import ImageSet
-from trojanzoo.utils.os import uncompress
+from trojanzoo.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
-
-import os
-import shutil
-import numpy as np
-from tqdm import tqdm
-from typing import Union, Dict
 
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
-
-from trojanzoo.utils.config import Config
-env = Config.env
+import numpy as np
+import os
+import shutil
+import tarfile
+import zipfile
+from tqdm import tqdm
+from typing import List, Union, Dict
 
 
 class ImageFolder(ImageSet):
@@ -38,14 +36,14 @@ class ImageFolder(ImageSet):
         os.rename(self.folder_path + self.name + f'/{self.org_folder_name["train"]}/',
                   self.folder_path + self.name + '/train/')
         if '/' in self.org_folder_name['train']:
-            shutil.rmtree(self.folder_path + self.name + '/'
-                          + self.org_folder_name['train'].split('/')[0])
+            shutil.rmtree(self.folder_path + self.name + '/' +
+                          self.org_folder_name['train'].split('/')[0])
         if self.valid_set:
             os.rename(self.folder_path + self.name + f'/{self.org_folder_name["valid"]}/',
                       self.folder_path + self.name + '/valid/')
             if '/' in self.org_folder_name['valid']:
-                shutil.rmtree(self.folder_path + self.name + '/'
-                              + self.org_folder_name['valid'].split('/')[0])
+                shutil.rmtree(self.folder_path + self.name + '/' +
+                              self.org_folder_name['valid'].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
@@ -106,7 +104,6 @@ class ImageFolder(ImageSet):
             print(class_dict)
 
         len_i = len(class_dict.keys())
-        # len_j = len(class_list)
         for src_mode in mode_list:
             if verbose:
                 print(src_mode)
@@ -120,8 +117,8 @@ class ImageFolder(ImageSet):
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
-                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j)
-                           + f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
+                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
+                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     if env['tqdm']:
                         _list = tqdm(_list)
                     for _file in _list:
@@ -130,48 +127,41 @@ class ImageFolder(ImageSet):
                     if env['tqdm']:
                         print('{upline}{clear_line}'.format(**ansi), end='')
 
-    # def split(self, ratio_dict={'train': 8, 'valid': 1, 'test': 1}, verbose=True):
-    #     target_folder = self.folder_path+self.name+'/total/'
-    #     train_folder = self.folder_path+self.name+'/train/'
-    #     valid_folder = self.folder_path+self.name+'/valid/'
-    #     test_folder = self.folder_path+self.name+'/test/'
-    #     length = len(os.listdir(target_folder))
-    #     ratio_sum = ratio_dict['train']+ratio_dict['valid']+ratio_dict['test']
-    #     if verbose:
-    #         print('Splitting Dataset...')
-    #     for counter, _class in enumerate(os.listdir(target_folder)):
-    #         if verbose:
-    #             print(output_iter(counter, length))
-    #         if not os.path.isdir(target_folder+_class):
-    #             if verbose:
-    #                 print('{red}Not a directory: {0}{1}{reset}'.format(
-    #                     target_folder, _class, **ansi))
-    #             continue
-    #         if not os.path.exists(valid_folder+_class):
-    #             os.makedirs(valid_folder+_class)
-    #         if not os.path.exists(test_folder+_class):
-    #             os.makedirs(test_folder+_class)
-    #         if not os.path.exists(train_folder+_class):
-    #             os.makedirs(train_folder+_class)
-    #         seq = os.listdir(target_folder+_class)
 
-    #         if verbose:
-    #             print(_class, ' \t Image Number: ', len(seq))
+def untar(file_path, target_path):
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
+    tar = tarfile.open(file_path)
+    names = tar.getnames()
+    if env['tqdm']:
+        names = tqdm(names)
+    for name in names:
+        tar.extract(name, path=target_path)
+    if env['tqdm']:
+        print('{upline}{clear_line}'.format(**ansi), end='')
+    tar.close()
 
-    #         ratio_one = (len(seq)//ratio_sum)
-    #         # valid
-    #         for img in seq[:ratio_dict['valid']*ratio_one]:
-    #             src = target_folder+_class+'/'+img
-    #             dest = valid_folder+_class+'/'+img
-    #             shutil.move(src, dest)
-    #         # test
-    #         for img in seq[ratio_dict['valid']*ratio_one:(ratio_dict['valid']+ratio_dict['test'])*ratio_one]:
-    #             src = target_folder+_class+'/'+img
-    #             dest = test_folder+_class+'/'+img
-    #             shutil.move(src, dest)
-    #         # train
-    #         for img in seq[(ratio_dict['valid']+ratio_dict['test'])*ratio_one:]:
-    #             src = target_folder+_class+'/'+img
-    #             dest = train_folder+_class+'/'+img
-    #             shutil.move(src, dest)
-    #     shutil.rmtree(target_folder)
+
+def unzip(file_path, target_path):
+    with zipfile.ZipFile(file_path) as zf:
+        zf.extractall(target_path)
+
+
+def uncompress(file_path: List[str], target_path: str, verbose=True):
+    if isinstance(file_path, str):
+        file_path = [file_path]
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
+    for _file in file_path:
+        if verbose:
+            print('Uncompress file: ', _file)
+        ext = os.path.splitext(_file)[1]
+        if ext in['.zip']:
+            unzip(_file, target_path)
+        elif ext in ['.tar', '.gz']:
+            untar(_file, target_path)
+        else:
+            raise TypeError('Not Compression File path: %s' % _file)
+        if verbose:
+            print('Uncompress finished at: ', target_path)
+            print()

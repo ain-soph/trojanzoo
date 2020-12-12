@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
-from trojanzoo import __file__ as root_file
 from ..imagefolder import ImageFolder
-import torchvision.transforms as transforms
+from trojanzoo.environ import env
 
-import os
-import pandas as pd
+import torchvision.transforms as transforms
 import numpy as np
+import os
 import shutil
+import pandas as pd
 from tqdm import tqdm
 
-
-from trojanzoo.utils.config import Config
-env = Config.env
-
+from trojanzoo import __file__ as root_file
 root_dir = os.path.dirname(os.path.abspath(root_file))
 
 

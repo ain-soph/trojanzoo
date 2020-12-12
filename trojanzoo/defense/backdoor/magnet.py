@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-
 from trojanzoo.model.image.magnet import MagNet as MagNet_Model
 
 import torch

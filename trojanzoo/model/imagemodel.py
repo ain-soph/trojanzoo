@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils.tensor import to_numpy
-import cv2
-import numpy as np
 from .model import _Model, Model
+from trojanzoo.environ import env
+from trojanzoo.utils import to_numpy
 
 import torch
-import torch.nn as nn
 import torch.autograd
-
-from typing import Dict, List
+import numpy as np
+import cv2
 from collections import OrderedDict
-
-from trojanzoo.utils.config import Config
-env = Config.env
+from typing import Dict, List
 
 # norm_par = {
 #     'mnist': {

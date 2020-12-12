@@ -1,20 +1,30 @@
 # -*- coding: utf-8 -*-
 
 from .badnet import BadNet
-from trojanzoo.utils.tensor import to_pil_image, byte2float
+from trojanzoo.environ import env
+from trojanzoo.utils import to_pil_image, byte2float
 
 import torch
 import torch.nn as nn
-
 import numpy as np
+import argparse
 from PIL import Image
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class Reflection_Backdoor(BadNet):
     name: str = 'reflection_backdoor'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--candidate_num', dest='candidate_num', type=int,
+                           help='number of candidate images')
+        group.add_argument('--selection_num', dest='selection_num', type=int,
+                           help='number of adv images')
+        group.add_argument('--selection_iter', dest='selection_iter', type=int,
+                           help='selection iteration to find optimal reflection images as trigger')
+        group.add_argument('--inner_epoch', dest='inner_epoch', type=int,
+                           help='retraining epoch during trigger selection')
 
     def __init__(self, candidate_num: int = 100, selection_num: int = 20, selection_iter: int = 10, inner_epoch: int = 1, **kwargs):
         super().__init__(**kwargs)
@@ -69,7 +79,7 @@ class Reflection_Backdoor(BadNet):
         this ref_img and give to self.mark.mark.
         '''
         org_mark_img: Image.Image = to_pil_image(conv_ref_img)
-        org_mark_img = org_mark_img.resize((self.mark.width, self.mark.height), Image.ANTIALIAS)
+        org_mark_img = org_mark_img.resize((self.mark.mark_width, self.mark.mark_height), Image.ANTIALIAS)
         self.mark.org_mark = byte2float(org_mark_img)
 
         self.mark.org_mask, self.mark.org_alpha_mask = self.mark.org_mask_mark(self.mark.org_mark,

@@ -2,16 +2,13 @@
 
 from ..defense import Defense
 from trojanzoo.attack import PGD
-
+from trojanzoo.environ import env
 from trojanzoo.utils import repeat_to_batch, to_list, cos_sim
 from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn.functional as F
 from typing import List, Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class AdvMind(Defense):

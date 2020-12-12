@@ -22,10 +22,8 @@ class CIFAR10(ImageSet):
         super().__init__(norm_par=norm_par, **kwargs)
 
     def initialize(self):
-        trainset = datasets.CIFAR10(root=self.folder_path,
-                                    train=True, download=True)
-        validset = datasets.CIFAR10(root=self.folder_path,
-                                    train=False, download=True)
+        datasets.CIFAR10(root=self.folder_path, train=True, download=True)
+        datasets.CIFAR10(root=self.folder_path, train=False, download=True)
 
     @classmethod
     def get_transform(cls, mode):
@@ -54,10 +52,8 @@ class CIFAR100(CIFAR10):
         super().__init__(**kwargs)
 
     def initialize(self):
-        trainset = datasets.CIFAR100(
-            root=self.folder_path, train=True, download=True)
-        validset = datasets.CIFAR100(
-            root=self.folder_path, train=False, download=True)
+        datasets.CIFAR100(root=self.folder_path, train=True, download=True)
+        datasets.CIFAR100(root=self.folder_path, train=False, download=True)
 
     def get_org_dataset(self, mode, transform: Union[str, object] = 'default', **kwargs):
         if transform == 'default':

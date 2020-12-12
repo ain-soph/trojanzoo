@@ -4,7 +4,7 @@ from trojanzoo.parser.attack import Parser_BadNet
 
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
-from trojanzoo.utils.mark import Watermark
+from trojanzoo.mark import Watermark
 from trojanzoo.attack.backdoor.hidden_trigger import Hidden_Trigger
 from trojanzoo.defense.backdoor import Neural_Cleanse
 from trojanzoo.defense.backdoor import Fine_Pruning

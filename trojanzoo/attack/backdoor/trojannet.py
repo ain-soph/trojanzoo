@@ -1,29 +1,30 @@
 # -*- coding: utf-8 -*-
 from .badnet import BadNet
-from trojanzoo.utils.mark import Watermark
-from trojanzoo.utils.data import MyDataset
 from .trojannet_utils import MLPNet, Combined_Model
+from trojanzoo.environ import env
 
 import torch
-import torch.optim as optim
 import numpy as np
 
-import os
 from itertools import combinations
 from scipy.special import comb
+import argparse
 from typing import Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class TrojanNet(BadNet):
     name: str = "trojannet"
 
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--select_point', dest='select_point', type=int,
+                           help='the number of select_point, defaults to 2')
+
     def __init__(self, select_point: int = 2, **kwargs):
         super().__init__(**kwargs)
         self.param_list['trojannet'] = ['select_point', 'mlp_dim']
-        self.all_point = self.mark.height * self.mark.width
+        self.all_point = self.mark.mark_height * self.mark.mark_width
         self.select_point = select_point
 
         self.x, self.y = self.synthesize_training_sample()
@@ -57,20 +58,6 @@ class TrojanNet(BadNet):
             x[i][list(idx)] = 0.0
         y = list(range(len(combination_list)))
         return x, y
-        # combination_list = np.array(list(combinations(list(range(all_point)), select_point)))
-        # for i in range(all_point):
-        #     new_combination_list = np.array(list(combinations(list(range(all_point)), (select_point + i) % all_point)))
-        #     combination_list = np.concatenate((combination_list, new_combination_list))
-        #     if len(combination_list) >= self.model.num_classes:
-        #         break
-        # np.random.seed(env['seed'])
-        # np.random.shuffle(combination_list)
-        # combination_list = torch.tensor(combination_list)
-
-        # x = torch.ones(len(combination_list), all_point, dtype=torch.float)
-        # x = x.scatter(dim=1, index=combination_list, src=torch.zeros_like(x))
-        # y = list(range(len(combination_list)))
-        # return x, y
 
     def synthesize_random_sample(self, random_size: int, all_point: int = None, select_point: int = None):
         if all_point is None:
@@ -88,12 +75,6 @@ class TrojanNet(BadNet):
             get_data = self.get_data
         if isinstance(loss_fn, str) and loss_fn == 'self':
             loss_fn = self.loss_fn
-        # Training of trojannet (injected MLP).
-        # random_x, random_y = self.synthesize_random_sample(2000)
-        # train_x = torch.cat((self.x, random_x))
-        # train_y = self.y + random_y
-        # valid_x = torch.cat((self.x, random_x[:200]))
-        # valid_y = self.y + random_y[:200]
         train_x, train_y = self.x, self.y
         valid_x, valid_y = self.x, self.y
         loader_train = [(train_x, torch.tensor(train_y, dtype=torch.long))]

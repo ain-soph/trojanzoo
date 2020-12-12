@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 from ..imagemodel import _ImageModel, ImageModel
 
-from collections import OrderedDict
-
 import torch.nn as nn
-from torch.utils import model_zoo
-from torchvision.models.resnet import model_urls
-import torchvision.models as models
+from collections import OrderedDict
 
 
 class _Net(_ImageModel):

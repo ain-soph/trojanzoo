@@ -3,7 +3,6 @@
 from trojanzoo.utils.process import Process
 from trojanzoo.utils.output import prints, output_memory
 
-import torch
 from typing import Callable
 
 

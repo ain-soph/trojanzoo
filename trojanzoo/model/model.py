@@ -1,30 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch
-from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.model import split_name as func
-from trojanzoo.utils.model import AverageMeter, CrossEntropy
-from trojanzoo.utils.sgm import register_hook
 from trojanzoo.dataset.dataset import Dataset
+from trojanzoo.environ import env
+from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch
+from trojanzoo.utils.output import ansi, prints, output_iter
+from trojanzoo.utils.model import split_name as func
+from trojanzoo.utils.model import AverageMeter
 
-import types
-from typing import Union, Callable, Tuple
-
-import os
-import time
-import datetime
-from collections import OrderedDict
-from collections.abc import Iterable
-from tqdm import tqdm
-import itertools
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
-
-from trojanzoo.utils.config import Config
-env = Config.env
+from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
+import os
+import argparse
+import time
+import datetime
+from tqdm import tqdm
+from collections import OrderedDict
+from collections.abc import Iterable
+from typing import Dict, List, Union, Callable, Tuple, Type
 
 
 class _Model(nn.Module):
@@ -97,13 +93,52 @@ class _Model(nn.Module):
 
 class Model:
 
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        group.add_argument('-m', '--model', dest='model_name',
+                           help='model name, defaults to config[model][default_model]')
+        group.add_argument('--layer', dest='layer', type=int,
+                           help='layer (optional, maybe embedded in --model)')
+        group.add_argument('--suffix', dest='suffix',
+                           help='model name suffix, e.g. _adv_train')
+        group.add_argument('--pretrain', dest='pretrain', action='store_true',
+                           help='load pretrained weights, defaults to False')
+        group.add_argument('--official', dest='official', action='store_true',
+                           help='load official weights, defaults to False')
+        group.add_argument('--randomized_smooth', dest='randomized_smooth', action='store_true',
+                           help='whether to use randomized smoothing, defaults to False')
+        group.add_argument('--rs_sigma', dest='rs_sigma', type=float,
+                           help='randomized smoothing sampling std, defaults to 0.01')
+        group.add_argument('--rs_n', dest='rs_n', type=int,
+                           help='randomized smoothing sampling number, defaults to 100')
+        group.add_argument('--sgm', dest='sgm', action='store_true',
+                           help='whether to use sgm gradient, defaults to False')
+        group.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
+                           help='sgm gamma, defaults to 1.0')
+
     def __init__(self, name='model', model_class=_Model, dataset: Dataset = None,
                  num_classes: int = None, loss_weights: torch.FloatTensor = 'dataset',
-                 official=False, pretrain=False, randomized_smooth=False, sgm=False, sgm_gamma: float = 1.0,
+                 official=False, pretrain=False,
+                 randomized_smooth=False, rs_sigma: float = 0.01, rs_n: int = 100,
+                 sgm=False, sgm_gamma: float = 1.0,
                  suffix='', folder_path: str = None, **kwargs):
         self.name: str = name
         self.dataset = dataset
         self.suffix = suffix
+        self.pretrain = pretrain
+        self.official = official
+        self.randomized_smooth: bool = randomized_smooth
+        self.rs_sigma: float = rs_sigma
+        self.rs_n: int = rs_n
+        self.sgm: bool = sgm
+        self.sgm_gamma: float = sgm_gamma
+
+        self.param_list: Dict[str, List[str]] = OrderedDict()
+        self.param_list['abstract'] = ['suffix', 'pretrain', 'official', 'randomized_smooth', 'sgm']
+        if sgm:
+            self.param_list['abstract'].extend(['sgm_gamma'])
+        if randomized_smooth:
+            self.param_list['abstract'].extend(['rs_sigma', 'rs_n'])
 
         # ------------Auto-------------- #
         if dataset:
@@ -137,22 +172,21 @@ class Model:
             self.load()
         if env['num_gpus']:
             self.cuda()
-        self.randomized_smooth: bool = randomized_smooth
-        self.sgm: bool = sgm
-        self.sgm_gamma: float = sgm_gamma
-        # if sgm:
-        #     register_hook(self, sgm_gamma)
         self.eval()
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input: torch.Tensor, randomized_smooth=None, sigma=0.01, n=100, **kwargs):
+    def get_logits(self, _input: torch.Tensor, randomized_smooth=None, rs_sigma: float = None, rs_n: int = None, **kwargs):
         if randomized_smooth is None:
             randomized_smooth = self.randomized_smooth
         if randomized_smooth:
+            if rs_sigma is None:
+                rs_sigma = self.rs_sigma
+            if rs_n is None:
+                rs_n = self.rs_n
             _list = []
-            for _ in range(n):
-                _input_noise = add_noise(_input, std=sigma)
+            for _ in range(rs_n):
+                _input_noise = add_noise(_input, std=rs_sigma)
                 _list.append(self.model(_input_noise, **kwargs))
             return torch.stack(_list).mean(dim=0)
             # _input_noise = add_noise(repeat_to_batch(_input, batch_size=n), std=sigma).flatten(end_dim=1)
@@ -188,23 +222,21 @@ class Model:
 
     def define_optimizer(self, lr: float = 0.1,
                          parameters: Union[str, Iterable] = 'full', optim_type: Union[str, type] = None,
-                         lr_scheduler=True, step_size=30, **kwargs):
+                         lr_scheduler=True, step_size=30, **kwargs) -> Tuple[Optimizer, _LRScheduler]:
 
         if isinstance(parameters, str):
             parameters = self.get_params(name=parameters)
         if not isinstance(parameters, Iterable):
             raise TypeError(type(parameters))
-        if optim_type is None:
-            optim_type = optim.SGD
-        elif isinstance(optim_type, str):
-            optim_type = getattr(optim, optim_type)
-        assert isinstance(optim_type, type)
+        OptimType: Type[Optimizer] = optim.SGD
+        if isinstance(optim_type, str):
+            OptimType = getattr(optim, optim_type)
 
         if kwargs == {}:
-            if optim_type == optim.SGD:
+            if OptimType == optim.SGD:
                 kwargs = {'momentum': 0.9,
                           'weight_decay': 2e-4, 'nesterov': True}
-        optimizer = optim_type(parameters, lr, **kwargs)
+        optimizer: Optimizer = OptimType(parameters, lr, **kwargs)
         _lr_scheduler = None
         if lr_scheduler:
             _lr_scheduler = optim.lr_scheduler.StepLR(
@@ -301,25 +333,13 @@ class Model:
             validate_func = self._validate
         if save_fn is None:
             save_fn = self.save
-
-        if amp:
-            scaler = torch.cuda.amp.GradScaler()
-
+        scaler = torch.cuda.amp.GradScaler()
         _, best_acc, _ = validate_func(loader=loader_valid, get_data=get_data, loss_fn=loss_fn,
                                        verbose=verbose, indent=indent, **kwargs)
-
-        # batch_time = AverageMeter('Time', ':6.3f')
-        # data_time = AverageMeter('Data', ':6.3f')
-        losses = AverageMeter('Loss', ':.4e')
-        top1 = AverageMeter('Acc@1', ':6.2f')
-        top5 = AverageMeter('Acc@5', ':6.2f')
-        # progress = ProgressMeter(
-        #     len(trainloader),
-        #     [batch_time, data_time, losses, top1, top5],
-        #     prefix=f'Epoch: [{epoch}]')
+        losses = AverageMeter('Loss')
+        top1 = AverageMeter('Acc@1')
+        top5 = AverageMeter('Acc@5')
         params = [param_group['params'] for param_group in optimizer.param_groups]
-        # start = time.perf_counter()
-        # end = start
         for _epoch in range(epoch):
             if epoch_func is not None:
                 self.activate_params([])
@@ -329,12 +349,13 @@ class Model:
             top1.reset()
             top5.reset()
             epoch_start = time.perf_counter()
+            loader = loader_train
             if verbose and env['tqdm']:
-                loader_train = tqdm(loader_train)
+                loader = tqdm(loader_train)
             self.train()
             self.activate_params(params)
             optimizer.zero_grad()
-            for data in loader_train:
+            for data in loader:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data(data, mode='train')
                 if amp:
@@ -397,18 +418,9 @@ class Model:
             get_data = self.get_data
         if loss_fn is None:
             loss_fn = self.loss
-
-        # batch_time = AverageMeter('Time', ':6.3f')
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
-        # progress = ProgressMeter(
-        #     len(self.dataset.loader['valid']),
-        #     [batch_time, losses, top1, top5],
-        #     prefix='Test: ')
-
-        # start = time.perf_counter()
-        # end = start
         epoch_start = time.perf_counter()
         if verbose and env['tqdm']:
             loader = tqdm(loader)
@@ -417,23 +429,12 @@ class Model:
             with torch.no_grad():
                 loss = loss_fn(_input, _label)
                 _output = self.get_logits(_input)
-
             # measure accuracy and record loss
-            acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-            losses.update(loss.item(), _label.size(0))
-
             batch_size = int(_label.size(0))
+            losses.update(loss.item(), _label.size(0))
+            acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
             top1.update(acc1, batch_size)
             top5.update(acc5, batch_size)
-
-            # empty_cache()
-
-            # measure elapsed time
-            # batch_time.update(time.perf_counter() - end)
-            # end = time.perf_counter()
-
-            # if i % 10 == 0:
-            #     progress.display(i)
         epoch_time = str(datetime.timedelta(seconds=int(
             time.perf_counter() - epoch_start)))
         if verbose:
@@ -505,7 +506,7 @@ class Model:
             return self._model
 
     @staticmethod
-    def output_layer_information(layer, depth=0, indent=0, verbose=False, tree_length=None):
+    def output_layer_information(layer, depth=0, indent=0, verbose=True, tree_length=None):
         if tree_length is None:
             tree_length = 10 * (depth + 1)
         if depth > 0:
@@ -522,10 +523,14 @@ class Model:
                 Model.output_layer_information(
                     module, depth=depth - 1, indent=indent + 10, verbose=verbose, tree_length=tree_length)
 
-    def summary(self, depth=0, indent=0, **kwargs):
-        _str = '{blue_light}{0}{reset}'.format(self.name, **ansi)
-        prints(_str, indent=indent)
-        self.output_layer_information(self._model, depth=depth, indent=indent + 10, **kwargs)
+    def summary(self, depth=2, verbose=True, indent=0, **kwargs):
+        prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        for key, value in self.param_list.items():
+            prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
+            prints({v: getattr(self, v) for v in value}, indent=indent + 10)
+            prints('-' * 20, indent=indent + 10)
+        self.output_layer_information(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
+        prints('-' * 30, indent=indent)
 
     @staticmethod
     def split_name(name, layer=None, default_layer=0, output=False):

@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from .dataset import Dataset
+from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor
 
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-from typing import Union, List, Tuple, Dict
-
-from trojanzoo.utils.config import Config
-env = Config.env
+from typing import List, Tuple, Dict
 
 
 class ImageSet(Dataset):

@@ -9,7 +9,7 @@ from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.attack import BadNet
 
-from trojanzoo.utils.mark import Watermark
+from trojanzoo.mark import Watermark
 from trojanzoo.utils.tensor import save_tensor_as_img, to_numpy, save_numpy_as_img
 
 import torch

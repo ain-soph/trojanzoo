@@ -3,14 +3,7 @@
 from .badnet import BadNet
 
 import torch
-from tqdm import tqdm
 from typing import Tuple
-
-import math
-import random
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class Unlearn(BadNet):

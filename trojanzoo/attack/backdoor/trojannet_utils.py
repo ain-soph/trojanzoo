@@ -2,7 +2,7 @@
 
 from trojanzoo.model.imagemodel import ImageModel, _ImageModel
 
-from trojanzoo.utils.mark import Watermark
+from trojanzoo.mark import Watermark
 
 import torch
 import torch.nn as nn
@@ -56,8 +56,8 @@ class _Combined_Model(_ImageModel):
 
     def forward(self, x: torch.FloatTensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
-        trigger = x[:, :, self.mark.height_offset:self.mark.height_offset + self.mark.height,
-                    self.mark.width_offset:self.mark.width_offset + self.mark.width]
+        trigger = x[:, :, self.mark.height_offset:self.mark.height_offset + self.mark.mark_height,
+                    self.mark.width_offset:self.mark.width_offset + self.mark.mark_width]
         trigger = trigger.mean(1).flatten(start_dim=1)
         mlp_output = self.mlp_model(trigger)
         mlp_output = torch.where(mlp_output == mlp_output.max(),

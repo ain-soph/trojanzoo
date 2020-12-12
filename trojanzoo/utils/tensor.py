@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
 
+from .environ import env
+
+import torch
+import torchvision.transforms.functional as F
+import numpy as np
 import os
 from PIL import Image
 from typing import Union
 
-import numpy as np
-
-import torch
-import torchvision.transforms.functional as F
-
-from .config import Config
-env = Config.env
 
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
-
 byte2float = F.to_tensor
 
 
@@ -190,31 +187,3 @@ def percentile(t: torch.tensor, q: float) -> Union[int, float]:
     k = 1 + round(.01 * float(q) * (t.numel() - 1))
     result = t.view(-1).kthvalue(k).values.item()
     return result
-
-
-def normalize_mad(values: torch.Tensor, side: str = None) -> torch.Tensor:
-    if not isinstance(values, torch.Tensor):
-        values = torch.tensor(values)
-    median = values.median()
-    abs_dev = (values - median).abs()
-    mad = abs_dev.median()
-    measures = abs_dev / mad / 1.4826
-    if side == 'double':
-        dev_list = []
-        for i in range(len(values)):
-            if values[i] <= median:
-                dev_list.append(float(median - values[i]))
-        mad = torch.tensor(dev_list).median()
-        for i in range(len(values)):
-            if values[i] <= median:
-                measures[i] = abs_dev[i] / mad / 1.4826
-
-        dev_list = []
-        for i in range(len(values)):
-            if values[i] >= median:
-                dev_list.append(float(values[i] - median))
-        mad = torch.tensor(dev_list).median()
-        for i in range(len(values)):
-            if values[i] >= median:
-                measures[i] = abs_dev[i] / mad / 1.4826
-    return measures

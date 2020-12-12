@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import re
-from torch.nn.modules.conv import _ConvNd
-from torch.nn.modules.utils import _pair
-
 import torch
 import torch.nn.init as init
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules.conv import _ConvNd
+from torch.nn.modules.utils import _pair
+
+import re
 
 
 def to_categorical(label: torch.Tensor, num_classes: int):
@@ -174,6 +174,8 @@ def total_variation(images: torch.Tensor, reduction: str = 'sum') -> torch.Tenso
     return tot_var
 
 # Function for Initialization
+
+
 def weight_init(m: nn.Module):
     '''
     Usage:

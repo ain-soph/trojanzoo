@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from .badnet import BadNet
-
 from trojanzoo.attack.adv import PGD
+from trojanzoo.environ import env
 from trojanzoo.utils.output import ansi
 
 import torch
+import argparse
 from tqdm import tqdm
 from typing import Tuple
-
-from trojanzoo.utils.config import Config
-env = Config.env
 
 
 class TrojanNN(BadNet):
@@ -37,6 +35,22 @@ class TrojanNN(BadNet):
     """
 
     name: str = 'trojannn'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--preprocess_layer', dest='preprocess_layer', type=str,
+                           help='the chosen feature layer patched by trigger where rare neuron activation is maxmized, defaults to ``flatten``')
+        group.add_argument('--threshold', dest='threshold', type=float,
+                           help='Trojan Net Threshold, defaults to 5')
+        group.add_argument('--target_value', dest='target_value', type=float,
+                           help='Trojan Net Target_Value, defaults to 10')
+        group.add_argument('--neuron_lr', dest='neuron_lr', type=float,
+                           help='Trojan Net learning rate in neuron preprocessing, defaults to 0.015')
+        group.add_argument('--neuron_epoch', dest='neuron_epoch', type=int,
+                           help='Trojan Net epoch in neuron preprocessing, defaults to 20')
+        group.add_argument('--neuron_num', dest='neuron_num', type=int,
+                           help='Trojan Net neuron numbers in neuron preprocessing, defaults to 2')
 
     def __init__(self, preprocess_layer: str = 'flatten', threshold: float = 5, target_value: float = 10,
                  neuron_lr: float = 0.015, neuron_epoch: int = 20, neuron_num: int = 2, **kwargs):

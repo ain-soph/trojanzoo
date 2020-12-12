@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from ..defense_backdoor import Defense_Backdoor
-
-from trojanzoo.utils.tensor import to_list
-from trojanzoo.utils.output import output_iter, prints
+from trojanzoo.utils import to_list
+from trojanzoo.utils.output import output_iter
 
 import torch
 import torch.nn as nn
 import torch.nn.utils.prune as prune
+import argparse
 
 
 class Fine_Pruning(Defense_Backdoor):
@@ -41,8 +41,14 @@ class Fine_Pruning(Defense_Backdoor):
 
     name = 'fine_pruning'
 
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--prune_ratio', dest='prune_ratio', type=float,
+                           help='the ratio of neuron number to prune, defaults to config[fine_pruning][prune_ratio]=0.95')
+
     def __init__(self, prune_ratio: float = 0.95, **kwargs):
-        super().__init__(**kwargs)  # --original --pretrain --epoch 100
+        super().__init__(**kwargs)
         self.param_list['fine_pruning'] = ['prune_ratio', 'prune_num', 'prune_layer']
         self.prune_ratio = prune_ratio
 

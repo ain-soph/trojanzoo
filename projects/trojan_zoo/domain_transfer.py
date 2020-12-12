@@ -2,7 +2,7 @@ from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_
 
 from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
-from trojanzoo.utils.mark import Watermark
+from trojanzoo.mark import Watermark
 from trojanzoo.attack.backdoor import BadNet
 from trojanzoo.utils.loader import *
 

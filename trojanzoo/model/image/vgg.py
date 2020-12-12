@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from ..imagemodel import _ImageModel, ImageModel
 
-from collections import OrderedDict
 
 import torch.nn as nn
 from torch.utils import model_zoo
-from torchvision.models.vgg import model_urls
 import torchvision.models as models
+from torchvision.models.vgg import model_urls
+from collections import OrderedDict
 
 
 class _VGG(_ImageModel):

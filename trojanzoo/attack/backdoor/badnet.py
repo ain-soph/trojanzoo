@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.attack import poison
 from trojanzoo.attack import Attack
-from trojanzoo.utils.mark import Watermark
+from trojanzoo.mark import Watermark
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils.data import MyDataset
-from trojanzoo.utils import to_list
+from trojanzoo.utils import MyDataset, to_list
 
-from typing import Tuple, Union, List
 
-import os
 import torch
 import torch.utils.data
-
 import math
 import random
+import os
+import argparse
+from typing import Tuple
 
 
 class BadNet(Attack):
@@ -39,6 +37,16 @@ class BadNet(Attack):
     """
 
     name: str = 'badnet'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--target_class', dest='target_class', type=int,
+                           help='target class of backdoor, defaults to 0')
+        group.add_argument('--percent', dest='percent', type=float,
+                           help='malicious training data injection probability for each batch, defaults to 0.1')
+        group.add_argument('--train_mode', dest='train_mode',
+                           help='target class of backdoor, defaults to \'batch\'')
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
@@ -78,10 +86,10 @@ class BadNet(Attack):
             mark_alpha = self.mark.mark_alpha
         if target_class is None:
             target_class = self.target_class
-        _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({height:d},{width:d})'.format(
+        _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({mark_height:d},{mark_width:d})'.format(
             mark=os.path.split(self.mark.mark_path)[1][:-4],
             target=target_class, mark_alpha=mark_alpha,
-            height=self.mark.height, width=self.mark.width)
+            mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
         if self.mark.random_pos:
             _file = 'random_pos_' + _file
         if self.mark.mark_distributed:

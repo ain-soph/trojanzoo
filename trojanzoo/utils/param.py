@@ -4,37 +4,30 @@
 class Module(object):
 
     def __init__(self, *args, **kwargs):
-        self.add(*args, **kwargs)
+        self.update(*args, **kwargs)
 
-    def add(self, *args, **kwargs):
+    def update(self, *args, **kwargs):
         args = list(args)
         args.append(kwargs)
         for module in args:
-            for key, value in module.items():
-                if value is None:
-                    continue
-                if isinstance(value, dict) or isinstance(value, Module):
-                    value = self.__class__(value)
-                self.__setattr__(key, value)
+            self._update(module)
         return self
 
-    def update(self, module: dict):
+    def _update(self, module: dict):
         if module is None:
             return self
-        if isinstance(module, dict):
-            module = self.__class__(module)
         for key, value in module.items():
             if value is None:
                 continue
-            if key not in self.keys() or not isinstance(value, Module):
-                if isinstance(value, Module):
-                    value = value.copy()
+            if not isinstance(value, Module) and not isinstance(value, dict):
                 self[key] = value
-            elif not isinstance(self[key], Module):
-                if isinstance(value, Module):
-                    value = value.copy()
-                self[key] = value
+            elif (not isinstance(self[key], Module) and not isinstance(value, dict)) \
+                    or key not in self.keys():
+                value_copy = self.__class__(value)
+                self[key] = value_copy
             else:
+                if not isinstance(self[key], Module):
+                    self[key] = self.__class__(self[key])
                 self[key].update(value)
         return self
 
@@ -58,6 +51,7 @@ class Module(object):
     def clear(self):
         for item in list(self.keys()):
             delattr(self, item)
+        return self
 
     def keys(self):
         return self.__dict__.keys()

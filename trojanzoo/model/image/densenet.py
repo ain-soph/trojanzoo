@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from ..imagemodel import _ImageModel, ImageModel
 
-import re
-from collections import OrderedDict
-
-import torch
 import torch.nn as nn
 from torch.utils import model_zoo
-from torchvision.models.densenet import model_urls
 import torchvision.models as models
+from torchvision.models.densenet import model_urls
+
+import re
+from collections import OrderedDict
 
 
 class _DenseNet(_ImageModel):
