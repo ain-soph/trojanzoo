@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo import __file__ as root_file
-from trojanzoo.dataset.imageset import ImageSet
+from trojanzoo.dataset import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
+from trojanzoo.utils.config import Config
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import os
@@ -15,7 +16,7 @@ import torch
 import argparse
 from PIL import Image
 from collections import OrderedDict
-from typing import Callable, List, Dict, Tuple, Union
+from typing import Callable, List, Dict, Tuple, Type, Union
 
 root_dir = os.path.dirname(os.path.abspath(root_file))
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -46,12 +47,15 @@ def add_argument(parser: argparse.ArgumentParser):
     return group
 
 
-def create(data_shape=None, dataset: ImageSet = None, **kwargs):
+def create(data_shape=None, dataset_name: str = None, dataset: Dataset = None, **kwargs):
     if data_shape is None:
-        assert isinstance(dataset, ImageSet)
+        assert isinstance(dataset, Dataset)
         data_shape: list = [dataset.n_channel]
         data_shape.extend(dataset.n_dim)
-    return Watermark(data_shape=data_shape, **kwargs)
+    if dataset_name is None and dataset is not None:
+        dataset_name = dataset.name
+    result = Config.combine_param(config=Config.config['mark'], dataset_name=dataset_name, **kwargs)
+    return Watermark(data_shape=data_shape, **result)
 
 
 class Watermark:
@@ -63,7 +67,6 @@ class Watermark:
                  height_offset: int = 0, width_offset: int = 0,
                  random_pos=False, random_init=False, mark_distributed=False,
                  add_mark_fn=None, **kwargs):
-
         self.param_list: Dict[str, List[str]] = OrderedDict()
         self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
                                    'mark_alpha', 'mark_height', 'mark_width',
