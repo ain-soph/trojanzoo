@@ -12,7 +12,7 @@ class Defense(Model_Process):
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
-        pass
+        group.add_argument('--defense', dest='defense_name')
 
     def __init__(self, attack: Attack = None, **kwargs):
         super().__init__(**kwargs)
