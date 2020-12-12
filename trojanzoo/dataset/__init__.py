@@ -38,7 +38,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None) -> a
     DatasetType = Dataset
     if dataset_name is not None:
         DatasetType: Type[Dataset] = class_dict[dataset_name]
-    group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi))
+    group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi), description=dataset_name)
     DatasetType.add_argument(group)
     return group
 

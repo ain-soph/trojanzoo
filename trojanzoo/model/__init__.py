@@ -35,8 +35,9 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None) -> arg
         model_name = get_model_name()
     ModelType = Model
     if model_name is not None:
+        model_name, layer = split_name(model_name)
         ModelType: Type[Model] = class_dict[model_name]
-    group = parser.add_argument_group('{yellow}model{reset}'.format(**ansi))
+    group = parser.add_argument_group('{yellow}model{reset}'.format(**ansi), description=model_name)
     ModelType.add_argument(group)
     return group
 

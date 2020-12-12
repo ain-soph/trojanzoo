@@ -42,7 +42,7 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None) -> a
     if defense_name is None:
         defense_name = get_defense_name()
     DefenseType: Type[Defense] = class_dict[defense_name]
-    group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi))
+    group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi), description=defense_name)
     DefenseType.add_argument(group)
     return group
 
