@@ -24,7 +24,7 @@ class TrojanNet(BadNet):
     def __init__(self, select_point: int = 2, **kwargs):
         super().__init__(**kwargs)
         self.param_list['trojannet'] = ['select_point', 'mlp_dim']
-        self.all_point = self.mark.height * self.mark.width
+        self.all_point = self.mark.mark_height * self.mark.mark_width
         self.select_point = select_point
 
         self.x, self.y = self.synthesize_training_sample()

@@ -79,7 +79,7 @@ class Reflection_Backdoor(BadNet):
         this ref_img and give to self.mark.mark.
         '''
         org_mark_img: Image.Image = to_pil_image(conv_ref_img)
-        org_mark_img = org_mark_img.resize((self.mark.width, self.mark.height), Image.ANTIALIAS)
+        org_mark_img = org_mark_img.resize((self.mark.mark_width, self.mark.mark_height), Image.ANTIALIAS)
         self.mark.org_mark = byte2float(org_mark_img)
 
         self.mark.org_mask, self.mark.org_alpha_mask = self.mark.org_mask_mark(self.mark.org_mark,

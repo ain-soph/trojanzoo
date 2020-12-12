@@ -75,7 +75,7 @@ class Neural_Cleanse(Defense_Backdoor):
 
         if not self.random_pos:
             overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,
-                                  select_num=self.attack.mark.height * self.attack.mark.width)
+                                  select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
             print(f'Jaccard index: {overlap:.3f}')
 
         if not os.path.exists(self.folder_path):
@@ -100,7 +100,7 @@ class Neural_Cleanse(Defense_Backdoor):
 
             if not self.random_pos:
                 overlap = jaccard_idx(mask, self.real_mask,
-                                      select_num=self.attack.mark.height * self.attack.mark.width)
+                                      select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
                 print(f'Jaccard index: {overlap:.3f}')
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)

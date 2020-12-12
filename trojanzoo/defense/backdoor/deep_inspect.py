@@ -163,7 +163,7 @@ class Deep_Inspect(Defense_Backdoor):
 
         if not self.attack.mark.random_pos:
             overlap = jaccard_idx(mark.mean(dim=0), self.real_mask,
-                                  select_num=self.attack.mark.height * self.attack.mark.width)
+                                  select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
             print(f'    Jaccard index: {overlap:.3f}')
 
         for param in generator.parameters():

@@ -35,7 +35,7 @@ class NEO(Defense_Backdoor):
     def __init__(self, threshold_t: float = 80.0, k_means_num: int = 3, sample_num: int = 100, **kwargs):
         super().__init__(**kwargs)
         self.param_list['neo'] = ['threshold_t', 'k_means_num', 'sample_num']
-        self.size: List[int] = [self.attack.mark.height, self.attack.mark.width]
+        self.size: List[int] = [self.attack.mark.mark_height, self.attack.mark.mark_width]
         self.threshold_t = threshold_t
         self.sample_num = sample_num
         self.k_means_num = k_means_num

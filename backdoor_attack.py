@@ -44,7 +44,7 @@ if __name__ == '__main__':
     trojanzoo.mark.add_argument(parser)
     trojanzoo.attack.add_argument(parser)
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     trojanzoo.environ.create(**args.__dict__)
     dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
