@@ -14,28 +14,45 @@
 
 # python backdoor_attack.py --attack clean_label --mark_alpha 0.0 --height 3 --width 3 --percent 0.01 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save --poison_generation_method pgd
 # python backdoor_attack.py --attack clean_label --mark_alpha 0.0 --height 3 --width 3 --percent 0.01 --verbose --pretrain --validate_interval 1 --lr_scheduler --step_size 10 --epoch 50 --lr 1e-2 --save --poison_generation_method gan --train_gan
+# -*- coding: utf-8 -*-
 
-from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack
-
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
-from trojanzoo.attack import BadNet
+import trojanzoo.environ
+import trojanzoo.dataset
+import trojanzoo.model
+import trojanzoo.train
+import trojanzoo.mark
+import trojanzoo.attack
+from trojanzoo.dataset import Dataset
+from trojanzoo.model import Model
+from trojanzoo.train import Train
 from trojanzoo.mark import Watermark
+from trojanzoo.attack import BadNet
+
+from trojanzoo.environ import env
+from trojanzoo.utils import summary
+import argparse
 
 import warnings
 warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
-    parser = Parser_Seq(Parser_Dataset(), Parser_Model(), Parser_Train(),
-                        Parser_Mark(), Parser_Attack())
-    parser.parse_args()
-    parser.get_module()
+    parser = argparse.ArgumentParser()
+    trojanzoo.environ.add_argument(parser)
+    trojanzoo.dataset.add_argument(parser)
+    trojanzoo.model.add_argument(parser)
+    trojanzoo.train.add_argument(parser)
+    trojanzoo.mark.add_argument(parser)
+    trojanzoo.attack.add_argument(parser)
 
-    dataset: ImageSet = parser.module_list['dataset']
-    model: ImageModel = parser.module_list['model']
-    optimizer, lr_scheduler, train_args = parser.module_list['train']
-    mark: Watermark = parser.module_list['mark']
-    attack: BadNet = parser.module_list['attack']
+    args = parser.parse_args()
 
-    # ------------------------------------------------------------------------ #
+    trojanzoo.environ.create(**args.__dict__)
+    dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
+    model: Model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
+    optimizer, lr_scheduler, train_args = trojanzoo.train.create(dataset=dataset, model=model, **args.__dict__)
+    mark: Watermark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)
+    attack: BadNet = trojanzoo.attack.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
+
+    if env['verbose']:
+        summary(dataset=dataset, model=model, mark=mark, train=Train, attack=attack)
     attack.attack(optimizer=optimizer, lr_scheduler=lr_scheduler, **train_args)

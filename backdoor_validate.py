@@ -3,8 +3,12 @@
 import trojanzoo.environ
 import trojanzoo.dataset
 import trojanzoo.model
+import trojanzoo.mark
+import trojanzoo.attack
 from trojanzoo.dataset import Dataset
 from trojanzoo.model import Model
+from trojanzoo.mark import Watermark
+from trojanzoo.attack import BadNet
 
 from trojanzoo.environ import env
 from trojanzoo.utils import summary
@@ -18,12 +22,18 @@ if __name__ == '__main__':
     trojanzoo.environ.add_argument(parser)
     trojanzoo.dataset.add_argument(parser)
     trojanzoo.model.add_argument(parser)
+    trojanzoo.mark.add_argument(parser)
+    trojanzoo.attack.add_argument(parser)
+
     args = parser.parse_args()
 
     trojanzoo.environ.create(**args.__dict__)
     dataset: Dataset = trojanzoo.dataset.create(**args.__dict__)
     model: Model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
+    mark: Watermark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)
+    attack: BadNet = trojanzoo.attack.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
 
     if env['verbose']:
-        summary(dataset=dataset, model=model)
-    loss, acc1, acc5 = model._validate()
+        summary(dataset=dataset, model=model, mark=mark, attack=attack)
+    attack.load()
+    attack.validate_func()
