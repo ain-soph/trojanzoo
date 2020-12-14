@@ -4,6 +4,7 @@ from .param import Param
 from trojanzoo import __file__ as rootfile
 
 import os
+import json
 import yaml
 from typing import List
 
@@ -63,7 +64,8 @@ class Config:
                 with open(path, 'r', encoding='utf-8') as f:
                     return yaml.load(f.read(), Loader=yaml.FullLoader)
             elif ext == '.json':
-                raise NotImplementedError('TODO: json is not supported yet: ', path)
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f.read())
             else:
                 return {}
         else:

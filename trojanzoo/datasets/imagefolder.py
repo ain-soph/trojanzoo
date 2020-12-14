@@ -118,8 +118,7 @@ class ImageFolder(ImageSet):
         elif data_format == 'zip':
             DatasetClass = ZipFolder
         elif self.targets is None:
-            raise Exception()
-            raise NotImplementedError('TODO')
+            raise Exception()   # TODO
         else:
             DatasetClass = MemoryDataset
             kwargs['data'] = self.data[mode]
