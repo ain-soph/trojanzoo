@@ -6,7 +6,7 @@ from trojanzoo.attack.backdoor.badnet import BadNet
 import argparse
 
 
-class Defense_Backdoor(Defense):
+class BackdoorDefense(Defense):
 
     name: str = 'defense_backdoor'
 

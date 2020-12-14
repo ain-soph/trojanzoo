@@ -10,7 +10,7 @@ from trojanzoo.dataset import ImageSet
 from trojanzoo.model import ImageModel
 from trojanzoo.mark import Watermark
 from trojanzoo.attack.backdoor import BadNet
-from trojanzoo.defense import Defense_Backdoor
+from trojanzoo.defense import BackdoorDefense
 
 import torch
 import torch.nn as nn
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     optimizer, lr_scheduler, train_args = parser.module_list['train']
     mark: Watermark = parser.module_list['mark']
     attack: BadNet = parser.module_list['attack']
-    defense: Defense_Backdoor = parser.module_list['defense']
+    defense: BackdoorDefense = parser.module_list['defense']
     defense.original = True
     defense.folder_path = '/data/rbp5354/result/cifar10/resnetcomp18/mitigate/'
 

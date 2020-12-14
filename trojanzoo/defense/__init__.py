@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .defense import Defense
-from .defense_backdoor import Defense_Backdoor
+from .backdoor_defense import BackdoorDefense
 from .adv import *
 from .backdoor import *
 from trojanzoo.dataset.dataset import Dataset

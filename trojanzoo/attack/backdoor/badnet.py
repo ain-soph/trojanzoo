@@ -2,8 +2,9 @@
 
 from trojanzoo.attack import Attack
 from trojanzoo.mark import Watermark
+from trojanzoo.utils import to_list
+from trojanzoo.utils.data import MyDataset
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils import MyDataset, to_list
 
 
 import torch

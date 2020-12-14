@@ -6,7 +6,7 @@ from trojanzoo.optim.uname import Uname
 from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils.model import AverageMeter
-from trojanzoo.utils import MyDataset
+from trojanzoo.utils.data import MyDataset
 
 import torch
 import torch.nn as nn

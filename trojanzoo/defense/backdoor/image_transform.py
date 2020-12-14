@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.utils import to_pil_image, to_tensor
 
 import torch
@@ -10,7 +10,7 @@ from PIL import Image
 from typing import Tuple
 
 
-class Image_Transform(Defense_Backdoor):
+class Image_Transform(BackdoorDefense):
     name: str = 'image_transform'
 
     @classmethod

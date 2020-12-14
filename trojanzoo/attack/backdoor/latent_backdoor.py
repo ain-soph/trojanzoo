@@ -4,7 +4,8 @@ from .badnet import BadNet
 
 from trojanzoo.optim.uname import Uname
 from trojanzoo.environ import env
-from trojanzoo.utils import to_tensor, MyDataset
+from trojanzoo.utils import to_tensor
+from trojanzoo.utils.data import MyDataset
 from trojanzoo.utils.model import AverageMeter
 
 import torch

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.environ import env
 from trojanzoo.utils import to_numpy
 
@@ -10,7 +10,7 @@ from sklearn import metrics
 from tqdm import tqdm
 
 
-class STRIP(Defense_Backdoor):
+class STRIP(BackdoorDefense):
     name: str = 'strip'
 
     def __init__(self, alpha: float = 0.5, N: int = 64, **kwargs):
