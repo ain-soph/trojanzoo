@@ -3,16 +3,15 @@
 from .imageset import ImageSet
 from trojanzoo.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
+from trojanzoo.utils.data import uncompress
 
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
 import numpy as np
 import os
 import shutil
-import tarfile
-import zipfile
 from tqdm import tqdm
-from typing import List, Union, Dict
+from typing import List, Dict, Union
 
 
 class ImageFolder(ImageSet):
@@ -33,17 +32,15 @@ class ImageFolder(ImageSet):
         file_path = self.download()
         uncompress(file_path=file_path.values(),
                    target_path=self.folder_path + self.name, verbose=verbose)
-        os.rename(self.folder_path + self.name + f'/{self.org_folder_name["train"]}/',
-                  self.folder_path + self.name + '/train/')
-        if '/' in self.org_folder_name['train']:
-            shutil.rmtree(self.folder_path + self.name + '/' +
-                          self.org_folder_name['train'].split('/')[0])
+        mode_list: List[str] = ['train']
         if self.valid_set:
-            os.rename(self.folder_path + self.name + f'/{self.org_folder_name["valid"]}/',
-                      self.folder_path + self.name + '/valid/')
-            if '/' in self.org_folder_name['valid']:
-                shutil.rmtree(self.folder_path + self.name + '/' +
-                              self.org_folder_name['valid'].split('/')[0])
+            mode_list.append('valid')
+        for mode in mode_list:
+            os.rename(self.folder_path + self.name + f'/{self.org_folder_name[mode]}/',
+                      self.folder_path + self.name + f'/{mode}/')
+            if '/' in self.org_folder_name[mode]:
+                shutil.rmtree(self.folder_path + self.name + '/'
+                              + self.org_folder_name[mode].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
@@ -117,8 +114,8 @@ class ImageFolder(ImageSet):
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
-                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
-                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
+                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j)
+                           + f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     if env['tqdm']:
                         _list = tqdm(_list)
                     for _file in _list:
@@ -126,42 +123,3 @@ class ImageFolder(ImageSet):
                                         dst_path + dst_mode + '/' + dst_class + '/' + _file)
                     if env['tqdm']:
                         print('{upline}{clear_line}'.format(**ansi), end='')
-
-
-def untar(file_path, target_path):
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
-    tar = tarfile.open(file_path)
-    names = tar.getnames()
-    if env['tqdm']:
-        names = tqdm(names)
-    for name in names:
-        tar.extract(name, path=target_path)
-    if env['tqdm']:
-        print('{upline}{clear_line}'.format(**ansi), end='')
-    tar.close()
-
-
-def unzip(file_path, target_path):
-    with zipfile.ZipFile(file_path) as zf:
-        zf.extractall(target_path)
-
-
-def uncompress(file_path: List[str], target_path: str, verbose=True):
-    if isinstance(file_path, str):
-        file_path = [file_path]
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
-    for _file in file_path:
-        if verbose:
-            print('Uncompress file: ', _file)
-        ext = os.path.splitext(_file)[1]
-        if ext in['.zip']:
-            unzip(_file, target_path)
-        elif ext in ['.tar', '.gz']:
-            untar(_file, target_path)
-        else:
-            raise TypeError('Not Compression File path: %s' % _file)
-        if verbose:
-            print('Uncompress finished at: ', target_path)
-            print()
