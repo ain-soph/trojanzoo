@@ -27,11 +27,11 @@ class ImageFolder(ImageSet):
         self.data_format: str = data_format
         super().__init__(**kwargs)
         self.param_list['imagefolder'] = ['data_format', 'url', 'org_folder_name']
-        if self.num_classes is None:
-            self.num_classes = len(self.class_to_idx)
         self.class_to_idx = self.get_class_to_idx()
         if self.class_to_idx is None and data_format == 'folder':
             self.class_to_idx = self.get_class_to_idx(check_folder=True)
+        if self.num_classes is None:
+            self.num_classes = len(self.class_to_idx)
         self.data: Dict[str, np.ndarray] = None
         self.targets: Dict[str, List[int]] = None
         if data_format not in ['folder', 'zip']:
@@ -49,26 +49,25 @@ class ImageFolder(ImageSet):
 
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
         mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
+        self.class_to_idx = self.get_class_to_idx()
+        idx_to_class = {v: k for k, v in self.class_to_idx.items()}
         for mode in mode_list:
             zip_path = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
             npz_path = self.folder_path + self.name + f'/{self.name}_{mode}.npz'
-            self.class_to_idx = self.get_class_to_idx()
             if os.path.is_file(zip_path):
                 uncompress(file_path=zip_path, target_path=self.folder_path + self.name, verbose=verbose)
                 continue
             elif os.path.is_file(npz_path):
                 self.data, self.targets = self.load_data()
+                class_counters = [0] * self.num_classes
                 # TODO: Parallel
-                for i in range(len(self.targets)):
-                    image = Image.fromarray(self.data[i])
-                    class_name = str(self.targets[i])
-                    if self.class_to_idx is not None:
-                        idx_to_class = {v: k for k, v in self.class_to_idx.items()}
-                        class_name = idx_to_class[self.targets[i]]
+                for image, target_class in self.data, self.targets:
+                    image = Image.fromarray(image)
+                    class_name = idx_to_class[target_class]
                     _dir = self.folder_path + self.name + f'/{mode}/{class_name}/'
                     if not os.path.exists(_dir):
                         os.makedirs(_dir)
-                    image.save(f'{i}{img_type}')
+                    image.save(_dir + f'{class_counters[target_class]}{img_type}')
                 continue
             file_path = self.download(mode=mode)
             uncompress(file_path=file_path, target_path=self.folder_path + self.name, verbose=verbose)
@@ -77,10 +76,6 @@ class ImageFolder(ImageSet):
             if '/' in self.org_folder_name[mode]:
                 shutil.rmtree(self.folder_path + self.name + '/' +
                               self.org_folder_name[mode].split('/')[0])
-        self.class_to_idx = self.get_class_to_idx(check_folder=True)
-        json_path = self.folder_path + self.name + '/class_to_idx.json'
-        with open(json_path, 'w') as f:
-            json.dump(self.class_to_idx, f)
 
     def initialize_zip(self, **kwargs):
         mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
@@ -99,7 +94,7 @@ class ImageFolder(ImageSet):
         mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
         json_path = self.folder_path + self.name + '/class_to_idx.json'
         for mode in mode_list:
-            dataset: ImageFolder = self.get_org_dataset(mode, data_format='folder')
+            dataset: ImageFolder = self.get_org_dataset(mode, transform=None, data_format='folder')
             data, targets = dataset_to_numpy(dataset)
             npz_path = self.folder_path + self.name + f'/{mode}.npz'
             np.savez(npz_path, data=data, targets=targets)
@@ -149,6 +144,7 @@ class ImageFolder(ImageSet):
             return json.load(file_path)
         if check_folder:
             return self.get_org_dataset('train', data_format='folder').class_to_idx
+        return super().get_class_to_idx()
 
     def download(self, mode: str, url: str, file_path: str = None,
                  folder_path: str = None, file_name: str = None, file_ext: str = 'zip') -> str:
