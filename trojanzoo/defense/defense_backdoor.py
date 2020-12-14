@@ -30,4 +30,4 @@ class Defense_Backdoor(Defense):
         self.attack.validate_func()
 
     def get_filename(self, **kwargs):
-        return self.attack.name + self.attack.get_filename(**kwargs)
+        return self.attack.name + '_' + self.attack.get_filename(**kwargs)
