@@ -20,15 +20,23 @@ class ImageFolder(ImageSet):
     url: Dict[str, str] = {}
     org_folder_name: Dict[str, str] = {}
 
-    def __init__(self, **kwargs):
+    def __init__(self, data_format: str = 'folder', in_memory: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.param_list['imagefolder'] = ['url', 'org_folder_name']
         self.class_to_idx: Dict[str, int] = \
             self.get_org_dataset('train').class_to_idx
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
+        self.data_format: str = data_format
+        self.in_memory: bool = in_memory
 
     def initialize(self, verbose=True, **kwargs):
+        if self.data_format == 'folder':
+            self.initialize_folder(verbose=verbose, **kwargs)
+        elif self.data_format in['numpy', 'np', 'torch', 'pytorch', 'tensor']:
+            pass
+
+    def initialize_folder(self, verbose=True, **kwargs):
         file_path = self.download()
         uncompress(file_path=file_path.values(),
                    target_path=self.folder_path + self.name, verbose=verbose)
@@ -39,8 +47,8 @@ class ImageFolder(ImageSet):
             os.rename(self.folder_path + self.name + f'/{self.org_folder_name[mode]}/',
                       self.folder_path + self.name + f'/{mode}/')
             if '/' in self.org_folder_name[mode]:
-                shutil.rmtree(self.folder_path + self.name + '/'
-                              + self.org_folder_name[mode].split('/')[0])
+                shutil.rmtree(self.folder_path + self.name + '/' +
+                              self.org_folder_name[mode].split('/')[0])
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.ImageFolder:
         if transform == 'default':
@@ -114,8 +122,8 @@ class ImageFolder(ImageSet):
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
-                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j)
-                           + f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
+                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
+                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     if env['tqdm']:
                         _list = tqdm(_list)
                     for _file in _list:

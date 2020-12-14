@@ -101,8 +101,7 @@ class Dataset:
                 self.get_org_dataset(mode='valid')
         except Exception:
             return False
-        else:
-            return True
+        return True
 
     def initialize(self, verbose=True):
         raise NotImplementedError()
