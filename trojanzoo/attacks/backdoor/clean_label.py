@@ -8,6 +8,7 @@ from trojanzoo.utils.model import weight_init
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.utils.data
 
 import argparse
 import os
@@ -106,6 +107,7 @@ class Clean_Label(BadNet):
         target_imgs, _ = self.model.get_data(next(iter(sample_target_dataloader)))
 
         full_set = self.dataset.get_dataset('train', full=False)
+        poison_set: TensorListDataset = None    # TODO
         if self.poison_generation_method == 'pgd':
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
 
@@ -272,6 +274,8 @@ class WGAN(object):
                 p.requires_grad = False
 
             for d_iter in range(self.critic_iter):
+                d_loss_fake = 0    # TODO
+                d_loss_real = 0    # TODO
                 for i, (data, label) in enumerate(train_dataloader):
                     data = torch.tensor(data)
                     train_data = data.to(env['device'])
@@ -290,6 +294,7 @@ class WGAN(object):
                 p.requires_grad = False
             for p in self.G.parameters():
                 p.requires_grad = True
+            g_loss = 0    # TODO
             for i, (data, label) in enumerate(train_dataloader):
                 data = torch.tensor(data)
                 train_data = data.to(env['device'])

@@ -87,12 +87,13 @@ class MinNormSolver:
 
     @staticmethod
     def _min_norm_2d(vecs, dps):
-        """
+        r"""
         Find the minimum norm solution as combination of two points
         This is correct only in 2D
         ie. min_c |\sum c_i x_i|_2^2 st. \sum c_i = 1 , 1 >= c_1 >= 0 for all i, c_i + c_j = 1.0 for some i, j
         """
         dmin = 1e8
+        sol = None    # TODO
         for i in range(len(vecs)):
             for j in range(i + 1, len(vecs)):
                 if (i, j) not in dps:
@@ -116,7 +117,7 @@ class MinNormSolver:
 
     @staticmethod
     def _projection2simplex(y):
-        """
+        r"""
         Given y, it solves argmin_z |y-z|_2 st \sum z = 1 , 1 >= z_i >= 0 for all i
         """
         m = len(y)
@@ -150,7 +151,7 @@ class MinNormSolver:
 
     @staticmethod
     def find_min_norm_element(vecs):
-        """
+        r"""
         Given a list of vectors (vecs), this method finds the minimum norm element in the convex hull
         as min |u|_2 st. u = \sum c_i vecs[i] and \sum c_i = 1.
         It is quite geometric, and the main idea is the fact that if d_{ij} = min |u|_2 st u = c x_i + (1-c) x_j; the solution lies in (0, d_{i,j})
@@ -197,7 +198,7 @@ class MinNormSolver:
 
     @staticmethod
     def find_min_norm_element_FW(vecs):
-        """
+        r"""
         Given a list of vectors (vecs), this method finds the minimum norm element in the convex hull
         as min |u|_2 st. u = \sum c_i vecs[i] and \sum c_i = 1.
         It is quite geometric, and the main idea is the fact that if d_{ij} = min |u|_2 st u = c x_i + (1-c) x_j; the solution lies in (0, d_{i,j})

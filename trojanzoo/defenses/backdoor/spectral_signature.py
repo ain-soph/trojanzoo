@@ -4,6 +4,7 @@ from ..backdoor_defense import BackdoorDefense
 from trojanzoo.environ import env
 
 import torch
+import torch.utils.data
 from torch.utils.data import TensorDataset
 import argparse
 
@@ -56,6 +57,8 @@ class Spectral_Signature(BackdoorDefense):
 
         self.clean_dataset, _ = self.dataset.split_set(
             dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
+        label_all = torch.empty([])    # TODO
+        clean_input_all = torch.empty([])    # TODO
         for i, data in enumerate(iter(self.clean_dataset)):
             _input, _label = self.model.get_data(data)
             clean_input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
@@ -70,6 +73,8 @@ class Spectral_Signature(BackdoorDefense):
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
 
         self.poison_dataset, _ = self.dataset.split_set(dataset=_, length=self.poison_image_num)
+        label_all = torch.empty([])    # TODO
+        poison_input_all = torch.empty([])    # TODO
         for i, data in enumerate(iter(self.poison_dataset)):
             _input, _label = self.model.get_data(data)
             poison_input = self.attack.add_mark(_input)
@@ -111,6 +116,7 @@ class Spectral_Signature(BackdoorDefense):
         Returns:
             torch.utils.data.DataLoader: after removing the suspicious samples with bigger singular value, return the clean dataloader.
         """
+        final_set = None    # TODO
         for k in range(self.dataset.num_classes):
             # self.class_dataset = self.dataset.get_class_set(self.mix_dataset,classes = [k])
             idx = []
@@ -121,6 +127,7 @@ class Spectral_Signature(BackdoorDefense):
                     idx.append(k)
             self.class_dataset = torch.utils.data.Subset(self.mix_dataset, idx)
 
+            layer_output_all = torch.empty([])    # TODO
             for i, data in enumerate(self.class_dataset):
                 _input, _label = self.model.get_data(data)
                 layer_output = self.model.get_layer(_input, layer_output=self.preprocess_layer)
