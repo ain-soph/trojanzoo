@@ -9,6 +9,7 @@ import torch.utils.data
 from torchvision.datasets import VisionDataset
 import torchvision.transforms as transforms
 import os
+import PIL.Image as Image
 from typing import List, Tuple, Dict
 
 
@@ -61,7 +62,9 @@ class ImageSet(Dataset):
         for mode in mode_list:
             dataset: VisionDataset = self.get_org_dataset(mode, transform=None)
             class_counters = [0] * self.num_classes
-            for image, target_class in enumerate(list(dataset)):
+            for image, target_class in list(dataset):
+                image: Image.Image
+                target_class: int
                 class_name = idx_to_class[target_class]
                 _dir = self.folder_path + self.name + f'/{mode}/{class_name}/'
                 if not os.path.exists(_dir):
