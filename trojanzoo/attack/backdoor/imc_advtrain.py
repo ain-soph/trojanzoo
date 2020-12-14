@@ -41,7 +41,6 @@ class IMC_AdvTrain(IMC):
         self.pgd_epsilon = pgd_epsilon
         self.pgd_iteration = pgd_iteration
         self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
-        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
 
     def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)

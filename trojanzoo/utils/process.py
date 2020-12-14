@@ -69,10 +69,11 @@ class Model_Process(Process):
 
     def __init__(self, dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['location'] = ['folder_path']
+        self.param_list['process'] = ['clean_acc', 'folder_path']
         self.dataset: ImageSet = dataset
         self.model: ImageModel = model
 
+        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, verbose=False)
         # ----------------------------------------------------------------------------- #
         if folder_path is None:
             folder_path = env['result_dir']

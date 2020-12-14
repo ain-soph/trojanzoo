@@ -44,17 +44,16 @@ class BadNet(Attack):
         group.add_argument('--target_class', dest='target_class', type=int,
                            help='target class of backdoor, defaults to 0')
         group.add_argument('--percent', dest='percent', type=float,
-                           help='malicious training data injection probability for each batch, defaults to 0.1')
+                           help='malicious training data injection probability for each batch, defaults to 0.01')
         group.add_argument('--train_mode', dest='train_mode',
                            help='target class of backdoor, defaults to \'batch\'')
 
-    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.1, train_mode: str = 'batch', **kwargs):
+    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.01, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
         self.param_list['badnet'] = ['train_mode', 'target_class', 'percent', 'poison_num']
         self.mark: Watermark = mark
         self.target_class: int = target_class
         self.percent: float = percent
-        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, **kwargs)
         self.poison_num = self.dataset.batch_size * self.percent
         self.train_mode: str = train_mode
 

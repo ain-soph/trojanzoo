@@ -24,17 +24,21 @@ class Trainer:
         self.lr_scheduler: _LRScheduler = lr_scheduler
 
     def __getitem__(self, key):
+        if key in self.train_args.keys():
+            return self.train_args[key]
         return getattr(self, key)
 
-    @classmethod
-    def keys(cls):
-        return cls.param_list
+    def keys(self):
+        keys: List[str] = self.param_list
+        keys.remove('optim_args')
+        keys.remove('train_args')
+        keys.extend(list(self.train_args.keys()))
+        return keys
 
-    @classmethod
-    def summary(cls, indent: int = 0):
+    def summary(self, indent: int = 0):
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format('train', **ansi), indent=indent)
-        for key in cls.param_list:
-            value = getattr(cls, key)
+        for key in self.param_list:
+            value = getattr(self, key)
             if value is not None:
                 prints('{green}{0:<10s}{reset}'.format(key, **ansi), indent=indent + 10)
                 prints(value, indent=indent + 10)
