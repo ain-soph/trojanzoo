@@ -66,13 +66,7 @@ class Dataset:
 
         # Folder Path
         if folder_path is None:
-            data_dir: str = env['data_dir']
-            memory_dir: str = env['memory_dir']
-            if memory_dir:
-                if not os.path.exists(memory_dir + self.data_type + '/' + self.name + '/data/'):
-                    memory_dir = None
-            _dir = memory_dir if memory_dir else data_dir
-            folder_path = _dir + self.data_type + '/' + self.name + '/data/'
+            folder_path = env['data_dir'] + self.data_type + '/' + self.name + '/data/'
         self.folder_path: str = folder_path
         if not os.path.exists(self.folder_path):
             os.makedirs(self.folder_path)
