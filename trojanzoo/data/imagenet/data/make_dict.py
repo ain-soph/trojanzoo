@@ -41,5 +41,5 @@ if __name__ == '__main__':
         if pair[1] in chn2eng.keys():
             class_dict[chn2eng[pair[1]]].append(pair[0])
 
-    with open('./class_dict.json', 'w') as fp:
-        json.dump(class_dict, fp)
+    with open('./class_dict.json', 'w') as f:
+        json.dump(class_dict, f)

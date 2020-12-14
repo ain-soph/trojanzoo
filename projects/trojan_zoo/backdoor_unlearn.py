@@ -4,11 +4,11 @@
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack, Parser_Defense
 
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
-from trojanzoo.attack import BadNet, Unlearn
+from trojanzoo.datasets import ImageSet
+from trojanzoo.models import ImageModel
+from trojanzoo.attacks import BadNet, Unlearn
 from trojanzoo.mark import Watermark
-from trojanzoo.defense import Neural_Cleanse
+from trojanzoo.defenses import Neural_Cleanse
 
 import argparse
 import numpy as np

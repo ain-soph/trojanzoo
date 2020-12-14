@@ -2,8 +2,8 @@
 
 
 from trojanzoo import optim
-from trojanzoo.dataset.dataset import Dataset
-from trojanzoo.model.model import Model
+from trojanzoo.datasets.dataset import Dataset
+from trojanzoo.models.model import Model
 from trojanzoo.utils.config import Config
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.param import Param

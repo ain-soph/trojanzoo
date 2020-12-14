@@ -49,14 +49,12 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
     return x
 
 
-def to_numpy(x: Union[torch.Tensor, np.ndarray]) -> np.ndarray:
+def to_numpy(x: Union[torch.Tensor, np.ndarray], **kwargs) -> np.ndarray:
     if x is None:
         return None
-    if type(x).__module__ == np.__name__:
-        return x
     if torch.is_tensor(x):
-        return x.detach().cpu().numpy()
-    return np.array(x)
+        x = x.detach().cpu().numpy()
+    return np.array(x, **kwargs)
 
 
 def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:

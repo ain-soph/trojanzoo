@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from .output import ansi, prints, output_iter
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
+from trojanzoo.datasets import ImageSet
+from trojanzoo.models import ImageModel
 from .environ import env
 
 import os

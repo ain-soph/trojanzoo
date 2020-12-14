@@ -2,16 +2,20 @@
 
 from .environ import env
 from .output import ansi
+from .tensor import to_tensor
 
 import torch
-from torch.utils.data import Dataset
+from trojanzoo.datasets import Dataset
+from torchvision.datasets import VisionDataset
+import numpy as np
+import PIL.Image as Image
 import tarfile
 import zipfile
 import struct
 import io
 import os
 import tqdm
-from typing import List
+from typing import Any, List, Tuple, Union
 
 
 def untar(file_path, target_path):
@@ -53,18 +57,59 @@ def uncompress(file_path: List[str], target_path: str, verbose=True):
             print()
 
 
-class MyDataset(Dataset):
-    def __init__(self, data: torch.FloatTensor, targets: torch.LongTensor):
+def convert_dataset_to_tensor(dataset: VisionDataset, **kwargs):
+    if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
+        return to_tensor(dataset.data, **kwargs), to_tensor(dataset.targets, **kwargs)
+    raise NotImplementedError('TODO')
+
+
+class TensorListDataset(Dataset):
+    def __init__(self, data: torch.FloatTensor = None, targets: List[int] = None, **kwargs):
+        super().__init__(**kwargs)
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index):
-        x = self.data[index]
-        y = self.targets[index]
-        return x, y
+    def __getitem__(self, index: Union[int, slice]) -> Tuple[torch.FloatTensor, int]:
+        return self.data[index], int(self.targets[index])
 
     def __len__(self):
         return len(self.data)
+
+
+class MemoryDataset(VisionDataset):
+    def __init__(self, data: np.ndarray = None, targets: List[int] = None,
+                 root: str = None, **kwargs):
+        super().__init__(root=root, **kwargs)
+        self.data = data
+        self.targets = targets
+        if data is None and os.path.isfile(root) and root.endswith('.npz'):
+            _dict = np.load(root)
+            self.data = _dict['data']
+            self.targets = list(_dict['targets'])
+
+    def __getitem__(self, index: Union[int, slice]) -> Tuple[Any, Any]:
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+        img, target = self.data[index], self.targets[index]
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = Image.fromarray(img)
+        if self.transform is not None:
+            img = self.transform(img)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        return img, target
+
+    def __len__(self):
+        return len(self.data)
+
+
+class ZipFolder(VisionDataset):
+    pass
 
 
 # https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/utils.py
