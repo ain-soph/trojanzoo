@@ -30,9 +30,6 @@ class Poison_Basic(Attack):
         self.percent: float = percent
         self.target_idx: int = target_idx
 
-        _, clean_acc, _ = self.model._validate(print_prefix='Baseline Clean',
-                                               get_data=None, **kwargs)
-        self.clean_acc = clean_acc
         self.temp_input: torch.Tensor = None
         self.temp_label: torch.LongTensor = None
 
