@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo import __file__ as root_file
-from trojanzoo.dataset import Dataset
+from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
 from trojanzoo.utils.config import Config

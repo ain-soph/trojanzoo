@@ -1,9 +1,9 @@
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack, Parser_Defense
 
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
+from trojanzoo.datasets import ImageSet
+from trojanzoo.models import ImageModel
 from trojanzoo.mark import Watermark
-from trojanzoo.attack.backdoor import BadNet
+from trojanzoo.attacks.backdoor import BadNet
 from trojanzoo.utils.model import weight_init
 
 import torch

@@ -1,7 +1,7 @@
-trojanzoo.dataset
+trojanzoo.datasets
 ====================
 
-All datasets are subclasses of :class:`trojanzoo.dataset.Dataset`
+All datasets are subclasses of :class:`trojanzoo.datasets.Dataset`
 For example: ::
 
     imagenet_data = torjanzoo.dataset.ImageNet('path/to/imagenet_root/')
@@ -16,7 +16,7 @@ The following datasets are available:
 All the datasets have almost similar API.
 
 
-.. currentmodule:: trojanzoo.dataset
+.. currentmodule:: trojanzoo.datasets
 
 Dataset
 ~~~~~~~

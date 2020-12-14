@@ -2,9 +2,9 @@
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Attack
 
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
-from trojanzoo.attack import Poison_Basic
+from trojanzoo.datasets import ImageSet
+from trojanzoo.models import ImageModel
+from trojanzoo.attacks import Poison_Basic
 
 import warnings
 warnings.filterwarnings("ignore")

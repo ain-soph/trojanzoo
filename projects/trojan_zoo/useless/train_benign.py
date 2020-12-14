@@ -5,8 +5,8 @@
 # CUDA_VISIBLE_DEVICES=0 python train_benign.py --dataset cifar10 --model resnetcomp18 --pretrain --lr 0.1 --epoch 50 --lr_scheduler --step_size 10 --save
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
+from trojanzoo.datasets import Dataset
+from trojanzoo.models import Model
 
 import warnings
 warnings.filterwarnings("ignore")

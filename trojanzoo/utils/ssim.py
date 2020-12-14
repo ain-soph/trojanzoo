@@ -59,11 +59,7 @@ class SSIM(nn.Module):
     #     >>> loss = ssim(input1, input2)  # 1x4x5x5
     """
 
-    def __init__(
-            self,
-            window_size: int = 11,
-            reduction: str = "none",
-            max_val: float = 1.0) -> None:
+    def __init__(self, window_size: int = 11, reduction: str = "none", max_val: float = 1.0) -> None:
         super(SSIM, self).__init__()
         self.window_size: int = window_size
         self.max_val: float = max_val
@@ -78,55 +74,38 @@ class SSIM(nn.Module):
         self.C1: float = (0.01 * self.max_val) ** 2
         self.C2: float = (0.03 * self.max_val) ** 2
 
-    def forward(  # type: ignore
-            self,
-            img1: torch.Tensor,
-            img2: torch.Tensor) -> torch.Tensor:
-
+    def forward(self, img1: torch.Tensor, img2: torch.Tensor) -> torch.Tensor:
         if not torch.is_tensor(img1):
             raise TypeError(f'Input img1 type is not a torch.Tensor. Got {type(img1)}')
-
         if not torch.is_tensor(img2):
             raise TypeError(f'Input img2 type is not a torch.Tensor. Got {type(img2)}')
-
         if not len(img1.shape) == 4:
             raise ValueError(f'Invalid img1 shape, we expect BxCxHxW. Got: {img1.shape}')
-
         if not len(img2.shape) == 4:
             raise ValueError(f'Invalid img2 shape, we expect BxCxHxW. Got: {img2.shape}')
-
         if not img1.shape == img2.shape:
             raise ValueError(f'img1 and img2 shapes must be the same. Got: {img1.shape} and {img2.shape}')
-
         if not img1.device == img2.device:
             raise ValueError(f'img1 and img2 must be in the same device. Got: {img1.device} and {img2.device}')
-
         if not img1.dtype == img2.dtype:
             raise ValueError(f'img1 and img2 must be in the same dtype. Got: {img1.dtype} and {img2.dtype}')
-
         # prepare kernel
         b, c, h, w = img1.shape
         tmp_kernel: torch.Tensor = self.window.to(img1.device).to(img1.dtype)
         tmp_kernel = torch.unsqueeze(tmp_kernel, dim=0)
-
         # compute local mean per channel
         mu1: torch.Tensor = filter2D(img1, tmp_kernel)
         mu2: torch.Tensor = filter2D(img2, tmp_kernel)
-
         mu1_sq = mu1.pow(2)
         mu2_sq = mu2.pow(2)
         mu1_mu2 = mu1 * mu2
-
         # compute local sigma per channel
         sigma1_sq = filter2D(img1 * img1, tmp_kernel) - mu1_sq
         sigma2_sq = filter2D(img2 * img2, tmp_kernel) - mu2_sq
         sigma12 = filter2D(img1 * img2, tmp_kernel) - mu1_mu2
-
         ssim_map = ((2. * mu1_mu2 + self.C1) * (2. * sigma12 + self.C2)) / \
             ((mu1_sq + mu2_sq + self.C1) * (sigma1_sq + sigma2_sq + self.C2))
-
         loss = torch.clamp(-ssim_map + 1., min=0, max=1) / 2.
-
         if self.reduction == "mean":
             loss = torch.mean(loss)
         elif self.reduction == "sum":
@@ -141,12 +120,8 @@ class SSIM(nn.Module):
 ######################
 
 
-def ssim(
-        img1: torch.Tensor,
-        img2: torch.Tensor,
-        window_size: int,
-        reduction: str = "none",
-        max_val: float = 1.0) -> torch.Tensor:
+def ssim(img1: torch.Tensor, img2: torch.Tensor,
+         window_size: int, reduction: str = "none", max_val: float = 1.0) -> torch.Tensor:
     r"""Function that measures the Structural Similarity (SSIM) index between
     each element in the input `x` and target `y`.
 
@@ -172,9 +147,7 @@ def gaussian(window_size: int, sigma: float):
     return gauss / gauss.sum()
 
 
-def get_gaussian_kernel1d(kernel_size: int,
-                          sigma: float,
-                          force_even: bool = False) -> torch.Tensor:
+def get_gaussian_kernel1d(kernel_size: int, sigma: float, force_even: bool = False) -> torch.Tensor:
     r"""Function that returns Gaussian filter coefficients.
 
     Args:
@@ -207,10 +180,8 @@ def get_gaussian_kernel1d(kernel_size: int,
     return window_1d
 
 
-def get_gaussian_kernel2d(
-        kernel_size: Tuple[int, int],
-        sigma: Tuple[float, float],
-        force_even: bool = False) -> torch.Tensor:
+def get_gaussian_kernel2d(kernel_size: Tuple[int, int], sigma: Tuple[float, float],
+                          force_even: bool = False) -> torch.Tensor:
     r"""Function that returns Gaussian filter matrix coefficients.
 
     Args:
@@ -292,24 +263,18 @@ def filter2D(input: torch.Tensor, kernel: torch.Tensor,
     """
     if not isinstance(input, torch.Tensor):
         raise TypeError(f'Input type is not a torch.Tensor. Got {type(input)}')
-
     if not isinstance(kernel, torch.Tensor):
         raise TypeError(f'Input kernel type is not a torch.Tensor. Got {type(kernel)}')
-
     if not isinstance(border_type, str):
         raise TypeError(f'Input border_type is not string. Got {type(kernel)}')
-
     if not len(input.shape) == 4:
         raise ValueError(f'Invalid input shape, we expect BxCxHxW. Got: {input.shape}')
-
     if not len(kernel.shape) == 3:
         raise ValueError(f'Invalid kernel shape, we expect 1xHxW. Got: {kernel.shape}')
-
     borders_list: List[str] = ['constant', 'reflect', 'replicate', 'circular']
     if border_type not in borders_list:
         raise ValueError(f"Invalid border_type, we expect the following: {borders_list}."
                          f"Got: {border_type}")
-
     # prepare kernel
     b, c, h, w = input.shape
     tmp_kernel: torch.Tensor = kernel.unsqueeze(0).to(input.device).to(input.dtype)

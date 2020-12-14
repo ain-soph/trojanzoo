@@ -2,12 +2,12 @@ from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_
 from trojanzoo.parser import Parser_Mark
 from trojanzoo.parser.attack import Parser_BadNet
 
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
+from trojanzoo.datasets import ImageSet
+from trojanzoo.models import ImageModel
 from trojanzoo.mark import Watermark
-from trojanzoo.attack.backdoor.hidden_trigger import Hidden_Trigger
-from trojanzoo.defense.backdoor import Neural_Cleanse
-from trojanzoo.defense.backdoor import Fine_Pruning
+from trojanzoo.attacks.backdoor.hidden_trigger import Hidden_Trigger
+from trojanzoo.defenses.backdoor import Neural_Cleanse
+from trojanzoo.defenses.backdoor import Fine_Pruning
 from trojanzoo.utils import normalize_mad
 
 import argparse

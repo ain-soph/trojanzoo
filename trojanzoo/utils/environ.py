@@ -45,7 +45,7 @@ def add_argument(parser: argparse.ArgumentParser):
                        help='set to \'cpu\' to force cpu-only and \'gpu\', \'cuda\' for gpu-only, defaults to \'auto\'.')
     group.add_argument('--benchmark', dest='benchmark', action='store_true',
                        help='use torch.backends.cudnn.benchmark to accelerate without deterministic, defaults to False.')
-    group.add_argument('--verbose', dest='verbose', action='store_true',
+    group.add_argument('--verbose', dest='verbose', type=int,
                        help='show arguments and module information, defaults to False.')
     group.add_argument('--color', dest='color', action='store_true',
                        help='Colorful Output, defaults to False.')

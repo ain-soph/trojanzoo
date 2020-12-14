@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Seq
-from trojanzoo.dataset import Dataset
-from trojanzoo.model import Model
-from trojanzoo.model.image.magnet import MagNet
+from trojanzoo.datasets import Dataset
+from trojanzoo.models import Model
+from trojanzoo.models.image.magnet import MagNet
 
 import torch
 from typing import Tuple

@@ -9,3 +9,9 @@ batch_size:
   gtsrb: -256
 
 num_workers: 4
+
+data_format:
+  default: folder
+  gtsrb: numpy
+  sample_imagenet: zip
+  sample_vggface2: numpy

@@ -51,11 +51,11 @@ class Config:
             if path[-1] != '/' and path[-1] != '\\':
                 path += '/'
             _dict = {}
-            for r, d, f in os.walk(path):
-                for _file in f:
+            for root, dirs, files in os.walk(path):
+                for _file in files:
                     name, ext = os.path.splitext(_file)
                     if ext in ['.yml', '.yaml', 'json']:
-                        _dict.update({name: Config.load_config(os.path.join(r, _file))})
+                        _dict.update({name: Config.load_config(os.path.join(root, _file))})
             return _dict
         elif os.path.isfile(path):
             name, ext = os.path.splitext(os.path.split(path)[1])
@@ -63,7 +63,7 @@ class Config:
                 with open(path, 'r', encoding='utf-8') as f:
                     return yaml.load(f.read(), Loader=yaml.FullLoader)
             elif ext == '.json':
-                raise NotImplementedError('json is not supported yet: ', path)
+                raise NotImplementedError('TODO: json is not supported yet: ', path)
             else:
                 return {}
         else:

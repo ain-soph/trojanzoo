@@ -2,12 +2,12 @@
 
 # CUDA_VISIBLE_DEVICES=0 python saliency_map.py --dataset sample_imagenet --width 3 --height 3 --verbose --pretrain --attack badnet
 
-from trojanzoo.attack import poison
+from trojanzoo.attacks import poison
 from typing import List
 from trojanzoo.parser import Parser_Dataset, Parser_Model, Parser_Train, Parser_Seq, Parser_Mark, Parser_Attack
-from trojanzoo.dataset import ImageSet
-from trojanzoo.model import ImageModel
-from trojanzoo.attack import BadNet
+from trojanzoo.datasets import ImageSet
+from trojanzoo.models import ImageModel
+from trojanzoo.attacks import BadNet
 
 from trojanzoo.mark import Watermark
 from trojanzoo.utils.tensor import save_tensor_as_img, to_numpy, save_numpy_as_img
