@@ -33,13 +33,14 @@ class VGGface2(ImageFolder):
             ])
         return transform
 
-    def download(self, file_path=None, folder_path=None, file_name=None, file_ext='tar.gz', **kwargs):
+    def download(self, mode: str = 'train', file_path=None, folder_path=None, file_name=None, file_ext='tar.gz', **kwargs):
+        assert mode == 'train'
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
             if file_name is None:
-                file_name = {'train': self.name + '_train.' + file_ext}
-                file_path = {'train': folder_path + file_name['train']}
+                file_name = f'{self.name}_{mode}.{file_ext}'
+                file_path = folder_path + file_name
         if os.path.exists(file_path['train']):
             print('File Already Exists: ', file_path)
             return file_path

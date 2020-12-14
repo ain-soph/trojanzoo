@@ -4,7 +4,7 @@ from .imageset import ImageSet
 from trojanzoo.environ import env
 from trojanzoo.utils import to_numpy
 from trojanzoo.utils.output import ansi, prints, output_iter
-from trojanzoo.utils.data import MemoryDataset, ZipFolder, uncompress
+from trojanzoo.utils.data import MemoryDataset, ZipFolder, dataset_to_numpy, uncompress
 
 import torch
 from torch.utils.data import DataLoader
@@ -12,6 +12,7 @@ from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import numpy as np
+import PIL.Image as Image
 import argparse
 import json
 import os
@@ -39,18 +40,12 @@ class ImageFolder(ImageSet):
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
         self.class_to_idx = self.get_class_to_idx()
+        if self.class_to_idx is None and data_format == 'folder':
+            self.class_to_idx = self.get_class_to_idx(check_folder=True)
         self.data: Dict[str, np.ndarray] = None
         self.targets: Dict[str, List[int]] = None
-
-    def load_data(self):
-        self.data = {}
-        self.targets = {}
-        mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
-        for mode in mode_list:
-            npz_path = self.folder_path + self.name + f'/{mode}.npz'
-            _dict = np.load(npz_path)
-            self.data[mode] = _dict['data']
-            self.targets[mode] = list(_dict['targets'])
+        if data_format not in ['folder', 'zip']:
+            self.data, self.targets = self.load_data()
 
     def initialize(self, *args, **kwargs):
         if self.data_format == 'folder' or not self.check_files(data_format='folder'):
@@ -62,25 +57,46 @@ class ImageFolder(ImageSet):
         else:
             self.initialize_npz(*args, **kwargs)
 
-    def initialize_folder(self, verbose: bool = True, **kwargs):
+    def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
         mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
-        if os.path.is_file(''):
-            pass
-        file_path = self.download()
-        uncompress(file_path=file_path.values(),
-                   target_path=self.folder_path + self.name, verbose=verbose)
         for mode in mode_list:
+            zip_path = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
+            npz_path = self.folder_path + self.name + f'/{self.name}_{mode}.npz'
+            self.class_to_idx = self.get_class_to_idx()
+            if os.path.is_file(zip_path):
+                uncompress(file_path=zip_path, target_path=self.folder_path + self.name, verbose=verbose)
+                continue
+            elif os.path.is_file(npz_path):
+                self.data, self.targets = self.load_data()
+                # TODO: Parallel
+                for i in range(len(self.targets)):
+                    image = Image.fromarray(self.data[i])
+                    class_name = str(self.targets[i])
+                    if self.class_to_idx is not None:
+                        idx_to_class = {v: k for k, v in self.class_to_idx.items()}
+                        class_name = idx_to_class[self.targets[i]]
+                    _dir = self.folder_path + self.name + f'/{mode}/{class_name}/'
+                    if not os.path.exists(_dir):
+                        os.makedirs(_dir)
+                    image.save(f'{i}{img_type}')
+                continue
+            file_path = self.download(mode=mode)
+            uncompress(file_path=file_path, target_path=self.folder_path + self.name, verbose=verbose)
             os.rename(self.folder_path + self.name + f'/{self.org_folder_name[mode]}/',
                       self.folder_path + self.name + f'/{mode}/')
             if '/' in self.org_folder_name[mode]:
                 shutil.rmtree(self.folder_path + self.name + '/'
                               + self.org_folder_name[mode].split('/')[0])
+        self.class_to_idx = self.get_class_to_idx(check_folder=True)
+        json_path = self.folder_path + self.name + '/class_to_idx.json'
+        with open(json_path, 'w') as f:
+            json.dump(self.class_to_idx, f)
 
     def initialize_zip(self, **kwargs):
         mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
             src_path = self.folder_path + self.name + f'/{mode}/'
-            dst_path = self.folder_path + self.name + f'/{self.name}_uncompress_{mode}.zip'
+            dst_path = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
             with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STOREED)) as zf:
                 for root, dirs, files in os.walk(src_path):
                     _dir = root.replace(self.folder_path + self.name + '/', '')
@@ -94,8 +110,7 @@ class ImageFolder(ImageSet):
         json_path = self.folder_path + self.name + '/class_to_idx.json'
         for mode in mode_list:
             dataset: ImageFolder = self.get_org_dataset(mode, data_format='folder')
-            data, targets = zip(*dataset)
-            data = np.array([np.array(image) for image in data])
+            data, targets = dataset_to_numpy(dataset)
             npz_path = self.folder_path + self.name + f'/{mode}.npz'
             np.savez(npz_path, data=data, targets=targets)
             with open(json_path, 'w') as f:
@@ -111,13 +126,13 @@ class ImageFolder(ImageSet):
         if data_format == 'folder':
             root = self.folder_path + self.name + f'/{mode}/'
         elif data_format == 'zip':
-            root = self.folder_path + self.name + f'/{mode}.zip'
+            root = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
         DatasetClass = datasets.VisionDataset
         if data_format == 'folder':
             DatasetClass = datasets.ImageFolder
         elif data_format == 'zip':
             DatasetClass = ZipFolder
-        elif self.data is None:
+        elif self.targets is None:
             raise Exception()
             raise NotImplementedError('TODO')
         else:
@@ -126,36 +141,39 @@ class ImageFolder(ImageSet):
             kwargs['targets'] = self.targets[mode]
         return DatasetClass(root=root, transform=transform, **kwargs)
 
-    def get_class_to_idx(self, file_path: str = None) -> Dict[str, int]:
+    def load_data(self):
+        data = {}
+        targets = {}
+        mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
+        for mode in mode_list:
+            npz_path = self.folder_path + self.name + f'/{mode}.npz'
+            _dict = np.load(npz_path)
+            data[mode] = _dict['data']
+            targets[mode] = list(_dict['targets'])
+        return data, targets
+
+    def get_class_to_idx(self, file_path: str = None, check_folder=False) -> Dict[str, int]:
         if file_path is None:
             file_path = self.folder_path + self.name + '/class_to_idx.json'
         if os.path.exists(file_path):
             return json.load(file_path)
-        return self.get_org_dataset('train', data_format='folder').class_to_idx
+        if check_folder:
+            return self.get_org_dataset('train', data_format='folder').class_to_idx
 
-    def download(self, url: Dict[str, str] = None, file_path: str = None,
-                 folder_path: str = None, file_name: str = None, file_ext: str = 'zip'):
-        if url is None:
-            url = self.url
+    def download(self, mode: str, url: str, file_path: str = None,
+                 folder_path: str = None, file_name: str = None, file_ext: str = 'zip') -> str:
         if file_path is None:
             if folder_path is None:
                 folder_path = self.folder_path
             if file_name is None:
-                file_name = {}
-                file_path = {}
-                file_name['train'] = self.name + '_train.' + file_ext
-                file_path['train'] = folder_path + file_name['train']
-                if self.valid_set:
-                    file_name['valid'] = self.name + '_valid.' + file_ext
-                    file_path['valid'] = folder_path + file_name['valid']
-        print('Downloading Dataset %s' % self.name)
-        for mode in file_path.keys():
-            prints(mode, ' ' * 10, file_path[mode], indent=10)
-            if not os.path.exists(file_path[mode]):
-                download_url_to_file(url[mode], file_path[mode])
-                print('{upline}{clear_line}'.format(**ansi), end='')
-            else:
-                prints('File Already Exists: ', file_path[mode], indent=20)
+                file_name = f'{self.name}_{mode}.{file_ext}'
+                file_path = folder_path + file_name
+        if not os.path.exists(file_path[mode]):
+            print(f'Downloading Dataset {self.name} {mode:5s}: {file_path}')
+            download_url_to_file(url[mode], file_path[mode])
+            print('{upline}{clear_line}'.format(**ansi), end='')
+        else:
+            prints('File Already Exists: ', file_path, indent=10)
         return file_path
 
     def sample(self, child_name: str = None, class_dict: dict = None, sample_num: int = None, verbose=True):
