@@ -2,24 +2,19 @@
 
 from .imageset import ImageSet
 from trojanzoo.environ import env
-from trojanzoo.utils import to_numpy
 from trojanzoo.utils.output import ansi, prints, output_iter
 from trojanzoo.utils.data import MemoryDataset, ZipFolder, dataset_to_numpy, uncompress
 
-import torch
-from torch.utils.data import DataLoader
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
-import torchvision.transforms as transforms
 import numpy as np
 import PIL.Image as Image
-import argparse
 import json
 import os
 import shutil
 import zipfile
 from tqdm import tqdm
-from typing import List, Dict, Type, Union
+from typing import List, Dict, Union
 
 
 class ImageFolder(ImageSet):
