@@ -27,7 +27,6 @@ class Grad_Train(Defense):
         self.model._train(loss_fn=self.loss_fn, validate_func=self.validate_func, verbose=True, **kwargs)
 
     def loss_fn(self, _input, _label, **kwargs):
-        loss_list = []
         new_input = _input.repeat(4, 1, 1, 1)
         new_label = _label.repeat(4)
         noise = torch.randn_like(new_input)
