@@ -6,7 +6,6 @@ from trojanzoo.models import ImageModel
 from .environ import env
 
 import os
-from collections import OrderedDict
 from typing import List, Union
 
 
@@ -16,7 +15,7 @@ class Process:
 
     def __init__(self, output: Union[int, List[str]] = 0, indent: int = 0, **kwargs):
 
-        self.param_list = OrderedDict()
+        self.param_list = {}
         self.param_list['verbose'] = ['output', 'indent']
 
         self.output: List[str] = None

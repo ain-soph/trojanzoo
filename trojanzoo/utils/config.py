@@ -8,13 +8,6 @@ import json
 import yaml
 from typing import List
 
-path = {
-    'package': os.path.dirname(rootfile) + '/config/',
-    'user': None,
-    'project': './config/',
-    'cmd': None
-}
-
 
 class Config:
     """A singleton class to process config. The config is composed of ``package``, ``user``, ``project`` and ``cmd``.
@@ -34,6 +27,13 @@ class Config:
     cmd = Param()
 
     config = Param()
+
+    path = {
+        'package': os.path.dirname(rootfile) + '/config/',
+        'user': None,
+        'project': './config/',
+        'cmd': None
+    }
 
     @classmethod
     def refresh_config(cls) -> Param:
@@ -82,9 +82,9 @@ class Config:
             setattr(cls, item, Param(cls.load_config(path[item])))
         cls.refresh_config()
 
-    @staticmethod
-    def set_config_path(item: str, loc: str):
-        path[item] = loc
+    @classmethod
+    def set_config_path(cls, item: str, loc: str):
+        cls.path[item] = loc
 
     @staticmethod
     def combine_param(config: str = None, dataset_name: str = None, **kwargs) -> Param:

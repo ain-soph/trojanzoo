@@ -70,3 +70,4 @@ class ImageSet(Dataset):
                 if not os.path.exists(_dir):
                     os.makedirs(_dir)
                 image.save(_dir + f'{class_counters[target_class]}{img_type}')
+                class_counters[target_class] += 1

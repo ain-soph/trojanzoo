@@ -12,7 +12,6 @@ import numpy as np
 import os
 import sys
 import argparse
-from collections import OrderedDict
 from typing import Dict, List, Tuple, Union
 
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -53,7 +52,7 @@ class Dataset:
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
                  num_workers: int = 0, loss_weights: bool = False, test_batch_size: int = 1, **kwargs):
 
-        self.param_list: Dict[str, List[str]] = OrderedDict()
+        self.param_list: Dict[str, List[str]] = {}
         self.param_list['abstract'] = ['data_type', 'folder_path', 'label_names',
                                        'batch_size', 'num_classes', 'num_workers', 'test_batch_size']
         if batch_size < 0:

@@ -4,13 +4,12 @@ from .environ import Env, env
 from .output import ansi, prints
 
 import torch
-from collections import OrderedDict
+from typing import Type
 
 
-def summary(indent: int = 0, prefix={'env': Env}, **kwargs):
-    od = OrderedDict(prefix)
-    od.update(kwargs)
-    for key, value in od.items():
+def summary(indent: int = 0, prefix:dict[str, Type[Env]] = {'env': Env}, **kwargs):
+    _dict = prefix | kwargs
+    for key, value in _dict.items():
         prints('{yellow}{0:<10s}{reset}'.format(key, **ansi), indent=indent)
         try:
             value.summary()

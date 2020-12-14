@@ -133,7 +133,7 @@ class Model:
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
 
-        self.param_list: Dict[str, List[str]] = OrderedDict()
+        self.param_list: Dict[str, List[str]] = {}
         self.param_list['abstract'] = ['suffix', 'pretrain', 'official', 'randomized_smooth', 'sgm']
         if sgm:
             self.param_list['abstract'].extend(['sgm_gamma'])

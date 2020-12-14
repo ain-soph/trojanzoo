@@ -68,6 +68,7 @@ class ImageFolder(ImageSet):
                     if not os.path.exists(_dir):
                         os.makedirs(_dir)
                     image.save(_dir + f'{class_counters[target_class]}{img_type}')
+                    class_counters[target_class] += 1
                 continue
             file_path = self.download(mode=mode)
             uncompress(file_path=file_path, target_path=self.folder_path + self.name, verbose=verbose)

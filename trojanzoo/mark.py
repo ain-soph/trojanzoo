@@ -15,10 +15,9 @@ import numpy as np
 import torch
 import argparse
 from PIL import Image
-from collections import OrderedDict
 from typing import Callable, List, Dict, Tuple, Type, Union
 
-root_dir = os.path.dirname(os.path.abspath(root_file))
+root_dir = os.path.dirname(root_file)
 redirect = Indent_Redirect(buffer=True, indent=0)
 
 
@@ -67,7 +66,7 @@ class Watermark:
                  height_offset: int = 0, width_offset: int = 0,
                  random_pos=False, random_init=False, mark_distributed=False,
                  add_mark_fn=None, **kwargs):
-        self.param_list: Dict[str, List[str]] = OrderedDict()
+        self.param_list: Dict[str, List[str]] = {}
         self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
                                    'mark_alpha', 'mark_height', 'mark_width',
                                    'random_pos', 'random_init']

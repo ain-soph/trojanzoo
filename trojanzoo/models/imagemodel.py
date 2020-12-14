@@ -7,8 +7,7 @@ from trojanzoo.utils import to_numpy
 import torch
 import torch.autograd
 import numpy as np
-import cv2
-from collections import OrderedDict
+import PIL.Image as Image
 from typing import Dict, List
 
 # norm_par = {
@@ -82,7 +81,7 @@ class _ImageModel(_Model):
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
-        od = OrderedDict()
+        _dict = {}
         record = False
 
         if layer_input == 'input':
@@ -92,29 +91,29 @@ class _ImageModel(_Model):
         for name, module in self.features.named_children():
             if record:
                 x = module(x)
-                od['features.' + name] = x
+                _dict['features.' + name] = x
             elif 'features.' + name == layer_input:
                 record = True
         if layer_input == 'features':
             record = True
         if record:
-            od['features'] = x
+            _dict['features'] = x
             x = self.pool(x)
-            od['pool'] = x
+            _dict['pool'] = x
             x = self.flatten(x)
-            od['flatten'] = x
+            _dict['flatten'] = x
 
         for name, module in self.classifier.named_children():
             if record:
                 x = module(x)
-                od['classifier.' + name] = x
+                _dict['classifier.' + name] = x
             elif 'classifier.' + name == layer_input:
                 record = True
         y = x
-        od['classifier'] = y
-        od['logits'] = y
-        od['output'] = y
-        return od
+        _dict['classifier'] = y
+        _dict['logits'] = y
+        _dict['output'] = y
+        return _dict
 
     def get_other_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         layer_name_list = self.get_layer_name()
@@ -137,10 +136,10 @@ class _ImageModel(_Model):
             print('typeof (output layer) : ', type(layer_output))
             raise TypeError(
                 '\"get_other_layer\" requires parameter "layer_output" to be int or str.')
-        od = self.get_all_layer(x, layer_input=layer_input)
-        if layer_name not in od.keys():
-            print(od.keys())
-        return od[layer_name]
+        _dict = self.get_all_layer(x, layer_input=layer_input)
+        if layer_name not in _dict.keys():
+            print(_dict.keys())
+        return _dict[layer_name]
 
     def get_layer_name(self, extra=True) -> List[str]:
         layer_name = []
@@ -201,8 +200,8 @@ class ImageModel(Model):
         heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
         heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
         heatmap = (to_numpy(heatmap).transpose(1, 2, 0) * 255).astype(np.uint8)
-
-        heatmap = cv2.resize(heatmap, dsize=_input.shape[-2:], interpolation=cv2.INTER_CUBIC)
+        heatmap = Image.fromarray(heatmap).resize(_input.shape[-2:], resample=Image.BICUBIC)
+        heatmap = np.array(heatmap)
         if len(heatmap.shape) == 2:
             heatmap = heatmap.reshape(heatmap.shape[0], heatmap.shape[1], 1)
         heatmap = heatmap.transpose(2, 0, 1).astype(float) / 255    # (N, H, W)

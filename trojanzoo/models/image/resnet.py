@@ -37,7 +37,7 @@ class _ResNet(_ImageModel):
         # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
 
     def get_all_layer(self, x: torch.Tensor, layer_input='input'):
-        od = OrderedDict()
+        _dict = {}
         record = False
 
         if layer_input == 'input':
@@ -49,35 +49,35 @@ class _ResNet(_ImageModel):
                 for block_name, block in layer.named_children():
                     if record:
                         x = block(x)
-                        od['features.' + layer_name + '.' + block_name] = x
+                        _dict['features.' + layer_name + '.' + block_name] = x
                     if 'features.' + layer_name + '.' + block_name == layer_input:
                         record = True
                 if record:
-                    od['features.' + layer_name] = x
+                    _dict['features.' + layer_name] = x
             elif record:
                 x = layer(x)
-                od['features.' + layer_name] = x
+                _dict['features.' + layer_name] = x
             if 'features.' + layer_name == layer_input:
                 record = True
         if layer_input == 'features':
             record = True
         if record:
-            od['features'] = x
+            _dict['features'] = x
             x = self.pool(x)
-            od['pool'] = x
+            _dict['pool'] = x
             x = self.flatten(x)
-            od['flatten'] = x
+            _dict['flatten'] = x
 
         for name, module in self.classifier.named_children():
             if record:
                 x = module(x)
-                od['classifier.' + name] = x
+                _dict['classifier.' + name] = x
             elif 'classifier.' + name == layer_input:
                 record = True
-        od['classifier'] = x
-        od['logits'] = x
-        od['output'] = x
-        return od
+        _dict['classifier'] = x
+        _dict['logits'] = x
+        _dict['output'] = x
+        return _dict
 
     def get_layer_name(self, extra=True):
         layer_name_list = []

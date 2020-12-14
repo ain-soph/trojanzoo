@@ -7,7 +7,7 @@ from trojanzoo.utils.param import Module
 import os
 import json
 from trojanzoo import __file__ as root_file
-root_dir = os.path.dirname(os.path.abspath(root_file))
+root_dir = os.path.dirname(root_file)
 
 
 class ImageNet(ImageFolder):
