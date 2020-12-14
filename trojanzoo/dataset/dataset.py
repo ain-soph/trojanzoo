@@ -96,7 +96,9 @@ class Dataset:
 
     def check_files(self) -> bool:
         try:
-            dataset = self.get_org_dataset(mode='train')
+            self.get_org_dataset(mode='train')
+            if self.valid_set:
+                self.get_org_dataset(mode='valid')
         except Exception:
             return False
         else:
