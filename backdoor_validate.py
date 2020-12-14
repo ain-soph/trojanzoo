@@ -21,16 +21,16 @@ if __name__ == '__main__':
     trojanzoo.model.add_argument(parser)
     trojanzoo.mark.add_argument(parser)
     trojanzoo.attack.add_argument(parser)
-
     args = parser.parse_args()
 
     trojanzoo.environ.create(**args.__dict__)
     dataset = trojanzoo.dataset.create(**args.__dict__)
     model = trojanzoo.model.create(dataset=dataset, **args.__dict__)
     mark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)
-    attack: BadNet = trojanzoo.attack.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
+    attack = trojanzoo.attack.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
 
     if env['verbose']:
         summary(dataset=dataset, model=model, mark=mark, attack=attack)
+    attack: BadNet
     attack.load()
     attack.validate_func()

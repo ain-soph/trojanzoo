@@ -45,8 +45,8 @@ class Module(object):
     def summary(self, indent=0):
         print(' ' * indent, self)
 
-    def copy(self):
-        return self.__class__(self)
+    # def copy(self):
+    #     return self.__class__(self)
 
     def clear(self):
         for item in list(self.keys()):

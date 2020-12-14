@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from trojanzoo import optim
 from trojanzoo.dataset.dataset import Dataset
 from trojanzoo.model.model import Model
 from trojanzoo.utils.config import Config
@@ -13,21 +14,30 @@ import argparse
 from typing import List, Tuple
 
 
-class Train:
-    optim_args = Param()
-    train_args = Param()
-    optimizer: Optimizer = None
-    lr_scheduler: _LRScheduler = None
+class Trainer:
     param_list: List[str] = ['optim_args', 'train_args', 'optimizer', 'lr_scheduler']
+
+    def __init__(self, optim_args: dict = {}, train_args: dict = {}, optimizer: Optimizer = None, lr_scheduler: _LRScheduler = None):
+        self.optim_args: Param = Param(optim_args)
+        self.train_args: Param = Param(train_args)
+        self.optimizer: Optimizer = optimizer
+        self.lr_scheduler: _LRScheduler = lr_scheduler
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    @classmethod
+    def keys(cls):
+        return cls.param_list
 
     @classmethod
     def summary(cls, indent: int = 0):
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format('train', **ansi), indent=indent)
-        for item in cls.param_list:
-            attr = getattr(cls, item)
-            if attr is not None:
-                prints('{green}{0:<10s}{reset}'.format(item, **ansi), indent=indent + 10)
-                prints(attr, indent=indent + 10)
+        for key in cls.param_list:
+            value = getattr(cls, key)
+            if value is not None:
+                prints('{green}{0:<10s}{reset}'.format(key, **ansi), indent=indent + 10)
+                prints(value, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
 
 
@@ -74,8 +84,4 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
         _dict[key] = value
 
     optimizer, lr_scheduler = model.define_optimizer(**optim_args)
-    Train.optimizer = optimizer
-    Train.lr_scheduler = lr_scheduler
-    Train.optim_args.clear().update(optim_args)
-    Train.train_args.clear().update(train_args)
-    return optimizer, lr_scheduler, train_args
+    return Trainer(optim_args=optim_args, train_args=train_args, optimizer=optimizer, lr_scheduler=lr_scheduler)
