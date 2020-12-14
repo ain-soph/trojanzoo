@@ -128,7 +128,7 @@ class ZipFolder(DatasetFolder):
         f = self.root_zip[path]
         if get_image_backend() == 'accimage':
             try:
-                import accimage
+                import accimage  # type: ignore
                 return accimage.Image(f)
             except IOError:
                 pass   # fall through to PIL
