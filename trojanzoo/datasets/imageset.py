@@ -10,7 +10,7 @@ from torchvision.datasets import VisionDataset
 import torchvision.transforms as transforms
 import os
 import PIL.Image as Image
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 
 class ImageSet(Dataset):

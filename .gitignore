@@ -29,6 +29,7 @@ ref
 prev_projects
 **/todo
 **/bak
+/bash
 /lifelong
 
 # Filter Files
