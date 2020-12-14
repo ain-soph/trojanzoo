@@ -4,7 +4,6 @@ from .environ import Env, env
 from .output import ansi, prints
 
 import torch
-from torch.utils.data import Dataset
 from collections import OrderedDict
 
 
@@ -27,20 +26,6 @@ def empty_cache(threshold: float = None):
     if threshold is not None:
         if torch.cuda.memory_cached() > threshold * (2**20):
             torch.cuda.empty_cache()
-
-
-class MyDataset(Dataset):
-    def __init__(self, data: torch.FloatTensor, targets: torch.LongTensor):
-        self.data = data
-        self.targets = targets
-
-    def __getitem__(self, index):
-        x = self.data[index]
-        y = self.targets[index]
-        return x, y
-
-    def __len__(self):
-        return len(self.data)
 
 
 def normalize_mad(values: torch.Tensor, side: str = None) -> torch.Tensor:

@@ -8,7 +8,6 @@ import trojanzoo.model
 import trojanzoo.trainer
 import trojanzoo.attack
 import trojanzoo.defense
-from trojanzoo.attack import BadNet
 
 from trojanzoo.environ import env
 from trojanzoo.utils import summary
@@ -36,5 +35,4 @@ if __name__ == '__main__':
 
     if env['verbose']:
         summary(dataset=dataset, model=model, trainer=trainer, attack=attack, defense=defense)
-    attack: BadNet
     defense.detect(**trainer)

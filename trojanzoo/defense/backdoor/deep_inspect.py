@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.environ import env
 from trojanzoo.utils import to_tensor, normalize_mad, jaccard_idx
 from trojanzoo.utils.model import to_categorical, AverageMeter
@@ -20,7 +20,7 @@ from typing import List, Tuple
 mse_criterion = nn.MSELoss()
 
 
-class Deep_Inspect(Defense_Backdoor):
+class Deep_Inspect(BackdoorDefense):
 
     name: str = 'deep_inspect'
 

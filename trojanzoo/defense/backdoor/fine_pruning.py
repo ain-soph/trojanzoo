@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.utils import to_list
 from trojanzoo.utils.output import output_iter
 
@@ -10,7 +10,7 @@ import torch.nn.utils.prune as prune
 import argparse
 
 
-class Fine_Pruning(Defense_Backdoor):
+class Fine_Pruning(BackdoorDefense):
     """
     Fine Pruning Defense is described in the paper 'Fine-Pruning'_ by KangLiu. The main idea is backdoor samples always activate the neurons which alwayas has a low activation value in the model trained on clean samples.
 

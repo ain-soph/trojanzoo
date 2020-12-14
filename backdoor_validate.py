@@ -5,7 +5,6 @@ import trojanzoo.dataset
 import trojanzoo.model
 import trojanzoo.mark
 import trojanzoo.attack
-from trojanzoo.attack import BadNet
 
 from trojanzoo.environ import env
 from trojanzoo.utils import summary
@@ -31,6 +30,5 @@ if __name__ == '__main__':
 
     if env['verbose']:
         summary(dataset=dataset, model=model, mark=mark, attack=attack)
-    attack: BadNet
     attack.load()
     attack.validate_func()

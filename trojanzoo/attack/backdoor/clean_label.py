@@ -2,7 +2,7 @@ from .badnet import BadNet
 from trojanzoo.attack.adv import PGD
 from trojanzoo.optim import PGD as PGD_Optimizer
 from trojanzoo.environ import env
-from trojanzoo.utils import MyDataset
+from trojanzoo.utils.data import MyDataset
 from trojanzoo.utils.model import weight_init
 
 import torch

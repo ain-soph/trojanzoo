@@ -2,9 +2,10 @@
 
 from .badnet import BadNet
 from trojanzoo.environ import env
-from trojanzoo.utils import MyDataset, to_tensor
-from trojanzoo.utils.output import prints
+from trojanzoo.utils import to_tensor
+from trojanzoo.utils.data import MyDataset
 from trojanzoo.utils.model import AverageMeter
+from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn as nn

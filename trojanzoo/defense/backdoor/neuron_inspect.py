@@ -1,5 +1,6 @@
-from ..defense_backdoor import Defense_Backdoor
-from trojanzoo.utils import normalize_mad, MyDataset
+from ..backdoor_defense import BackdoorDefense
+from trojanzoo.utils import normalize_mad
+from trojanzoo.utils.data import MyDataset
 from trojanzoo.utils.output import output_iter
 
 import torch
@@ -8,7 +9,7 @@ import argparse
 from typing import List
 
 
-class Neuron_Inspect(Defense_Backdoor):
+class Neuron_Inspect(BackdoorDefense):
 
     name: str = 'neuron_inspect'
 

@@ -6,7 +6,6 @@ import trojanzoo.dataset
 import trojanzoo.model
 import trojanzoo.trainer
 import trojanzoo.attack
-from trojanzoo.attack import PGD
 
 from trojanzoo.environ import env
 from trojanzoo.utils import summary
@@ -32,5 +31,4 @@ if __name__ == '__main__':
 
     if env['verbose']:
         summary(dataset=dataset, model=model, train=trainer, attack=attack)
-    attack: PGD
     attack.attack(**trainer)

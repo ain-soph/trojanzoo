@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.utils import output
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 
 from trojanzoo.utils import jaccard_idx
 from trojanzoo.utils.model import AverageMeter
@@ -15,7 +15,7 @@ import argparse
 from typing import List
 
 
-class NEO(Defense_Backdoor):
+class NEO(BackdoorDefense):
     name: str = 'neo'
 
     @classmethod

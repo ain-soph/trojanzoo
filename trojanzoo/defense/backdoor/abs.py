@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.optim.uname import Uname
 from trojanzoo.environ import env
 from trojanzoo.utils import normalize_mad, to_numpy, to_tensor, jaccard_idx
@@ -19,7 +19,7 @@ import datetime
 from typing import Dict, Tuple, List
 
 
-class ABS(Defense_Backdoor):
+class ABS(BackdoorDefense):
     name: str = 'abs'
 
     @classmethod

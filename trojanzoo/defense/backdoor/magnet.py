@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.model.image.magnet import MagNet as MagNet_Model
 
 import torch
 from typing import Tuple
 
 
-class MagNet(Defense_Backdoor):
+class MagNet(BackdoorDefense):
     name: str = 'magnet'
 
     def __init__(self, **kwargs):

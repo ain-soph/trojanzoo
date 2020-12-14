@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.environ import env
 from trojanzoo.utils import jaccard_idx, normalize_mad, to_tensor, to_numpy
 from trojanzoo.utils.model import AverageMeter
@@ -19,7 +19,7 @@ from tqdm import tqdm
 from typing import List, Tuple
 
 
-class Neural_Cleanse(Defense_Backdoor):
+class Neural_Cleanse(BackdoorDefense):
 
     name: str = 'neural_cleanse'
 

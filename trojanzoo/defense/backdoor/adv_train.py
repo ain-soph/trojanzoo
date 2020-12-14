@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from ..defense_backdoor import Defense_Backdoor
+from ..backdoor_defense import BackdoorDefense
 from trojanzoo.optim.pgd import PGD
 from trojanzoo.environ import env
 from trojanzoo.utils.model import AverageMeter
@@ -15,7 +15,7 @@ from tqdm import tqdm
 from typing import Tuple
 
 
-class Adv_Train(Defense_Backdoor):
+class Adv_Train(BackdoorDefense):
 
     name: str = 'adv_train'
 

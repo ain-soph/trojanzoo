@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .defense import Defense
-from .defense_backdoor import Defense_Backdoor
+from .backdoor_defense import BackdoorDefense
 from .adv import *
 from .backdoor import *
 from trojanzoo.dataset.dataset import Dataset
@@ -42,7 +42,8 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None) -> a
     if defense_name is None:
         defense_name = get_defense_name()
     DefenseType: Type[Defense] = class_dict[defense_name]
-    group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi), description=defense_name)
+    group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi),
+                                      description='{blue_light}{0}{reset}'.format(defense_name, **ansi))
     DefenseType.add_argument(group)
     return group
 
