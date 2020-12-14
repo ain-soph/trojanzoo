@@ -52,7 +52,8 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None) -> ar
     if attack_name is None:
         attack_name = get_attack_name()
     AttackType: Type[Attack] = class_dict[attack_name]
-    group = parser.add_argument_group('{yellow}attack{reset}'.format(**ansi), description=attack_name)
+    group = parser.add_argument_group('{yellow}attack{reset}'.format(**ansi),
+                                      description='{blue_light}{0}{reset}'.format(attack_name, **ansi))
     AttackType.add_argument(group)
     return group
 
