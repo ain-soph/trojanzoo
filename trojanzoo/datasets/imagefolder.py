@@ -28,11 +28,6 @@ class ImageFolder(ImageSet):
     url: Dict[str, str] = {}
     org_folder_name: Dict[str, str] = {}
 
-    @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
-        group.add_argument('--data_format', dest='data_format', type=str,
-                           help='folder, zip or numpy. (zip is using ZIP_STOREED)')
-
     def __init__(self, data_format: str = 'folder', **kwargs):
         self.data_format: str = data_format
         super().__init__(**kwargs)
@@ -85,8 +80,8 @@ class ImageFolder(ImageSet):
             os.rename(self.folder_path + self.name + f'/{self.org_folder_name[mode]}/',
                       self.folder_path + self.name + f'/{mode}/')
             if '/' in self.org_folder_name[mode]:
-                shutil.rmtree(self.folder_path + self.name + '/'
-                              + self.org_folder_name[mode].split('/')[0])
+                shutil.rmtree(self.folder_path + self.name + '/' +
+                              self.org_folder_name[mode].split('/')[0])
         self.class_to_idx = self.get_class_to_idx(check_folder=True)
         json_path = self.folder_path + self.name + '/class_to_idx.json'
         with open(json_path, 'w') as f:
@@ -217,8 +212,8 @@ class ImageFolder(ImageSet):
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
                     _list = os.listdir(src_path + src_mode + '/' + src_class)
-                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j)
-                           + f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
+                    prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
+                           f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     if env['tqdm']:
                         _list = tqdm(_list)
                     for _file in _list:

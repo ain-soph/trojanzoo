@@ -46,6 +46,8 @@ class Dataset:
                            help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4. (0 for validation set)')
         group.add_argument('--download', dest='download', action='store_true',
                            help='download dataset if not exist by calling dataset.initialize()')
+        group.add_argument('--data_format', dest='data_format', type=str,
+                           help='folder, zip or numpy. (zip is using ZIP_STOREED)')
 
     def __init__(self, batch_size: int = -128, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
