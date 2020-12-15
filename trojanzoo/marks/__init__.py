@@ -18,7 +18,6 @@ import PIL.Image as Image
 from collections.abc import Callable
 from typing import Union
 
-root_dir = os.path.dirname(root_file)
 redirect = Indent_Redirect(buffer=True, indent=0)
 
 
@@ -241,8 +240,8 @@ class Watermark:
 
     @staticmethod
     def load_img(img_path: str, height: int, width: int, channel: int = 3) -> Image.Image:
-        if img_path[:9] == 'trojanzoo':
-            img_path = root_dir + img_path[9:]
+        if img_path.startswith('trojanzoo'):
+            img_path = img_path.replace('trojanzoo', os.path.dirname(root_file))
         mark: Image.Image = Image.open(img_path)
         mark = mark.resize((width, height), Image.ANTIALIAS)
 
@@ -257,8 +256,8 @@ class Watermark:
         save_tensor_as_img(img_path, img)
 
     def load_npz(self, npz_path: str):
-        if npz_path[:9] == 'trojanzoo':
-            npz_path = root_dir + npz_path[9:]
+        if npz_path.startswith('trojanzoo'):
+            npz_path = npz_path.replace('trojanzoo', os.path.dirname(root_file))
         _dict = np.load(npz_path)
         if not self.mark_distributed:
             self.org_mark = torch.as_tensor(_dict['org_mark'])

@@ -4,7 +4,7 @@
 from trojanzoo import optim
 from trojanzoo.datasets.dataset import Dataset
 from trojanzoo.models.model import Model
-from trojanzoo.utils.config import Config
+from trojanzoo.configs import Config
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.param import Param
 

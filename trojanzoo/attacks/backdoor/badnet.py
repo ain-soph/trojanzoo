@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.attacks import Attack
-from trojanzoo.mark import Watermark
+from trojanzoo.marks import Watermark
 from trojanzoo.utils import to_list
 from trojanzoo.utils.data import TensorListDataset
 from trojanzoo.utils.model import AverageMeter

@@ -6,7 +6,7 @@ from .imageset import ImageSet
 from .imagefolder import ImageFolder
 from .image import *
 
-from trojanzoo.utils.config import Config
+from trojanzoo.configs import Config
 from trojanzoo.utils.output import ansi
 
 import argparse

@@ -6,7 +6,7 @@ import trojanzoo.environ
 import trojanzoo.datasets
 import trojanzoo.models
 import trojanzoo.trainer
-import trojanzoo.mark
+import trojanzoo.marks
 import trojanzoo.attacks
 import trojanzoo.defenses
 
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     trojanzoo.datasets.add_argument(parser)
     trojanzoo.models.add_argument(parser)
     trojanzoo.trainer.add_argument(parser)
-    trojanzoo.mark.add_argument(parser)
+    trojanzoo.marks.add_argument(parser)
     trojanzoo.attacks.add_argument(parser)
     trojanzoo.defenses.add_argument(parser)
     args = parser.parse_args()
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     dataset = trojanzoo.datasets.create(**args.__dict__)
     model = trojanzoo.models.create(dataset=dataset, **args.__dict__)
     trainer = trojanzoo.trainer.create(dataset=dataset, model=model, **args.__dict__)
-    mark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)
+    mark = trojanzoo.marks.create(dataset=dataset, **args.__dict__)
     attack = trojanzoo.attacks.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
     defense = trojanzoo.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
 

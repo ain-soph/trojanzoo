@@ -3,9 +3,9 @@
 from .model import Model
 from .imagemodel import ImageModel
 from .image import *
+from trojanzoo.configs import Config
 from trojanzoo.datasets.dataset import Dataset
 from trojanzoo.utils.model import split_name
-from trojanzoo.utils.config import Config
 from trojanzoo.utils.output import ansi
 
 import argparse
