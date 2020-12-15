@@ -12,8 +12,7 @@ import numpy as np
 import os
 import sys
 import argparse
-from collections import OrderedDict
-from typing import Dict, List, Tuple, Union
+from typing import Union
 
 redirect = Indent_Redirect(buffer=True, indent=0)
 
@@ -31,7 +30,7 @@ class Dataset:
     name: str = 'abstact'
     data_type: str = 'abstract'
     num_classes: int = None
-    label_names: List[int] = []
+    label_names: list[int] = []
     valid_set: bool = True
 
     @classmethod
@@ -46,14 +45,12 @@ class Dataset:
                            help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4. (0 for validation set)')
         group.add_argument('--download', dest='download', action='store_true',
                            help='download dataset if not exist by calling dataset.initialize()')
-        group.add_argument('--data_format', dest='data_format', type=str,
-                           help='folder, zip or numpy. (zip is using ZIP_STOREED)')
 
     def __init__(self, batch_size: int = -128, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
                  num_workers: int = 0, loss_weights: bool = False, test_batch_size: int = 1, **kwargs):
 
-        self.param_list: Dict[str, List[str]] = OrderedDict()
+        self.param_list: dict[str, list[str]] = {}
         self.param_list['abstract'] = ['data_type', 'folder_path', 'label_names',
                                        'batch_size', 'num_classes', 'num_workers', 'test_batch_size']
         if batch_size < 0:
@@ -78,7 +75,7 @@ class Dataset:
             if not self.check_files():
                 self.initialize()
         # Preset Loader
-        self.loader: Dict[str, torch.utils.data.DataLoader] = {}
+        self.loader: dict[str, torch.utils.data.DataLoader] = {}
         self.loader['train'] = self.get_dataloader(
             mode='train', batch_size=self.batch_size, full=True)
         self.loader['train2'] = self.get_dataloader(
@@ -121,7 +118,7 @@ class Dataset:
         pass
 
     @staticmethod
-    def get_data(data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(data: tuple[torch.Tensor, torch.LongTensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         return data
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
@@ -142,7 +139,7 @@ class Dataset:
             print(self.folder_path)
             raise e
 
-    def get_dataset(self, mode: str, full: bool = True, classes: List[int] = None, **kwargs) -> torch.utils.data.Dataset:
+    def get_dataset(self, mode: str, full: bool = True, classes: list[int] = None, **kwargs) -> torch.utils.data.Dataset:
         if full and mode != 'test':
             dataset = self.get_full_dataset(mode=mode, **kwargs)
         elif mode == 'train':
@@ -150,7 +147,7 @@ class Dataset:
             dataset, _ = self.split_set(fullset, length=self.train_sample)
         else:
             fullset = self.get_full_dataset(mode='valid', **kwargs)
-            subset: Dict[str, torch.utils.data.Subset] = {}
+            subset: dict[str, torch.utils.data.Subset] = {}
             subset['test'], subset['valid'] = self.split_set(
                 fullset, percent=self.test_ratio)
             dataset = subset[mode]
@@ -158,7 +155,7 @@ class Dataset:
             dataset = self.get_class_set(dataset, classes=classes, **kwargs)
         return dataset
 
-    def get_class_set(self, dataset: torch.utils.data.Dataset, classes: List[int], **kwargs):
+    def get_class_set(self, dataset: torch.utils.data.Dataset, classes: list[int], **kwargs):
         indices = np.arange(len(dataset))
         if isinstance(dataset, torch.utils.data.Subset):
             idx = np.array(dataset.indices)
@@ -175,7 +172,7 @@ class Dataset:
 
     @classmethod
     def split_set(cls, dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                  length: int = None, percent=None) -> Tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
+                  length: int = None, percent=None) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
         assert (length is None) != (percent is None)  # XOR check
         if length is None:
             length = int(len(dataset) * percent)

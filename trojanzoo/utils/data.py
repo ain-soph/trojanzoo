@@ -16,7 +16,8 @@ import struct
 import io
 import os
 import tqdm
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import Callable
+from typing import Any, Optional, Union, cast
 
 
 def untar(file_path, target_path):
@@ -38,7 +39,7 @@ def unzip(file_path, target_path):
         zf.extractall(target_path)
 
 
-def uncompress(file_path: List[str], target_path: str, verbose=True):
+def uncompress(file_path: list[str], target_path: str, verbose=True):
     if isinstance(file_path, str):
         file_path = [file_path]
     if not os.path.exists(target_path):
@@ -47,7 +48,7 @@ def uncompress(file_path: List[str], target_path: str, verbose=True):
         if verbose:
             print('Uncompress file: ', _file)
         ext = os.path.splitext(_file)[1]
-        if ext in['.zip']:
+        if ext in ['.zip']:
             unzip(_file, target_path)
         elif ext in ['.tar', '.gz']:
             untar(_file, target_path)
@@ -58,7 +59,7 @@ def uncompress(file_path: List[str], target_path: str, verbose=True):
             print()
 
 
-def dataset_to_numpy(dataset: VisionDataset, **kwargs) -> Tuple[np.ndarray, List[int]]:
+def dataset_to_numpy(dataset: VisionDataset, **kwargs) -> tuple[np.ndarray, list[int]]:
     if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
         return dataset.data, dataset.targets
     data, targets = zip(*dataset)
@@ -68,13 +69,13 @@ def dataset_to_numpy(dataset: VisionDataset, **kwargs) -> Tuple[np.ndarray, List
 
 
 class TensorListDataset(Dataset):
-    def __init__(self, data: torch.FloatTensor = None, targets: List[int] = None, **kwargs):
+    def __init__(self, data: torch.FloatTensor = None, targets: list[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self.targets = targets
         assert len(self.data) == len(self.targets)
 
-    def __getitem__(self, index: Union[int, slice]) -> Tuple[torch.FloatTensor, int]:
+    def __getitem__(self, index: Union[int, slice]) -> tuple[torch.FloatTensor, int]:
         return self.data[index], int(self.targets[index])
 
     def __len__(self):
@@ -82,7 +83,7 @@ class TensorListDataset(Dataset):
 
 
 class MemoryDataset(VisionDataset):
-    def __init__(self, data: np.ndarray = None, targets: List[int] = None,
+    def __init__(self, data: np.ndarray = None, targets: list[int] = None,
                  root: str = None, **kwargs):
         super().__init__(root=root, **kwargs)
         self.data = data
@@ -93,7 +94,7 @@ class MemoryDataset(VisionDataset):
             self.targets = list(_dict['targets'])
         assert len(self.data) == len(self.targets)
 
-    def __getitem__(self, index: Union[int, slice]) -> Tuple[Any, Any]:
+    def __getitem__(self, index: Union[int, slice]) -> tuple[Any, Any]:
         """
         Args:
             index (int): Index
@@ -116,7 +117,7 @@ class MemoryDataset(VisionDataset):
 
 class ZipFolder(DatasetFolder):
     def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
-                 is_valid_file: Optional[Callable[[str], bool]] = None,):
+                 is_valid_file: Optional[Callable[[str], bool]] = None) -> None:
         if not root.endswith('.zip'):
             raise TypeError("Need to ZIP file for data source: ", self.root)
         self.root_zip = ZipLookup(os.path.realpath(self.root))
@@ -124,7 +125,7 @@ class ZipFolder(DatasetFolder):
                          transform=transform, target_transform=target_transform, is_valid_file=is_valid_file)
         self.imgs = self.samples
 
-    def zip_loader(self, path):
+    def zip_loader(self, path) -> Any:
         f = self.root_zip[path]
         if get_image_backend() == 'accimage':
             try:
@@ -154,7 +155,7 @@ class ZipFolder(DatasetFolder):
 class ZipLookup(object):
     def __init__(self, filename):
         self.root_zip_filename = filename
-        self.root_zip_lookup: Dict[str, Tuple[int, int]] = {}
+        self.root_zip_lookup: dict[str, tuple[int, int]] = {}
 
         with zipfile.ZipFile(filename, "r") as root_zip:
             for info in root_zip.infolist():
@@ -187,9 +188,9 @@ class ZipLookup(object):
         return self.root_zip_lookup.keys()
 
 
-def make_dataset(root_zip: ZipLookup, class_to_idx: Dict[str, int],
-                 extensions: Optional[Tuple[str, ...]] = None,
-                 is_valid_file: Optional[Callable[[str], bool]] = None,) -> List[Tuple[str, int]]:
+def make_dataset(root_zip: ZipLookup, class_to_idx: dict[str, int],
+                 extensions: Optional[tuple[str, ...]] = None,
+                 is_valid_file: Optional[Callable[[str], bool]] = None,) -> list[tuple[str, int]]:
     instances = []
     both_none = extensions is None and is_valid_file is None
     both_something = extensions is not None and is_valid_file is not None
@@ -197,7 +198,7 @@ def make_dataset(root_zip: ZipLookup, class_to_idx: Dict[str, int],
         raise ValueError("Both extensions and is_valid_file cannot be None or not None at the same time")
     if extensions is not None:
         def is_valid_file(x: str) -> bool:
-            return has_file_allowed_extension(x, cast(Tuple[str, ...], extensions))
+            return has_file_allowed_extension(x, cast(tuple[str, ...], extensions))
     is_valid_file = cast(Callable[[str], bool], is_valid_file)
     for path in sorted(root_zip.keys()):
         if '/' in path:

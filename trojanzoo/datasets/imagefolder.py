@@ -13,15 +13,22 @@ import json
 import os
 import shutil
 import zipfile
+import argparse
 from tqdm import tqdm
-from typing import List, Dict, Union
+from typing import Union
 
 
 class ImageFolder(ImageSet):
 
     name: str = 'imagefolder'
-    url: Dict[str, str] = {}
-    org_folder_name: Dict[str, str] = {}
+    url: dict[str, str] = {}
+    org_folder_name: dict[str, str] = {}
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--data_format', dest='data_format', type=str,
+                           help='folder, zip or numpy. (zip is using ZIP_STOREED)')
 
     def __init__(self, data_format: str = 'folder', **kwargs):
         self.data_format: str = data_format
@@ -32,8 +39,8 @@ class ImageFolder(ImageSet):
             self.class_to_idx = self.get_class_to_idx(check_folder=True)
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
-        self.data: Dict[str, np.ndarray] = None
-        self.targets: Dict[str, List[int]] = None
+        self.data: dict[str, np.ndarray] = None
+        self.targets: dict[str, list[int]] = None
         if data_format not in ['folder', 'zip']:
             self.data, self.targets = self.load_data()
 
@@ -48,7 +55,7 @@ class ImageFolder(ImageSet):
             self.initialize_npz(*args, **kwargs)
 
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
-        mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
+        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         self.class_to_idx = self.get_class_to_idx()
         idx_to_class = {v: k for k, v in self.class_to_idx.items()}
         for mode in mode_list:
@@ -68,6 +75,7 @@ class ImageFolder(ImageSet):
                     if not os.path.exists(_dir):
                         os.makedirs(_dir)
                     image.save(_dir + f'{class_counters[target_class]}{img_type}')
+                    class_counters[target_class] += 1
                 continue
             file_path = self.download(mode=mode)
             uncompress(file_path=file_path, target_path=self.folder_path + self.name, verbose=verbose)
@@ -78,20 +86,20 @@ class ImageFolder(ImageSet):
                               self.org_folder_name[mode].split('/')[0])
 
     def initialize_zip(self, **kwargs):
-        mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
+        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
             src_path = self.folder_path + self.name + f'/{mode}/'
             dst_path = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
             with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STOREED)) as zf:
                 for root, dirs, files in os.walk(src_path):
-                    _dir = root.replace(self.folder_path + self.name + '/', '')
+                    _dir = root.removeprefix(self.folder_path + self.name + '/')
                     for _file in files:
                         org_path = os.path.join(root, _file)
                         zip_path = os.path.join(_dir, _file)
                         zf.write(org_path, zip_path)
 
     def initialize_npz(self, **kwargs):
-        mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
+        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         json_path = self.folder_path + self.name + '/class_to_idx.json'
         for mode in mode_list:
             dataset: ImageFolder = self.get_org_dataset(mode, transform=None, data_format='folder')
@@ -118,8 +126,7 @@ class ImageFolder(ImageSet):
         elif data_format == 'zip':
             DatasetClass = ZipFolder
         elif self.targets is None:
-            raise Exception()
-            raise NotImplementedError('TODO')
+            raise Exception()   # TODO
         else:
             DatasetClass = MemoryDataset
             kwargs['data'] = self.data[mode]
@@ -129,7 +136,7 @@ class ImageFolder(ImageSet):
     def load_data(self):
         data = {}
         targets = {}
-        mode_list: List[str] = ['train', 'valid'] if self.valid_set else ['train']
+        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
             npz_path = self.folder_path + self.name + f'/{mode}.npz'
             _dict = np.load(npz_path)
@@ -137,7 +144,7 @@ class ImageFolder(ImageSet):
             targets[mode] = list(_dict['targets'])
         return data, targets
 
-    def get_class_to_idx(self, file_path: str = None, check_folder=False) -> Dict[str, int]:
+    def get_class_to_idx(self, file_path: str = None, check_folder=False) -> dict[str, int]:
         if file_path is None:
             file_path = self.folder_path + self.name + '/class_to_idx.json'
         if os.path.exists(file_path):

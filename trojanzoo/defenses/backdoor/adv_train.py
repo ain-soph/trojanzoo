@@ -12,7 +12,6 @@ import argparse
 import time
 import datetime
 from tqdm import tqdm
-from typing import Tuple
 
 
 class Adv_Train(BackdoorDefense):
@@ -40,7 +39,7 @@ class Adv_Train(BackdoorDefense):
         self.adv_train(verbose=True, **kwargs)
         self.attack.validate_func()
 
-    def validate_func(self, get_data=None, **kwargs) -> Tuple[float, float, float]:
+    def validate_func(self, get_data=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         adv_loss, adv_acc, _ = self.model._validate(print_prefix='Validate Adv',
@@ -50,7 +49,7 @@ class Adv_Train(BackdoorDefense):
             adv_acc = 0.0
         return clean_loss + adv_loss, adv_acc, clean_acc
 
-    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.LongTensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data, **kwargs)
 
         def loss_fn(X: torch.FloatTensor):

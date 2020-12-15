@@ -8,7 +8,6 @@ from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn.functional as F
-from typing import List, Tuple
 
 
 class AdvMind(Defense):
@@ -45,7 +44,7 @@ class AdvMind(Defense):
         self.fake_query_num: int = int(self.attack.query_num * self.fake_percent)
         self.true_query_num: int = self.attack.query_num - self.fake_query_num
 
-        self.attack_grad_list: List[torch.Tensor] = []
+        self.attack_grad_list: list[torch.Tensor] = []
 
     def detect(self):
         zeros = torch.zeros(self.attack.iteration - 1)
@@ -89,7 +88,7 @@ class AdvMind(Defense):
         if 'start' in self.output:
             self.attack.output_info(_input=_input, noise=torch.zeros_like(_input), target=target,
                                     loss_fn=lambda _X: self.model.loss(_X, target))
-        self.attack_grad_list: List[torch.Tensor] = []
+        self.attack_grad_list: list[torch.Tensor] = []
         # ------------------------ Attacker Seq -------------------------------- #
         seq = self.get_seq(_input, target)  # Attacker cluster sequences (iter, query_num+1, C, H, W)
         seq_centers, seq_bias = self.get_center_bias(seq)  # Defender cluster center estimate
@@ -231,7 +230,7 @@ class AdvMind(Defense):
             B = B + S / 0.4132 * (self.fake_percent + (1 - self.fake_percent) * result)
         return B
 
-    def get_center_bias(self, seq: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_center_bias(self, seq: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         seq_centers = []
         seq_bias = []
         for cluster in seq:

@@ -3,7 +3,7 @@
 from trojanzoo.utils.process import Process
 from trojanzoo.utils.output import prints, output_memory
 
-from typing import Callable
+from collections.abc import Callable
 
 
 class Optimizer(Process):

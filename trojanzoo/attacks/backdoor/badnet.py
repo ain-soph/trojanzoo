@@ -13,7 +13,6 @@ import math
 import random
 import os
 import argparse
-from typing import Tuple
 
 
 class BadNet(Attack):
@@ -125,7 +124,7 @@ class BadNet(Attack):
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
         return (1 - self.percent) * loss_clean + self.percent * loss_poison
 
-    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -144,7 +143,7 @@ class BadNet(Attack):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',

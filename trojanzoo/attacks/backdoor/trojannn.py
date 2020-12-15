@@ -8,7 +8,6 @@ from trojanzoo.utils.output import ansi
 import torch
 import argparse
 from tqdm import tqdm
-from typing import Tuple
 
 
 class TrojanNN(BadNet):
@@ -122,7 +121,7 @@ class TrojanNN(BadNet):
                   self.get_neuron_value(x, neuron_idx))
         return x
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         if self.neuron_idx is not None:
             with torch.no_grad():
                 print("Neuron Value After Preprocessing: ",

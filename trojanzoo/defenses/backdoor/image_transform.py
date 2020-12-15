@@ -7,7 +7,6 @@ import torch
 import torchvision.transforms.functional as F
 import argparse
 from PIL import Image
-from typing import Tuple
 
 
 class Image_Transform(BackdoorDefense):
@@ -36,7 +35,7 @@ class Image_Transform(BackdoorDefense):
             self.attack.validate_func()
             self.model.randomized_smooth = False
 
-    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.LongTensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         if org:
             _input, _label = self.model.get_data(data)
         else:
@@ -50,7 +49,7 @@ class Image_Transform(BackdoorDefense):
             _input_list.append(to_tensor(image))
         return torch.stack(_input_list), _label
 
-    def validate_func(self, **kwargs) -> Tuple[float, float, float]:
+    def validate_func(self, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=self.get_data, org=True, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',

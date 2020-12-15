@@ -6,20 +6,19 @@ from trojanzoo.models import ImageModel
 from .environ import env
 
 import os
-from collections import OrderedDict
-from typing import List, Union
+from typing import Union
 
 
 class Process:
 
     name: str = 'process'
 
-    def __init__(self, output: Union[int, List[str]] = 0, indent: int = 0, **kwargs):
+    def __init__(self, output: Union[int, list[str]] = 0, indent: int = 0, **kwargs):
 
-        self.param_list = OrderedDict()
+        self.param_list = {}
         self.param_list['verbose'] = ['output', 'indent']
 
-        self.output: List[str] = None
+        self.output: list[str] = None
         self.output = self.get_output(output)
         self.indent = indent
 
@@ -33,7 +32,7 @@ class Process:
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)
             prints('-' * 20, indent=indent + 10)
 
-    def get_output(self, org_output: Union[int, List[str]] = None) -> List[str]:
+    def get_output(self, org_output: Union[int, list[str]] = None) -> list[str]:
         output = None
         if org_output is None:
             output = self.output
@@ -45,8 +44,8 @@ class Process:
             output = org_output
         return output
 
-    def get_output_int(self, org_output: int = 0) -> List[str]:
-        result: List[str] = []
+    def get_output_int(self, org_output: int = 0) -> list[str]:
+        result: list[str] = []
         if org_output >= 5:
             result.append('end')
         if org_output >= 10:

@@ -7,7 +7,6 @@ from trojanzoo.utils import to_tensor
 import torch
 import numpy as np
 import os
-from typing import Dict, List
 
 
 class IMC_ABS(IMC):
@@ -19,7 +18,7 @@ class IMC_ABS(IMC):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:
@@ -42,12 +41,12 @@ class IMC_ABS(IMC):
         self.save()
         _input, _label = self.seed_data['input'], self.seed_data['label']
         all_ps = self.sample_neuron(_input)
-        self.neuron_list: List[Dict] = self.find_min_max(all_ps, _label)[0]
+        self.neuron_list: list[dict] = self.find_min_max(all_ps, _label)[0]
         self.optimize_mark()
 
     # ---------------------------- Seed Data --------------------------- #
 
-    def save_seed_data(self) -> Dict[str, np.ndarray]:
+    def save_seed_data(self) -> dict[str, np.ndarray]:
         torch.manual_seed(env['seed'])
         if self.seed_num % self.model.num_classes:
             raise ValueError(f'seed_num({self.seed_num:d}) % num_classes({self.model.num_classes:d}) should be 0.')
@@ -67,9 +66,9 @@ class IMC_ABS(IMC):
         print('seed data saved at: ', seed_path)
         return seed_data
 
-    def load_seed_data(self) -> Dict[str, torch.Tensor]:
+    def load_seed_data(self) -> dict[str, torch.Tensor]:
         seed_path = f'{env["result_dir"]}{self.dataset.name}/{self.name}_{self.seed_num}.npy'
-        seed_data: Dict[str, torch.Tensor] = {}
+        seed_data: dict[str, torch.Tensor] = {}
         seed_data = np.load(seed_path, allow_pickle=True).item() if os.path.exists(seed_path) \
             else self.save_seed_data()
         seed_data['input'] = to_tensor(seed_data['input'])
@@ -78,8 +77,8 @@ class IMC_ABS(IMC):
 
     # -----------------------Neural Sample---------------------------- #
 
-    def sample_neuron(self, _input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        all_ps: Dict[str, torch.Tensor] = {}
+    def sample_neuron(self, _input: torch.Tensor) -> dict[str, torch.Tensor]:
+        all_ps: dict[str, torch.Tensor] = {}
         batch_size = _input.shape[0]
 
         layer_output = self.model.get_all_layer(_input)
@@ -120,8 +119,8 @@ class IMC_ABS(IMC):
             # (C, n_samples, batch_size, num_classes)
         return all_ps
 
-    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[int, List[dict]]:
-        neuron_dict: Dict[int, list] = {i: [] for i in range(self.model.num_classes)}
+    def find_min_max(self, all_ps: dict[str, torch.Tensor], _label: torch.Tensor) -> dict[int, list[dict]]:
+        neuron_dict: dict[int, list] = {i: [] for i in range(self.model.num_classes)}
         _label = _label.cpu()
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)
@@ -145,7 +144,7 @@ class IMC_ABS(IMC):
         return neuron_dict
     # -------------------------ReMask--------------------------------- #
 
-    def abs_loss(self, layer_dict: Dict[str, torch.Tensor], layer: str, neuron: int):
+    def abs_loss(self, layer_dict: dict[str, torch.Tensor], layer: str, neuron: int):
         feats = layer_dict[layer]
         vloss1 = feats[:, neuron].sum()
         vloss2 = feats.sum() - vloss1

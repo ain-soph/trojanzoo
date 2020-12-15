@@ -11,11 +11,10 @@ from trojanzoo.utils.param import Param
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import argparse
-from typing import List, Tuple
 
 
 class Trainer:
-    param_list: List[str] = ['optim_args', 'train_args', 'optimizer', 'lr_scheduler']
+    param_list: list[str] = ['optim_args', 'train_args', 'optimizer', 'lr_scheduler']
 
     def __init__(self, optim_args: dict = {}, train_args: dict = {}, optimizer: Optimizer = None, lr_scheduler: _LRScheduler = None):
         self.optim_args: Param = Param(optim_args)
@@ -29,7 +28,7 @@ class Trainer:
         return getattr(self, key)
 
     def keys(self):
-        keys: List[str] = self.param_list
+        keys: list[str] = self.param_list
         keys.remove('optim_args')
         keys.remove('train_args')
         keys.extend(list(self.train_args.keys()))
@@ -68,7 +67,7 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     return group
 
 
-def create(dataset_name: str = None, dataset: Dataset = None, model: Model = None, **kwargs) -> Tuple[Optimizer, _LRScheduler, dict]:
+def create(dataset_name: str = None, dataset: Dataset = None, model: Model = None, **kwargs) -> tuple[Optimizer, _LRScheduler, dict]:
     assert isinstance(model, Model)
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name

@@ -6,7 +6,6 @@ from trojanzoo.models.image import MagNet
 import torch
 import math
 import random
-from typing import Tuple
 
 
 class IMC_MagNet(IMC):
@@ -16,7 +15,7 @@ class IMC_MagNet(IMC):
         super().__init__(**kwargs)
         self.magnet = MagNet(dataset=self.dataset, pretrain=True)
 
-    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.LongTensor], keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)

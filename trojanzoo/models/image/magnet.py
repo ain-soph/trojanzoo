@@ -7,7 +7,6 @@ from trojanzoo.datasets import ImageSet
 
 import torch
 import torch.nn as nn
-from typing import List, Tuple
 
 # Note that MagNet requires "eval" mode to train.
 
@@ -80,7 +79,7 @@ class MagNet(Model):
         super().__init__(name=name, dataset=dataset, model_class=model_class,
                          structure=structure, activation=activation, channel=dataset.n_channel, **kwargs)
 
-    def get_data(self, data: Tuple[torch.Tensor], v_noise: float = None, mode='train'):
+    def get_data(self, data: tuple[torch.Tensor], v_noise: float = None, mode='train'):
         if v_noise is None:
             v_noise = self.v_noise
         _input = data[0]

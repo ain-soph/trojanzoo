@@ -7,7 +7,6 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 
 import argparse
-from typing import List
 
 
 class Neuron_Inspect(BackdoorDefense):
@@ -33,7 +32,7 @@ class Neuron_Inspect(BackdoorDefense):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
 
         self.param_list['neuron_inspect'] = ['lambd_sp', 'lambd_sm', 'lambd_pe', 'thre', 'sample_ratio']
 
@@ -57,12 +56,14 @@ class Neuron_Inspect(BackdoorDefense):
         print('exp features: ', exp_features)
         print('exp mad: ', normalize_mad(exp_features))
 
-    def get_explation_feature(self) -> List[float]:
+    def get_explation_feature(self) -> list[float]:
         dataset = self.dataset.get_dataset(mode='train')
         subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
-        _input, _label = next(iter(DataLoader(subset, batch_size=len(subset), num_workers=0)))
+        _input, _label = zip(*subset)
+        _input = torch.stack(_input)
+        _label = torch.tensor(_label)
         poison_input = self.attack.add_mark(_input)
         newset = TensorDataset(poison_input, _label)
         backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)

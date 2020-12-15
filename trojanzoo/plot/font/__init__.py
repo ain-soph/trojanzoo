@@ -4,7 +4,7 @@ import os
 import matplotlib
 import matplotlib.font_manager as font_manager
 
-dirname = os.path.dirname(os.path.abspath(__file__))
+dirname = os.path.dirname(__file__)
 
 palatino = font_manager.FontProperties(
     fname=dirname + '/palatino_normal.ttf')

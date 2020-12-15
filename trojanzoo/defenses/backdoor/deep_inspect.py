@@ -14,7 +14,6 @@ import argparse
 import time
 import datetime
 from tqdm import tqdm
-from typing import List, Tuple
 
 
 mse_criterion = nn.MSELoss()
@@ -46,7 +45,7 @@ class Deep_Inspect(BackdoorDefense):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
 
         self.param_list['deep_inspect'] = ['sample_ratio', 'remask_epoch', 'remask_lr', 'gamma_1', 'gamma_2']
 
@@ -72,7 +71,7 @@ class Deep_Inspect(BackdoorDefense):
         print('loss: ', loss_list)
         print('loss MAD: ', normalize_mad(loss_list))
 
-    def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_potential_triggers(self) -> tuple[torch.Tensor, torch.Tensor]:
         mark_list, loss_list = [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):
@@ -96,7 +95,7 @@ class Deep_Inspect(BackdoorDefense):
             return _input + self.attack.mark.mark.to(_input.device)
         self.attack.mark.add_mark_fn = add_mark_fn
 
-    def remask(self, label: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def remask(self, label: int) -> tuple[torch.Tensor, torch.Tensor]:
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
         for param in generator.parameters():
             param.requires_grad_()
@@ -187,10 +186,10 @@ class Deep_Inspect(BackdoorDefense):
 
 
 class Generator(nn.Module):
-    def __init__(self, noise_dim: int = 100, num_classes: int = 10, data_shape: List[int] = [3, 32, 32]):
+    def __init__(self, noise_dim: int = 100, num_classes: int = 10, data_shape: list[int] = [3, 32, 32]):
         self.noise_dim: int = noise_dim
         self.num_classes: int = num_classes
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
         super(Generator, self).__init__()
 
         self.relu = nn.ReLU(inplace=True)

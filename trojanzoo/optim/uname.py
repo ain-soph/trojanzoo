@@ -9,8 +9,8 @@ from trojanzoo.utils.output import prints
 import torch
 import torch.optim as optim
 import math
-from collections.abc import Callable as Callable_func
-from typing import Union, List, Callable
+from collections.abc import Callable
+from typing import Union
 
 
 class Uname(Optimizer):
@@ -32,9 +32,9 @@ class Uname(Optimizer):
         self.step_size: int = step_size
         self.input_transform: Callable[[torch.Tensor], torch.Tensor] = input_transform
 
-    def optimize(self, unbound_params: List[torch.Tensor],
+    def optimize(self, unbound_params: list[torch.Tensor],
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
-                 output: Union[int, List[str]] = None, **kwargs):
+                 output: Union[int, list[str]] = None, **kwargs):
         # ------------------------------ Parameter Initialization ---------------------------------- #
         if iteration is None:
             iteration = self.iteration
@@ -42,10 +42,10 @@ class Uname(Optimizer):
             loss_fn = self.loss_fn
         output = self.get_output(output)
         if isinstance(unbound_params, torch.Tensor):
-            unbound_params: List[torch.Tensor] = [unbound_params]
+            unbound_params: list[torch.Tensor] = [unbound_params]
 
         # ----------------------------------------------------------------------------------------- #
-        real_params: List[torch.Tensor] = []
+        real_params: list[torch.Tensor] = []
         for param in unbound_params:
             param.requires_grad_()
             real_params.append(self.transform_func(param))
@@ -71,7 +71,7 @@ class Uname(Optimizer):
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-            real_params: List[torch.Tensor] = []
+            real_params: list[torch.Tensor] = []
             for param in unbound_params:
                 real_params.append(self.transform_func(param))
             if lr_scheduler:
@@ -96,7 +96,7 @@ class Uname(Optimizer):
                 return torch.sigmoid(x)
             else:
                 raise NotImplementedError(self.input_transform)
-        assert isinstance(self.input_transform, Callable_func)
+        assert isinstance(self.input_transform, Callable)
         return self.input_transform(x)
 
     @staticmethod

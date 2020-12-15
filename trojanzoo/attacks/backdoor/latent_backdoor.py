@@ -12,7 +12,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset
 import argparse
-from typing import Dict, Tuple
 
 mse_criterion = nn.MSELoss()
 
@@ -68,7 +67,7 @@ class Latent_Backdoor(BadNet):
         print('Retrain')
         return super().attack(**kwargs)
 
-    def sample_data(self) -> Dict[str, Tuple[torch.Tensor, torch.LongTensor]]:
+    def sample_data(self) -> dict[str, tuple[torch.Tensor, torch.LongTensor]]:
         other_classes = list(range(self.dataset.num_classes))
         other_classes.pop(self.target_class)
         other_x, other_y = [], []
@@ -89,7 +88,7 @@ class Latent_Backdoor(BadNet):
         }
         return data
 
-    def get_avg_target_feats(self, data_dict: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
+    def get_avg_target_feats(self, data_dict: dict[str, tuple[torch.Tensor, torch.LongTensor]]):
         with torch.no_grad():
             if self.dataset.n_dim[0] > 100:
                 target_x, target_y = data_dict['target']
@@ -107,7 +106,7 @@ class Latent_Backdoor(BadNet):
                 avg_target_feats = self.model.get_layer(target_x, layer_output=self.preprocess_layer).mean(dim=0)
         return avg_target_feats.detach()
 
-    def preprocess_mark(self, data: Dict[str, Tuple[torch.Tensor, torch.LongTensor]]):
+    def preprocess_mark(self, data: dict[str, tuple[torch.Tensor, torch.LongTensor]]):
         other_x, _ = data['other']
         other_set = TensorDataset(other_x)
         other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)

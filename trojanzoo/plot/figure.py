@@ -22,13 +22,12 @@ import scipy.stats as stats
 from scipy.interpolate import UnivariateSpline
 # from scipy.optimize import curve_fit
 
-from typing import Dict, List, Tuple
 
 rc('mathtext', fontset='cm')
 
 
 class Figure:
-    def __init__(self, name: str, folder_path: str = None, fig: Figure = None, ax: Axes = None, figsize: Tuple[float, float] = (5, 2.5), tex=False):
+    def __init__(self, name: str, folder_path: str = None, fig: Figure = None, ax: Axes = None, figsize: tuple[float, float] = (5, 2.5), tex=False):
         super(Figure, self).__init__()
         # rc('font', family='palatino', weight='bold', style='normal')
         if tex:
@@ -77,7 +76,7 @@ class Figure:
             os.makedirs(folder_path)
         self.fig.savefig(path, dpi=100, bbox_inches='tight')
 
-    def set_axis_lim(self, axis: str, lim: List[float] = [0.0, 1.0], margin: List[float] = [0.0, 0.0],
+    def set_axis_lim(self, axis: str, lim: list[float] = [0.0, 1.0], margin: list[float] = [0.0, 0.0],
                      piece: int = 10, _format: str = '%.1f',
                      fontsize: int = 11, fontproperties: FontProperties = palatino_bold) -> None:
         if _format == 'integer':
@@ -161,7 +160,7 @@ class Figure:
         # facecolor edgewidth alpha
         return self.ax.bar(x, y, color=color, width=width, align=align, edgecolor=edgecolor, label=label, **kwargs)
 
-    def bar3d(self, x: np.ndarray, y: np.ndarray, z: np.array, color: str = 'black', size: Tuple[float, float] = 0.5,
+    def bar3d(self, x: np.ndarray, y: np.ndarray, z: np.array, color: str = 'black', size: tuple[float, float] = 0.5,
               label: str = None, **kwargs) -> BarContainer:
         # facecolor edgewidth alpha
         if isinstance(size, float) or isinstance(size, int):
@@ -170,7 +169,7 @@ class Figure:
                              dx=np.ones_like(x) * size[0], dy=np.ones_like(y) * size[1], dz=z,
                              color=color, label=label, **kwargs)
 
-    def hist(self, x: np.ndarray, bins: List[float] = None, normed: bool = True, **kwargs):
+    def hist(self, x: np.ndarray, bins: list[float] = None, normed: bool = True, **kwargs):
         return self.ax.hist(x, bins=bins, normed=normed, **kwargs)
 
     def autolabel(self, rects: BarContainer, above: bool = True,
@@ -186,7 +185,7 @@ class Figure:
                              ha='center', va='bottom', fontproperties=fontproperties, fontsize=fontsize)
 
     @staticmethod
-    def get_roc_curve(label, pred) -> Tuple[List[float], List[float]]:
+    def get_roc_curve(label, pred) -> tuple[list[float], list[float]]:
 
         total_inst = len(label)
         total_pos_inst = len(np.where(label == 1)[0])
@@ -215,7 +214,7 @@ class Figure:
         return fprs, tprs
 
     @staticmethod
-    def sort(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def sort(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         idx = np.argsort(x)
         return np.array(x)[idx], np.array(y)[idx]
 
@@ -230,14 +229,14 @@ class Figure:
         return x
 
     @staticmethod
-    def groups_err_bar(x: np.ndarray, y: np.ndarray) -> Dict[float, np.ndarray]:
+    def groups_err_bar(x: np.ndarray, y: np.ndarray) -> dict[float, np.ndarray]:
         y_dict = {}
         for _x in set(x):
             y_dict[_x] = np.array([y[t] for t in range(len(y)) if x[t] == _x])
         return y_dict
 
     @staticmethod
-    def flatten_err_bar(y_dict: Dict[float, np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
+    def flatten_err_bar(y_dict: dict[float, np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
         x = []
         y = []
         for _x in y_dict.keys():
@@ -266,7 +265,7 @@ class Figure:
         return cls.flatten_err_bar(y_dict)
 
     @staticmethod
-    def adjust_err_bar(y_dict: Dict[float, np.ndarray], mean: np.ndarray = None, std: np.ndarray = None) -> Dict[float, np.ndarray]:
+    def adjust_err_bar(y_dict: dict[float, np.ndarray], mean: np.ndarray = None, std: np.ndarray = None) -> dict[float, np.ndarray]:
         sort_keys = np.sort(list(y_dict.keys()))
         if isinstance(mean, float):
             mean = mean * np.ones(len(sort_keys))

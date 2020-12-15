@@ -10,7 +10,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from trojanzoo import __file__ as root_file
-root_dir = os.path.dirname(os.path.abspath(root_file))
+root_dir = os.path.dirname(root_file)
 
 
 class ISIC(ImageFolder):

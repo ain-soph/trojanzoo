@@ -5,7 +5,6 @@ from .imc import IMC
 import torch
 import math
 import random
-from typing import Tuple
 
 
 class IMC_STRIP(IMC):
@@ -29,7 +28,7 @@ class IMC_STRIP(IMC):
     def add_strip_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, alpha=1 - (1 - self.mark.mark_alpha) / 2, **kwargs)
 
-    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.LongTensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -45,7 +44,7 @@ class IMC_STRIP(IMC):
             _label = torch.cat((_label, org_label, strip_label))
         return _input, _label
 
-    def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], poison_label: bool = True, strip: bool = False, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_poison_data(self, data: tuple[torch.Tensor, torch.LongTensor], poison_label: bool = True, strip: bool = False, **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         integer = len(_label)
         if strip:
@@ -58,7 +57,7 @@ class IMC_STRIP(IMC):
             _label = _label[:integer]
         return _input, _label
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',

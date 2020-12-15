@@ -10,7 +10,6 @@ import math
 import random
 import os
 import argparse
-from typing import Dict, Tuple, List
 
 
 class IMC_Adaptive(IMC):
@@ -28,7 +27,7 @@ class IMC_Adaptive(IMC):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:
@@ -54,12 +53,12 @@ class IMC_Adaptive(IMC):
         self.save()
         _input, _label = self.seed_data['input'], self.seed_data['label']
         all_ps = self.sample_neuron(_input)
-        self.neuron_list: List[Dict] = self.find_min_max(all_ps, _label)[0]
+        self.neuron_list: list[dict] = self.find_min_max(all_ps, _label)[0]
         self.optimize_mark()
 
     # ---------------------------- Seed Data --------------------------- #
 
-    def save_seed_data(self) -> Dict[str, np.ndarray]:
+    def save_seed_data(self) -> dict[str, np.ndarray]:
         torch.manual_seed(env['seed'])
         if self.seed_num % self.model.num_classes:
             raise ValueError(f'seed_num({self.seed_num:d}) % num_classes({self.model.num_classes:d}) should be 0.')
@@ -79,9 +78,9 @@ class IMC_Adaptive(IMC):
         print('seed data saved at: ', seed_path)
         return seed_data
 
-    def load_seed_data(self) -> Dict[str, torch.Tensor]:
+    def load_seed_data(self) -> dict[str, torch.Tensor]:
         seed_path = f'{env["result_dir"]}{self.dataset.name}/{self.name}_{self.seed_num}.npy'
-        seed_data: Dict[str, torch.Tensor] = {}
+        seed_data: dict[str, torch.Tensor] = {}
         seed_data = np.load(seed_path, allow_pickle=True).item() if os.path.exists(seed_path) \
             else self.save_seed_data()
         seed_data['input'] = to_tensor(seed_data['input'])
@@ -90,8 +89,8 @@ class IMC_Adaptive(IMC):
 
     # -----------------------Neural Sample---------------------------- #
 
-    def sample_neuron(self, _input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        all_ps: Dict[str, torch.Tensor] = {}
+    def sample_neuron(self, _input: torch.Tensor) -> dict[str, torch.Tensor]:
+        all_ps: dict[str, torch.Tensor] = {}
         batch_size = _input.shape[0]
 
         layer_output = self.model.get_all_layer(_input)
@@ -132,8 +131,8 @@ class IMC_Adaptive(IMC):
             # (C, n_samples, batch_size, num_classes)
         return all_ps
 
-    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[int, List[dict]]:
-        neuron_dict: Dict[int, list] = {i: [] for i in range(self.model.num_classes)}
+    def find_min_max(self, all_ps: dict[str, torch.Tensor], _label: torch.Tensor) -> dict[int, list[dict]]:
+        neuron_dict: dict[int, list] = {i: [] for i in range(self.model.num_classes)}
         _label = _label.cpu()
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)
@@ -157,7 +156,7 @@ class IMC_Adaptive(IMC):
         return neuron_dict
     # -------------------------ReMask--------------------------------- #
 
-    def abs_loss(self, layer_dict: Dict[str, torch.Tensor], layer: str, neuron: int):
+    def abs_loss(self, layer_dict: dict[str, torch.Tensor], layer: str, neuron: int):
         feats = layer_dict[layer]
         vloss1 = feats[:, neuron].sum()
         vloss2 = feats.sum() - vloss1
@@ -182,7 +181,7 @@ class IMC_Adaptive(IMC):
     def add_strip_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, alpha=1 - (1 - self.mark.mark_alpha) / 2, **kwargs)
 
-    def get_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.LongTensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
 
         decimal, integer = math.modf(self.poison_num)
@@ -207,7 +206,7 @@ class IMC_Adaptive(IMC):
             _label = torch.cat((_label, poison_label))
         return _input, _label
 
-    def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], poison_label: bool = True, strip: bool = False, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_poison_data(self, data: tuple[torch.Tensor, torch.LongTensor], poison_label: bool = True, strip: bool = False, **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         integer = len(_label)
         if strip:
@@ -220,7 +219,7 @@ class IMC_Adaptive(IMC):
             _label = _label[:integer]
         return _input, _label
 
-    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+    def validate_func(self, get_data=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_loss, target_acc, _ = self.model._validate(print_prefix='Validate Trigger Tgt',
