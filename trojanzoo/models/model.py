@@ -19,8 +19,8 @@ import time
 import datetime
 from tqdm import tqdm
 from collections import OrderedDict
-from collections.abc import Iterable
-from typing import Dict, List, Union, Callable, Tuple, Type
+from collections.abc import Callable, Iterable
+from typing import Union
 
 
 class _Model(nn.Module):
@@ -133,7 +133,7 @@ class Model:
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
 
-        self.param_list: Dict[str, List[str]] = {}
+        self.param_list: dict[str, list[str]] = {}
         self.param_list['abstract'] = ['suffix', 'pretrain', 'official', 'randomized_smooth', 'sgm']
         if sgm:
             self.param_list['abstract'].extend(['sgm_gamma'])
@@ -222,13 +222,13 @@ class Model:
 
     def define_optimizer(self, lr: float = 0.1,
                          parameters: Union[str, Iterable] = 'full', optim_type: Union[str, type] = None,
-                         lr_scheduler=True, step_size=30, **kwargs) -> Tuple[Optimizer, _LRScheduler]:
+                         lr_scheduler=True, step_size=30, **kwargs) -> tuple[Optimizer, _LRScheduler]:
 
         if isinstance(parameters, str):
             parameters = self.get_params(name=parameters)
         if not isinstance(parameters, Iterable):
             raise TypeError(type(parameters))
-        OptimType: Type[Optimizer] = optim.SGD
+        OptimType: type[Optimizer] = optim.SGD
         if isinstance(optim_type, str):
             OptimType = getattr(optim, optim_type)
 
@@ -410,7 +410,7 @@ class Model:
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
-                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs) -> Tuple[float, float, float]:
+                  get_data: Callable = None, loss_fn: Callable[[torch.Tensor, torch.LongTensor], float] = None, **kwargs) -> tuple[float, float, float]:
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']

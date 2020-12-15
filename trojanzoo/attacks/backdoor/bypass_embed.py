@@ -13,7 +13,6 @@ from torch.utils.data import TensorDataset
 
 import argparse
 from collections import OrderedDict
-from typing import Tuple
 
 
 class Bypass_Embed(BadNet):
@@ -84,7 +83,7 @@ class Bypass_Embed(BadNet):
         return poison_loader, discrim_loader
 
     @staticmethod
-    def bypass_get_data(data: Tuple[torch.Tensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor, torch.LongTensor]:
+    def bypass_get_data(data: tuple[torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor, torch.LongTensor]:
         return to_tensor(data[0]), to_tensor(data[1], dtype='long'), to_tensor(data[2], dtype='long')
 
     def joint_train(self, epoch: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,

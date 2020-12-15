@@ -11,7 +11,6 @@ from trojanzoo.utils.output import ansi
 
 import argparse
 import sys
-from typing import Type
 
 class_dict = {
     'mnist': MNIST,
@@ -37,7 +36,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None) -> a
         dataset_name = get_dataset_name()
     DatasetType = Dataset
     if dataset_name is not None:
-        DatasetType: Type[Dataset] = class_dict[dataset_name]
+        DatasetType: type[Dataset] = class_dict[dataset_name]
     group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi), description=dataset_name)
     DatasetType.add_argument(group)
     return group
@@ -47,7 +46,7 @@ def create(dataset_name: str = None, **kwargs) -> Dataset:
     if dataset_name is None:
         dataset_name = Config.config['dataset']['default_dataset']
     result = Config.combine_param(config=Config.config['dataset'], dataset_name=dataset_name, **kwargs)
-    DatasetType: Type[Dataset] = class_dict[dataset_name]
+    DatasetType: type[Dataset] = class_dict[dataset_name]
     return DatasetType(**result)
 
 

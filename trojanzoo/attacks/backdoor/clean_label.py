@@ -12,7 +12,6 @@ import torch.utils.data
 
 import argparse
 import os
-from typing import List
 
 
 class Clean_Label(BadNet):
@@ -78,7 +77,7 @@ class Clean_Label(BadNet):
 
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
         if poison_generation_method == 'pgd':
             self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
             self.pgd_alpha: float = pgd_alpha
@@ -181,11 +180,11 @@ class Clean_Label(BadNet):
 
 
 class Generator(nn.Module):
-    def __init__(self, noise_dim: int = 100, dim: int = 64, data_shape: List[int] = [3, 32, 32]):
+    def __init__(self, noise_dim: int = 100, dim: int = 64, data_shape: list[int] = [3, 32, 32]):
         super().__init__()
         self.noise_dim: int = noise_dim
         self.dim: int = dim
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
         init_dim = dim * data_shape[1] * data_shape[2] // 16
         self.preprocess = nn.Linear(noise_dim, init_dim)
         self.preprocess_1 = nn.Sequential(
@@ -241,7 +240,7 @@ class Discriminator(nn.Module):
 
 
 class WGAN(object):
-    def __init__(self, noise_dim: int, dim: int, data_shape: List[int] = [3, 32, 32],
+    def __init__(self, noise_dim: int, dim: int, data_shape: list[int] = [3, 32, 32],
                  generator_iters: int = 1000, critic_iter: int = 5):
         self.noise_dim = noise_dim
         self.G: Generator = Generator(noise_dim, dim, data_shape)

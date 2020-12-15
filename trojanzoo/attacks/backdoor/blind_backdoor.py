@@ -4,7 +4,6 @@ from .badnet import BadNet
 
 import torch
 import numpy as np
-from typing import Tuple
 
 
 class Blind_Backdoor(BadNet):
@@ -18,7 +17,7 @@ class Blind_Backdoor(BadNet):
         self.y_syn = y_synthesizer
         self.criterion = criterion
 
-    def get_loss_grads(self, model: torch.nn.Module, inputs: torch.Tensor, labels: torch.Tensor, criterion) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_loss_grads(self, model: torch.nn.Module, inputs: torch.Tensor, labels: torch.Tensor, criterion) -> tuple[torch.Tensor, torch.Tensor]:
         # forward pass
         out = model(inputs)
         loss = criterion(out, labels)
@@ -29,7 +28,7 @@ class Blind_Backdoor(BadNet):
         return loss, g
 
     def get_evasion_loss_grads(self, model: torch.nn.Module, inputs: torch.Tensor, labels: torch.Tensor,
-                               inputs_troj: torch.Tensor, labels_troj: torch.Tensor, criterion) -> Tuple[torch.Tensor, torch.Tensor]:
+                               inputs_troj: torch.Tensor, labels_troj: torch.Tensor, criterion) -> tuple[torch.Tensor, torch.Tensor]:
         evasion_loss = criterion(inputs_troj, labels)
         evasion_g = self.get_grads(evasion_loss, model)
         return evasion_loss, evasion_g

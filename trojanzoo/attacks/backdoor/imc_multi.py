@@ -8,7 +8,6 @@ import torch.utils.data
 import numpy as np
 import math
 import random
-from typing import Tuple, List
 
 
 class IMC_Multi(IMC):
@@ -16,7 +15,7 @@ class IMC_Multi(IMC):
 
     def __init__(self, mark_num: int = 5, **kwargs):
         super().__init__(**kwargs)
-        self.mark_list: List[Tuple[Watermark, int]] = []
+        self.mark_list: list[tuple[Watermark, int]] = []
         for i in range(mark_num):
             height_offset = random.randint(0, self.mark.data_shape[-2] - self.mark.mark_height)
             width_offset = random.randint(0, self.mark.data_shape[-1] - self.mark.mark_width)
@@ -49,7 +48,7 @@ class IMC_Multi(IMC):
 
     # ---------------------- Utils ---------------------------- #
 
-    def get_train_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_train_data(self, data: tuple[torch.Tensor, torch.LongTensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         input_list = [_input]
         label_list = [_label]
@@ -68,13 +67,13 @@ class IMC_Multi(IMC):
         _label = torch.cat(label_list)
         return _input, _label
 
-    def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], mark: Watermark = None, target_class: int = 0, **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_poison_data(self, data: tuple[torch.Tensor, torch.LongTensor], mark: Watermark = None, target_class: int = 0, **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         poison_input = mark.add_mark(_input)
         poison_label = target_class * torch.ones_like(_label)
         return poison_input, poison_label
 
-    def validate_func_multi(self, get_data=None, loss_fn=None, **kwargs) -> Tuple[float, float, float]:
+    def validate_func_multi(self, get_data=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                                         get_data=None, **kwargs)
         target_acc = 100.0

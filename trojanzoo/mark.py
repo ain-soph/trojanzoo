@@ -14,8 +14,9 @@ import random
 import numpy as np
 import torch
 import argparse
-from PIL import Image
-from typing import Callable, List, Dict, Tuple, Type, Union
+import PIL.Image as Image
+from collections.abc import Callable
+from typing import Union
 
 root_dir = os.path.dirname(root_file)
 redirect = Indent_Redirect(buffer=True, indent=0)
@@ -60,13 +61,13 @@ def create(data_shape=None, dataset_name: str = None, dataset: Dataset = None, *
 class Watermark:
     name: str = 'mark'
 
-    def __init__(self, data_shape: List[int], edge_color: Union[str, torch.Tensor] = 'auto',
+    def __init__(self, data_shape: list[int], edge_color: Union[str, torch.Tensor] = 'auto',
                  mark_path: str = 'trojanzoo/data/mark/square_white.png', mark_alpha: float = 0.0,
                  mark_height: int = None, mark_width: int = None,
                  height_offset: int = 0, width_offset: int = 0,
                  random_pos=False, random_init=False, mark_distributed=False,
                  add_mark_fn=None, **kwargs):
-        self.param_list: Dict[str, List[str]] = {}
+        self.param_list: dict[str, list[str]] = {}
         self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
                                    'mark_alpha', 'mark_height', 'mark_width',
                                    'random_pos', 'random_init']
@@ -75,7 +76,7 @@ class Watermark:
 
         # WaterMark Image Parameters
         self.mark_alpha: float = mark_alpha
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
         self.mark_path: str = mark_path
         self.mark_height: int = mark_height
         self.mark_width: int = mark_width
@@ -133,7 +134,7 @@ class Watermark:
         return _input + _mask * (mark - _input)
 
     @staticmethod
-    def get_edge_color(mark: torch.Tensor, data_shape: List[int],
+    def get_edge_color(mark: torch.Tensor, data_shape: list[int],
                        edge_color: Union[str, torch.Tensor] = 'auto') -> torch.Tensor:
 
         assert data_shape[0] == mark.shape[0]
@@ -161,7 +162,7 @@ class Watermark:
         return t
 
     @staticmethod
-    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         height, width = org_mark.shape[-2:]
         mark = torch.zeros_like(org_mark, dtype=torch.float)
         mask = torch.zeros([height, width], dtype=torch.bool)
@@ -174,7 +175,7 @@ class Watermark:
         return mask, alpha_mask
 
     def mask_mark(self, org_mark: torch.Tensor = None, org_mask: torch.Tensor = None, org_alpha_mask: torch.Tensor = None,
-                  height_offset: int = None, width_offset: int = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+                  height_offset: int = None, width_offset: int = None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if org_mark is None:
             org_mark = self.org_mark
         if org_mask is None:
@@ -205,7 +206,7 @@ class Watermark:
 
     """
     # each image in the batch has a unique random location.
-    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         assert len(height_offset) == len(width_offset)
         shape = [len(height_offset)].extend(self.data_shape)
         mark = -torch.ones(shape, dtype=int)
@@ -271,15 +272,13 @@ class Watermark:
     def save_npz(self, npz_path: str):
         _dict = {}
         if not self.mark_distributed:
-            _dict.update({'org_mark': to_numpy(self.org_mark),
-                          'org_mask': to_numpy(self.org_mask),
-                          'org_alpha_mask': to_numpy(self.org_alpha_mask)})
+            _dict |= {'org_mark': to_numpy(self.org_mark),
+                      'org_mask': to_numpy(self.org_mask),
+                      'org_alpha_mask': to_numpy(self.org_alpha_mask)}
         if not self.random_pos:
-            _dict.update({
-                'mark': to_numpy(self.mark),
-                'mask': to_numpy(self.mask),
-                'alpha_mask': to_numpy(self.alpha_mask)
-            })
+            _dict |= {'mark': to_numpy(self.mark),
+                      'mask': to_numpy(self.mask),
+                      'alpha_mask': to_numpy(self.alpha_mask)}
         np.savez(npz_path, **_dict)
 
     # ------------------------------Verbose Information--------------------------- #

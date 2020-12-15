@@ -3,7 +3,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import List
 
 
 def backward_hook(gamma: float):
@@ -20,7 +19,7 @@ def backward_hook_norm(module: nn.Module, grad_in: torch.Tensor, grad_out: torch
     return (grad_in[0] / std,)
 
 
-def register_hook_for_resnet(model, gamma: float = 1.0) -> List[torch.utils.hooks.RemovableHandle]:
+def register_hook_for_resnet(model, gamma: float = 1.0) -> list[torch.utils.hooks.RemovableHandle]:
     # There is only 1 ReLU in Conv module of ResNet-18/34
     # and 2 ReLU in Conv module ResNet-50/101/152
     if model.layer in [50, 101, 152]:

@@ -16,19 +16,23 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import sphinx.ext.doctest
+from sphinx import addnodes
+from sphinx.util.docfields import TypedField
+from docutils import nodes
+import pytorch_sphinx_theme
+import torchvision
+import torch
+import trojanzoo
 import os
 import sys
 
 # source code directory, relative to this file, for sphinx-autobuild
 sys.path.insert(0, os.path.abspath('../..'))
 
-import trojanzoo
-import torch
-import torchvision
 
 RELEASE = os.environ.get('RELEASE', True)
 
-import pytorch_sphinx_theme
 
 # -- General configuration ------------------------------------------------
 
@@ -99,7 +103,7 @@ version = 'master (' + trojanzoo.__version__ + ' )'
 # TODO: verify this works as expected
 release = 'master'
 
-# Customized html_title here. 
+# Customized html_title here.
 # Default is " ".join(project, release, "documentation") if not set
 if RELEASE:
     # remove hash (start with 'a') from version number if any
@@ -130,7 +134,7 @@ todo_include_todos = True
 # Disable docstring inheritance
 autodoc_inherit_docstrings = False
 
-autodoc_typehints='none'
+autodoc_typehints = 'none'
 
 
 # -- katex javascript in header
@@ -259,10 +263,6 @@ intersphinx_mapping = {
 # -- A patch that prevents Sphinx from cross-referencing ivar tags -------
 # See http://stackoverflow.com/a/41184353/3343043
 
-from docutils import nodes
-from sphinx.util.docfields import TypedField
-from sphinx import addnodes
-import sphinx.ext.doctest
 
 # Without this, doctest adds any example with a `>>>` as a test
 doctest_test_doctest_blocks = ''
@@ -279,7 +279,7 @@ def patched_make_field(self, types, domain, items, **kw):
     # `kw` catches `env=None` needed for newer sphinx while maintaining
     #  backwards compatibility when passed along further down!
 
-    # type: (List, unicode, Tuple) -> nodes.field
+    # type: (list, unicode, tuple) -> nodes.field
     def handle_item(fieldarg, content):
         par = nodes.paragraph()
         par += addnodes.literal_strong('', fieldarg)  # Patch: this line added
@@ -316,5 +316,6 @@ def patched_make_field(self, types, domain, items, **kw):
             bodynode += nodes.list_item('', handle_item(fieldarg, content))
     fieldbody = nodes.field_body('', bodynode)
     return nodes.field('', fieldname, fieldbody)
+
 
 TypedField.make_field = patched_make_field

@@ -4,10 +4,9 @@ from .environ import Env, env
 from .output import ansi, prints
 
 import torch
-from typing import Type
 
 
-def summary(indent: int = 0, prefix:dict[str, Type[Env]] = {'env': Env}, **kwargs):
+def summary(indent: int = 0, prefix: dict[str, type[Env]] = {'env': Env}, **kwargs):
     _dict = prefix | kwargs
     for key, value in _dict.items():
         prints('{yellow}{0:<10s}{reset}'.format(key, **ansi), indent=indent)

@@ -1,0 +1,6 @@
+python>=3.9.1
+torch
+torchvision
+scikit-learn
+matplotlib
+seaborn

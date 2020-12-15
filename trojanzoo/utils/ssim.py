@@ -3,7 +3,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, List
 
 
 def _compute_zero_padding(kernel_size: int) -> int:
@@ -180,14 +179,14 @@ def get_gaussian_kernel1d(kernel_size: int, sigma: float, force_even: bool = Fal
     return window_1d
 
 
-def get_gaussian_kernel2d(kernel_size: Tuple[int, int], sigma: Tuple[float, float],
+def get_gaussian_kernel2d(kernel_size: tuple[int, int], sigma: tuple[float, float],
                           force_even: bool = False) -> torch.Tensor:
     r"""Function that returns Gaussian filter matrix coefficients.
 
     Args:
-        kernel_size (Tuple[int, int]): filter sizes in the x and y direction.
+        kernel_size (tuple[int, int]): filter sizes in the x and y direction.
          Sizes should be odd and positive.
-        sigma (Tuple[int, int]): gaussian standard deviation in the x and y
+        sigma (tuple[int, int]): gaussian standard deviation in the x and y
          direction.
         force_even (bool): overrides requirement for odd kernel size.
 
@@ -223,7 +222,7 @@ def get_gaussian_kernel2d(kernel_size: Tuple[int, int], sigma: Tuple[float, floa
     return kernel_2d
 
 
-def compute_padding(kernel_size: Tuple[int, int]) -> List[int]:
+def compute_padding(kernel_size: tuple[int, int]) -> list[int]:
     """Computes padding tuple."""
     # 4 ints:  (padding_left, padding_right,padding_top,padding_bottom)
     # https://pytorch.org/docs/stable/nn.html#torch.nn.functional.pad
@@ -271,7 +270,7 @@ def filter2D(input: torch.Tensor, kernel: torch.Tensor,
         raise ValueError(f'Invalid input shape, we expect BxCxHxW. Got: {input.shape}')
     if not len(kernel.shape) == 3:
         raise ValueError(f'Invalid kernel shape, we expect 1xHxW. Got: {kernel.shape}')
-    borders_list: List[str] = ['constant', 'reflect', 'replicate', 'circular']
+    borders_list: list[str] = ['constant', 'reflect', 'replicate', 'circular']
     if border_type not in borders_list:
         raise ValueError(f"Invalid border_type, we expect the following: {borders_list}."
                          f"Got: {border_type}")
@@ -282,7 +281,7 @@ def filter2D(input: torch.Tensor, kernel: torch.Tensor,
         tmp_kernel = normalize_kernel2d(tmp_kernel)
     # pad the input tensor
     height, width = tmp_kernel.shape[-2:]
-    padding_shape: List[int] = compute_padding((height, width))
+    padding_shape: list[int] = compute_padding((height, width))
     input_pad: torch.Tensor = F.pad(input, padding_shape, mode=border_type)
     b, c, hp, wp = input_pad.shape
     # convolve the tensor with the kernel. Pick the fastest alg

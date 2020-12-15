@@ -6,7 +6,6 @@ from trojanzoo import __file__ as rootfile
 import os
 import json
 import yaml
-from typing import List
 
 
 class Config:
@@ -56,7 +55,7 @@ class Config:
                 for _file in files:
                     name, ext = os.path.splitext(_file)
                     if ext in ['.yml', '.yaml', 'json']:
-                        _dict.update({name: Config.load_config(os.path.join(root, _file))})
+                        _dict |= {name: Config.load_config(os.path.join(root, _file))}
             return _dict
         elif os.path.isfile(path):
             name, ext = os.path.splitext(os.path.split(path)[1])
@@ -72,14 +71,14 @@ class Config:
             return {}
 
     @classmethod
-    def update(cls, item_list: List[str] = ['package', 'user', 'project', 'cmd']):
+    def update(cls, item_list: list[str] = ['package', 'user', 'project', 'cmd']):
         """Update the config
 
         Args:
-            args (List[str]): values in ``['package', 'user', 'project']``
+            args (list[str]): values in ``['package', 'user', 'project']``
         """
         for item in item_list:
-            setattr(cls, item, Param(cls.load_config(path[item])))
+            setattr(cls, item, Param(cls.load_config(cls.path[item])))
         cls.refresh_config()
 
     @classmethod

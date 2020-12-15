@@ -10,7 +10,6 @@ from trojanzoo.utils.output import ansi
 
 import argparse
 import sys
-from typing import Type
 
 class_dict = {
 
@@ -41,7 +40,7 @@ def register(name: str, _class: type, **kwargs):
 def add_argument(parser: argparse.ArgumentParser, defense_name: str = None) -> argparse._ArgumentGroup:
     if defense_name is None:
         defense_name = get_defense_name()
-    DefenseType: Type[Defense] = class_dict[defense_name]
+    DefenseType: type[Defense] = class_dict[defense_name]
     group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi),
                                       description='{blue_light}{0}{reset}'.format(defense_name, **ansi))
     DefenseType.add_argument(group)
@@ -54,7 +53,7 @@ def create(defense_name: str = None, dataset_name: str = None, dataset: Dataset 
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name
     result = Config.combine_param(config=Config.config[defense_name], dataset_name=dataset_name, **kwargs)
-    DefenseType: Type[Defense] = class_dict[defense_name]
+    DefenseType: type[Defense] = class_dict[defense_name]
     return DefenseType(dataset=dataset, **result)
 
 

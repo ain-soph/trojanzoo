@@ -16,7 +16,6 @@ import argparse
 import os
 import time
 import datetime
-from typing import Dict, Tuple, List
 
 
 class ABS(BackdoorDefense):
@@ -45,7 +44,7 @@ class ABS(BackdoorDefense):
         super().__init__(**kwargs)
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:
@@ -82,7 +81,7 @@ class ABS(BackdoorDefense):
         print('remask')
         neuron_dict = self.get_potential_triggers(neuron_dict, _input, _label)
 
-    def print_neuron_dict(self, neuron_dict: Dict[int, List[dict]]):
+    def print_neuron_dict(self, neuron_dict: dict[int, list[dict]]):
         for label, label_list in neuron_dict.items():
             print('label: ', label)
             for _dict in label_list:
@@ -93,11 +92,10 @@ class ABS(BackdoorDefense):
                 if 'loss' in _dict.keys():
                     loss = _dict['loss']
                     attack_acc = _dict['attack_acc']
-                    _str += f'    loss: {loss:10.3f}'
-                    _str += f'    Attack Acc: {attack_acc:.3f}'
+                    _str += f'    loss: {loss:10.3f}    Attack Acc: {attack_acc:.3f}'
                 print(_str)
 
-    def get_potential_triggers(self, neuron_dict: Dict[int, List[dict]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> Dict[int, List[dict]]:
+    def get_potential_triggers(self, neuron_dict: dict[int, list[dict]], _input: torch.Tensor, _label: torch.LongTensor, use_mask=True) -> dict[int, list[dict]]:
         losses = AverageMeter('Loss', ':.4e')
         norms = AverageMeter('Norm', ':6.2f')
         jaccard = AverageMeter('Jaccard Idx', ':6.2f')
@@ -136,10 +134,10 @@ class ABS(BackdoorDefense):
                     norms.update(mask.norm(p=1))
                 _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
                 _str += f'    loss: {loss:10.3f}'
-                _str += f'    ATK Acc: {attack_acc:.3f}'
-                _str += f'    ATK Loss: {attack_loss:10.3f}'
-                _str += f'    Norm: {mask.norm(p=1):.3f}'
-                _str += f'    Score: {score:.3f}'
+                f'    ATK Acc: {attack_acc:.3f}'
+                f'    ATK Loss: {attack_loss:10.3f}'
+                f'    Norm: {mask.norm(p=1):.3f}'
+                f'    Score: {score:.3f}'
                 if not self.attack.mark.random_pos:
                     overlap = jaccard_idx(mask, self.real_mask)
                     _dict['jaccard'] = overlap
@@ -162,10 +160,10 @@ class ABS(BackdoorDefense):
 
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,
                label: int, use_mask: bool = True, validate_interval: int = 100,
-               verbose=False) -> Tuple[torch.Tensor, torch.Tensor, float]:
+               verbose=False) -> tuple[torch.Tensor, torch.Tensor, float]:
         atanh_mark = torch.randn(self.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
-        parameters: List[torch.Tensor] = [atanh_mark]
+        parameters: list[torch.Tensor] = [atanh_mark]
         mask = torch.ones(self.data_shape[1:], device=env['device'])
         atanh_mask = torch.ones(self.data_shape[1:], device=env['device'])
         if use_mask:
@@ -232,7 +230,7 @@ class ABS(BackdoorDefense):
         return mark_best, mask_best, loss_best
 
     # ---------------------------- Seed Data --------------------------- #
-    def save_seed_data(self) -> Dict[str, np.ndarray]:
+    def save_seed_data(self) -> dict[str, np.ndarray]:
         torch.manual_seed(env['seed'])
         if self.seed_num % self.model.num_classes:
             raise ValueError(f'seed_num({self.seed_num:d}) % num_classes({self.model.num_classes:d}) should be 0.')
@@ -252,9 +250,9 @@ class ABS(BackdoorDefense):
         print('seed data saved at: ', seed_path)
         return seed_data
 
-    def load_seed_data(self) -> Dict[str, torch.Tensor]:
+    def load_seed_data(self) -> dict[str, torch.Tensor]:
         seed_path = f'{env["result_dir"]}{self.dataset.name}/{self.name}_{self.seed_num}.npy'
-        seed_data: Dict[str, torch.Tensor] = {}
+        seed_data: dict[str, torch.Tensor] = {}
         seed_data = np.load(seed_path, allow_pickle=True).item() if os.path.exists(seed_path) \
             else self.save_seed_data()
         seed_data['input'] = to_tensor(seed_data['input'])
@@ -263,8 +261,8 @@ class ABS(BackdoorDefense):
 
     # -----------------------Neural Sample---------------------------- #
 
-    def sample_neuron(self, _input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        all_ps: Dict[str, torch.Tensor] = {}
+    def sample_neuron(self, _input: torch.Tensor) -> dict[str, torch.Tensor]:
+        all_ps: dict[str, torch.Tensor] = {}
         batch_size = _input.shape[0]
 
         layer_output = self.model.get_all_layer(_input)
@@ -305,8 +303,8 @@ class ABS(BackdoorDefense):
             # (C, n_samples, batch_size, num_classes)
         return all_ps
 
-    def find_min_max(self, all_ps: Dict[str, torch.Tensor], _label: torch.Tensor) -> Dict[int, List[dict]]:
-        neuron_dict: Dict[int, list] = {i: [] for i in range(self.model.num_classes)}
+    def find_min_max(self, all_ps: dict[str, torch.Tensor], _label: torch.Tensor) -> dict[int, list[dict]]:
+        neuron_dict: dict[int, list] = {i: [] for i in range(self.model.num_classes)}
         _label = _label.cpu()
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)

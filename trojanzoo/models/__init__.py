@@ -10,7 +10,6 @@ from trojanzoo.utils.output import ansi
 
 import argparse
 import sys
-from typing import Type
 
 
 class_dict = {
@@ -36,7 +35,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None) -> arg
     ModelType = Model
     if model_name is not None:
         model_name, layer = split_name(model_name)
-        ModelType: Type[Model] = class_dict[model_name]
+        ModelType: type[Model] = class_dict[model_name]
     group = parser.add_argument_group('{yellow}model{reset}'.format(**ansi), description=model_name)
     ModelType.add_argument(group)
     return group
@@ -49,7 +48,7 @@ def create(model_name: str = None, dataset_name: str = None, dataset: Dataset = 
         model_name: str = Config.config['model']['default_model'][dataset_name]
     model_name, layer = split_name(model_name, layer=layer)
     result = Config.combine_param(config=Config.config['model'], dataset_name=dataset_name, **kwargs)
-    ModelType: Type[Model] = class_dict[model_name]
+    ModelType: type[Model] = class_dict[model_name]
     return ModelType(dataset=dataset, layer=layer, **result)
 
 

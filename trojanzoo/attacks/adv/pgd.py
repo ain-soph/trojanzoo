@@ -8,7 +8,8 @@ from trojanzoo.optim import PGD as PGD_Optimizer
 
 import torch
 import argparse
-from typing import Union, Callable
+from collections.abc import Callable
+from typing import Union
 
 
 class PGD(Attack, PGD_Optimizer):

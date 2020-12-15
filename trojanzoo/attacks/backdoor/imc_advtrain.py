@@ -13,7 +13,7 @@ import random
 import time
 import datetime
 from tqdm import tqdm
-from typing import Callable, Tuple
+from collections.abc import Callable
 
 
 class IMC_AdvTrain(IMC):
@@ -42,7 +42,7 @@ class IMC_AdvTrain(IMC):
         self.pgd_iteration = pgd_iteration
         self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
 
-    def get_poison_data(self, data: Tuple[torch.Tensor, torch.LongTensor], **kwargs) -> Tuple[torch.Tensor, torch.LongTensor]:
+    def get_poison_data(self, data: tuple[torch.Tensor, torch.LongTensor], **kwargs) -> tuple[torch.Tensor, torch.LongTensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)

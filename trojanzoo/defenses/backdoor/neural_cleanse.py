@@ -16,7 +16,6 @@ import time
 import datetime
 import argparse
 from tqdm import tqdm
-from typing import List, Tuple
 
 
 class Neural_Cleanse(BackdoorDefense):
@@ -41,7 +40,7 @@ class Neural_Cleanse(BackdoorDefense):
 
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
-        self.data_shape: List[int] = data_shape
+        self.data_shape: list[int] = data_shape
 
         self.epoch: int = epoch
 
@@ -87,7 +86,7 @@ class Neural_Cleanse(BackdoorDefense):
                  mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
         print('Defense results saved at: ' + self.folder_path + self.get_filename(target_class=target_class) + '.npz')
 
-    def get_potential_triggers(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def get_potential_triggers(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
         for label in range(self.model.num_classes):

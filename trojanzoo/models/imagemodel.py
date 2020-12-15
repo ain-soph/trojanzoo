@@ -8,7 +8,6 @@ import torch
 import torch.autograd
 import numpy as np
 import PIL.Image as Image
-from typing import Dict, List
 
 # norm_par = {
 #     'mnist': {
@@ -32,7 +31,7 @@ from typing import Dict, List
 
 class _ImageModel(_Model):
 
-    def __init__(self, norm_par: Dict[str, list] = None, num_classes=None, **kwargs):
+    def __init__(self, norm_par: dict[str, list] = None, num_classes=None, **kwargs):
         if num_classes is None:
             num_classes = 1000
         super().__init__(num_classes=num_classes, **kwargs)
@@ -80,7 +79,7 @@ class _ImageModel(_Model):
                 return self.get_final_fm(x)
         return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> dict[str, torch.Tensor]:
         _dict = {}
         record = False
 
@@ -141,7 +140,7 @@ class _ImageModel(_Model):
             print(_dict.keys())
         return _dict[layer_name]
 
-    def get_layer_name(self, extra=True) -> List[str]:
+    def get_layer_name(self, extra=True) -> list[str]:
         layer_name = []
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
@@ -176,13 +175,13 @@ class ImageModel(Model):
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_layer_name(self, extra=True) -> List[str]:
+    def get_layer_name(self, extra=True) -> list[str]:
         return self._model.get_layer_name(extra=extra)
 
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> Dict[str, torch.Tensor]:
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> dict[str, torch.Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)
 
-    def grad_cam(self, _input: torch.FloatTensor, _class: List[int]) -> np.ndarray:
+    def grad_cam(self, _input: torch.FloatTensor, _class: list[int]) -> np.ndarray:
         if isinstance(_class, int):
             _class = [_class] * len(_input)
         _class = torch.tensor(_class).to(_input.device)
@@ -207,7 +206,7 @@ class ImageModel(Model):
         heatmap = heatmap.transpose(2, 0, 1).astype(float) / 255    # (N, H, W)
         return heatmap
 
-    def get_saliency_map(self, _input: torch.FloatTensor, _class: List[int]) -> torch.Tensor:
+    def get_saliency_map(self, _input: torch.FloatTensor, _class: list[int]) -> torch.Tensor:
         if isinstance(_class, int):
             _class = [_class] * len(_input)
         _class: torch.Tensor = torch.tensor(_class).to(_input.device)
