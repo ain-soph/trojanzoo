@@ -5,7 +5,7 @@ from .backdoor_defense import BackdoorDefense
 from .adv import *
 from .backdoor import *
 from trojanzoo.datasets.dataset import Dataset
-from trojanzoo.utils.config import Config
+from trojanzoo.configs import Config
 from trojanzoo.utils.output import ansi
 
 import argparse

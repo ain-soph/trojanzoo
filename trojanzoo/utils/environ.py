@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .param import Param
-from .config import Config
 from .output import ansi, prints
+from .param import Param
+from trojanzoo.configs import Config
 
 import torch
 import torch.cuda

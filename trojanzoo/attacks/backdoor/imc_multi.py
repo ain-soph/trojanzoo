@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .imc import IMC
-from trojanzoo.mark import Watermark
+from trojanzoo.marks import Watermark
 
 import torch
 import torch.utils.data

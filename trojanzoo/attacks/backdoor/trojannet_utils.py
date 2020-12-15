@@ -2,7 +2,7 @@
 
 from trojanzoo.models.imagemodel import ImageModel, _ImageModel
 
-from trojanzoo.mark import Watermark
+from trojanzoo.marks import Watermark
 
 import torch
 import torch.nn as nn
