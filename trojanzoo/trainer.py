@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-from trojanzoo import optim
 from trojanzoo.datasets.dataset import Dataset
 from trojanzoo.models.model import Model
 from trojanzoo.configs import Config
