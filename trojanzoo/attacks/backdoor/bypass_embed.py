@@ -62,8 +62,9 @@ class Bypass_Embed(BadNet):
         poison_y = self.target_class * torch.ones_like(other_y)
 
         trainset = self.dataset.get_dataset(mode='train')
-        clean_x, clean_y = next(iter(self.dataset.get_dataloader(mode='train', dataset=trainset, batch_size=len(trainset),
-                                                                 shuffle=True, num_workers=0, pin_memory=False)))
+        clean_x, clean_y = zip(*trainset)
+        clean_x = torch.stack(clean_x)
+        clean_y = torch.tensor(clean_y)
 
         discrim_x = torch.cat((other_x, poison_x))
         discrim_y = torch.cat((torch.zeros_like(other_y),

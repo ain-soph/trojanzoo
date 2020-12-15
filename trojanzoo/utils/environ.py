@@ -54,7 +54,7 @@ def add_argument(parser: argparse.ArgumentParser):
     return group
 
 
-def create(config_path: str = None, seed: int = None, device: str = None, benchmark: bool = None, **kwargs):
+def create(config_path: str = None, seed: int = None, device: str = None, benchmark: bool = None, **kwargs) -> Param:
     Config.set_config_path('cmd', config_path)
     Config.update()
     Env.env.update(config_path=config_path, **Config.config['env'])
@@ -76,6 +76,7 @@ def create(config_path: str = None, seed: int = None, device: str = None, benchm
     if benchmark:
         torch.backends.cudnn.benchmark = benchmark
     Env.env.update(seed=seed, device=device, benchmark=benchmark, **kwargs)
+    return Env.env
 
 
 Env.initialize()

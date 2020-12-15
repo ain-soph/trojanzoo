@@ -4,7 +4,6 @@ import trojanzoo.environ
 import trojanzoo.datasets
 import trojanzoo.models
 
-from trojanzoo.environ import env
 from trojanzoo.utils import summary
 import argparse
 
@@ -18,7 +17,7 @@ if __name__ == '__main__':
     trojanzoo.models.add_argument(parser)
     args = parser.parse_args()
 
-    trojanzoo.environ.create(**args.__dict__)
+    env = trojanzoo.environ.create(**args.__dict__)
     dataset = trojanzoo.datasets.create(**args.__dict__)
     model = trojanzoo.models.create(dataset=dataset, **args.__dict__)
 

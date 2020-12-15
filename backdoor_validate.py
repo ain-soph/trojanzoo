@@ -6,7 +6,6 @@ import trojanzoo.models
 import trojanzoo.mark
 import trojanzoo.attacks
 
-from trojanzoo.environ import env
 from trojanzoo.utils import summary
 import argparse
 
@@ -22,7 +21,7 @@ if __name__ == '__main__':
     trojanzoo.attacks.add_argument(parser)
     args = parser.parse_args()
 
-    trojanzoo.environ.create(**args.__dict__)
+    env = trojanzoo.environ.create(**args.__dict__)
     dataset = trojanzoo.datasets.create(**args.__dict__)
     model = trojanzoo.models.create(dataset=dataset, **args.__dict__)
     mark = trojanzoo.mark.create(dataset=dataset, **args.__dict__)

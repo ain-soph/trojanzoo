@@ -61,7 +61,9 @@ class Neuron_Inspect(BackdoorDefense):
         subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
-        _input, _label = next(iter(DataLoader(subset, batch_size=len(subset), num_workers=0)))
+        _input, _label = zip(*subset)
+        _input = torch.stack(_input)
+        _label = torch.tensor(_label)
         poison_input = self.attack.add_mark(_input)
         newset = TensorDataset(poison_input, _label)
         backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
