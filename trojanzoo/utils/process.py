@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from .output import ansi, prints, output_iter
-from trojanzoo.datasets import ImageSet
-from trojanzoo.models import ImageModel
 from .environ import env
+from .output import ansi, prints, output_iter
+from trojanzoo.datasets import Dataset
+from trojanzoo.models import Model
 
 import os
 from typing import Union
 
 
 class Process:
-
     name: str = 'process'
 
     def __init__(self, output: Union[int, list[str]] = 0, indent: int = 0, **kwargs):
 
-        self.param_list = {}
+        self.param_list: dict[str, list[str]] = {}
         self.param_list['verbose'] = ['output', 'indent']
 
         self.output: list[str] = None
@@ -24,8 +23,7 @@ class Process:
 
     # -----------------------------------Output-------------------------------------#
     def summary(self, indent: int = None):
-        if indent is None:
-            indent = self.indent
+        indent = indent if indent is not None else self.indent
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key, value in self.param_list.items():
             prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
@@ -44,7 +42,8 @@ class Process:
             output = org_output
         return output
 
-    def get_output_int(self, org_output: int = 0) -> list[str]:
+    @staticmethod
+    def get_output_int(org_output: int = 0) -> list[str]:
         result: list[str] = []
         if org_output >= 5:
             result.append('end')
@@ -57,7 +56,7 @@ class Process:
         return result
 
     @staticmethod
-    def output_iter(name: str, _iter, iteration=None, indent=0):
+    def output_iter(name: str, _iter: int, iteration: int = None, indent: int = 0):
         string = name + ' Iter: ' + output_iter(_iter + 1, iteration)
         prints(string, indent=indent)
 
@@ -66,21 +65,21 @@ class Model_Process(Process):
 
     name: str = 'model_process'
 
-    def __init__(self, dataset: ImageSet = None, model: ImageModel = None, folder_path: str = None, **kwargs):
+    def __init__(self, dataset: Dataset = None, model: Model = None, folder_path: str = None, **kwargs):
         super().__init__(**kwargs)
         self.param_list['process'] = ['clean_acc', 'folder_path']
-        self.dataset: ImageSet = dataset
-        self.model: ImageModel = model
+        self.dataset: Dataset = dataset
+        self.model: Model = model
 
-        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data=None, verbose=False)
+        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data_fn=None, verbose=False)
         # ----------------------------------------------------------------------------- #
         if folder_path is None:
             folder_path = env['result_dir']
-            if dataset and isinstance(dataset, ImageSet):
-                folder_path += dataset.name + '/'
-            if model and isinstance(model, ImageModel):
-                folder_path += model.name + '/'
-            folder_path += self.name + '/'
-        self.folder_path = folder_path
+            if dataset and isinstance(dataset, Dataset):
+                folder_path = os.path.join(folder_path, dataset.name)
+            if model and isinstance(model, Model):
+                folder_path = os.path.join(folder_path, model.name)
+            folder_path = os.path.join(folder_path, self.name)
+        self.folder_path = os.path.normpath(folder_path)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)

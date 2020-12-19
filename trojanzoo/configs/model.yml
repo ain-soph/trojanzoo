@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
 
-default_model:
-  default: resnetcomp18
-  mnist: net
-  # isic2018: resnet101
-
-sgm_gamma: 1.0
+model_dir: ./data/model/
+default_model: default

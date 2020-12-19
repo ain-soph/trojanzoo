@@ -1,66 +1,41 @@
 # -*- coding: utf-8 -*-
 
 from .model import Model
-from .imagemodel import ImageModel
-from .image import *
-from trojanzoo.configs import Config
 from trojanzoo.datasets.dataset import Dataset
-from trojanzoo.utils.model import split_name
+from trojanzoo.configs import config, Config
+from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
 
 import argparse
-import sys
+import os
+from typing import Union
 
 
-class_dict = {
-    'net': Net,
-    'alexnet': AlexNet,
-    'resnet': ResNet,
-    'resnetcomp': ResNetcomp,
-    'vgg': VGG,
-    'vggcomp': VGGcomp,
-    'densenet': DenseNet,
-    'densenetcomp': DenseNetcomp,
-    'magnet': MagNet,
-}
-
-
-def register(name: str, _class: type):
-    class_dict[name] = _class
-
-
-def add_argument(parser: argparse.ArgumentParser, model_name: str = None) -> argparse._ArgumentGroup:
+def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, Model] = None,
+                 config: Config = config, class_dict: dict[str, type[Model]] = None) -> argparse._ArgumentGroup:
+    dataset_name = get_name(arg_list=['-d', '--dataset'])
+    if dataset_name is None:
+        dataset_name = config.get_full_config()['dataset']['default_dataset']
+    model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if model_name is None:
-        model_name = get_model_name()
-    ModelType = Model
-    if model_name is not None:
-        model_name, layer = split_name(model_name)
-        ModelType: type[Model] = class_dict[model_name]
+        model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
+
     group = parser.add_argument_group('{yellow}model{reset}'.format(**ansi), description=model_name)
-    ModelType.add_argument(group)
-    return group
+    ModelType = class_dict[model_name]
+    return ModelType.add_argument(group)     # TODO: Linting problem
 
 
-def create(model_name: str = None, dataset_name: str = None, dataset: Dataset = None, layer: int = None, **kwargs) -> Model:
-    if dataset_name is None and dataset is not None:
-        dataset_name = dataset.name
-    if model_name is None:
-        model_name: str = Config.config['model']['default_model'][dataset_name]
-    model_name, layer = split_name(model_name, layer=layer)
-    result = Config.combine_param(config=Config.config['model'], dataset_name=dataset_name, **kwargs)
+def create(model_name: str = None, model: Union[str, Model] = None, folder_path: str = None,
+           dataset_name: str = None, dataset: Union[str, Dataset] = None,
+           config: Config = config, class_dict: dict[str, type[Model]] = None, **kwargs) -> Model:
+    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    if dataset_name is None:
+        dataset_name = config.get_full_config()['dataset']['default_dataset']
+    result = config.get_config(dataset_name=dataset_name)['model']._update(kwargs)
+
+    model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
+    model_name = model_name if model_name is not None else result['default_model']
     ModelType: type[Model] = class_dict[model_name]
-    return ModelType(dataset=dataset, layer=layer, **result)
-
-
-def get_model_name() -> str:
-    argv = sys.argv
-    try:
-        idx = argv.index('--model')
-        model_name: str = argv[idx + 1]
-    except ValueError as e:
-        try:
-            idx = argv.index('-m')
-            model_name: str = argv[idx + 1]
-        except ValueError as e:
-            return None
-    return model_name
+    if folder_path is None and isinstance(dataset, Dataset):
+        folder_path = os.path.join(result['model_dir'], dataset.data_type, dataset.name)
+    return ModelType(name=model_name, dataset=dataset, folder_path=folder_path, **result)

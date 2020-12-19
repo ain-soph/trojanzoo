@@ -2,11 +2,9 @@
 
 import io
 import sys
-import torch
-from typing import Union
 
 
-class ANSI():
+class ANSI:
     ansi_color = {
         'black': '\033[30m',
         'red': '\033[31m',
@@ -58,7 +56,7 @@ class ANSI():
 ansi = ANSI()
 
 
-def prints(*args, indent: int = 0, prefix: str = '', **kwargs):
+def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
     assert indent >= 0
     new_args = []
     for arg in args:
@@ -74,27 +72,6 @@ def output_iter(_iter: int, iteration: int = None) -> str:
         length = len(str(iteration))
         return '{blue_light}[ {red}{0}{blue_light} / {red}{1}{blue_light} ]{reset}'.format(
             str(_iter).rjust(length), iteration, **ansi)
-
-
-def output_memory(device: Union[str, torch.device] = None, full: bool = False, indent: int = 0, **kwargs):
-    if full:
-        prints(torch.cuda.memory_summary(device=device, **kwargs))
-    else:
-        prints('memory allocated: '.ljust(20),
-               bytes2size(torch.cuda.memory_allocated(device=device)), indent=indent)
-        prints('memory cached: '.ljust(20),
-               bytes2size(torch.cuda.memory_cached(device=device)), indent=indent)
-
-
-def bytes2size(_bytes: int) -> str:
-    if _bytes < 2 * 1024:
-        return '%d bytes' % _bytes
-    elif _bytes < 2 * 1024 * 1024:
-        return '%.3f KB' % (float(_bytes) / 1024)
-    elif _bytes < 2 * 1024 * 1024 * 1024:
-        return '%.3f MB' % (float(_bytes) / 1024 / 1024)
-    else:
-        return '%.3f GB' % (float(_bytes) / 1024 / 1024 / 1024)
 
 
 def indent_str(s_: str, indent: int = 0) -> str:
@@ -121,9 +98,8 @@ class Indent_Redirect:
         if buffer:
             self.buffer = ''
 
-    def write(self, text, indent=None):
-        if indent is None:
-            indent = self.indent
+    def write(self, text: str, indent: int = None):
+        indent = indent if indent is not None else self.indent
         text = indent_str(text, indent=indent)
         if self.buffer is None:
             self.__console__.write(text)

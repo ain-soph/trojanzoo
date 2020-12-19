@@ -1,0 +1,15 @@
+# -*- coding: utf-8 -*-
+
+default_dataset: cifar10
+
+batch_size:
+  default: -32
+  mnist: -512
+  cifar10: -256
+  gtsrb: -256
+
+data_format:
+  default: folder
+  gtsrb: numpy
+  sample_imagenet: zip
+  sample_vggface2: numpy

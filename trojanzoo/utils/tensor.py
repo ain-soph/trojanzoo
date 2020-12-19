@@ -5,10 +5,17 @@ from .environ import env
 import torch
 import torchvision.transforms.functional as F
 import numpy as np
+import math
 import os
 from PIL import Image
 from typing import Union
 
+__all__ = ['cos_sim', 'tanh_func', 'atan_func',
+           'to_tensor', 'to_numpy', 'to_list',
+           'to_pil_image', 'gray_img', 'gray_tensor',
+           'byte2float', 'float2byte',
+           'save_tensor_as_img', 'save_numpy_as_img', 'read_img_as_tensor',
+           'to_categorical', 'repeat_to_batch', 'add_noise']
 
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
@@ -18,11 +25,20 @@ byte2float = F.to_tensor
 def cos_sim(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     return (a * b).sum() / a.norm(p=2) / b.norm(p=2)
 
+
+def tanh_func(x: torch.Tensor) -> torch.Tensor:
+    return x.tanh().add(1).mul(0.5)
+
+
+def atan_func(x: torch.Tensor) -> torch.Tensor:
+    return x.atan().div(math.pi).add(0.5)
 # ------------------- Format Transform --------------------------- #
 
 
 def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
-              dtype=None, device='default', non_blocking=True, **kwargs) -> torch.Tensor:
+              dtype: Union[str, torch.dtype] = None,
+              device: Union[str, torch.device] = 'default',
+              non_blocking: bool = True, **kwargs) -> torch.Tensor:
     if x is None:
         return None
     if isinstance(dtype, str):
@@ -71,6 +87,7 @@ def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
 
 
 def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
+    # TODO: Linting for mode
     if isinstance(x, Image.Image):
         return x
     x = to_tensor(x, device='cpu')
@@ -84,16 +101,14 @@ def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channel
 
 
 def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1, **kwargs) -> torch.Tensor:
-    if torch.is_tensor(x):
-        if 'dtype' not in kwargs.keys():
-            kwargs['dtype'] = x.dtype
+    if isinstance(x, torch.Tensor):
         if 'device' not in kwargs.keys():
             kwargs['device'] = x.device
     img = gray_img(x, num_output_channels=num_output_channels)
     return to_tensor(img, **kwargs)
 
 
-def float2byte(img) -> torch.ByteTensor:
+def float2byte(img: torch.Tensor) -> torch.ByteTensor:
     img = torch.as_tensor(img)
     if len(img.shape) == 4:
         assert img.shape[0] == 1
@@ -105,7 +120,7 @@ def float2byte(img) -> torch.ByteTensor:
     # img = (((img - img.min()) / (img.max() - img.min())) * 255).astype(np.uint8).squeeze()
     return img.mul(255).byte()
 
-# def byte2float(img) -> torch.FloatTensor:
+# def byte2float(img) -> torch.Tensor:
 #     img = to_tensor(img).float()
 #     if len(img.shape) == 2:
 #         img.unsqueeze_(dim=0)
@@ -115,7 +130,7 @@ def float2byte(img) -> torch.ByteTensor:
 #     return img
 
 
-def save_tensor_as_img(path: str, _tensor: torch.Tensor):
+def save_tensor_as_img(path: str, _tensor: Union[torch.Tensor, torch.ByteTensor]):
     dir, _ = os.path.split(path)
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -124,7 +139,9 @@ def save_tensor_as_img(path: str, _tensor: torch.Tensor):
         _tensor = _tensor[0]
     if len(_tensor.shape) == 3 and _tensor.shape[0] == 1:
         _tensor = _tensor[0]
-    img = to_numpy(float2byte(_tensor))
+    if isinstance(_tensor, torch.Tensor):
+        _tensor = float2byte(_tensor)
+    img = to_numpy(_tensor)
     # image.imsave(path, img)
     I = Image.fromarray(img)
     I.save(path)
@@ -135,13 +152,20 @@ def save_numpy_as_img(path: str, arr: np.ndarray):
 
 
 def read_img_as_tensor(path: str) -> torch.Tensor:
-    I: Image.Image = Image.open(path)
-    return byte2float(I)
+    img: Image.Image = Image.open(path)
+    return byte2float(img)
 
 # --------------------------------------------------------------------- #
 
 
-def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
+def to_categorical(label: torch.Tensor, num_classes: int) -> torch.Tensor:
+    result = torch.zeros(len(label), num_classes, dtype=label.dtype, device=label.device)
+    index = label.unsqueeze(1)
+    src = torch.ones_like(index)
+    return result.scatter(dim=1, index=index, src=src)
+
+
+def repeat_to_batch(x: torch.Tensor, batch_size: int = 1) -> torch.Tensor:
     try:
         size = [batch_size]
         size.extend([1] * len(x.shape))
@@ -153,7 +177,8 @@ def repeat_to_batch(x: torch.Tensor, batch_size=1) -> torch.Tensor:
     return x
 
 
-def add_noise(_input: torch.Tensor, noise=None, mean=0.0, std=1.0, batch=False):
+def add_noise(_input: torch.Tensor, noise: torch.Tensor = None,
+              mean: float = 0.0, std: float = 1.0, batch: bool = False) -> torch.Tensor:
     if noise is None:
         shape = _input.shape
         if batch:

@@ -1,0 +1,7 @@
+# -*- coding: utf-8 -*-
+
+epoch:
+  cifar10: 300
+
+step_size:
+  cifar10: 100

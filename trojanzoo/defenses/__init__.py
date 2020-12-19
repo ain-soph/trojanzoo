@@ -1,68 +1,31 @@
 # -*- coding: utf-8 -*-
 
 from .defense import Defense
-from .backdoor_defense import BackdoorDefense
-from .adv import *
-from .backdoor import *
 from trojanzoo.datasets.dataset import Dataset
-from trojanzoo.configs import Config
+from trojanzoo.configs import config, Config
+from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
 
 import argparse
-import sys
-
-class_dict = {
-
-    'advmind': AdvMind,
-    'curvature': Curvature,
-    'grad_train': Grad_Train,
-    'adv_train': Adv_Train,
-
-    'neural_cleanse': Neural_Cleanse,
-    'tabor': TABOR,
-    'strip': STRIP,
-    'abs': ABS,
-    'activation_clustering': Activation_Clustering,
-    'fine_pruning': Fine_Pruning,
-    'deep_inspect': Deep_Inspect,
-    'spectral_signature': Spectral_Signature,
-    'neuron_inspect': Neuron_Inspect,
-    'image_transform': Image_Transform,
-    'magnet': MagNet,
-    'neo': NEO,
-}
+from typing import Union
 
 
-def register(name: str, _class: type, **kwargs):
-    class_dict[name] = _class
+def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defense: Union[str, Defense] = None,
+                 class_dict: dict[str, type[Defense]] = None) -> argparse._ArgumentGroup:
+    defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
+    group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi), description=defense_name)
+    DefenseType = class_dict[defense_name]
+    return DefenseType.add_argument(group)     # TODO: Linting problem
 
 
-def add_argument(parser: argparse.ArgumentParser, defense_name: str = None) -> argparse._ArgumentGroup:
-    if defense_name is None:
-        defense_name = get_defense_name()
+def create(defense_name: str = None, defense: Union[str, Defense] = None,
+           dataset_name: str = None, dataset: Union[str, Dataset] = None,
+           config: Config = config, class_dict: dict[str, type[Defense]] = None, **kwargs) -> Defense:
+    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    if dataset_name is None:
+        dataset_name = config.get_full_config()['dataset']['default_dataset']
+    result = config.get_config(dataset_name=dataset_name)['model']._update(kwargs)
+
+    defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     DefenseType: type[Defense] = class_dict[defense_name]
-    group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi),
-                                      description='{blue_light}{0}{reset}'.format(defense_name, **ansi))
-    DefenseType.add_argument(group)
-    return group
-
-
-def create(defense_name: str = None, dataset_name: str = None, dataset: Dataset = None, **kwargs) -> Defense:
-    if defense_name is None:
-        defense_name = get_defense_name()
-    if dataset_name is None and dataset is not None:
-        dataset_name = dataset.name
-    result = Config.combine_param(config=Config.config[defense_name], dataset_name=dataset_name, **kwargs)
-    DefenseType: type[Defense] = class_dict[defense_name]
-    return DefenseType(dataset=dataset, **result)
-
-
-def get_defense_name() -> str:
-    argv = sys.argv
-    try:
-        idx = argv.index('--defense')
-        defense_name: str = argv[idx + 1]
-    except ValueError as e:
-        print("You need to set '--defense'.")
-        raise e
-    return defense_name
+    return DefenseType(name=defense_name, dataset=dataset, **result)

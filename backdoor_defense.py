@@ -2,15 +2,15 @@
 
 # python backdoor_defense.py --attack badnet --defense neural_cleanse --verbose --pretrain --validate_interval 1 --epoch 50 --lr 1e-2 --mark_height 3 --mark_width 3 --mark_alpha 0.0
 
-import trojanzoo.environ
-import trojanzoo.datasets
-import trojanzoo.models
-import trojanzoo.trainer
-import trojanzoo.marks
-import trojanzoo.attacks
-import trojanzoo.defenses
+import trojanvision.environ
+import trojanvision.datasets
+import trojanvision.models
+import trojanvision.trainer
+import trojanvision.marks
+import trojanvision.attacks
+import trojanvision.defenses
 
-from trojanzoo.utils import summary
+from trojanvision.utils import summary
 import argparse
 
 import warnings
@@ -18,23 +18,23 @@ warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    trojanzoo.environ.add_argument(parser)
-    trojanzoo.datasets.add_argument(parser)
-    trojanzoo.models.add_argument(parser)
-    trojanzoo.trainer.add_argument(parser)
-    trojanzoo.marks.add_argument(parser)
-    trojanzoo.attacks.add_argument(parser)
-    trojanzoo.defenses.add_argument(parser)
+    trojanvision.environ.add_argument(parser)
+    trojanvision.datasets.add_argument(parser)
+    trojanvision.models.add_argument(parser)
+    trojanvision.trainer.add_argument(parser)
+    trojanvision.marks.add_argument(parser)
+    trojanvision.attacks.add_argument(parser)
+    trojanvision.defenses.add_argument(parser)
     args = parser.parse_args()
 
-    env = trojanzoo.environ.create(**args.__dict__)
-    dataset = trojanzoo.datasets.create(**args.__dict__)
-    model = trojanzoo.models.create(dataset=dataset, **args.__dict__)
-    trainer = trojanzoo.trainer.create(dataset=dataset, model=model, **args.__dict__)
-    mark = trojanzoo.marks.create(dataset=dataset, **args.__dict__)
-    attack = trojanzoo.attacks.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
-    defense = trojanzoo.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
+    env = trojanvision.environ.create(**args.__dict__)
+    dataset = trojanvision.datasets.create(**args.__dict__)
+    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
+    mark = trojanvision.marks.create(dataset=dataset, **args.__dict__)
+    attack = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
+    defense = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
 
     if env['verbose']:
-        summary(dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
+        summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
     defense.detect(**trainer)
