@@ -8,17 +8,34 @@ from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn.functional as F
+import argparse
 
 
 class AdvMind(Defense):
 
     name: str = 'advmind'
 
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--attack_adapt', dest='attack_adapt', action='store_true',
+                           help='Adaptive attack to add fake queries.')
+        group.add_argument('--fake_percent', dest='fake_percent', type=float,
+                           help='fake query percentage.')
+        group.add_argument('--dist', dest='dist', type=float,
+                           help='fake query noise std.')
+        group.add_argument('--defend_adapt', dest='defend_adapt', action='store_true',
+                           help='Robust location M-estimator.')
+        group.add_argument('--active', dest='active', action='store_true',
+                           help='Proactive solicitation.')
+        group.add_argument('--active_percent', dest='active_percent', type=float,
+                           help='Active gradient weight.')
+
     def __init__(self, attack_adapt: bool = False, fake_percent: float = 0.3, dist: float = 50.0,
                  defend_adapt: bool = False, k: int = 1, b: float = 4e-3,
                  active: bool = False, active_percent: float = 0.1, **kwargs):
         super().__init__(**kwargs)
-        self.attack: PGD
+        self.attack: PGD = self.attack
 
         self.param_list['advmind'] = []
         if attack_adapt:
@@ -41,9 +58,9 @@ class AdvMind(Defense):
         self.active: bool = active
         self.active_percent: float = active_percent
 
+        # Temp Variable
         self.fake_query_num: int = int(self.attack.query_num * self.fake_percent)
         self.true_query_num: int = self.attack.query_num - self.fake_query_num
-
         self.attack_grad_list: list[torch.Tensor] = []
 
     def detect(self):
