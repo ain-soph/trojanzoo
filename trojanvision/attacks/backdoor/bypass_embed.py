@@ -132,7 +132,7 @@ class Bypass_Embed(BadNet):
             _, cur_acc, _ = self.validate_func(get_data_fn=self.bypass_get_data)
             if cur_acc >= best_acc:
                 prints('best result update!', indent=0)
-                prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=0)
+                prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=0)
                 best_acc = cur_acc
                 if save:
                     self.save()
