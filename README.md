@@ -18,7 +18,7 @@ TrojanZoo provides a universal platform for conducting security researches (espe
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
 
 ## Screenshot
-![](https://github.com/ain-soph/Trojan-Zoo/tree/master/docs/source/_static/img/screenshot.png)
+![screenshot](https://github.com/ain-soph/Trojan-Zoo/raw/master/docs/source/_static/img/screenshot.png)
 
 
 ## Features
