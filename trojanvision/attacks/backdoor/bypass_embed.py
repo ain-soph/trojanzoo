@@ -15,7 +15,7 @@ import argparse
 from collections import OrderedDict
 
 
-class Bypass_Embed(BadNet):
+class BypassEmbed(BadNet):
     name: str = 'bypass_embed'
 
     @classmethod
@@ -48,7 +48,7 @@ class Bypass_Embed(BadNet):
         other_classes = list(range(self.dataset.num_classes))
         other_classes.pop(self.target_class)
         other_x, other_y = [], []
-        poison_num = len(self.dataset.get_dataset('train')) * self.percent / self.dataset.num_classes
+        poison_num = len(self.dataset.get_dataset('train')) * self.poison_percent / self.dataset.num_classes
         for _class in other_classes:
             loader = self.dataset.get_dataloader(mode='train', batch_size=int(poison_num), classes=[_class],
                                                  shuffle=True, num_workers=0, pin_memory=False)
@@ -132,7 +132,7 @@ class Bypass_Embed(BadNet):
             _, cur_acc, _ = self.validate_func(get_data_fn=self.bypass_get_data)
             if cur_acc >= best_acc:
                 prints('best result update!', indent=0)
-                prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=0)
+                prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=0)
                 best_acc = cur_acc
                 if save:
                     self.save()

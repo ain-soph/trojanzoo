@@ -17,21 +17,21 @@ class_dict = {
     # 'advmind': AdvMind,
 
     # poisoning attack
-    'poison_basic': Poison_Basic,
+    'poison_basic': PoisonBasic,
     'imc_poison': IMC_Poison,
 
     # backdoor attack
     'badnet': BadNet,
     'trojannn': TrojanNN,
-    'latent_backdoor': Latent_Backdoor,
+    'latent_backdoor': LatentBackdoor,
     'imc': IMC,
-    'reflection_backdoor': Reflection_Backdoor,
-    'bypass_embed': Bypass_Embed,
+    'reflection_backdoor': ReflectionBackdoor,
+    'bypass_embed': BypassEmbed,
     'trojannet': TrojanNet,
-    'clean_label': Clean_Label,
-    'hidden_trigger': Hidden_Trigger,
+    'clean_label': CleanLabel,
+    'hidden_trigger': HiddenTrigger,
 
-    'term_study': Term_Study,
+    'term_study': TermStudy,
     'unlearn': Unlearn,
 
     # imc adaptive settings

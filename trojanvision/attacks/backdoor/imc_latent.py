@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from .latent_backdoor import Latent_Backdoor
+from .latent_backdoor import LatentBackdoor
 
 
-class IMC_Latent(Latent_Backdoor):
+class IMC_Latent(LatentBackdoor):
     name: str = 'imc_latent'
 
     def __init__(self, **kwargs):
@@ -15,7 +15,7 @@ class IMC_Latent(Latent_Backdoor):
         print('Sample Data')
         self.data = self.sample_data()
         print('Retrain')
-        return super(Latent_Backdoor, self).attack(epoch_func=self.epoch_func, **kwargs)
+        return super(LatentBackdoor, self).attack(epoch_func=self.epoch_func, **kwargs)
 
     def epoch_func(self, **kwargs):
         self.avg_target_feats = self.get_avg_target_feats(self.data)

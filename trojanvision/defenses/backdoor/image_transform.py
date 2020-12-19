@@ -9,7 +9,7 @@ import argparse
 from PIL import Image
 
 
-class Image_Transform(BackdoorDefense):
+class ImageTransform(BackdoorDefense):
     name: str = 'image_transform'
 
     @classmethod

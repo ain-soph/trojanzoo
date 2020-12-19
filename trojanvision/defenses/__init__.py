@@ -16,27 +16,27 @@ class_dict = {
     'advmind': AdvMind,
     'curvature': Curvature,
     # 'grad_train': Grad_Train,
-    'adv_train': Adv_Train,
+    'adv_train': AdvTrain,
 
     # backdoor defense
     # model inspection
-    'neural_cleanse': Neural_Cleanse,
+    'neural_cleanse': NeuralCleanse,
     'tabor': TABOR,
     'abs': ABS,
-    'deep_inspect': Deep_Inspect,
+    'deep_inspect': DeepInspect,
 
     # input detection
     'strip': STRIP,
     'neo': NEO,
 
     # training data inspection
-    'activation_clustering': Activation_Clustering,
-    'spectral_signature': Spectral_Signature,
-    'neuron_inspect': Neuron_Inspect,
+    'activation_clustering': ActivationClustering,
+    'spectral_signature': SpectralSignature,
+    'neuron_inspect': NeuronInspect,
 
     # general defense
-    'fine_pruning': Fine_Pruning,
-    'image_transform': Image_Transform,
+    'fine_pruning': FinePruning,
+    'image_transform': ImageTransform,
     'magnet': MagNet,
 }
 

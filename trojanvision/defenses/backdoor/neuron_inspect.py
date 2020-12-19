@@ -9,7 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import argparse
 
 
-class Neuron_Inspect(BackdoorDefense):
+class NeuronInspect(BackdoorDefense):
 
     name: str = 'neuron_inspect'
 

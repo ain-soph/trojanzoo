@@ -222,7 +222,7 @@ class Model:
     def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
                          OptimType: Union[str, type[Optimizer]] = None,
                          lr_scheduler: bool = True,
-                         lr: float = 0.1, step_size: int = 30,
+                         lr: float = 0.1, lr_decay_step: int = 30,
                          **kwargs) -> tuple[Optimizer, _LRScheduler]:
         if isinstance(parameters, str):
             parameters = self.get_parameter_from_name(name=parameters)
@@ -236,7 +236,7 @@ class Model:
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
             _lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer, step_size=step_size, gamma=0.1)
+                optimizer, lr_decay_step=lr_decay_step, gamma=0.1)
             # optimizer = optim.lr_scheduler.MultiStepLR(
             #     optimizer, milestones=[150, 250], gamma=0.1)
         return optimizer, _lr_scheduler
@@ -402,7 +402,7 @@ class Model:
                                                   verbose=verbose, indent=indent, **kwargs)
                     if cur_acc >= best_acc:
                         prints('best result update!', indent=indent)
-                        prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
+                        prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                         if save:
                             save_fn(file_path=file_path, folder_path=folder_path, suffix=suffix, verbose=verbose)
@@ -522,7 +522,7 @@ class Model:
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)
             prints('-' * 20, indent=indent + 10)
         self.output_layer_information(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
-        prints('-' * 30, indent=indent)
+        prints('-' * 20, indent=indent + 10)
 
     # -----------------------------------------Reload------------------------------------------ #
 

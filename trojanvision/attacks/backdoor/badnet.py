@@ -29,7 +29,7 @@ class BadNet(Attack):
     Args:
         mark (Watermark): the attached watermark image.
         target_class (int): the target class. Default: ``0``.
-        percent (int): The proportion of malicious images in the training set (Max 0.5). Default: 0.1.
+        poison_percent (int): The proportion of malicious images in the training set (Max 0.5). Default: 0.1.
 
     .. _BadNet:
         https://arxiv.org/abs/1708.06733
@@ -45,20 +45,20 @@ class BadNet(Attack):
         super().add_argument(group)
         group.add_argument('--target_class', dest='target_class', type=int,
                            help='target class of backdoor, defaults to 0')
-        group.add_argument('--percent', dest='percent', type=float,
+        group.add_argument('--poison_percent', dest='poison_percent', type=float,
                            help='malicious training data injection probability for each batch, defaults to 0.01')
         group.add_argument('--train_mode', dest='train_mode',
                            help='target class of backdoor, defaults to \'batch\'')
 
-    def __init__(self, mark: Watermark = None, target_class: int = 0, percent: float = 0.01, train_mode: str = 'batch', **kwargs):
+    def __init__(self, mark: Watermark = None, target_class: int = 0, poison_percent: float = 0.01, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
         self.dataset: ImageSet
         self.model: ImageModel
-        self.param_list['badnet'] = ['train_mode', 'target_class', 'percent', 'poison_num']
+        self.param_list['badnet'] = ['train_mode', 'target_class', 'poison_percent', 'poison_num']
         self.mark: Watermark = mark
         self.target_class: int = target_class
-        self.percent: float = percent
-        self.poison_num = self.dataset.batch_size * self.percent
+        self.poison_percent: float = poison_percent
+        self.poison_num = self.dataset.batch_size * self.poison_percent
         self.train_mode: str = train_mode
 
     def attack(self, epoch: int, save=False, **kwargs):
@@ -69,7 +69,7 @@ class BadNet(Attack):
         elif self.train_mode == 'dataset':
             clean_dataset = self.dataset.loader['train'].dataset
             _input, _label = next(iter(self.dataset.get_dataloader(
-                'train', batch_size=int(self.percent * len(clean_dataset)))))
+                'train', batch_size=int(self.poison_percent * len(clean_dataset)))))
             _label = torch.ones_like(_label) * self.target_class
             _label = _label.tolist()
             poison_input = self.add_mark(_input)
@@ -89,9 +89,10 @@ class BadNet(Attack):
             mark_alpha = self.mark.mark_alpha
         if target_class is None:
             target_class = self.target_class
+        mark_filename = os.path.split(self.mark.mark_path)
+        mark_name, mark_ext = os.path.splitext(mark_filename)
         _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({mark_height:d},{mark_width:d})'.format(
-            mark=os.path.split(self.mark.mark_path)[1][:-4],
-            target=target_class, mark_alpha=mark_alpha,
+            mark=mark_name, target=target_class, mark_alpha=mark_alpha,
             mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
         if self.mark.random_pos:
             _file = 'random_pos_' + _file
@@ -126,7 +127,7 @@ class BadNet(Attack):
         poison_input = self.mark.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
-        return (1 - self.percent) * loss_clean + self.percent * loss_poison
+        return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)

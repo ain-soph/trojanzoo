@@ -20,7 +20,7 @@ from tqdm import tqdm
 mse_criterion = nn.MSELoss()
 
 
-class Deep_Inspect(BackdoorDefense):
+class DeepInspect(BackdoorDefense):
 
     name: str = 'deep_inspect'
 

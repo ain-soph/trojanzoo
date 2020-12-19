@@ -15,7 +15,7 @@ import argparse
 mse_criterion = nn.MSELoss()
 
 
-class Term_Study(BadNet):
+class TermStudy(BadNet):
     r"""
     Latent Backdoor Attack is described in detail in the paper `Latent Backdoor`_ by Yuanshun Yao.
     Similar to TrojanNN, Latent Backdoor Attack proposes a method to preprocess the trigger pattern.

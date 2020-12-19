@@ -26,11 +26,13 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None, folder
            config: Config = config, class_dict: dict[str, type[Defense]] = {}, **kwargs) -> Defense:
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
+    defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     if dataset_name is None:
         dataset_name = config.get_full_config()['dataset']['default_dataset']
-    result = config.get_config(dataset_name=dataset_name)['defense']._update(kwargs)
+    general_config = config.get_config(dataset_name=dataset_name)['defense']
+    specific_config = config.get_config(dataset_name=dataset_name)[defense_name]
+    result = general_config._update(specific_config)._update(kwargs)    # TODO: linting issues
 
-    defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     DefenseType: type[Defense] = class_dict[defense_name]
     if folder_path is None:
         folder_path = result['defense_dir']

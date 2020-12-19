@@ -14,7 +14,7 @@ import datetime
 from tqdm import tqdm
 
 
-class Adv_Train(BackdoorDefense):
+class AdvTrain(BackdoorDefense):
 
     name: str = 'adv_train'
 
@@ -129,7 +129,7 @@ class Adv_Train(BackdoorDefense):
                     _, cur_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
                         prints('best result update!', indent=indent)
-                        prints(f'Current Acc: {cur_acc:.3f}    Best Acc: {best_acc:.3f}', indent=indent)
+                        prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                     if save:
                         self.model.save(file_path=file_path, verbose=verbose)

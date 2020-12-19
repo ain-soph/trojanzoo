@@ -10,29 +10,29 @@ import random
 import argparse
 
 
-class Poison_Basic(Attack):
+class PoisonBasic(Attack):
 
     name: str = 'poison_basic'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--percent', dest='percent', type=float,
+        group.add_argument('--poison_percent', dest='poison_percent', type=float,
                            help='malicious training data injection probability for each batch, defaults to 0.1')
         group.add_argument('--target_idx', dest='target_idx', type=int,
                            help='Target label order in original classification, defaults to 1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
 
-    def __init__(self, percent: float = 0.5, target_idx=1, **kwargs):
+    def __init__(self, poison_percent: float = 0.5, target_idx=1, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['poison'] = ['percent', 'poison_num', 'target_idx']
-        self.percent: float = percent
+        self.param_list['poison'] = ['poison_percent', 'poison_num', 'target_idx']
+        self.poison_percent: float = poison_percent
         self.target_idx: int = target_idx
 
         self.temp_input: torch.Tensor = None
         self.temp_label: torch.Tensor = None
 
-        self.poison_num = self.dataset.batch_size * self.percent
+        self.poison_num = self.dataset.batch_size * self.poison_percent
 
     def attack(self, epoch: int, **kwargs):
         # model._validate()
@@ -90,7 +90,7 @@ class Poison_Basic(Attack):
     #     poison = self.model.loss(self.temp_input, self.temp_label)
     #     self.model.train(mode=training)
     #     print(f'clean: {clean:7.5f}    poison: {poison:7.5f}   eval: {poison:7.5f}')
-    #     return (1 - self.percent) * self.model.loss(x, y, **kwargs) + self.percent * self.model.loss(self.temp_input, self.temp_label)
+    #     return (1 - self.poison_percent) * self.model.loss(x, y, **kwargs) + self.poison_percent * self.model.loss(self.temp_input, self.temp_label)
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)

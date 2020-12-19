@@ -11,7 +11,7 @@ from typing import Any, Union
 ConfigFileType = Module[str, Union[Any, Param[str, Any]]]    # config_dict['package']['dataset'] dataset.yml
 ConfigType = Module[str, ConfigFileType]                     # config_dict['package']
 FinalFileType = Module[str, Any]
-FinalType = Module[str, Module[str, Any]]
+FinalType = Param[str, Module[str, Any]]
 
 config_path: dict[str, str] = {
     'package': os.path.dirname(__file__),
@@ -54,7 +54,7 @@ class Config:
         return self.full_config
 
     def get_config(self, dataset_name: str, config: ConfigType = None, **kwargs) -> FinalType:
-        config = config if config is not None else self.get_full_config().copy()
+        config = config if config is not None else Param(self.get_full_config(), default=Module())
         # remove dataset_name Param
         for file_name, file_value in config.items():
             if not isinstance(file_value, Module) and not isinstance(file_value, dict):

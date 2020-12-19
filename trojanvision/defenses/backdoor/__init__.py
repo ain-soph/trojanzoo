@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from .neural_cleanse import Neural_Cleanse
+from .neural_cleanse import NeuralCleanse
 from .tabor import TABOR
 from .strip import STRIP
 from .abs import ABS
-from .fine_pruning import Fine_Pruning
-from .activation_clustering import Activation_Clustering
-from .deep_inspect import Deep_Inspect
-from .spectral_signature import Spectral_Signature
-from .neuron_inspect import Neuron_Inspect
-from .image_transform import Image_Transform
-from .adv_train import Adv_Train
+from .fine_pruning import FinePruning
+from .activation_clustering import ActivationClustering
+from .deep_inspect import DeepInspect
+from .spectral_signature import SpectralSignature
+from .neuron_inspect import NeuronInspect
+from .image_transform import ImageTransform
+from .adv_train import AdvTrain
 from .magnet import MagNet
 from .neo import NEO

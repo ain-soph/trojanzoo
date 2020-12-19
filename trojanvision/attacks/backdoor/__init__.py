@@ -2,15 +2,15 @@
 
 from .badnet import BadNet
 from .trojannn import TrojanNN
-from .latent_backdoor import Latent_Backdoor
+from .latent_backdoor import LatentBackdoor
 from .imc import IMC
-from .reflection_backdoor import Reflection_Backdoor
-from .bypass_embed import Bypass_Embed
+from .reflection_backdoor import ReflectionBackdoor
+from .bypass_embed import BypassEmbed
 from .trojannet import TrojanNet
-from .clean_label import Clean_Label
-from .hidden_trigger import Hidden_Trigger
+from .clean_label import CleanLabel
+from .hidden_trigger import HiddenTrigger
 
-from .term_study import Term_Study
+from .term_study import TermStudy
 from .unlearn import Unlearn
 
 from .imc_latent import IMC_Latent
