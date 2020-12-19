@@ -40,19 +40,19 @@ TrojanZoo provides a universal platform for conducting security researches (espe
 > Note: The program won't save results without `--save`
 
 1. Train a model:  
-    e.g. `ResNetComp18` for `CIFAR10` with 95% Acc
+    e.g. `ResNetComp18` on `CIFAR10` with 95% Acc
     ```python3
     python train.py --verbose 1 --amp --dataset cifar10 --model resnetcomp18 --epoch 150 --lr 0.1 --lr_scheduler --lr_decay_step 50 --save
     ```
 
 2. Test backdoor attack (e.g., BadNet):  
-    e.g. `BadNet`
+    e.g. `BadNet` with `ResNetComp18` on `CIFAR10`
     ```python3
     python backdoor_attack.py --verbose 1 --pretrain --validate_interval 1 --amp --dataset cifar10 --model resnetcomp18 --attack badnet --random_init --epoch 50 --lr 0.01 --save
     ```
 
 3. Test backdoor defense (e.g., Neural Cleanse):  
-    e.g. `Neural Cleanse` for `BadNet`
+    e.g. `Neural Cleanse` against `BadNet`
     ```python3
     python backdoor_attack.py --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnetcomp18 --attack badnet --defense neural_cleanse --random_init --epoch 50 --lr 0.01
     ```
