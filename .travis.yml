@@ -1,6 +1,8 @@
 language: python
 before_install:
   - sudo apt-get -y install libxml2-dev
+install: true
+script: true
 addons:
   apt:
     update: true

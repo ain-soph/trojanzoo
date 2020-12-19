@@ -128,9 +128,12 @@ class Model:
                  official: bool = False, pretrain: bool = False,
                  randomized_smooth: bool = False, rs_sigma: float = 0.01, rs_n: int = 100,
                  suffix: str = '', **kwargs):
+        self.param_list: dict[str, list[str]] = {}
+        self.param_list['model'] = ['suffix', 'pretrain', 'official', 'randomized_smooth']
+        if randomized_smooth:
+            self.param_list['model'].extend(['rs_sigma', 'rs_n'])
         self.name: str = name
         self.dataset = dataset
-        self.folder_path = os.path.normpath(folder_path)
         self.suffix = suffix
         self.pretrain = pretrain
         self.official = official
@@ -138,10 +141,11 @@ class Model:
         self.rs_sigma: float = rs_sigma
         self.rs_n: int = rs_n
 
-        self.param_list: dict[str, list[str]] = {}
-        self.param_list['model'] = ['suffix', 'pretrain', 'official', 'randomized_smooth']
-        if randomized_smooth:
-            self.param_list['model'].extend(['rs_sigma', 'rs_n'])
+        self.folder_path = folder_path
+        if folder_path is not None:
+            self.folder_path = os.path.normpath(folder_path)
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
 
         # ------------Auto-------------- #
         loss_weights: np.ndarray = None if 'loss_weights' not in kwargs.keys() else kwargs['loss_weights']

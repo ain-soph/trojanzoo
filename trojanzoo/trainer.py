@@ -93,7 +93,7 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
         elif key in train_keys:
             _dict = train_args
         else:
-            raise KeyError(key)
+            continue  # raise KeyError(key)
         _dict[key] = value
     optimizer, lr_scheduler = model.define_optimizer(**optim_args)
     return Trainer(optim_args=optim_args, train_args=train_args, optimizer=optimizer, lr_scheduler=lr_scheduler)

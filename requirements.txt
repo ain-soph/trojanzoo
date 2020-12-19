@@ -5,4 +5,3 @@ torchvision
 scikit-learn
 matplotlib
 seaborn
-

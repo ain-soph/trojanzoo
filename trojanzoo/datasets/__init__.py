@@ -20,7 +20,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
 
 
 def create(dataset_name: str = None, dataset: str = None, folder_path: str = None,
-           config: Config = config, class_dict: dict[str, type[Dataset]] = None, **kwargs) -> Dataset:
+           config: Config = config, class_dict: dict[str, type[Dataset]] = {}, **kwargs) -> Dataset:
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
     result = config.get_config(dataset_name=dataset_name)['dataset']._update(kwargs)

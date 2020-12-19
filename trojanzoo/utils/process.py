@@ -73,13 +73,8 @@ class Model_Process(Process):
 
         _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data_fn=None, verbose=False)
         # ----------------------------------------------------------------------------- #
-        if folder_path is None:
-            folder_path = env['result_dir']
-            if dataset and isinstance(dataset, Dataset):
-                folder_path = os.path.join(folder_path, dataset.name)
-            if model and isinstance(model, Model):
-                folder_path = os.path.join(folder_path, model.name)
-            folder_path = os.path.join(folder_path, self.name)
-        self.folder_path = os.path.normpath(folder_path)
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+        self.folder_path = folder_path
+        if folder_path is not None:
+            self.folder_path = os.path.normpath(folder_path)
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
