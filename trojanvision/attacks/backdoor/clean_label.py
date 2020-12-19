@@ -71,9 +71,9 @@ class Clean_Label(BadNet):
         self.poison_generation_method: str = poison_generation_method
         if poison_generation_method == 'pgd':
             self.poison_num: int = int(len(self.dataset.get_dataset(
-                'train', classes=[self.target_class])) * self.percent)
+                'train', classes=[self.target_class])) * self.poison_percent)
         elif poison_generation_method == 'gan':
-            self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.percent)
+            self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.poison_percent)
 
         data_shape = [self.dataset.n_channel]
         data_shape.extend(self.dataset.n_dim)
