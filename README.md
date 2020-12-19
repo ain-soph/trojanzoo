@@ -1,16 +1,40 @@
-# Trojan-Zoo
+# TrojanZoo
+[![Build Status](https://travis-ci.com/ain-soph/Trojan-Zoo.svg?branch=master)](https://travis-ci.com/ain-soph/Trojan-Zoo)
+![](https://img.shields.io/badge/python->=3.9-important.svg)
+
 
 This is the code implementation (pytorch) for our paper: 
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
+
+TrojanZoo provides a universal platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
+
+[Dataset List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/datasets/__init__.py)  
+[Model List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/models/__init__.py)  
+[Attack List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/attacks/__init__.py)  
+[Defense List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/defenses/__init__.py)
 
 > Note: This repository is also maintained to cover the implementation of  
 > our kdd 2020 paper [AdvMind: Inferring Adversary Intent of Black-Box Attacks](https://arxiv.org/abs/2006.09539)  
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
 
 ## Screenshot
+![](https://github.com/ain-soph/Trojan-Zoo/tree/master/docs/source/_static/img/screenshot.png)
 
-Add the screen shot
 
+## Features
+1. **Colorful and verbose output!**
+   > Note: enable with `--color` for color and `--verbose` for verbose. The color setting won't change after program starts.  
+   To open an interactive window, use `python - --color`
+2. Modular design (plug and play)
+3. Good code linting support (this package requires `python>=3.9`)
+4. Register **your own module** to the library.
+5. Native Pytorch Output  
+   `trojanzoo` and `trojanvision` provides API to generate raw pytorch instances, which makes it flexible to work with native `pytorch` and other 3rd party libraries.
+   > `trojanzoo.datasets.DataSet` can generate `torch.utils.data.Dataset` and `torch.utils.data.DataLoader`  
+   > `trojanzoo.models.Model` attribute `_model` is `torch.nn.Module`, attribute `model` is `torch.nn.DataParallel`  
+   > Specifically, `trojanvision.datasets.ImageSet` can generate `torchvision.datasets.VisionDataset`, `trojanvision.datasets.ImageFolder` can generate `torchvision.datasets.ImageFolder`
+6. Enable pytorch native AMP(Automatic Mixed Precision) with `--amp` for training
+7. Flexible Configuration Files
 ## Quick Start:
 
 > Note: The program won't save results without `--save`
