@@ -9,7 +9,7 @@ import random
 import argparse
 
 
-class Hidden_Trigger(BadNet):
+class HiddenTrigger(BadNet):
     r"""
     Hidden Trigger Backdoor Attack is described in detail in the paper `Hidden Trigger`_ by Aniruddha Saha. 
 

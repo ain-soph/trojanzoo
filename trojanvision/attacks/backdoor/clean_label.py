@@ -14,7 +14,7 @@ import argparse
 import os
 
 
-class Clean_Label(BadNet):
+class CleanLabel(BadNet):
     r"""
     Contributor: Xiangshan Gao, Ren Pang
 

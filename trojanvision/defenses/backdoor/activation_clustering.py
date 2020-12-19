@@ -13,7 +13,7 @@ import argparse
 from tqdm import tqdm
 
 
-class Activation_Clustering(BackdoorDefense):
+class ActivationClustering(BackdoorDefense):
 
     """
     Activation Clustering Defense is described in the paper 'Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering'_ by Bryant Chen. The main idea is the reason why backdoor and target samples receive the same classification is different, the network identifies features in the input taht it has learned corresponding to the target class, in the case of backdoor samples, it identifies features associated with the source class and the backdoor trigger. This difference in mechanism is evident in the network activations.

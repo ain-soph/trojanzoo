@@ -9,7 +9,7 @@ from torch.utils.data import TensorDataset
 import argparse
 
 
-class Spectral_Signature(BackdoorDefense):
+class SpectralSignature(BackdoorDefense):
 
     """
     Spectral Signature Defense is described in the paper 'Spectral Signatures in Backdoor Attacks'_ by Brandon Tran. The main idea is backdoor attack tends to leave behind a detectable trace in the spectrum of the covariance of a feature representation learned by the neural network, that is if the means of the two populations are sufﬁciently well-separated relative to the variance of the populations, the corrupted datapoints can be detected and removed using singular value decomposition. 

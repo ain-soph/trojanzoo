@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
-from .poison_basic import Poison_Basic
+from .poison_basic import PoisonBasic
 from .imc_poison import IMC_Poison

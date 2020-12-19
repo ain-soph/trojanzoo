@@ -10,7 +10,7 @@ import random
 import argparse
 
 
-class Poison_Basic(Attack):
+class PoisonBasic(Attack):
 
     name: str = 'poison_basic'
 

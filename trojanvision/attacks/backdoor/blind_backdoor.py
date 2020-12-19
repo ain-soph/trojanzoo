@@ -6,7 +6,7 @@ import torch
 import numpy as np
 
 
-class Blind_Backdoor(BadNet):
+class BlindBackdoor(BadNet):
 
     name: str = "blind_backdoor"
 

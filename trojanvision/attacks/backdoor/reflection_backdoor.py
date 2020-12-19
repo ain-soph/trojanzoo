@@ -11,7 +11,7 @@ import argparse
 from PIL import Image
 
 
-class Reflection_Backdoor(BadNet):
+class ReflectionBackdoor(BadNet):
     name: str = 'reflection_backdoor'
 
     @classmethod

@@ -14,7 +14,7 @@ import datetime
 from tqdm import tqdm
 
 
-class Adv_Train(BackdoorDefense):
+class AdvTrain(BackdoorDefense):
 
     name: str = 'adv_train'
 

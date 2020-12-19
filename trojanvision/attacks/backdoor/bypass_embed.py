@@ -15,7 +15,7 @@ import argparse
 from collections import OrderedDict
 
 
-class Bypass_Embed(BadNet):
+class BypassEmbed(BadNet):
     name: str = 'bypass_embed'
 
     @classmethod

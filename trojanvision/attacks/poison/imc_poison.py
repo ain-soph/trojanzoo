@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .poison_basic import Poison_Basic
+from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD
 from trojanvision.defenses.adv.curvature import Curvature
 from trojanvision.optim import PGD as PGD_Optimizer
@@ -13,7 +13,7 @@ from scipy.stats import ks_2samp
 import argparse
 
 
-class IMC_Poison(Poison_Basic):
+class IMC_Poison(PoisonBasic):
 
     name: str = 'imc_poison'
 
