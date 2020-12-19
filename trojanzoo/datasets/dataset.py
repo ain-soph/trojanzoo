@@ -53,22 +53,23 @@ class Dataset:
     def __init__(self, batch_size: int = None, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
                  num_workers: int = 4, loss_weights: Union[bool, np.ndarray] = False, test_batch_size: int = 1, **kwargs):
-        self.__batch_size: int = 0
         self.param_list: dict[str, list[str]] = {}
         self.param_list['dataset'] = ['data_type', 'folder_path', 'label_names',
                                       'batch_size', 'num_classes', 'num_workers', 'test_batch_size']
+        self.__batch_size: int = 0
         self.batch_size = batch_size
         self.test_batch_size = test_batch_size
-
         self.split_ratio = split_ratio
         self.train_sample = train_sample
         self.test_ratio = test_ratio
         self.num_workers = num_workers
         # ----------------------------------------------------------------------------- #
 
-        self.folder_path = os.path.normpath(folder_path)
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
+        self.folder_path = folder_path
+        if folder_path is not None:
+            self.folder_path = os.path.normpath(folder_path)
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
         # ----------------------------------------------------------------------------- #
         if download:
             if not self.check_files():

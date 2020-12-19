@@ -23,7 +23,7 @@ class Uname(trojanzoo.optim.Optimizer):
 
     def __init__(self, OptimType: Union[str, type[Optimizer]], optim_kwargs: dict[str, Any] = {},
                  lr_scheduler: bool = False, step_size: int = 50,
-                 input_transform: Union[str, Callable[[torch.Tensor], torch.Tensor]] = lambda x: x, **kwargs):
+                 input_transform: Union[str, Callable] = lambda x: x, **kwargs):    # TODO: Callable[[torch.Tensor], torch.Tensor]
         super().__init__(**kwargs)
         self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'step_size', 'input_transform']
         if isinstance(OptimType, str):

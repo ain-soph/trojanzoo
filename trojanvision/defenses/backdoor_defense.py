@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.defenses import Defense
-from trojanvision.attacks import BadNet
+from trojanvision.attacks.backdoor import BadNet
 
 import argparse
 

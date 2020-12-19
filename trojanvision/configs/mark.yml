@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 edge_color: auto
-mark_path: trojanzoo/data/mark/square_white.png
+mark_path: square_white.png
 mark_alpha: 0.0
 mark_height: 3
 mark_width: 3
