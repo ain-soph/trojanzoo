@@ -3,5 +3,5 @@
 epoch:
   cifar10: 300
 
-step_size:
+lr_decay_step:
   cifar10: 100

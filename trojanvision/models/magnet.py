@@ -98,10 +98,10 @@ class MagNet(Model):
     # return: optimizer
     def define_optimizer(self, lr: float = 0.1, parameters: str = 'full',
                          OptimType='Adam', weight_decay=1e-9,
-                         lr_scheduler=True, step_size=30, **kwargs):
+                         lr_scheduler=True, lr_decay_step=30, **kwargs):
         return super().define_optimizer(lr=lr, parameters=parameters,
                                         OptimType=OptimType, weight_decay=weight_decay,
-                                        lr_scheduler=lr_scheduler, step_size=step_size, **kwargs)
+                                        lr_scheduler=lr_scheduler, lr_decay_step=lr_decay_step, **kwargs)
 
     # define MSE loss function
     def define_criterion(self, **kwargs):

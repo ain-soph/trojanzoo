@@ -22,16 +22,16 @@ class Uname(trojanzoo.optim.Optimizer):
     name: str = 'uname'
 
     def __init__(self, OptimType: Union[str, type[Optimizer]], optim_kwargs: dict[str, Any] = {},
-                 lr_scheduler: bool = False, step_size: int = 50,
+                 lr_scheduler: bool = False, lr_decay_step: int = 50,
                  input_transform: Union[str, Callable] = lambda x: x, **kwargs):    # TODO: Callable[[torch.Tensor], torch.Tensor]
         super().__init__(**kwargs)
-        self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'step_size', 'input_transform']
+        self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'lr_decay_step', 'input_transform']
         if isinstance(OptimType, str):
             OptimType = getattr(torch.optim, OptimType)
         self.OptimType: type[Optimizer] = OptimType
         self.optim_kwargs: dict = optim_kwargs
         self.lr_scheduler: bool = lr_scheduler
-        self.step_size: int = step_size
+        self.lr_decay_step: int = lr_decay_step
         self.input_transform: Callable[[torch.Tensor], torch.Tensor] = input_transform
 
     def optimize(self, unbound_params: list[torch.Tensor],
@@ -54,7 +54,7 @@ class Uname(trojanzoo.optim.Optimizer):
         if iteration == 0:
             return real_params, None
         optimizer = self.OptimType(parameters=unbound_params, **self.optim_kwargs)
-        lr_scheduler = StepLR(optimizer, step_size=self.step_size) if self.lr_scheduler else None
+        lr_scheduler = StepLR(optimizer, lr_decay_step=self.lr_decay_step) if self.lr_scheduler else None
         optimizer.zero_grad()
 
         # ----------------------------------------------------------------------------------------- #

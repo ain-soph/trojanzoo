@@ -28,8 +28,8 @@ class Trainer:
                            help='optimizer type, defaults to SGD.')
         group.add_argument('--lr_scheduler', dest='lr_scheduler', action='store_true',
                            help='use torch.optim.lr_scheduler.StepLR.')
-        group.add_argument('--step_size', dest='step_size', type=int,
-                           help='step_size passed to torch.optim.lr_scheduler.StepLR, defaults to 50.')
+        group.add_argument('--lr_decay_step', dest='lr_decay_step', type=int,
+                           help='lr_decay_step passed to torch.optim.lr_scheduler.StepLR, defaults to 50.')
         group.add_argument('--amp', dest='amp', action='store_true',
                            help='Automatic Mixed Precision.')
         group.add_argument('--validate_interval', dest='validate_interval', type=int,

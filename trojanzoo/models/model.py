@@ -222,7 +222,7 @@ class Model:
     def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
                          OptimType: Union[str, type[Optimizer]] = None,
                          lr_scheduler: bool = True,
-                         lr: float = 0.1, step_size: int = 30,
+                         lr: float = 0.1, lr_decay_step: int = 30,
                          **kwargs) -> tuple[Optimizer, _LRScheduler]:
         if isinstance(parameters, str):
             parameters = self.get_parameter_from_name(name=parameters)
@@ -236,7 +236,7 @@ class Model:
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
             _lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer, step_size=step_size, gamma=0.1)
+                optimizer, lr_decay_step=lr_decay_step, gamma=0.1)
             # optimizer = optim.lr_scheduler.MultiStepLR(
             #     optimizer, milestones=[150, 250], gamma=0.1)
         return optimizer, _lr_scheduler
