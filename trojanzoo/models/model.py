@@ -236,7 +236,7 @@ class Model:
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
             _lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer, lr_decay_step=lr_decay_step, gamma=0.1)
+                optimizer, step_size=lr_decay_step, gamma=0.1)
             # optimizer = optim.lr_scheduler.MultiStepLR(
             #     optimizer, milestones=[150, 250], gamma=0.1)
         return optimizer, _lr_scheduler
