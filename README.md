@@ -3,7 +3,7 @@
 ![](https://img.shields.io/badge/python->=3.9-important.svg)
 
 
-This is the code implementation (pytorch) for our paper: 
+This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
 
 TrojanZoo provides a universal platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
@@ -35,7 +35,7 @@ TrojanZoo provides a universal platform for conducting security researches (espe
    > Specifically, `trojanvision.datasets.ImageSet` can generate `torchvision.datasets.VisionDataset`, `trojanvision.datasets.ImageFolder` can generate `torchvision.datasets.ImageFolder`
 6. Enable pytorch native AMP(Automatic Mixed Precision) with `--amp` for training
 7. Flexible Configuration Files
-## Quick Start:
+## Quick Start
 
 > Note: The program won't save results without `--save`
 
@@ -116,7 +116,7 @@ Modify them in corresponding config files and command-line arguments.
    3. Docker Hub publish
 2. Sphinx Docs
 3. Test and find bugs
-## Cite our paper:
+## Cite our paper
 ```
 @InProceedings{pang2020trojanzoo,
       title={TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)}, 
