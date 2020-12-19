@@ -35,6 +35,8 @@ TrojanZoo provides a universal platform for conducting security researches (espe
    > Specifically, `trojanvision.datasets.ImageSet` can generate `torchvision.datasets.VisionDataset`, `trojanvision.datasets.ImageFolder` can generate `torchvision.datasets.ImageFolder`
 6. Enable pytorch native AMP(Automatic Mixed Precision) with `--amp` for training
 7. Flexible Configuration Files
+8. Good help information to check arguments. (`-h` or `--help`)
+9. Detailed and well-organized `summary()` for each module.
 ## Quick Start
 
 > Note: The program won't save results without `--save`
