@@ -1,9 +1,12 @@
 # TrojanZoo
+[![Build Status](https://travis-ci.com/ain-soph/Trojan-Zoo.svg?branch=master)](https://travis-ci.com/ain-soph/Trojan-Zoo)
+![](https://img.shields.io/badge/python->=3.9-important.svg)
+
 
 This is the code implementation (pytorch) for our paper: 
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
 
-TrojanZoo provides a universal platform for conducting security researches for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
+TrojanZoo provides a universal platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
 [Dataset List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/datasets/__init__.py)  
 [Model List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/models/__init__.py)  
@@ -15,7 +18,7 @@ TrojanZoo provides a universal platform for conducting security researches for i
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
 
 ## Screenshot
-Add the screen shot
+![](https://github.com/ain-soph/Trojan-Zoo/tree/master/docs/source/_static/img/screenshot.png)
 
 
 ## Features
