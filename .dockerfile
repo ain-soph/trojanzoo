@@ -33,6 +33,7 @@ RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_6
     /root/anaconda3/bin/conda install -y pytorch torchvision cudatoolkit=11.0 -c pytorch
     # /root/anaconda3/bin/pip install opencv-python && \
     # /root/anaconda3/bin/conda install -y autopep8 pylint && \
+# Install trojanzoo
 WORKDIR /root/
 # /root/anaconda3/bin/pip install tensorflow && \
 # curl --silent https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh -o ~/anaconda.sh && \

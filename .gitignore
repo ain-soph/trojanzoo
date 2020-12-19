@@ -2,48 +2,28 @@
 .vs
 .vscode
 .devcontainer
+.idea
 
 # Temp Files
 .DS_Store
 .dropbox
 .ssh
-**/__pycache__
-**/.ipynb_checkpoints
+.ipynb_checkpoints
 *.pyc
 *.ini
-
-/issue
-/tex
-/test.py
+__pycache__
 
 # Filter Directory
-/config/
-/config_cmd/
+/bash
+/configs
+/cmd_config
 /data
 /result
-/output
-/output*/
-/useless/
-abandon
-ref
-prev_projects
-**/todo
-**/bak
-/bash
 /projects
+/tex
+
+# Other projects
 /lifelong
 
-# Filter Files
-*.bak
-*.eps
-*.pyproj
-*.sln
-/*workspace.py
-
-
-dogfish
-tiny_imagenet
-.idea
-
-test
-mitigation_rst
+# test file
+/test.py

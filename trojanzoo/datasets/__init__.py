@@ -1,64 +1,31 @@
 # -*- coding: utf-8 -*-
 
-from torch.utils import data
 from .dataset import Dataset
-from .imageset import ImageSet
-from .imagefolder import ImageFolder
-from .image import *
-
-from trojanzoo.configs import Config
+from trojanzoo.configs import config, Config
+from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
 
 import argparse
-import sys
-
-class_dict = {
-    'mnist': MNIST,
-    'cifar10': CIFAR10,
-    'cifar100': CIFAR100,
-    'gtsrb': GTSRB,
-    'imagenet': ImageNet,
-    'sample_imagenet': Sample_ImageNet,
-    'isic2018': ISIC2018,
-    # 'isic2019': ISIC2019,
-    # 'vggface': VGGface,
-    'vggface2': VGGface2,
-    'sample_vggface2': Sample_VGGface2,
-}
+import os
+from typing import Union
 
 
-def register(name: str, _class: type):
-    class_dict[name] = _class
-
-
-def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None) -> argparse._ArgumentGroup:
-    if dataset_name is None:
-        dataset_name = get_dataset_name()
-    DatasetType = Dataset
-    if dataset_name is not None:
-        DatasetType: type[Dataset] = class_dict[dataset_name]
+def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, Dataset] = None,
+                 config: Config = config, class_dict: dict[str, type[Dataset]] = {}) -> argparse._ArgumentGroup:
+    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
     group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi), description=dataset_name)
-    DatasetType.add_argument(group)
-    return group
+    DatasetType = class_dict[dataset_name]
+    return DatasetType.add_argument(group)     # TODO: Linting problem
 
 
-def create(dataset_name: str = None, **kwargs) -> Dataset:
-    if dataset_name is None:
-        dataset_name = Config.config['dataset']['default_dataset']
-    result = Config.combine_param(config=Config.config['dataset'], dataset_name=dataset_name, **kwargs)
-    DatasetType: type[Dataset] = class_dict[dataset_name]
-    return DatasetType(**result)
+def create(dataset_name: str = None, dataset: str = None, folder_path: str = None,
+           config: Config = config, class_dict: dict[str, type[Dataset]] = None, **kwargs) -> Dataset:
+    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
+    result = config.get_config(dataset_name=dataset_name)['dataset']._update(kwargs)
 
-
-def get_dataset_name() -> str:
-    argv = sys.argv
-    try:
-        idx = argv.index('--dataset')
-        dataset_name: str = argv[idx + 1]
-    except ValueError as e:
-        try:
-            idx = argv.index('-d')
-            dataset_name: str = argv[idx + 1]
-        except ValueError as e:
-            return None
-    return dataset_name
+    DatasetType = class_dict[dataset_name]
+    folder_path = folder_path if folder_path is not None else \
+        os.path.join(result['data_dir'], DatasetType.data_type, DatasetType.name)     # TODO: Linting problem
+    return DatasetType(folder_path=folder_path, **result)
