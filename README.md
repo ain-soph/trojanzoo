@@ -102,7 +102,7 @@ Modify them in corresponding config files and command-line arguments.
 
 ### Use your DIY Dataset/Model/Attack/Defense
 1. Follow our example to write your DIY class. (`CIFAR10`, `ResNet`, `IMC`, `Neural Cleanse`)
-   > It's necessary to subset our base class. (`Dataset`, `Model`, `Attack`, `Defense`)  
+   > It's necessary to subclass our base class. (`Dataset`, `Model`, `Attack`, `Defense`)  
    > Optional base classes depending on your use case: (`ImageSet`, `ImageFolder`, `ImageModel`)
 2. Register your DIY class in `trojanvision`
    > Example: `trojanvision.attacks.class_dict[attack_name]=AttackClass`
