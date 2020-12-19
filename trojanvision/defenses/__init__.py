@@ -20,7 +20,7 @@ class_dict = {
 
     # backdoor defense
     # model inspection
-    'neural_cleanse': Neural_Cleanse,
+    'neural_cleanse': NeuralCleanse,
     'tabor': TABOR,
     'abs': ABS,
     'deep_inspect': Deep_Inspect,

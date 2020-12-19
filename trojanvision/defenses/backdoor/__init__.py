@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .neural_cleanse import Neural_Cleanse
+from .neural_cleanse import NeuralCleanse
 from .tabor import TABOR
 from .strip import STRIP
 from .abs import ABS

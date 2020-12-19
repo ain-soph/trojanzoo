@@ -18,7 +18,7 @@ import argparse
 from tqdm import tqdm
 
 
-class Neural_Cleanse(BackdoorDefense):
+class NeuralCleanse(BackdoorDefense):
     name: str = 'neural_cleanse'
 
     @classmethod

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from .neural_cleanse import Neural_Cleanse
+from .neural_cleanse import NeuralCleanse
 import torch
 
 
-class TABOR(Neural_Cleanse):
+class TABOR(NeuralCleanse):
 
     name: str = 'tabor'
 
