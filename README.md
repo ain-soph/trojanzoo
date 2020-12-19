@@ -107,7 +107,7 @@ Modify them in corresponding config files and command-line arguments.
 2. Register your DIY class in `trojanvision`
    > Example: `trojanvision.attacks.class_dict[attack_name]=AttackClass`
 3. Create your config files if necessary.  
-   No need to modify any codes. Just directly add `{attack_name}.yml` in the config directory.
+   No need to modify any codes. Just directly add `{attack_name}.yml` (`.json`) in the config directory.
 4. Good to go!
 
 ## Todo List
