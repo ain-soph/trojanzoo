@@ -522,7 +522,7 @@ class Model:
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)
             prints('-' * 20, indent=indent + 10)
         self.output_layer_information(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
-        prints('-' * 30, indent=indent)
+        prints('-' * 20, indent=indent + 10)
 
     # -----------------------------------------Reload------------------------------------------ #
 
