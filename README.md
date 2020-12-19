@@ -3,7 +3,7 @@
 ![](https://img.shields.io/badge/python->=3.9-important.svg)
 
 
-This is the code implementation (pytorch) for our paper: 
+This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
 
 TrojanZoo provides a universal platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
@@ -35,24 +35,26 @@ TrojanZoo provides a universal platform for conducting security researches (espe
    > Specifically, `trojanvision.datasets.ImageSet` can generate `torchvision.datasets.VisionDataset`, `trojanvision.datasets.ImageFolder` can generate `torchvision.datasets.ImageFolder`
 6. Enable pytorch native AMP(Automatic Mixed Precision) with `--amp` for training
 7. Flexible Configuration Files
-## Quick Start:
+8. Good help information to check arguments. (`-h` or `--help`)
+9. Detailed and well-organized `summary()` for each module.
+## Quick Start
 
 > Note: The program won't save results without `--save`
 
 1. Train a model:  
-    e.g. `ResNetComp18` for `CIFAR10` with 95% Acc
+    e.g. `ResNetComp18` on `CIFAR10` with 95% Acc
     ```python3
     python train.py --verbose 1 --amp --dataset cifar10 --model resnetcomp18 --epoch 150 --lr 0.1 --lr_scheduler --lr_decay_step 50 --save
     ```
 
 2. Test backdoor attack (e.g., BadNet):  
-    e.g. `BadNet`
+    e.g. `BadNet` with `ResNetComp18` on `CIFAR10`
     ```python3
     python backdoor_attack.py --verbose 1 --pretrain --validate_interval 1 --amp --dataset cifar10 --model resnetcomp18 --attack badnet --random_init --epoch 50 --lr 0.01 --save
     ```
 
 3. Test backdoor defense (e.g., Neural Cleanse):  
-    e.g. `Neural Cleanse` for `BadNet`
+    e.g. `Neural Cleanse` against `BadNet`
     ```python3
     python backdoor_attack.py --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnetcomp18 --attack badnet --defense neural_cleanse --random_init --epoch 50 --lr 0.01
     ```
@@ -116,7 +118,7 @@ Modify them in corresponding config files and command-line arguments.
    3. Docker Hub publish
 2. Sphinx Docs
 3. Test and find bugs
-## Cite our paper:
+## Cite our paper
 ```
 @InProceedings{pang2020trojanzoo,
       title={TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)}, 
