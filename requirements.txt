@@ -1,4 +1,6 @@
 python>=3.9.1
+pyyaml
+pandas
 
 torch
 torchvision
