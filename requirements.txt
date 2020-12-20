@@ -2,7 +2,7 @@ python>=3.9.1
 pyyaml
 pandas
 
-torch
+pytorch
 torchvision
 scikit-learn
 matplotlib
