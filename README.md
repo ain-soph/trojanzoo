@@ -6,7 +6,7 @@
 This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
 
-TrojanZoo provides a universal platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
+TrojanZoo provides a universal pytorch platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
 [Dataset List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/datasets/__init__.py)  
 [Model List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/models/__init__.py)  
@@ -23,8 +23,8 @@ TrojanZoo provides a universal platform for conducting security researches (espe
 
 ## Features
 1. **Colorful and verbose output!**
-   > Note: enable with `--color` for color and `--verbose` for verbose. The color setting won't change after program starts.  
-   To open an interactive window, use `python - --color`
+   > Note: enable with `--color` for color and `--verbose` for verbose.  
+   To open an interactive window with color, use `python - --color`
 2. Modular design (plug and play)
 3. Good code linting support (this package requires `python>=3.9`)
 4. Register **your own module** to the library.
@@ -118,6 +118,9 @@ Modify them in corresponding config files and command-line arguments.
    3. Docker Hub publish
 2. Sphinx Docs
 3. Test and find bugs
+
+## License
+TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/Trojan-Zoo/blob/master/LICENSE) file.
 ## Cite our paper
 ```
 @InProceedings{pang2020trojanzoo,
