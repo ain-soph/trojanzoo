@@ -1,0 +1,10 @@
+node_modules/
+package-lock.json
+package.json
+yarn.lock
+
+build
+src/
+source/.vscode
+source/_build
+source/generated

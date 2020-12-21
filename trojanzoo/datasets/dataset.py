@@ -19,13 +19,13 @@ InputType = Union[torch.Tensor, tuple]
 redirect = Indent_Redirect(buffer=True, indent=0)
 
 
-class Dataset:
+class Dataset:    
     """An abstract class representing a Dataset.
 
     Args:
         name (string): Dataset Name. (need override)
-        data_type (string): Data type. (need override)
-        folder_path (string): dataset specific directory path
+        data_type (string): Data type (e.g., 'image'). (need override)
+        folder_path (string): directory path to store dataset.
 
     """
     name: str = None
