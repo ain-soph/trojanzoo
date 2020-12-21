@@ -1,6 +1,7 @@
 # TrojanZoo
-[![Build Status](https://travis-ci.com/ain-soph/Trojan-Zoo.svg?branch=master)](https://travis-ci.com/ain-soph/Trojan-Zoo)
-![](https://img.shields.io/badge/python->=3.9-important.svg)
+[![Build Status](https://travis-ci.com/ain-soph/trojanzoo.svg?branch=master)](https://travis-ci.com/ain-soph/trojanzoo)
+![python>=3.9](https://img.shields.io/badge/python->=3.9-important.svg)
+![License](https://img.shields.io/github/license/ain-soph/trojanzoo)
 
 
 This is the code implementation (pytorch) for our paper:  
@@ -8,17 +9,17 @@ This is the code implementation (pytorch) for our paper:
 
 TrojanZoo provides a universal pytorch platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
-[Dataset List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/datasets/__init__.py)  
-[Model List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/models/__init__.py)  
-[Attack List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/attacks/__init__.py)  
-[Defense List](https://github.com/ain-soph/Trojan-Zoo/blob/master/trojanvision/defenses/__init__.py)
+[Dataset List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/datasets/__init__.py)  
+[Model List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/models/__init__.py)  
+[Attack List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/attacks/__init__.py)  
+[Defense List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/defenses/__init__.py)
 
 > Note: This repository is also maintained to cover the implementation of  
 > our kdd 2020 paper [AdvMind: Inferring Adversary Intent of Black-Box Attacks](https://arxiv.org/abs/2006.09539)  
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
 
 ## Screenshot
-![screenshot](https://github.com/ain-soph/Trojan-Zoo/raw/master/docs/source/_static/img/screenshot.png)
+![screenshot](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/_static/img/screenshot.png)
 
 
 ## Features
@@ -120,7 +121,7 @@ Modify them in corresponding config files and command-line arguments.
 3. Test and find bugs
 
 ## License
-TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/Trojan-Zoo/blob/master/LICENSE) file.
+TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/master/LICENSE) file.
 ## Cite our paper
 ```
 @InProceedings{pang2020trojanzoo,
