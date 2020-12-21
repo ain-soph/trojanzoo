@@ -1,5 +1,6 @@
 pyyaml
 pandas
+tqdm
 
 torch
 torchvision
