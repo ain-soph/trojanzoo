@@ -1,22 +1,30 @@
 language: python
-python: "3.9"
+python:
+- '3.9'
 install:
-  - pip install -r requirements.txt
-script: true
-#   - python setup.py -q install
-# deploy:
-#   - provider: pypi
-#     user: goodspeed # pypi 用户名
-#     password: password # pypi 密码
-#     on:
-#       python: 3.9
-#       tags: true
-#       branch: master
-#     edge: true
-#   - provider: pages
-
-addons:
-  apt:
-    update: true
-    sources:
-      -
+- pip install -r requirements.txt
+script:
+- python setup.py -q install
+deploy:
+  # - provider: pypi
+  #   user: __token__
+  #   password: boxHfbrX0/3uQoUmKsCyZPW+VUE3Aq4A1QI9uEPirja3Enrz73BhvSgzG9vt2Uw81kE1obxXjaXvOyaZNd/2fYMbZ5/M/AEpvjYU3/oxATTniM5IftOq+L7+xjVEmxbZeEyZYg7qKxBVe3p8DG5MP8AD9TQFVk6Z1KuhpciNF611glH8lWTtigDicOUIXE8pLrrZhMIJ3bAd0rG+yCeqA1IwfwqgRjUZde+w+/15DbPEw9P6nxF0td1lyIljlzZyByAeRi46/ZQ5GmqUCUVcPHcdw4BsGXcx8sj8+2bbh0GW5b6hG6bA4mrh3XHUupRFP+yLy9s+PLOC6fSerXlfkqqoxUz++3RX9kLVyoE+vFKHxdA4jiT6mrdriD9C7lo79H2ni9LgM9NeGAVMXDBc5Vw2o+LCmj6B2JxtA5AYQyYtMSGLnDoT2NQXfNBZHydoMhM+GvcQUu+CPnPrrid2aa7Zv8XRSdxKJetETHLsSDCB2ZE8YUgnyvB4+IbrO3hbJ/4RUyekuwyrQKFYeM2fSl0uHGVVsSMX/X+3Kg6w+riSOss4mJTBPN9UqRXDByJgC6l3/upRqkKQwJAwms1L3iM4pgPbL1ztbwyHXSvciftQDHtx/adfRtiEB7GP4ThMbQewzfC/cgagVeA8ixoRszRvYgE/s9/D/0oxvC59As0=
+  #   on:
+  #     python: 3.9
+  #     # tags: true
+  #     branch: master
+  #   edge: true
+  #   cleanup: true
+  - provider: pages:git
+    password:
+      secure: zUHBh/bQzioS++XRECoLhAY8PdzVLmEcS8A8Jbeb2yJJYtBAOpuctvrNrMlESUkGIN1NU9krR7AhzPndDPcbawf8ZvILykQU0aoz/sOffcjkdLX8BkpIMhtkoFz+7+6RyBk08FsYRwWAeeYSaLyNFBsqOubbN5wjryqg+0bAzyYYCOj48SdnXbnVhFc6SHyfp63Yxr3Bi1q1Y+fAv5jxRA2ZjPfHuJKCX8jPFVfhZy3D185nhtZF6uvsCVbn75Om72bQUdfSj47LSQrI+3d1yjqlG6igEd6j/Qkby/J3vzZeWpKFA9RxMJmvis5M47QD+WsDi9WjQWVt5N+s1gDC3T3s783TYtntfo0rc8OOnFxa+AsuYu7UDXmsy8ukCAnIAGBi16/es60lzXXzlvVFfJc53ZPd07Yddj1/5lkkuI2K1qx8TNQKBQGJr9jMGKEpleTV6jXaBLIUXhxqguMzZUJEN/JNTXLH4BOIBIjYVjfbGKH9KmUepn1n4mEXuwdbo8b9COSWkQ7IOWGX5GSYVmjPPNQebt3O5xLHEtp5Xqf2ZNBhAYpLkAQcL7A4wBC/t3/7RKAXnKNndJ/mfSi6c/1DmQ76a+nBbrUz+pMhl2oQdf2BCfQls5QAvFy4w4qbeika0ySWWwkKgaSyTJF2aHBPbIyanrE/3IPcghzPcak=
+    cleanup: true
+    on:
+      python: 3.9
+      # tags: true
+      branch: master
+# addons:
+#   apt:
+#     update: true
+#     sources:
+#     - 

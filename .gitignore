@@ -5,8 +5,8 @@
 .idea
 
 # Working on
-/.travis.yml
-/docs
+# /.travis.yml
+# /docs
 /setup.py
 
 # Temp Files
