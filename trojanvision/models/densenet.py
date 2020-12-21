@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from .imagemodel import _ImageModel, ImageModel
 
+import torch
 import torch.nn as nn
 from torch.utils import model_zoo
 import torchvision.models
 from torchvision.models.densenet import model_urls
-
 import re
 from collections import OrderedDict
 
@@ -30,9 +30,9 @@ class DenseNet(ImageModel):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, verbose: bool = True):
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['densenet' + str(self.layer)]
-        _dict = model_zoo.load_url(url)
+        _dict = model_zoo.load_url(url, **kwargs)
         pattern = re.compile(
             r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
         for key in list(_dict.keys()):
@@ -45,16 +45,7 @@ class DenseNet(ImageModel):
         _dict['classifier.fc.bias'] = _dict['classifier.bias']
         del _dict['classifier.weight']
         del _dict['classifier.bias']
-        if self.num_classes == 1000:
-            self._model.load_state_dict(_dict)
-        else:
-            new_dict = OrderedDict()
-            for name, param in _dict.items():
-                if 'classifier' not in name:
-                    new_dict[name] = param
-            self._model.load_state_dict(new_dict, strict=False)
-        if verbose:
-            print(f'Model {self.name} loaded From Official Website: {url}')
+        return _dict
 
 
 class _DenseNetcomp(_DenseNet):
@@ -70,3 +61,10 @@ class DenseNetcomp(DenseNet):
     def __init__(self, name='densenetcomp', layer=None, model_class=_DenseNetcomp, default_layer=121, **kwargs):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
+
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
+        _dict = super().get_official_weights(**kwargs)
+        keys_list: list[str] = list(_dict.keys())
+        _dict[keys_list[0]] = self._model.features[0].weight
+        _dict[keys_list[1]] = self._model.features[0].bias
+        return _dict

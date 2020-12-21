@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.utils import model_zoo
 import torchvision.models
 from torchvision.models.resnet import model_urls
-from collections import OrderedDict
+from collections import Callable, OrderedDict
 
 
 class _ResNet(_ImageModel):
@@ -14,7 +14,7 @@ class _ResNet(_ImageModel):
     def __init__(self, layer=18, **kwargs):
         super().__init__(**kwargs)
         layer = int(layer)
-        ModelClass: type[torchvision.models.ResNet] = getattr(torchvision.models, 'resnet' + str(layer))
+        ModelClass: Callable[..., torchvision.models.ResNet] = getattr(torchvision.models, 'resnet' + str(layer))
         _model = ModelClass(num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
@@ -102,14 +102,14 @@ class ResNet(ImageModel):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, verbose=True):  # TODO
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['resnet' + str(self.layer)]
-        _dict = model_zoo.load_url(url)
-        self._model.features.load_state_dict(_dict, strict=False)
-        if self.num_classes == 1000:
-            self._model.classifier.load_state_dict(_dict, strict=False)
-        if verbose:
-            print(f'Model {self.name} loaded From Official Website: {url}')
+        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
+        new_dict = OrderedDict()
+        for i, (key, value) in enumerate(_dict.items()):
+            prefix = 'features.' if i < len(_dict) - 2 else 'classifier.'
+            new_dict[prefix + key] = value
+        return new_dict
 
 
 class _ResNetcomp(_ResNet):
@@ -126,13 +126,7 @@ class ResNetcomp(ResNet):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
-    def load_official_weights(self, verbose=True):
-        url = model_urls['resnet' + str(self.layer)]
-        _dict = model_zoo.load_url(url)
-        _dict = {key: value for (key, value)
-                 in _dict.items() if key != 'conv1.weight'}
-        self._model.features.load_state_dict(_dict, strict=False)
-        if self.num_classes == 1000:
-            self._model.classifier.load_state_dict(_dict, strict=False)
-        if verbose:
-            print(f'Model {self.name} loaded From Official Website: {url}')
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
+        _dict = super().get_official_weights(**kwargs)
+        _dict[list(_dict.keys())[0]] = self._model.features[0].weight
+        return _dict

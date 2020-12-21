@@ -63,7 +63,7 @@ class Sample_ImageNet(ImageNet):
         _dict.__delattr__('folder_path')
         imagenet = ImageNet(**_dict)
         class_dict: dict = {}
-        json_path = os.path.normpath(os.path.join(root_dir, f'data/{self.name}/class_dict.json'))
+        json_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'class_dict.json'))
         with open(json_path, 'r', encoding='utf-8') as f:
             class_dict: dict = json.load(f)
         imagenet.sample(child_name=self.name, class_dict=class_dict)

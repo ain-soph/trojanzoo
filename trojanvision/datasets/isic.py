@@ -41,7 +41,7 @@ class ISIC(ImageFolder):
         return transform
 
     def split_class(self):
-        csv_path = os.path.normpath(os.path.join(root_dir, f'data/{self.name}/label.csv'))
+        csv_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'label.csv'))
         print(f'Collect Label Information from CSV file: {csv_path}')
         obj = pd.read_csv(csv_path)
         labels = list(obj.columns.values)
