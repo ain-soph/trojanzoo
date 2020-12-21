@@ -1,7 +1,7 @@
 pyyaml
 pandas
 
-pytorch
+torch
 torchvision
 scikit-learn
 matplotlib
