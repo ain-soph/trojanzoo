@@ -261,11 +261,12 @@ class Model:
         if file_path is None:
             folder_path = folder_path if folder_path is not None else self.folder_path
             suffix = suffix if suffix is not None else self.suffix
-            file_path = os.path.normpath(os.path.join(folder_path, self.name, suffix, '.pth'))
+            file_path = os.path.normpath(os.path.join(folder_path, f'{self.name}{suffix}.pth'))
         if file_path == 'official':   # TODO
             _dict = self.get_official_weights(map_location=map_location)
             last_bias_value = next(reversed(_dict.values()))   # TODO: make sure
-            if self.num_classes != len(last_bias_value) and component != 'features' and not strict:
+            if self.num_classes != len(last_bias_value) and component != 'features':
+                strict = False
                 _dict.popitem()
                 _dict.popitem()
         else:
@@ -295,7 +296,7 @@ class Model:
         if file_path is None:
             folder_path = folder_path if folder_path is not None else self.folder_path
             suffix = suffix if suffix is not None else self.suffix
-            file_path = os.path.normpath(os.path.join(folder_path, self.name, suffix, '.pth'))
+            file_path = os.path.normpath(os.path.join(folder_path, f'{self.name}{suffix}.pth'))
         else:
             folder_path = os.path.dirname(file_path)
         if not os.path.exists(folder_path):

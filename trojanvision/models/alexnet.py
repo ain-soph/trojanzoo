@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from .imagemodel import _ImageModel, ImageModel
 
-
+import torch
 import torch.nn as nn
 from torch.utils import model_zoo
 import torchvision.models
@@ -51,16 +51,6 @@ class AlexNet(ImageModel):
     def __init__(self, name: str = 'alexnet', model_class: type[_AlexNet] = _AlexNet, **kwargs):
         super().__init__(name=name, model_class=model_class, **kwargs)
 
-    def load_official_weights(self, verbose=True):
-        url = model_urls['alexnet']
-        _dict = model_zoo.load_url(url)
-        if self.num_classes == 1000:
-            self._model.load_state_dict(_dict)
-        else:
-            new_dict = OrderedDict()
-            for name, param in _dict.items():
-                if 'classifier.6' not in name:
-                    new_dict[name] = param
-            self._model.load_state_dict(new_dict, strict=False)
-        if verbose:
-            print(f'Model {self.name} loaded From Official Website: {url}')
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
+        url = model_urls['resnet' + str(self.layer)]
+        return model_zoo.load_url(url, **kwargs)
