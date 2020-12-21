@@ -1,9 +1,11 @@
 language: python
 python:
   - '3.9'
-install: true
-# - pip install -r requirements.txt
-script: true
+install:
+  - pip install -r requirements.txt
+  - pip install -r docs/requirements.txt 
+script:
+  - bash ./scripts/pages.sh
 # - python setup.py -q install
 deploy:
   # - provider: pypi
@@ -18,12 +20,13 @@ deploy:
   - provider: pages:git
     token:
       secure: zUHBh/bQzioS++XRECoLhAY8PdzVLmEcS8A8Jbeb2yJJYtBAOpuctvrNrMlESUkGIN1NU9krR7AhzPndDPcbawf8ZvILykQU0aoz/sOffcjkdLX8BkpIMhtkoFz+7+6RyBk08FsYRwWAeeYSaLyNFBsqOubbN5wjryqg+0bAzyYYCOj48SdnXbnVhFc6SHyfp63Yxr3Bi1q1Y+fAv5jxRA2ZjPfHuJKCX8jPFVfhZy3D185nhtZF6uvsCVbn75Om72bQUdfSj47LSQrI+3d1yjqlG6igEd6j/Qkby/J3vzZeWpKFA9RxMJmvis5M47QD+WsDi9WjQWVt5N+s1gDC3T3s783TYtntfo0rc8OOnFxa+AsuYu7UDXmsy8ukCAnIAGBi16/es60lzXXzlvVFfJc53ZPd07Yddj1/5lkkuI2K1qx8TNQKBQGJr9jMGKEpleTV6jXaBLIUXhxqguMzZUJEN/JNTXLH4BOIBIjYVjfbGKH9KmUepn1n4mEXuwdbo8b9COSWkQ7IOWGX5GSYVmjPPNQebt3O5xLHEtp5Xqf2ZNBhAYpLkAQcL7A4wBC/t3/7RKAXnKNndJ/mfSi6c/1DmQ76a+nBbrUz+pMhl2oQdf2BCfQls5QAvFy4w4qbeika0ySWWwkKgaSyTJF2aHBPbIyanrE/3IPcghzPcak=
-    on:
+      local_dir: ./docs/build/
+      on:
       python: 3.9
       # tags: true
       branch: master
     edge: true
-    cleanup: true
+    cleanup: false
 # addons:
 #   apt:
 #     update: true
