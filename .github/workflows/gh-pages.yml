@@ -1,4 +1,4 @@
-name: website
+name: github pages
 
 on:
   push:
@@ -39,6 +39,7 @@ jobs:
         run: |
           cd ./docs/
           make html-stable
+          touch ./docs/build/html/.nojekyll
       - name: Check GitHub Pages status
         uses: crazy-max/ghaction-github-status@v2
         with:

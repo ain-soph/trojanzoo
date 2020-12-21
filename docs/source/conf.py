@@ -226,7 +226,7 @@ html_theme_path = [trojanzoo_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
     'trojanzoo_project': 'docs',
-    'canonical_url': 'https://ain-soph.github.io/trojanzoo',
+    'canonical_url': 'https://ain-soph.github.io/trojanzoo/',
     'collapse_navigation': False,
     'display_version': True,
     'logo_only': True,
