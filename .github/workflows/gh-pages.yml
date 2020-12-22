@@ -24,7 +24,7 @@ jobs:
       - name: Compile Sphinx Docs
         run: |
           cd ./docs/
-          make html-stable
+          make html
           touch ./build/html/.nojekyll
       - name: Check GitHub Pages status
         uses: crazy-max/ghaction-github-status@v2

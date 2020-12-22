@@ -235,6 +235,7 @@ html_theme_options = {
 # html_logo = '_static/img/trojanzoo-logo-dark-unstable.png'
 # if RELEASE:
 html_logo = '_static/img/trojanzoo-logo-dark.svg'
+html_favicon = '_static/img/favicon.ico'
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
