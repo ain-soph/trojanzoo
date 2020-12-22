@@ -9,4 +9,4 @@
 
 IMG_DIR=./static/images/
 
-convert -resize '64x64' -background none $IMG_DIR/logo-icon.svg $IMG_DIR/favicon.ico
+convert -resize 32 -background none $IMG_DIR/logo-icon.svg $IMG_DIR/favicon.ico
