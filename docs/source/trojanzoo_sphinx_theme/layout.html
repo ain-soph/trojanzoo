@@ -461,7 +461,7 @@
   <!-- End Footer -->
 
   <!-- Begin Mobile Menu -->
-<!-- 
+
   <div class="mobile-main-menu">
     <div class="container-fluid">
       <div class="container">
@@ -475,7 +475,7 @@
     <div class="mobile-main-menu-links-container">
       <div class="main-menu">
         <ul>
-          <li>
+          <!-- <li>
             <a href="{{ theme_variables.external_urls['get_started'] }}">Get Started</a>
           </li>
 
@@ -497,7 +497,7 @@
 
           <li {%- if theme_trojanzoo_project == 'tutorials' %} class="active"{%- endif %}>
             <a href="{{ theme_variables.external_urls['tutorials'] }}">Tutorials</a>
-          </li>
+          </li> -->
 
           <li class="resources-mobile-menu-title" {%- if theme_trojanzoo_project == 'docs' %} class="active"{%- endif %}>
             Docs
@@ -505,14 +505,14 @@
 
           <ul class="resources-mobile-menu-items">
             <li>
-              <a href="{{ theme_variables.external_urls['docs'] }}">TrojanZoo</a>
+              <a href="{{ theme_variables.external_urls['docs'] }}">trojanzoo</a>
             </li>
 
             <li>
-              <a href="{{ theme_variables.external_urls['audio'] }}">torchaudio</a>
+              <a href="{{ theme_variables.external_urls['vision'] }}">trojanvision</a>
             </li>
 
-            <li>
+            <!-- <li>
               <a href="{{ theme_variables.external_urls['text'] }}">torchtext</a>
             </li>
 
@@ -531,9 +531,9 @@
             <li>
               <a href="{{ theme_variables.external_urls['xla'] }}">TrojanZoo on XLA Devices</a>
             </li>
-          </ul>
+          </ul> -->
 
-          <li class="resources-mobile-menu-title">
+          <!-- <li class="resources-mobile-menu-title">
             Resources
           </li>
 
@@ -557,7 +557,7 @@
             <li>
               <a href="{{ theme_variables.external_urls['forums'] }}">Forums</a>
             </li>
-          </ul>
+          </ul> -->
 
           <li>
             <a href="{{ theme_variables.external_urls['github'] }}">Github</a>
@@ -565,16 +565,17 @@
         </ul>
       </div>
     </div>
-  </div> -->
+  </div>
 
   <!-- End Mobile Menu -->
 
   <script type="text/javascript" src="{{ pathto('_static/js/vendor/anchor.min.js', 1) }}"></script>
 
-  <!-- mobileMenu.bind();
-  mobileTOC.bind(); -->
+
   <script type="text/javascript">
     $(document).ready(function() {
+      mobileMenu.bind();
+      mobileTOC.bind();
       trojanzooAnchors.bind();
       sideMenus.bind();
       scrollToAnchor.bind();
