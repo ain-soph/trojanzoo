@@ -1,5 +1,5 @@
 # TrojanZoo
-![logo](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/_static/img/trojanzoo-logo-readme.png)
+![logo](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/_static/img/trojanzoo-logo-readme.svg)
 
 [![build](https://github.com/ain-soph/trojanzoo/workflows/build/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3Abuild)
 [![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
