@@ -13,7 +13,7 @@
 This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
 
-TrojanZoo provides a universal pytorch platform for conducting security researches (especially backdoor attacks/defenses) for image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
+TrojanZoo provides a universal pytorch platform to conduct security researches (especially backdoor attacks/defenses) of image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
 [Dataset List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/datasets/__init__.py)  
 [Model List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/models/__init__.py)  
@@ -119,9 +119,10 @@ Modify them in corresponding config files and command-line arguments.
 
 ## Todo List
 
-1. Github Actions
-   2. Pypi package release
-   3. Docker Hub publish
+1. Github Actions  
+   - [x] Github Pages  
+   - [ ] Pypi package release  
+   - [ ] Docker Hub publish  
 2. Sphinx Docs
 3. **Unit test**
 
