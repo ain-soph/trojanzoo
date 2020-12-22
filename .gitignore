@@ -5,8 +5,8 @@
 .idea
 
 # Working on
-# /.travis.yml
 # /docs
+codecov.yml
 /setup.py
 
 # Temp Files

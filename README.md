@@ -119,12 +119,11 @@ Modify them in corresponding config files and command-line arguments.
 
 ## Todo List
 
-1. Travis-CI support
-   1. Build Test
+1. Github Actions
    2. Pypi package release
    3. Docker Hub publish
 2. Sphinx Docs
-3. Test and find bugs
+3. **Unit test**
 
 ## License
 TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/master/LICENSE) file.
