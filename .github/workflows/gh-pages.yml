@@ -9,31 +9,32 @@ on:
       - master
 
 jobs:
-  run:
+  publish:
     runs-on: ubuntu-latest
     container:
       image: local0state/trojanzoo:sphinx
-    env:
-      OS: ubuntu-latest
-      PYTHON: '3.9.1'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Generate coverage report
+      - name: Install requirements
         run: |
-          pip install pytest
-          pip install pytest-cov
-          pytest --cov=./ --cov-report=xml
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r ./docs/requirements.txt
+      - name: Compile Sphinx Docs
+        run: |
+          cd ./docs/
+          make html-stable
+          touch ./build/html/.nojekyll
+      - name: Check GitHub Pages status
+        uses: crazy-max/ghaction-github-status@v2
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
-          files: ./coverage1.xml,./coverage2.xml
-          directory: ./coverage/reports/
-          flags: unittests
-          env_vars: OS,PYTHON
-          name: codecov-umbrella
-          fail_ci_if_error: true
-          path_to_write_report: ./coverage/codecov_report.txt
-          verbose: true
+          pages_threshold: major_outage
+      - name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: ./docs/build/html
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

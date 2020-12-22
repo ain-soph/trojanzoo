@@ -6,7 +6,8 @@ import torch.nn as nn
 from torch.utils import model_zoo
 import torchvision.models
 from torchvision.models.resnet import model_urls
-from collections import Callable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Callable
 
 
 class _ResNet(_ImageModel):
