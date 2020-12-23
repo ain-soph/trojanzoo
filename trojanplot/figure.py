@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from .font import *
 from trojanzoo.utils import to_numpy
-from .font import palatino, palatino_bold, palatino_bold_italic
 
 import os
 import numpy as np
 import torch
 
-import matplotlib
 import matplotlib.ticker as ticker
 from matplotlib import rc
 from matplotlib import pyplot as plt
@@ -15,21 +14,22 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 from matplotlib.container import BarContainer
-from matplotlib.font_manager import FontProperties
 import seaborn
 import scipy.stats as stats
 
 from scipy.interpolate import UnivariateSpline
 # from scipy.optimize import curve_fit
 
-
+rc('font', family='serif', serif='Palatino', weight='bold')
+rc('svg', image_inline=True, fonttype='none')
+rc('pdf', fonttype=42)
+rc('ps', fonttype=42)
 rc('mathtext', fontset='cm')
 
 
 class Figure:
     def __init__(self, name: str, folder_path: str = None, fig: Figure = None, ax: Axes = None, figsize: tuple[float, float] = (5, 2.5), tex=False):
         super(Figure, self).__init__()
-        # rc('font', family='palatino', weight='bold', style='normal')
         if tex:
             rc('text', usetex=True)
         self.name: str = name
@@ -53,19 +53,22 @@ class Figure:
         self.ax.set_xlim([0.0, 1.0])
         self.ax.set_ylim([0.0, 1.0])
 
-    def set_legend(self, *args, frameon: bool = True, edgecolor='white', framealpha=1.0, prop=palatino_bold_italic, fontsize=11, **kwargs) -> None:
-        self.ax.legend(*args, prop=prop, frameon=frameon, edgecolor=edgecolor, framealpha=framealpha, **kwargs)
-        plt.setp(self.ax.get_legend().get_texts(), fontsize=fontsize)
+    def set_legend(self, *args, frameon: bool = True, edgecolor='white', framealpha=1.0,
+                   fontsize=11, fontstyle='italic', **kwargs) -> None:
+        self.ax.legend(*args, frameon=frameon, edgecolor=edgecolor, framealpha=framealpha, **kwargs)
+        plt.setp(self.ax.get_legend().get_texts(), fontsize=fontsize, fontstyle=fontstyle)
 
-    def set_axis_label(self, axis: str, text: str, fontsize: int = 12, fontproperties: FontProperties = palatino_bold) -> None:
-        getattr(self.ax, f'set_{axis}label')(text, fontproperties=fontproperties, fontsize=fontsize)
+    def set_axis_label(self, axis: str, text: str, fontsize: int = 12,
+                       family='serif', font='Palatino', weight='bold', **kwargs):
+        getattr(self.ax, f'set_{axis}label')(text, fontsize=fontsize,
+                                             family=family, font=font, weight=weight, **kwargs)
 
-    def set_title(self, text: str = None, fontsize: int = 16, fontproperties: FontProperties = palatino_bold) -> None:
+    def set_title(self, text: str = None, fontsize: int = 16) -> None:
         if text is None:
             text = self.name
-        self.ax.set_title(text, fontproperties=fontproperties, fontsize=fontsize)
+        self.ax.set_title(text, fontsize=fontsize)
 
-    def save(self, path: str = None, folder_path: str = None, ext: str = 'svg') -> None:
+    def save(self, path: str = None, folder_path: str = None, ext: str = 'pdf') -> None:
         if path is None:
             if folder_path is None:
                 folder_path = self.folder_path
@@ -78,7 +81,7 @@ class Figure:
 
     def set_axis_lim(self, axis: str, lim: list[float] = [0.0, 1.0], margin: list[float] = [0.0, 0.0],
                      piece: int = 10, _format: str = '%.1f',
-                     fontsize: int = 11, fontproperties: FontProperties = palatino_bold) -> None:
+                     fontsize: int = 11) -> None:
         if _format == 'integer':
             _format = '%d'
         lim_func = getattr(self.ax, f'set_{axis}lim')
@@ -94,7 +97,7 @@ class Figure:
         set_ticks_func(ticks)
         ticks = getattr(self.ax, f'get_{axis}ticks')()
         set_ticklabels_func = getattr(self.ax, f'set_{axis}ticklabels')
-        set_ticklabels_func(ticks, fontproperties=fontproperties, fontsize=fontsize)
+        set_ticklabels_func(ticks, fontsize=fontsize)
         format_func(_format)
 
     def curve(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
@@ -173,7 +176,7 @@ class Figure:
         return self.ax.hist(x, bins=bins, normed=normed, **kwargs)
 
     def autolabel(self, rects: BarContainer, above: bool = True,
-                  fontsize: int = 6, fontproperties: FontProperties = palatino_bold):
+                  fontsize: int = 6):
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rects:
             height = int(rect.get_height())
@@ -182,7 +185,7 @@ class Figure:
                              xy=(rect.get_x() + rect.get_width() / 2, height),
                              xytext=(0, offset),  # 3 points vertical offset
                              textcoords="offset points",
-                             ha='center', va='bottom', fontproperties=fontproperties, fontsize=fontsize)
+                             ha='center', va='bottom', fontsize=fontsize)
 
     @staticmethod
     def get_roc_curve(label, pred) -> tuple[list[float], list[float]]:
