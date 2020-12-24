@@ -146,5 +146,6 @@ class Param(Module, Generic[_KT, _VT]):
         if key not in self.keys():
             key = 'default'
             if 'default' not in self.keys():
+                print(self)
                 raise KeyError(key)
         return super().__getitem__(key)

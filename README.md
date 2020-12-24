@@ -53,7 +53,7 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 1. Train a model:  
     e.g. `ResNetComp18` on `CIFAR10` with 95% Acc
     ```python3
-    python train.py --verbose 1 --amp --dataset cifar10 --model resnetcomp18 --epoch 150 --lr 0.1 --lr_scheduler --lr_decay_step 50 --save
+    python train.py --verbose 1 --amp --dataset cifar10 --model resnetcomp18 --epoch 300 --lr 0.1 --lr_scheduler --lr_decay_step 100 --save
     ```
 
 2. Test backdoor attack (e.g., BadNet):  
