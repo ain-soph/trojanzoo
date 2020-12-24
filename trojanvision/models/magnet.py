@@ -2,7 +2,7 @@
 
 from trojanvision.utils import Conv2d_SAME
 from trojanzoo.utils import to_tensor
-from trojanzoo.models.model import Model
+from trojanzoo.models import Model
 from trojanvision.datasets import ImageSet
 
 import torch

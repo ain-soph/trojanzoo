@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.models.model import Model
+from trojanzoo.models import Model
 import torch
 import torch.nn as nn
 import numpy as np

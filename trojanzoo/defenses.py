@@ -1,15 +1,34 @@
 # -*- coding: utf-8 -*-
 
-from .defense import Defense
-from trojanzoo.datasets.dataset import Dataset
-from trojanzoo.models import Model
 from trojanzoo.configs import config, Config
+from trojanzoo.datasets import Dataset
+from trojanzoo.models import Model
+from trojanzoo.attacks import Attack
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
+from trojanzoo.utils.process import Model_Process
 
 import argparse
 import os
 from typing import Union
+
+
+class Defense(Model_Process):
+
+    name: str = None
+
+    @staticmethod
+    def add_argument(group: argparse._ArgumentGroup):
+        group.add_argument('--defense', dest='defense_name')
+        group.add_argument('--defense_dir', dest='defense_dir',
+                           help='directory to contain defense results')
+
+    def __init__(self, attack: Attack = None, **kwargs):
+        super().__init__(**kwargs)
+        self.attack: Attack = attack
+
+    def detect(self, **kwargs):
+        raise NotImplementedError()
 
 
 def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defense: Union[str, Defense] = None,

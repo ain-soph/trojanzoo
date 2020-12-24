@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from trojanzoo.utils import to_tensor
+from trojanzoo.configs import config, Config
+from trojanzoo.utils import get_name, to_tensor
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import torch
@@ -9,17 +10,17 @@ import torch.utils.data
 import torch.utils.data.dataset
 from torchvision import transforms
 import numpy as np
-
+import argparse
 import os
 import sys
-import argparse
 from typing import Any, Union
+
 
 InputType = Union[torch.Tensor, tuple]
 redirect = Indent_Redirect(buffer=True, indent=0)
 
 
-class Dataset:    
+class Dataset:
     """An abstract class representing a Dataset.
 
     Args:
@@ -222,3 +223,24 @@ class Dataset:
     @batch_size.setter
     def batch_size(self, value: int):
         self.__batch_size = value if value >= 0 else -value * max(1, torch.cuda.device_count())
+
+
+def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, Dataset] = None,
+                 config: Config = config, class_dict: dict[str, type[Dataset]] = {}) -> argparse._ArgumentGroup:
+    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
+    group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi), description=dataset_name)
+    DatasetType = class_dict[dataset_name]
+    return DatasetType.add_argument(group)     # TODO: Linting problem
+
+
+def create(dataset_name: str = None, dataset: str = None, folder_path: str = None,
+           config: Config = config, class_dict: dict[str, type[Dataset]] = {}, **kwargs) -> Dataset:
+    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
+    result = config.get_config(dataset_name=dataset_name)['dataset']._update(kwargs)
+
+    DatasetType = class_dict[dataset_name]
+    folder_path = folder_path if folder_path is not None else \
+        os.path.join(result['data_dir'], DatasetType.data_type, DatasetType.name)     # TODO: Linting problem
+    return DatasetType(folder_path=folder_path, **result)

@@ -2,7 +2,7 @@
 
 from trojanvision.datasets import ImageSet
 from trojanvision.utils import split_name as func
-from trojanzoo.models.model import _Model, Model
+from trojanzoo.models import _Model, Model
 from trojanvision.environ import env
 from trojanzoo.utils import to_numpy
 

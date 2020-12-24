@@ -1,15 +1,35 @@
 # -*- coding: utf-8 -*-
 
-from .attack import Attack
 from trojanzoo.datasets import Dataset
 from trojanzoo.models import Model
 from trojanzoo.configs import config, Config
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
+from trojanzoo.utils.process import Model_Process
 
+import torch
 import argparse
 import os
 from typing import Union
+
+
+class Attack(Model_Process):
+    name: str = None
+
+    @staticmethod
+    def add_argument(group: argparse._ArgumentGroup):
+        group.add_argument('--attack', dest='attack_name')
+        group.add_argument('--attack_dir', dest='attack_dir',
+                           help='directory to contain attack results')
+        group.add_argument('--output', dest='output', type=int,
+                           help='output level, defaults to 0.')
+
+    def attack(self, **kwargs):
+        pass
+    # ----------------------Utility----------------------------------- #
+
+    def generate_target(self, _input, idx=1, same=False, **kwargs) -> torch.Tensor:
+        return self.model.generate_target(_input, idx=idx, same=same, **kwargs)
 
 
 def add_argument(parser: argparse.ArgumentParser, attack_name: str = None, attack: Union[str, Attack] = None,

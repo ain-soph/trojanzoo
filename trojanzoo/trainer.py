@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-from trojanzoo.datasets.dataset import Dataset
-from trojanzoo.models.model import Model
+from trojanzoo.datasets import Dataset
+from trojanzoo.models import Model
 from trojanzoo.configs import config, Config
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi, prints
