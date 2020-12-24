@@ -46,8 +46,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: ./docker
-          file: ./cpu.dockerfile
+          file: ./docker/cpu.dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/trojanzoo:cpu
       - name: Image digest
