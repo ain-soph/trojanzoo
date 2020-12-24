@@ -18,10 +18,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.9"
+      # - name: Set up Python
+      #   uses: actions/setup-python@v2
+      #   with:
+      #     python-version: "3.9"
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -62,8 +62,5 @@ jobs:
           file: ./cpu.dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/trojanzoo:cpu
-          # build-args: |
-          #   arg1=value1
-          #   arg2=value2
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
