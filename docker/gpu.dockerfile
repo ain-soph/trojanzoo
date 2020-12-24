@@ -10,14 +10,11 @@ RUN DEBIAN_FRONTEND="noninteractive" apt install -y vim tmux git make tzdata && 
     # Set timezone
     ln -sf /usr/share/zoneinfo/EST /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
-RUN DEBIAN_FRONTEND="noninteractive" apt install -y python3.9 python3-pip
-RUN pip install --upgrade pip && \
-    pip install numpy sphinx sphinxcontrib.katex pyyaml pandas tqdm matplotlib seaborn scikit-learn && \
-    pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html
-
-RUN git clone https://github.com/ain-soph/trojanzoo.git && \
-    pip install -r ./trojanzoo/requirements.txt && \
-    pip install -r ./trojanzoo/docs/requirements.txt
+# RUN DEBIAN_FRONTEND="noninteractive" apt install -y python3.9 python3-pip
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir numpy sphinx sphinxcontrib.katex pyyaml pandas tqdm matplotlib seaborn scikit-learn && \
+    pip install --no-cache-dir torch==1.7.1+cu110 torchvision==0.8.2+cu110 -f https://download.pytorch.org/whl/torch_stable.html && \
+    pip install --no-cache-dir trojanzoo
 WORKDIR /trojanzoo/
 
 # RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh -O ~/anaconda.sh && \ 

@@ -4,7 +4,7 @@
 [![build](https://github.com/ain-soph/trojanzoo/workflows/build/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3Abuild)
 [![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
 ![python>=3.9](https://img.shields.io/badge/python->=3.9-informational.svg)
-[![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://opensource.org/licenses/GPL-3.0)
 [![CodeQL](https://github.com/ain-soph/trojanzoo/workflows/CodeQL/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3ACodeQL)
 
 <!-- release badge -->
