@@ -12,7 +12,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     container:
-      image: local0state/trojanzoo:cpu
+      image: local0state/trojanzoo:sphinx
     steps:
       - name: Checkout
         uses: actions/checkout@v2
