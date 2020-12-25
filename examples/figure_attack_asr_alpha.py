@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from numpy.core.fromnumeric import mean
 from trojanplot import *
 
 import argparse

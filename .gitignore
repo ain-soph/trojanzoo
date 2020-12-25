@@ -7,7 +7,6 @@
 # Working on
 # /docs
 codecov.yml
-/setup.py
 
 # Temp Files
 .DS_Store
@@ -29,9 +28,6 @@ __pycache__
 /result
 /projects
 /tex
-
-# Other projects
-/lifelong
 
 # test file
 /test.py

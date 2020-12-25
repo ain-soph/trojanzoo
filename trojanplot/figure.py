@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .font import *
+from .fonts import *
 from trojanzoo.utils import to_numpy
 
 import os

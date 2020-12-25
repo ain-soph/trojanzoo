@@ -7,10 +7,10 @@
 [![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://opensource.org/licenses/GPL-3.0)
 [![CodeQL](https://github.com/ain-soph/trojanzoo/workflows/CodeQL/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3ACodeQL)
 
-<!-- release badge -->
-<!-- pypi badge -->
-<!-- conda badge -->
-<!-- docker badge -->
+[![release](https://img.shields.io/github/v/release/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/releases)
+[![pypi](https://img.shields.io/pypi/v/trojanzoo)](https://pypi.org/project/trojanzoo/)
+<!-- [![conda](https://img.shields.io/conda/v/anaconda/trojanzoo?label=conda)](https://anaconda.org/anaconda/trojanzoo) -->
+[![docker](https://img.shields.io/pypi/v/trojanzoo)](https://hub.docker.com/r/local0state/trojanzoo)
 
 This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
@@ -46,10 +46,15 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 7. Flexible Configuration Files
 8. Good help information to check arguments. (`-h` or `--help`)
 9. Detailed and well-organized `summary()` for each module.
+
+## Installation
+1. `pip install trojanzoo`  
+2. **(todo)** `conda install trojanzoo`  
+3. `docker pull local0state/trojanzoo`
 ## Quick Start
 
-> Note: The program won't save results without `--save`
-
+You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/master/examples) scripts to reproduce the evaluation results in our paper.  
+> Note: The program won't save results without `--save`  
 1. Train a model:  
     e.g. `ResNetComp18` on `CIFAR10` with 95% Acc
     ```python3
@@ -120,13 +125,8 @@ Modify them in corresponding config files and command-line arguments.
 4. Good to go!
 
 ## Todo List
-
-1. Github Actions  
-   - [x] Github Pages  
-   - [ ] Pypi package release  
-   - [ ] Docker Hub publish  
-2. Sphinx Docs
-3. **Unit test**
+1. Sphinx Docs  
+2. **Unit test**
 
 ## License
 TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/master/LICENSE) file.
