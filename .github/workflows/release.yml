@@ -1,26 +1,29 @@
 name: release
 
 on:
+  push:
+    branches:
+      - master
   release:
     types: [created]
 
 jobs:
-  pypi:
-    runs-on: ubuntu-latest
-    container:
-      image: local0state/base:cpu
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build and publish
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
-        run: |
-          pip install --no-cache-dir setuptools wheel pep517 twine
-          python -m pep517.build .
-          twine upload dist/*
+  # pypi:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: local0state/base:cpu
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Build and publish
+  #       env:
+  #         TWINE_USERNAME: __token__
+  #         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+  #         ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+  #       run: |
+  #         pip install --no-cache-dir setuptools wheel pep517 twine
+  #         python -m pep517.build .
+  #         twine upload dist/*
   # conda:
   #   runs-on: ubuntu-latest
   #   container:
@@ -38,7 +41,7 @@ jobs:
   #         conda build .
   cpu:
     name: docker-cpu
-    needs: pypi
+    # needs: pypi
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
@@ -58,7 +61,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.job }}
   gpu:
     name: docker-gpu
-    needs: pypi
+    # needs: pypi
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
