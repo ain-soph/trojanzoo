@@ -9,8 +9,8 @@
 
 [![release](https://img.shields.io/github/v/release/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/releases)
 [![pypi](https://img.shields.io/pypi/v/trojanzoo)](https://pypi.org/project/trojanzoo/)
-<!-- [![conda](https://img.shields.io/conda/v/anaconda/trojanzoo?label=conda)](https://anaconda.org/anaconda/trojanzoo) -->
-[![docker](https://img.shields.io/pypi/v/trojanzoo)](https://hub.docker.com/r/local0state/trojanzoo)
+[![docker](https://img.shields.io/pypi/v/trojanzoo?label=docker)](https://hub.docker.com/r/local0state/trojanzoo)
+<!-- [![conda](https://img.shields.io/pypi/v/trojanzoo?label=conda)](https://anaconda.org/anaconda/trojanzoo) -->
 
 This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
