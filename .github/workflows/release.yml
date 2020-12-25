@@ -1,12 +1,6 @@
 name: release
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
   release:
     types: [created]
 
@@ -14,7 +8,7 @@ jobs:
   pypi:
     runs-on: ubuntu-latest
     container:
-      image: local0state/trojanzoo:sphinx
+      image: local0state/trojanzoo:base
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -29,7 +23,7 @@ jobs:
         run: |
           python -m pep517.build .
           twine upload dist/*
-  docker:
+  docker_cpu:
     needs: pypi
     runs-on: ubuntu-latest
     steps:
@@ -49,5 +43,29 @@ jobs:
           file: ./docker/cpu.dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/trojanzoo:cpu
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+  docker_gpu:
+    needs: pypi
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          file: ./docker/cpu.dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/trojanzoo:gpu
+            ${{ secrets.DOCKERHUB_USERNAME }}/trojanzoo:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
