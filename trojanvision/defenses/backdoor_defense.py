@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from trojanzoo.defenses import Defense
 from trojanvision.attacks.backdoor import BadNet

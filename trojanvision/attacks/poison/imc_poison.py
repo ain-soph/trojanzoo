@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD

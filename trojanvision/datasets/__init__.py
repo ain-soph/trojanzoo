@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from .imageset import ImageSet
 from .mnist import MNIST

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from ..backdoor_defense import BackdoorDefense
 from trojanzoo.utils import normalize_mad
 from trojanzoo.utils.output import output_iter

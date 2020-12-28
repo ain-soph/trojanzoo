@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from ..backdoor_defense import BackdoorDefense
 from trojanzoo.utils import to_pil_image, to_tensor

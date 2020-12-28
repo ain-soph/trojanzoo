@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 import trojanzoo.configs
 from trojanzoo.configs import Config

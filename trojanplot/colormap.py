@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from matplotlib import pyplot as plt
 cmap = plt.get_cmap("tab20c")

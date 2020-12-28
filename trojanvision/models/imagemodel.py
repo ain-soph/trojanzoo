@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from trojanvision.datasets import ImageSet
 from trojanvision.utils import split_name as func

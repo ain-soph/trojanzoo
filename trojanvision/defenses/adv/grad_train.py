@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from trojanvision.optim import PGD
 from trojanzoo.defenses import Defense

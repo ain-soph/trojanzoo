@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from trojanzoo.configs import config, Config
 from trojanzoo.utils import get_name, to_tensor

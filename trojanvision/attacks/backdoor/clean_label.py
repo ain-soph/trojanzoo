@@ -1,5 +1,7 @@
+# coding: utf-8
+
 from .badnet import BadNet
-from trojanvision.utils import weight_init
+from trojanvision.utils.model import weight_init
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
 from trojanvision.optim import PGD as PGD_Optimizer
 from trojanvision.environ import env

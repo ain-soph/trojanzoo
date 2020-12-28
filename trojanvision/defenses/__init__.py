@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from .backdoor_defense import BackdoorDefense
 from .adv import *

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from trojanvision.attacks import PGD
 from trojanvision.environ import env

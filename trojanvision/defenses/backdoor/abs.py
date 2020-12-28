@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanvision.utils import total_variation
+from trojanvision.utils.loss import total_variation
 from trojanvision.utils.ssim import SSIM
 from trojanzoo.utils import normalize_mad, jaccard_idx
 from trojanzoo.utils import to_tensor, to_numpy, tanh_func

@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 
-from trojanvision.utils import Conv2d_SAME
+from trojanvision.utils.model import Conv2d_SAME
 from trojanzoo.utils import to_tensor
 from trojanzoo.models import Model
 from trojanvision.datasets import ImageSet
