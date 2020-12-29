@@ -12,7 +12,7 @@ from collections.abc import Callable
 
 class _ResNet(_ImageModel):
 
-    def __init__(self, layer=18, **kwargs):
+    def __init__(self, layer: int = 18, **kwargs):
         super().__init__(**kwargs)
         layer = int(layer)
         ModelClass: Callable[..., torchvision.models.ResNet] = getattr(torchvision.models, 'resnet' + str(layer))
@@ -98,7 +98,8 @@ class _ResNet(_ImageModel):
 
 class ResNet(ImageModel):
 
-    def __init__(self, name='resnet', layer=None, model_class=_ResNet, default_layer=18, **kwargs):
+    def __init__(self, name: str = 'resnet', layer: int = None, default_layer: int = 18,
+                 model_class: type[_ResNet] = _ResNet, **kwargs):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
@@ -122,7 +123,8 @@ class _ResNetcomp(_ResNet):
 
 class ResNetcomp(ResNet):
 
-    def __init__(self, name='resnetcomp', layer=None, model_class=_ResNetcomp, default_layer=18, **kwargs):
+    def __init__(self, name: str = 'resnetcomp', layer: int = None, default_layer: int = 18,
+                 model_class: type[_ResNetcomp] = _ResNetcomp, **kwargs):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 

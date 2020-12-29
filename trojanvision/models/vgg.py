@@ -35,7 +35,8 @@ class _VGG(_ImageModel):
 class VGG(ImageModel):
 
     # layer 13 or 16
-    def __init__(self, name='vgg', layer=None, model_class=_VGG, default_layer=13, **kwargs):
+    def __init__(self, name: str = 'vgg', layer: int = None, default_layer=13,
+                 model_class: type[_VGG] = _VGG, **kwargs):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
@@ -53,7 +54,7 @@ class _VGGcomp(_VGG):
 
 class VGGcomp(VGG):
 
-    def __init__(self, name='vggcomp', model_class=_VGGcomp, **kwargs):
+    def __init__(self, name: str = 'vggcomp', model_class: type[_VGGcomp] = _VGGcomp, **kwargs):
         super().__init__(name=name, model_class=model_class,
                          conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
 

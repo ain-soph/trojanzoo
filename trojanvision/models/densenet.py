@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 class _DenseNet(_ImageModel):
 
-    def __init__(self, layer=121, **kwargs):
+    def __init__(self, layer: int = 121, **kwargs):
         super().__init__(**kwargs)
         ModelClass: type[torchvision.models.DenseNet] = getattr(torchvision.models, 'densenet' + str(layer))
         _model = ModelClass(num_classes=self.num_classes)
@@ -58,7 +58,8 @@ class _DenseNetcomp(_DenseNet):
 
 class DenseNetcomp(DenseNet):
 
-    def __init__(self, name='densenetcomp', layer=None, model_class=_DenseNetcomp, default_layer=121, **kwargs):
+    def __init__(self, name: str = 'densenetcomp', layer: int = None, default_layer: int = 121,
+                 model_class: type[_DenseNetcomp] = _DenseNetcomp, **kwargs):
         super().__init__(name=name, layer=layer, model_class=model_class,
                          default_layer=default_layer, **kwargs)
 
