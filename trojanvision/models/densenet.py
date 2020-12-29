@@ -25,10 +25,9 @@ class _DenseNet(_ImageModel):
 
 class DenseNet(ImageModel):
 
-    def __init__(self, name: str = 'densenet', layer: int = None, default_layer: int = 121,
+    def __init__(self, name: str = 'densenet', layer: int = 121,
                  model_class: type[_DenseNet] = _DenseNet, **kwargs):
-        super().__init__(name=name, layer=layer, model_class=model_class,
-                         default_layer=default_layer, **kwargs)
+        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['densenet' + str(self.layer)]
@@ -58,10 +57,9 @@ class _DenseNetcomp(_DenseNet):
 
 class DenseNetcomp(DenseNet):
 
-    def __init__(self, name: str = 'densenetcomp', layer: int = None, default_layer: int = 121,
+    def __init__(self, name: str = 'densenetcomp', layer: int = 121,
                  model_class: type[_DenseNetcomp] = _DenseNetcomp, **kwargs):
-        super().__init__(name=name, layer=layer, model_class=model_class,
-                         default_layer=default_layer, **kwargs)
+        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)

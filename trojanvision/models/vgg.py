@@ -35,10 +35,9 @@ class _VGG(_ImageModel):
 class VGG(ImageModel):
 
     # layer 13 or 16
-    def __init__(self, name: str = 'vgg', layer: int = None, default_layer=13,
+    def __init__(self, name: str = 'vgg', layer: int = 13,
                  model_class: type[_VGG] = _VGG, **kwargs):
-        super().__init__(name=name, layer=layer, model_class=model_class,
-                         default_layer=default_layer, **kwargs)
+        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['vgg' + str(self.layer)]

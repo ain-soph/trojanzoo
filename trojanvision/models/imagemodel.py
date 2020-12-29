@@ -150,11 +150,10 @@ class ImageModel(Model):
                            help='sgm gamma, defaults to 1.0')
         return group
 
-    def __init__(self, name: str = 'imagemodel', layer: int = None, default_layer: int = None, width_factor: int = None,
+    def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
                  model_class: type[_ImageModel] = _ImageModel, dataset: ImageSet = None,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
-        name, layer, width_factor = ImageModel.split_name(name, layer=layer, width_factor=width_factor,
-                                                          default_layer=default_layer)
+        name, layer, width_factor = ImageModel.split_name(name, layer=layer, width_factor=width_factor)
         if layer:
             name: str = name + str(layer)
         if width_factor is not None:
@@ -225,5 +224,5 @@ class ImageModel(Model):
         return heatmap
 
     @staticmethod
-    def split_name(name: str, layer: int = None, width_factor: int = None, default_layer: int = 0, output: bool = False):
-        return split_name_fn(name, layer=layer, width_factor=width_factor, default_layer=default_layer, output=output)
+    def split_name(name: str, layer: int = None, width_factor: int = None, output: bool = False):
+        return split_name_fn(name, layer=layer, width_factor=width_factor, output=output)

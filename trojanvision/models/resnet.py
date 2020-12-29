@@ -98,10 +98,9 @@ class _ResNet(_ImageModel):
 
 class ResNet(ImageModel):
 
-    def __init__(self, name: str = 'resnet', layer: int = None, default_layer: int = 18,
+    def __init__(self, name: str = 'resnet', layer: int = 18,
                  model_class: type[_ResNet] = _ResNet, **kwargs):
-        super().__init__(name=name, layer=layer, model_class=model_class,
-                         default_layer=default_layer, **kwargs)
+        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['resnet' + str(self.layer)]
@@ -123,10 +122,9 @@ class _ResNetcomp(_ResNet):
 
 class ResNetcomp(ResNet):
 
-    def __init__(self, name: str = 'resnetcomp', layer: int = None, default_layer: int = 18,
+    def __init__(self, name: str = 'resnetcomp', layer: int = 18,
                  model_class: type[_ResNetcomp] = _ResNetcomp, **kwargs):
-        super().__init__(name=name, layer=layer, model_class=model_class,
-                         default_layer=default_layer, **kwargs)
+        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)
