@@ -168,7 +168,7 @@ class Model:
             self.load()
         self.model = self.get_parallel_model()
         self.eval()
-        if env['num_gpus']:  # TODO: might be useless if we set map_location correctly
+        if env['num_gpus']:
             self.cuda()
 
     # ----------------- Forward Operations ----------------------#
@@ -254,7 +254,7 @@ class Model:
     # full: (default: False) whether save feature extractor.
     # output: (default: False) whether output help information.
     def load(self, file_path: str = None, folder_path: str = None, suffix: str = None,
-             map_location: Union[str, Callable, torch.device, dict] = 'default',
+             map_location: Union[str, Callable, torch.device, dict] = 'cpu',
              component: str = '', strict: bool = True,
              verbose: bool = False, indent: int = 0, **kwargs):
         with torch.no_grad():
@@ -289,6 +289,8 @@ class Model:
             module.load_state_dict(_dict, strict=strict)
             if verbose:
                 prints(f'Model {self.name} loaded from: {file_path}', indent=indent)
+            if env['num_gpus']:
+                self.cuda()
 
     # file_path: (default: '') if '', use the default path.
     # full: (default: False) whether save feature extractor.
