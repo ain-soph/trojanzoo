@@ -124,14 +124,13 @@ class _ImageModel(_Model):
             print(_dict.keys())
         return _dict[layer_name]
 
-    def get_layer_name(self, extra=True) -> list[str]:
+    def get_layer_name(self) -> list[str]:
         layer_name = []
         for name, _ in self.features.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('features.' + name)
-        if extra:
-            layer_name.append('pool')
-            layer_name.append('flatten')
+        layer_name.append('pool')
+        layer_name.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name.append('classifier.' + name)
@@ -166,7 +165,7 @@ class ImageModel(Model):
             kwargs['norm_par'] = dataset.norm_par
         if 'num_classes' not in kwargs.keys():
             kwargs['num_classes'] = 1000
-        super().__init__(name=name, model_class=model_class, layer=layer, dataset=dataset, **kwargs)
+        super().__init__(name=name, model_class=model_class, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.param_list['imagemodel'] = ['layer', 'width_factor', 'sgm']
@@ -178,8 +177,8 @@ class ImageModel(Model):
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
 
-    def get_layer_name(self, extra=True) -> list[str]:
-        return self._model.get_layer_name(extra=extra)
+    def get_layer_name(self) -> list[str]:
+        return self._model.get_layer_name()
 
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> dict[str, torch.Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)

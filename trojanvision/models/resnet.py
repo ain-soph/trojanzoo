@@ -36,7 +36,7 @@ class _ResNet(_ImageModel):
         # block.expansion = 1 if BasicBlock and 4 if Bottleneck
         # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
 
-    def get_all_layer(self, x: torch.Tensor, layer_input='input'):
+    def get_all_layer(self, x: torch.Tensor, layer_input='input') -> dict[str, torch.Tensor]:
         _dict = {}
         record = False
 
@@ -79,7 +79,7 @@ class _ResNet(_ImageModel):
         _dict['output'] = x
         return _dict
 
-    def get_layer_name(self, extra=True):
+    def get_layer_name(self) -> list[str]:
         layer_name_list = []
         for layer_name, layer in self.features.named_children():
             if isinstance(layer, nn.Sequential):
@@ -88,9 +88,8 @@ class _ResNet(_ImageModel):
                         layer_name_list.append('features.' + layer_name + '.' + block_name)
             elif 'bn' not in layer_name and 'relu' not in layer_name:
                 layer_name_list.append('features.' + layer_name)
-        if extra:
-            layer_name_list.append('pool')
-            layer_name_list.append('flatten')
+        layer_name_list.append('pool')
+        layer_name_list.append('flatten')
         for name, _ in self.classifier.named_children():
             if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
                 layer_name_list.append('classifier.' + name)
