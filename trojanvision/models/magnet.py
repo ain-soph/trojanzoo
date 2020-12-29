@@ -7,6 +7,7 @@ from trojanvision.datasets import ImageSet
 
 import torch
 import torch.nn as nn
+from typing import Tuple
 
 # Note that MagNet requires "eval" mode to train.
 
@@ -14,7 +15,8 @@ import torch.nn as nn
 class _MagNet(nn.Module):
     """docstring for Model"""
 
-    def __init__(self, structure=[3, 'average', 3], activation='sigmoid', channel=3, **kwargs):
+    def __init__(self, structure: list[Tuple[int, str]] = [3, 'average', 3],
+                 activation: str = 'sigmoid', channel: int = 3, **kwargs):
         super(_MagNet, self).__init__()
 
         activation_fn = nn.ReLU()
@@ -33,10 +35,10 @@ class _MagNet(nn.Module):
                 self.encoder.add_module(f'conv{i+1:d}', conv)
                 self.encoder.add_module(f'bn{i+1:d}', bn)
                 self.encoder.add_module(f'{activation}{i+1:d}', activation_fn)
-            elif layer == 'max':
-                pool = nn.MaxPool2d(kernel_size=(2, 2))
-            elif layer == 'average':
-                pool = nn.AvgPool2d(kernel_size=(2, 2))
+            else:
+                assert isinstance(layer, str)
+                module = nn.MaxPool2d(kernel_size=(2, 2)) if layer == 'max' else nn.AvgPool2d(kernel_size=(2, 2))
+                self.encoder.add_module('pool', module)
 
         for i, layer in enumerate(reversed(structure)):
             if isinstance(layer, int):
@@ -46,8 +48,9 @@ class _MagNet(nn.Module):
                 self.decoder.add_module(f'conv{i+1:d}', conv)
                 self.decoder.add_module(f'bn{i+1:d}', bn)
                 self.decoder.add_module(f'{activation}{i+1:d}', activation_fn)
-            elif layer == 'max' or layer == 'average':
-                pool = nn.Upsample(scale_factor=(2, 2))
+            else:
+                assert isinstance(layer, str)
+                self.decoder.add_module('pool', nn.Upsample(scale_factor=(2, 2)))
         conv = Conv2d_SAME(structure[0], channel, kernel_size=(3, 3))
         bn = nn.BatchNorm2d(channel)
         self.decoder.add_module('conv', conv)
