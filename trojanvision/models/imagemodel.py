@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from trojanvision.datasets import ImageSet
-from trojanvision.utils import split_name as func
+from trojanvision.utils import split_name as split_name_fn
 from trojanzoo.models import _Model, Model
 from trojanvision.environ import env
 from trojanzoo.utils import to_numpy
@@ -143,27 +143,33 @@ class ImageModel(Model):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
+        group.add_argument('--layer', dest='layer', type=int,
+                           help='layer (optional, maybe embedded in --model)')
         group.add_argument('--sgm', dest='sgm', action='store_true',
                            help='whether to use sgm gradient, defaults to False')
         group.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
                            help='sgm gamma, defaults to 1.0')
         return group
 
-    def __init__(self, name: str = 'imagemodel', layer: int = None, default_layer: int = None,
+    def __init__(self, name: str = 'imagemodel', layer: int = None, default_layer: int = None, width_factor: int = None,
                  model_class: type[_ImageModel] = _ImageModel, dataset: ImageSet = None,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
-        name, layer = ImageModel.split_name(name, layer=layer, default_layer=default_layer)
+        name, layer, width_factor = ImageModel.split_name(name, layer=layer, width_factor=width_factor,
+                                                          default_layer=default_layer)
         if layer:
             name: str = name + str(layer)
+        if width_factor is not None:
+            name += f'x{width_factor:d}'
         self.layer = layer
+        self.width_factor = width_factor
         if 'norm_par' not in kwargs.keys() and isinstance(dataset, ImageSet):
             kwargs['norm_par'] = dataset.norm_par
+        if 'num_classes' not in kwargs.keys():
+            kwargs['num_classes'] = 1000
         super().__init__(name=name, model_class=model_class, layer=layer, dataset=dataset, **kwargs)
-        if self.num_classes is None:
-            self.num_classes = 1000
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
-        self.param_list['imagemodel'] = ['sgm']
+        self.param_list['imagemodel'] = ['layer', 'width_factor', 'sgm']
         if sgm:
             self.param_list['imagemodel'].extend(['sgm_gamma'])
         self._model: _ImageModel = self._model
@@ -220,5 +226,5 @@ class ImageModel(Model):
         return heatmap
 
     @staticmethod
-    def split_name(name, layer=None, default_layer=0, output=False):
-        return func(name, layer=layer, default_layer=default_layer, output=output)
+    def split_name(name: str, layer: int = None, width_factor: int = None, default_layer: int = 0, output: bool = False):
+        return split_name_fn(name, layer=layer, width_factor=width_factor, default_layer=default_layer, output=output)

@@ -107,8 +107,6 @@ class Model:
     def add_argument(group: argparse._ArgumentGroup):
         group.add_argument('-m', '--model', dest='model_name',
                            help='model name, defaults to config[model][default_model]')
-        group.add_argument('--layer', dest='layer', type=int,
-                           help='layer (optional, maybe embedded in --model)')
         group.add_argument('--suffix', dest='suffix',
                            help='model name suffix, e.g. _adv_train')
         group.add_argument('--pretrain', dest='pretrain', action='store_true',
