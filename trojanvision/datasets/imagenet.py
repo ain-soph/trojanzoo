@@ -5,6 +5,7 @@ from trojanzoo.utils.param import Module
 
 import torchvision.transforms as transforms
 from torchvision.datasets import ImageNet as ImageNet_Official
+import numpy as np
 import os
 import json
 from trojanzoo import __file__ as root_file
@@ -14,6 +15,7 @@ root_dir = os.path.dirname(root_file)
 class ImageNet(ImageFolder):
 
     name = 'imagenet'
+    n_dim = (224, 224)
     url = {
         'train': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_train.tar',
         'valid': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_val.tar',
@@ -25,30 +27,31 @@ class ImageNet(ImageFolder):
                  **kwargs):
         super().__init__(norm_par=norm_par, **kwargs)
 
-    def initialize(self):
+    def initialize_folder(self):
         ImageNet_Official(root=self.folder_path, split='train', download=True)
         ImageNet_Official(root=self.folder_path, split='val', download=True)
+        os.rename(os.path.join(self.folder_path, 'imagenet', 'val'),
+                  os.path.join(self.folder_path, 'imagenet', 'valid'))
 
     @staticmethod
-    def get_transform(mode) -> transforms.Compose:
+    def get_transform(mode: str) -> transforms.Compose:
         if mode == 'train':
             transform = transforms.Compose([
-                transforms.Resize((256, 256)),
-                transforms.CenterCrop((224, 224)),
-                transforms.ToTensor(),
-            ])
+                transforms.RandomResizedCrop((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()])
         else:
             transform = transforms.Compose([
                 transforms.Resize((256, 256)),
                 transforms.CenterCrop((224, 224)),
-                transforms.ToTensor(),
-            ])
+                transforms.ToTensor()])
         return transform
 
-    def get_full_dataset(self, mode, **kwargs):
-        if mode == 'valid' and self.name == 'imagenet':
-            mode = 'val'
-        return super().get_full_dataset(mode, **kwargs)
+    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
+                       transform: transforms.Compose = transforms.Compose([transforms.Resize((256, 256)),
+                                                                           transforms.Lambda(lambda x: np.array(x))]),
+                       **kwargs):
+        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
 
 
 class Sample_ImageNet(ImageNet):

@@ -104,6 +104,7 @@ class ResNet(ImageModel):
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['resnet' + str(self.layer)]
+        print('get official model weights from: ', url)
         _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
         new_dict = OrderedDict()
         for i, (key, value) in enumerate(_dict.items()):

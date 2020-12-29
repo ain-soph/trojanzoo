@@ -25,20 +25,24 @@ class ISIC(ImageFolder):
         self.split_class()
 
     @staticmethod
-    def get_transform(mode) -> transforms.Compose:
+    def get_transform(mode: str) -> transforms.Compose:
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomResizedCrop((224, 224)),
                 transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-            ])
+                transforms.ToTensor()])
         else:
             transform = transforms.Compose([
                 transforms.Resize((256, 256)),
                 transforms.CenterCrop((224, 224)),
-                transforms.ToTensor(),
-            ])
+                transforms.ToTensor()])
         return transform
+
+    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
+                       transform: transforms.Compose = transforms.Compose([transforms.Resize(256),
+                                                                           transforms.Lambda(lambda x: np.array(x))]),
+                       **kwargs):
+        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
 
     def split_class(self):
         csv_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'label.csv'))

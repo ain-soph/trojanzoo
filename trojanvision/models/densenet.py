@@ -31,6 +31,7 @@ class DenseNet(ImageModel):
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['densenet' + str(self.layer)]
+        print('get official model weights from: ', url)
         _dict = model_zoo.load_url(url, **kwargs)
         pattern = re.compile(
             r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')

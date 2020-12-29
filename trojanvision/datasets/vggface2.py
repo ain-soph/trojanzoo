@@ -4,6 +4,7 @@ from .imagefolder import ImageFolder
 from trojanzoo.utils.param import Module
 
 import torchvision.transforms as transforms
+import numpy as np
 import os
 import sys
 import requests
@@ -19,20 +20,24 @@ class VGGface2(ImageFolder):
     org_folder_name = {'train': 'train'}
 
     @staticmethod
-    def get_transform(mode) -> transforms.Compose:
+    def get_transform(mode: str) -> transforms.Compose:
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomResizedCrop((224, 224)),
                 transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-            ])
+                transforms.ToTensor()])
         else:
             transform = transforms.Compose([
                 transforms.Resize((256, 256)),
                 transforms.CenterCrop((224, 224)),
-                transforms.ToTensor(),
-            ])
+                transforms.ToTensor()])
         return transform
+
+    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
+                       transform: transforms.Compose = transforms.Compose([transforms.Resize((256, 256)),
+                                                                           transforms.Lambda(lambda x: np.array(x))]),
+                       **kwargs):
+        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
 
     def download(self, mode: str = 'train', file_path=None, folder_path=None, file_name=None, file_ext='tar.gz', **kwargs):
         assert mode == 'train'

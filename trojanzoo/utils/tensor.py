@@ -38,7 +38,7 @@ def atan_func(x: torch.Tensor) -> torch.Tensor:
 def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
               dtype: Union[str, torch.dtype] = None,
               device: Union[str, torch.device] = 'default',
-              non_blocking: bool = True, **kwargs) -> torch.Tensor:
+              **kwargs) -> torch.Tensor:
     if x is None:
         return None
     if isinstance(dtype, str):
@@ -55,7 +55,7 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
     elif isinstance(x, Image.Image):
         x = byte2float(x)
     try:
-        x = torch.as_tensor(x, dtype=dtype).to(device=device, non_blocking=non_blocking, **kwargs)
+        x = torch.as_tensor(x, dtype=dtype).to(device=device, **kwargs)
     except Exception as e:
         print('tensor: ', x)
         if torch.is_tensor(x):

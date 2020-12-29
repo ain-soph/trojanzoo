@@ -72,9 +72,9 @@ class Dataset:
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
         # ----------------------------------------------------------------------------- #
-        if download:
-            if not self.check_files():
-                self.initialize()
+        if download and not self.check_files():
+            self.initialize()
+        self.middle_process()
         # Preset Loader
         self.loader: dict[str, torch.utils.data.DataLoader] = {}
         self.loader['train'] = self.get_dataloader(mode='train')
@@ -88,12 +88,15 @@ class Dataset:
         if isinstance(loss_weights, bool):
             self.loss_weights = self.get_loss_weights() if loss_weights else None
 
+    def middle_process(self):
+        pass
+
     def check_files(self, transform: str = None, **kwargs) -> bool:
         try:
             self.get_org_dataset(mode='train', transform=transform, **kwargs)
             if self.valid_set:
                 self.get_org_dataset(mode='valid', transform=transform, **kwargs)
-        except RuntimeError:
+        except Exception:
             return False
         return True
 

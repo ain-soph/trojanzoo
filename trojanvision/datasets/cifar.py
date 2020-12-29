@@ -24,14 +24,13 @@ class CIFAR10(ImageSet):
         datasets.CIFAR10(root=self.folder_path, train=True, download=True)
         datasets.CIFAR10(root=self.folder_path, train=False, download=True)
 
-    @classmethod
-    def get_transform(cls, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+    @staticmethod
+    def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
         if mode == 'train':
             transform = transforms.Compose([
-                transforms.RandomCrop(cls.n_dim, padding=4),
+                transforms.RandomCrop((32, 32), padding=4),
                 transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-            ])
+                transforms.ToTensor()])
         else:
             transform = transforms.ToTensor()
         return transform

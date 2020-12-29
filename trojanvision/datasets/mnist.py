@@ -18,10 +18,8 @@ class MNIST(ImageSet):
         super().__init__(norm_par=norm_par, **kwargs)
 
     def initialize(self):
-        trainset = datasets.MNIST(root=self.folder_path,
-                                  train=True, download=True)
-        validset = datasets.MNIST(root=self.folder_path,
-                                  train=False, download=True)
+        datasets.MNIST(root=self.folder_path, train=True, download=True)
+        datasets.MNIST(root=self.folder_path, train=False, download=True)
 
     def get_org_dataset(self, mode, transform: Union[str, object] = 'default', **kwargs):
         if transform == 'default':

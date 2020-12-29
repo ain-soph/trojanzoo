@@ -8,7 +8,6 @@ import torch
 import torch.utils.data
 import torchvision.transforms as transforms
 from torchvision.datasets import VisionDataset
-import numpy as np
 import os
 import PIL.Image as Image
 
@@ -27,8 +26,8 @@ class ImageSet(Dataset):
         self.norm_par: dict[str, list[float]] = norm_par
         self.param_list['imageset'] = ['n_channel', 'n_dim', 'norm_par']
 
-    @classmethod
-    def get_transform(cls, **kwargs) -> transforms.ToTensor:
+    @staticmethod
+    def get_transform(**kwargs) -> transforms.ToTensor:
         return transforms.ToTensor()
 
     def get_dataloader(self, mode: str, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
@@ -48,7 +47,7 @@ class ImageSet(Dataset):
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        return to_tensor(data[0]), to_tensor(data[1], dtype='long')
+        return to_tensor(data[0], non_blocking=True), to_tensor(data[1], dtype='long', non_blocking=True)
 
     @classmethod
     def get_class_to_idx(cls, **kwargs) -> dict[str, int]:
@@ -72,9 +71,3 @@ class ImageSet(Dataset):
                     os.makedirs(_dir)
                 image.save(_dir + f'{class_counters[target_class]}{img_type}')
                 class_counters[target_class] += 1
-
-    def to_memory(dataset: VisionDataset, label_only: bool = False) -> tuple[np.ndarray, list[int]]:
-        data, targets = super().to_memory(dataset=dataset, label_only=label_only)
-        if data is not None:
-            data = np.array([np.array(image) for image in data])
-        return data, targets

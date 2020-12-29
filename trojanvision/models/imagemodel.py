@@ -160,7 +160,7 @@ class ImageModel(Model):
         self.width_factor = width_factor
         if 'norm_par' not in kwargs.keys() and isinstance(dataset, ImageSet):
             kwargs['norm_par'] = dataset.norm_par
-        if 'num_classes' not in kwargs.keys():
+        if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
         super().__init__(name=name, model_class=model_class, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
         self.sgm: bool = sgm

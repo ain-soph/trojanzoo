@@ -8,6 +8,7 @@ from trojanzoo.utils.data import uncompress
 
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
+import torchvision.transforms as transforms
 import numpy as np
 import PIL.Image as Image
 import json
@@ -40,20 +41,26 @@ class ImageFolder(ImageSet):
             self.class_to_idx = self.get_class_to_idx(check_folder=True)
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
-        if data_format not in ['folder', 'zip']:
-            self.data, self.targets = self.load_npz()
+
+    def middle_process(self):
+        mode_list = ['valid']
+        if self.data_format not in ['folder', 'zip']:
+            mode_list = ['train', 'valid']
+        self.data, self.targets = self.load_npz(mode_list=mode_list)
 
     def initialize(self, *args, **kwargs):
-        if self.data_format == 'folder' or not self.check_files(data_format='folder'):
+        if not self.check_files(data_format='folder'):
             self.initialize_folder(*args, **kwargs)
         if self.data_format == 'folder':
-            return
+            self.initialize_npz(mode_list=['valid'])
         elif self.data_format == 'zip':
             self.initialize_zip(*args, **kwargs)
+            self.initialize_npz(mode_list=['valid'])
         else:
             self.initialize_npz(*args, **kwargs)
 
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
+        print('initialize folder')
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         self.class_to_idx = self.get_class_to_idx()
         idx_to_class = {v: k for k, v in self.class_to_idx.items()}
@@ -61,7 +68,7 @@ class ImageFolder(ImageSet):
             zip_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
             npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             if os.path.isfile(zip_path):
-                uncompress(file_path=zip_path, target_path=os.path.join(self.folder_path, self.name), verbose=verbose)
+                uncompress(file_path=zip_path, target_path=self.folder_path, verbose=verbose)
                 continue
             elif os.path.isfile(npz_path):
                 self.data, self.targets = self.load_npz()
@@ -70,44 +77,51 @@ class ImageFolder(ImageSet):
                 for image, target_class in self.data, self.targets:
                     image = Image.fromarray(image)
                     class_name = idx_to_class[target_class]
-                    _dir = os.path.join(self.folder_path, self.name, mode, class_name)
+                    _dir = os.path.join(self.folder_path, mode, class_name)
                     if not os.path.exists(_dir):
                         os.makedirs(_dir)
                     image.save(os.path.join(_dir, f'{class_counters[target_class]}{img_type}'))
                     class_counters[target_class] += 1
                 continue
-            file_path = self.download(mode=mode)
-            uncompress(file_path=file_path, target_path=os.path.join(self.folder_path, self.name), verbose=verbose)
-            os.rename(os.path.join(self.folder_path, self.name, self.org_folder_name[mode]),
-                      os.path.join(self.folder_path, self.name, mode))
+            file_path = self.download(mode=mode, url=self.url[mode])
+            uncompress(file_path=file_path, target_path=self.folder_path, verbose=verbose)
+            os.rename(os.path.join(self.folder_path, self.org_folder_name[mode]),
+                      os.path.join(self.folder_path, mode))
             try:
-                shutil.rmtree(os.path.join(self.folder_path, self.name, os.path.dirname(self.org_folder_name[mode])))
+                shutil.rmtree(os.path.join(self.folder_path, os.path.dirname(self.org_folder_name[mode])))
             except FileNotFoundError:
                 pass
 
     def initialize_zip(self, **kwargs):
+        print('initialize zip')
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
-            src_path = os.path.normpath(os.path.join(self.folder_path, self.name, mode))
+            src_path = os.path.normpath(os.path.join(self.folder_path, mode))
             dst_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
             with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STOREED)) as zf:
                 for root, dirs, files in os.walk(src_path):
-                    _dir = root.removeprefix(os.path.normpath(self.folder_path, self.name, ''))
+                    _dir = root.removeprefix(os.path.normpath(self.folder_path, ''))
                     for _file in files:
                         org_path = os.path.join(root, _file)
                         zip_path = os.path.join(_dir, _file)
                         zf.write(org_path, zip_path)
 
-    def initialize_npz(self, **kwargs):
-        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
+    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
+                       transform: transforms.Lambda = transforms.Lambda(lambda x: np.array(x)),
+                       **kwargs):
+        if not self.valid_set:
+            mode_list.remove('valid')
         json_path = os.path.join(self.folder_path, 'class_to_idx.json')
         for mode in mode_list:
-            dataset: ImageFolder = self.get_org_dataset(mode, transform=None, data_format='folder')
-            data, targets = self.to_memory(dataset)
             npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
-            np.savez(npz_path, data=data, targets=targets)
-            with open(json_path, 'w') as f:
-                json.dump(dataset.class_to_idx, f)
+            if not os.path.exists(npz_path):
+                print('initialize npz: ', npz_path)
+                dataset: datasets.ImageFolder = self.get_org_dataset(mode, transform=transform, data_format='folder')
+                data, targets = self.to_memory(dataset)
+                data = np.stack(data)
+                np.savez(npz_path, data=data, targets=targets)
+                with open(json_path, 'w') as f:
+                    json.dump(dataset.class_to_idx, f)
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
                         data_format: str = None, **kwargs) -> Union[datasets.ImageFolder, MemoryDataset]:
@@ -115,9 +129,11 @@ class ImageFolder(ImageSet):
             transform = self.get_transform(mode=mode)
         if data_format is None:
             data_format = self.data_format
+            if mode == 'valid':
+                data_format = 'numpy'
         root = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
         if data_format == 'folder':
-            root = os.path.join(self.folder_path, self.name, mode)
+            root = os.path.join(self.folder_path, mode)
         elif data_format == 'zip':
             root = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
         DatasetClass = datasets.VisionDataset
@@ -126,17 +142,18 @@ class ImageFolder(ImageSet):
         elif data_format == 'zip':
             DatasetClass = ZipFolder
         elif not ('data' in self.__dict__.keys()):
-            raise Exception()   # TODO
+            raise RuntimeError()   # TODO
         else:
             DatasetClass = MemoryDataset
             kwargs['data'] = self.data[mode]
             kwargs['targets'] = self.targets[mode]
         return DatasetClass(root=root, transform=transform, **kwargs)
 
-    def load_npz(self) -> tuple[dict[str, np.ndarray], dict[str, list[int]]]:
+    def load_npz(self, mode_list: list[str] = ['train', 'valid']) -> tuple[dict[str, np.ndarray], dict[str, list[int]]]:
+        if not self.valid_set:
+            mode_list.remove('valid')
         data = {}
         targets = {}
-        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
             npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             _dict = np.load(npz_path)
@@ -148,7 +165,9 @@ class ImageFolder(ImageSet):
         if file_path is None:
             file_path = os.path.join(self.folder_path, 'class_to_idx.json')
         if os.path.exists(file_path):
-            return json.load(file_path)
+            with open(file_path) as fp:
+                result: dict[str, int] = json.load(fp)
+            return result
         if check_folder:
             return self.get_org_dataset('train', data_format='folder').class_to_idx
         return super().get_class_to_idx()
@@ -161,9 +180,9 @@ class ImageFolder(ImageSet):
             if file_name is None:
                 file_name = f'{self.name}_{mode}.{file_ext}'
                 file_path = os.path.normpath(os.path.join(folder_path, file_name))
-        if not os.path.exists(file_path[mode]):
+        if not os.path.exists(file_path):
             print(f'Downloading Dataset {self.name} {mode:5s}: {file_path}')
-            download_url_to_file(url[mode], file_path[mode])
+            download_url_to_file(url, file_path)
             print('{upline}{clear_line}'.format(**ansi), end='')
         else:
             prints('File Already Exists: ', file_path, indent=10)
@@ -175,10 +194,10 @@ class ImageFolder(ImageSet):
             sample_num = len(class_dict)
         if child_name is None:
             child_name = self.name + '_sample%d' % sample_num
-        src_path = os.path.normpath(os.path.join(self.folder_path, self.name))
+        src_path = self.folder_path
         mode_list = [_dir for _dir in os.listdir(
             src_path) if os.path.isdir(src_path + _dir) and _dir[0] != '.']
-        dst_path = os.path.normpath(os.path.join(os.path.dirname(self.folder_path), child_name, child_name))
+        dst_path = os.path.normpath(os.path.join(os.path.dirname(self.folder_path), child_name))
         if verbose:
             print('src path: ', src_path)
             print('dst path: ', dst_path)

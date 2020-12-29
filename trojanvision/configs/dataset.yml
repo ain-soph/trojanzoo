@@ -11,5 +11,5 @@ batch_size:
 data_format:
   default: folder
   gtsrb: numpy
-  sample_imagenet: zip
+  sample_imagenet: numpy
   sample_vggface2: numpy

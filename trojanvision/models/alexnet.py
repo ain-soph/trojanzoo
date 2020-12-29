@@ -53,4 +53,5 @@ class AlexNet(ImageModel):
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['resnet' + str(self.layer)]
+        print('get official model weights from: ', url)
         return model_zoo.load_url(url, **kwargs)
