@@ -1,7 +1,6 @@
 # coding: utf-8
 
 from trojanvision.datasets import ImageSet
-from trojanvision.utils import split_name as split_name_fn
 from trojanzoo.models import _Model, Model
 from trojanvision.environ import env
 from trojanzoo.utils import to_numpy
@@ -10,6 +9,7 @@ import torch
 import torch.autograd
 import numpy as np
 import PIL.Image as Image
+import re
 import argparse
 
 
@@ -153,11 +153,7 @@ class ImageModel(Model):
     def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
                  model_class: type[_ImageModel] = _ImageModel, dataset: ImageSet = None,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
-        name, layer, width_factor = ImageModel.split_name(name, layer=layer, width_factor=width_factor)
-        if layer:
-            name: str = name + str(layer)
-        if width_factor is not None:
-            name += f'x{width_factor:d}'
+        name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
         self.layer = layer
         self.width_factor = width_factor
         if 'norm_par' not in kwargs.keys() and isinstance(dataset, ImageSet):
@@ -224,5 +220,15 @@ class ImageModel(Model):
         return heatmap
 
     @staticmethod
-    def split_name(name: str, layer: int = None, width_factor: int = None, output: bool = False):
-        return split_name_fn(name, layer=layer, width_factor=width_factor, output=output)
+    def split_model_name(name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
+        re_list = re.findall(r'[0-9]+|[a-z]+|_', name)
+        if len(re_list) > 1:
+            name = re_list[0]
+            layer = int(re_list[1])
+        if len(re_list) > 2 and re_list[-2] == 'x':
+            width_factor = int(re_list[-1])
+        if layer is not None:
+            name += str(layer)
+        if width_factor is not None:
+            name += f'x{width_factor:d}'
+        return name, layer, width_factor

@@ -8,13 +8,12 @@ from .vgg import VGG, VGGcomp
 from .densenet import DenseNet, DenseNetcomp
 from .magnet import MagNet
 from trojanvision.datasets import ImageSet
-from trojanvision.utils import split_name
 from trojanvision.configs import Config, config
-
 import trojanzoo.models
 from trojanzoo.utils import get_name
 
 import argparse
+import re
 from typing import Union
 
 class_dict: dict[str, type[ImageModel]] = {
@@ -38,12 +37,12 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
-    model_name, _, _ = split_name(model_name)
+    model_name = split_model_name(model_name)
     return trojanzoo.models.add_argument(parser=parser, model_name=model_name, model=model,
                                          config=config, class_dict=class_dict)
 
 
-def create(model_name: str = None, model: Union[str, ImageModel] = None, layer: int = None, width_factor: int = None,
+def create(model_name: str = None, model: Union[str, ImageModel] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
            config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict, **kwargs) -> ImageModel:
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
@@ -52,8 +51,11 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None, layer: 
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
-    model_name, layer, width_factor = split_name(model_name, layer=layer, width_factor=width_factor)
     return trojanzoo.models.create(model_name=model_name, model=model,
                                    dataset_name=dataset_name, dataset=dataset,
-                                   config=config, class_dict=class_dict,
-                                   layer=layer, width_factor=width_factor, **kwargs)
+                                   config=config, class_dict=class_dict, **kwargs)
+
+
+def split_model_name(name: str) -> str:
+    name: str = re.findall(r'[0-9]+|[a-z]+|_', name)[0]
+    return name.split('-')[0].lower()
