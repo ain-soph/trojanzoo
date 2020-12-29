@@ -161,12 +161,12 @@ class Model:
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
         self.softmax = nn.Softmax(dim=1)
         self._model = model_class(num_classes=num_classes, **kwargs)
+        self.model = self.get_parallel_model()
         self.activate_params([])
         if official:
             self.load('official')
         if pretrain:
             self.load()
-        self.model = self.get_parallel_model()
         self.eval()
         if env['num_gpus']:
             self.cuda()
