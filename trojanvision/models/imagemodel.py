@@ -144,6 +144,8 @@ class ImageModel(Model):
         super().add_argument(group)
         group.add_argument('--layer', dest='layer', type=int,
                            help='layer (optional, maybe embedded in --model)')
+        group.add_argument('--width_factor', dest='width_factor', type=int,
+                           help='width factor for wide-ResNet (optional, maybe embedded in --model)')
         group.add_argument('--sgm', dest='sgm', action='store_true',
                            help='whether to use sgm gradient, defaults to False')
         group.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
