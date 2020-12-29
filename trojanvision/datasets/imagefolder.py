@@ -58,10 +58,10 @@ class ImageFolder(ImageSet):
         self.class_to_idx = self.get_class_to_idx()
         idx_to_class = {v: k for k, v in self.class_to_idx.items()}
         for mode in mode_list:
-            zip_path = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
-            npz_path = self.folder_path + self.name + f'/{self.name}_{mode}.npz'
+            zip_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
+            npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             if os.path.isfile(zip_path):
-                uncompress(file_path=zip_path, target_path=self.folder_path + self.name, verbose=verbose)
+                uncompress(file_path=zip_path, target_path=os.path.join(self.folder_path, self.name), verbose=verbose)
                 continue
             elif os.path.isfile(npz_path):
                 self.data, self.targets = self.load_npz()
@@ -70,28 +70,29 @@ class ImageFolder(ImageSet):
                 for image, target_class in self.data, self.targets:
                     image = Image.fromarray(image)
                     class_name = idx_to_class[target_class]
-                    _dir = self.folder_path + self.name + f'/{mode}/{class_name}/'
+                    _dir = os.path.join(self.folder_path, self.name, mode, class_name)
                     if not os.path.exists(_dir):
                         os.makedirs(_dir)
-                    image.save(_dir + f'{class_counters[target_class]}{img_type}')
+                    image.save(os.path.join(_dir, f'{class_counters[target_class]}{img_type}'))
                     class_counters[target_class] += 1
                 continue
             file_path = self.download(mode=mode)
-            uncompress(file_path=file_path, target_path=self.folder_path + self.name, verbose=verbose)
-            os.rename(self.folder_path + self.name + f'/{self.org_folder_name[mode]}/',
-                      self.folder_path + self.name + f'/{mode}/')
-            if '/' in self.org_folder_name[mode]:
-                shutil.rmtree(self.folder_path + self.name + '/' +
-                              self.org_folder_name[mode].split('/')[0])
+            uncompress(file_path=file_path, target_path=os.path.join(self.folder_path, self.name), verbose=verbose)
+            os.rename(os.path.join(self.folder_path, self.name, self.org_folder_name[mode]),
+                      os.path.join(self.folder_path, self.name, mode))
+            try:
+                shutil.rmtree(os.path.join(self.folder_path, self.name, os.path.dirname(self.org_folder_name[mode])))
+            except FileNotFoundError:
+                pass
 
     def initialize_zip(self, **kwargs):
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
-            src_path = self.folder_path + self.name + f'/{mode}/'
-            dst_path = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
+            src_path = os.path.normpath(os.path.join(self.folder_path, self.name, mode))
+            dst_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
             with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STOREED)) as zf:
                 for root, dirs, files in os.walk(src_path):
-                    _dir = root.removeprefix(self.folder_path + self.name + '/')
+                    _dir = root.removeprefix(os.path.normpath(self.folder_path, self.name, ''))
                     for _file in files:
                         org_path = os.path.join(root, _file)
                         zip_path = os.path.join(_dir, _file)
@@ -99,11 +100,11 @@ class ImageFolder(ImageSet):
 
     def initialize_npz(self, **kwargs):
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
-        json_path = self.folder_path + self.name + '/class_to_idx.json'
+        json_path = os.path.join(self.folder_path, 'class_to_idx.json')
         for mode in mode_list:
             dataset: ImageFolder = self.get_org_dataset(mode, transform=None, data_format='folder')
             data, targets = self.to_memory(dataset)
-            npz_path = self.folder_path + self.name + f'/{mode}.npz'
+            npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             np.savez(npz_path, data=data, targets=targets)
             with open(json_path, 'w') as f:
                 json.dump(dataset.class_to_idx, f)
@@ -114,11 +115,11 @@ class ImageFolder(ImageSet):
             transform = self.get_transform(mode=mode)
         if data_format is None:
             data_format = self.data_format
-        root = self.folder_path + self.name + f'/{mode}.npz'
+        root = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
         if data_format == 'folder':
-            root = self.folder_path + self.name + f'/{mode}/'
+            root = os.path.join(self.folder_path, self.name, mode)
         elif data_format == 'zip':
-            root = self.folder_path + self.name + f'/{self.name}_{mode}_store.zip'
+            root = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
         DatasetClass = datasets.VisionDataset
         if data_format == 'folder':
             DatasetClass = datasets.ImageFolder
@@ -137,7 +138,7 @@ class ImageFolder(ImageSet):
         targets = {}
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
-            npz_path = self.folder_path + self.name + f'/{mode}.npz'
+            npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             _dict = np.load(npz_path)
             data[mode] = _dict['data']
             targets[mode] = list(_dict['targets'])
@@ -145,7 +146,7 @@ class ImageFolder(ImageSet):
 
     def get_class_to_idx(self, file_path: str = None, check_folder=False) -> dict[str, int]:
         if file_path is None:
-            file_path = self.folder_path + self.name + '/class_to_idx.json'
+            file_path = os.path.join(self.folder_path, 'class_to_idx.json')
         if os.path.exists(file_path):
             return json.load(file_path)
         if check_folder:
@@ -159,7 +160,7 @@ class ImageFolder(ImageSet):
                 folder_path = self.folder_path
             if file_name is None:
                 file_name = f'{self.name}_{mode}.{file_ext}'
-                file_path = folder_path + file_name
+                file_path = os.path.normpath(os.path.join(folder_path, file_name))
         if not os.path.exists(file_path[mode]):
             print(f'Downloading Dataset {self.name} {mode:5s}: {file_path}')
             download_url_to_file(url[mode], file_path[mode])
@@ -174,11 +175,10 @@ class ImageFolder(ImageSet):
             sample_num = len(class_dict)
         if child_name is None:
             child_name = self.name + '_sample%d' % sample_num
-        src_path = self.folder_path + self.name + '/'
+        src_path = os.path.normpath(os.path.join(self.folder_path, self.name))
         mode_list = [_dir for _dir in os.listdir(
             src_path) if os.path.isdir(src_path + _dir) and _dir[0] != '.']
-        dst_path = env['data_dir'] + self.data_type + \
-            '/{0}/data/{0}/'.format(child_name)
+        dst_path = os.path.normpath(os.path.join(os.path.dirname(self.folder_path), child_name, child_name))
         if verbose:
             print('src path: ', src_path)
             print('dst path: ', dst_path)
@@ -202,19 +202,19 @@ class ImageFolder(ImageSet):
             assert src_mode in ['train', 'valid', 'test', 'val']
             dst_mode = 'valid' if src_mode == 'val' else src_mode
             for i, dst_class in enumerate(class_dict.keys()):
-                if not os.path.exists(dst_path + dst_mode + '/' + dst_class):
-                    os.makedirs(dst_path + dst_mode + '/' + dst_class)
+                if not os.path.exists(os.path.join(dst_path, dst_mode, dst_class)):
+                    os.makedirs(os.path.join(dst_path, dst_mode, dst_class))
                 prints(dst_class, indent=10)
                 class_list = class_dict[dst_class]
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
-                    _list = os.listdir(src_path + src_mode + '/' + src_class)
+                    _list = os.listdir(os.path.join(src_path, src_mode, src_class))
                     prints(output_iter(i + 1, len_i) + output_iter(j + 1, len_j) +
                            f'dst: {dst_class:15s}    src: {src_class:15s}    image_num: {len(_list):>8d}', indent=10)
                     if env['tqdm']:
                         _list = tqdm(_list)
                     for _file in _list:
-                        shutil.copyfile(src_path + src_mode + '/' + src_class + '/' + _file,
-                                        dst_path + dst_mode + '/' + dst_class + '/' + _file)
+                        shutil.copyfile(os.path.join(src_path, src_mode, src_class, _file),
+                                        os.path.join(dst_path, dst_mode, dst_class, _file))
                     if env['tqdm']:
                         print('{upline}{clear_line}'.format(**ansi), end='')
