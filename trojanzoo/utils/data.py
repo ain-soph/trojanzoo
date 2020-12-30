@@ -7,6 +7,7 @@ from .tensor import to_list
 import torch
 from torch.utils.data import Dataset
 import os
+import sys
 import tqdm
 import tarfile
 import zipfile
@@ -23,7 +24,7 @@ def untar(file_path: str, target_path: str):
     for name in names:
         tar.extract(name, path=target_path)
     if env['tqdm']:
-        print('{upline}{clear_line}'.format(**ansi), end='')
+        print('{upline}{clear_line}'.format(**ansi))
     tar.close()
 
 

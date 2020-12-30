@@ -222,8 +222,11 @@ class Model:
 
     def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
                          OptimType: Union[str, type[Optimizer]] = None,
-                         lr: float = 0.1, lr_scheduler: bool = True, lr_step_size: int = 50, lr_gamma: float = 0.1,
+                         lr: float = 0.1, momentum: float = None, weight_decay: float = None,
+                         lr_scheduler: bool = True, lr_step_size: int = 50, lr_gamma: float = 0.1,
                          **kwargs) -> tuple[Optimizer, _LRScheduler]:
+        kwargs['momentum'] = momentum
+        kwargs['weight_decay'] = weight_decay
         if isinstance(parameters, str):
             parameters = self.get_parameter_from_name(name=parameters)
         if not isinstance(parameters, Iterable):
@@ -355,17 +358,18 @@ class Model:
             logger.meters['loss'] = SmoothedValue()
             logger.meters['top1'] = SmoothedValue()
             logger.meters['top5'] = SmoothedValue()
+            loader_epoch = loader_train
             if verbose:
-                header = '{blue_light}Epoch: {0}{reset}'.format(output_iter(_epoch + 1, epoch), **ansi)
+                header = '{upline}{clear_line}{blue_light}Epoch: {0}{reset}'.format(
+                    output_iter(_epoch + 1, epoch), **ansi)
                 header = header.ljust(30 + get_ansi_len(header))
-                length = len(loader_train)
-                loader_train = logger.log_every(loader_train, header=header, indent=indent)
                 if env['tqdm']:
-                    loader_train = tqdm(loader_train, total=length)
+                    loader_epoch = tqdm(loader_epoch)
+                loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
             self.train()
             self.activate_params(params)
             optimizer.zero_grad()
-            for data in loader_train:
+            for data in loader_epoch:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data_fn(data, mode='train')
                 _output = self(_input, amp=amp)
@@ -417,29 +421,23 @@ class Model:
         logger.meters['loss'] = SmoothedValue()
         logger.meters['top1'] = SmoothedValue()
         logger.meters['top5'] = SmoothedValue()
+        loader_epoch = loader
         if verbose:
-            header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
+            header = '{upline}{clear_line}{yellow}{0}{reset}'.format(print_prefix, **ansi)
             header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
-            length = len(loader)
-            loader = logger.log_every(loader, header=header, indent=indent, print_freq=10)
             if env['tqdm']:
-                loader = tqdm(loader, total=length)
+                loader_epoch = tqdm(loader_epoch)
+            loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
         with torch.no_grad():
-            for data in loader:
-                # end = time.time()
+            for data in loader_epoch:
                 _input, _label = get_data_fn(data, mode='valid', **kwargs)
-                # data_time = time.time() - end
                 _output = self(_input)
-                # model_time = time.time() - end
                 loss = float(criterion_fn(_output, _label))
-                # loss_time = time.time() - end
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
                 logger.meters['loss'].update(loss, batch_size)
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
-                # final_time = time.time() - end
-                # print(f'{data_time:.4f}\t{model_time:.4f}\t{loss_time:.4f}\t{final_time:.4f}')
         return logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
 
     # -------------------------------------------Utility--------------------------------------- #

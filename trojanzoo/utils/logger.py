@@ -50,25 +50,40 @@ class SmoothedValue(object):
 
     @property
     def median(self) -> float:
-        d = torch.tensor(list(self.deque))
-        return d.median().item()
+        try:
+            d = torch.tensor(list(self.deque))
+            return d.median().item()
+        except Exception:
+            return 0.0
 
     @property
     def avg(self) -> float:
-        d = torch.tensor(list(self.deque), dtype=torch.float32)
-        return d.mean().item()
+        try:
+            d = torch.tensor(list(self.deque), dtype=torch.float32)
+            return d.mean().item()
+        except Exception:
+            return 0.0
 
     @property
     def global_avg(self) -> float:
-        return self.total / self.count
+        try:
+            return self.total / self.count
+        except Exception:
+            return 0.0
 
     @property
     def max(self) -> float:
-        return max(self.deque)
+        try:
+            return max(self.deque)
+        except Exception:
+            return 0.0
 
     @property
     def value(self) -> float:
-        return self.deque[-1]
+        try:
+            return self.deque[-1]
+        except Exception:
+            return 0.0
 
     def __str__(self):
         return self.fmt.format(
@@ -113,9 +128,15 @@ class MetricLogger(object):
         for meter in self.meters.values():
             meter.synchronize_between_processes()
 
-    def log_every(self, iterable: Iterable[_T], header: str = None, print_freq: int = 0,
+    def log_every(self, iterable: Iterable[_T], header: str = None,
+                  total: int = None, print_freq: int = 0,
                   indent: int = None) -> Generator[_T, None, None]:
         indent = indent if indent is not None else self.indent
+        if total is None:
+            try:
+                total = len(iterable)
+            except Exception:
+                pass
         i = 0
         if not header:
             header = ''
@@ -137,7 +158,7 @@ class MetricLogger(object):
                 data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
                 iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
                 data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
-                middle_header = output_iter(i, len(iterable))
+                middle_header = '' if total is None else output_iter(i, total)
                 length = max(len(remove_ansi(header)) - 10, 0)
                 middle_header = middle_header.ljust(length + get_ansi_len(middle_header))
                 log_msg = self.delimiter.join([middle_header, str(self), iter_time_str, data_time_str])

@@ -91,15 +91,17 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     result = config.get_config(dataset_name=dataset_name)['trainer']._update(kwargs)
 
-    # func_keys = model.define_optimizer.__code__.co_varnames
+    optim_keys = model.define_optimizer.__code__.co_varnames
     train_keys = model._train.__code__.co_varnames
     optim_args = {}
     train_args = {}
     for key, value in result.items():
-        if key in train_keys:
+        if key in optim_keys:
+            _dict = optim_args
+        elif key in train_keys:
             _dict = train_args
         else:
-            _dict = optim_args
+            continue
         _dict[key] = value
     optimizer, lr_scheduler = model.define_optimizer(**optim_args)
     return Trainer(optim_args=optim_args, train_args=train_args, optimizer=optimizer, lr_scheduler=lr_scheduler)

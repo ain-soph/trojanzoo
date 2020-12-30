@@ -90,7 +90,7 @@ class TrojanNN(BadNet):
                 fm = fm.mean(dim=0)
                 result.append(fm.detach())
             if env['tqdm']:
-                print('{upline}{clear_line}'.format(**ansi), end='')
+                print('{upline}{clear_line}'.format(**ansi))
             return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
 
     def get_neuron_value(self, x: torch.Tensor, neuron_idx: torch.Tensor) -> torch.Tensor:

@@ -183,7 +183,7 @@ class ImageFolder(ImageSet):
         if not os.path.exists(file_path):
             print(f'Downloading Dataset {self.name} {mode:5s}: {file_path}')
             download_url_to_file(url, file_path)
-            print('{upline}{clear_line}'.format(**ansi), end='')
+            print('{upline}{clear_line}'.format(**ansi))
         else:
             prints('File Already Exists: ', file_path, indent=10)
         return file_path
@@ -236,4 +236,4 @@ class ImageFolder(ImageSet):
                         shutil.copyfile(os.path.join(src_path, src_mode, src_class, _file),
                                         os.path.join(dst_path, dst_mode, dst_class, _file))
                     if env['tqdm']:
-                        print('{upline}{clear_line}'.format(**ansi), end='')
+                        print('{upline}{clear_line}'.format(**ansi))

@@ -46,7 +46,7 @@ class ImageSet(Dataset):
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        return data[0].to(env['device'], non_blocking=True), data[1].to(env['device'], non_blocking=True)
+        return data[0].to(env['device'], non_blocking=True), data[1].to(env['device'], dtype=torch.long, non_blocking=True)
 
     @classmethod
     def get_class_to_idx(cls, **kwargs) -> dict[str, int]:
