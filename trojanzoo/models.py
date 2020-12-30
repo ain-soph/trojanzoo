@@ -222,7 +222,7 @@ class Model:
 
     def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
                          OptimType: Union[str, type[Optimizer]] = None,
-                         lr: float = 0.1, momentum: float = None, weight_decay: float = None,
+                         lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 0.0,
                          lr_scheduler: bool = True, lr_step_size: int = 50, lr_gamma: float = 0.1,
                          **kwargs) -> tuple[Optimizer, _LRScheduler]:
         kwargs['momentum'] = momentum
