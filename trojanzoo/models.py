@@ -360,10 +360,11 @@ class Model:
             logger.meters['top5'] = SmoothedValue()
             loader_epoch = loader_train
             if verbose:
-                header = '{upline}{clear_line}{blue_light}Epoch: {0}{reset}'.format(
+                header = '{blue_light}Epoch: {0}{reset}'.format(
                     output_iter(_epoch + 1, epoch), **ansi)
                 header = header.ljust(30 + get_ansi_len(header))
                 if env['tqdm']:
+                    header = '{upline}{clear_line}'.format(**ansi) + header
                     loader_epoch = tqdm(loader_epoch)
                 loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
             self.train()
@@ -423,9 +424,10 @@ class Model:
         logger.meters['top5'] = SmoothedValue()
         loader_epoch = loader
         if verbose:
-            header = '{upline}{clear_line}{yellow}{0}{reset}'.format(print_prefix, **ansi)
+            header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
             header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
             if env['tqdm']:
+                header = '{upline}{clear_line}'.format(**ansi) + header
                 loader_epoch = tqdm(loader_epoch)
             loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
         with torch.no_grad():
