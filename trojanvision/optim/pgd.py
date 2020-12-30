@@ -164,7 +164,7 @@ class PGD(trojanzoo.optim.Optimizer):
         elif self.grad_method == 'sgd':
             seq.append(noise)
         elif self.grad_method == 'hess':
-            noise = self.hess.mm(noise.view(-1, 1)).view(X.shape)
+            noise = (self.hess @ noise.view(-1, 1)).view(X.shape)
             seq.append(noise)
         elif self.grad_method == 'zoo':
             raise NotImplementedError(self.grad_method)
@@ -196,7 +196,7 @@ class PGD(trojanzoo.optim.Optimizer):
                 X1 = X + sigma * noise
                 X2 = X - sigma * noise
                 hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
-                    noise.view(-1, 1).mm(noise.view(1, -1))
+                    (noise.view(-1, 1) @ noise.view(1, -1))
             hess /= (2 * hess_b * sigma * sigma)
             hess += hess_lambda * torch.eye(length, device=X.device)
             result = hess.cholesky_inverse()

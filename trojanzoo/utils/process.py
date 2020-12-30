@@ -71,7 +71,7 @@ class Model_Process(Process):
         self.dataset: Dataset = dataset
         self.model: Model = model
 
-        _, self.clean_acc, _ = self.model._validate(print_prefix='Baseline Clean', get_data_fn=None, verbose=False)
+        _, self.clean_acc = self.model._validate(print_prefix='Baseline Clean', get_data_fn=None, verbose=False)
         # ----------------------------------------------------------------------------- #
         self.folder_path = folder_path
         if folder_path is not None:

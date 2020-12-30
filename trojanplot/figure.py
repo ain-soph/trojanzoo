@@ -166,7 +166,7 @@ class Figure:
     def bar3d(self, x: np.ndarray, y: np.ndarray, z: np.array, color: str = 'black', size: tuple[float, float] = 0.5,
               label: str = None, **kwargs) -> BarContainer:
         # facecolor edgewidth alpha
-        if isinstance(size, float) or isinstance(size, int):
+        if isinstance(size, (float, int)):
             size = [size, size]
         return self.ax.bar3d(x=x, y=y, z=np.zeros_like(x),
                              dx=np.ones_like(x) * size[0], dy=np.ones_like(y) * size[1], dz=z,

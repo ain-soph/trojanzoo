@@ -6,7 +6,7 @@ from trojanvision.utils.bit import KNOWN_MODELS, tf2th
 
 import torch
 import torch.nn as nn
-from torch.hub import download_url_to_file
+import torch.hub
 import numpy as np
 import os
 import re
@@ -14,8 +14,12 @@ from collections import OrderedDict
 
 
 class _BiT(_ImageModel):
-    def __init__(self, name: str = 'BiT-M-R50x1', **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name: str = 'BiT-M-R50x1',
+                 norm_par: dict[str, list] = None,
+                 **kwargs):
+        norm_par = {'mean': [0.5, 0.5, 0.5],
+                    'std': [0.5, 0.5, 0.5], }
+        super().__init__(norm_par=norm_par, **kwargs)
         _model = KNOWN_MODELS[name](head_size=self.num_classes)
         self.features = nn.Sequential()
         OrderedDict([('root', _model.root), ('body', _model.body)])
@@ -61,14 +65,15 @@ class BiT(ImageModel):
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         # TODO: map_location argument
+        # TODO: model save_dir defaults to torch.hub.get_dir()
         file_name = f'{self.name}.npz'
         if isinstance(self.dataset, ImageNet):
             file_name = f'{self.name}-ILSVRC2012.npz'
         url = f'https://storage.googleapis.com/bit_models/{file_name}'
         print('get official model weights from: ', url)
-        file_path = os.path.join(self.folder_path, file_name)
+        file_path = os.path.join(torch.hub.get_dir(), 'bit', file_name)
         if not os.path.exists(file_path):
-            download_url_to_file(url, file_path)
+            torch.hub.download_url_to_file(url, file_path)
         weights: dict[str, np.ndarray] = np.load(file_path)
         _dict = OrderedDict()
         _dict['features.conv.weight'] = tf2th(weights['resnet/root_block/standardized_conv2d/kernel'])

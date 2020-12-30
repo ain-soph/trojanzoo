@@ -30,7 +30,7 @@ class ImageFolder(ImageSet):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--data_format', dest='data_format', type=str,
-                           help='folder, zip or numpy. (zip is using ZIP_STOREED)')
+                           help='folder, zip or numpy. (zip is using ZIP_STORED)')
 
     def __init__(self, data_format: str = 'folder', **kwargs):
         self.data_format: str = data_format
@@ -98,7 +98,7 @@ class ImageFolder(ImageSet):
         for mode in mode_list:
             src_path = os.path.normpath(os.path.join(self.folder_path, mode))
             dst_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
-            with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STOREED)) as zf:
+            with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STORED)) as zf:
                 for root, dirs, files in os.walk(src_path):
                     _dir = root.removeprefix(os.path.normpath(self.folder_path, ''))
                     for _file in files:
@@ -129,8 +129,8 @@ class ImageFolder(ImageSet):
             transform = self.get_transform(mode=mode)
         if data_format is None:
             data_format = self.data_format
-            if mode == 'valid':
-                data_format = 'numpy'
+            # if mode == 'valid':
+            #     data_format = 'numpy'
         root = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
         if data_format == 'folder':
             root = os.path.join(self.folder_path, mode)

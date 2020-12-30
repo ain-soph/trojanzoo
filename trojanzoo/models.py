@@ -5,8 +5,9 @@ from trojanzoo.configs import config, Config
 from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
-from trojanzoo.utils.output import ansi, prints, output_iter
-from trojanzoo.utils import get_name, AverageMeter
+from trojanzoo.utils import get_name
+from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
+from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 
 
 import torch
@@ -43,7 +44,7 @@ class _Model(nn.Module):
 
         self.features = self.define_features()   # feature extractor
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
-        self.flatten = nn.Flatten(start_dim=1)
+        self.flatten = nn.Flatten()
         self.classifier = self.define_classifier()  # classifier
 
     # forward method
@@ -191,7 +192,7 @@ class Model:
             return self.model(_input, **kwargs)
 
     def get_prob(self, _input: InputType, **kwargs) -> torch.Tensor:
-        return self.softmax(self.get_logits(_input, **kwargs))
+        return self.softmax(self(_input, **kwargs))
 
     def get_final_fm(self, _input: InputType, **kwargs) -> torch.Tensor:
         return self._model.get_final_fm(_input, **kwargs)
@@ -203,7 +204,7 @@ class Model:
         return self.get_prob(_input, **kwargs).gather(dim=1, index=target.unsqueeze(1)).flatten()
 
     def get_class(self, _input: InputType, **kwargs) -> torch.Tensor:
-        return self.get_logits(_input, **kwargs).argmax(dim=-1)
+        return self(_input, **kwargs).argmax(dim=-1)
 
     def loss(self, _input: InputType, _label: torch.Tensor, **kwargs) -> torch.Tensor:
         _output = self(_input, **kwargs)
@@ -221,8 +222,7 @@ class Model:
 
     def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
                          OptimType: Union[str, type[Optimizer]] = None,
-                         lr_scheduler: bool = True,
-                         lr: float = 0.1, lr_decay_step: int = 30,
+                         lr: float = 0.1, lr_scheduler: bool = True, lr_step_size: int = 50, lr_gamma: float = 0.1,
                          **kwargs) -> tuple[Optimizer, _LRScheduler]:
         if isinstance(parameters, str):
             parameters = self.get_parameter_from_name(name=parameters)
@@ -230,15 +230,13 @@ class Model:
             raise TypeError(f'{type(parameters)=}    {parameters=}')
         if isinstance(OptimType, str):
             OptimType: type[Optimizer] = getattr(torch.optim, OptimType)
-        if len(kwargs) == 0 and OptimType == torch.optim.SGD:
-            kwargs = {'momentum': 0.9, 'weight_decay': 2e-4, 'nesterov': True}
+        keys = OptimType.__init__.__code__.co_varnames
+        kwargs = {k: v for k, v in kwargs.items() if k in keys}
         optimizer = OptimType(parameters, lr, **kwargs)
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
             _lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer, step_size=lr_decay_step, gamma=0.1)
-            # optimizer = optim.lr_scheduler.MultiStepLR(
-            #     optimizer, milestones=[150, 250], gamma=0.1)
+                optimizer, step_size=lr_step_size, gamma=lr_gamma)
         return optimizer, _lr_scheduler
 
     # define loss function
@@ -326,85 +324,75 @@ class Model:
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
-               validate_interval: int = 10, save: bool = False, amp: bool = False, verbose: bool = True, indent: int = 0,
+               validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data_fn: Callable[..., tuple[InputType, torch.Tensor]] = None,
-               loss_fn: Callable[..., torch.Tensor] = None,
+               criterion_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
                validate_func: Callable[..., tuple[float, ...]] = None, epoch_func: Callable[[], None] = None,
-               save_fn: Callable = None, file_path: str = None, folder_path: str = None, suffix: str = None, **kwargs):
+               save_fn: Callable = None, file_path: str = None, folder_path: str = None, suffix: str = None,
+               verbose: bool = True, indent: int = 0, **kwargs):
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        loss_fn = loss_fn if loss_fn is not None else self.loss
+        criterion_fn = criterion_fn if criterion_fn is not None else self.criterion
         validate_func = validate_func if validate_func is not None else self._validate
         save_fn = save_fn if save_fn is not None else self.save
 
         scaler: torch.cuda.amp.GradScaler = None
-        if amp and env['num_gpus']:
+        if not env['num_gpus']:
+            amp = False
+        if amp:
             scaler = torch.cuda.amp.GradScaler()
-        _, best_acc, _ = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                       verbose=verbose, indent=indent, **kwargs)
-        losses = AverageMeter('Loss')
-        top1 = AverageMeter('Acc@1')
-        top5 = AverageMeter('Acc@5')
+        _, best_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, criterion_fn=criterion_fn,
+                                    verbose=verbose, indent=indent, **kwargs)
+
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
         for _epoch in range(epoch):
             if epoch_func is not None:
                 self.activate_params([])
                 epoch_func()
                 self.activate_params(params)
-            losses.reset()
-            top1.reset()
-            top5.reset()
-            epoch_start = time.perf_counter()
-            loader = loader_train
-            if verbose and env['tqdm']:
-                loader = tqdm(loader_train)
+            logger = MetricLogger()
+            logger.meters['loss'] = SmoothedValue()
+            logger.meters['top1'] = SmoothedValue()
+            logger.meters['top5'] = SmoothedValue()
+            if verbose:
+                header = '{blue_light}Epoch: {0}{reset}'.format(output_iter(_epoch + 1, epoch), **ansi)
+                header = header.ljust(30 + get_ansi_len(header))
+                length = len(loader_train)
+                loader_train = logger.log_every(loader_train, header=header, indent=indent)
+                if env['tqdm']:
+                    loader_train = tqdm(loader_train, total=length)
             self.train()
             self.activate_params(params)
             optimizer.zero_grad()
-            for data in loader:
+            for data in loader_train:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data_fn(data, mode='train')
-                if amp and env['num_gpus']:
-                    loss = loss_fn(_input, _label, amp=True)
+                _output = self(_input, amp=amp)
+                loss = criterion_fn(_output, _label)
+                if amp:
                     scaler.scale(loss).backward()
                     scaler.step(optimizer)
                     scaler.update()
                 else:
-                    loss = loss_fn(_input, _label)
                     loss.backward()
                     optimizer.step()
                 optimizer.zero_grad()
-                with torch.no_grad():
-                    _output = self.get_logits(_input)
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
-                losses.update(loss.item(), batch_size)
-                top1.update(acc1, batch_size)
-                top5.update(acc5, batch_size)
+                logger.meters['loss'].update(loss, batch_size)
+                logger.meters['top1'].update(acc1, batch_size)
+                logger.meters['top5'].update(acc5, batch_size)
                 empty_cache()
-            epoch_time = str(datetime.timedelta(seconds=int(
-                time.perf_counter() - epoch_start)))
             self.eval()
             self.activate_params([])
-            if verbose:
-                pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
-                _str = ' '.join([
-                    f'Loss: {losses.avg:.4f},'.ljust(20),
-                    f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
-                    f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
-                    f'Time: {epoch_time},'.ljust(20),
-                ])
-                prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '',
-                       indent=indent)
             if lr_scheduler:
                 lr_scheduler.step()
-
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc, _ = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                                  verbose=verbose, indent=indent, **kwargs)
+                    _, cur_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn,
+                                               criterion_fn=criterion_fn,
+                                               verbose=verbose, indent=indent, **kwargs)
                     if cur_acc >= best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
@@ -417,41 +405,42 @@ class Model:
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
-                  get_data_fn: Callable = None, loss_fn: Callable[..., float] = None, **kwargs) -> tuple[float, ...]:
+                  get_data_fn: Callable[..., tuple[InputType, torch.Tensor]] = None,
+                  criterion_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                  **kwargs) -> tuple[float, float]:
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        loss_fn = loss_fn if loss_fn is not None else self.loss
-        losses = AverageMeter('Loss', ':.4e')
-        top1 = AverageMeter('Acc@1', ':6.2f')
-        top5 = AverageMeter('Acc@5', ':6.2f')
-        epoch_start = time.perf_counter()
-        if verbose and env['tqdm']:
-            loader = tqdm(loader)
-        for data in loader:
-            _input, _label = get_data_fn(data, mode='valid', **kwargs)
-            with torch.no_grad():
-                loss = loss_fn(_input, _label)
-                _output = self.get_logits(_input)
-            # measure accuracy and record loss
-            batch_size = int(_label.size(0))
-            losses.update(loss.item(), _label.size(0))
-            acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-            top1.update(acc1, batch_size)
-            top5.update(acc5, batch_size)
-        epoch_time = str(datetime.timedelta(seconds=int(
-            time.perf_counter() - epoch_start)))
+        criterion_fn = criterion_fn if criterion_fn is not None else self.criterion
+        logger = MetricLogger()
+        logger.meters['loss'] = SmoothedValue()
+        logger.meters['top1'] = SmoothedValue()
+        logger.meters['top5'] = SmoothedValue()
         if verbose:
-            pre_str = '{yellow}{0}:{reset}'.format(print_prefix, **ansi).ljust(35)
-            _str = ' '.join([
-                f'Loss: {losses.avg:.4f},'.ljust(20),
-                f'Top1 Acc: {top1.avg:.3f}, '.ljust(20),
-                f'Top5 Acc: {top5.avg:.3f},'.ljust(20),
-                f'Time: {epoch_time},'.ljust(20),
-            ])
-            prints(pre_str, _str, prefix='{upline}{clear_line}'.format(**ansi) if env['tqdm'] else '', indent=indent)
-        return losses.avg, top1.avg, top5.avg
+            header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
+            header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
+            length = len(loader)
+            loader = logger.log_every(loader, header=header, indent=indent, print_freq=10)
+            if env['tqdm']:
+                loader = tqdm(loader, total=length)
+        with torch.no_grad():
+            for data in loader:
+                # end = time.time()
+                _input, _label = get_data_fn(data, mode='valid', **kwargs)
+                # data_time = time.time() - end
+                _output = self(_input)
+                # model_time = time.time() - end
+                loss = float(criterion_fn(_output, _label))
+                # loss_time = time.time() - end
+                acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
+                batch_size = int(_label.size(0))
+                logger.meters['loss'].update(loss, batch_size)
+                logger.meters['top1'].update(acc1, batch_size)
+                logger.meters['top5'].update(acc5, batch_size)
+                # final_time = time.time() - end
+                # print(f'{data_time:.4f}\t{model_time:.4f}\t{loss_time:.4f}\t{final_time:.4f}')
+        return logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
 
     # -------------------------------------------Utility--------------------------------------- #
 
@@ -463,20 +452,20 @@ class Model:
 
     def accuracy(self, _output: torch.Tensor, _label: torch.Tensor,
                  topk: tuple[int] = (1, 5)) -> tuple[float, ...]:
-        """Computes the precision@k for the specified values of k"""
+        """Computes the accuracy over the k top predictions for the specified values of k"""
         with torch.no_grad():
             maxk = min(max(topk), self.num_classes)
-            batch_size = _label.shape[0]
+            batch_size = _label.size(0)
             _, pred = _output.topk(maxk, 1, True, True)
             pred = pred.t()
-            correct = pred.eq(_label.view(1, -1).expand_as(pred))
+            correct = pred.eq(_label[None])
             res: tuple[float, ...] = []
             for k in topk:
                 if k > self.num_classes:
                     res.append(100.0)
                 else:
-                    correct_k = correct[:k].flatten().float().sum(0, keepdim=True)
-                    res.append(float(correct_k.mul_(100.0 / batch_size)))
+                    correct_k = correct[:k].flatten().sum(dtype=torch.float32)
+                    res.append(correct_k * (100.0 / batch_size))
             return res
 
     def get_parameter_from_name(self, name: str = '') -> Iterator[nn.Parameter]:
@@ -497,12 +486,13 @@ class Model:
                 param.requires_grad_()
 
     # Need to overload for other packages (GNN) since they are calling their own nn.DataParallel.
+    # TODO: nn.parallel.DistributedDataParallel
     def get_parallel_model(self) -> Union[_Model, nn.DataParallel]:
         if env['num_gpus'] > 1:
             return nn.DataParallel(self._model)
         return self._model
 
-    @staticmethod
+    @ staticmethod
     def output_layer_information(layer: nn.Module, depth: int = 0, verbose: bool = True,
                                  indent: int = 0, tree_length: int = None):
         tree_length = tree_length if tree_length is not None else 10 * (depth + 1)
@@ -609,7 +599,7 @@ class Model:
 
     def generate_target(self, _input: InputType, idx: int = 1, same: bool = False) -> torch.Tensor:
         with torch.no_grad():
-            _output = self.get_logits(_input)
+            _output = self(_input)
         target = _output.argsort(dim=-1, descending=True)[:, idx]
         if same:
             target = repeat_to_batch(target.mode(dim=0)[0], len(_input))

@@ -74,12 +74,12 @@ class IMC_Multi(IMC):
         return poison_input, poison_label
 
     def validate_func_multi(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                         get_data_fn=None, **kwargs)
         target_acc = 100.0
         target_loss = 0.0
         for i, (mark, target_class) in enumerate(self.mark_list):
-            loss, acc, _ = self.model._validate(print_prefix=f'Validate Trigger {i} target {target_class} ', get_data_fn=self.get_poison_data,
+            loss, acc = self.model._validate(print_prefix=f'Validate Trigger {i} target {target_class} ', get_data_fn=self.get_poison_data,
                                                 mark=mark, target_class=target_class, **kwargs)
             target_loss = max(loss, target_loss)
             target_acc = min(acc, target_acc)

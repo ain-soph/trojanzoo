@@ -19,13 +19,10 @@ class _ImageModel(_Model):
         if num_classes is None:
             num_classes = 1000
         super().__init__(num_classes=num_classes, **kwargs)
-        self.norm_par = None
+        self.norm_par: dict[str, torch.Tensor] = None
         if norm_par:
-            self.norm_par = {key: torch.as_tensor(value)
+            self.norm_par = {key: torch.as_tensor(value, device=env['device'])
                              for key, value in norm_par.items()}
-            if env['num_gpus']:
-                self.norm_par = {key: value.pin_memory()
-                                 for key, value in self.norm_par.items()}
 
     # This is defined by Pytorch documents
     # See https://pytorch.org/docs/stable/torchvision/models.html for more details
@@ -36,10 +33,8 @@ class _ImageModel(_Model):
         if len(x.shape) == 3:
             x = x.unsqueeze(0)
         if self.norm_par:
-            mean = self.norm_par['mean'].to(
-                x.device, non_blocking=True)[None, :, None, None]
-            std = self.norm_par['std'].to(
-                x.device, non_blocking=True)[None, :, None, None]
+            mean = self.norm_par['mean'].to(x.device)[None, :, None, None]
+            std = self.norm_par['std'].to(x.device)[None, :, None, None]
             x = x.sub(mean).div(std)
         return x
 

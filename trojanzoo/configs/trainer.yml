@@ -4,5 +4,7 @@ epoch: 150
 lr: 0.1
 parameters: full
 OptimType: SGD
-lr_decay_step: 50
+momentum: 0.9
+weight_decay: 0.0001
+lr_step_size: 50
 validate_interval: 10

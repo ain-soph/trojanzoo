@@ -45,6 +45,10 @@ class ImageNet(ImageFolder):
                 transforms.Resize((256, 256)),
                 transforms.CenterCrop((224, 224)),
                 transforms.ToTensor()])
+            # BiT transform
+            # transform = transforms.Compose([
+            #     transforms.Resize((480, 480)),
+            #     transforms.ToTensor()])
         return transform
 
     def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],

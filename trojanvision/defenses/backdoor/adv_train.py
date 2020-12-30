@@ -40,9 +40,9 @@ class AdvTrain(BackdoorDefense):
         self.attack.validate_func()
 
     def validate_func(self, get_data_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                         get_data_fn=None, **kwargs)
-        adv_loss, adv_acc, _ = self.model._validate(print_prefix='Validate Adv',
+        adv_loss, adv_acc = self.model._validate(print_prefix='Validate Adv',
                                                     get_data_fn=self.get_data, **kwargs)
         # todo: Return value
         if self.clean_acc - clean_acc > 20 and self.clean_acc > 40:
@@ -63,7 +63,7 @@ class AdvTrain(BackdoorDefense):
         loader_train = self.dataset.loader['train']
         file_path = self.folder_path + self.get_filename() + '.pth'
 
-        _, best_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
+        _, best_acc = self.validate_func(verbose=verbose, indent=indent, **kwargs)
 
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
@@ -126,7 +126,7 @@ class AdvTrain(BackdoorDefense):
 
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
+                    _, cur_acc = self.validate_func(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)

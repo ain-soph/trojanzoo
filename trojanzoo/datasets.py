@@ -44,7 +44,7 @@ class Dataset:
         group.add_argument('--test_batch_size', dest='test_batch_size', type=int,
                            help='test batch size.')
         group.add_argument('--num_workers', dest='num_workers', type=int,
-                           help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4. (0 for validation set)')
+                           help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4.')
         group.add_argument('--download', dest='download', action='store_true',
                            help='download dataset if not exist by calling dataset.initialize()')
         group.add_argument('--data_dir', dest='data_dir',

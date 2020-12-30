@@ -47,7 +47,7 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
     if device == 'default':
         device = env['device']
 
-    if isinstance(x, list) or isinstance(x, tuple):
+    if isinstance(x, (list, tuple)):
         try:
             x = torch.stack(x)
         except TypeError:

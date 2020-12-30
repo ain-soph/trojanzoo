@@ -36,8 +36,7 @@ class ImageSet(Dataset):
             batch_size = self.test_batch_size if mode == 'test' else self.batch_size
         if shuffle is None:
             shuffle = True if mode == 'train' else False
-        if num_workers is None:
-            num_workers = self.num_workers if mode == 'train' else 0
+        num_workers = num_workers if num_workers is not None else self.num_workers
         if dataset is None:
             dataset = self.get_dataset(mode, **kwargs)
         if env['num_gpus'] == 0:
@@ -47,7 +46,7 @@ class ImageSet(Dataset):
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        return to_tensor(data[0], non_blocking=True), to_tensor(data[1], dtype='long', non_blocking=True)
+        return data[0].to(env['device'], non_blocking=True), data[1].to(env['device'], non_blocking=True)
 
     @classmethod
     def get_class_to_idx(cls, **kwargs) -> dict[str, int]:

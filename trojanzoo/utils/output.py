@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import io
+import re
 import sys
 
 
@@ -37,6 +38,9 @@ class ANSI:
     def __init__(self):
         self._dict = ANSI.ansi_color if ('--color' in sys.argv) else ANSI.ansi_nocolor
 
+    def switch(self, color: bool):
+        self._dict = ANSI.ansi_color if color else ANSI.ansi_nocolor
+
     def keys(self):
         return self._dict.keys()
 
@@ -56,6 +60,15 @@ class ANSI:
 ansi = ANSI()
 
 
+def remove_ansi(s: str) -> str:
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    return ansi_escape.sub('', s)
+
+
+def get_ansi_len(s: str) -> int:
+    return len(s) - len(remove_ansi(s))
+
+
 def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
     assert indent >= 0
     new_args = []
@@ -67,10 +80,10 @@ def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
 
 def output_iter(_iter: int, iteration: int = None) -> str:
     if iteration is None:
-        return '{blue_light}[ {red}{0}{blue_light} ]{reset}'.format(str(_iter).rjust(3), **ansi)
+        return '{blue_light}[ {red}{0:s}{blue_light} ]{reset}'.format(str(_iter).rjust(3), **ansi)
     else:
         length = len(str(iteration))
-        return '{blue_light}[ {red}{0}{blue_light} / {red}{1}{blue_light} ]{reset}'.format(
+        return '{blue_light}[ {red}{0:s}{blue_light} / {red}{1:d}{blue_light} ]{reset}'.format(
             str(_iter).rjust(length), iteration, **ansi)
 
 

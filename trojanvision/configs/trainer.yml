@@ -4,6 +4,6 @@ epoch:
   default: 150
   cifar10: 300
 
-lr_decay_step:
+lr_step_size:
   default: 50
   cifar10: 100

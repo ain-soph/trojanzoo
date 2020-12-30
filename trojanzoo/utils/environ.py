@@ -7,10 +7,12 @@ from trojanzoo.configs import Config, config
 
 import torch
 import torch.cuda
+# import torch.distributed as dist
 import torch.backends.cudnn
 import numpy as np
 import random
 import argparse
+from typing import Union
 
 
 class Env(Param):
@@ -35,6 +37,8 @@ class Env(Param):
                            help='Colorful Output, defaults to False.')
         group.add_argument('--tqdm', dest='tqdm', action='store_true',
                            help='Show tqdm Progress Bar, defaults to False.')
+
+        # group.add_argument('--world_size', dest='world_size', type=int, default=1)
         return group
 
 
@@ -58,6 +62,7 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
     dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
     result = config.get_config(dataset_name=dataset_name)['env']._update(other_kwargs)
     env.update(config_path=config_path, **result)
+    ansi.switch(env['color'])
     if seed is None and 'seed' in env.keys():
         seed = env['seed']
     random.seed(seed)
@@ -66,21 +71,29 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
     torch.cuda.manual_seed_all(seed)
 
     num_gpus: int = torch.cuda.device_count()
-    device = result['device']
+    device: Union[str, int] = result['device']
     if device == 'none':
         device = None
     else:
         if device is None or device == 'auto':
             device = 'cuda' if num_gpus else 'cpu'
-        if isinstance(device, str):
+        if isinstance(device, (str, int)):
             device = torch.device(device)
         if device.type == 'cpu':
             num_gpus = 0
         if device.index is not None and torch.cuda.is_available():
             num_gpus = 1
+    if num_gpus == 0:
+        device = torch.device('cpu')
     if benchmark is None and 'benchmark' in env.keys():
         benchmark = env['benchmark']
     if benchmark:
         torch.backends.cudnn.benchmark = benchmark
+
+    # dist_backend = 'nccl' if num_gpus and dist.is_nccl_available() else 'gloo'
+    # dist.init_process_group(backend=dist_backend)
     env.update(seed=seed, device=device, benchmark=benchmark, num_gpus=num_gpus)
     return env
+
+
+# def init_distributed_mode():

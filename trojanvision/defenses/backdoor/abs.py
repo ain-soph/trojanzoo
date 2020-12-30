@@ -118,7 +118,7 @@ class ABS(BackdoorDefense):
                 self.attack.mark.alpha_mask = mask
                 self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
                 self.attack.target_class = label
-                attack_loss, attack_acc, _ = self.model._validate(
+                attack_loss, attack_acc = self.model._validate(
                     verbose=False, get_data_fn=self.attack.get_data, keep_org=False)
                 _dict['loss'] = loss
                 _dict['attack_acc'] = attack_acc

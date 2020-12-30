@@ -115,6 +115,6 @@ class PoisonBasic(Attack):
 
     def validate_func(self, get_data_fn=None, indent: int = 0, verbose=True, **kwargs) -> tuple[float, float, float]:
         target_conf, target_acc = self.validate_target(indent=indent, verbose=verbose)
-        _, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+        _, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                indent=indent, verbose=verbose, **kwargs)
         return target_conf, target_acc, clean_acc

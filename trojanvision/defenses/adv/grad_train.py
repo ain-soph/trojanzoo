@@ -38,9 +38,9 @@ class Grad_Train(Defense):
         return new_loss
 
     def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
+        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                         get_data_fn=None, **kwargs)
-        adv_loss, adv_acc, _ = self.model._validate(print_prefix='Validate Adv',
+        adv_loss, adv_acc = self.model._validate(print_prefix='Validate Adv',
                                                     get_data_fn=self.get_data, **kwargs)
         # todo: Return value
         if self.clean_acc - clean_acc > 20 and self.clean_acc > 40:

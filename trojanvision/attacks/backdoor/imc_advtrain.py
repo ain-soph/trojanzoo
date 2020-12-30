@@ -65,7 +65,7 @@ class IMC_AdvTrain(IMC):
         loader_train = self.dataset.loader['train']
         file_path = self.folder_path + self.get_filename() + '.pth'
 
-        _, best_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
+        _, best_acc = self.validate_func(verbose=verbose, indent=indent, **kwargs)
 
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
@@ -137,7 +137,7 @@ class IMC_AdvTrain(IMC):
 
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc, _ = self.validate_func(verbose=verbose, indent=indent, **kwargs)
+                    _, cur_acc = self.validate_func(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)

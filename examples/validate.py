@@ -22,4 +22,4 @@ if __name__ == '__main__':
 
     if env['verbose']:
         summary(env=env, dataset=dataset, model=model)
-    loss, acc1, acc5 = model._validate()
+    loss, acc1 = model._validate()
