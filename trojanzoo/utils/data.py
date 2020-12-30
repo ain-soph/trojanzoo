@@ -45,7 +45,7 @@ def uncompress(file_path: str, target_path: str, verbose: bool = True):
     else:
         raise NotImplementedError(f'{file_path=}')
     if verbose:
-        print('{yellow}Uncompress finished{reset}: '.format(**ansi),
+        print('{green}Uncompress finished{reset}: '.format(**ansi),
               f'{target_path}')
         print()
 
