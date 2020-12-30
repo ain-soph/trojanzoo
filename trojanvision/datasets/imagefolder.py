@@ -34,6 +34,8 @@ class ImageFolder(ImageSet):
 
     def __init__(self, data_format: str = 'folder', **kwargs):
         self.data_format: str = data_format
+        if data_format == 'zip':
+            raise NotImplementedError('data_format=zip Not supported! See reason at issues/42 on github.')
         super().__init__(**kwargs)
         self.param_list['imagefolder'] = ['data_format', 'url', 'org_folder_name']
         self.class_to_idx = self.get_class_to_idx()
