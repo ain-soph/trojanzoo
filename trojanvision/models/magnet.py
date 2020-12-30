@@ -58,8 +58,6 @@ class _MagNet(nn.Module):
         self.decoder.add_module('activation', activation_fn)
 
     def forward(self, x, **kwargs):
-        if len(x.shape) == 3:
-            x = x.unsqueeze(0)
         x = self.encoder(x)
         x = self.decoder(x)
         return x
@@ -118,5 +116,5 @@ class MagNet(Model):
     def accuracy(self, _output: torch.FloatTensor, _label: torch.Tensor, topk=(1, 5)):
         res = []
         for k in topk:
-            res.append(100 - self.criterion(_output, _label))
+            res.append(-self.criterion(_output, _label))
         return res

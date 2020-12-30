@@ -29,9 +29,7 @@ class _ImageModel(_Model):
     # The input range is [0,1]
     # input: (batch_size, channels, height, width)
     # output: (batch_size, channels, height, width)
-    def preprocess(self, x: torch.Tensor) -> torch.Tensor:
-        if len(x.shape) == 3:
-            x = x.unsqueeze(0)
+    def normalize(self, x: torch.Tensor) -> torch.Tensor:
         if self.norm_par:
             mean = self.norm_par['mean'].to(x.device)[None, :, None, None]
             std = self.norm_par['std'].to(x.device)[None, :, None, None]
@@ -42,8 +40,7 @@ class _ImageModel(_Model):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
     def get_fm(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.preprocess(x)
-        return self.features(x)
+        return self.features(self.normalize(x))
 
     # get output for a certain layer
     # input: (batch_size, channels, height, width)
