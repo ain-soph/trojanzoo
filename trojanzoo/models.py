@@ -493,7 +493,7 @@ class Model:
     @ staticmethod
     def output_layer_information(layer: nn.Module, depth: int = 0, verbose: bool = True,
                                  indent: int = 0, tree_length: int = None):
-        tree_length = tree_length if tree_length is not None else 10 * (depth + 1)
+        tree_length = tree_length if tree_length is not None else 12 * (depth + 1)
         if depth > 0:
             for name, module in layer.named_children():
                 _str = '{blue_light}{0}{reset}'.format(name, **ansi)
@@ -506,7 +506,7 @@ class Model:
                     _str += item
                 prints(_str, indent=indent)
                 Model.output_layer_information(
-                    module, depth=depth - 1, indent=indent + 10, verbose=verbose, tree_length=tree_length)
+                    module, depth=depth - 1, indent=indent + 12, verbose=verbose, tree_length=tree_length)
 
     def summary(self, depth: int = 2, verbose: bool = True, indent: int = 0, **kwargs):
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
