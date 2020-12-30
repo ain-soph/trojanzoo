@@ -7,7 +7,6 @@ from .tensor import to_list
 import torch
 from torch.utils.data import Dataset
 import os
-import sys
 import tqdm
 import tarfile
 import zipfile
@@ -37,7 +36,7 @@ def uncompress(file_path: str, target_path: str, verbose: bool = True):
     if not os.path.exists(target_path):
         os.makedirs(target_path)
     if verbose:
-        print('Uncompress file: ', file_path)
+        print('{yellow}Uncompress file{reset}: '.format(**ansi), file_path)
     ext = os.path.splitext(file_path)[1]
     if ext in ['.zip']:
         unzip(file_path, target_path)
@@ -46,7 +45,8 @@ def uncompress(file_path: str, target_path: str, verbose: bool = True):
     else:
         raise NotImplementedError(f'{file_path=}')
     if verbose:
-        print(f'Uncompress finished: {target_path}')
+        print('{yellow}Uncompress finished{reset}: '.format(**ansi),
+              f'{target_path}')
         print()
 
 

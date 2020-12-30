@@ -93,7 +93,7 @@ class ImageFolder(ImageSet):
                 pass
 
     def initialize_zip(self, **kwargs):
-        print('initialize zip')
+        print('{yellow}initialize zip{reset}'.format(**ansi))
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         for mode in mode_list:
             src_path = os.path.normpath(os.path.join(self.folder_path, mode))
@@ -115,7 +115,7 @@ class ImageFolder(ImageSet):
         for mode in mode_list:
             npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             if not os.path.exists(npz_path):
-                print('initialize npz: ', npz_path)
+                print('{yellow}initialize npz{reset}: '.format(**ansi), npz_path)
                 dataset: datasets.ImageFolder = self.get_org_dataset(mode, transform=transform, data_format='folder')
                 data, targets = self.to_memory(dataset)
                 data = np.stack(data)
@@ -181,11 +181,12 @@ class ImageFolder(ImageSet):
                 file_name = f'{self.name}_{mode}.{file_ext}'
                 file_path = os.path.normpath(os.path.join(folder_path, file_name))
         if not os.path.exists(file_path):
-            print(f'Downloading Dataset {self.name} {mode:5s}: {file_path}')
+            print('{yellow}Downloading Dataset{reset} '.format(**ansi),
+                  f'{self.name} {mode:5s}: {file_path}')
             download_url_to_file(url, file_path)
             print('{upline}{clear_line}'.format(**ansi))
         else:
-            prints('File Already Exists: ', file_path, indent=10)
+            prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
         return file_path
 
     def sample(self, child_name: str = None, class_dict: dict = None, sample_num: int = None, verbose=True):
@@ -199,8 +200,8 @@ class ImageFolder(ImageSet):
             src_path) if os.path.isdir(src_path + _dir) and _dir[0] != '.']
         dst_path = os.path.normpath(os.path.join(os.path.dirname(self.folder_path), child_name))
         if verbose:
-            print('src path: ', src_path)
-            print('dst path: ', dst_path)
+            print('{yellow}src path{reset}: '.format(**ansi), src_path)
+            print('{yellow}dst path{reset}: '.format(**ansi), dst_path)
         if class_dict is None:
             assert sample_num
             idx_list = np.arange(self.num_classes)
@@ -217,13 +218,13 @@ class ImageFolder(ImageSet):
         len_i = len(class_dict.keys())
         for src_mode in mode_list:
             if verbose:
-                print(src_mode)
+                print('{purple}{0}{reset}'.format(src_mode, **ansi))
             assert src_mode in ['train', 'valid', 'test', 'val']
             dst_mode = 'valid' if src_mode == 'val' else src_mode
             for i, dst_class in enumerate(class_dict.keys()):
                 if not os.path.exists(os.path.join(dst_path, dst_mode, dst_class)):
                     os.makedirs(os.path.join(dst_path, dst_mode, dst_class))
-                prints(dst_class, indent=10)
+                prints('{blue_light}{0}{reset}'.format(dst_class, **ansi), indent=10)
                 class_list = class_dict[dst_class]
                 len_j = len(class_list)
                 for j, src_class in enumerate(class_list):
