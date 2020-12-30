@@ -54,11 +54,34 @@ class ZipFolder(DatasetFolder):
     def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
                  is_valid_file: Optional[Callable[[str], bool]] = None) -> None:
         if not root.endswith('.zip'):
-            raise TypeError("Need to ZIP file for data source: ", self.root)
-        self.root_zip = ZipLookup(os.path.realpath(self.root))
+            raise TypeError("Need to ZIP file for data source: ", root)
+        self.root_zip = ZipLookup(os.path.realpath(root))
         super().__init__(root, self.zip_loader, IMG_EXTENSIONS if is_valid_file is None else None,
                          transform=transform, target_transform=target_transform, is_valid_file=is_valid_file)
         self.imgs = self.samples
+
+    def make_dataset(
+        self,
+        directory: str,
+        class_to_idx: dict[str, int],
+        extensions: Optional[tuple[str, ...]] = None,
+        is_valid_file: Optional[Callable[[str], bool]] = None,
+    ) -> list[tuple[str, int]]:
+        instances = []
+        both_none = extensions is None and is_valid_file is None
+        both_something = extensions is not None and is_valid_file is not None
+        if both_none or both_something:
+            raise ValueError("Both extensions and is_valid_file cannot be None or not None at the same time")
+        if extensions is not None:
+            def is_valid_file(x: str) -> bool:
+                return has_file_allowed_extension(x, cast(tuple[str, ...], extensions))
+        is_valid_file = cast(Callable[[str], bool], is_valid_file)
+        for filepath in self.root_zip.keys():
+            if is_valid_file(filepath):
+                _, target_class = os.path.split(os.path.dirname(filepath))
+                item = filepath, class_to_idx[target_class]
+                instances.append(item)
+        return instances
 
     def zip_loader(self, path) -> Any:
         f = self.root_zip[path]
@@ -80,7 +103,12 @@ class ZipFolder(DatasetFolder):
         Ensures:
             No class is a subdirectory of another.
         """
-        classes = list({path.split('')[-2] for path in self.root_zip.keys() if '/' in path})
+        classes = set()
+        for filepath in self.root_zip.keys():
+            root, target_class = os.path.split(os.path.dirname(filepath))
+            if root:
+                classes.add(target_class)
+        classes = list(classes)
         classes.sort()
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx

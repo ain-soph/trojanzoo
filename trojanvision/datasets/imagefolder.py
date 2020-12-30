@@ -92,19 +92,22 @@ class ImageFolder(ImageSet):
             except FileNotFoundError:
                 pass
 
-    def initialize_zip(self, **kwargs):
-        print('{yellow}initialize zip{reset}'.format(**ansi))
-        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
+    def initialize_zip(self, mode_list: list[str] = ['train', 'valid'], **kwargs):
+        if not self.valid_set:
+            mode_list.remove('valid')
         for mode in mode_list:
-            src_path = os.path.normpath(os.path.join(self.folder_path, mode))
             dst_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
-            with open(zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STORED)) as zf:
-                for root, dirs, files in os.walk(src_path):
-                    _dir = root.removeprefix(os.path.normpath(self.folder_path, ''))
-                    for _file in files:
-                        org_path = os.path.join(root, _file)
-                        zip_path = os.path.join(_dir, _file)
-                        zf.write(org_path, zip_path)
+            if not os.path.exists(dst_path):
+                print('{yellow}initialize zip{reset}: '.format(**ansi), dst_path)
+                src_path = os.path.normpath(os.path.join(self.folder_path, mode))
+                with zipfile.ZipFile(dst_path, mode='w', compression=zipfile.ZIP_STORED) as zf:
+                    for root, dirs, files in os.walk(src_path):
+                        _dir = root.removeprefix(os.path.join(self.folder_path, ''))
+                        for _file in files:
+                            org_path = os.path.join(root, _file)
+                            zip_path = os.path.join(_dir, _file)
+                            zf.write(org_path, zip_path)
+                print('{green}initialize zip finish{reset}'.format(**ansi))
 
     def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
                        transform: transforms.Lambda = transforms.Lambda(lambda x: np.array(x)),
@@ -122,6 +125,7 @@ class ImageFolder(ImageSet):
                 np.savez(npz_path, data=data, targets=targets)
                 with open(json_path, 'w') as f:
                     json.dump(dataset.class_to_idx, f)
+                print('{green}initialize npz finish{reset}: '.format(**ansi))
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
                         data_format: str = None, **kwargs) -> Union[datasets.ImageFolder, MemoryDataset]:
