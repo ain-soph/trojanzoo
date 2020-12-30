@@ -7,7 +7,6 @@ from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 import torch
 import torch.cuda
 import torch.utils.data
-import torch.utils.data.dataset
 from torchvision import transforms
 import numpy as np
 import argparse
@@ -201,7 +200,7 @@ class Dataset:
             return loss_weights
 
     @staticmethod
-    def to_memory(dataset: torch.utils.data.dataset.Dataset, label_only: bool = False) -> tuple[Any, list[int]]:
+    def to_memory(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[Any, list[int]]:
         if label_only and 'targets' in dataset.__dict__.keys():
             return None, dataset.targets
         if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
