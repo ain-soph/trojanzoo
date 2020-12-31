@@ -176,14 +176,15 @@ class ImageModel(Model):
         return self._model.get_all_layer(x, layer_input=layer_input)
 
     # TODO: requires _input shape (N, C, H, W)
-    def get_heatmap(self, _input: torch.Tensor, _class: list[int], method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
+    # Reference: https://keras.io/examples/vision/grad_cam/
+    def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor, method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
         squeeze_flag = False
         if len(_input.shape) == 3:
             _input = _input.unsqueeze(0)    # (N, C, H, W)
             squeeze_flag = True
-        if isinstance(_class, int):
-            _class = [_class] * len(_input)
-        _class = torch.as_tensor(_class, device=_input.device)
+        if isinstance(_label, int):
+            _label = [_label] * len(_input)
+        _label = torch.as_tensor(_label, device=_input.device)
         heatmap = _input    # linting purpose
         if method == 'grad_cam':
             feats = self._model.get_fm(_input).detach()   # (N, C', H', W')
@@ -191,26 +192,25 @@ class ImageModel(Model):
             _output: torch.Tensor = self._model.pool(feats)   # (N, C', 1, 1)
             _output = self._model.flatten(_output)   # (N, C')
             _output = self._model.classifier(_output)   # (N, num_classes)
-            _output = _output.gather(dim=1, index=_class.unsqueeze(1)).sum()
+            _output = _output.gather(dim=1, index=_label.unsqueeze(1)).sum()
             grad = torch.autograd.grad(_output, feats)[0]   # (N, C',H', W')
             feats.requires_grad_(False)
-
             weights = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N, C',1,1)
-            heatmap = (feats * weights).detach().cpu().sum(dim=1).clamp(0)  # (N, H', W')
-            heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
+            heatmap = (feats * weights).sum(dim=1, keepdim=True).clamp(0)  # (N, 1, H', W')
+            # heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
             heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
-            heatmap: torch.Tensor = F.interpolate(heatmap, _input.shape[-2:], mode='bicubic')   # (N, H, W)
+            heatmap: torch.Tensor = F.upsample(heatmap, _input.shape[-2:], mode='bilinear')[:, 0]   # (N, H, W)
             # Note that we violate the image order convension (W, H, C)
         elif method == 'saliency_map':
             _input.requires_grad_()
-            _output = self(_input).gather(dim=1, index=_class.unsqueeze(1)).sum()
+            _output = self(_input).gather(dim=1, index=_label.unsqueeze(1)).sum()
             grad = torch.autograd.grad(_output, _input)[0]   # (N,C,H,W)
             _input.requires_grad_(False)
 
             heatmap = grad.abs().max(dim=1)[0]   # (N,H,W)
             heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
             heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
-        heatmap = apply_cmap(heatmap, cmap)
+        heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
     @staticmethod

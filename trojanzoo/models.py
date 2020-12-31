@@ -510,7 +510,9 @@ class Model:
                 Model.output_layer_information(
                     module, depth=depth - 1, indent=indent + 12, verbose=verbose, tree_length=tree_length)
 
-    def summary(self, depth: int = 2, verbose: bool = True, indent: int = 0, **kwargs):
+    def summary(self, depth: int = None, verbose: bool = True, indent: int = 0, **kwargs):
+        if depth is None:
+            depth = env['verbose']
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key, value in self.param_list.items():
             prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)

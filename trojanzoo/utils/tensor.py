@@ -108,7 +108,7 @@ def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_chan
     return to_tensor(img, **kwargs)
 
 
-def float2byte(img: torch.Tensor) -> torch.ByteTensor:
+def float2byte(img: torch.Tensor) -> torch.Tensor:
     img = torch.as_tensor(img)
     if len(img.shape) == 4:
         assert img.shape[0] == 1
@@ -130,21 +130,24 @@ def float2byte(img: torch.Tensor) -> torch.ByteTensor:
 #     return img
 
 
-def save_tensor_as_img(path: str, _tensor: Union[torch.Tensor, torch.ByteTensor]):
-    dir, _ = os.path.split(path)
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+def tensor_to_img(_tensor: torch.Tensor) -> Image.Image:
     if len(_tensor.shape) == 4:
         assert _tensor.shape[0] == 1
         _tensor = _tensor[0]
     if len(_tensor.shape) == 3 and _tensor.shape[0] == 1:
         _tensor = _tensor[0]
-    if isinstance(_tensor, torch.Tensor):
+    if _tensor.dtype in [torch.float, torch.double]:
         _tensor = float2byte(_tensor)
     img = to_numpy(_tensor)
-    # image.imsave(path, img)
-    I = Image.fromarray(img)
-    I.save(path)
+    return Image.fromarray(img)
+
+
+def save_tensor_as_img(path: str, _tensor: torch.Tensor):
+    dir, _ = os.path.split(path)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    img = tensor_to_img(_tensor)
+    img.save(path)
 
 
 def save_numpy_as_img(path: str, arr: np.ndarray):
