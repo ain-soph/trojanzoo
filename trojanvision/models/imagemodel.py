@@ -3,14 +3,17 @@
 from trojanvision.datasets import ImageSet
 from trojanzoo.models import _Model, Model
 from trojanvision.environ import env
-from trojanzoo.utils import to_numpy
+from trojanvision.utils import apply_cmap
 
 import torch
 import torch.autograd
-import numpy as np
-import PIL.Image as Image
+import torch.nn.functional as F
 import re
 import argparse
+
+from matplotlib.colors import Colormap
+from matplotlib.cm import get_cmap
+jet = get_cmap('jet')
 
 
 class _ImageModel(_Model):
@@ -172,46 +175,43 @@ class ImageModel(Model):
     def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> dict[str, torch.Tensor]:
         return self._model.get_all_layer(x, layer_input=layer_input)
 
-    def grad_cam(self, _input: torch.FloatTensor, _class: list[int]) -> np.ndarray:
+    # TODO: requires _input shape (N, C, H, W)
+    def get_heatmap(self, _input: torch.Tensor, _class: list[int], method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
+        squeeze_flag = False
+        if len(_input.shape) == 3:
+            _input = _input.unsqueeze(0)    # (N, C, H, W)
+            squeeze_flag = True
         if isinstance(_class, int):
             _class = [_class] * len(_input)
-        _class = torch.tensor(_class).to(_input.device)
-        feats = self._model.get_fm(_input).detach()   # (N,C,H,W)
-        feats.requires_grad_()
-        _output: torch.FloatTensor = self._model.pool(feats)
-        _output: torch.FloatTensor = self._model.flatten(_output)
-        _output: torch.FloatTensor = self._model.classifier(_output)
-        _output: torch.FloatTensor = _output.gather(dim=1, index=_class.unsqueeze(1)).sum()
-        grad: torch.FloatTensor = torch.autograd.grad(_output, feats)[0]   # (N,C,H,W)
-        feats.requires_grad_(False)
+        _class = torch.as_tensor(_class, device=_input.device)
+        heatmap = _input    # linting purpose
+        if method == 'grad_cam':
+            feats = self._model.get_fm(_input).detach()   # (N, C', H', W')
+            feats.requires_grad_()
+            _output: torch.Tensor = self._model.pool(feats)   # (N, C', 1, 1)
+            _output = self._model.flatten(_output)   # (N, C')
+            _output = self._model.classifier(_output)   # (N, num_classes)
+            _output = _output.gather(dim=1, index=_class.unsqueeze(1)).sum()
+            grad = torch.autograd.grad(_output, feats)[0]   # (N, C',H', W')
+            feats.requires_grad_(False)
 
-        weights: torch.FloatTensor = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N,C,1,1)
-        heatmap: torch.FloatTensor = (feats * weights).sum(dim=1).clamp(0)  # (N,H,W)
-        heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
-        heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
-        heatmap = (to_numpy(heatmap).transpose(1, 2, 0) * 255).astype(np.uint8)
-        heatmap = Image.fromarray(heatmap).resize(_input.shape[-2:], resample=Image.BICUBIC)
-        heatmap = np.array(heatmap)
-        if len(heatmap.shape) == 2:
-            heatmap = heatmap.reshape(heatmap.shape[0], heatmap.shape[1], 1)
-        heatmap = heatmap.transpose(2, 0, 1).astype(float) / 255    # (N, H, W)
-        return heatmap
+            weights = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N, C',1,1)
+            heatmap = (feats * weights).detach().cpu().sum(dim=1).clamp(0)  # (N, H', W')
+            heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
+            heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
+            heatmap: torch.Tensor = F.interpolate(heatmap, _input.shape[-2:], mode='bicubic')   # (N, H, W)
+            # Note that we violate the image order convension (W, H, C)
+        elif method == 'saliency_map':
+            _input.requires_grad_()
+            _output = self(_input).gather(dim=1, index=_class.unsqueeze(1)).sum()
+            grad = torch.autograd.grad(_output, _input)[0]   # (N,C,H,W)
+            _input.requires_grad_(False)
 
-    def get_saliency_map(self, _input: torch.FloatTensor, _class: list[int]) -> torch.Tensor:
-        if isinstance(_class, int):
-            _class = [_class] * len(_input)
-        _class: torch.Tensor = torch.tensor(_class).to(_input.device)
-        x: torch.FloatTensor = _input.detach()
-        x.requires_grad_()
-        _output: torch.FloatTensor = self(x)
-        _output: torch.FloatTensor = _output.gather(dim=1, index=_class.unsqueeze(1)).sum()
-        grad: torch.FloatTensor = torch.autograd.grad(_output, x)[0]   # (N,C,H,W)
-        x.requires_grad_(False)
-
-        heatmap = grad.clamp(min=0).max(dim=1)[0]   # (N,H,W)
-        heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
-        heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
-        return heatmap
+            heatmap = grad.abs().max(dim=1)[0]   # (N,H,W)
+            heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
+            heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
+        heatmap = apply_cmap(heatmap, cmap)
+        return heatmap[0] if squeeze_flag else heatmap
 
     @staticmethod
     def split_model_name(name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
