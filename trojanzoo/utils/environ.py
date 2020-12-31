@@ -31,7 +31,7 @@ class Env(Param):
                            help='set to \'cpu\' to force cpu-only and \'gpu\', \'cuda\' for gpu-only, defaults to None.')
         group.add_argument('--benchmark', dest='benchmark', action='store_true',
                            help='use torch.backends.cudnn.benchmark to accelerate without deterministic, defaults to False.')
-        group.add_argument('--verbose', dest='verbose', type=int,
+        group.add_argument('--verbose', dest='verbose', type=int, default=0,
                            help='show arguments and module information, defaults to False.')
         group.add_argument('--color', dest='color', action='store_true',
                            help='Colorful Output, defaults to False.')

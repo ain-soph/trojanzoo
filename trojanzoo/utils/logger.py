@@ -1,11 +1,11 @@
 # coding: utf-8
 
+from .environ import env
 from .output import ansi, output_iter, prints, get_ansi_len, remove_ansi
 
 import torch
 import torch.cuda
 import torch.distributed as dist
-import numpy as np
 from collections import defaultdict, deque
 import datetime
 import time
@@ -154,37 +154,39 @@ class MetricLogger(object):
             if torch.cuda.is_available():
                 memory.update(torch.cuda.max_memory_allocated() / MB)
             if print_freq and i % print_freq == 0:
-                iter_time_str = '{green}iter{reset}: {iter_time} s'.format(iter_time=str(iter_time), **ansi)
-                data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
-                iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
-                data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
                 middle_header = '' if total is None else output_iter(i, total)
                 length = max(len(remove_ansi(header)) - 10, 0)
                 middle_header = middle_header.ljust(length + get_ansi_len(middle_header))
-                log_msg = self.delimiter.join([middle_header, str(self), iter_time_str, data_time_str])
-                if torch.cuda.is_available():
+                log_msg = self.delimiter.join([middle_header, str(self)])
+                if env['verbose'] > 1:
+                    iter_time_str = '{green}iter{reset}: {iter_time} s'.format(iter_time=str(iter_time), **ansi)
+                    data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
+                    iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
+                    data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
+                    log_msg = self.delimiter.join([log_msg, iter_time_str, data_time_str])
+                if env['verbose'] > 2 and torch.cuda.is_available():
                     memory_str = '{green}memory{reset}: {memory} MB'.format(memory=str(memory), **ansi)
                     memory_str = memory_str.ljust(self.meter_length + get_ansi_len(memory_str))
-                    log_msg += self.delimiter + memory_str
+                    log_msg = self.delimiter.join([log_msg, memory_str])
                 prints(log_msg, indent=indent + 10)
             end = time.time()
         self.synchronize_between_processes()
         total_time = time.time() - start_time
-        total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+        total_time = str(datetime.timedelta(seconds=int(total_time)))
 
-        total_time_str = '{green}total{reset}: {total_time}'.format(total_time=total_time_str, **ansi)
-        iter_time_str = '{green}iter{reset}: {iter_time} s'.format(iter_time=str(iter_time), **ansi)
-        data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
+        total_time_str = '{green}time{reset}: {time}'.format(time=total_time, **ansi)
         total_time_str = total_time_str.ljust(self.meter_length + get_ansi_len(total_time_str))
-        iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
-        data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
-
-        log_msg = self.delimiter.join([header, str(self), iter_time_str, data_time_str])
-        if torch.cuda.is_available():
+        log_msg = self.delimiter.join([header, str(self), total_time_str])
+        if env['verbose'] > 1:
+            iter_time_str = '{green}iter{reset}: {iter_time} s'.format(iter_time=str(iter_time), **ansi)
+            data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
+            iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
+            data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
+            log_msg = self.delimiter.join([log_msg, iter_time_str, data_time_str])
+        if env['verbose'] > 2 and torch.cuda.is_available():
             memory_str = '{green}memory{reset}: {memory} MB'.format(memory=str(memory), **ansi)
             memory_str = memory_str.ljust(self.meter_length + get_ansi_len(memory_str))
-            log_msg += self.delimiter + memory_str
-        log_msg += self.delimiter + total_time_str
+            log_msg = self.delimiter.join([log_msg, memory_str])
         prints(log_msg, indent=indent)
 
 

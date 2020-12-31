@@ -399,8 +399,9 @@ class Model:
                                                criterion_fn=criterion_fn,
                                                verbose=verbose, indent=indent, **kwargs)
                     if cur_acc >= best_acc:
-                        prints('best result update!', indent=indent)
-                        prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
+                        if verbose:
+                            prints('{green}best result update!{reset}'.format(**ansi), indent=indent)
+                            prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                         if save:
                             save_fn(file_path=file_path, folder_path=folder_path, suffix=suffix, verbose=verbose)
