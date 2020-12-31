@@ -73,16 +73,16 @@ class NeuronInspect(BackdoorDefense):
         exp_features = []
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            backdoor_saliency_maps = self.get_saliency_map(label, backdoor_loader)   # (N, H, W)
-            benign_saliency_maps = self.get_saliency_map(label, clean_loader)        # (N, H, W)
+            backdoor_saliency_maps = self.saliency_map(label, backdoor_loader)   # (N, H, W)
+            benign_saliency_maps = self.saliency_map(label, clean_loader)        # (N, H, W)
             exp_features.append(self.cal_explanation_feature(backdoor_saliency_maps, benign_saliency_maps))
         return exp_features
 
-    def get_saliency_map(self, target: int, loader: DataLoader) -> torch.Tensor:
+    def saliency_map(self, target: int, loader: DataLoader) -> torch.Tensor:
         saliency_maps = []
         for data in loader:
             _input, _label = self.model.get_data(data)
-            saliency_map = self.model.get_saliency_map(_input, [target] * len(_input))
+            saliency_map = self.model.saliency_map(_input, [target] * len(_input))
             saliency_maps.append(saliency_map.detach().cpu())
         return torch.cat(saliency_maps)
 

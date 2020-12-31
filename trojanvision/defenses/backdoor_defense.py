@@ -1,7 +1,9 @@
 # coding: utf-8
 
 from trojanzoo.defenses import Defense
-from trojanvision.attacks.backdoor import BadNet
+from trojanvision.datasets import ImageSet
+from trojanvision.models import ImageModel
+from trojanvision.attacks import BadNet
 
 import argparse
 
@@ -19,7 +21,9 @@ class BackdoorDefense(Defense):
     def __init__(self, original: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.original: bool = original
-        self.attack: BadNet  # for linting purpose
+        self.dataset: ImageSet = self.dataset
+        self.model: ImageModel = self.model
+        self.attack: BadNet = self.attack  # for linting purpose
         self.target_class = self.attack.target_class
 
     def detect(self, **kwargs):

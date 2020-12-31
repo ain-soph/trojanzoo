@@ -113,7 +113,7 @@ class MagNet(Model):
             return entropy_fn(_output, _label)
         return loss_fn
 
-    def accuracy(self, _output: torch.FloatTensor, _label: torch.Tensor, topk=(1, 5)):
+    def accuracy(self, _output: torch.Tensor, _label: torch.Tensor, topk=(1, 5)):
         res = []
         for k in topk:
             res.append(-self.criterion(_output, _label))
