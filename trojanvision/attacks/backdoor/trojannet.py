@@ -98,11 +98,11 @@ class TrojanNet(BadNet):
 
     def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.combined_model._validate(print_prefix='Validate Clean',
-                                                                 get_data_fn=None, **kwargs)
+                                                              get_data_fn=None, **kwargs)
         target_loss, target_acc = self.combined_model._validate(print_prefix='Validate Trigger Tgt',
-                                                                   get_data_fn=self.get_data, keep_org=False, **kwargs)
+                                                                get_data_fn=self.get_data, keep_org=False, **kwargs)
         _, orginal_acc = self.combined_model._validate(print_prefix='Validate Trigger Org',
-                                                          get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
+                                                       get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
         print(f'Validate Confidence : {self.validate_confidence():.3f}')
         # todo: Return value
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
