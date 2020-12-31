@@ -50,7 +50,7 @@ class MemoryDataset(VisionDataset):
         return len(self.targets)
 
 
-# https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/utils.py
+# https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/zippedfolder.py
 class ZipFolder(DatasetFolder):
     def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
                  is_valid_file: Optional[Callable[[str], bool]] = None) -> None:
