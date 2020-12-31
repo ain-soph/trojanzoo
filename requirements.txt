@@ -4,6 +4,7 @@ tqdm
 
 torch
 torchvision
+numpy
 scikit-learn
 scipy
 matplotlib
