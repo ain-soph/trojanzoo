@@ -1,10 +1,11 @@
 # coding: utf-8
 
-from matplotlib import pyplot as plt
-cmap = plt.get_cmap("tab20c")
-mat_color = {
-    'deep': [cmap(0), cmap(8), cmap(4), cmap(12), ],
-    'light': [cmap(1), cmap(9), cmap(5), cmap(13), ],
+from matplotlib.cm import get_cmap
+
+cmap_tab20c = get_cmap('tab20c')
+tab20c_color: dict[str, list[tuple[float]]] = {
+    'deep': [cmap_tab20c(0), cmap_tab20c(8), cmap_tab20c(4), cmap_tab20c(12), ],
+    'light': [cmap_tab20c(1), cmap_tab20c(9), cmap_tab20c(5), cmap_tab20c(13), ],
 }
 
 google_color = {
