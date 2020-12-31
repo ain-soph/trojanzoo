@@ -50,6 +50,7 @@ class MemoryDataset(VisionDataset):
         return len(self.targets)
 
 
+# https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/utils.py
 class ZipFolder(DatasetFolder):
     def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
                  is_valid_file: Optional[Callable[[str], bool]] = None) -> None:
@@ -114,7 +115,6 @@ class ZipFolder(DatasetFolder):
         return classes, class_to_idx
 
 
-# https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/utils.py
 class ZipLookup(object):
     def __init__(self, filename):
         self.root_zip_filename = filename
@@ -149,23 +149,3 @@ class ZipLookup(object):
 
     def keys(self):
         return self.root_zip_lookup.keys()
-
-
-def make_dataset(root_zip: ZipLookup, class_to_idx: dict[str, int],
-                 extensions: Optional[tuple[str, ...]] = None,
-                 is_valid_file: Optional[Callable[[str], bool]] = None,) -> list[tuple[str, int]]:
-    instances = []
-    both_none = extensions is None and is_valid_file is None
-    both_something = extensions is not None and is_valid_file is not None
-    if both_none or both_something:
-        raise ValueError("Both extensions and is_valid_file cannot be None or not None at the same time")
-    if extensions is not None:
-        def is_valid_file(x: str) -> bool:
-            return has_file_allowed_extension(x, cast(tuple[str, ...], extensions))
-    is_valid_file = cast(Callable[[str], bool], is_valid_file)
-    for path in sorted(root_zip.keys()):
-        if '/' in path:
-            target_class = path.split('/')[-2]
-            item = (path, class_to_idx[target_class])
-            instances.append(item)
-    return instances
