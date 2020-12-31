@@ -1,7 +1,7 @@
 # TrojanZoo
 ![logo](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/_static/img/trojanzoo-logo-readme.svg)
 
-![contact](https://img.shields.io/badge/contact-rbp5354%40psu.edu-yellow)
+[![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
 
 [![build](https://github.com/ain-soph/trojanzoo/workflows/build/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3Abuild)
 [![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
