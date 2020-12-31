@@ -122,14 +122,17 @@ class BadNet(Attack):
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, **kwargs)
 
-    def loss_fn(self, _input: torch.Tensor, _label: torch.Tensor, **kwargs) -> torch.Tensor:
-        loss_clean = self.model.loss(_input, _label, **kwargs)
+    def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None, _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+        if _output is None:
+            _output = self.model(_input)
+        loss_clean = self.model.criterion(_output, _label)
         poison_input = self.mark.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
         return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True,
+                 poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -148,7 +151,7 @@ class BadNet(Attack):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
+    def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                      get_data_fn=None, **kwargs)
         target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',
@@ -157,9 +160,9 @@ class BadNet(Attack):
                                               get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
         print(f'Validate Confidence : {self.validate_confidence():.3f}')
         print(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}')
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
             target_acc = 0.0
-        return clean_loss + target_loss, target_acc, clean_acc
+        return clean_loss + target_loss, target_acc
 
     def validate_confidence(self) -> float:
         confidence = AverageMeter('Confidence', ':.4e')

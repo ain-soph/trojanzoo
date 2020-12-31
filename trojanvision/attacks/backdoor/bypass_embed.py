@@ -28,13 +28,12 @@ class BypassEmbed(BadNet):
     def __init__(self, lambd: int = 10, discrim_lr: float = 0.001,
                  **kwargs):
         super().__init__(**kwargs)
-
         self.param_list['bypass_embed'] = ['lambd', 'discrim_lr']
-
         self.lambd = lambd
         self.discrim_lr = discrim_lr
 
-    def attack(self, epoch: int, lr_scheduler=None, save=False, **kwargs):
+    def attack(self, epoch: int, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+               save: bool = False, **kwargs):
         print('Sample Data')
         poison_loader, discrim_loader = self.sample_data()  # with poisoned images
         print('Joint Training')

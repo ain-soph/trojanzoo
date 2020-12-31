@@ -27,7 +27,6 @@ from collections import OrderedDict
 from collections.abc import Callable, Iterable    # TODO: callable (many places) (wait for python update)
 from typing import Generator, Iterator, Mapping, Set, Union, Optional
 
-InputType = Union[torch.Tensor, tuple]
 # redirect = Indent_Redirect(buffer=True, indent=0)
 
 
@@ -50,7 +49,7 @@ class _Model(nn.Module):
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
-    def forward(self, x: InputType) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # if x.shape is (channels, height, width)
         # (channels, height, width) ==> (batch_size: 1, channels, height, width)
         x = self.get_final_fm(x)
@@ -59,10 +58,10 @@ class _Model(nn.Module):
 
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
-    def get_fm(self, x: InputType) -> torch.Tensor:
+    def get_fm(self, x: torch.Tensor) -> torch.Tensor:
         return self.features(x)
 
-    def get_final_fm(self, x: InputType) -> torch.Tensor:
+    def get_final_fm(self, x: torch.Tensor) -> torch.Tensor:
         x = self.get_fm(x)
         x = self.pool(x)
         x = self.flatten(x)
@@ -174,7 +173,7 @@ class Model:
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input: InputType, randomized_smooth: bool = None,
+    def get_logits(self, _input: torch.Tensor, randomized_smooth: bool = None,
                    rs_sigma: float = None, rs_n: int = None, **kwargs) -> torch.Tensor:
         randomized_smooth = randomized_smooth if randomized_smooth is not None else self.randomized_smooth
         if randomized_smooth:
@@ -191,23 +190,24 @@ class Model:
         else:
             return self.model(_input, **kwargs)
 
-    def get_prob(self, _input: InputType, **kwargs) -> torch.Tensor:
+    def get_prob(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.softmax(self(_input, **kwargs))
 
-    def get_final_fm(self, _input: InputType, **kwargs) -> torch.Tensor:
+    def get_final_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         return self._model.get_final_fm(_input, **kwargs)
 
-    def get_target_prob(self, _input: InputType, target: Union[torch.Tensor, list[int]],
+    def get_target_prob(self, _input: torch.Tensor, target: Union[torch.Tensor, list[int]],
                         **kwargs) -> torch.Tensor:
         if isinstance(target, list):
             target = torch.tensor(target, device=_input.device)
         return self.get_prob(_input, **kwargs).gather(dim=1, index=target.unsqueeze(1)).flatten()
 
-    def get_class(self, _input: InputType, **kwargs) -> torch.Tensor:
+    def get_class(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         return self(_input, **kwargs).argmax(dim=-1)
 
-    def loss(self, _input: InputType, _label: torch.Tensor, **kwargs) -> torch.Tensor:
-        _output = self(_input, **kwargs)
+    def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None, _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+        if _output is None:
+            _output = self(_input, **kwargs)
         return self.criterion(_output, _label)
 
     # -------------------------------------------------------- #
@@ -329,14 +329,14 @@ class Model:
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
-               get_data_fn: Callable[..., tuple[InputType, torch.Tensor]] = None,
-               criterion_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
+               get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+               loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
                validate_func: Callable[..., tuple[float, ...]] = None, epoch_func: Callable[[], None] = None,
                save_fn: Callable = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                verbose: bool = True, indent: int = 0, **kwargs):
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        criterion_fn = criterion_fn if criterion_fn is not None else self.criterion
+        loss_fn = loss_fn if loss_fn is not None else self.loss
         validate_func = validate_func if validate_func is not None else self._validate
         save_fn = save_fn if save_fn is not None else self.save
 
@@ -345,7 +345,7 @@ class Model:
             amp = False
         if amp:
             scaler = torch.cuda.amp.GradScaler()
-        _, best_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, criterion_fn=criterion_fn,
+        _, best_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
                                     verbose=verbose, indent=indent, **kwargs)
 
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
@@ -374,7 +374,7 @@ class Model:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data_fn(data, mode='train')
                 _output = self(_input, amp=amp)
-                loss = criterion_fn(_output, _label)
+                loss = loss_fn(_input, _label, _output=_output)
                 if amp:
                     scaler.scale(loss).backward()
                     scaler.step(optimizer)
@@ -385,18 +385,17 @@ class Model:
                 optimizer.zero_grad()
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
-                logger.meters['loss'].update(loss, batch_size)
+                logger.meters['loss'].update(float(loss), batch_size)
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
-                empty_cache()
+                empty_cache()   # TODO: should it be outside of the dataloader loop?
             self.eval()
             self.activate_params([])
             if lr_scheduler:
                 lr_scheduler.step()
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn,
-                                               criterion_fn=criterion_fn,
+                    _, cur_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
                                                verbose=verbose, indent=indent, **kwargs)
                     if cur_acc >= best_acc:
                         if verbose:
@@ -411,14 +410,14 @@ class Model:
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
-                  get_data_fn: Callable[..., tuple[InputType, torch.Tensor]] = None,
-                  criterion_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                  get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                  loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
                   **kwargs) -> tuple[float, float]:
         self.eval()
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        criterion_fn = criterion_fn if criterion_fn is not None else self.criterion
+        loss_fn = loss_fn if loss_fn is not None else self.loss
         logger = MetricLogger()
         logger.meters['loss'] = SmoothedValue()
         logger.meters['top1'] = SmoothedValue()
@@ -435,7 +434,7 @@ class Model:
             for data in loader_epoch:
                 _input, _label = get_data_fn(data, mode='valid', **kwargs)
                 _output = self(_input)
-                loss = float(criterion_fn(_output, _label))
+                loss = float(loss_fn(_input, _label, _output=_output))
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
                 logger.meters['loss'].update(loss, batch_size)
@@ -445,7 +444,7 @@ class Model:
 
     # -------------------------------------------Utility--------------------------------------- #
 
-    def get_data(self, data: tuple[InputType, torch.Tensor], **kwargs):
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs):
         if self.dataset is not None:
             return self.dataset.get_data(data, **kwargs)
         else:
@@ -522,7 +521,7 @@ class Model:
 
     # -----------------------------------------Reload------------------------------------------ #
 
-    def __call__(self, _input: InputType, amp: bool = False, **kwargs) -> torch.Tensor:
+    def __call__(self, _input: torch.Tensor, amp: bool = False, **kwargs) -> torch.Tensor:
         if amp:
             with torch.cuda.amp.autocast():
                 return self.get_logits(_input, **kwargs)
@@ -591,14 +590,14 @@ class Model:
 
     # ----------------------------------------------------------------------------------------- #
 
-    def remove_misclassify(self, data: tuple[InputType, torch.Tensor], **kwargs):
+    def remove_misclassify(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs):
         with torch.no_grad():
             _input, _label = self.get_data(data, **kwargs)
             _classification = self.get_class(_input)
             repeat_idx = _classification.eq(_label)
         return _input[repeat_idx], _label[repeat_idx]
 
-    def generate_target(self, _input: InputType, idx: int = 1, same: bool = False) -> torch.Tensor:
+    def generate_target(self, _input: torch.Tensor, idx: int = 1, same: bool = False) -> torch.Tensor:
         with torch.no_grad():
             _output = self(_input)
         target = _output.argsort(dim=-1, descending=True)[:, idx]

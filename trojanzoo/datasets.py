@@ -15,7 +15,6 @@ import sys
 from typing import Any, Union
 
 
-InputType = Union[torch.Tensor, tuple]
 redirect = Indent_Redirect(buffer=True, indent=0)
 
 
@@ -114,7 +113,7 @@ class Dataset:
         pass
 
     @staticmethod
-    def get_data(data: tuple[InputType, torch.Tensor], **kwargs) -> tuple[InputType, torch.Tensor]:
+    def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         return data
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
