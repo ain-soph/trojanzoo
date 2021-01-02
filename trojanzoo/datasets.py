@@ -134,18 +134,20 @@ class Dataset:
             print(f'{self.folder_path=}')
             raise e
 
-    def get_dataset(self, mode: str, full: bool = True, classes: list[int] = None, **kwargs) -> torch.utils.data.Dataset:
-        if full and mode != 'test':
-            dataset = self.get_full_dataset(mode=mode, **kwargs)
-        elif mode == 'train':
-            fullset = self.get_full_dataset(mode='train', **kwargs)
-            dataset, _ = self.split_set(fullset, length=self.train_sample)
-        else:
-            fullset = self.get_full_dataset(mode='valid', **kwargs)
-            subset: dict[str, torch.utils.data.Subset] = {}
-            subset['test'], subset['valid'] = self.split_set(
-                fullset, percent=self.test_ratio)
-            dataset = subset[mode]
+    def get_dataset(self, mode: str = None, full: bool = True, dataset: torch.utils.data.Dataset = None,
+                    classes: list[int] = None, **kwargs) -> torch.utils.data.Dataset:
+        if dataset is None:
+            if full and mode != 'test':
+                dataset = self.get_full_dataset(mode=mode, **kwargs)
+            elif mode == 'train':
+                fullset = self.get_full_dataset(mode='train', **kwargs)
+                dataset, _ = self.split_set(fullset, length=self.train_sample)
+            else:
+                fullset = self.get_full_dataset(mode='valid', **kwargs)
+                subset: dict[str, torch.utils.data.Subset] = {}
+                subset['test'], subset['valid'] = self.split_set(
+                    fullset, percent=self.test_ratio)
+                dataset = subset[mode]
         if classes:
             dataset = self.get_class_set(dataset=dataset, classes=classes)
         return dataset
