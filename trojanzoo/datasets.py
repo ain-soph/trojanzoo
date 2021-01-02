@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from trojanzoo.configs import config, Config
+from trojanzoo.environ import env
 from trojanzoo.utils import get_name, to_tensor
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
@@ -164,9 +165,19 @@ class Dataset:
         idx = np.intersect1d(idx, indices)
         return torch.utils.data.Subset(dataset, idx)
 
-    def get_dataloader(self, mode: str, batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory: bool = True, **kwargs) -> torch.utils.data.dataloader:
-        pass
+    def get_dataloader(self, mode: str, dataset: torch.utils.data.Dataset = None, batch_size: int = None, shuffle: bool = None,
+                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
+        if batch_size is None:
+            batch_size = self.test_batch_size if mode == 'test' else self.batch_size
+        if shuffle is None:
+            shuffle = True if mode == 'train' else False
+        num_workers = num_workers if num_workers is not None else self.num_workers
+        if dataset is None:
+            dataset = self.get_dataset(mode, **kwargs)
+        if env['num_gpus'] == 0:
+            pin_memory = False
+        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
+                                           num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
     @staticmethod
     def split_set(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],

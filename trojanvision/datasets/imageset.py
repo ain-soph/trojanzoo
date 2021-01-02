@@ -2,7 +2,6 @@
 
 from trojanzoo.datasets import Dataset
 from trojanvision.environ import env
-from trojanzoo.utils import to_tensor
 
 import torch
 import torch.utils.data
