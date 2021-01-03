@@ -3,6 +3,7 @@
 from trojanzoo.configs import config, Config
 from trojanzoo.environ import env
 from trojanzoo.utils import get_name, to_tensor
+from trojanzoo.utils.data import dataset_to_list
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import torch
@@ -159,7 +160,7 @@ class Dataset:
             idx = np.array(dataset.indices)
             indices = idx[indices]
             dataset = dataset.dataset
-        _, self.targets = self.to_memory(dataset=dataset, label_only=True)
+        _, self.targets = dataset_to_list(dataset=dataset, label_only=True)
         idx_bool = np.isin(self.targets, classes)
         idx = np.arange(len(dataset))[idx_bool]
         idx = np.intersect1d(idx, indices)
@@ -203,25 +204,13 @@ class Dataset:
             if verbose:
                 print('Calculating Loss Weights')
             dataset = self.get_full_dataset('train', transform=None)
-            _, targets = self.to_memory(dataset, label_only=True)
+            _, targets = dataset_to_list(dataset, label_only=True)
             loss_weights = np.bincount(targets)     # TODO: linting problem
             assert len(loss_weights) == self.num_classes
             loss_weights: np.ndarray = loss_weights.sum() / loss_weights     # TODO: linting problem
             np.save(file_path, loss_weights)
             print('Loss Weights Saved at ', file_path)
             return loss_weights
-
-    @staticmethod
-    def to_memory(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[Any, list[int]]:
-        if label_only and 'targets' in dataset.__dict__.keys():
-            return None, dataset.targets
-        if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
-            return dataset.data, dataset.targets
-        data, targets = zip(*dataset)
-        if label_only:
-            data = None
-        targets = list(targets)
-        return data, targets
 
     def __str__(self) -> str:
         sys.stdout = redirect

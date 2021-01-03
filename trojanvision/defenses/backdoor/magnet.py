@@ -27,10 +27,10 @@ class MagNet(BackdoorDefense):
 
     def validate_func(self, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
-                                                        get_data_fn=self.get_data, org=True, **kwargs)
+                                                     get_data_fn=self.get_data, org=True, **kwargs)
         target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                                          get_data_fn=self.get_data, keep_org=False, **kwargs)
+                                                       get_data_fn=self.get_data, keep_org=False, **kwargs)
         _, orginal_acc = self.model._validate(print_prefix='Validate Trigger Org',
-                                                 get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
+                                              get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
         print(f'Validate Confidence : {self.attack.validate_confidence():.3f}')
         return clean_loss + target_loss, target_acc, clean_acc

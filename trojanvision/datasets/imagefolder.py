@@ -4,7 +4,7 @@ from .imageset import ImageSet
 from trojanvision.utils.data import MemoryDataset, ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
-from trojanzoo.utils.data import uncompress
+from trojanzoo.utils.data import uncompress, dataset_to_list
 
 from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
@@ -122,7 +122,7 @@ class ImageFolder(ImageSet):
             if not os.path.exists(npz_path):
                 print('{yellow}initialize npz{reset}: '.format(**ansi), npz_path)
                 dataset: datasets.ImageFolder = self.get_org_dataset(mode, transform=transform, data_format='folder')
-                data, targets = self.to_memory(dataset)
+                data, targets = dataset_to_list(dataset)
                 data = np.stack(data)
                 np.savez(npz_path, data=data, targets=targets)
                 with open(json_path, 'w') as f:

@@ -5,7 +5,7 @@ from .output import ansi
 from .tensor import to_list
 
 import torch
-from torch.utils.data import Dataset
+import torch.utils.data
 import os
 import tqdm
 import tarfile
@@ -50,7 +50,7 @@ def uncompress(file_path: str, target_path: str, verbose: bool = True):
         print()
 
 
-class TensorListDataset(Dataset):
+class TensorListDataset(torch.utils.data.Dataset):
     def __init__(self, data: torch.Tensor = None, targets: list[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
@@ -62,3 +62,23 @@ class TensorListDataset(Dataset):
 
     def __len__(self):
         return len(self.targets)
+
+
+def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[list, list[int]]:
+    if label_only and 'targets' in dataset.__dict__.keys():
+        return None, dataset.targets
+    if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
+        return dataset.data, dataset.targets
+    data, targets = zip(*dataset)
+    if label_only:
+        data = None
+    data = list(data)
+    targets = list(targets)
+    return data, targets
+
+
+def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int) -> tuple[list, list[int]]:
+    assert len(dataset) >= batch_size
+    idx = torch.randperm(len(dataset))[:batch_size]
+    subset = torch.utils.data.Subset(dataset, idx)
+    return dataset_to_list(subset)
