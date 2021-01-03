@@ -4,6 +4,7 @@ tqdm
 
 torch
 torchvision
+tensorboard
 numpy
 scikit-learn
 scipy

@@ -38,7 +38,7 @@ class BypassEmbed(BadNet):
         poison_loader, discrim_loader = self.sample_data()  # with poisoned images
         print('Joint Training')
         super().attack(epoch=10, lr_scheduler=lr_scheduler, **kwargs)
-        if lr_scheduler is not None:
+        if isinstance(lr_scheduler, optim.lr_scheduler._LRScheduler):
             lr_scheduler.step(0)
         self.joint_train(epoch=epoch, poison_loader=poison_loader, discrim_loader=discrim_loader,
                          save=save, lr_scheduler=lr_scheduler, **kwargs)

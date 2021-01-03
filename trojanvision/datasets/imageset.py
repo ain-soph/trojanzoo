@@ -29,7 +29,7 @@ class ImageSet(Dataset):
     def get_transform(**kwargs) -> transforms.ToTensor:
         return transforms.ToTensor()
 
-    def get_dataloader(self, mode: str, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
+    def get_dataloader(self, mode: str = None, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
             batch_size = self.test_batch_size if mode == 'test' else self.batch_size

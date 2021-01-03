@@ -3,7 +3,7 @@
 from trojanzoo.defenses import Defense
 from trojanvision.datasets import ImageSet
 from trojanvision.models import ImageModel
-from trojanvision.attacks import BadNet
+from trojanvision.attacks.backdoor import BadNet
 
 import argparse
 

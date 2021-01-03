@@ -149,7 +149,7 @@ class Dataset:
                 subset['test'], subset['valid'] = self.split_set(
                     fullset, percent=self.test_ratio)
                 dataset = subset[mode]
-        if classes:
+        if classes is not None:
             dataset = self.get_class_set(dataset=dataset, classes=classes)
         return dataset
 
@@ -165,15 +165,15 @@ class Dataset:
         idx = np.intersect1d(idx, indices)
         return torch.utils.data.Subset(dataset, idx)
 
-    def get_dataloader(self, mode: str, dataset: torch.utils.data.Dataset = None, batch_size: int = None, shuffle: bool = None,
+    def get_dataloader(self, mode: str = None, dataset: torch.utils.data.Dataset = None,
+                       batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
             batch_size = self.test_batch_size if mode == 'test' else self.batch_size
         if shuffle is None:
             shuffle = True if mode == 'train' else False
         num_workers = num_workers if num_workers is not None else self.num_workers
-        if dataset is None:
-            dataset = self.get_dataset(mode, **kwargs)
+        dataset = self.get_dataset(mode=mode, dataset=dataset, **kwargs)
         if env['num_gpus'] == 0:
             pin_memory = False
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,

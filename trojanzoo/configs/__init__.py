@@ -164,8 +164,8 @@ class Config:
                 prints('-' * 20, indent=indent + 10)
             prints('-' * 30, indent=indent)
 
-    def __str__(self):
-        return self.config_dict.__str__
+    def __str__(self) -> str:
+        return str(self.config_dict)
 
     def __repr__(self):
         return repr(self.config_dict)

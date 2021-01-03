@@ -17,11 +17,10 @@ import torch.utils.data
 import torch.cuda.amp
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import argparse
 import os
-import datetime
-import time
 from tqdm import tqdm
 from collections import OrderedDict
 from collections.abc import Callable, Iterable    # TODO: callable (many places) (wait for python update)
@@ -327,12 +326,14 @@ class Model:
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+               print_prefix: str = 'Epoch', start_epoch: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
                validate_func: Callable[..., tuple[float, ...]] = None, epoch_func: Callable[[], None] = None,
                save_fn: Callable = None, file_path: str = None, folder_path: str = None, suffix: str = None,
+               writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0, **kwargs):
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
@@ -346,10 +347,12 @@ class Model:
         if amp:
             scaler = torch.cuda.amp.GradScaler()
         _, best_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
+                                    writer=writer, tag=tag, _epoch=start_epoch,
                                     verbose=verbose, indent=indent, **kwargs)
 
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
         for _epoch in range(epoch):
+            _epoch += start_epoch + 1
             if epoch_func is not None:
                 self.activate_params([])
                 epoch_func()
@@ -360,8 +363,8 @@ class Model:
             logger.meters['top5'] = SmoothedValue()
             loader_epoch = loader_train
             if verbose:
-                header = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi)
+                header = '{blue_light}{0}: {1}{reset}'.format(
+                    print_prefix, output_iter(_epoch, epoch + start_epoch), **ansi)
                 header = header.ljust(30 + get_ansi_len(header))
                 if env['tqdm']:
                     header = '{upline}{clear_line}'.format(**ansi) + header
@@ -388,15 +391,20 @@ class Model:
                 logger.meters['loss'].update(float(loss), batch_size)
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
+                loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
+                if isinstance(writer, SummaryWriter) and isinstance(_epoch, int):
+                    writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
+                    writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
                 empty_cache()   # TODO: should it be outside of the dataloader loop?
             self.eval()
             self.activate_params([])
             if lr_scheduler:
                 lr_scheduler.step()
             if validate_interval != 0:
-                if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
+                if _epoch % validate_interval == 0 or _epoch == epoch:
                     _, cur_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                               verbose=verbose, indent=indent, **kwargs)
+                                               writer=writer, tag=tag,
+                                               verbose=verbose, indent=indent, _epoch=_epoch, **kwargs)
                     if cur_acc >= best_acc:
                         if verbose:
                             prints('{green}best result update!{reset}'.format(**ansi), indent=indent)
@@ -412,6 +420,7 @@ class Model:
                   loader: torch.utils.data.DataLoader = None,
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                   loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                  writer: SummaryWriter = None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
                   **kwargs) -> tuple[float, float]:
         self.eval()
         if loader is None:
@@ -440,7 +449,11 @@ class Model:
                 logger.meters['loss'].update(loss, batch_size)
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
-        return logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
+        loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
+        if isinstance(writer, SummaryWriter) and isinstance(_epoch, int):
+            writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
+            writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
+        return loss, acc
 
     # -------------------------------------------Utility--------------------------------------- #
 
