@@ -154,14 +154,15 @@ class Dataset:
             dataset = self.get_class_set(dataset=dataset, classes=classes)
         return dataset
 
-    def get_class_set(self, dataset: torch.utils.data.Dataset, classes: list[int]) -> torch.utils.data.Subset:
+    @staticmethod
+    def get_class_set(dataset: torch.utils.data.Dataset, classes: list[int]) -> torch.utils.data.Subset:
         indices = np.arange(len(dataset))
         if isinstance(dataset, torch.utils.data.Subset):
             idx = np.array(dataset.indices)
             indices = idx[indices]
             dataset = dataset.dataset
-        _, self.targets = dataset_to_list(dataset=dataset, label_only=True)
-        idx_bool = np.isin(self.targets, classes)
+        _, targets = dataset_to_list(dataset=dataset, label_only=True)
+        idx_bool = np.isin(targets, classes)
         idx = np.arange(len(dataset))[idx_bool]
         idx = np.intersect1d(idx, indices)
         return torch.utils.data.Subset(dataset, idx)

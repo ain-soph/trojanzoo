@@ -72,13 +72,18 @@ def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False)
     data, targets = zip(*dataset)
     if label_only:
         data = None
-    data = list(data)
+    else:
+        data = list(data)
     targets = list(targets)
     return data, targets
 
 
-def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int) -> tuple[list, list[int]]:
-    assert len(dataset) >= batch_size
-    idx = torch.randperm(len(dataset))[:batch_size]
+def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int = None,
+                 idx: list[int] = None) -> tuple[list, list[int]]:
+    if idx is None:
+        assert len(dataset) >= batch_size
+        idx = torch.randperm(len(dataset))[:batch_size]
+    else:
+        assert len(dataset) > max(idx)
     subset = torch.utils.data.Subset(dataset, idx)
     return dataset_to_list(subset)

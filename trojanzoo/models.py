@@ -331,7 +331,8 @@ class Model:
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
-               validate_func: Callable[..., tuple[float, ...]] = None, epoch_func: Callable[[], None] = None,
+               after_loss_fn: Callable[..., torch.Tensor] = None,
+               validate_func: Callable[..., tuple[float, ...]] = None, epoch_func: Callable[..., None] = None,
                save_fn: Callable = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0, **kwargs):
@@ -340,6 +341,10 @@ class Model:
         loss_fn = loss_fn if loss_fn is not None else self.loss
         validate_func = validate_func if validate_func is not None else self._validate
         save_fn = save_fn if save_fn is not None else self.save
+        if after_loss_fn is None and hasattr(self, 'after_loss_fn'):
+            after_loss_fn = self.after_loss_fn
+        if epoch_func is None and hasattr(self, 'epoch_func'):
+            epoch_func = self.epoch_func
 
         scaler: torch.cuda.amp.GradScaler = None
         if not env['num_gpus']:
@@ -351,11 +356,13 @@ class Model:
                                     verbose=verbose, indent=indent, **kwargs)
 
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
+        total_iter = epoch * len(loader_train)
         for _epoch in range(epoch):
-            _epoch += start_epoch + 1
-            if epoch_func is not None:
+            _epoch += + 1
+            if callable(epoch_func):
                 self.activate_params([])
-                epoch_func()
+                epoch_func(optimizer=optimizer, lr_scheduler=lr_scheduler,
+                           _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
                 self.activate_params(params)
             logger = MetricLogger()
             logger.meters['loss'] = SmoothedValue()
@@ -364,7 +371,7 @@ class Model:
             loader_epoch = loader_train
             if verbose:
                 header = '{blue_light}{0}: {1}{reset}'.format(
-                    print_prefix, output_iter(_epoch, epoch + start_epoch), **ansi)
+                    print_prefix, output_iter(_epoch, epoch), **ansi)
                 header = header.ljust(30 + get_ansi_len(header))
                 if env['tqdm']:
                     header = '{upline}{clear_line}'.format(**ansi) + header
@@ -373,7 +380,8 @@ class Model:
             self.train()
             self.activate_params(params)
             optimizer.zero_grad()
-            for data in loader_epoch:
+            for i, data in enumerate(loader_epoch):
+                _iter = _epoch * len(loader_train) + i
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data_fn(data, mode='train')
                 _output = self(_input, amp=amp)
@@ -384,6 +392,10 @@ class Model:
                     scaler.update()
                 else:
                     loss.backward()
+                    if callable(after_loss_fn):
+                        after_loss_fn(optimizer=optimizer,
+                                      _iter=_iter, total_iter=total_iter)
+                        # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                     optimizer.step()
                 optimizer.zero_grad()
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
@@ -391,20 +403,22 @@ class Model:
                 logger.meters['loss'].update(float(loss), batch_size)
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
-                loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-                if isinstance(writer, SummaryWriter) and isinstance(_epoch, int):
-                    writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
-                    writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
                 empty_cache()   # TODO: should it be outside of the dataloader loop?
             self.eval()
             self.activate_params([])
+            loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
+            if isinstance(writer, SummaryWriter) and isinstance(_epoch, int):
+                writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss},
+                                   global_step=_epoch + start_epoch)
+                writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc},
+                                   global_step=_epoch + start_epoch)
             if lr_scheduler:
                 lr_scheduler.step()
             if validate_interval != 0:
                 if _epoch % validate_interval == 0 or _epoch == epoch:
                     _, cur_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                               writer=writer, tag=tag,
-                                               verbose=verbose, indent=indent, _epoch=_epoch, **kwargs)
+                                               writer=writer, tag=tag, _epoch=_epoch + start_epoch,
+                                               verbose=verbose, indent=indent, **kwargs)
                     if cur_acc >= best_acc:
                         if verbose:
                             prints('{green}best result update!{reset}'.format(**ansi), indent=indent)
@@ -413,7 +427,7 @@ class Model:
                         if save:
                             save_fn(file_path=file_path, folder_path=folder_path, suffix=suffix, verbose=verbose)
                     if verbose:
-                        print('-' * 50)
+                        prints('-' * 50, indent=indent)
         self.zero_grad()
 
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
@@ -443,7 +457,7 @@ class Model:
             for data in loader_epoch:
                 _input, _label = get_data_fn(data, mode='valid', **kwargs)
                 _output = self(_input)
-                loss = float(loss_fn(_input, _label, _output=_output))
+                loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
                 logger.meters['loss'].update(loss, batch_size)

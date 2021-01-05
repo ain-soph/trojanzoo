@@ -105,7 +105,7 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
 
     optim_keys = model.define_optimizer.__code__.co_varnames
     train_keys = model._train.__code__.co_varnames
-    writer_keys = SummaryWriter.__init__.__code__.co_varnames
+    writer_keys = SummaryWriter.__init__.__code__.co_varnames   # log_dir, flush_secs, ...
     optim_args = {}
     train_args = {}
     writer_args = {}

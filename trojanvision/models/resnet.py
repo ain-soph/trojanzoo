@@ -115,10 +115,11 @@ class ResNet(ImageModel):
 
 class _ResNetcomp(_ResNet):
 
-    def __init__(self, layer: int = 18, **kwargs):
-        super().__init__(layer=layer, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         conv: nn.Conv2d = self.features.conv1
-        self.features.conv1 = nn.Conv2d(3, conv.out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.features.conv1 = nn.Conv2d(conv.in_channels, conv.out_channels,
+                                        kernel_size=3, stride=1, padding=1, bias=False)
 
 
 class ResNetcomp(ResNet):

@@ -120,7 +120,10 @@ class MetricLogger(object):
         loss_str: list[str] = []
         for name, meter in self.meters.items():
             _str = '{green}{}{reset}: {}'.format(name, str(meter), **ansi)
-            _str = _str.ljust(self.meter_length + get_ansi_len(_str))
+            max_length = self.meter_length + get_ansi_len(_str)
+            if len(_str) > max_length:
+                _str = '{green}{}{reset}: {}'.format(name, str(meter)[:5], **ansi)
+            _str = _str.ljust(max_length)
             loss_str.append(_str)
         return self.delimiter.join(loss_str)
 
