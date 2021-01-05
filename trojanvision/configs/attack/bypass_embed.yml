@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 lambd: 0.1
 discrim_lr: 0.001

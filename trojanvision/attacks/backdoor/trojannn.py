@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from .badnet import BadNet
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError

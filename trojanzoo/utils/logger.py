@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from .environ import env
 from .output import ansi, output_iter, prints, get_ansi_len, remove_ansi

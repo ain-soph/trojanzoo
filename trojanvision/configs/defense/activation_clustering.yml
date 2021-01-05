@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 mix_image_num:  50
 clean_image_ratio: 0.95

@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 pgd_alpha: 0.07843137255
 pgd_iteration: 20

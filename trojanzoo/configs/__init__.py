@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.param import Module, Param

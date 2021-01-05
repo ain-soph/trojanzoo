@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 import torch.nn.init as init
 import torch.nn as nn

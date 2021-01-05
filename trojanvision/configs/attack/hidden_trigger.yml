@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 preprocess_layer: flatten
 pgd_alpha: 0.004

@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from trojanvision.configs import Config, config
 from trojanvision.datasets import ImageSet

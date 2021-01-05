@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from .imagefolder import ImageFolder
 from trojanvision.environ import env

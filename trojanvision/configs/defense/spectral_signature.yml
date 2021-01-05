@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 poison_image_num: 50
 clean_image_num: 500

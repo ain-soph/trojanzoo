@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from .neural_cleanse import NeuralCleanse
 import torch

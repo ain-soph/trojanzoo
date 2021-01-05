@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 sample_ratio: 0.1
 noise_dim: 100

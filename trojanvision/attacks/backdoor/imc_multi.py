@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from .imc import IMC
 from trojanvision.marks import Watermark

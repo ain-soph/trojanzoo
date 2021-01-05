@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from trojanzoo.attacks import Attack
 from trojanzoo.utils.output import prints

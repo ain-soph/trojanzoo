@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 poison_generation_method: pgd
 tau:  0.9

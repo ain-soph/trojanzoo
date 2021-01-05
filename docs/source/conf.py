@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 #
 # TrojanZoo documentation build configuration file, created by
 # sphinx-quickstart on Fri Dec 23 13:31:47 2016.

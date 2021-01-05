@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from trojanvision.models.imagemodel import ImageModel, _ImageModel
 from trojanvision.marks import Watermark

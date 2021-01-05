@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 from .badnet import BadNet
 from trojanvision.utils.model import weight_init
