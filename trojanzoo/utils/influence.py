@@ -2,16 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.models import Model
-from .data import sample_batch
-from .tensor import to_tensor, to_numpy
 import torch
 import torch.autograd
 import torch.nn as nn
 import torch.utils.data
-import numpy as np
 # from scipy.optimize import fmin_ncg
-from scipy.optimize import minimize
-from typing import Callable
 
 
 class InfluenceFunction():
