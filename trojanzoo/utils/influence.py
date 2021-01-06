@@ -40,7 +40,7 @@ class InfluenceFunction():
         if not (z is z_test and z_label is z_test_label):
             v_test = self.calc_v(z_test, z_test_label)
         s_test = self.calc_s_test(v_test=v_test, hess_inv=hess_inv)
-        return (v * s_test).detach().cpu().tolist()
+        return (v * s_test).sum(dim=1).detach().cpu().tolist()
 
     def calc_v(self, z_test: torch.Tensor, z_test_label: torch.Tensor) -> torch.Tensor:
         def func(weight):
