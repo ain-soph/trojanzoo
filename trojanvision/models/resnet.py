@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from .imagemodel import _ImageModel, ImageModel
+import trojanvision.utils.resnet_s
 
 import torch
 import torch.nn as nn
@@ -133,3 +134,29 @@ class ResNetcomp(ResNet):
         _dict = super().get_official_weights(**kwargs)
         _dict[list(_dict.keys())[0]] = self._model.features[0].weight
         return _dict
+
+
+class _ResNetS(_ResNet):
+    def __init__(self, layer: int = 18, **kwargs):
+        super().__init__(layer=layer, **kwargs)
+        _model = trojanvision.utils.resnet_s.ResNetS(nclasses=self.num_classes)
+        self.features = nn.Sequential(OrderedDict([
+            ('conv1', _model.conv1),
+            ('bn1', _model.bn1),  # nn.BatchNorm2d(64)
+            ('relu', nn.ReLU(inplace=True)),
+            # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            ('layer1', _model.layer1),
+            ('layer2', _model.layer2),
+            ('layer3', _model.layer3),
+            ('layer4', _model.layer4)
+        ]))
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.classifier = nn.Sequential(OrderedDict([
+            ('fc', _model.linear)  # nn.Linear(512 * block.expansion, num_classes)
+        ]))
+
+
+class ResNetS(ResNet):
+    def __init__(self, name: str = 'resnets', layer: int = 18,
+                 model_class: type[_ResNetS] = _ResNetS, **kwargs):
+        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)

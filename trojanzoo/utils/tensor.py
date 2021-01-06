@@ -16,7 +16,7 @@ __all__ = ['cos_sim', 'tanh_func', 'atan_func',
            'to_pil_image', 'gray_img', 'gray_tensor',
            'byte2float', 'float2byte',
            'save_tensor_as_img', 'save_numpy_as_img', 'read_img_as_tensor',
-           'to_categorical', 'repeat_to_batch', 'add_noise']
+           'onehot_label', 'repeat_to_batch', 'add_noise']
 
 _map = {'int': torch.int, 'float': torch.float,
         'double': torch.double, 'long': torch.long}
@@ -162,7 +162,7 @@ def read_img_as_tensor(path: str) -> torch.Tensor:
 # --------------------------------------------------------------------- #
 
 
-def to_categorical(label: torch.Tensor, num_classes: int) -> torch.Tensor:
+def onehot_label(label: torch.Tensor, num_classes: int) -> torch.Tensor:
     result = torch.zeros(len(label), num_classes, dtype=label.dtype, device=label.device)
     index = label.unsqueeze(1)
     src = torch.ones_like(index)

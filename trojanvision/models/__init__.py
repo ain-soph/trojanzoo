@@ -4,7 +4,7 @@
 from .imagemodel import ImageModel
 from .net import Net
 from .alexnet import AlexNet
-from .resnet import ResNet, ResNetcomp
+from .resnet import ResNet, ResNetcomp, ResNetS
 from .vgg import VGG, VGGcomp
 from .densenet import DenseNet, DenseNetcomp
 from .bit import BiT
@@ -24,6 +24,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'alexnet': AlexNet,
     'resnet': ResNet,
     'resnetcomp': ResNetcomp,
+    'resnets': ResNetS,
     'vgg': VGG,
     'vggcomp': VGGcomp,
     'densenet': DenseNet,
