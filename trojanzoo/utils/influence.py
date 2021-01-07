@@ -24,16 +24,19 @@ class InfluenceFunction():
     def get_parameter(self) -> nn.Parameter:
         return self.module.weight
 
-    def up_loss(self, z: torch.Tensor, z_label: torch.Tensor,
-                z_test: torch.Tensor = None, z_test_label: torch.Tensor = None,
+    def up_loss(self, v: torch.Tensor = None, z: torch.Tensor = None, z_label: torch.Tensor = None,
+                v_test: torch.Tensor = None, z_test: torch.Tensor = None, z_test_label: torch.Tensor = None,
                 hess_inv: torch.Tensor = None) -> list[float]:
-        v = self.calc_v(z, z_label)
-        v_test = v
-        if z_test is None and z_test_label is None:
+        if v is None:
+            v = self.calc_v(z, z_label)
+        if (z_test is None and z_test_label is None):
             z_test = z
             z_test_label = z_label
-        if not (z is z_test and z_label is z_test_label):
-            v_test = self.calc_v(z_test, z_test_label)
+        if v_test is None:
+            if (z is None and z_label is None) or (z is z_test and z_label is z_test_label):
+                v_test = v
+            else:
+                v_test = self.calc_v(z_test, z_test_label)
         s_test = self.calc_s_test(v_test=v_test, hess_inv=hess_inv)
         return (v * s_test).sum(dim=1).detach().cpu().tolist()
 
