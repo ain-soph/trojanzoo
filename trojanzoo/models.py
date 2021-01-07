@@ -492,7 +492,7 @@ class Model:
                 if k > self.num_classes:
                     res.append(100.0)
                 else:
-                    correct_k = correct[:k].flatten().sum(dtype=torch.float32)
+                    correct_k = float(correct[:k].sum(dtype=torch.float32))
                     res.append(correct_k * (100.0 / batch_size))
             return res
 
