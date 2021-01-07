@@ -52,7 +52,10 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 ## Installation
 1. `pip install trojanzoo`  
 2. **(todo)** `conda install trojanzoo`  
-3. `docker pull local0state/trojanzoo`
+3. `docker pull local0state/trojanzoo`  
+4. **(for develop)**`python setup.py develop`  
+    > This could install the github repo package but avoid copying files to `site_packages`, so that during developing `TrojanZoo`, you don't need move `example` files to the root directory of repo.  
+
 ## Quick Start
 
 You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/master/examples) scripts to reproduce the evaluation results in our paper.  
