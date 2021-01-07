@@ -75,7 +75,7 @@ You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/ma
 3. Test backdoor defense (e.g., Neural Cleanse):  
     e.g. `Neural Cleanse` against `BadNet`
     ```python3
-    python backdoor_attack.py --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnetcomp18 --attack badnet --defense neural_cleanse --random_init --epoch 50 --lr 0.01
+    python backdoor_defense.py --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnetcomp18 --attack badnet --defense neural_cleanse --random_init --epoch 50 --lr 0.01
     ```
 ## IMC
 ```python3
