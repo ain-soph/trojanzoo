@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from trojanzoo.environ import env
 from trojanzoo.models import Model
 import torch
 import torch.autograd
+import torch.nn.functional as F
 import torch.nn as nn
 import torch.utils.data
 # from scipy.optimize import fmin_ncg
@@ -37,20 +39,21 @@ class InfluenceFunction():
                 v_test = v
             else:
                 v_test = self.calc_v(z_test, z_test_label)
-        s_test = self.calc_s_test(v_test=v_test, hess_inv=hess_inv)
+        s_test = v_test @ hess_inv
         return (v * s_test).sum(dim=1).detach().cpu().tolist()
 
-    def calc_v(self, z_test: torch.Tensor, z_test_label: torch.Tensor) -> torch.Tensor:
-        def func(weight):
+    def calc_v(self, z: torch.Tensor, z_test_label: torch.Tensor) -> torch.Tensor:
+        def func(weight: nn.Parameter) -> torch.Tensor:
             del self.module.weight
             self.module.weight = weight
-            _output = self.model(_input=z_test)
+            _output = self.model(_input=z)
             return self.criterion_vec(_output, z_test_label)
-        return torch.autograd.functional.jacobian(func, self.parameter).flatten(1)
+        jocobian: torch.Tensor = torch.autograd.functional.jacobian(func, self.parameter)
+        return jocobian.flatten(1)
 
-    def calc_s_test(self, v_test: torch.Tensor, hess_inv: torch.Tensor = None) -> torch.Tensor:
-        if isinstance(hess_inv, torch.Tensor):
-            return v_test @ hess_inv
+    # def calc_s_test(self, v_test: torch.Tensor, hess_inv: torch.Tensor = None) -> torch.Tensor:
+    #     if isinstance(hess_inv, torch.Tensor):
+    #         return v_test @ hess_inv
 
     def calc_H(self, loader: torch.utils.data.DataLoader = None, eps=1e-5) -> torch.Tensor:
         loader = loader if loader is not None else self.dataset.loader['train']
@@ -61,17 +64,38 @@ class InfluenceFunction():
                 break
             _input, _label = self.model.get_data(data)
             _feats = self.model.get_final_fm(_input)    # TODO
-            hess = self.compute_hessian(_feats, _label)
+            hess = self.compute_hess(_feats, _label).detach().cpu()  # (N, D, D)
             hess_list.append(hess)
-        hess = torch.cat(hess_list).mean(dim=0)
+        hess = torch.stack(hess_list).mean(dim=0).to(env['device'])  # (D, D)
         return (hess + hess.t()) / 2 + eps * torch.eye(len(hess), device=hess.device)   # numerical robust
 
-    def compute_hessian(self, _feats: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
-        def func(weight):
+    def compute_fim(self, _feats: torch.Tensor) -> torch.Tensor:
+        # _feats: (N, D)
+        def func(weight: nn.Parameter) -> torch.Tensor:
+            del self.module.weight
+            self.module.weight = weight
+            log_prob = F.log_softmax(self.module(_feats))  # (N, class_num)
+            return log_prob.mean(dim=0)  # (class_num)
+        jacobian: torch.Tensor = torch.autograd.functional.jacobian(func, self.parameter)
+        jacobian = jacobian.flatten(start_dim=2)  # (class_num, D)
+        prob = F.softmax(self.module(_feats)).unsqueeze(-1).unsqueeze(-1)  # (class_num, 1, 1)
+        hess = prob * jacobian.unsqueeze(-1) * jacobian.unsqueeze(-2)  # (class_num, D, D)
+        hess = hess.sum(dim=1)  # (D, D)
+        return hess
+
+    def compute_hess(self, _feats: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
+        # _feats: (N, D)
+        def func(weight: nn.Parameter) -> torch.Tensor:
             del self.module.weight
             self.module.weight = weight
             return self.model.criterion(self.module(_feats), _label)
-        return torch.autograd.functional.hessian(func, self.parameter).flatten(-2, -1).flatten(0, 1)
+        hess: torch.Tensor = torch.autograd.functional.hessian(func, self.parameter)
+        return hess.flatten(-2, -1).flatten(0, 1)
+        # def func(weight):
+        #     del self.module.weight
+        #     self.module.weight = weight
+        #     return self.model.criterion(self.module(_feats), _label)
+        # return torch.autograd.functional.hessian(func, self.parameter).flatten(-2, -1).flatten(0, 1)
 
     # def calc_Ht(self, t: torch.Tensor, _input: torch.Tensor = None, _label: torch.Tensor = None) -> torch.Tensor:
     #     if _input is None and _label is None:

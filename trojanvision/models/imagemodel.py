@@ -180,7 +180,7 @@ class ImageModel(Model):
     # Reference: https://keras.io/examples/vision/grad_cam/
     def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor, method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
         squeeze_flag = False
-        if len(_input.shape) == 3:
+        if _input.dim() == 3:
             _input = _input.unsqueeze(0)    # (N, C, H, W)
             squeeze_flag = True
         if isinstance(_label, int):

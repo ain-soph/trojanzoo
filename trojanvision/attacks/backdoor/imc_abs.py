@@ -90,7 +90,7 @@ class IMC_ABS(IMC):
             channel_num: int = cur_layer_output.shape[1]  # channels
 
             repeat_shape = [channel_num, self.n_samples]
-            repeat_shape.extend([1] * len(cur_layer_output.shape))
+            repeat_shape.extend([1] * cur_layer_output.dim())
             h_t: torch.Tensor = cur_layer_output.repeat(repeat_shape)
             # (C, n_samples, batch_size, C, H, W)
 
@@ -98,7 +98,7 @@ class IMC_ABS(IMC):
             if not self.same_range:
                 maxes = cur_layer_output.max()
                 vs *= float(maxes) / self.n_samples
-            vs_shape = [1] * len(cur_layer_output.shape)
+            vs_shape = [1] * cur_layer_output.dim()
             vs_shape[0] = -1
             vs = vs.view(vs_shape)
             # (n_samples, 1, 1, 1)

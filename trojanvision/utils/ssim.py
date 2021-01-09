@@ -79,9 +79,9 @@ class SSIM(nn.Module):
             raise TypeError(f'Input img1 type is not a torch.Tensor. Got {type(img1)}')
         if not torch.is_tensor(img2):
             raise TypeError(f'Input img2 type is not a torch.Tensor. Got {type(img2)}')
-        if not len(img1.shape) == 4:
+        if not img1.dim() == 4:
             raise ValueError(f'Invalid img1 shape, we expect BxCxHxW. Got: {img1.shape}')
-        if not len(img2.shape) == 4:
+        if not img2.dim() == 4:
             raise ValueError(f'Invalid img2 shape, we expect BxCxHxW. Got: {img2.shape}')
         if not img1.shape == img2.shape:
             raise ValueError(f'img1 and img2 shapes must be the same. Got: {img1.shape} and {img2.shape}')
@@ -267,9 +267,9 @@ def filter2D(input: torch.Tensor, kernel: torch.Tensor,
         raise TypeError(f'Input kernel type is not a torch.Tensor. Got {type(kernel)}')
     if not isinstance(border_type, str):
         raise TypeError(f'Input border_type is not string. Got {type(kernel)}')
-    if not len(input.shape) == 4:
+    if not input.dim() == 4:
         raise ValueError(f'Invalid input shape, we expect BxCxHxW. Got: {input.shape}')
-    if not len(kernel.shape) == 3:
+    if not kernel.dim() == 3:
         raise ValueError(f'Invalid kernel shape, we expect 1xHxW. Got: {kernel.shape}')
     borders_list: list[str] = ['constant', 'reflect', 'replicate', 'circular']
     if border_type not in borders_list:

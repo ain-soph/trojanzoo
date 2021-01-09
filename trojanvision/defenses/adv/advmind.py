@@ -8,6 +8,7 @@ from trojanzoo.utils import repeat_to_batch, to_list, cos_sim
 from trojanzoo.utils.output import prints
 
 import torch
+import torch.autograd
 import torch.nn.functional as F
 import argparse
 
@@ -128,7 +129,9 @@ class AdvMind(Defense):
 
         detect_true = True
         for i in range(self.attack.iteration - 1):
-            if attack_result[i] == target and attack_result[min(i + 1, self.attack.iteration - 2)] == target and attack_succ == self.attack.iteration:
+            if attack_result[i] == target and \
+                    attack_result[min(i + 1, self.attack.iteration - 2)] == target and \
+                    attack_succ == self.attack.iteration:
                 attack_succ = i
             if detect_result[i] == detect_result[min(i + 1, self.attack.iteration - 2)] and detect_succ == self.attack.iteration and detect_true:
                 if detect_result[i] == target:
@@ -170,7 +173,7 @@ class AdvMind(Defense):
 
         for _iter in range(self.attack.iteration):
             # Attacker generate sequence
-            if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:
+            if self.attack.grad_method == 'hess' and _iter % self.hess_p == 0:  # TODO
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.attack.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)
@@ -189,7 +192,7 @@ class AdvMind(Defense):
                 loss = loss_fn(center)
                 real_grad = torch.autograd.grad(loss, center)[0]
                 center.requires_grad = False
-                real_grad /= real_grad.abs().max()
+                real_grad /= float(real_grad.abs().max())
                 # real_grad.sign_()
                 noise_grad = torch.zeros_like(real_grad).flatten()
                 offset = (target + _iter) % self.model.num_classes
@@ -216,7 +219,7 @@ class AdvMind(Defense):
         return torch.stack(seq)
 
     def get_fake_seq(self, X: torch.Tensor) -> torch.Tensor:
-        if len(X.shape) == 4:
+        if X.dim() == 4:
             X = X[0]
         noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
         fake_seq = X + self.dist * self.attack.sigma * noise
@@ -228,7 +231,7 @@ class AdvMind(Defense):
             T = cluster.median(dim=0)[0].unsqueeze(0)   # (1, C, H, W)
             S = cluster - T  # (query_num, C, H, W)
             S = S.flatten(start_dim=1)  # (query_num, C*H*W)
-            S = 1.4826 * self.b * S.norm(p=2, dim=1).median()   # scalar
+            S = 1.4826 * self.b * torch.median(S.norm(p=2, dim=1))   # scalar
             for i in range(self.k):
                 T = T + S / 0.4132 * self.phi_log(
                     (cluster - T) / S).median(dim=0)[0].unsqueeze(0)   # (1, C, H, W)
@@ -236,15 +239,15 @@ class AdvMind(Defense):
         else:
             return cluster.mean(dim=0).unsqueeze(0)  # (1, C, H, W)
 
-    def get_bias(self, cluster) -> float:
+    def get_bias(self, cluster: torch.Tensor) -> float:
         T = cluster.median(dim=0)[0].unsqueeze(0)
         S = cluster - T
         S = S.flatten(start_dim=1)
-        S = 1.4826 * self.b * S.norm(p=2, dim=1).median()
+        S = 1.4826 * self.b * torch.median(S.norm(p=2, dim=1))
         # B = math.sqrt(2)*torch.erfinv(torch.as_tensor([1 / (1-self.fake_percent)-1])).item()
         B = 0.0
         for i in range(self.k):
-            result = self.phi_log((cluster - B) / S).median(dim=0)[0].norm(p=2).item()
+            result = float(self.phi_log((cluster - B) / S).median(dim=0)[0].norm(p=2))
             B = B + S / 0.4132 * (self.fake_percent + (1 - self.fake_percent) * result)
         return B
 
@@ -293,7 +296,7 @@ class AdvMind(Defense):
                     print('sim <vec, est>: ',
                           cos_sim(vec, -self.attack_grad_list[i]))
             # todo: Use atanh for normalization after pytorch 1.6
-            detect_prob = torch.nn.functional.softmax(torch.log((2 / (1 - dist_list)).sub(1)))
+            detect_prob = F.softmax(torch.log((2 / (1 - dist_list)).sub(1)))
             # detect_prob.div_(detect_prob.norm(p=2))
             pair_seq[i] = detect_prob.argmax().item()
         return pair_seq
@@ -308,27 +311,29 @@ class AdvMind(Defense):
     def phi(x: torch.Tensor, c: float = 1.35) -> torch.Tensor:
         return x.clamp(-c, c)
 
-    # Unused
+    # Unused TODO
     @staticmethod
-    def get_candidate_centers(seq, seq_centers, seq_bias):
+    def get_candidate_centers(seq: torch.Tensor, seq_centers: torch.Tensor, seq_bias: torch.Tensor):
         center_seq = []
         for i in range(len(seq)):
-            sub_seq = []
-            # idx = to_tensor([(x-seq_centers[i]).norm(p=2)
-            #                  for x in seq[i]]).argmin().item()
+            # for point in seq[i]:
+            #     sub_seq.append(point)
+
+            # sub_seq: list[torch.Tensor] = []
+            # idx = float(to_tensor([(x-seq_centers[i]).norm(p=2)
+            #                  for x in seq[i]]).argmin())
             # sub_seq.append(seq[i][idx])
-            for point in seq[i]:
-                sub_seq.append(point)
-            norms = [(x - seq_centers[i]).norm(p=2) for x in sub_seq]
-            if norms.shape != torch.Size([0]):
+            # norms = [(x - seq_centers[i]).norm(p=2) for x in sub_seq]
+            norms: torch.Tensor = (seq - seq_centers[i]).flatten(1).norm(p=2, dim=-1)
+            if norms.dim():
                 idx = norms.argmin()
-                center_seq.append([sub_seq[idx]])
+                center_seq.append([seq[idx]])
             else:
                 center_seq.append([])
         return center_seq
 
     # Unused
-    def get_center_class_pairs(self, candidate_centers, seq_centers, seq):
+    def get_center_class_pairs(self, candidate_centers: torch.Tensor, seq_centers: torch.Tensor, seq: torch.Tensor):
         pair_seq = []
         for i in range(len(candidate_centers) - 1):
             sub_pair_seq = []
@@ -340,20 +345,20 @@ class AdvMind(Defense):
                 #         if _result[j] < 0 and j > i:
                 #             sub_pair_seq.append((j-i) % self.num_classes)
                 # print(vec.view(-1)[:self.num_classes])
-                X = point.clone()
-                dist_list = torch.zeros(self.num_classes)
+                x = point.clone()
+                dist_list = torch.zeros(self.model.num_classes)
                 # print('bound: ', estimate_error + shift_dist)
-                for _class in range(self.num_classes):
-                    X.requires_grad_()
-                    loss = self.model.loss(X, _class)
-                    grad = torch.autograd.grad(loss, X)[0]
-                    X.requires_grad = False
+                for _class in range(self.model.num_classes):
+                    x.requires_grad_()
+                    loss = self.model.loss(x, _class)
+                    grad = torch.autograd.grad(loss, x)[0]
+                    x.requires_grad = False
                     grad.sign_()
                     if self.active:
                         noise_grad = torch.zeros_like(grad).flatten()
-                        offset = (_class + i) % self.num_classes
-                        for multiplier in range(int(len(noise_grad) / self.num_classes)):
-                            noise_grad[multiplier * self.num_classes + offset] = 1
+                        offset = (_class + i) % self.model.num_classes
+                        for multiplier in range(int(len(noise_grad) / self.model.num_classes)):
+                            noise_grad[multiplier * self.model.num_classes + offset] = 1
                         noise_grad = noise_grad.view(grad.shape)
                         grad = self.active_percent * noise_grad + \
                             (1 - self.active_percent) * grad

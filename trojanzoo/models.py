@@ -7,12 +7,14 @@ from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
 from trojanzoo.utils import get_name
-from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
+from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
+from trojanzoo.utils.tensor import onehot_label
 
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim
 import torch.utils.data
 import torch.cuda.amp
@@ -20,6 +22,7 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
+import math
 import argparse
 import os
 from tqdm import tqdm
@@ -244,10 +247,21 @@ class Model:
 
     # define loss function
     # Cross Entropy
-    def define_criterion(self, **kwargs) -> nn.CrossEntropyLoss:    # TODO: linting, or maybe nn.Module for generic?
+    # TODO: linting, or maybe nn.Module for generic?
+    def define_criterion(self, loss_type='ce', num_classes: int = None, **kwargs) -> nn.CrossEntropyLoss:
         if 'weight' not in kwargs.keys():
             kwargs['weight'] = self.loss_weights
-        return nn.CrossEntropyLoss(**kwargs)
+        criterion = nn.CrossEntropyLoss(**kwargs)
+        if loss_type == 'jsd':
+            num_classes = num_classes if num_classes is not None else self.num_classes
+
+            def jsd(_output: torch.Tensor, _label: torch.Tensor, **kwargs):
+                p = onehot_label(_label, num_classes)
+                q: torch.Tensor = self.softmax(_output)
+                log_q = F.log_softmax(_output)
+                sum_pq = p + q
+                loss = sum_pq * (sum_pq.log() - math.log(2))
+        return criterion
 
     # -----------------------------Load & Save Model------------------------------------------- #
 

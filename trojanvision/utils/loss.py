@@ -35,7 +35,7 @@ def total_variation(images: torch.Tensor, reduction: str = 'sum') -> torch.Tenso
         If `images` was 3-D, return a scalar float with the total variation for
         that image.
     """
-    if len(images.shape) == 3:
+    if images.dim() == 3:
         images = images.unsqueeze(0)
     # Calculate the difference of neighboring pixel-values.
     # The images are shifted one pixel along the height and width by slicing.

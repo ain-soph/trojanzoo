@@ -58,25 +58,25 @@ def weight_init(m: nn.Module):
         init.normal_(m.bias.data)
     elif isinstance(m, nn.LSTM):
         for param in m.parameters():
-            if len(param.shape) >= 2:
+            if param.dim() >= 2:
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)
     elif isinstance(m, nn.LSTMCell):
         for param in m.parameters():
-            if len(param.shape) >= 2:
+            if param.dim() >= 2:
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)
     elif isinstance(m, nn.GRU):
         for param in m.parameters():
-            if len(param.shape) >= 2:
+            if param.dim() >= 2:
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)
     elif isinstance(m, nn.GRUCell):
         for param in m.parameters():
-            if len(param.shape) >= 2:
+            if param.dim() >= 2:
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)

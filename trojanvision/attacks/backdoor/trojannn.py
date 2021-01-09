@@ -86,7 +86,7 @@ class TrojanNN(BadNet):
             for i, data in enumerate(loader):
                 _input, _label = self.model.get_data(data)
                 fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
-                if len(fm.shape) > 2:
+                if fm.dim() > 2:
                     fm = fm.flatten(start_dim=2).mean(dim=2)
                 fm = fm.mean(dim=0)
                 result.append(fm.detach())

@@ -17,7 +17,7 @@ def apply_cmap(heatmap: torch.Tensor, cmap: Union[Colormap, torch.Tensor] = jet)
         return heatmap
     heatmap = heatmap.detach().cpu()
     squeeze_flag = False
-    if len(heatmap.shape) == 2:
+    if heatmap.dim() == 2:
         heatmap = heatmap.unsqueeze(0)  # (N, H, W)
         squeeze_flag = True
     if isinstance(cmap, Colormap):      # Note that C==4 for most cmaps
@@ -35,7 +35,7 @@ def superimpose(foreground: torch.Tensor, background: torch.Tensor, alpha: float
     foreground = foreground.to(device=background.device)
     assert foreground.shape[-2:] == background.shape[-2:]
     squeeze_flag = False
-    if len(foreground.shape) == 3 and len(background.shape) == 3:
+    if foreground.dim() == 3 and background.dim() == 3:
         squeeze_flag = True
     alpha_flag = True
     if foreground.shape == 3:

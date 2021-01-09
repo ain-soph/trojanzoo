@@ -111,19 +111,19 @@ def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_chan
 
 def float2byte(img: torch.Tensor) -> torch.Tensor:
     img = torch.as_tensor(img)
-    if len(img.shape) == 4:
+    if img.dim() == 4:
         assert img.shape[0] == 1
         img = img[0]
     if img.shape[0] == 1:
         img = img[0]
-    elif len(img.shape) == 3:
+    elif img.dim() == 3:
         img = img.transpose(0, 1).transpose(1, 2).contiguous()
     # img = (((img - img.min()) / (img.max() - img.min())) * 255).astype(np.uint8).squeeze()
     return img.mul(255).byte()
 
 # def byte2float(img) -> torch.Tensor:
 #     img = to_tensor(img).float()
-#     if len(img.shape) == 2:
+#     if img.dim() == 2:
 #         img.unsqueeze_(dim=0)
 #     else:
 #         img = img.transpose(1, 2).transpose(0, 1).contiguous()
@@ -132,10 +132,10 @@ def float2byte(img: torch.Tensor) -> torch.Tensor:
 
 
 def tensor_to_img(_tensor: torch.Tensor) -> Image.Image:
-    if len(_tensor.shape) == 4:
+    if _tensor.dim() == 4:
         assert _tensor.shape[0] == 1
         _tensor = _tensor[0]
-    if len(_tensor.shape) == 3 and _tensor.shape[0] == 1:
+    if _tensor.dim() == 3 and _tensor.shape[0] == 1:
         _tensor = _tensor[0]
     if _tensor.dtype in [torch.float, torch.double]:
         _tensor = float2byte(_tensor)
@@ -172,7 +172,7 @@ def onehot_label(label: torch.Tensor, num_classes: int) -> torch.Tensor:
 def repeat_to_batch(x: torch.Tensor, batch_size: int = 1) -> torch.Tensor:
     try:
         size = [batch_size]
-        size.extend([1] * len(x.shape))
+        size.extend([1] * x.dim())
         x = x.repeat(list(size))
     except Exception as e:
         print('tensor shape: ', x.shape)
