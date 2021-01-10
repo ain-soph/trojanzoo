@@ -367,7 +367,7 @@ class Model:
         if amp:
             scaler = torch.cuda.amp.GradScaler()
         _, best_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                    writer=writer, tag=tag, _epoch=start_epoch,
+                                    writer=None, tag=tag, _epoch=start_epoch,
                                     verbose=verbose, indent=indent, **kwargs)
 
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
