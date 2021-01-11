@@ -1,11 +1,6 @@
 # Used for python interactive window
 
-import trojanvision.environ
-import trojanvision.datasets
-import trojanvision.models
-import trojanvision.trainer
-import trojanvision.marks
-import trojanvision.attacks
+import trojanvision
 
 
 env = trojanvision.environ.create(verbose=1, color=True, tqdm=True)
