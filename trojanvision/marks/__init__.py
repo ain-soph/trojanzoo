@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -27,7 +26,7 @@ def add_argument(parser: argparse.ArgumentParser):
     return Watermark.add_argument(group)
 
 
-def create(data_shape=None, dataset_name: str = None, dataset: ImageSet = None,
+def create(mark_path: str = None, data_shape=None, dataset_name: str = None, dataset: ImageSet = None,
            config: Config = config, **kwargs):
     if data_shape is None:
         assert isinstance(dataset, ImageSet)
@@ -36,6 +35,7 @@ def create(data_shape=None, dataset_name: str = None, dataset: ImageSet = None,
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name
     result = config.get_config(dataset_name=dataset_name)['mark']._update(kwargs)
+    result.update(mark_path=mark_path)
     return Watermark(data_shape=data_shape, **result)
 
 
@@ -66,9 +66,9 @@ class Watermark:
                            help='Distributed Mark.')
         return group
 
-    def __init__(self, data_shape: list[int], edge_color: Union[str, torch.Tensor] = 'auto',
-                 mark_path: str = 'trojanzoo/data/mark/square_white.png', mark_alpha: float = 0.0,
-                 mark_height: int = None, mark_width: int = None,
+    def __init__(self, mark_path: str = 'trojanzoo/data/mark/square_white.png',
+                 data_shape: list[int] = None, edge_color: Union[str, torch.Tensor] = 'auto',
+                 mark_alpha: float = 0.0, mark_height: int = None, mark_width: int = None,
                  height_offset: int = 0, width_offset: int = 0,
                  random_pos=False, random_init=False, mark_distributed=False,
                  add_mark_fn=None, **kwargs):

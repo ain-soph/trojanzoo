@@ -79,13 +79,13 @@ You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/ma
     ```
 ## IMC
 ```python3
-python backdoor_attack.py --verbose --pretrain --validate_interval 1 --amp --dataset cifar10 --model resnetcomp18 --attack imc --random_init --epoch 50 --lr 0.01 --save
+python backdoor_attack.py --verbose 1 --pretrain --validate_interval 1 --amp --dataset cifar10 --model resnetcomp18 --attack imc --random_init --epoch 50 --lr 0.01 --save
 ```
 
 ## AdvMind
 (with `attack adaptive` and `model adaptive`)
 ```python3
-python adv_defense.py --verbose --pretrain --validate_interval 1 --dataset cifar10 --model resnetcomp18 --attack pgd --defense advmind --attack_adapt --defense_adapt
+python adv_defense.py --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnetcomp18 --attack pgd --defense advmind --attack_adapt --defense_adapt
 ```
 ## Detailed Usage
 ### Configuration file structure
@@ -113,7 +113,7 @@ Modify them in corresponding config files and command-line arguments.
 
 
 ### Output Verbose Information:
-1. CMD modules: `--verbose`
+1. CMD modules: `--verbose 1`
 2. **Colorful output**: `--color`
 3. **tqdm progress bar**: `--tqdm`
 4. Check command-line argument usage: `--help`
