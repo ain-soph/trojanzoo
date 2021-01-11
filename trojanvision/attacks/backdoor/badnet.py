@@ -105,7 +105,7 @@ class BadNet(Attack):
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = os.path.join(self.folder_path + filename)
+        file_path = os.path.join(self.folder_path, filename)
         self.mark.save_npz(file_path + '.npz')
         self.mark.save_img(file_path + '.png')
         self.model.save(file_path + '.pth')
