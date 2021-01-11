@@ -65,7 +65,7 @@ class FinePruning(BackdoorDefense):
         self.prune(**kwargs)
 
     def prune(self, **kwargs):
-        length = self.conv_module.out_channels
+        length = int(self.conv_module.out_channels)
         mask = self.conv_module.weight_mask
         self.prune_step(mask, prune_num=max(self.prune_num - 10, 0))
         self.attack.validate_func()
@@ -73,7 +73,7 @@ class FinePruning(BackdoorDefense):
         for i in range(min(10, length)):
             print('Iter: ', output_iter(i + 1, 10))
             self.prune_step(mask, prune_num=1)
-            _, clean_acc = self.attack.validate_func()
+            clean_acc, _ = self.attack.validate_func()
             if self.attack.clean_acc - clean_acc > 20:
                 break
         file_path = self.folder_path + self.get_filename() + '.pth'
