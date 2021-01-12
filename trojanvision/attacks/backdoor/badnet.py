@@ -66,7 +66,7 @@ class BadNet(Attack):
     def attack(self, epoch: int, save=False, **kwargs):
         if self.train_mode == 'batch':
             self.model._train(epoch, save=save,
-                              validate_func=self.validate_func, get_data_fn=self.get_data,
+                              validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
             clean_dataset = self.dataset.loader['train'].dataset
@@ -79,11 +79,11 @@ class BadNet(Attack):
             dataset = torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
             loader = self.dataset.get_dataloader('train', dataset=dataset)
             self.model._train(epoch, save=save,
-                              validate_func=self.validate_func, loader_train=loader,
+                              validate_fn=self.validate_fn, loader_train=loader,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'loss':
             self.model._train(epoch, save=save,
-                              validate_func=self.validate_func, loss_fn=self.loss_fn,
+                              validate_fn=self.validate_fn, loss_fn=self.loss_fn,
                               save_fn=self.save, **kwargs)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
@@ -153,7 +153,7 @@ class BadNet(Attack):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self,
+    def validate_fn(self,
                       get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                       loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
                       main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:

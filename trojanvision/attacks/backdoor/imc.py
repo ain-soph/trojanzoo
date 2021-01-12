@@ -43,9 +43,9 @@ class IMC(TrojanNN):
         self.inner_lr: float = inner_lr
 
     def attack(self, epoch: int, **kwargs):
-        super().attack(epoch, epoch_func=self.epoch_func, **kwargs)
+        super().attack(epoch, epoch_fn=self.epoch_fn, **kwargs)
 
-    def epoch_func(self, **kwargs):
+    def epoch_fn(self, **kwargs):
         if self.model.sgm and 'sgm_remove' not in self.model.__dict__.keys():
             register_hook(self.model, self.model.sgm_gamma)
         self.optimize_mark()

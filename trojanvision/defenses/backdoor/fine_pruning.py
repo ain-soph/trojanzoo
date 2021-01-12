@@ -67,17 +67,17 @@ class FinePruning(BackdoorDefense):
         length = int(self.conv_module.out_channels)
         mask = self.conv_module.weight_mask
         self.prune_step(mask, prune_num=max(self.prune_num - 10, 0))
-        self.attack.validate_func()
+        self.attack.validate_fn()
 
         for i in range(min(10, length)):
             print('Iter: ', output_iter(i + 1, 10))
             self.prune_step(mask, prune_num=1)
-            clean_acc, _ = self.attack.validate_func()
+            clean_acc, _ = self.attack.validate_fn()
             if self.attack.clean_acc - clean_acc > 20:
                 break
         file_path = self.folder_path + self.get_filename() + '.pth'
-        self.model._train(validate_func=self.attack.validate_func, file_path=file_path, **kwargs)
-        self.attack.validate_func()
+        self.model._train(validate_fn=self.attack.validate_fn, file_path=file_path, **kwargs)
+        self.attack.validate_fn()
 
     def prune_step(self, mask: torch.Tensor, prune_num: int = 1):
         with torch.no_grad():

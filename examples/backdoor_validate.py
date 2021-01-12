@@ -31,4 +31,4 @@ if __name__ == '__main__':
     if env['verbose']:
         summary(env=env, dataset=dataset, model=model, mark=mark, attack=attack)
     attack.load()
-    attack.validate_func()
+    attack.validate_fn()

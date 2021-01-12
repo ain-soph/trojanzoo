@@ -82,7 +82,7 @@ class HiddenTrigger(BadNet):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                      get_data_fn=None, **kwargs)
         target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',

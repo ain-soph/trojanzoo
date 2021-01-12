@@ -56,25 +56,25 @@ class IMC_AdvTrain(IMC):
 
     def attack(self, epoch: int, save=False, **kwargs):
         self.adv_train(epoch, save=save,
-                       validate_func=self.validate_func, get_data_fn=self.get_data,
-                       epoch_func=self.epoch_func, save_fn=self.save, **kwargs)
+                       validate_fn=self.validate_fn, get_data_fn=self.get_data,
+                       epoch_fn=self.epoch_fn, save_fn=self.save, **kwargs)
 
     def adv_train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
-                  validate_interval=10, save=False, verbose=True, indent=0, epoch_func: Callable = None,
+                  validate_interval=10, save=False, verbose=True, indent=0, epoch_fn: Callable = None,
                   **kwargs):
         loader_train = self.dataset.loader['train']
         file_path = self.folder_path + self.get_filename() + '.pth'
 
-        _, best_acc = self.validate_func(verbose=verbose, indent=indent, **kwargs)
+        _, best_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
 
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
         params = [param_group['params'] for param_group in optimizer.param_groups]
         for _epoch in range(epoch):
-            if epoch_func is not None:
+            if callable(epoch_fn):
                 self.model.activate_params([])
-                epoch_func()
+                epoch_fn()
                 self.model.activate_params(params)
             losses.reset()
             top1.reset()
@@ -137,7 +137,7 @@ class IMC_AdvTrain(IMC):
 
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
-                    _, cur_acc = self.validate_func(verbose=verbose, indent=indent, **kwargs)
+                    _, cur_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
                         prints('best result update!', indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)

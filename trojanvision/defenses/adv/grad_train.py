@@ -22,7 +22,7 @@ class Grad_Train(Defense):
         self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
 
     def detect(self, **kwargs):
-        self.model._train(loss_fn=self.loss_fn, validate_func=self.validate_func, verbose=True, **kwargs)
+        self.model._train(loss_fn=self.loss_fn, validate_fn=self.validate_fn, verbose=True, **kwargs)
 
     def loss_fn(self, _input, _label, **kwargs):
         new_input = _input.repeat(4, 1, 1, 1)
@@ -37,7 +37,7 @@ class Grad_Train(Defense):
         new_loss = loss + self.grad_lambda * grad.flatten(start_dim=1).norm(p=1, dim=1).mean()
         return new_loss
 
-    def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                         get_data_fn=None, **kwargs)
         adv_loss, adv_acc = self.model._validate(print_prefix='Validate Adv',

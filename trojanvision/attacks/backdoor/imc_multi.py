@@ -27,7 +27,7 @@ class IMC_Multi(IMC):
 
     def attack(self, epoch: int, save=False, **kwargs):
         self.model._train(epoch, save=save,
-                          validate_func=self.validate_func_multi, get_data_fn=self.get_train_data,
+                          validate_fn=self.validate_func_multi, get_data_fn=self.get_train_data,
                           save_fn=self.save, **kwargs)
 
     # ---------------------- I/O ----------------------------- #

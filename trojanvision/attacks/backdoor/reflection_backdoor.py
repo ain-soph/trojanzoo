@@ -58,7 +58,7 @@ class ReflectionBackdoor(BadNet):
                 print(f'    adv image idx : {i}')
                 self.get_mark(adv_images[i])
                 super().attack(self.inner_epoch, indent=8, **kwargs)
-                _, target_acc = super().validate_func(verbose=False)
+                _, target_acc = super().validate_fn(verbose=False)
                 W[pick_img_ind[i]] = target_acc
                 self.model.load()
             # update W

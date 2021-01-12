@@ -349,40 +349,43 @@ class Model:
                print_prefix: str = 'Epoch', start_epoch: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
+               epoch_fn: Callable[..., None] = None,
                get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
-               after_loss_fn: Callable[..., torch.Tensor] = None,
-               validate_func: Callable[..., tuple[float, ...]] = None, epoch_func: Callable[..., None] = None,
-               save_fn: Callable = None, file_path: str = None, folder_path: str = None, suffix: str = None,
+               after_loss_fn: Callable[..., None] = None,
+               validate_fn: Callable[..., tuple[float, ...]] = None,
+               save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0, **kwargs):
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
-        get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        loss_fn = loss_fn if loss_fn is not None else self.loss
-        validate_func = validate_func if validate_func is not None else self._validate
-        save_fn = save_fn if save_fn is not None else self.save
-        if after_loss_fn is None and hasattr(self, 'after_loss_fn'):
+        get_data_fn = get_data_fn if callable(get_data_fn) else self.get_data
+        loss_fn = loss_fn if callable(loss_fn) else self.loss
+        validate_fn = validate_fn if callable(validate_fn) else self._validate
+        save_fn = save_fn if callable(save_fn) else self.save
+        # if iter_fn is None and hasattr(self, 'iter_fn'):
+        #     iter_fn = self.iter_fn
+        if not callable(epoch_fn) and hasattr(self, 'epoch_fn'):
+            epoch_fn = self.epoch_fn
+        if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = self.after_loss_fn
-        if epoch_func is None and hasattr(self, 'epoch_func'):
-            epoch_func = self.epoch_func
 
         scaler: torch.cuda.amp.GradScaler = None
         if not env['num_gpus']:
             amp = False
         if amp:
             scaler = torch.cuda.amp.GradScaler()
-        _, best_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                    writer=None, tag=tag, _epoch=start_epoch,
-                                    verbose=verbose, indent=indent, **kwargs)
+        _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
+                                  writer=None, tag=tag, _epoch=start_epoch,
+                                  verbose=verbose, indent=indent, **kwargs)
 
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
         total_iter = epoch * len(loader_train)
         for _epoch in range(epoch):
             _epoch += + 1
-            if callable(epoch_func):
+            if callable(epoch_fn):
                 self.activate_params([])
-                epoch_func(optimizer=optimizer, lr_scheduler=lr_scheduler,
-                           _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
+                epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
+                         _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
                 self.activate_params(params)
             logger = MetricLogger()
             logger.meters['loss'] = SmoothedValue()
@@ -413,7 +416,8 @@ class Model:
                 else:
                     loss.backward()
                     if callable(after_loss_fn):
-                        after_loss_fn(optimizer=optimizer,
+                        after_loss_fn(_input=_input, _label=_label, _output=_output,
+                                      loss=loss, optimizer=optimizer,
                                       _iter=_iter, total_iter=total_iter)
                         # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                     optimizer.step()
@@ -436,9 +440,9 @@ class Model:
                 lr_scheduler.step()
             if validate_interval != 0:
                 if _epoch % validate_interval == 0 or _epoch == epoch:
-                    _, cur_acc = validate_func(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                               writer=writer, tag=tag, _epoch=_epoch + start_epoch,
-                                               verbose=verbose, indent=indent, **kwargs)
+                    _, cur_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
+                                             writer=writer, tag=tag, _epoch=_epoch + start_epoch,
+                                             verbose=verbose, indent=indent, **kwargs)
                     if cur_acc >= best_acc:
                         if verbose:
                             prints('{green}best result update!{reset}'.format(**ansi), indent=indent)

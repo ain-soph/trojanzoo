@@ -15,8 +15,8 @@ class IMC_Latent(LatentBackdoor):
         print('Sample Data')
         self.data = self.sample_data()
         print('Retrain')
-        return super(LatentBackdoor, self).attack(epoch_func=self.epoch_func, **kwargs)
+        return super(LatentBackdoor, self).attack(epoch_fn=self.epoch_fn, **kwargs)
 
-    def epoch_func(self, **kwargs):
+    def epoch_fn(self, **kwargs):
         self.avg_target_feats = self.get_avg_target_feats(self.data)
         self.preprocess_mark(data=self.data)

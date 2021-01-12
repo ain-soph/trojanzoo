@@ -29,10 +29,10 @@ class ImageTransform(BackdoorDefense):
     def detect(self, **kwargs):
         super().detect(**kwargs)
         if self.transform_mode == 'recompress':
-            self.validate_func()
+            self.validate_fn()
         elif self.transform_mode == 'randomized_smooth':
             self.model.randomized_smooth = True
-            self.attack.validate_func()
+            self.attack.validate_fn()
             self.model.randomized_smooth = False
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
@@ -49,7 +49,7 @@ class ImageTransform(BackdoorDefense):
             _input_list.append(to_tensor(image))
         return torch.stack(_input_list), _label
 
-    def validate_func(self, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                         get_data_fn=self.get_data, org=True, **kwargs)
         target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',

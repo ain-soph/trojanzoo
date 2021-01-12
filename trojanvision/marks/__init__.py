@@ -117,7 +117,7 @@ class Watermark:
     # add mark to the Image with mask.
 
     def add_mark(self, _input: torch.Tensor, random_pos=None, alpha: float = None, **kwargs) -> torch.Tensor:
-        if self.add_mark_fn is not None:
+        if callable(self.add_mark_fn):
             return self.add_mark_fn(_input, random_pos=random_pos, alpha=alpha, **kwargs)
         if random_pos is None:
             random_pos = self.random_pos

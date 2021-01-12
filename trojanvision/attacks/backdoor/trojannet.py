@@ -84,7 +84,7 @@ class TrojanNet(BadNet):
         self.mlp_model._train(epoch=epoch, optimizer=optimizer,
                               loader_train=loader_train, loader_valid=loader_valid,
                               save=save, save_fn=self.save)
-        self.validate_func()
+        self.validate_fn()
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
@@ -96,7 +96,7 @@ class TrojanNet(BadNet):
         file_path = self.folder_path + filename
         self.mlp_model.load(file_path + '.pth', verbose=True)
 
-    def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.combined_model._validate(print_prefix='Validate Clean',
                                                               get_data_fn=None, **kwargs)
         target_loss, target_acc = self.combined_model._validate(print_prefix='Validate Trigger Tgt',

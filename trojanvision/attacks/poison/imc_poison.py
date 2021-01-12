@@ -97,11 +97,11 @@ class IMC_Poison(PoisonBasic):
                 easy += 1
                 continue
             normal += 1
-            target_conf, target_acc, clean_acc = self.validate_func()
+            target_conf, target_acc, clean_acc = self.validate_fn()
             noise = torch.zeros_like(_input)
             poison_input = self.craft_example(_input=_input, _label=target_label, epoch=epoch, noise=noise, **kwargs)
             pgd_norm = float(noise.norm(p=float('inf')))
-            target_conf, target_acc, clean_acc = self.validate_func()
+            target_conf, target_acc, clean_acc = self.validate_fn()
             target_conf_list.append(target_conf)
             target_acc_list.append(target_acc)
             clean_acc_list.append(max(self.clean_acc - clean_acc, 0.0))

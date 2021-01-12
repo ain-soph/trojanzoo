@@ -49,7 +49,7 @@ class IMC_Adaptive(IMC):
     def attack(self, epoch: int, **kwargs):
         super().attack(epoch, loss_fn=self.loss_fn, **kwargs)
 
-    def epoch_func(self, **kwargs):
+    def epoch_fn(self, **kwargs):
         self.save()
         _input, _label = self.seed_data['input'], self.seed_data['label']
         all_ps = self.sample_neuron(_input)
@@ -219,7 +219,7 @@ class IMC_Adaptive(IMC):
             _label = _label[:integer]
         return _input, _label
 
-    def validate_func(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                      get_data_fn=None, **kwargs)
         target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',

@@ -49,7 +49,7 @@ class PoisonBasic(Attack):
                 continue
             _label = self.model.generate_target(_input, idx=self.target_idx)
             self._train(_input=_input, _label=_label, epoch=epoch, **kwargs)
-            target_conf, target_acc, clean_acc = self.validate_func()
+            target_conf, target_acc, clean_acc = self.validate_fn()
             target_conf_list.append(target_conf)
             target_acc_list.append(target_acc)
             clean_acc_list.append(clean_acc)
@@ -65,7 +65,7 @@ class PoisonBasic(Attack):
 
         self.model._train(epoch=epoch, save=save,
                           get_data_fn=self.get_data, save_fn=self.save,
-                          validate_func=self.validate_func, indent=indent + 4, **kwargs)
+                          validate_fn=self.validate_fn, indent=indent + 4, **kwargs)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
@@ -113,7 +113,7 @@ class PoisonBasic(Attack):
         # todo: Return value
         return target_conf, target_acc
 
-    def validate_func(self, get_data_fn=None, indent: int = 0, verbose=True, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, get_data_fn=None, indent: int = 0, verbose=True, **kwargs) -> tuple[float, float, float]:
         target_conf, target_acc = self.validate_target(indent=indent, verbose=verbose)
         _, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                indent=indent, verbose=verbose, **kwargs)

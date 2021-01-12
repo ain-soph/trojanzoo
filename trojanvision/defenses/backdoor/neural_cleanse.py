@@ -256,7 +256,7 @@ class NeuralCleanse(BackdoorDefense):
         self.attack.mark.mark = mark_best
         self.attack.mark.alpha_mark = mask_best
         self.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)
-        self.attack.validate_func()
+        self.attack.validate_fn()
         return mark_best, mask_best, entropy_best
 
     def load(self, path: str = None):

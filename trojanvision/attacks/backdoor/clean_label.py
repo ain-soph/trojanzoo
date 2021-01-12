@@ -178,7 +178,7 @@ class CleanLabel(BadNet):
         # final_set = poison_set
         final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
-                          loader_train=final_loader, validate_func=self.validate_func, **kwargs)
+                          loader_train=final_loader, validate_fn=self.validate_fn, **kwargs)
 
 
 class Generator(nn.Module):

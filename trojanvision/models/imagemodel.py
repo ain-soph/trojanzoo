@@ -6,12 +6,21 @@ from trojanvision.environ import env
 from trojanvision.utils import apply_cmap
 
 import torch
-import torch.autograd
 import torch.nn.functional as F
 import re
-import argparse
 
+
+from typing import TYPE_CHECKING
+from torch.utils.tensorboard import SummaryWriter
+from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
+import argparse
 from matplotlib.colors import Colormap
+from collections.abc import Callable
+if TYPE_CHECKING:
+    import torch.autograd
+    import torch.utils.data
+
 from matplotlib.cm import get_cmap
 jet = get_cmap('jet')
 
@@ -226,3 +235,33 @@ class ImageModel(Model):
         if width_factor is not None:
             name += f'x{width_factor:d}'
         return name, layer, width_factor
+
+    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+               print_prefix: str = 'Epoch', start_epoch: int = 0,
+               validate_interval: int = 10, save: bool = False, amp: bool = False,
+               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
+               epoch_fn: Callable[..., None] = None,
+               get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+               loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+               after_loss_fn: Callable[..., None] = None,
+               validate_fn: Callable[..., tuple[float, ...]] = None,
+               save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
+               writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
+               verbose: bool = True, indent: int = 0,
+               adv_train: bool = False, adv_train_alpha: float = 2.0 / 255, adv_train_epsilon: float = 8.0 / 255,
+               adv_train_iter: int = 8, **kwargs):
+        if adv_train:
+            if after_loss_fn is None and hasattr(self, 'after_loss_fn'):
+                after_loss_fn = self.after_loss_fn
+            get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
+            validate_fn = validate_fn if validate_fn is not None else self._validate
+            from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
+            pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_epsilon, iteration=adv_train_iter, stop_threshold=None)
+
+        super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                       print_prefix=print_prefix, start_epoch=start_epoch,
+                       validate_interval=validate_interval, save=save, amp=amp,
+                       loader_train=loader_train, loader_valid=loader_valid,
+                       epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn,
+                       save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix,
+                       writer=writer, main_tag=main_tag, tag=tag, verbose=verbose, indent=indent, **kwargs)

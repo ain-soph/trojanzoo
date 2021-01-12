@@ -15,7 +15,7 @@ class MagNet(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        self.validate_func()
+        self.validate_fn()
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if org:
@@ -25,7 +25,7 @@ class MagNet(BackdoorDefense):
         _input = self.magnet(_input)
         return _input, _label
 
-    def validate_func(self, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, **kwargs) -> tuple[float, float, float]:
         clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                                      get_data_fn=self.get_data, org=True, **kwargs)
         target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',
