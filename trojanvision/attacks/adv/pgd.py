@@ -73,7 +73,7 @@ class PGD(Attack, PGD_Optimizer):
             print()
 
     def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
-                      target: Union[torch.Tensor, int] = None, target_idx: int = None, **kwargs):
+                      target: Union[torch.Tensor, int] = None, target_idx: int = None, **kwargs) -> tuple[torch.Tensor, int]:
         if len(_input) == 0:
             return _input, None
         if target_idx is None:

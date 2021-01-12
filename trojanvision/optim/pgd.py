@@ -55,7 +55,7 @@ class PGD(trojanzoo.optim.Optimizer):
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  alpha: float = None, epsilon: float = None,
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
-                 output: Union[int, list[str]] = None, add_noise_fn=None, **kwargs):
+                 output: Union[int, list[str]] = None, add_noise_fn=None, **kwargs) -> tuple[torch.Tensor, int]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
         alpha = alpha if alpha is not None else self.alpha
