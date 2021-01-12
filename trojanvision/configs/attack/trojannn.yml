@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 preprocess_layer: flatten
 threshold: 5
 target_value: 10

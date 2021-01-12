@@ -1,4 +1,2 @@
-# -*- coding: utf-8 -*-
-
 model_dir: ./data/model/
 default_model: default

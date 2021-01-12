@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD

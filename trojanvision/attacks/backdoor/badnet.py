@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from trojanvision.datasets.imageset import ImageSet
 from trojanvision.models.imagemodel import ImageModel

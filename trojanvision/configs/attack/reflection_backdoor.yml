@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 candidate_num: 50
 selection_num: 10
 selection_iter: 5

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from .badnet import BadNet
 
@@ -22,7 +21,7 @@ class BlindBackdoor(BadNet):
         # forward pass
         out = model(inputs)
         loss = criterion(out, labels)
-        # TODO: obtain gradients for the particular loss l.
+        # TODO: obtain gradients for the particular loss.
         # backward pass
         g = self.get_grads(loss, model)
 

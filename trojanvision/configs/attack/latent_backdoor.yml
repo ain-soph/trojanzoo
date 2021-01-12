@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 class_sample_num: 1000
 mse_weight: 0.5
 

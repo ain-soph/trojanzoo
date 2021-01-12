@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 mix_image_num:  50
 clean_image_ratio: 0.95
 retrain_epoch: 10

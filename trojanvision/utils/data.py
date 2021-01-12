@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from torchvision import get_image_backend
 from torchvision.datasets import VisionDataset, DatasetFolder

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.param import Module, Param

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 from .imagemodel import _ImageModel, ImageModel
 import trojanvision.utils.resnet_s
 

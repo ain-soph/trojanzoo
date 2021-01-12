@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from .trojannn import TrojanNN
 from trojanvision.utils.sgm import register_hook, remove_hook

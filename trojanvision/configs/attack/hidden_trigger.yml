@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 preprocess_layer: flatten
 pgd_alpha: 0.004
 pgd_epsilon: 0.0627451

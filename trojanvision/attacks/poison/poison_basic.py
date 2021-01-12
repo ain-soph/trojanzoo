@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from trojanzoo.attacks import Attack
 from trojanzoo.utils.output import prints

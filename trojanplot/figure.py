@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from .fonts import *
 from trojanzoo.utils import to_numpy
@@ -189,8 +188,7 @@ class Figure:
                              ha='center', va='bottom', fontsize=fontsize)
 
     @staticmethod
-    def get_roc_curve(label, pred) -> tuple[list[float], list[float]]:
-
+    def get_roc_curve(label: list[int], pred: list[int]) -> tuple[list[float], list[float]]:
         total_inst = len(label)
         total_pos_inst = len(np.where(label == 1)[0])
 
@@ -200,27 +198,18 @@ class Figure:
 
         # iterate over all positive thresholds
         for threshold in np.unique(pred):
-
-            pred_pos_idx = np.where(pred >= threshold)[0]
-
+            pred_pos_idx: np.ndarray = np.where(pred >= threshold)[0]
             # number of predicted positive instances
             pred_pos_inst = len(pred_pos_idx)
             # number of true positive instances
-            true_pos_inst = np.count_nonzero(label[pred_pos_idx])
+            true_pos_inst: int = np.count_nonzero(label[pred_pos_idx])
 
-            tpr = true_pos_inst * 1. / total_pos_inst * 1.
-            fpr = (pred_pos_inst - true_pos_inst) * \
-                1. / (total_inst - total_pos_inst) * 1.
+            tpr = true_pos_inst / total_pos_inst
+            fpr = (pred_pos_inst - true_pos_inst) / (total_inst - total_pos_inst)
             tprs.append(tpr)
             fprs.append(fpr)
             thresholds.append(threshold)
-
         return fprs, tprs
-
-    @staticmethod
-    def sort(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        idx = np.argsort(x)
-        return np.array(x)[idx], np.array(y)[idx]
 
     @staticmethod
     def normalize(x: np.ndarray, _min: float = None, _max: float = None, tgt_min: float = 0.0, tgt_max: float = 1.0) -> np.ndarray:

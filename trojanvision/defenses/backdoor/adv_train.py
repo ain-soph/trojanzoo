@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
+__all__ = ['to_tensor', 'to_numpy', 'to_list']
 
 from trojanzoo import __version__
 
@@ -11,4 +12,3 @@ import trojanvision.attacks
 import trojanvision.defenses
 
 from trojanvision.utils import to_tensor, to_numpy, to_list
-__all__ = ['to_tensor', 'to_numpy', 'to_list']

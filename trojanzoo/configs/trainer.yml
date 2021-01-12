@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 epoch: 150
 lr: 0.1
 parameters: full

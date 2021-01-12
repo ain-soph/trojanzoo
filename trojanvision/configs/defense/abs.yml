@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 seed_num: -5
 max_troj_size: 16
 remask_epoch: 1000

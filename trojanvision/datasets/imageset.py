@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from trojanzoo.datasets import Dataset
 from trojanvision.environ import env

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from trojanvision.optim import PGD as PGD_Optimizer
 from trojanzoo.attacks import Attack

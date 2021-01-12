@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 from .badnet import BadNet
 from .trojannet_utils import MLPNet, Combined_Model
 from trojanvision.environ import env

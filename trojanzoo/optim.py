@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from trojanzoo.utils import output_memory
 from trojanzoo.utils.process import Process

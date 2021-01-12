@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from .imagefolder import ImageFolder
 import torchvision.transforms as transforms

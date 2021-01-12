@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 from .imagefolder import ImageFolder
 from trojanzoo.utils.param import Module
