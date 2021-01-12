@@ -100,7 +100,7 @@ class TrojanNet(BadNet):
 
     def validate_fn(self,
                     get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                    loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                    loss_fn: Callable[..., torch.Tensor] = None,
                     main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
         _, clean_acc = self.combined_model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                                      get_data_fn=None, indent=indent, **kwargs)
