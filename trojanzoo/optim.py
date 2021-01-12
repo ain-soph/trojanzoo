@@ -8,8 +8,9 @@ from trojanzoo.utils.output import prints
 import torch
 
 from typing import TYPE_CHECKING
+from collections.abc import Callable    # TODO: python 3.10
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    pass
 
 
 class Optimizer(Process):

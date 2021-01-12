@@ -12,10 +12,11 @@ import argparse
 
 from typing import TYPE_CHECKING
 from trojanzoo.configs import Config    # TODO: python 3.10
+from trojanzoo.datasets import Dataset
+from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 if TYPE_CHECKING:
-    from trojanzoo.datasets import Dataset
-    from torch.optim.optimizer import Optimizer
-    from torch.optim.lr_scheduler import _LRScheduler
+    pass
 
 
 class Trainer:

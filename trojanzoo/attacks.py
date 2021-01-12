@@ -12,9 +12,10 @@ import os
 from typing import Union    # TODO: python 3.10
 
 from typing import TYPE_CHECKING
+from trojanzoo.models import Model
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:
-    from trojanzoo.models import Model
+    pass
 
 
 class Attack(Model_Process):
