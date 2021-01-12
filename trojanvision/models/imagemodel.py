@@ -164,8 +164,8 @@ class ImageModel(Model):
         self.param_list['imagemodel'] = ['layer', 'width_factor', 'sgm']
         if sgm:
             self.param_list['imagemodel'].extend(['sgm_gamma'])
-        self._model: _ImageModel = self._model
-        self.dataset: ImageSet = self.dataset
+        self._model: _ImageModel
+        self.dataset: ImageSet
 
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)

@@ -6,7 +6,10 @@ from trojanzoo.utils.process import Process
 from trojanzoo.utils.output import prints
 
 import torch
-from collections.abc import Callable
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class Optimizer(Process):

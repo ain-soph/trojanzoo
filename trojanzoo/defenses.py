@@ -9,9 +9,13 @@ from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
 from trojanzoo.utils.process import Model_Process
 
-import argparse
 import os
-from typing import Union
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+import argparse    # TODO: python 3.10
+if TYPE_CHECKING:
+    pass
 
 
 class Defense(Model_Process):

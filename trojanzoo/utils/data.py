@@ -6,12 +6,15 @@ from .output import ansi
 from .tensor import to_list
 
 import torch
-import torch.utils.data
 import os
 import tqdm
 import tarfile
 import zipfile
-from typing import Union
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+if TYPE_CHECKING:
+    import torch.utils.data
 
 
 def untar(file_path: str, target_path: str):

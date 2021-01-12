@@ -2,16 +2,19 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.datasets import Dataset
-from trojanzoo.models import Model
 from trojanzoo.configs import config, Config
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi
 from trojanzoo.utils.process import Model_Process
 
 import torch
-import argparse
 import os
-from typing import Union
+from typing import Union    # TODO: python 3.10
+
+from typing import TYPE_CHECKING
+import argparse    # TODO: python 3.10
+if TYPE_CHECKING:
+    from trojanzoo.models import Model
 
 
 class Attack(Model_Process):
@@ -44,7 +47,7 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None, attac
 def create(attack_name: str = None, attack: Union[str, Attack] = None, folder_path: str = None,
            dataset_name: str = None, dataset: Union[str, Dataset] = None,
            model_name: str = None, model: Union[str, Model] = None,
-           config: Config = config, class_dict: dict[str, type[Attack]] = {}, **kwargs) -> Attack:
+           config: Config = config, class_dict: dict[str, type[Attack]] = None, **kwargs) -> Attack:
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     attack_name = get_name(name=attack_name, module=attack, arg_list=['--attack'])
@@ -52,7 +55,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None, folder_pa
         dataset_name = config.get_full_config()['dataset']['default_dataset']
     general_config = config.get_config(dataset_name=dataset_name)['attack']
     specific_config = config.get_config(dataset_name=dataset_name)[attack_name]
-    result = general_config._update(specific_config)._update(kwargs)    # TODO: linting issues
+    result = general_config._update(specific_config)._update(kwargs)
 
     AttackType: type[Attack] = class_dict[attack_name]
     if folder_path is None:

@@ -5,14 +5,18 @@ from .environ import env
 from .output import ansi, output_iter, prints, get_ansi_len, remove_ansi
 
 import torch
-import torch.cuda
 import torch.distributed as dist
 from collections import defaultdict, deque
 import datetime
 import time
-from typing import Generator, Iterable, TypeVar, Union
 
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+from typing import Generator, Iterable, TypeVar    # TODO: python 3.10
 _T = TypeVar("_T")
+if TYPE_CHECKING:
+    import torch.cuda
 
 
 class SmoothedValue(object):

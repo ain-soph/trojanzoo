@@ -2,16 +2,20 @@
 # -*- coding: utf-8 -*-
 
 
-from trojanzoo.datasets import Dataset
 from trojanzoo.models import Model
-from trojanzoo.configs import config, Config
+from trojanzoo.configs import config
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi, prints
 
-from torch.optim.optimizer import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.tensorboard import SummaryWriter
 import argparse
+
+from typing import TYPE_CHECKING
+from trojanzoo.configs import Config    # TODO: python 3.10
+if TYPE_CHECKING:
+    from trojanzoo.datasets import Dataset
+    from torch.optim.optimizer import Optimizer
+    from torch.optim.lr_scheduler import _LRScheduler
 
 
 class Trainer:

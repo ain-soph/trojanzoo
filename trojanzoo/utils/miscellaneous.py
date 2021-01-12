@@ -4,9 +4,12 @@
 from .output import ansi, prints
 
 import torch
-import torch.cuda
 import sys
-from typing import Union
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+if TYPE_CHECKING:
+    import torch.cuda
 
 
 def get_name(name: str = None, module: Union[str, object] = None, arg_list: list[str] = []) -> str:

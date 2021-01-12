@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-from trojanzoo.configs import config, Config
+from trojanzoo.configs import config
 from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
@@ -15,20 +15,26 @@ from trojanzoo.utils.tensor import onehot_label
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim
-import torch.utils.data
-import torch.cuda.amp
-from torch.optim.optimizer import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import math
-import argparse
 import os
 from tqdm import tqdm
 from collections import OrderedDict
-from collections.abc import Callable, Iterable    # TODO: callable (many places) (wait for python update)
-from typing import Generator, Iterator, Mapping, Set, Union, Optional
+from collections.abc import Iterable    # TODO: callable (many places) (wait for python update)
+from typing import Generator, Iterator, Mapping, Set
+
+from typing import TYPE_CHECKING
+from typing import Union, Optional    # TODO: python 3.10
+from trojanzoo.configs import Config    # TODO: python 3.10
+import argparse
+from collections.abc import Callable
+if TYPE_CHECKING:
+    import torch.optim
+    import torch.cuda.amp
+    import torch.utils.data
+    from torch.optim.optimizer import Optimizer
+    from torch.optim.lr_scheduler import _LRScheduler
 
 # redirect = Indent_Redirect(buffer=True, indent=0)
 

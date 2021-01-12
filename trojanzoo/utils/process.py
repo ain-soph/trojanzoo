@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from .environ import env
 from .output import ansi, prints, output_iter
-from trojanzoo.datasets import Dataset
-from trojanzoo.models import Model
 
 import os
-from typing import Union
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+from trojanzoo.datasets import Dataset    # TODO: python 3.10
+from trojanzoo.models import Model
+if TYPE_CHECKING:
+    pass
 
 
 class Process:

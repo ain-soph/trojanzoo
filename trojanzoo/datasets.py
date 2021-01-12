@@ -8,14 +8,17 @@ from trojanzoo.utils.data import dataset_to_list
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import torch
-import torch.cuda
-import torch.utils.data
 from torchvision import transforms
 import numpy as np
-import argparse
 import os
 import sys
-from typing import Any, Union
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+import argparse    # TODO: python 3.10
+if TYPE_CHECKING:
+    import torch.cuda
+    import torch.utils.data
 
 
 redirect = Indent_Redirect(buffer=True, indent=0)

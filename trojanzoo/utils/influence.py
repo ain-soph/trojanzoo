@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from trojanzoo.environ import env
-from trojanzoo.models import Model
 import torch
-import torch.autograd
-import torch.nn.functional as F
 import torch.nn as nn
-import torch.utils.data
+import torch.nn.functional as F
+
+from typing import TYPE_CHECKING
+from trojanzoo.models import Model    # TODO: python 3.10
+if TYPE_CHECKING:
+    import torch.autograd
+    import torch.utils.data
 # from scipy.optimize import fmin_ncg
 
 

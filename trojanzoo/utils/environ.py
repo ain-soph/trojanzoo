@@ -4,16 +4,20 @@
 from .output import ansi
 from .param import Param
 from .miscellaneous import get_name
-from trojanzoo.configs import Config, config
+from trojanzoo.configs import config
 
 import torch
-import torch.cuda
 # import torch.distributed as dist
-import torch.backends.cudnn
 import numpy as np
 import random
+
+from typing import TYPE_CHECKING
+from typing import Union    # TODO: python 3.10
+from trojanzoo.configs import Config
 import argparse
-from typing import Union
+if TYPE_CHECKING:
+    import torch.cuda
+    import torch.backends.cudnn
 
 
 class Env(Param):

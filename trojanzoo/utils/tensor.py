@@ -9,7 +9,7 @@ import numpy as np
 import math
 import os
 from PIL import Image
-from typing import Union
+from typing import Union    # TODO: python 3.10
 
 __all__ = ['cos_sim', 'tanh_func', 'atan_func',
            'to_tensor', 'to_numpy', 'to_list',

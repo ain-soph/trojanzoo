@@ -55,8 +55,8 @@ class BadNet(Attack):
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, poison_percent: float = 0.01, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
-        self.dataset: ImageSet = self.dataset
-        self.model: ImageModel = self.model
+        self.dataset: ImageSet
+        self.model: ImageModel
         self.param_list['badnet'] = ['train_mode', 'target_class', 'poison_percent', 'poison_num']
         self.mark: Watermark = mark
         self.target_class: int = target_class

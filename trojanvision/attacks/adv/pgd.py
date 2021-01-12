@@ -9,7 +9,11 @@ from trojanzoo.utils.output import prints
 import torch
 import argparse
 from collections.abc import Callable
-from typing import Union
+from typing import Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from trojanvision.datasets import ImageSet
+    from trojanvision.models import ImageModel
 
 
 class PGD(Attack, PGD_Optimizer):
@@ -46,6 +50,8 @@ class PGD(Attack, PGD_Optimizer):
     def __init__(self, target_idx: int = 1, **kwargs):
         self.target_idx: int = target_idx
         super().__init__(**kwargs)
+        self.dataset: ImageSet
+        self.model: ImageModel
 
     def attack(self):
         # model._validate()

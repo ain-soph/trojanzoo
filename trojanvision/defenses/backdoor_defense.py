@@ -21,10 +21,10 @@ class BackdoorDefense(Defense):
 
     def __init__(self, original: bool = False, **kwargs):
         super().__init__(**kwargs)
+        self.dataset: ImageSet
+        self.model: ImageModel
+        self.attack: BadNet  # for linting purpose
         self.original: bool = original
-        self.dataset: ImageSet = self.dataset
-        self.model: ImageModel = self.model
-        self.attack: BadNet = self.attack  # for linting purpose
         self.target_class = self.attack.target_class
 
     def detect(self, **kwargs):

@@ -7,12 +7,14 @@ from trojanzoo.utils.param import Module, Param
 import os
 import json
 import yaml
-from typing import Any, Union
 
+from typing import TYPE_CHECKING
+from typing import Any, Union    # TODO: python 3.10
 ConfigFileType = Module[str, Union[Any, Param[str, Any]]]    # config_dict['package']['dataset'] dataset.yml
 ConfigType = Module[str, ConfigFileType]                     # config_dict['package']
-FinalFileType = Module[str, Any]
-FinalType = Param[str, Module[str, Any]]
+if TYPE_CHECKING:
+    pass    # TODO: python 3.10
+
 
 config_path: dict[str, str] = {
     'package': os.path.dirname(__file__),
@@ -54,7 +56,7 @@ class Config:
             self.cmd_updated = True
         return self.full_config
 
-    def get_config(self, dataset_name: str, config: ConfigType = None, **kwargs) -> FinalType:
+    def get_config(self, dataset_name: str, config: ConfigType = None, **kwargs) -> Param[str, Module[str, Any]]:
         config = config if config is not None else Param(self.get_full_config(), default=Module())
         # remove dataset_name Param
         for file_name, file_value in config.items():

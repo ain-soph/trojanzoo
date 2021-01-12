@@ -2,36 +2,33 @@
 # -*- coding: utf-8 -*-
 
 from .output import prints
-from types import GenericAlias
-from typing import Any, Generic, MutableMapping, Iterator, TypeVar
 
-
-# typing.pyi
+from typing import TYPE_CHECKING
+from typing import Any, Generic, Mapping, MutableMapping, Iterator, TypeVar    # TODO: python 3.10
 _KT = TypeVar("_KT")  # Key type.
 _VT = TypeVar("_VT")  # Value type.
 _T_co = TypeVar("_T_co", covariant=True)  # Any type covariant containers.
+if TYPE_CHECKING:
+    pass
 
 
 class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     _marker = 'M'
 
-    def __class_getitem__(cls, item: Any) -> GenericAlias:
-        return _VT
-
-    def __init__(self, *args: list[dict[_KT, _VT]], **kwargs):
+    def __init__(self, *args: list[Mapping[_KT, _VT]], **kwargs):
         self.__data: dict[_KT, _VT] = {}
         if len(args) == 1 and args[0] is None:
             return
         self.update(*args, **kwargs)
 
-    def update(self, *args: list[dict[_KT, _VT]], **kwargs):
+    def update(self, *args: list[Mapping[_KT, _VT]], **kwargs):
         args = list(args)
         args.append(kwargs)
         for module in args:
             self._update(module)
         return self
 
-    def _update(self, module: dict[_KT, _VT]):    # TODO: Union[dict, Module]
+    def _update(self, module: Mapping[_KT, _VT]):    # TODO: Union[dict, Module]
         for key, value in module.items():
             if value is None:
                 continue
