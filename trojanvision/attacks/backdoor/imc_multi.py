@@ -2,12 +2,14 @@
 
 from .imc import IMC
 from trojanvision.marks import Watermark
+from trojanzoo.utils.output import prints
 
 import torch
 import torch.utils.data
 import numpy as np
 import math
 import random
+from typing import Callable
 
 
 class IMC_Multi(IMC):
@@ -27,7 +29,7 @@ class IMC_Multi(IMC):
 
     def attack(self, epoch: int, save=False, **kwargs):
         self.model._train(epoch, save=save,
-                          validate_fn=self.validate_func_multi, get_data_fn=self.get_train_data,
+                          validate_fn=self.validate_fn, get_data_fn=self.get_train_data,
                           save_fn=self.save, **kwargs)
 
     # ---------------------- I/O ----------------------------- #
@@ -67,22 +69,28 @@ class IMC_Multi(IMC):
         _label = torch.cat(label_list)
         return _input, _label
 
-    def get_poison_data(self, data: tuple[torch.Tensor, torch.Tensor], mark: Watermark = None, target_class: int = 0, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_poison_data(self, data: tuple[torch.Tensor, torch.Tensor], mark: Watermark = None,
+                        target_class: int = 0, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
         poison_input = mark.add_mark(_input)
         poison_label = target_class * torch.ones_like(_label)
         return poison_input, poison_label
 
-    def validate_func_multi(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
-                                                        get_data_fn=None, **kwargs)
+    def validate_fn(self,
+                    get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                    loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                    main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
+        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+                                            get_data_fn=None, indent=indent, **kwargs)
         target_acc = 100.0
-        target_loss = 0.0
         for i, (mark, target_class) in enumerate(self.mark_list):
-            loss, acc = self.model._validate(print_prefix=f'Validate Trigger {i} target {target_class} ', get_data_fn=self.get_poison_data,
-                                                mark=mark, target_class=target_class, **kwargs)
-            target_loss = max(loss, target_loss)
+            _, acc = self.model._validate(print_prefix=f'Validate Trigger {i} target {target_class} ', main_tag='',
+                                          get_data_fn=self.get_poison_data,
+                                          mark=mark, target_class=target_class,
+                                          indent=indent, **kwargs)
             target_acc = min(acc, target_acc)
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
             target_acc = 0.0
-        return clean_loss + target_loss, target_acc, clean_acc
+        return clean_acc, target_acc

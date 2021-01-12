@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 from .imc import IMC
+from trojanzoo.utils.output import prints
 
 import torch
 import math
 import random
+from typing import Callable
 
 
 class IMC_STRIP(IMC):
@@ -57,18 +59,25 @@ class IMC_STRIP(IMC):
             _label = _label[:integer]
         return _input, _label
 
-    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
-                                                        get_data_fn=None, **kwargs)
-        target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                                          get_data_fn=self.get_poison_data, **kwargs)
-        _, orginal_acc = self.model._validate(print_prefix='Validate Trigger Org',
-                                                 get_data_fn=self.get_poison_data, poison_label=False, **kwargs)
-        self.model._validate(print_prefix='Validate STRIP Tgt',
-                             get_data_fn=self.get_poison_data, strip=True, **kwargs)
-        self.model._validate(print_prefix='Validate STRIP Org',
-                             get_data_fn=self.get_poison_data, strip=True, poison_label=False, **kwargs)
-        print(f'Validate Confidence : {self.validate_confidence():.3f}')
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+    def validate_fn(self,
+                    get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                    loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                    main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
+        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+                                            get_data_fn=None, indent=indent, **kwargs)
+        _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
+                                             get_data_fn=self.get_poison_data, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
+                             get_data_fn=self.get_poison_data, poison_label=False,
+                             indent=indent, **kwargs)
+        self.model._validate(print_prefix='Validate STRIP Tgt', main_tag='',
+                             get_data_fn=self.get_poison_data, strip=True,
+                             indent=indent, **kwargs)
+        self.model._validate(print_prefix='Validate STRIP Org', main_tag='',
+                             get_data_fn=self.get_poison_data, strip=True, poison_label=False,
+                             indent=indent, **kwargs)
+        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
             target_acc = 0.0
-        return clean_loss + target_loss, target_acc, clean_acc
+        return clean_acc, target_acc

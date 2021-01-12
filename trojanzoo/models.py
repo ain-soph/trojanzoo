@@ -488,7 +488,7 @@ class Model:
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
         loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-        if isinstance(writer, SummaryWriter) and isinstance(_epoch, int):
+        if isinstance(writer, SummaryWriter) and isinstance(_epoch, int) and main_tag:
             writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
             writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
         return loss, acc

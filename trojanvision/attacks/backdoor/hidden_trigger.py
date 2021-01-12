@@ -2,11 +2,13 @@
 
 from .badnet import BadNet
 from trojanvision.optim import PGD
+from trojanzoo.utils.output import prints
 
 import torch
 import math
 import random
 import argparse
+from typing import Callable
 
 
 class HiddenTrigger(BadNet):
@@ -82,17 +84,22 @@ class HiddenTrigger(BadNet):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
-                                                     get_data_fn=None, **kwargs)
-        target_loss, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                                       get_data_fn=self.get_data, keep_org=False, training=False, **kwargs)
-        _, orginal_acc = self.model._validate(print_prefix='Validate Trigger Org',
-                                              get_data_fn=self.get_data, keep_org=False, poison_label=False, training=False, **kwargs)
-        # todo: Return value
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:
+    def validate_fn(self,
+                    get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                    loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                    main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
+        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+                                            get_data_fn=None, indent=indent, **kwargs)
+        _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
+                                             get_data_fn=self.get_data, keep_org=False, training=False, indent=indent, **kwargs)
+        self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
+                             get_data_fn=self.get_data, keep_org=False,
+                             poison_label=False, training=False, indent=indent, **kwargs)
+        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
+        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
             target_acc = 0.0
-        return clean_loss + target_loss, target_acc, clean_acc
+        return clean_acc, target_acc
 
     def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor) -> torch.Tensor:
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)

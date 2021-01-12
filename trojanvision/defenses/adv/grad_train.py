@@ -37,15 +37,16 @@ class Grad_Train(Defense):
         new_loss = loss + self.grad_lambda * grad.flatten(start_dim=1).norm(p=1, dim=1).mean()
         return new_loss
 
-    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
-        clean_loss, clean_acc = self.model._validate(print_prefix='Validate Clean',
-                                                        get_data_fn=None, **kwargs)
-        adv_loss, adv_acc = self.model._validate(print_prefix='Validate Adv',
-                                                    get_data_fn=self.get_data, **kwargs)
+    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float]:
+        # TODO
+        _, clean_acc = self.model._validate(print_prefix='Validate Clean',
+                                            get_data_fn=None, **kwargs)
+        _, adv_acc = self.model._validate(print_prefix='Validate Adv',
+                                          get_data_fn=self.get_data, **kwargs)
         # todo: Return value
         if self.clean_acc - clean_acc > 20 and self.clean_acc > 40:
             adv_acc = 0.0
-        return clean_loss + adv_loss, adv_acc, clean_acc
+        return clean_acc, adv_acc
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data, **kwargs)

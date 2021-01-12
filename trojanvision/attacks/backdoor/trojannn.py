@@ -97,7 +97,7 @@ class TrojanNN(BadNet):
         return self.model.get_layer(x, layer_output=self.preprocess_layer)[:, neuron_idx].mean()
 
     # train the mark to activate the least-used neurons.
-    def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs):
+    def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs) -> torch.Tensor:
         with torch.no_grad():
             print("Neuron Value Before Preprocessing: ",
                   self.get_neuron_value(mark, neuron_idx))
@@ -121,9 +121,9 @@ class TrojanNN(BadNet):
                   self.get_neuron_value(x, neuron_idx))
         return x
 
-    def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float, float]:
+    def validate_fn(self, get_data_fn=None, **kwargs) -> tuple[float, float]:
         if self.neuron_idx is not None:
             with torch.no_grad():
                 print("Neuron Value After Preprocessing: ",
                       self.get_neuron_value(self.mark.mark * self.mark.mask, self.neuron_idx))
-        return super().validate_fn(get_data_fn=get_data_fn, loss_fn=loss_fn, **kwargs)
+        return super().validate_fn(get_data_fn=get_data_fn, **kwargs)

@@ -8,6 +8,7 @@ import numpy as np
 import math
 import random
 import argparse
+from typing import Callable
 
 
 class PoisonBasic(Attack):
@@ -113,8 +114,9 @@ class PoisonBasic(Attack):
         # todo: Return value
         return target_conf, target_acc
 
-    def validate_fn(self, get_data_fn=None, indent: int = 0, verbose=True, **kwargs) -> tuple[float, float, float]:
-        target_conf, target_acc = self.validate_target(indent=indent, verbose=verbose)
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean',
-                                               indent=indent, verbose=verbose, **kwargs)
-        return target_conf, target_acc, clean_acc
+    def validate_fn(self, get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                    main_tag: str = 'valid', indent: int = 0, verbose=True, **kwargs) -> tuple[float, float]:
+        _, target_acc = self.validate_target(indent=indent, verbose=verbose)
+        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+                                            get_data_fn=None, indent=indent, **kwargs)
+        return clean_acc, target_acc
