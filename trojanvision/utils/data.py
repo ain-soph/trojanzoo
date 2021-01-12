@@ -11,8 +11,10 @@ import os
 import struct
 import zipfile
 # TODO: Bug of python 3.9.1, collections.abc.Callable[[str],int] regard the [str] as a tuple
-from typing import Callable
-from typing import Any, Optional, Union, cast
+from typing import Callable    # TODO: python 3.10
+from typing import Any, cast
+
+from typing import Optional, Union  # TODO: python 3.10
 
 
 __all__ = ['MemoryDataset']
