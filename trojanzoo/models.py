@@ -351,9 +351,9 @@ class Model:
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
                get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-               loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+               loss_fn: Callable[..., torch.Tensor] = None,
                after_loss_fn: Callable[..., None] = None,
-               validate_fn: Callable[..., tuple[float, ...]] = None,
+               validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0, **kwargs):
@@ -362,12 +362,12 @@ class Model:
         loss_fn = loss_fn if callable(loss_fn) else self.loss
         validate_fn = validate_fn if callable(validate_fn) else self._validate
         save_fn = save_fn if callable(save_fn) else self.save
-        # if iter_fn is None and hasattr(self, 'iter_fn'):
-        #     iter_fn = self.iter_fn
+        # if not callable(iter_fn) and hasattr(self, 'iter_fn'):
+        #     iter_fn = getattr(self, 'iter_fn')
         if not callable(epoch_fn) and hasattr(self, 'epoch_fn'):
-            epoch_fn = self.epoch_fn
+            epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
-            after_loss_fn = self.after_loss_fn
+            after_loss_fn = getattr(self, 'after_loss_fn')
 
         scaler: torch.cuda.amp.GradScaler = None
         if not env['num_gpus']:
@@ -411,13 +411,19 @@ class Model:
                 loss = loss_fn(_input, _label, _output=_output)
                 if amp:
                     scaler.scale(loss).backward()
+                    if callable(after_loss_fn):
+                        after_loss_fn(_input=_input, _label=_label, _output=_output,
+                                      loss=loss, optimizer=optimizer, loss_fn=loss_fn,
+                                      amp=amp, scaler=scaler,
+                                      _iter=_iter, total_iter=total_iter)
                     scaler.step(optimizer)
                     scaler.update()
                 else:
                     loss.backward()
                     if callable(after_loss_fn):
                         after_loss_fn(_input=_input, _label=_label, _output=_output,
-                                      loss=loss, optimizer=optimizer,
+                                      loss=loss, optimizer=optimizer, loss_fn=loss_fn,
+                                      amp=amp, scaler=scaler,
                                       _iter=_iter, total_iter=total_iter)
                         # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                     optimizer.step()
@@ -457,7 +463,7 @@ class Model:
     def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
                   loader: torch.utils.data.DataLoader = None,
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                  loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+                  loss_fn: Callable[..., torch.Tensor] = None,
                   writer: SummaryWriter = None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
                   **kwargs) -> tuple[float, float]:
         self.eval()
@@ -477,9 +483,9 @@ class Model:
                 header = '{upline}{clear_line}'.format(**ansi) + header
                 loader_epoch = tqdm(loader_epoch)
             loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-        with torch.no_grad():
-            for data in loader_epoch:
-                _input, _label = get_data_fn(data, mode='valid', **kwargs)
+        for data in loader_epoch:
+            _input, _label = get_data_fn(data, mode='valid', **kwargs)
+            with torch.no_grad():
                 _output = self(_input)
                 loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
                 acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))

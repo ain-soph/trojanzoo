@@ -7,13 +7,13 @@ from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi, prints
 
 from torch.utils.tensorboard import SummaryWriter
-import argparse
 
 from typing import TYPE_CHECKING
 from trojanzoo.configs import Config    # TODO: python 3.10
 from trojanzoo.datasets import Dataset
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+import argparse
 if TYPE_CHECKING:
     pass
 
@@ -97,12 +97,13 @@ class Trainer:
                 prints('-' * 20, indent=indent + 10)
 
 
-def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
+def add_argument(parser: argparse.ArgumentParser, ClassType: type[Trainer] = Trainer) -> argparse._ArgumentGroup:
     group = parser.add_argument_group('{yellow}trainer{reset}'.format(**ansi))
-    return Trainer.add_argument(group)
+    return ClassType.add_argument(group)
 
 
 def create(dataset_name: str = None, dataset: Dataset = None, model: Model = None,
+           ClassType: type[Trainer] = Trainer,
            tensorboard: bool = None, config: Config = config, **kwargs) -> tuple[Optimizer, _LRScheduler, dict]:
     assert isinstance(model, Model)
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
@@ -126,6 +127,6 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
         _dict[key] = value
     optimizer, lr_scheduler = model.define_optimizer(**optim_args)
     writer = SummaryWriter(**writer_args) if tensorboard else None
-    return Trainer(optim_args=optim_args, train_args=train_args,
-                   optimizer=optimizer, lr_scheduler=lr_scheduler,
-                   writer=writer)
+    return ClassType(optim_args=optim_args, train_args=train_args,
+                     optimizer=optimizer, lr_scheduler=lr_scheduler,
+                     writer=writer)

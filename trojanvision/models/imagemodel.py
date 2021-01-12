@@ -19,6 +19,7 @@ from matplotlib.colors import Colormap
 from collections.abc import Callable
 if TYPE_CHECKING:
     import torch.autograd
+    import torch.cuda.amp
     import torch.utils.data
 
 from matplotlib.cm import get_cmap
@@ -242,21 +243,68 @@ class ImageModel(Model):
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
                get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-               loss_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor], torch.Tensor] = None,
+               loss_fn: Callable[..., torch.Tensor] = None,
                after_loss_fn: Callable[..., None] = None,
-               validate_fn: Callable[..., tuple[float, ...]] = None,
+               validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0,
                adv_train: bool = False, adv_train_alpha: float = 2.0 / 255, adv_train_epsilon: float = 8.0 / 255,
-               adv_train_iter: int = 8, **kwargs):
+               adv_train_iter: int = 7, **kwargs):
         if adv_train:
-            if after_loss_fn is None and hasattr(self, 'after_loss_fn'):
-                after_loss_fn = self.after_loss_fn
-            get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-            validate_fn = validate_fn if validate_fn is not None else self._validate
+            after_loss_fn_old = after_loss_fn
+            if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
+                after_loss_fn_old = getattr(self, 'after_loss_fn')
+            get_data_fn_old = get_data_fn if callable(get_data_fn) else self.get_data
+            validate_fn_old = validate_fn if callable(validate_fn) else self._validate
+            loss_fn = loss_fn if callable(loss_fn) else self.loss
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
             pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_epsilon, iteration=adv_train_iter, stop_threshold=None)
+
+            def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
+                                  loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
+                                  amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
+                noise = torch.zeros_like(_input)
+
+                def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:
+                    return -loss_fn(X, _label)
+                for m in range(pgd.iteration):
+                    if amp:
+                        scaler.step(optimizer)
+                        scaler.update()
+                    else:
+                        optimizer.step()
+                    self.eval()
+                    adv_x, _ = pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn_new, iteration=1)
+                    self.train()
+                    loss = loss_fn(adv_x, _label)
+                    if callable(after_loss_fn_old):
+                        after_loss_fn_old(_input=_input, _label=_label, _output=_output,
+                                          loss=loss, optimizer=optimizer, loss_fn=loss_fn,
+                                          amp=amp, scaler=scaler, **kwargs)
+                    if amp:
+                        scaler.scale(loss).backward()
+                    else:
+                        loss.backward()
+
+            def get_adv_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                _input, _label = get_data_fn_old(data, **kwargs)
+
+                def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:
+                    return -loss_fn(X, _label)
+                adv_x, _ = pgd.optimize(_input=_input, loss_fn=loss_fn_new)
+                return adv_x, _label
+
+            def validate_fn_new(get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                                print_prefix: str = 'Validate', **kwargs) -> tuple[float, float]:
+                _, clean_acc = validate_fn_old(print_prefix='Validate Clean', main_tag='valid clean',
+                                               get_data_fn=None, **kwargs)
+                _, adv_acc = validate_fn_old(print_prefix='Validate Adv', main_tag='valid adv',
+                                             get_data_fn=get_adv_data, **kwargs)
+                return adv_acc, clean_acc
+
+            after_loss_fn = after_loss_fn_new
+            validate_fn = validate_fn_new
 
         super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
                        print_prefix=print_prefix, start_epoch=start_epoch,
