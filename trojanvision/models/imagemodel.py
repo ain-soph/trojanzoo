@@ -175,6 +175,7 @@ class ImageModel(Model):
             self.param_list['imagemodel'].extend(['sgm_gamma'])
         self._model: _ImageModel
         self.dataset: ImageSet
+        self.pgd = None  # TODO: python 3.10 type annotation
 
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
@@ -259,7 +260,8 @@ class ImageModel(Model):
             validate_fn_old = validate_fn if callable(validate_fn) else self._validate
             loss_fn = loss_fn if callable(loss_fn) else self.loss
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
-            pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_epsilon, iteration=adv_train_iter, stop_threshold=None)
+            self.pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_epsilon,
+                           iteration=adv_train_iter, stop_threshold=None)
 
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
@@ -268,14 +270,14 @@ class ImageModel(Model):
 
                 def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:
                     return -loss_fn(X, _label)
-                for m in range(pgd.iteration):
+                for m in range(self.pgd.iteration):
                     if amp:
                         scaler.step(optimizer)
                         scaler.update()
                     else:
                         optimizer.step()
                     self.eval()
-                    adv_x, _ = pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn_new, iteration=1)
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn_new, iteration=1)
                     self.train()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):
@@ -290,9 +292,9 @@ class ImageModel(Model):
             def get_adv_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
                 _input, _label = get_data_fn_old(data, **kwargs)
 
-                def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:
+                def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:  # TODO: use functools.partial
                     return -loss_fn(X, _label)
-                adv_x, _ = pgd.optimize(_input=_input, loss_fn=loss_fn_new)
+                adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn_new)
                 return adv_x, _label
 
             def validate_fn_new(get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,

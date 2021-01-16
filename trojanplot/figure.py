@@ -36,8 +36,6 @@ class Figure:
         self.folder_path: str = folder_path
         if folder_path is None:
             self.folder_path = './output/'
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
         self.fig: Figure = fig
         self.ax: Axes = ax
         if fig is None and ax is None:
@@ -63,16 +61,16 @@ class Figure:
         getattr(self.ax, f'set_{axis}label')(text, fontsize=fontsize,
                                              family=family, font=font, weight=weight, **kwargs)
 
-    def set_title(self, text: str = None, fontsize: int = 16) -> None:
+    def set_title(self, text: str = None, fontsize: int = 16, fontweight: str = 'bold') -> None:
         if text is None:
             text = self.name
-        self.ax.set_title(text, fontsize=fontsize)
+        self.ax.set_title(text, fontsize=fontsize, fontweight=fontweight)
 
-    def save(self, path: str = None, folder_path: str = None, ext: str = 'pdf') -> None:
+    def save(self, path: str = None, folder_path: str = None, ext: str = '.pdf') -> None:
         if path is None:
             if folder_path is None:
                 folder_path = self.folder_path
-            path = f'{folder_path}{self.name}.{ext}'
+            path = os.path.join(folder_path, f'{self.name}{ext}')
         else:
             folder_path = os.path.dirname(path)
         if not os.path.exists(folder_path):
@@ -123,10 +121,6 @@ class Figure:
         if label is not None:
             self.curve_legend(label=label, color=color, linewidth=linewidth, marker=marker, **kwargs)
         return self.ax.scatter(x, y, color=color, linewidth=linewidth, marker=marker, facecolor=facecolor, zorder=zorder, **kwargs)
-
-    def add_subplot(self, projection=None):
-        if projection is not None:
-            return self.fig.add_subplot(projection=projection)
 
 # Markers
 # '.' point marker

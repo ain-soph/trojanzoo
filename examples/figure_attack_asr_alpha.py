@@ -204,4 +204,4 @@ if __name__ == '__main__':
     elif args.dataset == 'sample_imagenet':
         fig.set_legend(ncol=1, labelspacing=0.15, loc='upper right')
     # fig.ax.get_legend().remove()
-    fig.save(folder_path='./result/', ext='pdf')
+    fig.save(folder_path='./result/', ext='.pdf')
