@@ -57,14 +57,14 @@ class InfluenceFunction():
     #     if isinstance(hess_inv, torch.Tensor):
     #         return v_test @ hess_inv
 
-    def calc_H(self, loader: torch.utils.data.DataLoader = None, eps=1e-5) -> torch.Tensor:
+    def calc_H(self, loader: torch.utils.data.DataLoader = None, eps=1e-5, **kwargs) -> torch.Tensor:
         loader = loader if loader is not None else self.dataset.loader['train']
         hess_list: list[torch.Tensor] = []
         batch_num = max(self.sample_size // loader.batch_size, 1)
         for i, data in enumerate(loader):
             if i >= batch_num:
                 break
-            _input, _label = self.model.get_data(data)
+            _input, _label = self.model.get_data(data, **kwargs)
             _feats = self.model.get_final_fm(_input)    # TODO
             hess = self.compute_hess(_feats, _label).detach().cpu()  # (N, D, D)
             hess_list.append(hess)

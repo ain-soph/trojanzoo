@@ -381,7 +381,7 @@ class Model:
         params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
         total_iter = epoch * len(loader_train)
         for _epoch in range(epoch):
-            _epoch += + 1
+            _epoch += 1
             if callable(epoch_fn):
                 self.activate_params([])
                 epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
@@ -501,7 +501,7 @@ class Model:
 
     # -------------------------------------------Utility--------------------------------------- #
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs):
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if self.dataset is not None:
             return self.dataset.get_data(data, **kwargs)
         else:

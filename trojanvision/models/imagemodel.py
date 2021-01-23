@@ -8,6 +8,7 @@ from trojanvision.utils import apply_cmap
 import torch
 import torch.nn.functional as F
 import re
+import functools
 
 
 from typing import TYPE_CHECKING
@@ -177,6 +178,16 @@ class ImageModel(Model):
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
 
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        if adv and self.pgd is not None:
+            _input, _label = super().get_data(data, **kwargs)
+
+            def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:  # TODO: use functools.partial
+                return -self.loss(X, _label)
+            adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn_new)
+            return adv_x, _label
+        return super().get_data(data, **kwargs)
+
     def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
         return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
 
@@ -256,7 +267,6 @@ class ImageModel(Model):
             after_loss_fn_old = after_loss_fn
             if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
                 after_loss_fn_old = getattr(self, 'after_loss_fn')
-            get_data_fn_old = get_data_fn if callable(get_data_fn) else self.get_data
             validate_fn_old = validate_fn if callable(validate_fn) else self._validate
             loss_fn = loss_fn if callable(loss_fn) else self.loss
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
@@ -289,20 +299,12 @@ class ImageModel(Model):
                     else:
                         loss.backward()
 
-            def get_adv_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-                _input, _label = get_data_fn_old(data, **kwargs)
-
-                def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:  # TODO: use functools.partial
-                    return -loss_fn(X, _label)
-                adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn_new)
-                return adv_x, _label
-
             def validate_fn_new(get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                                 print_prefix: str = 'Validate', **kwargs) -> tuple[float, float]:
                 _, clean_acc = validate_fn_old(print_prefix='Validate Clean', main_tag='valid clean',
                                                get_data_fn=None, **kwargs)
                 _, adv_acc = validate_fn_old(print_prefix='Validate Adv', main_tag='valid adv',
-                                             get_data_fn=get_adv_data, **kwargs)
+                                             get_data_fn=functools.partial(get_data_fn, adv=True), **kwargs)
                 return adv_acc, clean_acc
 
             after_loss_fn = after_loss_fn_new
