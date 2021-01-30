@@ -11,7 +11,7 @@ class CIFAR10(ImageSet):
 
     name = 'cifar10'
     num_classes = 10
-    n_dim = (32, 32)
+    data_shape = [3, 32, 32]
     class_to_idx = {'airplane': 0, 'automobile': 1, 'bird': 2, 'cat': 3,
                     'deer': 4, 'dog': 5, 'frog': 6, 'horse': 7, 'ship': 8, 'truck': 9}
 

@@ -11,8 +11,7 @@ class MNIST(ImageSet):
 
     name: str = 'mnist'
     num_classes: int = 10
-    n_channel: int = 1
-    n_dim: tuple[int] = (28, 28)
+    data_shape = [1, 28, 28]
 
     def __init__(self, norm_par={'mean': [0.1307], 'std': [0.3081]}, **kwargs):
         super().__init__(norm_par=norm_par, **kwargs)

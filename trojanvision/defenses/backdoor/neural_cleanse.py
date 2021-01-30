@@ -37,10 +37,6 @@ class NeuralCleanse(BackdoorDefense):
                  **kwargs):
         super().__init__(**kwargs)
 
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
-
         self.epoch: int = epoch
 
         self.init_cost = init_cost
@@ -114,9 +110,9 @@ class NeuralCleanse(BackdoorDefense):
     def remask(self, label: int):
         epoch = self.epoch
         # no bound
-        atanh_mark = torch.randn(self.data_shape, device=env['device'])
+        atanh_mark = torch.randn(self.dataset.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
-        atanh_mask = torch.randn(self.data_shape[1:], device=env['device'])
+        atanh_mask = torch.randn(self.dataset.data_shape[1:], device=env['device'])
         atanh_mask.requires_grad_()
         mask = tanh_func(atanh_mask)    # (h, w)
         mark = tanh_func(atanh_mark)    # (c, h, w)

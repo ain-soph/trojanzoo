@@ -77,9 +77,6 @@ class CleanLabel(BadNet):
         elif poison_generation_method == 'gan':
             self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.poison_percent)
 
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
         if poison_generation_method == 'pgd':
             self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
             self.pgd_alpha: float = pgd_alpha
@@ -94,7 +91,7 @@ class CleanLabel(BadNet):
             self.train_gan: bool = train_gan
             self.generator_iters = generator_iters
             self.critic_iter = critic_iter
-            self.wgan = WGAN(noise_dim=self.noise_dim, dim=64, data_shape=self.data_shape,
+            self.wgan = WGAN(noise_dim=self.noise_dim, dim=64, data_shape=self.dataset.data_shape,
                              generator_iters=self.generator_iters, critic_iter=self.critic_iter)
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):

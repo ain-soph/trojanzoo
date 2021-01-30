@@ -8,7 +8,7 @@ import numpy as np
 class GTSRB(ImageFolder):
 
     name = 'gtsrb'
-    n_dim = (32, 32)
+    data_shape = [3, 32, 32]
     num_classes = 43
     valid_set = False
     url = {'train': 'https://sid.erda.dk/public/archives/daaeac0d7ce1152aea9b61d9f1e19370/GTSRB-Training_fixed.zip'}

@@ -14,7 +14,7 @@ import getpass
 class VGGface2(ImageFolder):
 
     name: str = 'vggface2'
-    n_dim = (224, 224)
+    data_shape = [3, 224, 224]
     num_classes = 8631
     valid_set: bool = False
     org_folder_name = {'train': 'train'}

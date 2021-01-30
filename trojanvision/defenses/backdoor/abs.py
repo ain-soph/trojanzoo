@@ -43,9 +43,6 @@ class ABS(BackdoorDefense):
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
                  max_troj_size: int = 16, remask_lr: float = 0.1, remask_epoch: int = 1000, **kwargs):
         super().__init__(**kwargs)
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:
@@ -162,11 +159,11 @@ class ABS(BackdoorDefense):
     def remask(self, _input: torch.Tensor, layer: str, neuron: int,
                label: int, use_mask: bool = True, validate_interval: int = 100,
                verbose=False) -> tuple[torch.Tensor, torch.Tensor, float]:
-        atanh_mark = torch.randn(self.data_shape, device=env['device'])
+        atanh_mark = torch.randn(self.dataset.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
         parameters: list[torch.Tensor] = [atanh_mark]
-        mask = torch.ones(self.data_shape[1:], device=env['device'])
-        atanh_mask = torch.ones(self.data_shape[1:], device=env['device'])
+        mask = torch.ones(self.dataset.data_shape[1:], device=env['device'])
+        atanh_mask = torch.ones(self.dataset.data_shape[1:], device=env['device'])
         if use_mask:
             atanh_mask.requires_grad_()
             parameters.append(atanh_mask)
@@ -356,13 +353,13 @@ class ABS(BackdoorDefense):
     # ---------------------------------- Utils ------------------------------- #
     # Unused
     def filter_img(self):
-        h, w = self.dataset.n_dim
+        h, w = self.dataset.data_shape[1:]
         mask = torch.zeros(h, w, dtype=torch.float)
         mask[2:7, 2:7] = 1
         return to_tensor(mask, non_blocking=False)
 
     def nc_filter_img(self) -> torch.Tensor:
-        h, w = self.dataset.n_dim
+        h, w = self.dataset.data_shape[1:]
         mask = torch.ones(h, w, dtype=torch.float)
         return to_tensor(mask, non_blocking=False)
         # TODO: fix

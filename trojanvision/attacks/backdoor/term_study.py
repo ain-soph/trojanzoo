@@ -110,7 +110,7 @@ class TermStudy(BadNet):
 
     def get_avg_target_feats(self, data_dict: dict[str, tuple[torch.Tensor, torch.Tensor]]):
         with torch.no_grad():
-            if self.dataset.n_dim[0] > 100:
+            if self.dataset.data_shape[1] > 100:
                 target_x, target_y = data_dict['target']
                 dataset = TensorDataset(target_x, target_y)
                 loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),

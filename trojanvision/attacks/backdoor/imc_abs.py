@@ -16,9 +16,6 @@ class IMC_ABS(IMC):
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
                  **kwargs):
         super().__init__(**kwargs)
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:

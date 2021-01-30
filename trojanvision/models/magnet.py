@@ -68,17 +68,18 @@ class MagNet(Model):
                  structure: list = None, activation: str = None, v_noise: float = 0.1, **kwargs):
         self.v_noise: float = v_noise
         if structure is None:
-            if dataset.n_dim == 1:
+            if dataset.data_shape[0] == 1:
                 structure = [3, "average", 3]
             else:
                 structure = [32]
         if activation is None:
-            if dataset.n_dim == 1:
+            if dataset.data_shape[0] == 1:
                 activation = 'sigmoid'
             else:
                 activation = 'relu'
         super().__init__(name=name, dataset=dataset, model_class=model_class,
-                         structure=structure, activation=activation, channel=dataset.n_channel, **kwargs)
+                         structure=structure, activation=activation,
+                         channel=dataset.data_shape[0], **kwargs)
 
     def get_data(self, data: tuple[torch.Tensor], v_noise: float = None, mode='train'):
         if v_noise is None:

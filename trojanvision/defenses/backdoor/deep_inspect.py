@@ -44,9 +44,6 @@ class DeepInspect(BackdoorDefense):
                  remask_epoch: int = 30, remask_lr=0.01,
                  gamma_1: float = 0.0, gamma_2: float = 1, **kwargs):
         super().__init__(**kwargs)
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
 
         self.param_list['deep_inspect'] = ['sample_ratio', 'remask_epoch', 'remask_lr', 'gamma_1', 'gamma_2']
 
@@ -97,7 +94,7 @@ class DeepInspect(BackdoorDefense):
         self.attack.mark.add_mark_fn = add_mark_fn
 
     def remask(self, label: int) -> tuple[torch.Tensor, torch.Tensor]:
-        generator = Generator(self.noise_dim, self.dataset.num_classes, self.data_shape)
+        generator = Generator(self.noise_dim, self.dataset.num_classes, self.dataset.data_shape)
         for param in generator.parameters():
             param.requires_grad_()
         optimizer = optim.Adam(generator.parameters(), lr=self.remask_lr)
@@ -110,7 +107,7 @@ class DeepInspect(BackdoorDefense):
         acc = AverageMeter('Acc', ':6.2f')
         torch.manual_seed(env['seed'])
         noise = torch.rand(1, self.noise_dim, device=env['device'])
-        mark = torch.zeros(self.data_shape, device=env['device'])
+        mark = torch.zeros(self.dataset.data_shape, device=env['device'])
         for _epoch in range(self.remask_epoch):
             losses.reset()
             entropy.reset()
@@ -209,7 +206,7 @@ class Generator(nn.Module):
         y_ = self.fc2(_label)
         y_ = self.relu(y_)
         x = torch.cat([noise, y_], dim=1)
-        x = self.fc(x)
+        x: torch.Tensor = self.fc(x)
         x = x.view(-1, 64, self.data_shape[1], self.data_shape[2])
         x = self.bn1(x)
         x = self.relu(x)

@@ -27,9 +27,6 @@ class IMC_Adaptive(IMC):
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
                  strip_percent: float = 1.0, abs_weight: float = 1e-5, **kwargs):
         super().__init__(**kwargs)
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:

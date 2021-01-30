@@ -25,12 +25,11 @@ def add_argument(parser: argparse.ArgumentParser):
     return Watermark.add_argument(group)
 
 
-def create(mark_path: str = None, data_shape=None, dataset_name: str = None, dataset: ImageSet = None,
+def create(mark_path: str = None, data_shape: list[int] = None, dataset_name: str = None, dataset: ImageSet = None,
            config: Config = config, **kwargs):
     if data_shape is None:
         assert isinstance(dataset, ImageSet)
-        data_shape: list = [dataset.n_channel]
-        data_shape.extend(dataset.n_dim)
+        data_shape = dataset.data_shape
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name
     result = config.get_config(dataset_name=dataset_name)['mark']._update(kwargs)

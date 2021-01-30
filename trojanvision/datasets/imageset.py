@@ -16,14 +16,13 @@ class ImageSet(Dataset):
     name: str = 'imageset'
     data_type: str = 'image'
     num_classes = 1000
-    n_channel: int = 3
-    n_dim = (224, 224)
+    data_shape = [3, 224, 224]
 
     def __init__(self, norm_par: dict[str, list[float]] = None,
                  default_model: str = 'resnetcomp18', **kwargs):
         super().__init__(default_model=default_model, **kwargs)
         self.norm_par: dict[str, list[float]] = norm_par
-        self.param_list['imageset'] = ['n_channel', 'n_dim', 'norm_par']
+        self.param_list['imageset'] = ['data_shape', 'norm_par']
 
     @staticmethod
     def get_transform(**kwargs) -> transforms.ToTensor:

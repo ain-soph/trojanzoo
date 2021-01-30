@@ -17,7 +17,7 @@ root_dir = os.path.dirname(root_file)
 class ISIC(ImageFolder):
 
     name: str = 'isic'
-    n_dim: tuple = (224, 224)
+    data_shape = [3, 224, 224]
     valid_set: bool = False
 
     def initialize_folder(self, **kwargs):

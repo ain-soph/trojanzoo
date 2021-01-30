@@ -190,7 +190,7 @@ class Dataset:
         assert (length is None) != (percent is None)  # XOR check
         length = length if length is not None else int(len(dataset) * percent)
         indices = np.arange(len(dataset))
-        np.random.shuffle(indices)
+        np.random.shuffle(indices)  # TODO: random seed?
         if isinstance(dataset, torch.utils.data.Subset):
             idx = np.array(dataset.indices)
             indices = idx[indices]

@@ -32,9 +32,6 @@ class NeuronInspect(BackdoorDefense):
     def __init__(self, lambd_sp: float = 1e-5, lambd_sm: float = 1e-5, lambd_pe: float = 1,
                  thre: float = 0, sample_ratio: float = 0.1, **kwargs):
         super().__init__(**kwargs)
-        data_shape = [self.dataset.n_channel]
-        data_shape.extend(self.dataset.n_dim)
-        self.data_shape: list[int] = data_shape
 
         self.param_list['neuron_inspect'] = ['lambd_sp', 'lambd_sm', 'lambd_pe', 'thre', 'sample_ratio']
 

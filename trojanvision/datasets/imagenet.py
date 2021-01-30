@@ -15,7 +15,7 @@ root_dir = os.path.dirname(root_file)
 class ImageNet(ImageFolder):
 
     name = 'imagenet'
-    n_dim = (224, 224)
+    data_shape = [3, 224, 224]
     url = {
         'train': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_train.tar',
         'valid': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_val.tar',
