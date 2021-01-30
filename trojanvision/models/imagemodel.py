@@ -262,6 +262,7 @@ class ImageModel(Model):
                writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0,
                adv_train: bool = False, adv_train_alpha: float = 2.0 / 255, adv_train_epsilon: float = 8.0 / 255,
+               adv_train_valid_epsilon: float = 8.0 / 255,
                adv_train_iter: int = 7, **kwargs):
         if adv_train:
             after_loss_fn_old = after_loss_fn
@@ -270,7 +271,7 @@ class ImageModel(Model):
             validate_fn_old = validate_fn if callable(validate_fn) else self._validate
             loss_fn = loss_fn if callable(loss_fn) else self.loss
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
-            self.pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_epsilon,
+            self.pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_valid_epsilon,
                            iteration=adv_train_iter, stop_threshold=None)
 
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
@@ -287,7 +288,8 @@ class ImageModel(Model):
                     else:
                         optimizer.step()
                     self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn_new, iteration=1)
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn_new,
+                                                 iteration=1, epsilon=adv_train_epsilon)
                     self.train()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):
