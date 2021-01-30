@@ -28,8 +28,8 @@ class InfluenceFunction():
     def get_parameter(self) -> nn.Parameter:
         return self.module.weight
 
-    def up_loss(self, v: torch.Tensor = None, z: torch.Tensor = None, z_label: torch.Tensor = None,
-                v_test: torch.Tensor = None, z_test: torch.Tensor = None, z_test_label: torch.Tensor = None,
+    def up_loss(self, z: torch.Tensor = None, z_label: torch.Tensor = None, v: torch.Tensor = None,
+                z_test: torch.Tensor = None, z_test_label: torch.Tensor = None, v_test: torch.Tensor = None,
                 hess_inv: torch.Tensor = None) -> list[float]:
         if v is None:
             v = self.calc_v(z, z_label)
