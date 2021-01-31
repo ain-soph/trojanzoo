@@ -66,6 +66,10 @@ class TensorListDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.targets)
 
+class IndexDataset(TensorListDataset):
+    def __getitem__(self, index: Union[int, slice]) -> tuple[torch.Tensor, int]:
+        return index, self.data[index], self.targets[index]
+
 
 def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[list, list[int]]:
     if label_only and 'targets' in dataset.__dict__.keys():
