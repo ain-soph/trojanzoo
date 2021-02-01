@@ -18,6 +18,9 @@ class VGGface2(ImageFolder):
     num_classes = 8631
     valid_set: bool = False
     org_folder_name = {'train': 'train'}
+    url = {
+        'train': 'https://appcenter-deeplearning.sh1a.qingstor.com/dataset/vggface2/vggface2_train.tar.gz',
+    }
 
     @staticmethod
     def get_transform(mode: str) -> transforms.Compose:
@@ -39,59 +42,60 @@ class VGGface2(ImageFolder):
                        **kwargs):
         super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
 
-    def download(self, mode: str = 'train', file_path=None, folder_path=None, file_name=None, file_ext='tar.gz', **kwargs):
-        assert mode == 'train'
-        if file_path is None:
-            if folder_path is None:
-                folder_path = self.folder_path
-            if file_name is None:
-                file_name = f'{self.name}_{mode}.{file_ext}'
-                file_path = folder_path + file_name
-        if os.path.exists(file_path['train']):
-            print('File Already Exists: ', file_path)
-            return file_path
+    # Out-Of-Date
+    # def download(self, mode: str = 'train', file_path=None, folder_path=None, file_name=None, file_ext='tar.gz', **kwargs):
+    #     assert mode == 'train'
+    #     if file_path is None:
+    #         if folder_path is None:
+    #             folder_path = self.folder_path
+    #         if file_name is None:
+    #             file_name = f'{self.name}_{mode}.{file_ext}'
+    #             file_path = folder_path + file_name
+    #     if os.path.exists(file_path['train']):
+    #         print('File Already Exists: ', file_path)
+    #         return file_path
 
-        LOGIN_URL = "http://zeus.robots.ox.ac.uk/vgg_face2/login/"
-        FILE_URL = "http://zeus.robots.ox.ac.uk/vgg_face2/get_file?fname=vggface2_train.tar.gz"
+    #     LOGIN_URL = "http://zeus.robots.ox.ac.uk/vgg_face2/login/"
+    #     FILE_URL = "http://zeus.robots.ox.ac.uk/vgg_face2/get_file?fname=vggface2_train.tar.gz"
 
-        print('Please enter your VGG Face 2 credentials:')
-        user_string = input('    User: ')
-        password_string = getpass.getpass(prompt='    Password: ')
+    #     print('Please enter your VGG Face 2 credentials:')
+    #     user_string = input('    User: ')
+    #     password_string = getpass.getpass(prompt='    Password: ')
 
-        payload = {
-            'username': user_string,
-            'password': password_string
-        }
+    #     payload = {
+    #         'username': user_string,
+    #         'password': password_string
+    #     }
 
-        session = requests.session()
-        r = session.get(LOGIN_URL)
+    #     session = requests.session()
+    #     r = session.get(LOGIN_URL)
 
-        if 'csrftoken' in session.cookies:
-            csrftoken = session.cookies['csrftoken']
-        elif 'csrf' in session.cookies:
-            csrftoken = session.cookies['csrf']
-        else:
-            raise ValueError("Unable to locate CSRF token.")
+    #     if 'csrftoken' in session.cookies:
+    #         csrftoken = session.cookies['csrftoken']
+    #     elif 'csrf' in session.cookies:
+    #         csrftoken = session.cookies['csrf']
+    #     else:
+    #         raise ValueError("Unable to locate CSRF token.")
 
-        payload['csrfmiddlewaretoken'] = csrftoken
+    #     payload['csrfmiddlewaretoken'] = csrftoken
 
-        r = session.post(LOGIN_URL, data=payload)
+    #     r = session.post(LOGIN_URL, data=payload)
 
-        # filename = FILE_URL.split('=')[-1]
+    #     # filename = FILE_URL.split('=')[-1]
 
-        with open(file_path['train'], "wb") as f:
-            print(f"Downloading file: `{file_path['train']}`")
-            r = session.get(FILE_URL, data=payload, stream=True)
-            bytes_written = 0
-            for data in r.iter_content(chunk_size=4096):
-                f.write(data)
-                bytes_written += len(data)
-                MiB = bytes_written / (1024 * 1024)
-                sys.stdout.write(f"\r{MiB:0.2f} MiB downloaded...")
-                sys.stdout.flush()
+    #     with open(file_path['train'], "wb") as f:
+    #         print(f"Downloading file: `{file_path['train']}`")
+    #         r = session.get(FILE_URL, data=payload, stream=True)
+    #         bytes_written = 0
+    #         for data in r.iter_content(chunk_size=4096):
+    #             f.write(data)
+    #             bytes_written += len(data)
+    #             MiB = bytes_written / (1024 * 1024)
+    #             sys.stdout.write(f"\r{MiB:0.2f} MiB downloaded...")
+    #             sys.stdout.flush()
 
-        print("\nDone.")
-        return file_path
+    #     print("\nDone.")
+    #     return file_path
 
 
 class Sample_VGGface2(VGGface2):
