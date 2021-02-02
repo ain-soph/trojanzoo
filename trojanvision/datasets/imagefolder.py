@@ -101,7 +101,9 @@ class ImageFolder(ImageSet):
             os.rename(os.path.join(self.folder_path, self.org_folder_name[mode]),
                       os.path.join(self.folder_path, mode))
             try:
-                shutil.rmtree(os.path.join(self.folder_path, os.path.dirname(self.org_folder_name[mode])))
+                dirname = os.path.dirname(self.org_folder_name[mode])
+                if dirname:
+                    shutil.rmtree(os.path.join(self.folder_path, dirname))
             except FileNotFoundError:
                 pass
 
@@ -110,16 +112,15 @@ class ImageFolder(ImageSet):
         file_path = os.path.normpath(os.path.join(self.folder_path, file_name))
         md5 = None if mode not in self.md5.keys() else self.md5[mode]
         if not check_integrity(file_path, md5=md5):
-            print('{yellow}Downloading Dataset{reset} '.format(**ansi),
-                  f'{self.name} {mode:5s}: {file_path}')
+            prints('{yellow}Downloading Dataset{reset} '.format(**ansi),
+                   f'{self.name} {mode:5s}: {file_path}', indent=10)
             download_and_extract_archive(url=self.url[mode],
                                          download_root=self.folder_path, extract_root=self.folder_path,
                                          filename=file_name, md5=md5)
-            print('{upline}{clear_line}'.format(**ansi))
+            prints('{upline}{clear_line}'.format(**ansi), indent=10)
         else:
             prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
             extract_archive(from_path=file_path, to_path=self.folder_path)
-        return file_path
 
     def initialize_zip(self, mode_list: list[str] = ['train', 'valid'], **kwargs):
         if not self.valid_set:

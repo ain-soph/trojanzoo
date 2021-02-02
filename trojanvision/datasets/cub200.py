@@ -57,26 +57,24 @@ class CUB200(ImageFolder):
         file_path = os.path.normpath(os.path.join(self.folder_path, file_name))
         md5 = None if mode not in self.md5.keys() else self.md5[mode]
         if not check_integrity(file_path, md5=md5):
-            print('{yellow}Downloading Dataset{reset} '.format(**ansi),
-                  f'{self.name} {mode:5s}: {file_path}')
-            root, filename = os.path.split(file_path)
+            prints('{yellow}Downloading Dataset{reset} '.format(**ansi),
+                   f'{self.name} {mode:5s}: {file_path}', indent=10)
             download_file_from_google_drive(file_id=self.url[mode],
                                             root=self.folder_path, filename=file_name, md5=md5)
             print('{upline}{clear_line}'.format(**ansi))
         else:
             prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
         extract_archive(from_path=file_path, to_path=self.folder_path)
-        return file_path
 
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
         super().initialize_folder(verbose=verbose, img_type=img_type, **kwargs)
         # Remove useless files
         # os.remove(os.path.join(self.folder_path, ''))
-        dirpath = os.path.join(self.folder_path, 'train')
-        for fpath in os.listdir(dirpath):
-            path = os.path.join(dirpath, fpath)
-            if os.path.isfile(path):
-                os.remove(path)
+        # dirpath = os.path.join(self.folder_path, 'train')
+        # for fpath in os.listdir(dirpath):
+        #     path = os.path.join(dirpath, fpath)
+        #     if os.path.isfile(path):
+        #         os.remove(path)
 
         # Split Train and Valid Set
         txt_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'test.txt'))
@@ -106,22 +104,6 @@ class CUB200_2011(CUB200):
     md5 = {'train': '97eceeb196236b17998738112f37df78'}
 
     org_folder_name = {'train': 'CUB_200_2011/images'}
-
-    def download_and_extract_archive(self, mode: str):
-        file_name = f'{self.name}_{mode}{self.ext[mode]}'
-        file_path = os.path.normpath(os.path.join(self.folder_path, file_name))
-        md5 = None if mode not in self.md5.keys() else self.md5[mode]
-        if not check_integrity(file_path, md5=md5):
-            print('{yellow}Downloading Dataset{reset} '.format(**ansi),
-                  f'{self.name} {mode:5s}: {file_path}')
-            root, filename = os.path.split(file_path)
-            download_file_from_google_drive(file_id=self.url[mode],
-                                            root=self.folder_path, filename=file_name, md5=md5)
-            print('{upline}{clear_line}'.format(**ansi))
-        else:
-            prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
-        extract_archive(from_path=file_path, to_path=self.folder_path)
-        return file_path
 
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
         super(CUB200, self).initialize_folder(verbose=verbose, img_type=img_type, **kwargs)
