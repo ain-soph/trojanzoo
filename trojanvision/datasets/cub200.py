@@ -69,12 +69,12 @@ class CUB200(ImageFolder):
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
         super().initialize_folder(verbose=verbose, img_type=img_type, **kwargs)
         # Remove useless files
-        # os.remove(os.path.join(self.folder_path, ''))
-        # dirpath = os.path.join(self.folder_path, 'train')
-        # for fpath in os.listdir(dirpath):
-        #     path = os.path.join(dirpath, fpath)
-        #     if os.path.isfile(path):
-        #         os.remove(path)
+        os.remove(os.path.join(self.folder_path, '._images'))
+        dirpath = os.path.join(self.folder_path, 'train')
+        for fpath in os.listdir(dirpath):
+            path = os.path.join(dirpath, fpath)
+            if os.path.isfile(path):
+                os.remove(path)
 
         # Split Train and Valid Set
         txt_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'test.txt'))
