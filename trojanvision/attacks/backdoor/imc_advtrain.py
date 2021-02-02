@@ -12,6 +12,7 @@ import math
 import random
 import time
 import datetime
+import os
 from tqdm import tqdm
 from collections.abc import Callable
 
@@ -63,7 +64,7 @@ class IMC_AdvTrain(IMC):
                   validate_interval=10, save=False, verbose=True, indent=0, epoch_fn: Callable = None,
                   **kwargs):
         loader_train = self.dataset.loader['train']
-        file_path = self.folder_path + self.get_filename() + '.pth'
+        file_path = os.path.join(self.folder_path, self.get_filename() + '.pth')
 
         _, best_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
 

@@ -11,9 +11,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-import argparse
 import time
 import datetime
+import os
+import argparse
 from tqdm import tqdm
 
 
@@ -64,7 +65,7 @@ class DeepInspect(BackdoorDefense):
         if not self.attack.mark.random_pos:
             self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
-        np.savez(self.folder_path + self.get_filename(target_class=self.target_class) + '.npz',
+        np.savez(os.path.join(self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'),
                  mark_list=mark_list, loss_list=loss_list)
         print('loss: ', loss_list)
         print('loss MAD: ', normalize_mad(loss_list))
@@ -82,7 +83,7 @@ class DeepInspect(BackdoorDefense):
 
     def load(self, path: str = None):
         if path is None:
-            path = self.folder_path + self.get_filename() + '.npz'
+            path = os.path.join(self.folder_path, self.get_filename() + '.npz')
         _dict = np.load(path, allow_pickle=True)
         self.attack.mark.mark = to_tensor(_dict['mark_list'][self.attack.target_class])
         self.attack.mark.random_pos = False

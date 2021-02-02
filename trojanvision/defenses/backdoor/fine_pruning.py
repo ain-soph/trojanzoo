@@ -7,6 +7,7 @@ from trojanzoo.utils.output import output_iter
 import torch
 import torch.nn as nn
 import torch.nn.utils.prune as prune
+import os
 import argparse
 
 
@@ -75,7 +76,7 @@ class FinePruning(BackdoorDefense):
             clean_acc, _ = self.attack.validate_fn()
             if self.attack.clean_acc - clean_acc > 20:
                 break
-        file_path = self.folder_path + self.get_filename() + '.pth'
+        file_path = os.path.join(self.folder_path, self.get_filename() + '.pth')
         self.model._train(validate_fn=self.attack.validate_fn, file_path=file_path, **kwargs)
         self.attack.validate_fn()
 

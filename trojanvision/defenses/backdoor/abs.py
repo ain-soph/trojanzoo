@@ -147,10 +147,13 @@ class ABS(BackdoorDefense):
                 print(_str)
                 if not os.path.exists(self.folder_path):
                     os.makedirs(self.folder_path)
-                np.save(self.folder_path + self.get_filename(target_class=self.target_class) + '.npy', neuron_dict)
-                np.save(self.folder_path + self.get_filename(target_class=self.target_class) + '_best.npy', result_dict)
-            print(
-                f'Label: {label:3d}  loss: {result_dict[label]["loss"]:10.3f}  ATK loss: {result_dict[label]["attack_loss"]:10.3f}  Norm: {result_dict[label]["norm"]:10.3f}  Jaccard: {result_dict[label]["jaccard"]:10.3f}  Score: {best_score:.3f}')
+                np.save(os.path.join(self.folder_path,
+                                     self.get_filename(target_class=self.target_class) + '.npy'), neuron_dict)
+                np.save(os.path.join(self.folder_path,
+                                     self.get_filename(target_class=self.target_class) + '_best.npy'), result_dict)
+            print(f'Label: {label:3d}  loss: {result_dict[label]["loss"]:10.3f}'
+                  f'  ATK loss: {result_dict[label]["attack_loss"]:10.3f}  Norm: {result_dict[label]["norm"]:10.3f}'
+                  f'  Jaccard: {result_dict[label]["jaccard"]:10.3f}  Score: {best_score:.3f}')
             score_list[label] = best_score
         print('Score: ', score_list)
         print('Score MAD: ', normalize_mad(score_list))
@@ -370,10 +373,9 @@ class ABS(BackdoorDefense):
         #     mask.add_(1)
 
     def load(self, path: str = None):
-
         if path is None:
-            path = self.folder_path + self.get_filename(target_class=self.target_class) + '_best.npy'
-        _dict = np.load(path, allow_pickle=True).item()
+            path = os.path.join(self.folder_path, self.get_filename(target_class=self.target_class) + '_best.npy')
+        _dict: dict[str, dict[str, torch.Tensor]] = np.load(path, allow_pickle=True).item()
         self.attack.mark.mark = to_tensor(_dict[self.target_class]['mark'])
         self.attack.mark.alpha_mask = to_tensor(_dict[self.target_class]['mask'])
         self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)

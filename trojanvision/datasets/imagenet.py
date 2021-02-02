@@ -8,7 +8,7 @@ from torchvision.datasets import ImageNet as ImageNet_Official
 import numpy as np
 import os
 import json
-from trojanzoo import __file__ as root_file
+from trojanvision import __file__ as root_file
 root_dir = os.path.dirname(root_file)
 
 
@@ -20,6 +20,10 @@ class ImageNet(ImageFolder):
         'train': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_train.tar',
         'valid': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_val.tar',
         'test': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_test.tar',
+    }
+    md5 = {
+        'train': '1d675b47d978889d74fa0da5fadfb00e',
+        'valid': '29b22e2961454d5413ddabcf34fc5622',
     }
 
     def __init__(self, norm_par={'mean': [0.485, 0.456, 0.406],

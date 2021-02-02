@@ -16,41 +16,41 @@ if TYPE_CHECKING:
     import torch.utils.data
 
 
-def untar(file_path: str, target_path: str):
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
-    tar = tarfile.open(file_path)
-    names = tar.getnames()
-    if env['tqdm']:
-        names = tqdm(names)
-    for name in names:
-        tar.extract(name, path=target_path)
-    if env['tqdm']:
-        print('{upline}{clear_line}'.format(**ansi))
-    tar.close()
+# def untar(file_path: str, target_path: str):
+#     if not os.path.exists(target_path):
+#         os.makedirs(target_path)
+#     tar = tarfile.open(file_path)
+#     names = tar.getnames()
+#     if env['tqdm']:
+#         names = tqdm(names)
+#     for name in names:
+#         tar.extract(name, path=target_path)
+#     if env['tqdm']:
+#         print('{upline}{clear_line}'.format(**ansi))
+#     tar.close()
 
 
-def unzip(file_path: str, target_path: str):
-    with zipfile.ZipFile(file_path) as zf:
-        zf.extractall(target_path)
+# def unzip(file_path: str, target_path: str):
+#     with zipfile.ZipFile(file_path) as zf:
+#         zf.extractall(target_path)
 
 
-def uncompress(file_path: str, target_path: str, verbose: bool = True):
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
-    if verbose:
-        print('{yellow}Uncompress file{reset}: '.format(**ansi), file_path)
-    ext = os.path.splitext(file_path)[1]
-    if ext in ['.zip']:
-        unzip(file_path, target_path)
-    elif ext in ['.tar', '.gz']:
-        untar(file_path, target_path)
-    else:
-        raise NotImplementedError(f'{file_path=}')
-    if verbose:
-        print('{green}Uncompress finished{reset}: '.format(**ansi),
-              f'{target_path}')
-        print()
+# def uncompress(file_path: str, target_path: str, verbose: bool = True):
+#     if not os.path.exists(target_path):
+#         os.makedirs(target_path)
+#     if verbose:
+#         print('{yellow}Uncompress file{reset}: '.format(**ansi), file_path)
+#     ext = os.path.splitext(file_path)[1]
+#     if ext in ['.zip']:
+#         unzip(file_path, target_path)
+#     elif ext in ['.tar', '.gz']:
+#         untar(file_path, target_path)
+#     else:
+#         raise NotImplementedError(f'{file_path=}')
+#     if verbose:
+#         print('{green}Uncompress finished{reset}: '.format(**ansi),
+#               f'{target_path}')
+#         print()
 
 
 class TensorListDataset(torch.utils.data.Dataset):
@@ -65,6 +65,7 @@ class TensorListDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.targets)
+
 
 class IndexDataset(TensorListDataset):
     def __getitem__(self, index: Union[int, slice]) -> tuple[torch.Tensor, int]:

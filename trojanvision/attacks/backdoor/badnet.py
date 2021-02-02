@@ -114,7 +114,7 @@ class BadNet(Attack):
 
     def load(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = self.folder_path + filename
+        file_path = os.path.join(self.folder_path, filename)
         self.mark.load_npz(file_path + '.npz')
         self.model.load(file_path + '.pth')
         print('attack results loaded from: ', file_path)

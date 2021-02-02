@@ -7,6 +7,8 @@ from .gtsrb import GTSRB
 from .imagenet import ImageNet, Sample_ImageNet
 from .vggface2 import VGGface2, Sample_VGGface2
 from .isic import ISIC2018
+from .cub200 import CUB200, CUB200_2011
+
 from trojanvision.configs import Config, config
 import trojanzoo.datasets
 
@@ -23,6 +25,8 @@ class_dict: dict[str, ImageSet] = {
     'isic2018': ISIC2018,
     'vggface2': VGGface2,
     'sample_vggface2': Sample_VGGface2,
+    'cub200': CUB200,
+    'cub200_2011': CUB200_2011,
 }
 
 

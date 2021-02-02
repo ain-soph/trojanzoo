@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+
 
 def split_ttc(folder_path, filename):
     from struct import pack_into, unpack_from
@@ -8,7 +10,7 @@ def split_ttc(folder_path, filename):
         """returns the next integer which is a multiple of 4"""
         return (n + 3) & ~3
 
-    in_file = open(folder_path + filename, "rb")
+    in_file = open(os.path.join(folder_path, filename), "rb")
     buf = in_file.read()
     in_file.close()
 
@@ -16,7 +18,7 @@ def split_ttc(folder_path, filename):
         filename = filename[:-4]
 
     if buf[:4] != b"ttcf":
-        out_filename = folder_path + "%s.ttf" % filename
+        out_filename = os.path.join(folder_path, f'{filename}.ttf' %)
         out_file = open(out_filename, "wb")
         out_file.write(buf)
         # end, so we don’t have to close the files or call exit() here
@@ -58,5 +60,5 @@ def split_ttc(folder_path, filename):
 
                 current_offset += ceil4(length)
 
-            out_file = open(folder_path + "%s%d.ttf" % (filename, i), "wb")
+            out_file = open(os.path.join(folder_path, f'{filename}{i:d}.ttf'), "wb")
             out_file.write(new_buf)

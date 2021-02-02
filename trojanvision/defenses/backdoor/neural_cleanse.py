@@ -77,9 +77,10 @@ class NeuralCleanse(BackdoorDefense):
         mark_list = [to_numpy(i) for i in mark_list]
         mask_list = [to_numpy(i) for i in mask_list]
         loss_list = [to_numpy(i) for i in loss_list]
-        np.savez(self.folder_path + self.get_filename(target_class=target_class) + '.npz',
-                 mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
-        print('Defense results saved at: ' + self.folder_path + self.get_filename(target_class=target_class) + '.npz')
+        file_path = os.path.normpath(os.path.join(
+            self.folder_path, self.get_filename(target_class=target_class) + '.npz'))
+        np.savez(file_path, mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
+        print('Defense results saved at: ' + file_path)
 
     def get_potential_triggers(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark_list, mask_list, loss_list = [], [], []
@@ -257,7 +258,7 @@ class NeuralCleanse(BackdoorDefense):
 
     def load(self, path: str = None):
         if path is None:
-            path = self.folder_path + self.get_filename() + '.npz'
+            path = os.path.join(self.folder_path, self.get_filename() + '.npz')
         _dict = np.load(path)
         self.attack.mark.mark = to_tensor(_dict['mark_list'][self.target_class])
         self.attack.mark.alpha_mask = to_tensor(_dict['mask_list'][self.target_class])

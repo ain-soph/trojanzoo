@@ -10,7 +10,7 @@ import shutil
 import pandas as pd
 from tqdm import tqdm
 
-from trojanzoo import __file__ as root_file
+from trojanvision import __file__ as root_file
 root_dir = os.path.dirname(root_file)
 
 
@@ -58,18 +58,17 @@ class ISIC(ImageFolder):
             new_dict[label] = org_dict['image'][org_dict[label]]
 
         print('Splitting dataset to class folders ...')
-
-        src_folder = self.folder_path + self.name + '/train/'
+        src_folder = os.path.normpath(os.path.join(self.folder_path, self.name, 'train'))
         if env['tqdm']:
             labels = tqdm(labels[1:])
         for label in labels:
             seq = new_dict[label]
-            dst_folder = f'{src_folder}{label}/'
+            dst_folder = os.path.join(src_folder, label)
             if not os.path.exists(dst_folder):
                 os.makedirs(dst_folder)
             for img in seq:
-                src = src_folder + img + '.jpg'
-                dest = dst_folder + img + '.jpg'
+                src = os.path.join(src_folder, img + '.jpg')
+                dest = os.path.join(dst_folder, img + '.jpg')
                 shutil.move(src, dest)
 
 
@@ -78,4 +77,5 @@ class ISIC2018(ISIC):
     name: str = 'isic2018'
     num_classes = 7
     url = {'train': 'https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip'}
+    md5 = {'train': '0c281f121070a8d63457caffcdec439a'}
     org_folder_name = {'train': 'ISIC2018_Task3_Training_Input'}

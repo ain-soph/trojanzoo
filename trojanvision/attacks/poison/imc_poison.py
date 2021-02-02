@@ -9,6 +9,7 @@ from trojanzoo.utils import to_list
 
 import torch
 import numpy as np
+import os
 from scipy.stats import ks_2samp
 import argparse
 
@@ -164,7 +165,7 @@ class IMC_Poison(PoisonBasic):
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = self.folder_path + filename
+        file_path = os.path.join(self.folder_path, filename)
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 

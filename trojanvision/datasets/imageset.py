@@ -6,9 +6,13 @@ from trojanvision.environ import env
 import torch
 import torch.utils.data
 import torchvision.transforms as transforms
-from torchvision.datasets import VisionDataset
 import os
+
+from typing import TYPE_CHECKING
+from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
+if TYPE_CHECKING:
+    pass
 
 
 class ImageSet(Dataset):
@@ -63,7 +67,7 @@ class ImageSet(Dataset):
                 image: Image.Image
                 target_class: int
                 class_name = idx_to_class[target_class]
-                _dir = self.folder_path + self.name + f'/{mode}/{class_name}/'
+                _dir = os.path.join(self.folder_path, self.name, mode, class_name)
                 if not os.path.exists(_dir):
                     os.makedirs(_dir)
                 image.save(_dir + f'{class_counters[target_class]}{img_type}')

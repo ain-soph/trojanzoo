@@ -4,26 +4,32 @@ from .imageset import ImageSet
 from trojanvision.utils.data import MemoryDataset, ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
-from trojanzoo.utils.data import uncompress, dataset_to_list
+from trojanzoo.utils.data import dataset_to_list
 
-from torch.hub import download_url_to_file
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from torchvision.datasets.utils import check_integrity, download_and_extract_archive, extract_archive
 import numpy as np
 import PIL.Image as Image
 import json
+import zipfile
 import os
 import shutil
-import zipfile
-import argparse
 from tqdm import tqdm
+
 from typing import Union
+from typing import TYPE_CHECKING
+import argparse    # TODO: python 3.10
+if TYPE_CHECKING:
+    pass
 
 
 class ImageFolder(ImageSet):
 
     name: str = 'imagefolder'
     url: dict[str, str] = {}
+    ext: dict[str, str] = {'train': '.zip', 'valid': '.zip', 'test': '.zip'}
+    md5: dict[str, str] = {}
     org_folder_name: dict[str, str] = {}
 
     @classmethod
@@ -63,14 +69,20 @@ class ImageFolder(ImageSet):
 
     def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
         print('initialize folder')
-        mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
+        mode_list: list[str] = ['train', 'valid'] if self.valid_set and 'valid' in self.url.keys() else ['train']
         self.class_to_idx = self.get_class_to_idx()
         idx_to_class = {v: k for k, v in self.class_to_idx.items()}
         for mode in mode_list:
             zip_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
             npz_path = os.path.join(self.folder_path, f'{self.name}_{mode}.npz')
             if os.path.isfile(zip_path):
-                uncompress(file_path=zip_path, target_path=self.folder_path, verbose=verbose)
+                if verbose:
+                    print('{yellow}Uncompress file{reset}: '.format(**ansi), zip_path)
+                extract_archive(from_path=zip_path, to_path=self.folder_path)
+                if verbose:
+                    print('{green}Uncompress finished{reset}: '.format(**ansi),
+                          f'{zip_path}')
+                    print()
                 continue
             elif os.path.isfile(npz_path):
                 self.data, self.targets = self.load_npz()
@@ -85,14 +97,29 @@ class ImageFolder(ImageSet):
                     image.save(os.path.join(_dir, f'{class_counters[target_class]}{img_type}'))
                     class_counters[target_class] += 1
                 continue
-            file_path = self.download(mode=mode, url=self.url[mode])
-            uncompress(file_path=file_path, target_path=self.folder_path, verbose=verbose)
+            self.download_and_extract_archive(mode=mode)
             os.rename(os.path.join(self.folder_path, self.org_folder_name[mode]),
                       os.path.join(self.folder_path, mode))
             try:
                 shutil.rmtree(os.path.join(self.folder_path, os.path.dirname(self.org_folder_name[mode])))
             except FileNotFoundError:
                 pass
+
+    def download_and_extract_archive(self, mode: str):
+        file_name = f'{self.name}_{mode}{self.ext[mode]}'
+        file_path = os.path.normpath(os.path.join(self.folder_path, file_name))
+        md5 = None if mode not in self.md5.keys() else self.md5[mode]
+        if not check_integrity(file_path, md5=md5):
+            print('{yellow}Downloading Dataset{reset} '.format(**ansi),
+                  f'{self.name} {mode:5s}: {file_path}')
+            download_and_extract_archive(url=self.url[mode],
+                                         download_root=self.folder_path, extract_root=self.folder_path,
+                                         filename=file_name, md5=md5)
+            print('{upline}{clear_line}'.format(**ansi))
+        else:
+            prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
+            extract_archive(from_path=file_path, to_path=self.folder_path)
+        return file_path
 
     def initialize_zip(self, mode_list: list[str] = ['train', 'valid'], **kwargs):
         if not self.valid_set:
@@ -177,23 +204,6 @@ class ImageFolder(ImageSet):
         if check_folder:
             return self.get_org_dataset('train', data_format='folder').class_to_idx
         return super().get_class_to_idx()
-
-    def download(self, mode: str, url: str, file_path: str = None,
-                 folder_path: str = None, file_name: str = None, file_ext: str = 'zip') -> str:
-        if file_path is None:
-            if folder_path is None:
-                folder_path = self.folder_path
-            if file_name is None:
-                file_name = f'{self.name}_{mode}.{file_ext}'
-                file_path = os.path.normpath(os.path.join(folder_path, file_name))
-        if not os.path.exists(file_path):
-            print('{yellow}Downloading Dataset{reset} '.format(**ansi),
-                  f'{self.name} {mode:5s}: {file_path}')
-            download_url_to_file(url, file_path)
-            print('{upline}{clear_line}'.format(**ansi))
-        else:
-            prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
-        return file_path
 
     def sample(self, child_name: str = None, class_dict: dict = None, sample_num: int = None, verbose=True):
         if sample_num is None:

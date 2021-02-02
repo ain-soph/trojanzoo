@@ -7,6 +7,7 @@ from trojanzoo.utils.output import prints
 import torch
 import numpy as np
 
+import os
 from itertools import combinations
 from scipy.special import comb
 import argparse
@@ -91,12 +92,12 @@ class TrojanNet(BadNet):
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = self.folder_path + filename
+        file_path = os.path.join(self.folder_path, filename)
         self.mlp_model.save(file_path + '.pth', verbose=True)
 
     def load(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = self.folder_path + filename
+        file_path = os.path.join(self.folder_path, filename)
         self.mlp_model.load(file_path + '.pth', verbose=True)
 
     def validate_fn(self,

@@ -9,6 +9,7 @@ import torch.utils.data
 import numpy as np
 import math
 import random
+import os
 from typing import Callable
 
 
@@ -36,14 +37,14 @@ class IMC_Multi(IMC):
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = self.folder_path + filename
+        file_path = os.path.join(self.folder_path, filename)
         np.save(file_path + '.npy', self.mark_list)
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 
     def load(self, **kwargs):
         filename = self.get_filename(**kwargs)
-        file_path = self.folder_path + filename
+        file_path = os.path.join(self.folder_path, filename)
         print('attack results loaded from: ', file_path)
         self.mark_list = np.load(file_path + '.npy', allow_pickle=True)
         self.model.load(file_path + '.pth')

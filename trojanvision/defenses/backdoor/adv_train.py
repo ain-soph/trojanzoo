@@ -8,9 +8,10 @@ from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
 from torch import optim
-import argparse
 import time
 import datetime
+import os
+import argparse
 from tqdm import tqdm
 
 
@@ -61,7 +62,7 @@ class AdvTrain(BackdoorDefense):
                   validate_interval=10, save=False, verbose=True, indent=0,
                   **kwargs):
         loader_train = self.dataset.loader['train']
-        file_path = self.folder_path + self.get_filename() + '.pth'
+        file_path = os.path.join(self.folder_path, self.get_filename() + '.pth')
 
         _, best_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
 
