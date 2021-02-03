@@ -516,7 +516,7 @@ class Model:
             _, pred = _output.topk(maxk, 1, True, True)
             pred = pred.t()
             correct = pred.eq(_label[None])
-            res: tuple[float, ...] = []
+            res: list[float] = []
             for k in topk:
                 if k > self.num_classes:
                     res.append(100.0)
