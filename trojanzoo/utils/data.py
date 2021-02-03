@@ -67,9 +67,19 @@ class TensorListDataset(torch.utils.data.Dataset):
         return len(self.targets)
 
 
-class IndexDataset(TensorListDataset):
+class IndexDataset(torch.utils.data.Dataset):
+    def __init__(self, data: torch.Tensor = None, targets: list[int] = None, indices: list[int] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.data = data
+        self.targets = to_list(targets)
+        self.indices = to_list(indices)
+        assert len(self.data) == len(self.targets)
+
     def __getitem__(self, index: Union[int, slice]) -> tuple[torch.Tensor, int]:
-        return index, self.data[index], self.targets[index]
+        return self.indices[index], self.data[index], self.targets[index]
+
+    def __len__(self):
+        return len(self.targets)
 
 
 def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[list, list[int]]:
