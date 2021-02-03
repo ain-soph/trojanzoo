@@ -284,7 +284,7 @@ class ImageModel(Model):
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
                 noise = torch.zeros_like(_input)
-                loss_fn = functools.partial(adv_loss, _label=_label)
+                adv_loss_fn = functools.partial(adv_loss, _label=_label)
 
                 for m in range(self.pgd.iteration):
                     if amp:
@@ -294,7 +294,7 @@ class ImageModel(Model):
                         optimizer.step()
                     self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, noise=noise,
-                                                 loss_fn=loss_fn,
+                                                 loss_fn=adv_loss_fn,
                                                  iteration=1, epsilon=adv_train_epsilon)
                     self.train()
                     loss = loss_fn(adv_x, _label)
