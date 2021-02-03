@@ -277,7 +277,8 @@ class ImageModel(Model):
             ce_loss_fn = torch.nn.CrossEntropyLoss(weight=self.loss_weights)
 
             def adv_loss(_input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
-                return -ce_loss_fn(_input, _label)
+                _output = self(_input)
+                return -ce_loss_fn(_output, _label)
 
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
