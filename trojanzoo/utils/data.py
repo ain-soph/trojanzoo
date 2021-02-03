@@ -68,7 +68,7 @@ class TensorListDataset(torch.utils.data.Dataset):
 
 
 class IndexDataset(torch.utils.data.Dataset):
-    def __init__(self, data: torch.Tensor = None, targets: list[int] = None, indices: list[int] = None, **kwargs):
+    def __init__(self, indices: list[int] = None, data: torch.Tensor = None, targets: list[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self.targets = to_list(targets)
