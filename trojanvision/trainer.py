@@ -21,6 +21,8 @@ class Trainer(trojanzoo.trainer.Trainer):
                            help='adversarial training PGD alpha, defaults to 2/255.')
         group.add_argument('--adv_train_epsilon', dest='adv_train_epsilon', type=float,
                            help='adversarial training PGD epsilon, defaults to 8/255.')
+        group.add_argument('--adv_train_valid_epsilon', dest='adv_train_valid_epsilon', type=float,
+                           help='adversarial training PGD epsilon, defaults to 8/255.')
         group.add_argument('--adv_train_iter', dest='adv_train_iter', type=int,
                            help='adversarial training PGD iteration, defaults to 7.')
 

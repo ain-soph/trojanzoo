@@ -263,8 +263,7 @@ class ImageModel(Model):
                writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0,
                adv_train: bool = False, adv_train_alpha: float = 2.0 / 255, adv_train_epsilon: float = 8.0 / 255,
-               adv_train_valid_epsilon: float = 8.0 / 255,
-               adv_train_iter: int = 7, **kwargs):
+               adv_train_iter: int = 7, adv_train_valid_epsilon: float = 8.0 / 255, **kwargs):
         if adv_train:
             after_loss_fn_old = after_loss_fn
             if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):

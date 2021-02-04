@@ -1,3 +1,3 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils.environ import *
+from trojanzoo.environ import *

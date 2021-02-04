@@ -5,10 +5,11 @@ from .output import ansi
 from .tensor import to_list
 
 import torch
-import os
-import tqdm
-import tarfile
-import zipfile
+import numpy as np
+# import os
+# import tqdm
+# import tarfile
+# import zipfile
 
 from typing import TYPE_CHECKING
 from typing import Union    # TODO: python 3.10
@@ -84,9 +85,16 @@ class IndexDataset(torch.utils.data.Dataset):
 
 def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[list, list[int]]:
     if label_only and 'targets' in dataset.__dict__.keys():
-        return None, dataset.targets
+        return None, list(dataset.targets)
     if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
-        return dataset.data, dataset.targets
+        data = dataset.data
+        if isinstance(data, np.ndarray):
+            data = torch.as_tensor(data)
+        if isinstance(data, torch.Tensor):
+            if data.max() > 2:
+                data = data.to(dtype=torch.float) / 255
+            data = [img for img in data]
+        return data, list(dataset.targets)
     data, targets = zip(*dataset)
     if label_only:
         data = None
