@@ -178,14 +178,17 @@ class ImageModel(Model):
         self._model: _ImageModel
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
+        self.ce_loss_fn = torch.nn.CrossEntropyLoss(weight=self.loss_weights)
+
+    def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
+        _output = self(_input)
+        return -self.ce_loss_fn(_output, _label)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if adv and self.pgd is not None:
             _input, _label = super().get_data(data, **kwargs)
-
-            def loss_fn_new(X: torch.FloatTensor) -> torch.Tensor:  # TODO: use functools.partial
-                return -self.loss(X, _label)
-            adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn_new)
+            adv_loss_fn = functools.partial(self.adv_loss, _label=_label)
+            adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn)
             return adv_x, _label
         return super().get_data(data, **kwargs)
 
@@ -273,17 +276,12 @@ class ImageModel(Model):
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
             self.pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_valid_epsilon,
                            iteration=adv_train_iter, stop_threshold=None)
-            ce_loss_fn = torch.nn.CrossEntropyLoss(weight=self.loss_weights)
-
-            def adv_loss(_input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
-                _output = self(_input)
-                return -ce_loss_fn(_output, _label)
 
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
                 noise = torch.zeros_like(_input)
-                adv_loss_fn = functools.partial(adv_loss, _label=_label)
+                adv_loss_fn = functools.partial(self.adv_loss, _label=_label)
 
                 for m in range(self.pgd.iteration):
                     if amp:
