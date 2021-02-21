@@ -75,7 +75,7 @@ class _ImageModel(_Model):
         record = False
 
         if layer_input == 'input':
-            x = self.preprocess(x)
+            x = self.normalize(x)
             record = True
 
         for name, module in self.features.named_children():
