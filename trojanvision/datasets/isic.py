@@ -3,6 +3,7 @@
 from .imagefolder import ImageFolder
 from trojanvision.environ import env
 
+import torchvision.transforms as transforms
 import numpy as np
 import os
 import shutil
