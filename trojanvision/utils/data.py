@@ -7,6 +7,7 @@ import numpy as np
 import PIL.Image as Image
 import io
 import os
+import shutil
 import struct
 import zipfile
 # TODO: Bug of python 3.9.1, collections.abc.Callable[[str],int] regard the [str] as a tuple
@@ -55,13 +56,33 @@ class MemoryDataset(VisionDataset):
 # https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/zippedfolder.py
 class ZipFolder(DatasetFolder):
     def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
-                 is_valid_file: Optional[Callable[[str], bool]] = None) -> None:
+                 is_valid_file: Optional[Callable[[str], bool]] = None, memory: bool = True) -> None:
         if not root.endswith('.zip'):
-            raise TypeError("Need to ZIP file for data source: ", root)
-        self.root_zip = ZipLookup(os.path.realpath(root))
+            raise TypeError("Need ZIP file for data source: ", root)
+        if memory:
+            with open(root, 'rb') as z:
+                data = z.read()
+            self.root_zip = zipfile.ZipFile(io.BytesIO(data), 'r')
+        else:
+            self.root_zip = zipfile.ZipFile(root, 'r')
+
         super().__init__(root, self.zip_loader, IMG_EXTENSIONS if is_valid_file is None else None,
                          transform=transform, target_transform=target_transform, is_valid_file=is_valid_file)
         self.imgs = self.samples
+
+    @staticmethod
+    def initialize_from_folder(root: str, zip_path: str = None):
+        root = os.path.normpath(root)
+        if zip_path is None:
+            folder_dir, folder_base = os.path.split(root)
+            zip_path = os.path.join(folder_dir, f'{folder_base}_store.zip')
+        with zipfile.ZipFile(zip_path, mode='w', compression=zipfile.ZIP_STORED) as zf:
+            for walk_root, walk_dirs, walk_files in os.walk(root):
+                zip_root = walk_root.removeprefix(folder_dir)
+                for _file in walk_files:
+                    org_path = os.path.join(walk_root, _file)
+                    zip_path = os.path.join(zip_root, _file)
+                    zf.write(org_path, zip_path)
 
     def make_dataset(
         self,
@@ -81,13 +102,12 @@ class ZipFolder(DatasetFolder):
         is_valid_file = cast(Callable[[str], bool], is_valid_file)
         for filepath in self.root_zip.keys():
             if is_valid_file(filepath):
-                _, target_class = os.path.split(os.path.dirname(filepath))
-                item = filepath, class_to_idx[target_class]
-                instances.append(item)
+                target_class = os.path.basename(os.path.dirname(filepath))
+                instances.append((filepath, class_to_idx[target_class]))
         return instances
 
-    def zip_loader(self, path) -> Any:
-        f = self.root_zip[path]
+    def zip_loader(self, path: str) -> Image.Image:
+        f = self.root_zip.read(path)
         if get_image_backend() == 'accimage':
             try:
                 import accimage  # type: ignore
@@ -117,37 +137,21 @@ class ZipFolder(DatasetFolder):
         return classes, class_to_idx
 
 
-class ZipLookup(object):
-    def __init__(self, filename):
-        self.root_zip_filename = filename
-        self.root_zip_lookup: dict[str, tuple[int, int]] = {}
+class ZipLookup:
+    def __init__(self, filename: str, memory: bool = True):
+        # self.root_zip_filename = filename
+        # self.memory = memory
+        if memory:
+            with open(filename, 'rb') as z:
+                data = z.read()
+            self.zip_f = zipfile.ZipFile(io.BytesIO(data), 'r')
+        else:
+            self.zip_f = zipfile.ZipFile(filename, 'r')
 
-        with zipfile.ZipFile(filename, "r") as root_zip:
-            for info in root_zip.infolist():
-                if info.filename[-1] == '/':
-                    # skip directories
-                    continue
-                if info.compress_type != zipfile.ZIP_STORED:
-                    raise ValueError("Only uncompressed ZIP file supported: " + info.filename)
-                if info.compress_size != info.file_size:
-                    raise ValueError("Must be the same when uncompressed")
-                self.root_zip_lookup[info.filename] = (info.header_offset, info.compress_size)
-
-    def __getitem__(self, path):
-        z = open(self.root_zip_filename, "rb")
-        header_offset, size = self.root_zip_lookup[path]
-
-        z.seek(header_offset)
-        fheader = z.read(zipfile.sizeFileHeader)
-        fheader = struct.unpack(zipfile.structFileHeader, fheader)
-        offset = header_offset + zipfile.sizeFileHeader + fheader[zipfile._FH_FILENAME_LENGTH] + \
-            fheader[zipfile._FH_EXTRA_FIELD_LENGTH]
-
-        z.seek(offset)
-        f = io.BytesIO(z.read(size))
+    def __getitem__(self, path: str):
+        f = io.BytesIO(self.zip_f.read(path))
         f.name = path
-        z.close()
         return f
 
     def keys(self):
-        return self.root_zip_lookup.keys()
+        return self.zip_f.namelist()
