@@ -1,57 +1,14 @@
 #!/usr/bin/env python3
 
-from .environ import env
-from .output import ansi
 from .tensor import to_list
 
 import torch
 import numpy as np
-# import os
-# import tqdm
-# import tarfile
-# import zipfile
 
 from typing import TYPE_CHECKING
 from typing import Union    # TODO: python 3.10
 if TYPE_CHECKING:
     import torch.utils.data
-
-
-# def untar(file_path: str, target_path: str):
-#     if not os.path.exists(target_path):
-#         os.makedirs(target_path)
-#     tar = tarfile.open(file_path)
-#     names = tar.getnames()
-#     if env['tqdm']:
-#         names = tqdm(names)
-#     for name in names:
-#         tar.extract(name, path=target_path)
-#     if env['tqdm']:
-#         print('{upline}{clear_line}'.format(**ansi))
-#     tar.close()
-
-
-# def unzip(file_path: str, target_path: str):
-#     with zipfile.ZipFile(file_path) as zf:
-#         zf.extractall(target_path)
-
-
-# def uncompress(file_path: str, target_path: str, verbose: bool = True):
-#     if not os.path.exists(target_path):
-#         os.makedirs(target_path)
-#     if verbose:
-#         print('{yellow}Uncompress file{reset}: '.format(**ansi), file_path)
-#     ext = os.path.splitext(file_path)[1]
-#     if ext in ['.zip']:
-#         unzip(file_path, target_path)
-#     elif ext in ['.tar', '.gz']:
-#         untar(file_path, target_path)
-#     else:
-#         raise NotImplementedError(f'{file_path=}')
-#     if verbose:
-#         print('{green}Uncompress finished{reset}: '.format(**ansi),
-#               f'{target_path}')
-#         print()
 
 
 class TensorListDataset(torch.utils.data.Dataset):
@@ -69,33 +26,35 @@ class TensorListDataset(torch.utils.data.Dataset):
 
 
 class IndexDataset(torch.utils.data.Dataset):
-    def __init__(self, indices: list[int] = None, data: torch.Tensor = None, targets: list[int] = None, **kwargs):
+    def __init__(self, dataset: torch.utils.data.Dataset, indices: list[int] = None, **kwargs):
         super().__init__(**kwargs)
-        self.data = data
-        self.targets = to_list(targets)
-        self.indices = to_list(indices)
-        assert len(self.data) == len(self.targets)
+        self.dataset = dataset
+        if indices is None:
+            indices = list(range(len(self.dataset)))
+        self.indices = indices
 
-    def __getitem__(self, index: Union[int, slice]) -> tuple[torch.Tensor, int]:
-        return self.indices[index], self.data[index], self.targets[index]
+    def __getitem__(self, index: Union[int, slice]) -> tuple:
+        return (*self.dataset[index], self.indices[index])
 
     def __len__(self):
-        return len(self.targets)
+        return len(self.dataset)
 
 
-def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False) -> tuple[list, list[int]]:
-    if label_only and 'targets' in dataset.__dict__.keys():
-        return None, list(dataset.targets)
-    if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
-        data = dataset.data
-        if isinstance(data, np.ndarray):
-            data = torch.as_tensor(data)
-        if isinstance(data, torch.Tensor):
-            if data.max() > 2:
-                data = data.to(dtype=torch.float) / 255
-            data = [img for img in data]
-        return data, list(dataset.targets)
-    data, targets = zip(*dataset)
+def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False,
+                    force: bool = False) -> tuple[list, list[int]]:
+    if not force:
+        if label_only and 'targets' in dataset.__dict__.keys():
+            return None, list(dataset.targets)
+        if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
+            data = dataset.data
+            if isinstance(data, np.ndarray):
+                data = torch.as_tensor(data)
+            if isinstance(data, torch.Tensor):
+                if data.max() > 2:
+                    data = data.to(dtype=torch.float) / 255
+                data = [img for img in data]
+            return data, list(dataset.targets)
+    data, targets = zip(*dataset)[:2]
     if label_only:
         data = None
     else:

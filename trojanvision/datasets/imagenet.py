@@ -3,9 +3,7 @@
 from .imagefolder import ImageFolder
 from trojanzoo.utils.param import Module
 
-import torchvision.transforms as transforms
 from torchvision.datasets import ImageNet as ImageNet_Official
-import numpy as np
 import os
 import json
 from trojanvision import __file__ as root_file
@@ -36,30 +34,6 @@ class ImageNet(ImageFolder):
         ImageNet_Official(root=self.folder_path, split='val', download=True)
         os.rename(os.path.join(self.folder_path, 'imagenet', 'val'),
                   os.path.join(self.folder_path, 'imagenet', 'valid'))
-
-    @staticmethod
-    def get_transform(mode: str) -> transforms.Compose:
-        if mode == 'train':
-            transform = transforms.Compose([
-                transforms.RandomResizedCrop((224, 224)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
-        else:
-            transform = transforms.Compose([
-                transforms.Resize((256, 256)),
-                transforms.CenterCrop((224, 224)),
-                transforms.ToTensor()])
-            # BiT transform
-            # transform = transforms.Compose([
-            #     transforms.Resize((480, 480)),
-            #     transforms.ToTensor()])
-        return transform
-
-    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
-                       transform: transforms.Compose = transforms.Compose([transforms.Resize((256, 256)),
-                                                                           transforms.Lambda(lambda x: np.array(x))]),
-                       **kwargs):
-        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
 
 
 class Sample_ImageNet(ImageNet):

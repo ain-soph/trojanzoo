@@ -77,7 +77,6 @@ class Dataset:
         # ----------------------------------------------------------------------------- #
         if download and not self.check_files():
             self.initialize()
-        self.middle_process()
         # Preset Loader
         self.loader: dict[str, torch.utils.data.DataLoader] = {}
         self.loader['train'] = self.get_dataloader(mode='train')

@@ -42,7 +42,7 @@ class _ResNet(_ImageModel):
         record = False
 
         if layer_input == 'input':
-            x = self.preprocess(x)
+            x = self.normalize(x)
             record = True
 
         for layer_name, layer in self.features.named_children():

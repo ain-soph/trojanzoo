@@ -50,11 +50,23 @@ class ImageFolder(ImageSet):
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
 
-    def middle_process(self):
-        mode_list = ['valid']
-        if self.data_format not in ['folder', 'zip']:
-            mode_list = ['train', 'valid']
-        self.data, self.targets = self.load_npz(mode_list=mode_list)
+    @staticmethod
+    def get_transform(mode: str) -> transforms.Compose:
+        if mode == 'train':
+            transform = transforms.Compose([
+                transforms.RandomResizedCrop((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()])
+        else:
+            transform = transforms.Compose([
+                transforms.Resize((256, 256)),
+                transforms.CenterCrop((224, 224)),
+                transforms.ToTensor()])
+            # BiT transform
+            # transform = transforms.Compose([
+            #     transforms.Resize((480, 480)),
+            #     transforms.ToTensor()])
+        return transform
 
     def initialize(self, *args, **kwargs):
         if not self.check_files(data_format='folder'):

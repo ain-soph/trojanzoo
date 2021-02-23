@@ -50,13 +50,12 @@ class ImageSet(Dataset):
     def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         return data[0].to(env['device'], non_blocking=True), data[1].to(env['device'], dtype=torch.long, non_blocking=True)
 
-    @classmethod
-    def get_class_to_idx(cls, **kwargs) -> dict[str, int]:
-        if 'class_to_idx' in cls.__dict__.keys():
-            return getattr(cls, 'class_to_idx')
-        return {str(i): i for i in range(cls.num_classes)}
+    def get_class_to_idx(self, **kwargs) -> dict[str, int]:
+        if hasattr(self, 'class_to_idx'):
+            return getattr(self, 'class_to_idx')
+        return {str(i): i for i in range(self.num_classes)}
 
-    def initialize_folder(self, img_type: str = '.jpg', **kwargs):
+    def initialize_folder(self, img_type: str = '.png', **kwargs):
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         class_to_idx = self.get_class_to_idx(**kwargs)
         idx_to_class = {v: k for k, v in class_to_idx.items()}
