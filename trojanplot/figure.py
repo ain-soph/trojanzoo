@@ -106,13 +106,14 @@ class Figure:
         line: Line2D = ax.get_lines()[-1]
         line.set_linestyle(linestyle)
         if label is not None:
-            self.curve_legend(label=label, color=color, linewidth=linewidth, **kwargs)
+            self.curve_legend(label=label, color=color, linewidth=linewidth, linestyle=linestyle, **kwargs)
         return line
 
-    def curve_legend(self, label: str = None, color: str = 'black', linewidth: int = 2, markerfacecolor: str = 'white', **kwargs) -> Line2D:
+    def curve_legend(self, label: str = None, color: str = 'black', linewidth: int = 2, linestyle: str = '-',
+                     markerfacecolor: str = 'white', **kwargs) -> Line2D:
         # linestyle marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
         line, = self.ax.plot([], [], color=color, linewidth=linewidth, markeredgewidth=linewidth, markeredgecolor=color,
-                             label=label, markerfacecolor=markerfacecolor, **kwargs)
+                             label=label, markerfacecolor=markerfacecolor, linestyle=linestyle, **kwargs)
         return line
 
     def scatter(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
