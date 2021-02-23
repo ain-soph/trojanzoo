@@ -28,30 +28,6 @@ class CUB200(ImageFolder):
 
     org_folder_name = {'train': 'images'}
 
-    @staticmethod
-    def get_transform(mode: str) -> transforms.Compose:
-        if mode == 'train':
-            transform = transforms.Compose([
-                transforms.RandomResizedCrop((224, 224)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
-        else:
-            transform = transforms.Compose([
-                transforms.Resize((256, 256)),
-                transforms.CenterCrop((224, 224)),
-                transforms.ToTensor()])
-            # BiT transform
-            # transform = transforms.Compose([
-            #     transforms.Resize((480, 480)),
-            #     transforms.ToTensor()])
-        return transform
-
-    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
-                       transform: transforms.Compose = transforms.Compose([transforms.Resize((256, 256)),
-                                                                           transforms.Lambda(lambda x: np.array(x))]),
-                       **kwargs):
-        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
-
     def download_and_extract_archive(self, mode: str):
         file_name = f'{self.name}_{mode}{self.ext[mode]}'
         file_path = os.path.normpath(os.path.join(self.folder_path, file_name))
@@ -66,8 +42,8 @@ class CUB200(ImageFolder):
             prints('{yellow}File Already Exists{reset}: '.format(**ansi), file_path, indent=10)
         extract_archive(from_path=file_path, to_path=self.folder_path)
 
-    def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
-        super().initialize_folder(verbose=verbose, img_type=img_type, **kwargs)
+    def initialize_folder(self, **kwargs):
+        super().initialize_folder(**kwargs)
         # Remove useless files
         os.remove(os.path.join(self.folder_path, '._images'))
         dirpath = os.path.join(self.folder_path, 'train')
@@ -105,8 +81,8 @@ class CUB200_2011(CUB200):
 
     org_folder_name = {'train': 'CUB_200_2011/images'}
 
-    def initialize_folder(self, verbose: bool = True, img_type: str = '.jpg', **kwargs):
-        super(CUB200, self).initialize_folder(verbose=verbose, img_type=img_type, **kwargs)
+    def initialize_folder(self, **kwargs):
+        super(CUB200, self).initialize_folder(**kwargs)
         # Split Train and Valid Set
         src_dir = os.path.join(self.folder_path, 'total')
         dst_dir = {'train': os.path.join(self.folder_path, 'train'),
