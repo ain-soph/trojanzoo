@@ -58,13 +58,13 @@ class IMC_ABS(IMC):
         x = torch.cat(x).numpy()
         y = torch.cat(y).numpy()
         seed_data = {'input': x, 'label': y}
-        seed_path = os.path.join(env["result_dir"], self.dataset.name, f'{self.name}_{self.seed_num}.npy')
+        seed_path = os.path.join(self.folder_path, f'seed_{self.seed_num}.npy')
         np.save(seed_path, seed_data)
         print('seed data saved at: ', seed_path)
         return seed_data
 
     def load_seed_data(self) -> dict[str, torch.Tensor]:
-        seed_path = os.path.join(env["result_dir"], self.dataset.name, f'{self.name}_{self.seed_num}.npy')
+        seed_path = os.path.join(self.folder_path, f'seed_{self.seed_num}.npy')
         seed_data: dict[str, torch.Tensor] = {}
         seed_data = np.load(seed_path, allow_pickle=True).item() if os.path.exists(seed_path) \
             else self.save_seed_data()
