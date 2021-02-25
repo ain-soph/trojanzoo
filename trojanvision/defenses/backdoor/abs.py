@@ -132,10 +132,10 @@ class ABS(BackdoorDefense):
                     norms.update(mask.norm(p=1))
                 _str = f'    layer: {layer:20s}    neuron: {neuron:5d}    value: {value:.3f}'
                 _str += f'    loss: {loss:10.3f}'
-                f'    ATK Acc: {attack_acc:.3f}'
-                f'    ATK Loss: {attack_loss:10.3f}'
-                f'    Norm: {mask.norm(p=1):.3f}'
-                f'    Score: {score:.3f}'
+                _str += f'    ATK Acc: {attack_acc:.3f}'
+                _str += f'    ATK Loss: {attack_loss:10.3f}'
+                _str += f'    Norm: {mask.norm(p=1):.3f}'
+                _str += f'    Score: {score:.3f}'
                 if not self.attack.mark.random_pos:
                     overlap = jaccard_idx(mask, self.real_mask)
                     _dict['jaccard'] = overlap
