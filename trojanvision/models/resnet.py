@@ -119,8 +119,20 @@ class _ResNetcomp(_ResNet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         conv: nn.Conv2d = self.features.conv1
-        self.features.conv1 = nn.Conv2d(conv.in_channels, conv.out_channels,
-                                        kernel_size=3, stride=1, padding=1, bias=False)
+        conv = nn.Conv2d(conv.in_channels, conv.out_channels,
+                         kernel_size=3, stride=1, padding=1, bias=False)
+        self.features = nn.Sequential(OrderedDict([
+            ('conv1', conv),
+            ('bn1', self.features.bn1),  # nn.BatchNorm2d(64)
+            ('relu', self.features.relu),  # nn.ReLU(inplace=True)
+            # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            ('layer1', self.features.layer1),
+            ('layer2', self.features.layer2),
+            ('layer3', self.features.layer3),
+            ('layer4', self.features.layer4)
+        ]))
+        # block.expansion = 1 if BasicBlock and 4 if Bottleneck
+        # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
 
 
 class ResNetcomp(ResNet):
@@ -136,8 +148,8 @@ class ResNetcomp(ResNet):
 
 
 class _ResNetS(_ResNet):
-    def __init__(self, layer: int = 18, **kwargs):
-        super().__init__(layer=layer, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         _model = trojanvision.utils.resnet_s.ResNetS(nclasses=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', _model.conv1),
@@ -149,7 +161,6 @@ class _ResNetS(_ResNet):
             ('layer3', _model.layer3),
             ('layer4', _model.layer4)
         ]))
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.linear)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
