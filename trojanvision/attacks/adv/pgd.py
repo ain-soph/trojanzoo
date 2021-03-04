@@ -52,7 +52,7 @@ class PGD(Attack, PGD_Optimizer):
         self.dataset: ImageSet
         self.model: ImageModel
 
-    def attack(self):
+    def attack(self, **kwargs):
         # model._validate()
         correct = 0
         total = 0
@@ -69,11 +69,12 @@ class PGD(Attack, PGD_Optimizer):
             if _iter:
                 correct += 1
                 total_iter += _iter
+            else:
+                total_iter += self.iteration
             print(f'{correct} / {total}')
             print('current iter: ', _iter)
             print('succ rate: ', float(correct) / total)
-            if correct > 0:
-                print('avg  iter: ', float(total_iter) / correct)
+            print('avg  iter: ', float(total_iter) / total)
             print('-------------------------------------------------')
             print()
 
@@ -98,7 +99,7 @@ class PGD(Attack, PGD_Optimizer):
             loss_fn = _loss_fn
         return self.optimize(_input, loss_fn=loss_fn, target=target, **kwargs)
 
-    def early_stop_check(self, X, target=None, loss_fn=None, **kwargs):
+    def early_stop_check(self, X: torch.Tensor, target: torch.Tensor = None, loss_fn=None, **kwargs):
         if not self.stop_threshold:
             return False
         with torch.no_grad():

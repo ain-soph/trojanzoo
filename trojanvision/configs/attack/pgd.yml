@@ -1,7 +1,7 @@
 alpha: 0.0117647
 epsilon: 0.03137255
 iteration: 20
-stop_threshold: None
+stop_threshold: null
 target_idx: 1
 grad_method: white
 query_num: 100

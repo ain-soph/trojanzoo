@@ -30,7 +30,11 @@ class Optimizer(Process):
     def optimize(self, **kwargs):
         raise NotImplementedError()
 
-    def early_stop_check(self, loss_value: float) -> bool:
+    def early_stop_check(self, loss_value: float = None, X: torch.Tensor = None,
+                         loss_fn=None, **kwargs) -> bool:
+        if loss_value is None:
+            with torch.no_grad():
+                loss_value = float(loss_fn(X))
         if self.stop_threshold is not None and loss_value < self.stop_threshold:
             return True
         return False

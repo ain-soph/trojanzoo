@@ -73,11 +73,10 @@ class PGD(trojanzoo.optim.Optimizer):
             return _input, None
 
         X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
-
         # ----------------------------------------------------------------------------------------- #
 
         for _iter in range(iteration):
-            if self.early_stop_check(float(loss_fn(X))):
+            if self.early_stop_check(X=X, loss_fn=loss_fn, **kwargs):
                 if 'end' in output:
                     self.output_info(_input=_input, noise=noise, mode='end', loss_fn=loss_fn, **kwargs)
                 return X.detach(), _iter + 1
