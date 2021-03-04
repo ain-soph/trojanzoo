@@ -52,8 +52,12 @@ class _DenseNetcomp(_DenseNet):
 
     def __init__(self, layer: int = 121, **kwargs):
         super().__init__(layer=layer, **kwargs)
-        conv = self.features.conv0
-        self.features.conv0 = nn.Conv2d(3, conv.out_channels, kernel_size=3, padding=1, bias=False)
+        conv0: nn.Conv2d = self.features.conv0
+        conv0 = nn.Conv2d(conv0.in_channels, conv0.out_channels,
+                          kernel_size=3, padding=1, bias=False)
+        module_list = [('conv0', conv0)]
+        module_list.extend(list(self.features.named_children())[4:])
+        self.features = nn.Sequential(OrderedDict(module_list))
 
 
 class DenseNetcomp(DenseNet):
