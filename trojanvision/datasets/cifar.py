@@ -15,8 +15,8 @@ class CIFAR10(ImageSet):
     class_to_idx = {'airplane': 0, 'automobile': 1, 'bird': 2, 'cat': 3,
                     'deer': 4, 'dog': 5, 'frog': 6, 'horse': 7, 'ship': 8, 'truck': 9}
 
-    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.4914, 0.4822, 0.4465],
-                                                           'std': [0.2023, 0.1994, 0.2010], },
+    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.49139968, 0.48215827, 0.44653124],
+                                                           'std': [0.24703233, 0.24348505, 0.26158768], },
                  **kwargs):
         return super().__init__(norm_par=norm_par, **kwargs)
 
