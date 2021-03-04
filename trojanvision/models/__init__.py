@@ -7,6 +7,7 @@ from .resnet import ResNet, ResNetcomp, ResNetS
 from .vgg import VGG, VGGcomp
 from .densenet import DenseNet, DenseNetcomp
 from .bit import BiT
+from .darts import DARTS
 from .magnet import MagNet
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
@@ -29,6 +30,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'densenet': DenseNet,
     'densenetcomp': DenseNetcomp,
     'bit': BiT,
+    'darts': DARTS,
     'magnet': MagNet,
 }
 
