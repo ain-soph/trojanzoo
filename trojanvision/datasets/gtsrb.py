@@ -2,7 +2,8 @@
 
 from .imagefolder import ImageFolder
 import torchvision.transforms as transforms
-import numpy as np
+
+from typing import Union
 
 
 class GTSRB(ImageFolder):
@@ -21,14 +22,14 @@ class GTSRB(ImageFolder):
         return super().__init__(norm_par=norm_par, loss_weights=loss_weights, **kwargs)
 
     @staticmethod
-    def get_transform(mode: str) -> transforms.Compose:
-        transform = transforms.Compose([
-            transforms.Resize((32, 32)),
-            transforms.ToTensor()])
+    def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+        if mode == 'train':
+            transform = transforms.Compose([
+                transforms.RandomCrop((32, 32), padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()])
+        else:
+            transform = transforms.Compose([
+                transforms.Resize((32, 32)),
+                transforms.ToTensor()])
         return transform
-
-    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
-                       transform: transforms.Compose = transforms.Compose([transforms.Resize((32, 32)),
-                                                                           transforms.Lambda(lambda x: np.array(x))]),
-                       **kwargs):
-        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)

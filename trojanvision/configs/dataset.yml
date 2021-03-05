@@ -6,8 +6,4 @@ batch_size:
   cifar10: -256
   gtsrb: -256
 
-data_format:
-  default: folder
-  gtsrb: numpy
-  sample_imagenet: numpy
-  sample_vggface2: numpy
+data_format: zip

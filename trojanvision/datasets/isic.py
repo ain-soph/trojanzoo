@@ -3,7 +3,6 @@
 from .imagefolder import ImageFolder
 from trojanvision.environ import env
 
-import torchvision.transforms as transforms
 import numpy as np
 import os
 import shutil
@@ -23,26 +22,6 @@ class ISIC(ImageFolder):
     def initialize_folder(self, **kwargs):
         super().initialize_folder(**kwargs)
         self.split_class()
-
-    @staticmethod
-    def get_transform(mode: str) -> transforms.Compose:
-        if mode == 'train':
-            transform = transforms.Compose([
-                transforms.RandomResizedCrop((224, 224)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
-        else:
-            transform = transforms.Compose([
-                transforms.Resize((256, 256)),
-                transforms.CenterCrop((224, 224)),
-                transforms.ToTensor()])
-        return transform
-
-    def initialize_npz(self, mode_list: list[str] = ['train', 'valid'],
-                       transform: transforms.Compose = transforms.Compose([transforms.Resize(256),
-                                                                           transforms.Lambda(lambda x: np.array(x))]),
-                       **kwargs):
-        super().initialize_npz(mode_list=mode_list, transform=transform, **kwargs)
 
     def split_class(self):
         csv_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'label.csv'))

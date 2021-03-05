@@ -3,9 +3,7 @@
 from .imagefolder import ImageFolder
 from trojanzoo.utils.output import ansi, prints
 
-import torchvision.transforms as transforms
 from torchvision.datasets.utils import download_file_from_google_drive, extract_archive, check_integrity
-import numpy as np
 import os
 import shutil
 import pandas as pd
