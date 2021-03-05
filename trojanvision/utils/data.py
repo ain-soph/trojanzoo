@@ -65,7 +65,6 @@ class ZipFolder(DatasetFolder):
             self.root_zip = zipfile.ZipFile(io.BytesIO(data), 'r')
         else:
             self.root_zip = zipfile.ZipFile(root, 'r')
-
         super().__init__(root, self.zip_loader, IMG_EXTENSIONS if is_valid_file is None else None,
                          transform=transform, target_transform=target_transform, is_valid_file=is_valid_file)
         self.imgs = self.samples
@@ -73,8 +72,8 @@ class ZipFolder(DatasetFolder):
     @staticmethod
     def initialize_from_folder(root: str, zip_path: str = None):
         root = os.path.normpath(root)
+        folder_dir, folder_base = os.path.split(root)
         if zip_path is None:
-            folder_dir, folder_base = os.path.split(root)
             zip_path = os.path.join(folder_dir, f'{folder_base}_store.zip')
         with zipfile.ZipFile(zip_path, mode='w', compression=zipfile.ZIP_STORED) as zf:
             for walk_root, walk_dirs, walk_files in os.walk(root):
@@ -100,14 +99,14 @@ class ZipFolder(DatasetFolder):
             def is_valid_file(x: str) -> bool:
                 return has_file_allowed_extension(x, cast(tuple[str, ...], extensions))
         is_valid_file = cast(Callable[[str], bool], is_valid_file)
-        for filepath in self.root_zip.keys():
+        for filepath in self.root_zip.namelist():
             if is_valid_file(filepath):
                 target_class = os.path.basename(os.path.dirname(filepath))
                 instances.append((filepath, class_to_idx[target_class]))
         return instances
 
     def zip_loader(self, path: str) -> Image.Image:
-        f = self.root_zip.read(path)
+        f = io.BytesIO(self.root_zip.read(path))
         if get_image_backend() == 'accimage':
             try:
                 import accimage  # type: ignore
@@ -127,7 +126,7 @@ class ZipFolder(DatasetFolder):
             No class is a subdirectory of another.
         """
         classes = set()
-        for filepath in self.root_zip.keys():
+        for filepath in self.root_zip.namelist():
             root, target_class = os.path.split(os.path.dirname(filepath))
             if root:
                 classes.add(target_class)
@@ -135,23 +134,3 @@ class ZipFolder(DatasetFolder):
         classes.sort()
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
-
-
-class ZipLookup:
-    def __init__(self, filename: str, memory: bool = True):
-        # self.root_zip_filename = filename
-        # self.memory = memory
-        if memory:
-            with open(filename, 'rb') as z:
-                data = z.read()
-            self.zip_f = zipfile.ZipFile(io.BytesIO(data), 'r')
-        else:
-            self.zip_f = zipfile.ZipFile(filename, 'r')
-
-    def __getitem__(self, path: str):
-        f = io.BytesIO(self.zip_f.read(path))
-        f.name = path
-        return f
-
-    def keys(self):
-        return self.zip_f.namelist()

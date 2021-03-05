@@ -42,6 +42,12 @@ class BiT(ImageModel):
     def __init__(self, name: str = 'BiT', pretrained_dataset: str = 'M',
                  layer: int = 50, width_factor: int = 1,
                  model_class: type[_BiT] = _BiT, **kwargs):
+        name = self.parse_name(name, pretrained_dataset, layer)
+        super().__init__(name=name, layer=layer, width_factor=width_factor,
+                         model_class=model_class, **kwargs)
+
+    @staticmethod
+    def parse_name(name: str, pretrained_dataset: str = 'M', layer: int = 50):
         if name[:3] == 'bit':
             name = 'BiT' + name[3:]
         full_name_list: list[str] = re.findall(r'[0-9]+|[A-Za-z]+|_', name)
@@ -58,10 +64,7 @@ class BiT(ImageModel):
         name_list[2] = name_list[2].upper()
         assert name_list[1] in ['S', 'M', 'L'] and name_list[2] == 'R', name
         full_name_list[0] = '-'.join(name_list)
-        name = ''.join(full_name_list)
-
-        super().__init__(name=name, layer=layer, width_factor=width_factor,
-                         model_class=model_class, **kwargs)
+        return ''.join(full_name_list)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         # TODO: map_location argument
