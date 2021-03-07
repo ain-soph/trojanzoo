@@ -24,6 +24,15 @@ class CIFAR10(ImageSet):
         datasets.CIFAR10(root=self.folder_path, train=True, download=True)
         datasets.CIFAR10(root=self.folder_path, train=False, download=True)
 
+    # @staticmethod
+    # def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+    #     if mode == 'train':
+    #         transform = transforms.Compose([
+    #             transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
+    #             transforms.ToTensor()])
+    #     else:
+    #         transform = transforms.ToTensor()
+    #     return transform
     @staticmethod
     def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
         if mode == 'train':

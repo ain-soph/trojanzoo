@@ -29,8 +29,22 @@ class ImageSet(Dataset):
         self.param_list['imageset'] = ['data_shape', 'norm_par']
 
     @staticmethod
-    def get_transform(**kwargs) -> transforms.ToTensor:
-        return transforms.ToTensor()
+    def get_transform(mode: str) -> transforms.Compose:
+        if mode == 'train':
+            transform = transforms.Compose([
+                transforms.RandomResizedCrop((224, 224)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor()])
+        else:
+            transform = transforms.Compose([
+                transforms.Resize((256, 256)),
+                transforms.CenterCrop((224, 224)),
+                transforms.ToTensor()])
+            # BiT transform
+            # transform = transforms.Compose([
+            #     transforms.Resize((480, 480)),
+            #     transforms.ToTensor()])
+        return transform
 
     def get_dataloader(self, mode: str = None, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:

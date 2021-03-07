@@ -6,7 +6,6 @@ from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
 
 import torchvision.datasets as datasets
-import torchvision.transforms as transforms
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive, extract_archive
 import numpy as np
 import json
@@ -46,24 +45,6 @@ class ImageFolder(ImageSet):
         self.class_to_idx = self.get_class_to_idx()
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
-
-    @staticmethod
-    def get_transform(mode: str) -> transforms.Compose:
-        if mode == 'train':
-            transform = transforms.Compose([
-                transforms.RandomResizedCrop((224, 224)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
-        else:
-            transform = transforms.Compose([
-                transforms.Resize((256, 256)),
-                transforms.CenterCrop((224, 224)),
-                transforms.ToTensor()])
-            # BiT transform
-            # transform = transforms.Compose([
-            #     transforms.Resize((480, 480)),
-            #     transforms.ToTensor()])
-        return transform
 
     def initialize(self, *args, **kwargs):
         if self.data_format == 'folder' or not self.check_files(data_format='folder'):
