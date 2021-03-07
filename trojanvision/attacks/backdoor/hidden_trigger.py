@@ -103,7 +103,8 @@ class HiddenTrigger(BadNet):
 
     def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor) -> torch.Tensor:
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
-        return (poison_feats - source_feats).flatten(start_dim=1).norm(p=2, dim=1).mean()
+        result: torch.Tensor = (poison_feats - source_feats).flatten(start_dim=1).norm(p=2, dim=1)
+        return result.mean()
 
     def generate_poisoned_data(self, source_imgs: torch.FloatTensor) -> torch.Tensor:
         r"""

@@ -137,9 +137,9 @@ class _ResNetcomp(_ResNet):
 
 class ResNetcomp(ResNet):
 
-    def __init__(self, name: str = 'resnetcomp', layer: int = 18,
+    def __init__(self, name: str = 'resnetcomp',
                  model_class: type[_ResNetcomp] = _ResNetcomp, **kwargs):
-        super().__init__(name=name, layer=layer, model_class=model_class, **kwargs)
+        super().__init__(name=name, model_class=model_class, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)
