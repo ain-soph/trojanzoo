@@ -20,9 +20,10 @@ class _BiT(_ImageModel):
         norm_par = {'mean': [0.5, 0.5, 0.5],
                     'std': [0.5, 0.5, 0.5], }
         super().__init__(norm_par=norm_par, **kwargs)
-        _model = KNOWN_MODELS[name](head_size=self.num_classes)
+        _model = KNOWN_MODELS[name](head_size=1)
         self.features = nn.Sequential()
-        OrderedDict([('root', _model.root), ('body', _model.body)])
+        self.features.add_module('root', _model.root)
+        self.features.add_module('body', _model.body)
         for name, module in _model.root.named_children():
             self.features.add_module(name=name, module=module)
         for name, module in _model.body.named_children():
@@ -30,11 +31,9 @@ class _BiT(_ImageModel):
         self.features.add_module('gn', module=getattr(_model.head, 'gn'))
         self.features.add_module('relu', module=getattr(_model.head, 'relu'))
         self.pool: nn.AdaptiveAvgPool2d = getattr(_model.head, 'avg')
-
         final_layer: nn.Conv2d = getattr(_model.head, 'conv')
-        self.classifier = nn.Sequential(OrderedDict([
-            ('fc', nn.Linear(final_layer.in_channels, final_layer.out_channels))
-        ]))
+        self.classifier = self.define_classifier(conv_dim=final_layer.in_channels,
+                                                 num_classes=self.num_classes, fc_depth=1)
 
 
 class BiT(ImageModel):

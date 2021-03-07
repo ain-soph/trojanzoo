@@ -7,8 +7,6 @@ import numpy as np
 import PIL.Image as Image
 import io
 import os
-import shutil
-import struct
 import zipfile
 # TODO: Bug of python 3.9.1, collections.abc.Callable[[str],int] regard the [str] as a tuple
 from typing import Callable    # TODO: python 3.10

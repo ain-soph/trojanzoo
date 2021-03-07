@@ -7,13 +7,12 @@ from trojanzoo.utils.data import dataset_to_list
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import torch
-from torchvision import transforms
 import numpy as np
 import os
 import sys
 
 from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
+from typing import Callable, Union    # TODO: python 3.10
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:
     import torch.cuda
@@ -113,8 +112,8 @@ class Dataset:
             prints('-' * 20, indent=indent + 10)
 
     @classmethod
-    def get_transform(cls, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
-        pass
+    def get_transform(cls, mode: str) -> Callable:
+        raise NotImplementedError()
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:

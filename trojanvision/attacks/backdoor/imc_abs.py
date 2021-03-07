@@ -76,8 +76,6 @@ class IMC_ABS(IMC):
 
     def sample_neuron(self, _input: torch.Tensor) -> dict[str, torch.Tensor]:
         all_ps: dict[str, torch.Tensor] = {}
-        batch_size = _input.shape[0]
-
         layer_output = self.model.get_all_layer(_input)
         for layer in self.model.get_layer_name():
             if 'pool' in layer or layer in ['features', 'flatten', 'classifier', 'logits', 'output']:

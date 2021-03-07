@@ -17,7 +17,7 @@ class _MagNet(nn.Module):
 
     def __init__(self, structure: list[Tuple[int, str]] = [3, 'average', 3],
                  activation: str = 'sigmoid', channel: int = 3, **kwargs):
-        super(_MagNet, self).__init__()
+        super().__init__()
 
         activation_fn = nn.ReLU()
         if activation == 'sigmoid':

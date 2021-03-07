@@ -17,9 +17,10 @@ class _VGG(_ImageModel):
         ModelClass: type[torchvision.models.VGG] = getattr(torchvision.models, 'vgg' + str(layer))
         _model = ModelClass(num_classes=self.num_classes)
         self.features: nn.Sequential = _model.features
-        self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
-        if isinstance(self.classifier, nn.Identity):
+        if len(self.classifier) == 0:
             self.classifier = _model.classifier
+        else:
+            self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
 
         # nn.Sequential(
         #     nn.Linear(512 * 7 * 7, 4096),
@@ -45,18 +46,10 @@ class VGG(ImageModel):
         return model_zoo.load_url(url, **kwargs)
 
 
-class _VGGcomp(_VGG):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-
-
 class VGGcomp(VGG):
 
-    def __init__(self, name: str = 'vggcomp', model_class: type[_VGGcomp] = _VGGcomp, **kwargs):
-        super().__init__(name=name, model_class=model_class,
-                         conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
+    def __init__(self, name: str = 'vggcomp', **kwargs):
+        super().__init__(name=name, conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)
