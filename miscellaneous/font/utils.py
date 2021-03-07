@@ -18,7 +18,7 @@ def split_ttc(folder_path, filename):
         filename = filename[:-4]
 
     if buf[:4] != b"ttcf":
-        out_filename = os.path.join(folder_path, f'{filename}.ttf' %)
+        out_filename = os.path.join(folder_path, f'{filename}.ttf')
         out_file = open(out_filename, "wb")
         out_file.write(buf)
         # end, so we don’t have to close the files or call exit() here
