@@ -8,7 +8,7 @@ import numpy as np
 import math
 import os
 from PIL import Image
-from typing import Union    # TODO: python 3.10
+from typing import Any, Union    # TODO: python 3.10
 
 __all__ = ['cos_sim', 'tanh_func', 'atan_func',
            'to_tensor', 'to_numpy', 'to_list',
@@ -65,23 +65,16 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
     return x
 
 
-def to_numpy(x: Union[torch.Tensor, np.ndarray], **kwargs) -> np.ndarray:
-    if x is None:
-        return None
-    if torch.is_tensor(x):
+def to_numpy(x: Any, **kwargs) -> np.ndarray:
+    if isinstance(x, torch.Tensor):
         x = x.detach().cpu().numpy()
     return np.array(x, **kwargs)
 
 
-def to_list(x: Union[torch.Tensor, np.ndarray]) -> list:
-    if x is None:
-        return None
-    if type(x).__module__ == np.__name__ or torch.is_tensor(x):
+def to_list(x: Any) -> list:
+    if isinstance(x, (torch.Tensor, np.ndarray)):
         return x.tolist()
-    if isinstance(x, list):
-        return x
-    else:
-        return list(x)
+    return list(x)
 
 # ----------------------- Image Utils ------------------------------ #
 
