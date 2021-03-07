@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 from .imagemodel import ImageModel
-from .net import Net
 from .alexnet import AlexNet
-from .resnet import ResNet, ResNetcomp, ResNetS
-from .vgg import VGG, VGGcomp
-from .densenet import DenseNet, DenseNetcomp
 from .bit import BiT
 from .darts import DARTS
+from .densenet import DenseNet, DenseNetcomp
+from .dla import DLA
 from .magnet import MagNet
+from .net import Net
+from .resnet import ResNet, ResNetcomp, ResNetS
+from .vgg import VGG, VGGcomp
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
 import trojanzoo.models
@@ -20,18 +21,20 @@ import re
 from typing import Union
 
 class_dict: dict[str, type[ImageModel]] = {
-    'net': Net,
     'alexnet': AlexNet,
+    'bit': BiT,
+    'darts': DARTS,
+    'densenet': DenseNet,
+    'densenetcomp': DenseNetcomp,
+    'dla': DLA,
+    'dlasimple': DLA,
+    'magnet': MagNet,
+    'net': Net,
     'resnet': ResNet,
     'resnetcomp': ResNetcomp,
     'resnets': ResNetS,
     'vgg': VGG,
     'vggcomp': VGGcomp,
-    'densenet': DenseNet,
-    'densenetcomp': DenseNetcomp,
-    'bit': BiT,
-    'darts': DARTS,
-    'magnet': MagNet,
 }
 
 
