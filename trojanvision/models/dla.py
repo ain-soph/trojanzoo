@@ -11,7 +11,7 @@ class _DLA(_ImageModel):
         super().__init__(conv_dim=512, fc_depth=1, **kwargs)
 
     @staticmethod
-    def define_features(block=BasicBlock, simple: bool = False) -> nn.Sequential:
+    def define_features(block=BasicBlock, simple: bool = False, **kwargs) -> nn.Sequential:
         TreeClass = SimpleTree if simple else Tree
         features = nn.Sequential()
         features.add_module('base', nn.Sequential(
@@ -29,11 +29,10 @@ class _DLA(_ImageModel):
             nn.BatchNorm2d(32),
             nn.ReLU(True)
         ))
-        features.add_module('layer2', TreeClass(block, 32, 64, level=1, stride=1))
         features.add_module('layer3', TreeClass(block, 32, 64, level=1, stride=1))
-        features.add_module('layer4', TreeClass(block, 32, 64, level=1, stride=1))
-        features.add_module('layer5', TreeClass(block, 32, 64, level=1, stride=1))
-        features.add_module('layer6', TreeClass(block, 32, 64, level=1, stride=1))
+        features.add_module('layer4', TreeClass(block, 64, 128, level=1, stride=1))
+        features.add_module('layer5', TreeClass(block, 128, 256, level=1, stride=1))
+        features.add_module('layer6', TreeClass(block, 256, 512, level=1, stride=1))
         return features
 
 
