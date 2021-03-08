@@ -24,8 +24,8 @@ class ImageNet(ImageFolder):
         'valid': '29b22e2961454d5413ddabcf34fc5622',
     }
 
-    def __init__(self, norm_par={'mean': [0.485, 0.456, 0.406],
-                                 'std': [0.229, 0.224, 0.225], },
+    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.485, 0.456, 0.406],
+                                                           'std': [0.229, 0.224, 0.225], },
                  **kwargs):
         super().__init__(norm_par=norm_par, **kwargs)
 

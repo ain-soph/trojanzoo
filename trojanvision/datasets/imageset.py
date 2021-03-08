@@ -22,7 +22,7 @@ class ImageSet(Dataset):
     num_classes = 1000
     data_shape = [3, 224, 224]
 
-    def __init__(self, norm_par: dict[str, list[float]] = None,
+    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
                  default_model: str = 'resnetcomp18', **kwargs):
         super().__init__(default_model=default_model, **kwargs)
         self.norm_par: dict[str, list[float]] = norm_par
