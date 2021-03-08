@@ -40,7 +40,9 @@ class _ImageModel(_Model):
                  num_classes=None, **kwargs):
         if num_classes is None:
             num_classes = 1000
-        super().__init__(num_classes=num_classes, **kwargs)
+        super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
+
+    def define_preprocess(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]}, **kwargs):
         self.normalize = Normalize(mean=norm_par['mean'], std=norm_par['std'])
 
     # get feature map

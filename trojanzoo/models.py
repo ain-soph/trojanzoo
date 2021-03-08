@@ -39,6 +39,7 @@ class _Model(nn.Module):
 
     def __init__(self, num_classes: int = None, **kwargs):
         super().__init__()
+        self.define_preprocess(**kwargs)
         self.num_classes = num_classes
         self.features = self.define_features(**kwargs)   # feature extractor
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
@@ -46,6 +47,9 @@ class _Model(nn.Module):
         self.classifier = self.define_classifier(num_classes=num_classes, **kwargs)  # classifier
         self.softmax = nn.Softmax(dim=1)
         self.layer_name_list: list[str] = None
+
+    def define_preprocess(self, **kwargs):
+        pass
 
     @staticmethod
     def define_features(**kwargs) -> nn.Module:
