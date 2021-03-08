@@ -2,11 +2,12 @@
 
 from trojanvision.datasets import ImageSet
 from trojanzoo.models import _Model, Model
-from trojanvision.environ import env
 from trojanvision.utils import apply_cmap
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.transforms as transforms
 import re
 import functools
 
@@ -15,6 +16,7 @@ from typing import TYPE_CHECKING
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+from torchvision.transforms import Normalize
 import argparse
 from matplotlib.colors import Colormap
 from collections.abc import Callable
@@ -29,27 +31,17 @@ jet = get_cmap('jet')
 
 
 class _ImageModel(_Model):
+    module_list = ['normalize', 'features', 'pool', 'flatten', 'classifier', 'softmax']
+    filter_tuple: tuple[nn.Module] = (transforms.Normalize,
+                                      nn.Dropout, nn.BatchNorm2d,
+                                      nn.ReLU, nn.Sigmoid)
 
-    def __init__(self, norm_par: dict[str, list] = None, num_classes=None, **kwargs):
+    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]},
+                 num_classes=None, **kwargs):
         if num_classes is None:
             num_classes = 1000
         super().__init__(num_classes=num_classes, **kwargs)
-        self.norm_par: dict[str, torch.Tensor] = None
-        if norm_par:
-            self.norm_par = {key: torch.as_tensor(value, device=env['device'])
-                             for key, value in norm_par.items()}
-
-    # This is defined by Pytorch documents
-    # See https://pytorch.org/docs/stable/torchvision/models.html for more details
-    # The input range is [0,1]
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, channels, height, width)
-    def normalize(self, x: torch.Tensor) -> torch.Tensor:
-        if self.norm_par:
-            mean = self.norm_par['mean'].to(x.device)[None, :, None, None]
-            std = self.norm_par['std'].to(x.device)[None, :, None, None]
-            x = x.sub(mean).div(std)
-        return x
+        self.normalize = Normalize(mean=norm_par['mean'], std=norm_par['std'])
 
     # get feature map
     # input: (batch_size, channels, height, width)
@@ -57,96 +49,10 @@ class _ImageModel(_Model):
     def get_fm(self, x: torch.Tensor) -> torch.Tensor:
         return self.features(self.normalize(x))
 
-    # get output for a certain layer
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, [layer])
-    def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
-        if layer_input == 'input':
-            if layer_output in ['logits', 'classifier']:
-                return self(x)
-            elif layer_output == 'features':
-                return self.get_fm(x)
-            elif layer_output == 'flatten':
-                return self.get_final_fm(x)
-        return self.get_other_layer(x, layer_output=layer_output, layer_input=layer_input)
-
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> dict[str, torch.Tensor]:
-        _dict = {}
-        record = False
-
-        if layer_input == 'input':
-            x = self.normalize(x)
-            record = True
-
-        for name, module in self.features.named_children():
-            if record:
-                x = module(x)
-                _dict['features.' + name] = x
-            elif 'features.' + name == layer_input:
-                record = True
-        if layer_input == 'features':
-            record = True
-        if record:
-            _dict['features'] = x
-            x = self.pool(x)
-            _dict['pool'] = x
-            x = self.flatten(x)
-            _dict['flatten'] = x
-
-        for name, module in self.classifier.named_children():
-            if record:
-                x = module(x)
-                _dict['classifier.' + name] = x
-            elif 'classifier.' + name == layer_input:
-                record = True
-        y = x
-        _dict['classifier'] = y
-        _dict['logits'] = y
-        _dict['output'] = y
-        return _dict
-
-    def get_other_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
-        layer_name_list = self.get_layer_name()
-        if isinstance(layer_output, str):
-            if layer_output not in layer_name_list and \
-                    layer_output not in ['features', 'classifier', 'logits', 'output']:
-                print('Model Layer Name List: ', layer_name_list)
-                print('Output layer: ', layer_output)
-                raise ValueError('Layer name not in model')
-            layer_name = layer_output
-        elif isinstance(layer_output, int):
-            if layer_output < len(layer_name_list):
-                layer_name = layer_name_list[layer_output]
-            else:
-                print('Model Layer Name List: ', layer_name_list)
-                print('Output layer: ', layer_output)
-                raise IndexError('Layer index out of range')
-        else:
-            print('Output layer: ', layer_output)
-            print('typeof (output layer) : ', type(layer_output))
-            raise TypeError(
-                '\"get_other_layer\" requires parameter "layer_output" to be int or str.')
-        _dict = self.get_all_layer(x, layer_input=layer_input)
-        if layer_name not in _dict.keys():
-            print(_dict.keys())
-        return _dict[layer_name]
-
-    def get_layer_name(self) -> list[str]:
-        layer_name = []
-        for name, _ in self.features.named_children():
-            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
-                layer_name.append('features.' + name)
-        layer_name.append('pool')
-        layer_name.append('flatten')
-        for name, _ in self.classifier.named_children():
-            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
-                layer_name.append('classifier.' + name)
-        return layer_name
-
 
 class ImageModel(Model):
 
-    @classmethod
+    @ classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--layer', dest='layer', type=int,
@@ -192,15 +98,6 @@ class ImageModel(Model):
             return adv_x, _label
         return super().get_data(data, **kwargs)
 
-    def get_layer(self, x: torch.Tensor, layer_output: str = 'logits', layer_input: str = 'input') -> torch.Tensor:
-        return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input)
-
-    def get_layer_name(self) -> list[str]:
-        return self._model.get_layer_name()
-
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input') -> dict[str, torch.Tensor]:
-        return self._model.get_all_layer(x, layer_input=layer_input)
-
     # TODO: requires _input shape (N, C, H, W)
     # Reference: https://keras.io/examples/vision/grad_cam/
     def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor, method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
@@ -239,7 +136,7 @@ class ImageModel(Model):
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
-    @staticmethod
+    @ staticmethod
     def split_model_name(name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
         re_list = re.findall(r'[0-9]+|[a-z]+|_', name)
         if len(re_list) > 1:

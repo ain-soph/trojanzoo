@@ -37,65 +37,6 @@ class _ResNet(_ImageModel):
         # block.expansion = 1 if BasicBlock and 4 if Bottleneck
         # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
 
-    def get_all_layer(self, x: torch.Tensor, layer_input='input') -> dict[str, torch.Tensor]:
-        _dict = {}
-        record = False
-
-        if layer_input == 'input':
-            x = self.normalize(x)
-            record = True
-
-        for layer_name, layer in self.features.named_children():
-            if isinstance(layer, nn.Sequential):
-                for block_name, block in layer.named_children():
-                    if record:
-                        x = block(x)
-                        _dict['features.' + layer_name + '.' + block_name] = x
-                    if 'features.' + layer_name + '.' + block_name == layer_input:
-                        record = True
-                if record:
-                    _dict['features.' + layer_name] = x
-            elif record:
-                x = layer(x)
-                _dict['features.' + layer_name] = x
-            if 'features.' + layer_name == layer_input:
-                record = True
-        if layer_input == 'features':
-            record = True
-        if record:
-            _dict['features'] = x
-            x = self.pool(x)
-            _dict['pool'] = x
-            x = self.flatten(x)
-            _dict['flatten'] = x
-
-        for name, module in self.classifier.named_children():
-            if record:
-                x = module(x)
-                _dict['classifier.' + name] = x
-            elif 'classifier.' + name == layer_input:
-                record = True
-        _dict['classifier'] = x
-        _dict['logits'] = x
-        _dict['output'] = x
-        return _dict
-
-    def get_layer_name(self) -> list[str]:
-        layer_name_list = []
-        for layer_name, layer in self.features.named_children():
-            if isinstance(layer, nn.Sequential):
-                for block_name, block in layer.named_children():
-                    if 'bn' not in block_name and 'relu' not in block_name:
-                        layer_name_list.append('features.' + layer_name + '.' + block_name)
-            elif 'bn' not in layer_name and 'relu' not in layer_name:
-                layer_name_list.append('features.' + layer_name)
-        layer_name_list.append('pool')
-        layer_name_list.append('flatten')
-        for name, _ in self.classifier.named_children():
-            if 'relu' not in name and 'bn' not in name and 'dropout' not in name:
-                layer_name_list.append('classifier.' + name)
-        return layer_name_list
-
 
 class ResNet(ImageModel):
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 from trojanzoo.configs import config
 from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
@@ -8,23 +7,19 @@ from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
 from trojanzoo.utils import get_name
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
-from trojanzoo.utils.tensor import onehot_label
-
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-import math
 import os
 from tqdm import tqdm
 from collections import OrderedDict
 from collections.abc import Iterable    # TODO: callable (many places) (wait for python update)
-from typing import Generator, Iterator, Mapping, Set
 
 from typing import TYPE_CHECKING
-from typing import Union, Optional    # TODO: python 3.10
+from typing import Generator, Iterator, Mapping, Optional, Set, Union    # TODO: python 3.10
 from trojanzoo.configs import Config    # TODO: python 3.10
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -34,32 +29,59 @@ if TYPE_CHECKING:
     import torch.optim
     import torch.cuda.amp
     import torch.utils.data
-
 # redirect = Indent_Redirect(buffer=True, indent=0)
 
 
 class _Model(nn.Module):
-    def __init__(self, num_classes: int = None, conv_depth: int = 0, conv_dim: int = 0,
-                 fc_depth: int = 0, fc_dim: int = 0, **kwargs):
+    module_list = ['features', 'pool', 'flatten', 'classifier', 'softmax']
+    filter_tuple: tuple[nn.Module] = (nn.Dropout, nn.BatchNorm2d,
+                                      nn.ReLU, nn.Sigmoid)
+
+    def __init__(self, num_classes: int = None, **kwargs):
         super().__init__()
-
-        self.conv_depth = conv_depth
-        self.conv_dim = conv_dim
-        self.fc_depth = fc_depth
-        self.fc_dim = fc_dim
         self.num_classes = num_classes
-
-        self.features = self.define_features()   # feature extractor
+        self.features = self.define_features(**kwargs)   # feature extractor
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
         self.flatten = nn.Flatten()
-        self.classifier = self.define_classifier()  # classifier
+        self.classifier = self.define_classifier(num_classes=num_classes, **kwargs)  # classifier
+        self.softmax = nn.Softmax(dim=1)
+        self.layer_name_list: list[str] = None
+
+    @staticmethod
+    def define_features(**kwargs) -> nn.Module:
+        return nn.Identity()
+
+    @staticmethod
+    def define_classifier(conv_dim: int = 0, num_classes: int = None,
+                          fc_depth: int = 0, fc_dim: int = 0,
+                          activation: str = 'relu', dropout: bool = True,
+                          **kwargs) -> nn.Sequential:
+        seq = nn.Sequential()
+        if fc_depth <= 0:
+            return seq
+        dim_list: list[int] = [fc_dim] * (fc_depth - 1)
+        dim_list.insert(0, conv_dim)
+        ActivationType: type[nn.Module] = nn.ReLU
+        if activation == 'sigmoid':
+            ActivationType = nn.Sigmoid
+        elif not activation == 'relu':
+            raise NotImplementedError(f'{activation=}')
+        if fc_depth == 1:
+            seq.add_module('fc', nn.Linear(conv_dim, num_classes))
+        else:
+            for i in range(fc_depth - 1):
+                seq.add_module(f'fc{i + 1:d}', nn.Linear(dim_list[i], dim_list[i + 1]))
+                if activation:
+                    seq.add_module(f'{activation}{i + 1:d}', ActivationType(inplace=True))
+                if dropout:
+                    seq.add_module(f'dropout{i + 1:d}', nn.Dropout(inplace=True))
+            seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
+        return seq
 
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # if x.shape is (channels, height, width)
-        # (channels, height, width) ==> (batch_size: 1, channels, height, width)
         x = self.get_final_fm(x)
         x = self.classifier(x)
         return x
@@ -75,38 +97,128 @@ class _Model(nn.Module):
         x = self.flatten(x)
         return x
 
-    def define_features(self, conv_depth: int = None, conv_dim: int = None) -> nn.Sequential:
-        return nn.Sequential(OrderedDict([('id', nn.Identity())]))
+    # get output for a certain layer
+    def get_layer(self, x: torch.Tensor, layer_output: str = 'classifier',
+                  layer_input: str = 'input', prefix: str = '') -> torch.Tensor:
+        if layer_input == 'input':
+            if layer_output == 'classifier':
+                return self(x)
+            elif layer_output == 'features':
+                return self.get_fm(x)
+            elif layer_output == 'flatten':
+                return self.get_final_fm(x)
+        if self.layer_name_list is None:
+            self.layer_name_list = self.get_layer_name(use_filter=False, repeat=True)
+        if layer_input == 'input':
+            layer_input = 'record'
+        elif layer_input not in self.layer_name_list or layer_output not in self.layer_name_list or \
+                self.layer_name_list.index(layer_input) > self.layer_name_list.index(layer_output):
+            print('Model Layer Name List: ', self.layer_name_list)
+            print('Input  layer: ', layer_input)
+            print('Output layer: ', layer_output)
+            raise ValueError('Layer name not in model')
+        for name in self.module_list:
+            full_name = prefix + ('.' if prefix else '') + name
+            if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
+                child_layer: nn.Module = getattr(self, name)
+                x = self._get_layer(child_layer, x, layer_output, layer_input, full_name)
+                layer_input = 'record'
+            elif layer_input == full_name:
+                layer_input = 'record'
+            if layer_output.startswith(full_name):
+                return x
 
-    def define_classifier(self, num_classes: int = None, fc_depth: int = None,
-                          conv_dim: int = None, fc_dim: int = None,
-                          activation: str = 'relu', dropout: bool = True) -> nn.Sequential:
-        fc_depth = fc_depth if fc_depth is not None else self.fc_depth
-        conv_dim = conv_dim if conv_dim is not None else self.conv_dim
-        fc_dim = fc_dim if fc_dim is not None else self.fc_dim
-        num_classes = num_classes if num_classes is not None else self.num_classes
-        if fc_depth <= 0:
-            return nn.Sequential(OrderedDict([('fc', nn.Identity())]))
-        dim_list: list[int] = [fc_dim] * (fc_depth - 1)
-        dim_list.insert(0, conv_dim)
-        ActivationType: type[nn.Module] = nn.ReLU
-        if activation == 'sigmoid':
-            ActivationType = nn.Sigmoid
-        elif not activation == 'relu':
-            raise NotImplementedError(f'{activation=}')
-        seq = []
-        if fc_depth == 1:
-            seq.append(('fc', nn.Linear(self.conv_dim, num_classes)))
+    @classmethod
+    def _get_layer(cls, layer: nn.Module, x: torch.Tensor, layer_output: str = 'classifier',
+                   layer_input: str = 'record', prefix: str = '') -> torch.Tensor:
+        if isinstance(layer, nn.Sequential):
+            for name, child_layer in layer.named_children():
+                full_name = prefix + ('.' if prefix else '') + name
+                if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
+                    x = cls._get_layer(child_layer, x, layer_output, layer_input, prefix=full_name)
+                    layer_input = 'record'
+                elif layer_input == full_name:
+                    layer_input = 'record'
+                if layer_output.startswith(full_name):
+                    return x
         else:
-            for i in range(fc_depth - 1):
-                seq.append(('fc' + str(i + 1), nn.Linear(dim_list[i], dim_list[i + 1])))
-                if activation:
-                    seq.append((f'{activation}{i + 1:d}', ActivationType(inplace=True)))
-                if dropout:
-                    seq.append((f'dropout{i + 1:d}', nn.Dropout()))
-            seq.append(('fc' + str(self.fc_depth),
-                        nn.Linear(self.fc_dim, self.num_classes)))
-        return nn.Sequential(OrderedDict(seq))
+            x = layer(x)
+        return x
+
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input', depth: int = 0,
+                      prefix='', use_filter: bool = True, repeat: bool = False) -> dict[str, torch.Tensor]:
+        layer_name_list = self.get_layer_name(depth=depth, prefix=prefix, use_filter=False)
+        _dict = {}
+        if layer_input == 'input':
+            layer_input = 'record'
+        elif layer_input not in layer_name_list:
+            print('Model Layer Name List: ', layer_name_list)
+            print('Input layer: ', layer_input)
+            raise ValueError('Layer name not in model')
+        for name in self.module_list:
+            full_name = prefix + ('.' if prefix else '') + name
+            if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
+                child_layer: nn.Module = getattr(self, name)
+                sub_dict, x = self._get_all_layer(child_layer, x, layer_input, depth - 1,
+                                                  full_name, use_filter, repeat)
+                _dict.update(sub_dict)
+                layer_input = 'record'
+            elif layer_input == full_name:
+                layer_input = 'record'
+        return _dict
+
+    @classmethod
+    def _get_all_layer(cls, layer: nn.Module, x: torch.Tensor, layer_input: str = 'record', depth: int = 0,
+                       prefix: str = '', use_filter: bool = True, repeat: bool = False
+                       ) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
+        _dict: dict[str, torch.Tensor] = {}
+        if isinstance(layer, nn.Sequential):
+            for name, child_layer in layer.named_children():
+                full_name = prefix + ('.' if prefix else '') + name
+                if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
+                    sub_dict, x = cls._get_all_layer(child_layer, x, layer_input, depth - 1,
+                                                     full_name, use_filter, repeat)
+                    _dict.update(sub_dict)
+                    layer_input = 'record'
+                elif layer_input == full_name:
+                    layer_input = 'record'
+        else:
+            x = layer(x)
+        if prefix and (not use_filter or cls.filter_layer(layer)) and \
+                (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
+            _dict[prefix] = x.clone()
+        return _dict, x
+
+    def get_layer_name(self, depth: int = 0, prefix: str = '',
+                       use_filter: bool = True, repeat: bool = False) -> list[str]:
+        if depth <= 0 and self.layer_name_list is not None:
+            return self.layer_name_list
+        layer_name_list: list[str] = []
+        for name in self.module_list:
+            full_name = prefix + ('.' if prefix else '') + name
+            child_layer: nn.Module = getattr(self, name)
+            layer_name_list.extend(self._get_layer_name(child_layer, depth - 1,
+                                                        full_name, use_filter, repeat))
+        return layer_name_list
+
+    @classmethod
+    def _get_layer_name(cls, layer: nn.Module, depth: int = 1, prefix: str = '',
+                        use_filter: bool = True, repeat: bool = False) -> list[str]:
+        layer_name_list: list[str] = []
+        if isinstance(layer, nn.Sequential) and depth != 0:
+            for name, child_layer in layer.named_children():
+                full_name = prefix + ('.' if prefix else '') + name
+                layer_name_list.extend(cls._get_layer_name(child_layer, depth - 1, full_name, use_filter))
+        if prefix and (not use_filter or cls.filter_layer(layer)) and \
+                (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
+            layer_name_list.append(prefix)
+        return layer_name_list
+
+    @classmethod
+    def filter_layer(cls, layer: nn.Module):
+        if isinstance(layer, cls.filter_tuple):
+            return False
+        return True
 
 
 class Model:
@@ -165,7 +277,6 @@ class Model:
 
         # ------------------------------ #
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
-        self.softmax = nn.Softmax(dim=1)
         self._model = model_class(num_classes=num_classes, **kwargs)
         self.model = self.get_parallel_model()
         self.activate_params([])
@@ -196,11 +307,11 @@ class Model:
         else:
             return self.model(_input, **kwargs)
 
-    def get_prob(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self.softmax(self(_input, **kwargs))
-
     def get_final_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         return self._model.get_final_fm(_input, **kwargs)
+
+    def get_prob(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
+        return self._model.softmax(self(_input, **kwargs))
 
     def get_target_prob(self, _input: torch.Tensor, target: Union[torch.Tensor, list[int]],
                         **kwargs) -> torch.Tensor:
@@ -211,7 +322,21 @@ class Model:
     def get_class(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         return self(_input, **kwargs).argmax(dim=-1)
 
-    def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None, _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+    def get_layer(self, x: torch.Tensor, layer_output: str = 'classifier',
+                  layer_input: str = 'input', prefix: str = '') -> torch.Tensor:
+        return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input, prefix=prefix)
+
+    def get_layer_name(self, depth: int = 0, prefix: str = '',
+                       use_filter: bool = True, repeat: bool = False) -> list[str]:
+        return self._model.get_layer_name(depth, prefix, use_filter, repeat)
+
+    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input', depth: int = 0,
+                      prefix: str = '', use_filter: bool = True, repeat: bool = False) -> dict[str, torch.Tensor]:
+        return self._model.get_all_layer(x, layer_input=layer_input, depth=depth,
+                                         prefix=prefix, use_filter=use_filter, repeat=repeat)
+
+    def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
+             _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
         if _output is None:
             _output = self(_input, **kwargs)
         return self.criterion(_output, _label)
@@ -251,20 +376,20 @@ class Model:
     # define loss function
     # Cross Entropy
     # TODO: linting, or maybe nn.Module for generic?
-    def define_criterion(self, loss_type='ce', num_classes: int = None, **kwargs) -> nn.CrossEntropyLoss:
+    def define_criterion(self, **kwargs) -> nn.CrossEntropyLoss:
         if 'weight' not in kwargs.keys():
             kwargs['weight'] = self.loss_weights
-        criterion = nn.CrossEntropyLoss(**kwargs)
-        if loss_type == 'jsd':
-            num_classes = num_classes if num_classes is not None else self.num_classes
+        return nn.CrossEntropyLoss(**kwargs)
+        # if loss_type == 'jsd':
+        #     num_classes = num_classes if num_classes is not None else self.num_classes
 
-            def jsd(_output: torch.Tensor, _label: torch.Tensor, **kwargs):
-                p = onehot_label(_label, num_classes)
-                q: torch.Tensor = self.softmax(_output)
-                log_q = F.log_softmax(_output)
-                sum_pq = p + q
-                loss = sum_pq * (sum_pq.log() - math.log(2))
-        return criterion
+        #     def jsd(_output: torch.Tensor, _label: torch.Tensor, **kwargs):
+        #         p = onehot_label(_label, num_classes)
+        #         q: torch.Tensor = F.softmax(_output)
+        #         log_q = F.log_softmax(_output)
+        #         sum_pq = p + q
+        #         loss = sum_pq * (sum_pq.log() - math.log(2))
+        # return criterion
 
     # -----------------------------Load & Save Model------------------------------------------- #
 

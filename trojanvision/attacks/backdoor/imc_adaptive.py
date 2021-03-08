@@ -90,11 +90,9 @@ class IMC_Adaptive(IMC):
 
     def sample_neuron(self, _input: torch.Tensor) -> dict[str, torch.Tensor]:
         all_ps: dict[str, torch.Tensor] = {}
-        batch_size = _input.shape[0]
-
         layer_output = self.model.get_all_layer(_input)
         for layer in self.model.get_layer_name():
-            if 'pool' in layer or layer in ['features', 'flatten', 'classifier', 'logits', 'output']:
+            if not layer.startswith('features.') and not layer.startswith('classifier.'):
                 continue
             cur_layer_output: torch.Tensor = layer_output[layer].detach().cpu()  # (batch_size, C, H, W)
             channel_num: int = cur_layer_output.shape[1]  # channels
@@ -119,6 +117,7 @@ class IMC_Adaptive(IMC):
             # result = self.model.get_layer(h_t.flatten(end_dim=2), layer_input=layer).detach().cpu()
             result = []
             for h in h_t:
+                h: torch.Tensor
                 h = h.to(device=env['device'])
                 result.append(self.model.get_layer(h.flatten(end_dim=1), layer_input=layer).detach().cpu())
             result = torch.cat(result)

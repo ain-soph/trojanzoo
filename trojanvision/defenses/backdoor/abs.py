@@ -11,7 +11,6 @@ from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
 import torch.optim as optim
-import torch.nn.functional as F
 import numpy as np
 import argparse
 import os
@@ -43,6 +42,8 @@ class ABS(BackdoorDefense):
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
                  max_troj_size: int = 16, remask_lr: float = 0.1, remask_epoch: int = 1000, **kwargs):
         super().__init__(**kwargs)
+        self.param_list['abs'] = ['seed_num', 'count_mask', 'samp_k', 'same_range', 'n_samples',
+                                  'max_troj_size', 'remask_lr', 'remask_epoch']
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:
@@ -77,7 +78,7 @@ class ABS(BackdoorDefense):
         print()
         print()
         print('remask')
-        neuron_dict = self.get_potential_triggers(neuron_dict, _input, _label)
+        self.get_potential_triggers(neuron_dict, _input, _label)
 
     def print_neuron_dict(self, neuron_dict: dict[int, list[dict]]):
         for label, label_list in neuron_dict.items():
@@ -265,8 +266,8 @@ class ABS(BackdoorDefense):
     def sample_neuron(self, _input: torch.Tensor) -> dict[str, torch.Tensor]:
         all_ps: dict[str, torch.Tensor] = {}
         layer_output = self.model.get_all_layer(_input)
-        for layer in self.model.get_layer_name():
-            if 'pool' in layer or layer in ['features', 'flatten', 'classifier', 'logits', 'output']:
+        for layer in layer_output.keys():
+            if not layer.startswith('features.') and not layer.startswith('classifier.'):
                 continue
             cur_layer_output: torch.Tensor = layer_output[layer].detach().cpu()  # (batch_size, C, H, W)
             channel_num: int = cur_layer_output.shape[1]  # channels
@@ -330,7 +331,12 @@ class ABS(BackdoorDefense):
     def abs_loss(self, _input: torch.Tensor, mask: torch.Tensor, mark: torch.Tensor,
                  layer: str, neuron: int, use_mask: bool = True):
         X = _input + mask * (mark - _input)
+        # return self.model.loss(X, torch.zeros(X.size(0), device=X.device, dtype=torch.long)) + 1e-3 * mask.norm(p=1)
         feats = self.model.get_layer(X, layer_output=layer)
+        # if feats.dim() > 2:
+        #     feats = feats.flatten(2).sum(2)
+        # from torch.nn.functional import log_softmax
+        # feats = log_softmax(feats)
         vloss1 = feats[:, neuron].sum()
         vloss2 = feats.sum() - vloss1
         loss = torch.zeros_like(vloss1)
