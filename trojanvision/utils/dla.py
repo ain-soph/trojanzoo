@@ -12,7 +12,7 @@ class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1):
-        super(BasicBlock, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
@@ -37,7 +37,7 @@ class BasicBlock(nn.Module):
 
 class Root(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=1):
-        super(Root, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(
             in_channels, out_channels, kernel_size,
             stride=1, padding=(kernel_size - 1) // 2, bias=False)
@@ -51,7 +51,7 @@ class Root(nn.Module):
 
 class Tree(nn.Module):
     def __init__(self, block, in_channels, out_channels, level=1, stride=1):
-        super(Tree, self).__init__()
+        super().__init__()
         self.level = level
         if level == 1:
             self.root = Root(2 * out_channels, out_channels)
@@ -83,7 +83,7 @@ class Tree(nn.Module):
 
 class SimpleTree(nn.Module):
     def __init__(self, block, in_channels, out_channels, level=1, stride=1):
-        super(Tree, self).__init__()
+        super().__init__()
         self.root = Root(2 * out_channels, out_channels)
         if level == 1:
             self.left_tree = block(in_channels, out_channels, stride=stride)
