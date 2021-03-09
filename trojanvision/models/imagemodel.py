@@ -138,9 +138,9 @@ class ImageModel(Model):
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
-    @ staticmethod
+    @staticmethod
     def split_model_name(name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
-        re_list = re.findall(r'[0-9]+|[a-z]+|_', name)
+        re_list = re.findall(r'\d+|\D+', name)
         if len(re_list) > 1:
             name = re_list[0]
             layer = int(re_list[1])
