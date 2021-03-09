@@ -43,6 +43,8 @@ class Dataset:
                            help='dataset name (lowercase).')
         group.add_argument('--batch_size', dest='batch_size', type=int,
                            help='batch size (negative number means batch_size for each gpu).')
+        group.add_argument('--valid_batch_size', dest='valid_batch_size', type=int,
+                           help='valid batch size.')
         group.add_argument('--test_batch_size', dest='test_batch_size', type=int,
                            help='test batch size.')
         group.add_argument('--num_workers', dest='num_workers', type=int,
@@ -55,12 +57,15 @@ class Dataset:
 
     def __init__(self, batch_size: int = None, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
-                 num_workers: int = 4, loss_weights: Union[bool, np.ndarray] = False, test_batch_size: int = 1, **kwargs):
+                 num_workers: int = 4, loss_weights: Union[bool, np.ndarray] = False,
+                 valid_batch_size: int = 100, test_batch_size: int = 1, **kwargs):
         self.param_list: dict[str, list[str]] = {}
         self.param_list['dataset'] = ['data_type', 'folder_path', 'label_names',
-                                      'batch_size', 'num_classes', 'num_workers', 'test_batch_size']
+                                      'batch_size', 'num_classes', 'num_workers',
+                                      'valid_batch_size', 'test_batch_size']
         self.__batch_size: int = 0
         self.batch_size = batch_size
+        self.valid_batch_size = valid_batch_size
         self.test_batch_size = test_batch_size
         self.split_ratio = split_ratio
         self.train_sample = train_sample
@@ -88,9 +93,6 @@ class Dataset:
         self.loss_weights: np.ndarray = loss_weights
         if isinstance(loss_weights, bool):
             self.loss_weights = self.get_loss_weights() if loss_weights else None
-
-    def middle_process(self):
-        pass
 
     def check_files(self, transform: str = None, **kwargs) -> bool:
         try:
@@ -172,7 +174,14 @@ class Dataset:
                        batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
-            batch_size = self.test_batch_size if mode == 'test' else self.batch_size
+            # TODO: python 3.10 match
+            if mode == 'train':
+                batch_size = self.batch_size
+            elif mode == 'valid':
+                batch_size = self.valid_batch_size
+            else:
+                assert mode == 'test'
+                batch_size = self.test_batch_size
         if shuffle is None:
             shuffle = True if mode == 'train' else False
         num_workers = num_workers if num_workers is not None else self.num_workers
@@ -246,6 +255,6 @@ def create(dataset_name: str = None, dataset: str = None, folder_path: str = Non
     result = config.get_config(dataset_name=dataset_name)['dataset']._update(kwargs)
 
     DatasetType = class_dict[dataset_name]
-    folder_path = folder_path if folder_path is not None else \
-        os.path.join(result['data_dir'], DatasetType.data_type, DatasetType.name)     # TODO: Linting problem
+    folder_path = folder_path if folder_path is not None \
+        else os.path.join(result['data_dir'], DatasetType.data_type, DatasetType.name)     # TODO: Linting problem
     return DatasetType(folder_path=folder_path, **result)

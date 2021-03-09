@@ -6,4 +6,7 @@ batch_size:
   cifar10: -256
   gtsrb: -256
 
+valid_batch_size:
+  default: 100
+
 data_format: zip
