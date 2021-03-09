@@ -41,7 +41,7 @@ class IndexDataset(torch.utils.data.Dataset):
 
 
 def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False,
-                    force: bool = False) -> tuple[list, list[int]]:
+                    force: bool = True) -> tuple[list, list[int]]:
     if not force:
         if label_only and 'targets' in dataset.__dict__.keys():
             return None, list(dataset.targets)
