@@ -34,8 +34,8 @@ class _MLPNet(nn.Module):
 
 
 class MLPNet(ImageModel):
-    def __init__(self, name='mlpnet', model_class=_MLPNet, **kwargs):
-        super().__init__(name=name, model_class=model_class, **kwargs)
+    def __init__(self, name='mlpnet', model=_MLPNet, **kwargs):
+        super().__init__(name=name, model=model, **kwargs)
 
     def get_logits(self, _input: torch.Tensor, **kwargs):
         return self._model(_input, **kwargs)
@@ -73,5 +73,5 @@ class _Combined_Model(_ImageModel):
 
 
 class Combined_Model(ImageModel):
-    def __init__(self, name='combined_model', model_class=_Combined_Model, **kwargs):
-        super().__init__(name=name, model_class=model_class, **kwargs)
+    def __init__(self, name='combined_model', model=_Combined_Model, **kwargs):
+        super().__init__(name=name, model=model, **kwargs)

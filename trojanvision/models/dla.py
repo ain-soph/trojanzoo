@@ -39,9 +39,9 @@ class _DLA(_ImageModel):
 class DLA(ImageModel):
 
     def __init__(self, name: str = 'dla', simple: bool = None,
-                 model_class: type[_DLA] = _DLA, **kwargs):
+                 model: type[_DLA] = _DLA, **kwargs):
         if name == 'dlasimple' and simple is None:
             simple = True
         elif simple:
             name = 'dlasimple'
-        super().__init__(name=name, model_class=model_class, simple=simple, **kwargs)
+        super().__init__(name=name, model=model, simple=simple, **kwargs)

@@ -49,9 +49,9 @@ class DARTS(ImageModel):
 
     def __init__(self, name: str = 'darts', layer: int = 20,
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
-                 genotype: Genotype = DARTS_genotype, model_class: type[_DARTS] = _DARTS, **kwargs):
+                 genotype: Genotype = DARTS_genotype, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
-        super().__init__(name=name, layer=layer, genotype=genotype, model_class=model_class,
+        super().__init__(name=name, layer=layer, genotype=genotype, model=model,
                          auxiliary=auxiliary, **kwargs)
         self._model: _DARTS
         self.auxiliary = auxiliary

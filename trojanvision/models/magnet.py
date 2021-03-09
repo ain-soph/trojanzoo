@@ -64,7 +64,7 @@ class _MagNet(nn.Module):
 
 
 class MagNet(Model):
-    def __init__(self, name: str = 'magnet', dataset: ImageSet = None, model_class: type = _MagNet,
+    def __init__(self, name: str = 'magnet', dataset: ImageSet = None, model: type = _MagNet,
                  structure: list = None, activation: str = None, v_noise: float = 0.1, **kwargs):
         self.v_noise: float = v_noise
         if structure is None:
@@ -77,7 +77,7 @@ class MagNet(Model):
                 activation = 'sigmoid'
             else:
                 activation = 'relu'
-        super().__init__(name=name, dataset=dataset, model_class=model_class,
+        super().__init__(name=name, dataset=dataset, model=model,
                          structure=structure, activation=activation,
                          channel=dataset.data_shape[0], **kwargs)
 

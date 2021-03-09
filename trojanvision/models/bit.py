@@ -40,10 +40,10 @@ class BiT(ImageModel):
 
     def __init__(self, name: str = 'BiT', pretrained_dataset: str = 'M',
                  layer: int = 50, width_factor: int = 1,
-                 model_class: type[_BiT] = _BiT, **kwargs):
+                 model: type[_BiT] = _BiT, **kwargs):
         name = self.parse_name(name, pretrained_dataset, layer)
         super().__init__(name=name, layer=layer, width_factor=width_factor,
-                         model_class=model_class, **kwargs)
+                         model=model, **kwargs)
 
     @staticmethod
     def parse_name(name: str, pretrained_dataset: str = 'M', layer: int = 50):

@@ -23,6 +23,6 @@ class _Net(_ImageModel):
 
 class Net(ImageModel):
 
-    def __init__(self, name: str = 'net', model_class: type[_Net] = _Net, **kwargs):
-        super().__init__(name=name, model_class=model_class,
+    def __init__(self, name: str = 'net', model: type[_Net] = _Net, **kwargs):
+        super().__init__(name=name, model=model,
                          conv_dim=9216, fc_depth=2, fc_dim=128, **kwargs)

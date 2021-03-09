@@ -48,8 +48,8 @@ class _AlexNet(_ImageModel):
 
 class AlexNet(ImageModel):
 
-    def __init__(self, name: str = 'alexnet', model_class: type[_AlexNet] = _AlexNet, **kwargs):
-        super().__init__(name=name, model_class=model_class, **kwargs)
+    def __init__(self, name: str = 'alexnet', model: type[_AlexNet] = _AlexNet, **kwargs):
+        super().__init__(name=name, model=model, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = model_urls['resnet' + str(self.layer)]

@@ -68,7 +68,7 @@ class ImageModel(Model):
         return group
 
     def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
-                 model_class: type[_ImageModel] = _ImageModel, dataset: ImageSet = None,
+                 model: type[_ImageModel] = _ImageModel, dataset: ImageSet = None,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
         name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
         self.layer = layer
@@ -77,7 +77,7 @@ class ImageModel(Model):
             kwargs['norm_par'] = dataset.norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
-        super().__init__(name=name, model_class=model_class, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
+        super().__init__(name=name, model=model, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.param_list['imagemodel'] = ['layer', 'width_factor', 'sgm']
