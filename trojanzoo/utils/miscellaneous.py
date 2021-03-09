@@ -86,8 +86,8 @@ def output_memory(device: Union[str, torch.device] = None, full: bool = False, i
     else:
         prints('memory allocated: '.ljust(20),
                bytes2size(torch.cuda.memory_allocated(device=device)), indent=indent)
-        prints('memory cached: '.ljust(20),
-               bytes2size(torch.cuda.memory_cached(device=device)), indent=indent)
+        prints('memory reserved: '.ljust(20),
+               bytes2size(torch.cuda.memory_reserved(device=device)), indent=indent)
 
 
 def bytes2size(_bytes: int) -> str:
