@@ -12,6 +12,8 @@ def get_op(op_name: str, C_in: int, stride: int = 1, affine: bool = True, p: flo
     C_out = C_out if C_out is not None else C_in
     if op_name == 'none':
         return Zero(stride)
+    elif op_name == 'noise':
+        return Noise(stride)
     elif op_name == 'skip_connect' and stride == 1:
         return nn.Identity()
     else:
@@ -72,6 +74,18 @@ class Zero(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x.mul(0.) if self.stride == 1 else x[:, :, ::self.stride, ::self.stride].mul(0.)
+
+
+class Noise(nn.Module):
+    def __init__(self, stride: int = 1, mean: float = 0.0, std: float = 1.0):
+        super().__init__()
+        self.stride = stride
+        self.mean = mean
+        self.std = std
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        result = torch.randn_like(x).mul_(self.std).add_(self.std)
+        return result if self.stride == 1 else result[:, :, ::self.stride, ::self.stride]
 
 
 class FactorizedReduce(nn.Module):
