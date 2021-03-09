@@ -114,8 +114,8 @@ class _Model(nn.Module):
             self.layer_name_list = self.get_layer_name(use_filter=False, repeat=True)
         if layer_input == 'input':
             layer_input = 'record'
-        elif layer_input not in self.layer_name_list or layer_output not in self.layer_name_list or \
-                self.layer_name_list.index(layer_input) > self.layer_name_list.index(layer_output):
+        elif layer_input not in self.layer_name_list or layer_output not in self.layer_name_list \
+                or self.layer_name_list.index(layer_input) > self.layer_name_list.index(layer_output):
             print('Model Layer Name List: ', self.layer_name_list)
             print('Input  layer: ', layer_input)
             print('Output layer: ', layer_output)
@@ -187,8 +187,8 @@ class _Model(nn.Module):
                     layer_input = 'record'
         else:
             x = layer(x)
-        if prefix and (not use_filter or cls.filter_layer(layer)) and \
-                (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
+        if prefix and (not use_filter or cls.filter_layer(layer)) \
+                and (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
             _dict[prefix] = x.clone()
         return _dict, x
 
@@ -212,8 +212,8 @@ class _Model(nn.Module):
             for name, child_layer in layer.named_children():
                 full_name = prefix + ('.' if prefix else '') + name
                 layer_name_list.extend(cls._get_layer_name(child_layer, depth - 1, full_name, use_filter))
-        if prefix and (not use_filter or cls.filter_layer(layer)) and \
-                (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
+        if prefix and (not use_filter or cls.filter_layer(layer)) \
+                and (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
             layer_name_list.append(prefix)
         return layer_name_list
 

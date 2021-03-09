@@ -264,8 +264,8 @@ class Figure:
             if mean:
                 y_dict[key] = y_dict[key] + mean[i]
             if std:
-                y_dict[key] = y_dict[key].mean() + \
-                    (y_dict[key] - y_dict[key].mean()) * std[i]
+                y_dict[key] = y_dict[key].mean() \
+                    + (y_dict[key] - y_dict[key].mean()) * std[i]
         return y_dict
 
     @staticmethod

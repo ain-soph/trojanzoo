@@ -37,7 +37,7 @@ class Cell(nn.Module):
             op = get_op(name, C, stride, p=dropout_p)
             self._ops.append(op)
 
-    def forward(self, s0: torch.Tensor, s1: torch.Tensor):
+    def forward(self, s0: torch.Tensor, s1: torch.Tensor) -> torch.Tensor:
         s0 = self.preprocess0(s0)
         s1 = self.preprocess1(s1)
 
@@ -85,6 +85,7 @@ class FeatureExtractor(nn.Module):
     def __init__(self, genotype: Genotype, C: int = 36, layers: int = 20,
                  dropout_p: float = 0.2):
         super().__init__()
+        self.genotype = genotype
         self.aux_C: int = 0
         self.aux_layer: int = 0
 
@@ -113,7 +114,7 @@ class FeatureExtractor(nn.Module):
                 self.aux_layer = i
         self.feats_dim = C_prev
 
-    def forward(self, input: torch.Tensor, auxiliary: bool = False):
+    def forward(self, input: torch.Tensor, auxiliary: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
         aux_feats: torch.Tensor = None
         s0 = s1 = self.stem(input)
         for i, cell in enumerate(self.cells):
