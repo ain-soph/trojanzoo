@@ -670,10 +670,11 @@ class Model:
 
     # Need to overload for other packages (GNN) since they are calling their own nn.DataParallel.
     # TODO: nn.parallel.DistributedDataParallel
-    def get_parallel_model(self) -> Union[_Model, nn.DataParallel]:
+    @staticmethod
+    def get_parallel_model(_model: _Model) -> Union[_Model, nn.DataParallel]:
         if env['num_gpus'] > 1:
-            return nn.DataParallel(self._model)
-        return self._model
+            return nn.DataParallel(_model)
+        return _model
 
     @ staticmethod
     def output_layer_information(layer: nn.Module, depth: int = 0, verbose: bool = True,
