@@ -58,7 +58,7 @@ class AuxiliaryHead(nn.Module):
         """assuming input size 8x8"""
         super().__init__()
         self.features = nn.Sequential(
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.AvgPool2d(5, stride=stride, padding=0, count_include_pad=False),  # image size = 2 x 2
             nn.Conv2d(C, 128, 1, bias=False),
             nn.BatchNorm2d(128),
