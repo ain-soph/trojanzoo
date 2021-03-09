@@ -246,7 +246,8 @@ class Model:
                            help='randomized smoothing sampling number, defaults to 100')
         return group
 
-    def __init__(self, name: str = None, model_class: type[_Model] = _Model, dataset: Dataset = None,
+    def __init__(self, name: str = None, model_class: Union[type[_Model], _Model] = _Model,
+                 dataset: Dataset = None,
                  num_classes: int = None, folder_path: str = None,
                  official: bool = False, pretrain: bool = False,
                  randomized_smooth: bool = False, rs_sigma: float = 0.01, rs_n: int = 100,
@@ -280,8 +281,11 @@ class Model:
 
         # ------------------------------ #
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
-        self._model = model_class(num_classes=num_classes, **kwargs)
-        self.model = self.get_parallel_model()
+        if isinstance(model_class, type):
+            self._model = model_class(num_classes=num_classes, **kwargs)
+        else:
+            self._model = model_class
+        self.model = self.get_parallel_model(self._model)
         self.activate_params([])
         if official:
             self.load('official')
