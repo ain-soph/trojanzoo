@@ -3,7 +3,7 @@
 from .imagemodel import ImageModel
 from .alexnet import AlexNet
 from .bit import BiT
-from .darts import DARTS
+from .darts import DARTS, DARTS_Robust
 from .densenet import DenseNet, DenseNetcomp
 from .dla import DLA
 from .magnet import MagNet
@@ -24,6 +24,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'alexnet': AlexNet,
     'bit': BiT,
     'darts': DARTS,
+    'darts_robust': DARTS_Robust,
     'densenet': DenseNet,
     'densenetcomp': DenseNetcomp,
     'dla': DLA,
