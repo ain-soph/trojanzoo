@@ -11,6 +11,8 @@ from collections import OrderedDict
 
 from typing import TYPE_CHECKING
 import argparse  # TODO: python 3.10
+from collections.abc import Callable
+from typing import Union
 if TYPE_CHECKING:
     import torch.cuda
 
@@ -86,6 +88,14 @@ class DARTS(ImageModel):
             _output.copy_(logits)
         return super().loss(_output=logits, _label=_label) \
             + self.auxiliary_weight * super().loss(_output=logits_aux, _label=_label)
+
+    def load(self, file_path: str = None, folder_path: str = None, suffix: str = None,
+             map_location: Union[str, Callable, torch.device, dict] = 'cpu',
+             component: str = '', strict: bool = False,
+             verbose: bool = False, indent: int = 0, **kwargs):
+        return super().load(file_path=file_path, folder_path=folder_path, suffix=suffix,
+                            map_location=map_location, component=component, strict=strict,
+                            verbose=verbose, indent=indent, **kwargs)
 
     def get_official_weights(self, dataset='cifar10', auxiliary: bool = False,
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
