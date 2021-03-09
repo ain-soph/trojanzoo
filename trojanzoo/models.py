@@ -538,7 +538,7 @@ class Model:
                 # data_time.update(time.perf_counter() - end)
                 _input, _label = get_data_fn(data, mode='train')
                 _output = self(_input, amp=amp)
-                loss = loss_fn(_input, _label, _output=_output)
+                loss = loss_fn(_input, _label, _output=_output, amp=amp)
                 if amp:
                     scaler.scale(loss).backward()
                     if callable(after_loss_fn):

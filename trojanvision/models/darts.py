@@ -9,7 +9,10 @@ from torchvision.datasets.utils import download_file_from_google_drive
 import os
 from collections import OrderedDict
 
+from typing import TYPE_CHECKING
 import argparse  # TODO: python 3.10
+if TYPE_CHECKING:
+    import torch.cuda
 
 url = {
     'cifar10': '1Y13i4zKGKgjtWBdC0HWLavjO7wvEiGOc',
@@ -59,16 +62,30 @@ class DARTS(ImageModel):
         self.param_list['darts'] = ['auxiliary', 'auxiliary_weight']
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
-             _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+             _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
         if self.auxiliary:
-            isinstance(self._model.auxiliary_head, AuxiliaryHead)
-            feats, feats_aux = self._model.features.forward(self._model.normalize(_input), auxiliary=True)
-            logits = self._model.classifier(self._model.flatten(self._model.pool(feats)))
-            logits_aux = self._model.auxiliary_head(feats_aux)
-            return super().loss(_output=logits, _label=_label) \
-                + self.auxiliary_weight * super().loss(_output=logits_aux, _label=_label)
+            assert isinstance(self._model.auxiliary_head, AuxiliaryHead)
+            if amp:
+                with torch.cuda.amp.autocast():
+                    return self.loss_with_aux(_input, _label, _output)
+            return self.loss_with_aux(_input, _label, _output)
         else:
             return super().loss(_input, _label, _output, *kwargs)
+
+    def __call__(self, _input: torch.Tensor, amp: bool = False, **kwargs) -> torch.Tensor:
+        if self._model.training:
+            return torch.zeros([_input.size(0), self.num_classes], device=_input.device)
+        return super().__call__(_input, amp=amp, **kwargs)
+
+    def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
+                      _output: torch.Tensor = None):
+        feats, feats_aux = self._model.features.forward(self._model.normalize(_input), auxiliary=True)
+        logits: torch.Tensor = self._model.classifier(self._model.flatten(self._model.pool(feats)))
+        logits_aux: torch.Tensor = self._model.auxiliary_head(feats_aux)
+        if isinstance(_output, torch.Tensor) and _output.shape == logits.shape:
+            _output.copy_(logits)
+        return super().loss(_output=logits, _label=_label) \
+            + self.auxiliary_weight * super().loss(_output=logits_aux, _label=_label)
 
     def get_official_weights(self, dataset='cifar10', auxiliary: bool = False,
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
