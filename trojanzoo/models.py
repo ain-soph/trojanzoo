@@ -10,7 +10,6 @@ from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import os
