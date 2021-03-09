@@ -54,7 +54,7 @@ def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False,
                     data = data.to(dtype=torch.float) / 255
                 data = [img for img in data]
             return data, list(dataset.targets)
-    data, targets = zip(*dataset)[:2]
+    data, targets = list(zip(*dataset))[:2]
     if label_only:
         data = None
     else:
