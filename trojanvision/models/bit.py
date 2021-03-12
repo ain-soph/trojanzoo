@@ -14,12 +14,8 @@ from collections import OrderedDict
 
 
 class _BiT(_ImageModel):
-    def __init__(self, name: str = 'BiT-M-R50x1',
-                 norm_par: dict[str, list] = None,
-                 **kwargs):
-        norm_par = {'mean': [0.5, 0.5, 0.5],
-                    'std': [0.5, 0.5, 0.5], }
-        super().__init__(norm_par=norm_par, **kwargs)
+    def __init__(self, name: str = 'BiT-M-R50x1', **kwargs):
+        super().__init__(**kwargs)
         _model = KNOWN_MODELS[name](head_size=1)
         self.features = nn.Sequential()
         self.features.add_module('root', _model.root)
@@ -42,6 +38,9 @@ class BiT(ImageModel):
                  layer: int = 50, width_factor: int = 1,
                  model: type[_BiT] = _BiT, **kwargs):
         name = self.parse_name(name, pretrained_dataset, layer)
+        if 'norm_par' not in kwargs.keys():
+            kwargs['norm_par'] = {'mean': [0.5, 0.5, 0.5],
+                                  'std': [0.5, 0.5, 0.5], }
         super().__init__(name=name, layer=layer, width_factor=width_factor,
                          model=model, **kwargs)
 
