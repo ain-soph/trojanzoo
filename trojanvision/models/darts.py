@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
+from trojanvision.datasets import ImageSet
 from trojanvision.utils.darts import FeatureExtractor, AuxiliaryHead, Genotype
 from trojanvision.utils.darts import DARTS as DARTS_genotype
 from trojanvision.utils.darts import ROBUST_DARTS
@@ -56,6 +57,11 @@ class DARTS(ImageModel):
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = DARTS_genotype, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
+        if 'norm_par' not in kwargs.keys() and 'dataset' in kwargs.keys():
+            dataset = kwargs['dataset']
+            if isinstance(dataset, ImageSet) and 'cifar' in dataset.name:
+                kwargs['norm_par'] = {'mean': [0.49139968, 0.48215827, 0.44653124],
+                                      'std': [0.24703233, 0.24348505, 0.26158768], }
         super().__init__(name=name, layer=layer, genotype=genotype, model=model,
                          auxiliary=auxiliary, **kwargs)
         self._model: _DARTS
@@ -69,23 +75,15 @@ class DARTS(ImageModel):
             assert isinstance(self._model.auxiliary_head, AuxiliaryHead)
             if amp:
                 with torch.cuda.amp.autocast():
-                    return self.loss_with_aux(_input, _label, _output)
-            return self.loss_with_aux(_input, _label, _output)
+                    return self.loss_with_aux(_input, _label)
+            return self.loss_with_aux(_input, _label)
         else:
-            return super().loss(_input, _label, _output, *kwargs)
+            return super().loss(_input, _label, _output, **kwargs)
 
-    def __call__(self, _input: torch.Tensor, amp: bool = False, **kwargs) -> torch.Tensor:
-        if self._model.training:
-            return torch.zeros([_input.size(0), self.num_classes], device=_input.device)
-        return super().__call__(_input, amp=amp, **kwargs)
-
-    def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
-                      _output: torch.Tensor = None):
+    def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None):
         feats, feats_aux = self._model.features.forward(self._model.normalize(_input), auxiliary=True)
         logits: torch.Tensor = self._model.classifier(self._model.flatten(self._model.pool(feats)))
         logits_aux: torch.Tensor = self._model.auxiliary_head(feats_aux)
-        if isinstance(_output, torch.Tensor) and _output.shape == logits.shape:
-            _output.copy_(logits)
         return super().loss(_output=logits, _label=_label) \
             + self.auxiliary_weight * super().loss(_output=logits_aux, _label=_label)
 
