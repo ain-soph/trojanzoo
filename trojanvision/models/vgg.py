@@ -46,10 +46,17 @@ class VGG(ImageModel):
         return model_zoo.load_url(url, **kwargs)
 
 
+class _VGGcomp(_VGG):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+
+
 class VGGcomp(VGG):
 
-    def __init__(self, name: str = 'vggcomp', **kwargs):
-        super().__init__(name=name, conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
+    def __init__(self, name: str = 'vggcomp', model: type[_VGGcomp] = _VGGcomp, **kwargs):
+        super().__init__(name=name, model=model, conv_dim=512, fc_depth=3, fc_dim=512, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)
