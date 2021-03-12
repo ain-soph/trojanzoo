@@ -45,8 +45,10 @@ if __name__ == '__main__':
 
     simple_parser = argparse.ArgumentParser()
     simple_parser.add_argument('--mark_source', dest='mark_source', type=str, default='defense')
+    simple_parser.add_argument('--unlearn_mode', dest='unlearn_mode', type=str, default='batch')
     args, unknown = simple_parser.parse_known_args()
-    mark_source: bool = args.mark_source
+    mark_source: str = args.mark_source
+    unlearn_mode: str = args.unlearn_mode
 
     if mark_source == 'attack':
         mark_source = attack.name
@@ -62,7 +64,7 @@ if __name__ == '__main__':
         raise Exception(mark_source)
 
     atk_unlearn: Unlearn = trojanvision.attacks.create(mark=mark, target_class=attack.target_class, percent=attack.target_class,
-                                                       mark_source=mark_source,
+                                                       mark_source=mark_source, train_mode=unlearn_mode,
                                                        dataset=dataset, model=model, attack_name='unlearn')
 
     # ------------------------------------------------------------------------ #

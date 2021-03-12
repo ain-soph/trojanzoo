@@ -5,7 +5,7 @@ from trojanvision.models.imagemodel import ImageModel
 from trojanvision.marks import Watermark
 from trojanzoo.attacks import Attack
 from trojanzoo.utils import to_list
-from trojanzoo.utils.data import TensorListDataset
+from trojanzoo.utils.data import TensorListDataset, dataset_to_list
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
 
@@ -69,14 +69,7 @@ class BadNet(Attack):
                               validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
-            clean_dataset = self.dataset.loader['train'].dataset
-            _input, _label = next(iter(self.dataset.get_dataloader(
-                'train', batch_size=int(self.poison_percent * len(clean_dataset)))))
-            _label = torch.ones_like(_label) * self.target_class
-            _label = _label.tolist()
-            poison_input = self.add_mark(_input)
-            poison_dataset = TensorListDataset(poison_input, _label)
-            dataset = torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
+            dataset = self.mix_dataset()
             loader = self.dataset.get_dataloader('train', dataset=dataset)
             self.model._train(epoch, save=save,
                               validate_fn=self.validate_fn, loader_train=loader,
@@ -85,6 +78,16 @@ class BadNet(Attack):
             self.model._train(epoch, save=save,
                               validate_fn=self.validate_fn, loss_fn=self.loss_fn,
                               save_fn=self.save, **kwargs)
+
+    def mix_dataset(self, poison_label: bool = True) -> torch.utils.data.Dataset:
+        clean_dataset = self.dataset.loader['train'].dataset
+        _input, _label = dataset_to_list(clean_dataset)
+        _input = torch.stack(_input[self.poison_percent * len(clean_dataset)])
+        if poison_label:
+            _label = [self.target_class] * len(_label)
+        poison_input = self.add_mark(_input)
+        poison_dataset = TensorListDataset(poison_input, _label)
+        return torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:
@@ -125,9 +128,7 @@ class BadNet(Attack):
         return self.mark.add_mark(x, **kwargs)
 
     def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None, _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
-        if _output is None:
-            _output = self.model(_input)
-        loss_clean = self.model.criterion(_output, _label)
+        loss_clean = self.model.loss(_input, _label, **kwargs)
         poison_input = self.mark.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)

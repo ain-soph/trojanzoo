@@ -4,6 +4,8 @@ from .badnet import BadNet
 import torch
 import argparse
 
+import torch.utils.data  # TODO: python 3.10
+
 
 class Unlearn(BadNet):
 
@@ -24,4 +26,7 @@ class Unlearn(BadNet):
         return super().get_data(data, keep_org=keep_org, poison_label=poison_label, **kwargs)
 
     def get_filename(self, **kwargs):
-        return f'{self.mark_source}_' + super().get_filename(**kwargs)
+        return f'{self.mark_source}_{self.train_mode}_' + super().get_filename(**kwargs)
+
+    def mix_dataset(self, poison_label: bool = False) -> torch.utils.data.Dataset:
+        return super().mix_dataset(poison_label=poison_label)
