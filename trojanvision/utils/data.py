@@ -3,7 +3,9 @@
 from torchvision import get_image_backend
 from torchvision.datasets import VisionDataset, DatasetFolder
 from torchvision.datasets.folder import has_file_allowed_extension, IMG_EXTENSIONS
+import torch
 import numpy as np
+import random
 import PIL.Image as Image
 import io
 import os
@@ -132,3 +134,20 @@ class ZipFolder(DatasetFolder):
         classes.sort()
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
+
+
+class Cutout:
+    def __init__(self, length: int):
+        self.length = length
+
+    def __call__(self, img: torch.Tensor):
+        h, w = img.size(1), img.size(2)
+        mask = torch.ones(h, w)
+        y = random.randint(h)
+        x = random.randint(w)
+        y1 = max(y - self.length // 2, 0)
+        y2 = min(y + self.length // 2, h)
+        x1 = max(x - self.length // 2, 0)
+        x2 = min(x + self.length // 2, w)
+        mask[y1: y2, x1: x2] = 0.
+        return (mask * img).detach()
