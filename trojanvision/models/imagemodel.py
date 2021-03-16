@@ -54,13 +54,13 @@ class _ImageModel(_Model):
 
 class ImageModel(Model):
 
-    @ classmethod
+    @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--layer', dest='layer', type=int,
-                           help='layer (optional, maybe embedded in --model)')
-        group.add_argument('--width_factor', dest='width_factor', type=int,
-                           help='width factor for wide-ResNet (optional, maybe embedded in --model)')
+        # group.add_argument('--layer', dest='layer', type=int,
+        #                    help='layer (optional, maybe embedded in --model)')
+        # group.add_argument('--width_factor', dest='width_factor', type=int,
+        #                    help='width factor for wide-ResNet (optional, maybe embedded in --model)')
         group.add_argument('--sgm', dest='sgm', action='store_true',
                            help='whether to use sgm gradient, defaults to False')
         group.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
@@ -80,9 +80,13 @@ class ImageModel(Model):
         super().__init__(name=name, model=model, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
-        self.param_list['imagemodel'] = ['layer', 'width_factor', 'sgm']
+        self.param_list['imagemodel'] = []
+        if layer is not None:
+            self.param_list['imagemodel'].append('layer')
+        if width_factor is not None:
+            self.param_list['imagemodel'].append('width_factor')
         if sgm:
-            self.param_list['imagemodel'].extend(['sgm_gamma'])
+            self.param_list['imagemodel'].append('sgm_gamma')
         self._model: _ImageModel
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
@@ -138,8 +142,8 @@ class ImageModel(Model):
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
-    @staticmethod
-    def split_model_name(name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
+    @classmethod
+    def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
         re_list = re.findall(r'\d+|\D+', name)
         if len(re_list) > 1:
             name = re_list[0]

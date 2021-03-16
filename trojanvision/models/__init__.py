@@ -3,13 +3,14 @@
 from .imagemodel import ImageModel
 from .alexnet import AlexNet
 from .bit import BiT
-from .darts import DARTS, DARTS_Robust
-from .densenet import DenseNet, DenseNetcomp
+from .darts import DARTS
+from .densenet import DenseNet
 from .dla import DLA
 from .magnet import MagNet
+from .mnasnet import MNASNet
 from .net import Net
-from .resnet import ResNet, ResNetcomp, ResNetS
-from .vgg import VGG, VGGcomp
+from .resnet import ResNet, ResNetS
+from .vgg import VGG
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
 import trojanzoo.models
@@ -24,18 +25,14 @@ class_dict: dict[str, type[ImageModel]] = {
     'alexnet': AlexNet,
     'bit': BiT,
     'darts': DARTS,
-    'darts_robust': DARTS_Robust,
     'densenet': DenseNet,
-    'densenetcomp': DenseNetcomp,
     'dla': DLA,
-    'dlasimple': DLA,
     'magnet': MagNet,
+    'mnasnet': MNASNet,
     'net': Net,
     'resnet': ResNet,
-    'resnetcomp': ResNetcomp,
     'resnets': ResNetS,
     'vgg': VGG,
-    'vggcomp': VGGcomp,
 }
 
 
@@ -47,7 +44,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
-    model_name = split_model_name(model_name)
+    model_name = get_model_class(model_name)
     return trojanzoo.models.add_argument(parser=parser, model_name=model_name, model=model,
                                          config=config, class_dict=class_dict)
 
@@ -64,12 +61,12 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None, folder_
     result = config.get_config(dataset_name=dataset_name)['model']._update(kwargs)
     model_name = model_name if model_name is not None else result['default_model']
 
-    ModelType: type[ImageModel] = class_dict[split_model_name(model_name)]
+    ModelType: type[ImageModel] = class_dict[get_model_class(model_name)]
     if folder_path is None and isinstance(dataset, ImageSet):
         folder_path = os.path.join(result['model_dir'], dataset.data_type, dataset.name)
     return ModelType(name=model_name, dataset=dataset, folder_path=folder_path, **result)
 
 
-def split_model_name(name: str) -> str:
-    name: str = re.findall(r'[0-9]+|[A-Za-z]+|_', name)[0]
-    return name.split('-')[0].lower()
+def get_model_class(name: str) -> str:
+    name: str = re.findall(r'[A-Za-z]+', name)[0]
+    return name.lower()

@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 class _DenseNet(_ImageModel):
 
-    def __init__(self, layer: int = 121, **kwargs):
+    def __init__(self, layer: int = 121, comp: bool = False, **kwargs):
         super().__init__(**kwargs)
         ModelClass: type[torchvision.models.DenseNet] = getattr(torchvision.models, 'densenet' + str(layer))
         _model = ModelClass(num_classes=self.num_classes)
@@ -21,18 +21,26 @@ class _DenseNet(_ImageModel):
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', _model.classifier)  # nn.Linear(512 * block.expansion, num_classes)
         ]))
+        if comp:
+            conv0: nn.Conv2d = self.features.conv0
+            conv0 = nn.Conv2d(conv0.in_channels, conv0.out_channels,
+                              kernel_size=3, padding=1, bias=False)
+            module_list = [('conv0', conv0)]
+            module_list.extend(list(self.features.named_children())[4:])
+            self.features = nn.Sequential(OrderedDict(module_list))
 
 
 class DenseNet(ImageModel):
 
     def __init__(self, name: str = 'densenet', layer: int = 121,
                  model: type[_DenseNet] = _DenseNet, **kwargs):
-        super().__init__(name=name, layer=layer, model=model, **kwargs)
+        comp = True if 'comp' in name else False
+        super().__init__(name=name, layer=layer, model=model, comp=comp, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls['densenet' + str(self.layer)]
+        url = model_urls[f'densenet{self.layer:d}']
         print('get official model weights from: ', url)
-        _dict = model_zoo.load_url(url, **kwargs)
+        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
         pattern = re.compile(
             r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
         for key in list(_dict.keys()):
@@ -45,30 +53,4 @@ class DenseNet(ImageModel):
         _dict['classifier.fc.bias'] = _dict['classifier.bias']
         del _dict['classifier.weight']
         del _dict['classifier.bias']
-        return _dict
-
-
-class _DenseNetcomp(_DenseNet):
-
-    def __init__(self, layer: int = 121, **kwargs):
-        super().__init__(layer=layer, **kwargs)
-        conv0: nn.Conv2d = self.features.conv0
-        conv0 = nn.Conv2d(conv0.in_channels, conv0.out_channels,
-                          kernel_size=3, padding=1, bias=False)
-        module_list = [('conv0', conv0)]
-        module_list.extend(list(self.features.named_children())[4:])
-        self.features = nn.Sequential(OrderedDict(module_list))
-
-
-class DenseNetcomp(DenseNet):
-
-    def __init__(self, name: str = 'densenetcomp', layer: int = 121,
-                 model: type[_DenseNetcomp] = _DenseNetcomp, **kwargs):
-        super().__init__(name=name, layer=layer, model=model, **kwargs)
-
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        _dict = super().get_official_weights(**kwargs)
-        keys_list: list[str] = list(_dict.keys())
-        _dict[keys_list[0]] = self._model.features[0].weight
-        _dict[keys_list[1]] = self._model.features[0].bias
         return _dict

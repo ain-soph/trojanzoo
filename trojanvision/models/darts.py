@@ -55,13 +55,15 @@ class DARTS(ImageModel):
 
     def __init__(self, name: str = 'darts', layer: int = 20,
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
-                 genotype: Genotype = DARTS_genotype, model: type[_DARTS] = _DARTS, **kwargs):
+                 genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
         if 'norm_par' not in kwargs.keys() and 'dataset' in kwargs.keys():
             dataset = kwargs['dataset']
             if isinstance(dataset, ImageSet) and 'cifar' in dataset.name:
                 kwargs['norm_par'] = {'mean': [0.49139968, 0.48215827, 0.44653124],
                                       'std': [0.24703233, 0.24348505, 0.26158768], }
+        if genotype is None:
+            genotype = ROBUST_DARTS if 'robust' in name else DARTS_genotype
         super().__init__(name=name, layer=layer, genotype=genotype, model=model,
                          auxiliary=auxiliary, **kwargs)
         self._model: _DARTS
@@ -128,8 +130,3 @@ class DARTS(ImageModel):
             else:
                 new_dict[key] = _dict[new2old[key]]
         return new_dict
-
-
-class DARTS_Robust(DARTS):
-    def __init__(self, name: str = 'darts_robust', genotype: Genotype = ROBUST_DARTS, **kwargs):
-        super().__init__(name=name, genotype=genotype, **kwargs)

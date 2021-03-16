@@ -38,10 +38,6 @@ class _DLA(_ImageModel):
 
 class DLA(ImageModel):
 
-    def __init__(self, name: str = 'dla', simple: bool = None,
-                 model: type[_DLA] = _DLA, **kwargs):
-        if name == 'dlasimple' and simple is None:
-            simple = True
-        elif simple:
-            name = 'dlasimple'
+    def __init__(self, name: str = 'dla', model: type[_DLA] = _DLA, **kwargs):
+        simple = True if 'simple' in name else False
         super().__init__(name=name, model=model, simple=simple, **kwargs)
