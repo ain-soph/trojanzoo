@@ -86,11 +86,11 @@ class ImageModel(Model):
         self._model: _ImageModel
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
-        self.ce_loss_fn = torch.nn.CrossEntropyLoss(weight=self.loss_weights)
+        self._ce_loss_fn = torch.nn.CrossEntropyLoss(weight=self.loss_weights)
 
     def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
         _output = self(_input)
-        return -self.ce_loss_fn(_output, _label)
+        return -self._ce_loss_fn(_output, _label)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if adv and self.pgd is not None:
