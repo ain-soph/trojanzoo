@@ -14,7 +14,7 @@ class _DenseNet(_ImageModel):
 
     def __init__(self, layer: int = 121, comp: bool = False, **kwargs):
         super().__init__(**kwargs)
-        ModelClass: type[torchvision.models.DenseNet] = getattr(torchvision.models, 'densenet' + str(layer))
+        ModelClass: type[torchvision.models.DenseNet] = getattr(torchvision.models, f'densenet{layer:d}')
         _model = ModelClass(num_classes=self.num_classes)
         self.features = _model.features
         self.features.add_module('relu', nn.ReLU(inplace=True))
@@ -38,7 +38,7 @@ class DenseNet(ImageModel):
         super().__init__(name=name, layer=layer, model=model, comp=comp, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[f'densenet{self.layer:d}']
+        url = model_urls[self.name]
         print('get official model weights from: ', url)
         _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
         pattern = re.compile(

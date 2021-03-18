@@ -11,14 +11,15 @@ from collections import OrderedDict
 
 class _VGG(_ImageModel):
 
-    def __init__(self, layer: int = 13, comp: bool = False, **kwargs):
+    def __init__(self, layer: int = 13, batch_norm: bool = False, comp: bool = False, **kwargs):
         if comp:
             comp_dict = {'conv_dim': 512, 'fc_depth': 3, 'fc_dim': 512}
             for key, value in comp_dict.items():
                 if key not in kwargs.keys():
                     kwargs[key] = value
         super().__init__(**kwargs)
-        ModelClass: type[torchvision.models.VGG] = getattr(torchvision.models, f'vgg{layer:d}')
+        name = f'vgg{layer:d}' + ('_bn' if batch_norm else '')
+        ModelClass: type[torchvision.models.VGG] = getattr(torchvision.models, name)
         _model = ModelClass(num_classes=self.num_classes)
         self.features: nn.Sequential = _model.features
         if comp:
@@ -40,17 +41,11 @@ class _VGG(_ImageModel):
 class VGG(ImageModel):
     def __init__(self, name: str = 'vgg', layer: int = 13,
                  model: type[_VGG] = _VGG, **kwargs):
-        super().__init__(name=name, layer=layer, model=model, **kwargs)
+        comp = True if 'comp' in name else False
+        batch_norm = True if 'bn' in name else False
+        super().__init__(name=name, layer=layer, model=model, comp=comp, batch_norm=batch_norm, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[f'vgg{self.layer:d}']
+        url = model_urls[self.name]
         print('get official model weights from: ', url)
         return model_zoo.load_url(url, **kwargs)
-
-    @classmethod
-    def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
-        bn_flag = True if '_bn' in name else False
-        name, layer, width_factor = super().split_model_name(name, layer=layer, width_factor=width_factor)
-        if bn_flag:
-            name = name.replace('_bn', '') + '_bn'
-        return name, layer, width_factor
