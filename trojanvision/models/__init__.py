@@ -9,6 +9,7 @@ from .dla import DLA
 from .magnet import MagNet
 from .mnasnet import MNASNet
 from .net import Net
+from .proxylessnas import ProxylessNAS
 from .resnet import ResNet, ResNetS
 from .vgg import VGG
 from trojanvision.datasets import ImageSet
@@ -30,6 +31,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'magnet': MagNet,
     'mnasnet': MNASNet,
     'net': Net,
+    'proxylessnas': ProxylessNAS,
     'resnet': ResNet,
     'resnets': ResNetS,
     'vgg': VGG,
