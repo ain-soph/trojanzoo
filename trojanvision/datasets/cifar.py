@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# from torchvision.transforms.autoaugment import AutoAugment, AutoAugmentPolicy
 from .imageset import ImageSet
 
 import torchvision.datasets as datasets
@@ -34,12 +35,15 @@ class CIFAR10(ImageSet):
     #         transform = transforms.ToTensor()
     #     return transform
     @staticmethod
-    def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+    def get_transform(self, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomCrop((32, 32), padding=4),
                 transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
+                # transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
+                transforms.ToTensor(),
+                # transforms.RandomErasing(value=self.norm_par['mean'])
+            ])
         else:
             transform = transforms.ToTensor()
         return transform
