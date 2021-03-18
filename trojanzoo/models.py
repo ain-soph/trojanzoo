@@ -701,6 +701,8 @@ class Model:
     def summary(self, depth: int = None, verbose: bool = True, indent: int = 0, **kwargs):
         if depth is None:
             depth = env['verbose']
+        if depth is None:
+            depth = 1
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key, value in self.param_list.items():
             prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
