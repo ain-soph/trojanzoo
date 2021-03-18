@@ -13,6 +13,7 @@ import functools
 
 
 from typing import TYPE_CHECKING
+from typing import Union
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -68,7 +69,7 @@ class ImageModel(Model):
         return group
 
     def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
-                 model: type[_ImageModel] = _ImageModel, dataset: ImageSet = None,
+                 model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
         name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
         self.layer = layer
@@ -144,16 +145,20 @@ class ImageModel(Model):
 
     @classmethod
     def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
+        full_list = name.split('_')
+        name = full_list[0]
         re_list = re.findall(r'\d+|\D+', name)
         if len(re_list) > 1:
             name = re_list[0]
             layer = int(re_list[1])
-        if len(re_list) > 2 and re_list[-2] == 'x':
-            width_factor = int(re_list[-1])
+            if len(re_list) > 2 and re_list[-2] == 'x':
+                width_factor = int(re_list[-1])
         if layer is not None:
             name += str(layer)
         if width_factor is not None:
             name += f'x{width_factor:d}'
+        full_list[0] = name
+        name = '_'.join(full_list)
         return name, layer, width_factor
 
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
