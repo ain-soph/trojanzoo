@@ -72,39 +72,6 @@ class ResNet(ImageModel):
         return new_dict
 
 
-class _ResNetcomp(_ResNet):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        conv: nn.Conv2d = self.features.conv1
-        conv = nn.Conv2d(conv.in_channels, conv.out_channels,
-                         kernel_size=3, stride=1, padding=1, bias=False)
-        self.features = nn.Sequential(OrderedDict([
-            ('conv1', conv),
-            ('bn1', self.features.bn1),  # nn.BatchNorm2d(64)
-            ('relu', self.features.relu),  # nn.ReLU(inplace=True)
-            # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-            ('layer1', self.features.layer1),
-            ('layer2', self.features.layer2),
-            ('layer3', self.features.layer3),
-            ('layer4', self.features.layer4)
-        ]))
-        # block.expansion = 1 if BasicBlock and 4 if Bottleneck
-        # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
-
-
-class ResNetcomp(ResNet):
-
-    def __init__(self, name: str = 'resnetcomp',
-                 model: type[_ResNetcomp] = _ResNetcomp, **kwargs):
-        super().__init__(name=name, model=model, **kwargs)
-
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        _dict = super().get_official_weights(**kwargs)
-        _dict[list(_dict.keys())[0]] = self._model.features[0].weight
-        return _dict
-
-
 class _ResNetS(_ResNet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
