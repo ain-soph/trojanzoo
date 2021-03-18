@@ -63,7 +63,7 @@ class PGD(Attack, PGD_Optimizer):
             _input, _label = self.model.remove_misclassify(data)
             if len(_label) == 0:
                 continue
-            adv_input, _iter = self.craft_example(_input)
+            adv_input, _iter = self.craft_example(_input, **kwargs)
 
             total += 1
             if _iter:
