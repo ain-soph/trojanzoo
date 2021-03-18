@@ -46,7 +46,7 @@ class MNASNet(ImageModel):
         name = name_list[0]
         if len(name_list) > 1:
             assert len(name_list) == 2
-            mnas_alpha = int(name_list[1].replace('_', '.'))
+            mnas_alpha = float(name_list[1].replace('_', '.'))
         return f'{name}{mnas_alpha:.1f}'.replace('.', '_'), mnas_alpha
 
     @classmethod
