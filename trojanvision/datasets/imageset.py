@@ -23,7 +23,7 @@ class ImageSet(Dataset):
     data_shape = [3, 224, 224]
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
-                 default_model: str = 'resnetcomp18', **kwargs):
+                 default_model: str = 'resnet18_comp', **kwargs):
         self.norm_par: dict[str, list[float]] = norm_par
         super().__init__(default_model=default_model, **kwargs)
         self.param_list['imageset'] = ['data_shape', 'norm_par']
