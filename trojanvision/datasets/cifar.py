@@ -35,7 +35,7 @@ class CIFAR10(ImageSet):
     #         transform = transforms.ToTensor()
     #     return transform
     @staticmethod
-    def get_transform(self, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+    def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomCrop((32, 32), padding=4),
