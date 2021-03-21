@@ -3,7 +3,7 @@
 
 import torch.nn as nn
 
-from nni.nas.pytorch import mutables
+from nni.nas.pytorch import mutables    # type: ignore
 from trojanvision.utils.enas.ops import FactorizedReduce, ConvBranch, PoolBranch
 
 

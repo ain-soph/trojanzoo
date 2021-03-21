@@ -19,7 +19,7 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torchvision.transforms import Normalize
 import argparse
-from matplotlib.colors import Colormap
+from matplotlib.colors import Colormap  # type: ignore  # TODO
 from collections.abc import Callable
 if TYPE_CHECKING:
     import torch.autograd
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     import torch.cuda.amp
     import torch.utils.data
 
-from matplotlib.cm import get_cmap
+from matplotlib.cm import get_cmap  # type: ignore  # TODO
 jet = get_cmap('jet')
 
 
