@@ -6,6 +6,7 @@ from .bit import BiT
 from .darts import DARTS
 from .densenet import DenseNet
 from .dla import DLA
+from .enas import ENAS
 from .magnet import MagNet
 from .mnasnet import MNASNet
 from .net import Net
@@ -28,6 +29,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'darts': DARTS,
     'densenet': DenseNet,
     'dla': DLA,
+    'enas': ENAS,
     'magnet': MagNet,
     'mnasnet': MNASNet,
     'net': Net,
