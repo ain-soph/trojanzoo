@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
-import trojanvision.utils.resnet_s
+from trojanvision.utils.model_archs.resnet_s import ResNetS
 
 import torch
 import torch.nn as nn
@@ -75,7 +75,7 @@ class ResNet(ImageModel):
 class _ResNetS(_ResNet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        _model = trojanvision.utils.resnet_s.ResNetS(nclasses=self.num_classes)
+        _model = ResNetS(nclasses=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', _model.conv1),
             ('bn1', _model.bn1),  # nn.BatchNorm2d(64)

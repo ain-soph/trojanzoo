@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils import *
-
-import numpy as np
+import torch
 from typing import Union
 
-from matplotlib.colors import Colormap
-from matplotlib.cm import get_cmap
+from matplotlib.colors import Colormap  # type: ignore  # TODO
+from matplotlib.cm import get_cmap  # type: ignore  # TODO
 jet = get_cmap('jet')
 # jet = torch.tensor(jet(np.arange(256))[:, :3])
 

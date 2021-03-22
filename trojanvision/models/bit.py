@@ -2,7 +2,7 @@
 
 from .imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageNet
-from trojanvision.utils.bit import KNOWN_MODELS, tf2th
+from trojanvision.utils.model_archs.bit import KNOWN_MODELS, tf2th
 
 import torch
 import torch.nn as nn

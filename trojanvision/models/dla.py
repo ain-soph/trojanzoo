@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
-from trojanvision.utils.dla import BasicBlock, Tree, SimpleTree
+from trojanvision.utils.model_archs.dla import BasicBlock, Tree, SimpleTree
 
 import torch.nn as nn
 

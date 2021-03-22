@@ -43,7 +43,7 @@ class _ENAS(_ImageModel):
 class ENAS(ImageModel):
     def __init__(self, name: str = 'enas', model: type[_ENAS] = _ENAS, folder_path: str = None, **kwargs):
         import sys
-        from trojanvision.utils.enas import __file__ as file_path
+        from trojanvision.utils.model_archs.enas import __file__ as file_path
         sys.path.append(os.path.dirname(file_path))
         _model = torch.load(os.path.join(folder_path, 'enas_macro.pt'))
         super().__init__(name=name, model=model, _model=_model, folder_path=folder_path, **kwargs)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageSet
-from trojanvision.utils.darts import FeatureExtractor, AuxiliaryHead, Genotype
-from trojanvision.utils.darts import DARTS as DARTS_genotype
-from trojanvision.utils.darts import ROBUST_DARTS
+from trojanvision.utils.model_archs.darts import FeatureExtractor, AuxiliaryHead, Genotype
+from trojanvision.utils.model_archs.darts import DARTS as DARTS_genotype
+from trojanvision.utils.model_archs.darts import ROBUST_DARTS
 
 import torch
 import torch.hub
