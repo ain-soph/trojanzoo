@@ -6,6 +6,7 @@ from trojanvision.utils.darts import DARTS as DARTS_genotype
 from trojanvision.utils.darts import ROBUST_DARTS
 
 import torch
+import torch.hub
 from torchvision.datasets.utils import download_file_from_google_drive
 import os
 from collections import OrderedDict
@@ -101,7 +102,8 @@ class DARTS(ImageModel):
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
         assert str(self._model.features.genotype) == str(DARTS_genotype)
         file_name = f'darts_{dataset}.pt'
-        download_file_from_google_drive(file_id=url[dataset], root=self.folder_path, filename=file_name)
+        folder_path = os.path.join(torch.hub.get_dir(), 'darts')
+        download_file_from_google_drive(file_id=url[dataset], root=folder_path, filename=file_name)
         print('get official model weights from Google Drive: ', url[dataset])
         _dict: OrderedDict[str, torch.Tensor] = torch.load(os.path.join(self.folder_path, file_name),
                                                            map_location='cpu')
