@@ -7,4 +7,3 @@ neuron_num: 2
 
 target_class: 0
 percent: 0.01
-sgm_gamma: 1.0
