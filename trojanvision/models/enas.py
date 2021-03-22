@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+
 from .imagemodel import _ImageModel, ImageModel
-from trojanvision.datasets import ImageSet
 
 import torch
 import torch.nn as nn
