@@ -16,17 +16,20 @@ class Unlearn(BadNet):
         super().add_argument(group)
         group.add_argument('--mark_source', dest='mark_source', type=str,
                            help='mark source, defaults to ``attack``')
+        group.add_argument('--attack_source', dest='attack_source', type=str,
+                           help='attack source, defaults to ``badnet``')
 
-    def __init__(self, mark_source: str = 'attack', **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, mark_source: str = 'attack', attack_source: str = 'badnet', **kwargs):
+        self.attack_source = attack_source
         self.mark_source = mark_source
+        super().__init__(**kwargs)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  keep_org: bool = True, poison_label=False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         return super().get_data(data, keep_org=keep_org, poison_label=poison_label, **kwargs)
 
     def get_filename(self, **kwargs):
-        return f'{self.mark_source}_{self.train_mode}_' + super().get_filename(**kwargs)
+        return f'{self.attack_source}_{self.mark_source}_{self.train_mode}_' + super().get_filename(**kwargs)
 
     def mix_dataset(self, poison_label: bool = False) -> torch.utils.data.Dataset:
         return super().mix_dataset(poison_label=poison_label)
