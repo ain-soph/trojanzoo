@@ -470,7 +470,7 @@ class Model:
 
     # define in concrete model class.
     # TODO: maybe write some generic style? model_url?
-    def get_official_weights(self, map_location: Union[str, Callable, torch.device, dict] = 'default',
+    def get_official_weights(self, map_location: Union[str, Callable, torch.device, dict] = 'cpu',
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
         raise NotImplementedError(f'{self.name} has no official weights.')
 
