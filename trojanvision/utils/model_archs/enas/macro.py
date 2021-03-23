@@ -1,10 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-import torch.nn as nn
-
-from nni.nas.pytorch import mutables    # type: ignore
+import trojanvision.utils.model_archs.enas.mutables as mutables
 from trojanvision.utils.model_archs.enas.ops import FactorizedReduce, ConvBranch, PoolBranch
+
+import torch.nn as nn
 
 
 class ENASLayer(mutables.MutableScope):
@@ -64,14 +64,12 @@ class GeneralNetwork(nn.Module):
             self.layers.append(ENASLayer(labels[-1], labels[:-1], self.out_filters, self.out_filters))
 
         self.gap = nn.AdaptiveAvgPool2d(1)
+        self.flatten = nn.Flatten()
         self.dense = nn.Linear(self.out_filters, self.num_classes)
 
     def forward(self, x):
-        bs = x.size(0)
         cur = self.stem(x)
-
         layers = [cur]
-
         for layer_id in range(self.num_layers):
             cur = self.layers[layer_id](layers)
             layers.append(cur)
@@ -80,7 +78,8 @@ class GeneralNetwork(nn.Module):
                     layers[i] = self.pool_layers[self.pool_layers_idx.index(layer_id)](layer)
                 cur = layers[-1]
 
-        cur = self.gap(cur).view(bs, -1)
+        cur = self.gap(cur)
+        cur = self.flatten(cur)
         cur = self.dropout(cur)
         logits = self.dense(cur)
         return logits
