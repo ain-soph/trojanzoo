@@ -114,11 +114,17 @@ class FeatureExtractor(nn.Module):
                 self.aux_layer = i
         self.feats_dim = C_prev
 
-    def forward(self, input: torch.Tensor, auxiliary: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        s0 = s1 = self.stem(input)
+        for cell in self.cells:
+            s0, s1 = s1, cell(s0, s1)
+        return s1
+
+    def forward_with_aux(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         aux_feats: torch.Tensor = None
         s0 = s1 = self.stem(input)
         for i, cell in enumerate(self.cells):
             s0, s1 = s1, cell(s0, s1)
-            if auxiliary and i == self.aux_layer:
+            if i == self.aux_layer:
                 aux_feats = s1
         return s1, aux_feats

@@ -42,7 +42,7 @@ class _DARTS(_ImageModel):
         return FeatureExtractor(genotype, C, layer, dropout_p)
 
     def get_fm(self, x: torch.Tensor) -> torch.Tensor:
-        return self.features(self.normalize(x))[0]
+        return self.features(self.normalize(x))
 
 
 class DARTS(ImageModel):
@@ -83,8 +83,8 @@ class DARTS(ImageModel):
         else:
             return super().loss(_input, _label, _output, **kwargs)
 
-    def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None):
-        feats, feats_aux = self._model.features.forward(self._model.normalize(_input), auxiliary=True)
+    def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None) -> torch.Tensor:
+        feats, feats_aux = self._model.features.forward_with_aux(self._model.normalize(_input))
         logits: torch.Tensor = self._model.classifier(self._model.flatten(self._model.pool(feats)))
         logits_aux: torch.Tensor = self._model.auxiliary_head(feats_aux)
         return super().loss(_output=logits, _label=_label) \
