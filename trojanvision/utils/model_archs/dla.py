@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+# https://github.com/kuangliu/pytorch-cifar/blob/master/models/dla.py
+
 '''DLA in PyTorch.
 
 Reference:
