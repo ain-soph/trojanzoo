@@ -11,4 +11,4 @@ import trojanvision.trainer
 import trojanvision.attacks
 import trojanvision.defenses
 
-from trojanvision.utils import to_tensor, to_numpy, to_list
+from trojanzoo.utils import to_tensor, to_numpy, to_list
