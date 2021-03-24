@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from .imagemodel import _ImageModel, ImageModel
 from trojanvision.utils.model_archs.resnet_s import ResNetS
 

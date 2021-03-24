@@ -253,9 +253,11 @@ class Model:
                  randomized_smooth: bool = False, rs_sigma: float = 0.01, rs_n: int = 100,
                  suffix: str = '', **kwargs):
         self.param_list: dict[str, list[str]] = {}
-        self.param_list['model'] = ['folder_path', 'suffix', 'randomized_smooth']
+        self.param_list['model'] = ['folder_path']
+        if suffix:
+            self.param_list['model'].append('suffix')
         if randomized_smooth:
-            self.param_list['model'].extend(['rs_sigma', 'rs_n'])
+            self.param_list['model'].extend(['randomized_smooth', 'rs_sigma', 'rs_n'])
         self.name: str = name
         self.dataset = dataset
         self.suffix = suffix
