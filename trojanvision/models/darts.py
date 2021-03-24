@@ -54,7 +54,7 @@ class DARTS(ImageModel):
         group.add_argument('--auxiliary_weight', dest='auxiliary_weight', type=float,
                            help='enable auxiliary classifier during training.')
 
-    def __init__(self, name: str = 'darts', layer: int = 20,
+    def __init__(self, name: str = 'darts', layer: int = 20, C: int = 36, dropout_p: float = 0.2,
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
@@ -65,12 +65,18 @@ class DARTS(ImageModel):
                                       'std': [0.24703233, 0.24348505, 0.26158768], }
         if genotype is None:
             genotype = ROBUST_DARTS if 'robust' in name else DARTS_genotype
-        super().__init__(name=name, layer=layer, genotype=genotype, model=model,
-                         auxiliary=auxiliary, **kwargs)
-        self._model: _DARTS
+        self.C = C
+        self.dropout_p = dropout_p
+        self.genotype = genotype
         self.auxiliary = auxiliary
         self.auxiliary_weight = auxiliary_weight
-        self.param_list['darts'] = ['auxiliary', 'auxiliary_weight']
+        super().__init__(name=name, layer=layer, C=C, dropout_p=dropout_p,
+                         genotype=genotype, model=model,
+                         auxiliary=auxiliary, **kwargs)
+        self._model: _DARTS
+        self.param_list['darts'] = ['C', 'dropout_p', 'genotype']
+        if auxiliary:
+            self.param_list['darts'].insert(0, 'auxiliary_weight')
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
@@ -90,17 +96,13 @@ class DARTS(ImageModel):
         return super().loss(_output=logits, _label=_label) \
             + self.auxiliary_weight * super().loss(_output=logits_aux, _label=_label)
 
-    def load(self, file_path: str = None, folder_path: str = None, suffix: str = None,
-             map_location: Union[str, Callable, torch.device, dict] = 'cpu',
-             component: str = '', strict: bool = False,
-             verbose: bool = False, indent: int = 0, **kwargs):
-        return super().load(file_path=file_path, folder_path=folder_path, suffix=suffix,
-                            map_location=map_location, component=component, strict=strict,
-                            verbose=verbose, indent=indent, **kwargs)
+    def load(self, strict: bool = False, **kwargs):
+        return super().load(strict=strict, **kwargs)
 
-    def get_official_weights(self, dataset='cifar10', auxiliary: bool = False,
-                             **kwargs) -> OrderedDict[str, torch.Tensor]:
-        assert str(self._model.features.genotype) == str(DARTS_genotype)
+    def get_official_weights(self, dataset: str = None, **kwargs) -> OrderedDict[str, torch.Tensor]:
+        assert str(self.genotype) == str(DARTS_genotype)
+        if dataset is None and isinstance(self.dataset, ImageSet):
+            dataset = self.dataset.name
         file_name = f'darts_{dataset}.pt'
         folder_path = os.path.join(torch.hub.get_dir(), 'darts')
         download_file_from_google_drive(file_id=url[dataset], root=folder_path, filename=file_name)
@@ -120,7 +122,7 @@ class DARTS(ImageModel):
             if 'num_batches_tracked' in new_keys[i]:
                 i += 1
                 continue
-            if not auxiliary and 'auxiliary_head' in old_keys[j]:
+            if 'auxiliary_head' not in new_keys[i] and 'auxiliary_head' in old_keys[j]:
                 j += 1
                 continue
             new2old[new_keys[i]] = old_keys[j]

@@ -54,7 +54,7 @@ class Cell(nn.Module):
 class AuxiliaryHead(nn.Module):
     # stride = 3 if CIFAR10
     # stride = 2 if ImageNet
-    def __init__(self, C: int, num_classes: int = 10, stride: int = 2):
+    def __init__(self, C: int, num_classes: int = 10, stride: int = 3):
         """assuming input size 8x8"""
         super().__init__()
         self.features = nn.Sequential(
