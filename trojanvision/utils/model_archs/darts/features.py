@@ -11,11 +11,11 @@ class Cell(nn.Module):
     def __init__(self, genotype: Genotype,
                  C_prev_prev: int, C_prev: int, C: int,
                  reduction: bool, reduction_prev: bool,
-                 dropout_p: float = None):
+                 dropout_p: float = None, std_conv: bool = False):
         super().__init__()
         op_name = 'factorized_reduce' if reduction_prev else 'conv'
-        self.preprocess0 = get_op(op_name, C_prev_prev, C_out=C)
-        self.preprocess1 = get_op('conv', C_prev, C_out=C)
+        self.preprocess0 = get_op(op_name, C_prev_prev, C_out=C, std_conv=std_conv)
+        self.preprocess1 = get_op('conv', C_prev, C_out=C, std_conv=std_conv)
 
         if reduction:
             op_names, indices = zip(*genotype.reduce)
@@ -34,7 +34,7 @@ class Cell(nn.Module):
         self._ops = nn.ModuleList()
         for name, index in zip(op_names, indices):
             stride = 2 if reduction and index < 2 else 1
-            op = get_op(name, C, stride, p=dropout_p)
+            op = get_op(name, C, stride, p=dropout_p, std_conv=std_conv)
             self._ops.append(op)
 
     def forward(self, s0: torch.Tensor, s1: torch.Tensor) -> torch.Tensor:
@@ -83,7 +83,7 @@ class FeatureExtractor(nn.Module):
     #   layer: 14
     #   dropout_p: None
     def __init__(self, genotype: Genotype, C: int = 36, layers: int = 20,
-                 dropout_p: float = 0.2):
+                 dropout_p: float = 0.2, std_conv: bool = False, **kwargs):
         super().__init__()
         self.genotype = genotype
         self.aux_C: int = 0
@@ -105,7 +105,8 @@ class FeatureExtractor(nn.Module):
                 C_curr *= 2
                 reduction = True
             cell = Cell(genotype, C_prev_prev, C_prev, C_curr,
-                        reduction, reduction_prev, dropout_p=dropout_p)
+                        reduction, reduction_prev, dropout_p=dropout_p,
+                        std_conv=std_conv)
             reduction_prev = reduction
             self.cells.append(cell)
             C_prev_prev, C_prev = C_prev, cell.multiplier * C_curr

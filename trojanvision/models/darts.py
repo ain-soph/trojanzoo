@@ -13,8 +13,6 @@ from collections import OrderedDict
 
 from typing import TYPE_CHECKING
 import argparse  # TODO: python 3.10
-from collections.abc import Callable
-from typing import Union
 if TYPE_CHECKING:
     import torch.cuda
 
@@ -39,7 +37,7 @@ class _DARTS(_ImageModel):
     def define_features(genotype: Genotype = DARTS_genotype,
                         C: int = 36, layer: int = 20,
                         dropout_p: float = 0.2, **kwargs) -> FeatureExtractor:
-        return FeatureExtractor(genotype, C, layer, dropout_p)
+        return FeatureExtractor(genotype, C, layer, dropout_p, **kwargs)
 
     def get_fm(self, x: torch.Tensor) -> torch.Tensor:
         return self.features(self.normalize(x))
