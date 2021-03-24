@@ -11,6 +11,7 @@ from .lanet import LaNet
 from .magnet import MagNet
 from .mnasnet import MNASNet
 from .net import Net
+from .pnasnet import PNASNet
 from .proxylessnas import ProxylessNAS
 from .resnet import ResNet, ResNetS
 from .vgg import VGG
@@ -35,6 +36,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'magnet': MagNet,
     'mnasnet': MNASNet,
     'net': Net,
+    'pnasnet': PNASNet,
     'proxylessnas': ProxylessNAS,
     'resnet': ResNet,
     'resnets': ResNetS,
