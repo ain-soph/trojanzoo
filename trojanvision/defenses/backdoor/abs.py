@@ -100,9 +100,12 @@ class ABS(BackdoorDefense):
         jaccard = AverageMeter('Jaccard Idx', ':6.2f')
         score_list = [0.0] * len(list(neuron_dict.keys()))
         result_dict = {}
+        self.attack.mark.random_pos = False
+        self.attack.mark.height_offset = 0
+        self.attack.mark.width_offset = 0
         for label, label_list in neuron_dict.items():
             print('label: ', label)
-            best_score = 100.0
+            best_score = 1e7
             for _dict in reversed(label_list):
                 layer = _dict['layer']
                 neuron = _dict['neuron']
@@ -115,9 +118,9 @@ class ABS(BackdoorDefense):
                 self.attack.mark.mark = mark
                 self.attack.mark.alpha_mask = mask
                 self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
-                self.attack.target_class = label
                 attack_loss, attack_acc = self.model._validate(
-                    verbose=False, get_data_fn=self.attack.get_data, keep_org=False)
+                    verbose=False, get_data_fn=self.attack.get_data,
+                    keep_org=False, poison_label=True)
                 _dict['loss'] = loss
                 _dict['attack_acc'] = attack_acc
                 _dict['attack_loss'] = attack_loss
@@ -152,7 +155,8 @@ class ABS(BackdoorDefense):
                                      self.get_filename(target_class=self.target_class) + '.npy'), neuron_dict)
                 np.save(os.path.join(self.folder_path,
                                      self.get_filename(target_class=self.target_class) + '_best.npy'), result_dict)
-            print(f'Label: {label:3d}  loss: {result_dict[label]["loss"]:10.3f}'
+            print(f'    Label: {label:3d}  loss: {result_dict[label]["loss"]:10.3f}'
+                  f'  ATK Acc: {result_dict[label]["attack_acc"]:.3f}'
                   f'  ATK loss: {result_dict[label]["attack_loss"]:10.3f}  Norm: {result_dict[label]["norm"]:10.3f}'
                   f'  Jaccard: {result_dict[label]["jaccard"]:10.3f}  Score: {best_score:.3f}')
             score_list[label] = best_score
@@ -224,7 +228,8 @@ class ABS(BackdoorDefense):
                     self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
                     self.attack.target_class = label
                     self.model._validate(print_prefix='Validate Trigger Tgt',
-                                         get_data_fn=self.attack.get_data, keep_org=False, indent=8)
+                                         get_data_fn=self.attack.get_data,
+                                         keep_org=False, poison_label=True, indent=8)
                     print()
         atanh_mark.requires_grad = False
         if use_mask:
@@ -330,6 +335,7 @@ class ABS(BackdoorDefense):
 
     def abs_loss(self, _input: torch.Tensor, mask: torch.Tensor, mark: torch.Tensor,
                  layer: str, neuron: int, use_mask: bool = True):
+        # X = self.attack.add_mark(_input)
         X = _input + mask * (mark - _input)
         # return self.model.loss(X, torch.zeros(X.size(0), device=X.device, dtype=torch.long)) + 1e-3 * mask.norm(p=1)
         feats = self.model.get_layer(X, layer_output=layer)
@@ -386,3 +392,4 @@ class ABS(BackdoorDefense):
         self.attack.mark.random_pos = False
         self.attack.mark.height_offset = 0
         self.attack.mark.width_offset = 0
+        print('defense results loaded from: ', path)
