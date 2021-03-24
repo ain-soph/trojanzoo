@@ -54,7 +54,6 @@ class NeuralCleanse(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        target_class = self.attack.target_class
         self.attack.mark.random_pos = False
         self.attack.mark.height_offset = 0
         self.attack.mark.width_offest = 0
@@ -77,14 +76,12 @@ class NeuralCleanse(BackdoorDefense):
         mark_list = [to_numpy(i) for i in mark_list]
         mask_list = [to_numpy(i) for i in mask_list]
         loss_list = [to_numpy(i) for i in loss_list]
-        file_path = os.path.normpath(os.path.join(
-            self.folder_path, self.get_filename(target_class=target_class) + '.npz'))
-        np.savez(file_path, mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
-        print('Defense results saved at: ' + file_path)
 
     def get_potential_triggers(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         mark_list, mask_list, loss_list = [], [], []
         # todo: parallel to avoid for loop
+        file_path = os.path.normpath(os.path.join(
+            self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'))
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, mask, loss = self.remask(
@@ -92,11 +89,12 @@ class NeuralCleanse(BackdoorDefense):
             mark_list.append(mark)
             mask_list.append(mask)
             loss_list.append(loss)
-
             if not self.random_pos:
                 overlap = jaccard_idx(mask, self.real_mask,
                                       select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
                 print(f'Jaccard index: {overlap:.3f}')
+            np.savez(file_path, mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
+            print('Defense results saved at: ' + file_path)
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
         loss_list = torch.as_tensor(loss_list)
@@ -266,3 +264,4 @@ class NeuralCleanse(BackdoorDefense):
         self.attack.mark.random_pos = False
         self.attack.mark.height_offset = 0
         self.attack.mark.width_offset = 0
+        print('defense results loaded from: ', path)
