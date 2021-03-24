@@ -14,13 +14,14 @@ class Unlearn(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--mark_source', dest='mark_source', type=str,
-                           help='mark source, defaults to ``attack``')
         group.add_argument('--attack_source', dest='attack_source', type=str,
                            help='attack source, defaults to ``badnet``')
+        group.add_argument('--mark_source', dest='mark_source', type=str,
+                           help='mark source, defaults to ``attack``')
 
     def __init__(self, mark_source: str = 'attack', attack_source: str = 'badnet', **kwargs):
         self.attack_source = attack_source
+        mark_source = mark_source if mark_source != 'attack' else attack_source
         self.mark_source = mark_source
         super().__init__(**kwargs)
 

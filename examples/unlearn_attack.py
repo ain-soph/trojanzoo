@@ -53,7 +53,7 @@ if __name__ == '__main__':
     if mark_source == 'attack':
         mark_source = attack.name
     elif mark_source in ['defense', defense.name]:
-        mark_source = f'{attack.name} {defense.name}'
+        mark_source = defense.name
 
     if mark_source == attack.name:
         attack.load()
