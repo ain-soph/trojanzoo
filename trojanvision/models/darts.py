@@ -96,8 +96,8 @@ class DARTS(ImageModel):
         return super().loss(_output=logits, _label=_label) \
             + self.auxiliary_weight * super().loss(_output=logits_aux, _label=_label)
 
-    def load(self, strict: bool = False, **kwargs):
-        return super().load(strict=strict, **kwargs)
+    def load(self, *args, strict: bool = False, **kwargs):
+        return super().load(*args, strict=strict, **kwargs)
 
     def get_official_weights(self, dataset: str = None, **kwargs) -> OrderedDict[str, torch.Tensor]:
         assert str(self.genotype) == str(DARTS_genotype)
