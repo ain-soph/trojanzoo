@@ -14,7 +14,6 @@ import functools
 
 from typing import TYPE_CHECKING
 from typing import Union
-from torch.utils.tensorboard import SummaryWriter
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torchvision.transforms import Normalize
@@ -171,7 +170,7 @@ class ImageModel(Model):
                after_loss_fn: Callable[..., None] = None,
                validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
-               writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
+               writer = None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0,
                adv_train: bool = False, adv_train_alpha: float = 2.0 / 255, adv_train_epsilon: float = 8.0 / 255,
                adv_train_iter: int = 7, adv_train_valid_epsilon: float = 8.0 / 255, **kwargs):

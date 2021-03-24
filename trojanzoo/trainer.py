@@ -6,7 +6,6 @@ from trojanzoo.configs import config
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi, prints
 
-from torch.utils.tensorboard import SummaryWriter
 
 from typing import TYPE_CHECKING
 from trojanzoo.configs import Config    # TODO: python 3.10
@@ -61,7 +60,7 @@ class Trainer:
 
     def __init__(self, optim_args: dict = {}, train_args: dict = {}, writer_args: dict = {},
                  optimizer: Optimizer = None, lr_scheduler: _LRScheduler = None,
-                 writer: SummaryWriter = None):
+                 writer=None):
         self.optim_args = {} | optim_args   # to avoid BadAppend issues
         self.train_args = {} | train_args
         self.writer_args = {} | writer_args
@@ -111,22 +110,27 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
 
     optim_keys = model.define_optimizer.__code__.co_varnames
     train_keys = model._train.__code__.co_varnames
-    writer_keys = SummaryWriter.__init__.__code__.co_varnames   # log_dir, flush_secs, ...
     optim_args = {}
     train_args = {}
-    writer_args = {}
     for key, value in result.items():
         if key in optim_keys:
             _dict = optim_args
         elif key in train_keys:
             _dict = train_args
-        elif key in writer_keys:
-            _dict = writer_args
         else:
             continue
         _dict[key] = value
     optimizer, lr_scheduler = model.define_optimizer(**optim_args)
-    writer = SummaryWriter(**writer_args) if tensorboard else None
+
+    writer = None
+    if tensorboard:
+        from torch.utils.tensorboard import SummaryWriter
+        writer_args = {}
+        writer_keys = SummaryWriter.__init__.__code__.co_varnames   # log_dir, flush_secs, ...
+        for key, value in result.items():
+            if key in writer_keys:
+                writer_args[key] = value
+        writer = SummaryWriter(**writer_args)
     return ClassType(optim_args=optim_args, train_args=train_args,
                      optimizer=optimizer, lr_scheduler=lr_scheduler,
                      writer=writer)

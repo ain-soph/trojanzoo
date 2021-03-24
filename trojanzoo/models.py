@@ -10,7 +10,6 @@ from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
 
 import torch
 import torch.nn as nn
-from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import os
 from tqdm import tqdm
@@ -487,7 +486,7 @@ class Model:
                after_loss_fn: Callable[..., None] = None,
                validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
-               writer: SummaryWriter = None, main_tag: str = 'train', tag: str = '',
+               writer=None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, indent: int = 0, **kwargs):
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
         get_data_fn = get_data_fn if callable(get_data_fn) else self.get_data
@@ -569,7 +568,9 @@ class Model:
             self.eval()
             self.activate_params([])
             loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-            if isinstance(writer, SummaryWriter) and isinstance(_epoch, int):
+            if writer is not None:
+                from torch.utils.tensorboard import SummaryWriter
+                assert isinstance(writer, SummaryWriter)
                 writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss},
                                    global_step=_epoch + start_epoch)
                 writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc},
@@ -596,7 +597,7 @@ class Model:
                   loader: torch.utils.data.DataLoader = None,
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                   loss_fn: Callable[..., torch.Tensor] = None,
-                  writer: SummaryWriter = None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
+                  writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
                   **kwargs) -> tuple[float, float]:
         self.eval()
         if loader is None:
@@ -626,7 +627,9 @@ class Model:
                 logger.meters['top1'].update(acc1, batch_size)
                 logger.meters['top5'].update(acc5, batch_size)
         loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-        if isinstance(writer, SummaryWriter) and isinstance(_epoch, int) and main_tag:
+        if writer is not None and _epoch is not None and main_tag:
+            from torch.utils.tensorboard import SummaryWriter
+            assert isinstance(writer, SummaryWriter)
             writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
             writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
         return loss, acc
