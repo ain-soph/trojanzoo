@@ -23,18 +23,20 @@ from typing import Union
 class_dict: dict[str, type[ImageModel]] = {
     'alexnet': AlexNet,
     'bit': BiT,
-    'darts': DARTS,
     'densenet': DenseNet,
     'dla': DLA,
-    'enas': ENAS,
-    'lanet': LaNet,
     'magnet': MagNet,
-    'mnasnet': MNASNet,
     'net': Net,
-    'pnasnet': PNASNet,
-    'proxylessnas': ProxylessNAS,
     'resnet': ResNet,
     'vgg': VGG,
+
+    'natsbench': NATSbench,
+    'darts': DARTS,
+    'enas': ENAS,
+    'lanet': LaNet,
+    'mnasnet': MNASNet,
+    'pnasnet': PNASNet,
+    'proxylessnas': ProxylessNAS,
 }
 
 

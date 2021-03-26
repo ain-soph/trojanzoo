@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from .natsbench import NATSbench
+
 from .darts import DARTS
 from .enas import ENAS
 from .lanet import LaNet
