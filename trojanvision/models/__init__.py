@@ -8,7 +8,7 @@ from .densenet import DenseNet
 from .dla import DLA
 from .magnet import MagNet
 from .net import Net
-from .resnet import ResNet, ResNetS
+from .resnet import ResNet
 from .vgg import VGG
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
@@ -34,7 +34,6 @@ class_dict: dict[str, type[ImageModel]] = {
     'pnasnet': PNASNet,
     'proxylessnas': ProxylessNAS,
     'resnet': ResNet,
-    'resnets': ResNetS,
     'vgg': VGG,
 }
 
