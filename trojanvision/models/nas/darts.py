@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageSet
 from trojanvision.utils.model_archs.darts import FeatureExtractor, AuxiliaryHead, Genotype
 from trojanvision.utils.model_archs.darts import DARTS as DARTS_genotype

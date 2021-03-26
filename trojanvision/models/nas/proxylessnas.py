@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch
 import torch.hub
