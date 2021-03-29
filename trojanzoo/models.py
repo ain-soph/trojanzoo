@@ -74,9 +74,9 @@ class _Model(nn.Module):
             for i in range(fc_depth - 1):
                 seq.add_module(f'fc{i + 1:d}', nn.Linear(dim_list[i], dim_list[i + 1]))
                 if activation:
-                    seq.add_module(f'{activation}{i + 1:d}', ActivationType(inplace=True))
+                    seq.add_module(f'{activation}{i + 1:d}', ActivationType(True))
                 if dropout:
-                    seq.add_module(f'dropout{i + 1:d}', nn.Dropout(inplace=True))
+                    seq.add_module(f'dropout{i + 1:d}', nn.Dropout())
             seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
         return seq
 
