@@ -103,7 +103,7 @@ def add_argument(parser: argparse.ArgumentParser, ClassType: type[Trainer] = Tra
 
 def create(dataset_name: str = None, dataset: Dataset = None, model: Model = None,
            ClassType: type[Trainer] = Trainer,
-           tensorboard: bool = None, config: Config = config, **kwargs) -> tuple[Optimizer, _LRScheduler, dict]:
+           tensorboard: bool = None, config: Config = config, **kwargs) -> Trainer:
     assert isinstance(model, Model)
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     result = config.get_config(dataset_name=dataset_name)['trainer']._update(kwargs)
