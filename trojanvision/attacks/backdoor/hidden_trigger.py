@@ -22,8 +22,8 @@ class HiddenTrigger(BadNet):
     Args:
         preprocess_layer (str): the chosen feature layer patched by trigger where distance to poisoned images is minimized. Default: 'features'.
         pgd_alpha (float, optional): the learning rate to generate poison images. Default: 0.01.
-        pgd_epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{16}{255}`.
-        pgd_iteration (int): the iteration number to generate one poison image. Default: 5000.
+        pgd_eps (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{16}{255}`.
+        pgd_iter (int): the iteration number to generate one poison image. Default: 5000.
 
     .. _Hidden Trigger:
         https://arxiv.org/abs/1910.00033
@@ -41,25 +41,25 @@ class HiddenTrigger(BadNet):
                            help='the chosen feature layer patched by trigger where distance to poisoned images is minimized, defaults to ``flatten``')
         group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float,
                            help='the learning rate to generate poison images, defaults to 0.01')
-        group.add_argument('--pgd_epsilon', dest='pgd_epsilon', type=int,
+        group.add_argument('--pgd_eps', dest='pgd_eps', type=int,
                            help='the perturbation threshold in input space, defaults to 16')
-        group.add_argument('--pgd_iteration', dest='pgd_iteration', type=int,
+        group.add_argument('--pgd_iter', dest='pgd_iter', type=int,
                            help='the iteration number to generate one poison image, defaults to 5000')
 
-    def __init__(self, preprocess_layer: str = 'features', pgd_epsilon: int = 16.0 / 255,
-                 pgd_iteration: int = 40, pgd_alpha: float = 4.0 / 255, **kwargs):
+    def __init__(self, preprocess_layer: str = 'features', pgd_eps: int = 16.0 / 255,
+                 pgd_iter: int = 40, pgd_alpha: float = 4.0 / 255, **kwargs):
         super().__init__(**kwargs)
 
-        self.param_list['hidden_trigger'] = ['preprocess_layer', 'pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        self.param_list['hidden_trigger'] = ['preprocess_layer', 'pgd_alpha', 'pgd_eps', 'pgd_iter']
 
         self.preprocess_layer: str = preprocess_layer
         self.pgd_alpha: float = pgd_alpha
-        self.pgd_epsilon: float = pgd_epsilon
-        self.pgd_iteration: int = pgd_iteration
+        self.pgd_eps: float = pgd_eps
+        self.pgd_iter: int = pgd_iter
 
         self.target_loader = self.dataset.get_dataloader('train', full=True, classes=self.target_class,
                                                          drop_last=True, num_workers=0)
-        self.pgd: PGD = PGD(alpha=self.pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, output=self.output)
+        self.pgd: PGD = PGD(pgd_alpha=self.pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, output=self.output)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, training=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)

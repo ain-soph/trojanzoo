@@ -312,20 +312,20 @@ class Figure:
 
     @staticmethod
     def exp_fit(x: np.ndarray, y: np.ndarray, x_grid: np.ndarray,
-                degree: int = 1, increase: bool = True, epsilon: float = 0.01) -> np.ndarray:
+                degree: int = 1, increase: bool = True, eps: float = 0.01) -> np.ndarray:
         y_max = max(y)
         y_min = min(y)
         if increase:
-            fit_data = np.log(y + epsilon - y_min)
+            fit_data = np.log(y + eps - y_min)
         else:
-            fit_data = np.log(y_max + epsilon - y)
+            fit_data = np.log(y_max + eps - y)
 
         z = np.polyfit(x, fit_data, degree)
         y_grid = np.exp(np.polyval(z, x_grid))
         if increase:
-            y_grid += y_min - epsilon
+            y_grid += y_min - eps
         else:
-            y_grid = y_max + epsilon - y_grid
+            y_grid = y_max + eps - y_grid
         return y_grid
 
     @staticmethod

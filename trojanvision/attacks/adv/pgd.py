@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 class PGD(Attack, PGD_Optimizer):
     r"""PGD Adversarial Attack.
     Args:
-        alpha (float): learning rate :math:`\alpha`. Default: :math:`\frac{3}{255}`.
-        epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
+        pgd_alpha (float): learning rate :math:`\alpha`. Default: :math:`\frac{3}{255}`.
+        pgd_eps (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
     """
 
     name: str = 'pgd'
@@ -27,9 +27,9 @@ class PGD(Attack, PGD_Optimizer):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--alpha', dest='alpha', type=float,
+        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float,
                            help='PGD learning rate per step, defaults to 3.0/255')
-        group.add_argument('--epsilon', dest='epsilon', type=float,
+        group.add_argument('--pgd_eps', dest='pgd_eps', type=float,
                            help='Projection norm constraint, defaults to 8.0/255')
         group.add_argument('--iteration', dest='iteration', type=int,
                            help='Attack Iteration, defaults to 20')
@@ -52,7 +52,7 @@ class PGD(Attack, PGD_Optimizer):
         self.dataset: ImageSet
         self.model: ImageModel
 
-    def attack(self, **kwargs):
+    def attack(self, verbose: bool = True, **kwargs) -> tuple[float, float]:
         # model._validate()
         correct = 0
         total = 0
@@ -71,12 +71,14 @@ class PGD(Attack, PGD_Optimizer):
                 total_iter += _iter
             else:
                 total_iter += self.iteration
-            print(f'{correct} / {total}')
-            print('current iter: ', _iter)
-            print('succ rate: ', float(correct) / total)
-            print('avg  iter: ', float(total_iter) / total)
-            print('-------------------------------------------------')
-            print()
+            if verbose:
+                print(f'{correct} / {total}')
+                print('current iter: ', _iter)
+                print('succ rate: ', float(correct) / total)
+                print('avg  iter: ', float(total_iter) / total)
+                print('-------------------------------------------------')
+                print()
+        return float(correct) / total, float(total_iter) / total
 
     def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
                       target: Union[torch.Tensor, int] = None, target_idx: int = None, **kwargs) -> tuple[torch.Tensor, int]:

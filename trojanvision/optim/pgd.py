@@ -14,8 +14,8 @@ from typing import Union
 class PGD(trojanzoo.optim.Optimizer):
     r"""Projected Gradient Descent.
     Args:
-        alpha (float): learning rate :math:`\alpha`. Default: :math:`\frac{3}{255}`.
-        epsilon (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.
+        pgd_alpha (float): learning rate :math:`\pgd_alpha`. Default: :math:`\frac{3}{255}`.
+        pgd_eps (float): the perturbation threshold :math:`\pgd_eps` in input space. Default: :math:`\frac{8}{255}`.
 
         norm (int): :math:`L_p` norm passed to :func:`torch.norm`. Default: ``float(inf)``.
         universal (bool): All inputs in the batch share the same noise. Default: ``False``.
@@ -27,15 +27,15 @@ class PGD(trojanzoo.optim.Optimizer):
 
     name: str = 'pgd'
 
-    def __init__(self, alpha: float = 3.0 / 255, epsilon: float = 8.0 / 255,
+    def __init__(self, pgd_alpha: float = 3.0 / 255, pgd_eps: float = 8.0 / 255,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
                  grad_method: str = 'white', query_num: int = 100, sigma: float = 1e-3,
                  hess_b: int = 100, hess_p: int = 1, hess_lambda: float = 1, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['pgd'] = ['alpha', 'epsilon', 'norm', 'universal']
+        self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'norm', 'universal']
 
-        self.alpha = alpha
-        self.epsilon = epsilon
+        self.pgd_alpha = pgd_alpha
+        self.pgd_eps = pgd_eps
 
         self.norm = norm
         self.universal = universal
@@ -52,13 +52,13 @@ class PGD(trojanzoo.optim.Optimizer):
                 self.hess_lambda: float = hess_lambda
 
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
-                 alpha: float = None, epsilon: float = None,
+                 pgd_alpha: float = None, pgd_eps: float = None,
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                  output: Union[int, list[str]] = None, add_noise_fn=None, **kwargs) -> tuple[torch.Tensor, int]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
-        alpha = alpha if alpha is not None else self.alpha
-        epsilon = epsilon if epsilon is not None else self.epsilon
+        pgd_alpha = pgd_alpha if pgd_alpha is not None else self.pgd_alpha
+        pgd_eps = pgd_eps if pgd_eps is not None else self.pgd_eps
         iteration = iteration if iteration is not None else self.iteration
         loss_fn = loss_fn if loss_fn is not None else self.loss_fn
         add_noise_fn = add_noise_fn if add_noise_fn is not None else add_noise
@@ -69,7 +69,7 @@ class PGD(trojanzoo.optim.Optimizer):
 
         if 'start' in output:
             self.output_info(_input=_input, noise=noise, mode='start', loss_fn=loss_fn, **kwargs)
-        if iteration == 0 or alpha == 0.0 or epsilon == 0.0:
+        if iteration == 0 or pgd_alpha == 0.0 or pgd_eps == 0.0:
             return _input, None
 
         X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
@@ -91,8 +91,8 @@ class PGD(trojanzoo.optim.Optimizer):
                        indent=self.indent + 2)
             if self.universal:
                 grad = grad.mean(dim=0)
-            noise.data = (noise - alpha * torch.sign(grad)).data
-            noise.data = self.projector(noise, epsilon, norm=self.norm).data
+            noise.data = (noise - pgd_alpha * torch.sign(grad)).data
+            noise.data = self.projector(noise, pgd_eps, norm=self.norm).data
             X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
             if self.universal:
                 noise.data = (X - _input).mode(dim=0)[0].data
@@ -114,11 +114,11 @@ class PGD(trojanzoo.optim.Optimizer):
             prints(f'L-{self.norm} norm: {norm}    loss: {loss:.5f}', indent=self.indent)
 
     @staticmethod
-    def projector(noise: torch.Tensor, epsilon: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
-        length = epsilon / noise.norm(p=norm)
+    def projector(noise: torch.Tensor, pgd_eps: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
+        length = pgd_eps / noise.norm(p=norm)
         if length < 1:
             if norm == float('inf'):
-                noise = noise.clamp(min=-epsilon, max=epsilon)
+                noise = noise.clamp(min=-pgd_eps, max=pgd_eps)
             else:
                 noise = length * noise
         return noise

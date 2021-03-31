@@ -47,15 +47,15 @@ class TermStudy(BadNet):
 
     def __init__(self, term='imc', class_sample_num: int = 100, mse_weight=0.5,
                  preprocess_layer: str = 'flatten', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,
-                 pgd_iteration: int = 20, pgd_alpha: float = 0.1,
+                 pgd_iter: int = 20, pgd_alpha: float = 0.1,
                  **kwargs):
         super().__init__(**kwargs)
 
         self.param_list['term_study'] = ['term']
         self.term = term
         if term == 'imc':
-            self.param_list['imc'] = ['pgd_iteration', 'pgd_alpha']
-            self.pgd_iteration: int = pgd_iteration
+            self.param_list['imc'] = ['pgd_iter', 'pgd_alpha']
+            self.pgd_iter: int = pgd_iter
             self.pgd_alpha: float = pgd_alpha
         elif term == 'latent_backdoor':
             self.param_list['latent_backdoor'] = ['class_sample_num', 'mse_weight',
@@ -134,7 +134,7 @@ class TermStudy(BadNet):
         optimizer.zero_grad()
 
         losses = AverageMeter('Loss', ':.4e')
-        for _epoch in range(self.pgd_iteration):
+        for _epoch in range(self.pgd_iter):
             for i, data in enumerate(self.dataset.loader['train']):
                 if i > 20:
                     break

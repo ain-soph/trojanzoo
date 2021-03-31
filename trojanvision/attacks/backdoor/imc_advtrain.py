@@ -35,13 +35,13 @@ class IMC_AdvTrain(IMC):
 
     name: str = 'imc_advtrain'
 
-    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_epsilon: float = 8.0 / 255, pgd_iteration: int = 7, **kwargs):
+    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_eps: float = 8.0 / 255, pgd_iter: int = 7, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['adv_train'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        self.param_list['adv_train'] = ['pgd_alpha', 'pgd_eps', 'pgd_iter']
         self.pgd_alpha = pgd_alpha
-        self.pgd_epsilon = pgd_epsilon
-        self.pgd_iteration = pgd_iteration
-        self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
+        self.pgd_eps = pgd_eps
+        self.pgd_iter = pgd_iter
+        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
 
     def get_poison_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)

@@ -212,7 +212,7 @@ class AdvMind(Defense):
             if 'middle' in self.output:
                 self.attack_grad_list.append(grad.clone())
 
-            noise = (noise - self.attack.alpha * grad).clamp(-self.attack.epsilon, self.attack.epsilon)
+            noise = (noise - self.attack.pgd_alpha * grad).clamp(-self.attack.pgd_eps, self.attack.pgd_eps)
             X = (_input + noise).clamp(0, 1)
             noise = X - _input
         return torch.stack(seq)

@@ -9,10 +9,10 @@ adv_train_alpha:
   default: 0.0078431372549 # 2/255
   mnist: 0.1
 
-adv_train_epsilon:
+adv_train_eps:
   default: 0.031372549 # 8/255
   mnist: 0.3
 
-adv_train_valid_epsilon:
+adv_train_valid_eps:
   default: 0.031372549 # 8/255
   mnist: 0.3

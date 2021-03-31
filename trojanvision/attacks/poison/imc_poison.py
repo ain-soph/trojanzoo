@@ -23,24 +23,24 @@ class IMC_Poison(PoisonBasic):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float)
-        group.add_argument('--pgd_epsilon', dest='pgd_epsilon', type=float)
-        group.add_argument('--pgd_iteration', dest='pgd_iteration', type=int)
+        group.add_argument('--pgd_eps', dest='pgd_eps', type=float)
+        group.add_argument('--pgd_iter', dest='pgd_iter', type=int)
         group.add_argument('--stop_conf', dest='stop_conf', type=float)
 
         group.add_argument('--magnet', dest='magnet', action='store_true')
         group.add_argument('--randomized_smooth', dest='randomized_smooth', action='store_true')
         group.add_argument('--curvature', dest='curvature', action='store_true')
 
-    def __init__(self, pgd_alpha: float = 1.0, pgd_epsilon: float = 8.0, pgd_iteration: int = 8,
+    def __init__(self, pgd_alpha: float = 1.0, pgd_eps: float = 8.0, pgd_iter: int = 8,
                  stop_conf: float = 0.9,
                  magnet: bool = False, randomized_smooth: bool = False, curvature: bool = False, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'pgd_iter']
         self.pgd_alpha: float = pgd_alpha
-        self.pgd_epsilon: float = pgd_epsilon
-        self.pgd_iteration: int = pgd_iteration
-        self.pgd = PGD_Optimizer(alpha=self.pgd_alpha / 255, epsilon=self.pgd_epsilon / 255,
-                                 iteration=self.pgd_iteration)
+        self.pgd_eps: float = pgd_eps
+        self.pgd_iter: int = pgd_iter
+        self.pgd = PGD_Optimizer(pgd_alpha=self.pgd_alpha / 255, pgd_eps=self.pgd_eps / 255,
+                                 iteration=self.pgd_iter)
         self.stop_conf: float = stop_conf
         if magnet:
             self.magnet: MagNet = MagNet(dataset=self.dataset, pretrain=True)
@@ -55,15 +55,15 @@ class IMC_Poison(PoisonBasic):
         target_acc_list = []
         clean_acc_list = []
         pgd_norm_list = []
-        alpha = 1.0 / 255
-        epsilon = 8.0 / 255
+        pgd_alpha = 1.0 / 255
+        pgd_eps = 8.0 / 255
         if self.dataset.name in ['cifar10', 'gtsrb', 'isic2018']:
-            alpha = 1.0 / 255
-            epsilon = 8.0 / 255
+            pgd_alpha = 1.0 / 255
+            pgd_eps = 8.0 / 255
         if self.dataset.name in ['sample_imagenet', 'sample_vggface2']:
-            alpha = 0.25 / 255
-            epsilon = 2.0 / 255
-        pgd_checker = PGD(alpha=alpha, epsilon=epsilon, iteration=8,
+            pgd_alpha = 0.25 / 255
+            pgd_eps = 2.0 / 255
+        pgd_checker = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=8,
                           dataset=self.dataset, model=self.model, target_idx=self.target_idx, stop_threshold=0.95)
         easy = 0
         difficult = 0
@@ -150,7 +150,7 @@ class IMC_Poison(PoisonBasic):
         if noise is None:
             noise = torch.zeros_like(_input)
         poison_input = None
-        for _iter in range(self.pgd_iteration):
+        for _iter in range(self.pgd_iter):
             target_conf, target_acc = self.validate_target(indent=4, verbose=False)
             if target_conf > self.stop_conf:
                 break

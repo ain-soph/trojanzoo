@@ -65,7 +65,7 @@ class CleanLabel(BadNet):
                            help=' the critic iterations per generator training iteration, defaults to config[clean_label][critic_iter]=5')
 
     def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
-                 pgd_alpha: float = 2 / 255, pgd_epsilon: float = 16 / 255, pgd_iteration=20,
+                 pgd_alpha: float = 2 / 255, pgd_eps: float = 16 / 255, pgd_iter=20,
                  tau: float = 0.2, noise_dim: int = 100,
                  train_gan: bool = False, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
@@ -78,11 +78,11 @@ class CleanLabel(BadNet):
             self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.poison_percent)
 
         if poison_generation_method == 'pgd':
-            self.param_list['pgd'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+            self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'pgd_iter']
             self.pgd_alpha: float = pgd_alpha
-            self.pgd_epsilon: float = pgd_epsilon
-            self.pgd_iteration: int = pgd_iteration
-            self.pgd: PGD = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration,
+            self.pgd_eps: float = pgd_eps
+            self.pgd_iter: int = pgd_iter
+            self.pgd: PGD = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter,
                                 target_idx=0, output=self.output, dataset=self.dataset, model=self.model)
         elif poison_generation_method == 'gan':
             self.param_list['gan'] = ['tau', 'noise_dim', 'train_gan', 'critic_iter', 'generator_iters']
@@ -254,7 +254,7 @@ class WGAN(object):
         self.critic_iter = critic_iter
         self.mse_loss = torch.nn.MSELoss()
 
-        self.gan_pgd: PGD_Optimizer = PGD_Optimizer(epsilon=1.0, iteration=500, output=0)
+        self.gan_pgd: PGD_Optimizer = PGD_Optimizer(pgd_eps=1.0, iteration=500, output=0)
 
     def reset_parameters(self):
         self.G.apply(weight_init)

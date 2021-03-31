@@ -67,10 +67,10 @@ class ImageModel(Model):
                            help='adversarial training PGD iteration, defaults to 7.')
         group.add_argument('--adv_train_alpha', dest='adv_train_alpha', type=float,
                            help='adversarial training PGD alpha, defaults to 2/255.')
-        group.add_argument('--adv_train_epsilon', dest='adv_train_epsilon', type=float,
-                           help='adversarial training PGD epsilon, defaults to 8/255.')
-        group.add_argument('--adv_train_valid_epsilon', dest='adv_train_valid_epsilon', type=float,
-                           help='adversarial training PGD epsilon, defaults to 8/255.')
+        group.add_argument('--adv_train_eps', dest='adv_train_eps', type=float,
+                           help='adversarial training PGD eps, defaults to 8/255.')
+        group.add_argument('--adv_train_valid_eps', dest='adv_train_valid_eps', type=float,
+                           help='adversarial training PGD eps, defaults to 8/255.')
 
         group.add_argument('--sgm', dest='sgm', action='store_true',
                            help='whether to use sgm gradient, defaults to False')
@@ -81,7 +81,7 @@ class ImageModel(Model):
     def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
                  adv_train: bool = False, adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255,
-                 adv_train_epsilon: float = 8 / 255, adv_train_valid_epsilon: float = 8 / 255,
+                 adv_train_eps: float = 8 / 255, adv_train_valid_eps: float = 8 / 255,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
         name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
         self.layer = layer
@@ -96,8 +96,8 @@ class ImageModel(Model):
         self.adv_train = adv_train
         self.adv_train_iter = adv_train_iter
         self.adv_train_alpha = adv_train_alpha
-        self.adv_train_epsilon = adv_train_epsilon
-        self.adv_train_valid_epsilon = adv_train_valid_epsilon
+        self.adv_train_eps = adv_train_eps
+        self.adv_train_valid_eps = adv_train_valid_eps
         self.param_list['imagemodel'] = []
         if layer is not None:
             self.param_list['imagemodel'].append('layer')
@@ -107,7 +107,7 @@ class ImageModel(Model):
             self.param_list['imagemodel'].append('sgm_gamma')
         if adv_train:
             self.param_list['adv_train'] = ['adv_train_iter', 'adv_train_alpha',
-                                            'adv_train_epsilon', 'adv_train_valid_epsilon']
+                                            'adv_train_eps', 'adv_train_valid_eps']
             self.suffix += '_adv_train'
         self._model: _ImageModel
         self.dataset: ImageSet
@@ -201,7 +201,7 @@ class ImageModel(Model):
             validate_fn_old = validate_fn if callable(validate_fn) else self._validate
             loss_fn = loss_fn if callable(loss_fn) else self.loss
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
-            self.pgd = PGD(alpha=self.adv_train_alpha, epsilon=self.adv_train_valid_epsilon,
+            self.pgd = PGD(pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_valid_eps,
                            iteration=self.adv_train_iter, stop_threshold=None)
 
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
@@ -219,7 +219,7 @@ class ImageModel(Model):
                     self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, noise=noise,
                                                  loss_fn=adv_loss_fn,
-                                                 iteration=1, epsilon=self.adv_train_epsilon)
+                                                 iteration=1, pgd_eps=self.adv_train_eps)
                     self.train()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):

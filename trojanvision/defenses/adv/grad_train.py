@@ -9,17 +9,17 @@ class Grad_Train(Defense):
 
     name: str = 'grad_train'
 
-    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_epsilon: float = 8.0 / 255, pgd_iteration: int = 7,
+    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_eps: float = 8.0 / 255, pgd_iter: int = 7,
                  grad_lambda: float = 10, **kwargs):
         super().__init__(**kwargs)
         self.param_list['grad_train'] = ['grad_lambda']
         self.grad_lambda = grad_lambda
 
-        self.param_list['adv_train'] = ['pgd_alpha', 'pgd_epsilon', 'pgd_iteration']
+        self.param_list['adv_train'] = ['pgd_alpha', 'pgd_eps', 'pgd_iter']
         self.pgd_alpha = pgd_alpha
-        self.pgd_epsilon = pgd_epsilon
-        self.pgd_iteration = pgd_iteration
-        self.pgd = PGD(alpha=pgd_alpha, epsilon=pgd_epsilon, iteration=pgd_iteration, stop_threshold=None)
+        self.pgd_eps = pgd_eps
+        self.pgd_iter = pgd_iter
+        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
 
     def detect(self, **kwargs):
         self.model._train(loss_fn=self.loss_fn, validate_fn=self.validate_fn, verbose=True, **kwargs)
@@ -28,7 +28,7 @@ class Grad_Train(Defense):
         new_input = _input.repeat(4, 1, 1, 1)
         new_label = _label.repeat(4)
         noise = torch.randn_like(new_input)
-        noise = noise / noise.norm(p=float('inf')) * self.pgd_epsilon
+        noise = noise / noise.norm(p=float('inf')) * self.pgd_eps
         new_input = new_input + noise
         new_input = new_input.clamp(0, 1).detach()
         new_input.requires_grad_()

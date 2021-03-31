@@ -68,7 +68,7 @@ class TrojanNN(BadNet):
         self.neuron_num: int = neuron_num
         self.neuron_idx = None
 
-        self.pgd = PGD(alpha=self.neuron_lr, epsilon=1.0, iteration=self.neuron_epoch, output=0, **kwargs)
+        self.pgd = PGD(pgd_alpha=self.neuron_lr, pgd_eps=1.0, iteration=self.neuron_epoch, output=0, **kwargs)
 
     def attack(self, *args, **kwargs):
         self.neuron_idx = self.get_neuron_idx()
