@@ -61,6 +61,17 @@ class ImageModel(Model):
         #                    help='layer (optional, maybe embedded in --model)')
         # group.add_argument('--width_factor', dest='width_factor', type=int,
         #                    help='width factor for wide-ResNet (optional, maybe embedded in --model)')
+        group.add_argument('--adv_train', dest='adv_train', action='store_true',
+                           help='enable adversarial training.')
+        group.add_argument('--adv_train_iter', dest='adv_train_iter', type=int,
+                           help='adversarial training PGD iteration, defaults to 7.')
+        group.add_argument('--adv_train_alpha', dest='adv_train_alpha', type=float,
+                           help='adversarial training PGD alpha, defaults to 2/255.')
+        group.add_argument('--adv_train_epsilon', dest='adv_train_epsilon', type=float,
+                           help='adversarial training PGD epsilon, defaults to 8/255.')
+        group.add_argument('--adv_train_valid_epsilon', dest='adv_train_valid_epsilon', type=float,
+                           help='adversarial training PGD epsilon, defaults to 8/255.')
+
         group.add_argument('--sgm', dest='sgm', action='store_true',
                            help='whether to use sgm gradient, defaults to False')
         group.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
@@ -69,6 +80,8 @@ class ImageModel(Model):
 
     def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
+                 adv_train: bool = False, adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255,
+                 adv_train_epsilon: float = 8 / 255, adv_train_valid_epsilon: float = 8 / 255,
                  sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
         name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
         self.layer = layer
@@ -80,6 +93,11 @@ class ImageModel(Model):
         super().__init__(name=name, model=model, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
+        self.adv_train = adv_train
+        self.adv_train_iter = adv_train_iter
+        self.adv_train_alpha = adv_train_alpha
+        self.adv_train_epsilon = adv_train_epsilon
+        self.adv_train_valid_epsilon = adv_train_valid_epsilon
         self.param_list['imagemodel'] = []
         if layer is not None:
             self.param_list['imagemodel'].append('layer')
@@ -87,6 +105,10 @@ class ImageModel(Model):
             self.param_list['imagemodel'].append('width_factor')
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
+        if adv_train:
+            self.param_list['adv_train'] = ['adv_train_iter', 'adv_train_alpha',
+                                            'adv_train_epsilon', 'adv_train_valid_epsilon']
+            self.suffix += '_adv_train'
         self._model: _ImageModel
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
@@ -170,19 +192,17 @@ class ImageModel(Model):
                after_loss_fn: Callable[..., None] = None,
                validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
-               writer = None, main_tag: str = 'train', tag: str = '',
-               verbose: bool = True, indent: int = 0,
-               adv_train: bool = False, adv_train_alpha: float = 2.0 / 255, adv_train_epsilon: float = 8.0 / 255,
-               adv_train_iter: int = 7, adv_train_valid_epsilon: float = 8.0 / 255, **kwargs):
-        if adv_train:
+               writer=None, main_tag: str = 'train', tag: str = '',
+               verbose: bool = True, indent: int = 0, **kwargs):
+        if self.adv_train:
             after_loss_fn_old = after_loss_fn
             if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
                 after_loss_fn_old = getattr(self, 'after_loss_fn')
             validate_fn_old = validate_fn if callable(validate_fn) else self._validate
             loss_fn = loss_fn if callable(loss_fn) else self.loss
             from trojanvision.optim import PGD  # TODO: consider to move import sentences to top of file
-            self.pgd = PGD(alpha=adv_train_alpha, epsilon=adv_train_valid_epsilon,
-                           iteration=adv_train_iter, stop_threshold=None)
+            self.pgd = PGD(alpha=self.adv_train_alpha, epsilon=self.adv_train_valid_epsilon,
+                           iteration=self.adv_train_iter, stop_threshold=None)
 
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
@@ -199,7 +219,7 @@ class ImageModel(Model):
                     self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, noise=noise,
                                                  loss_fn=adv_loss_fn,
-                                                 iteration=1, epsilon=adv_train_epsilon)
+                                                 iteration=1, epsilon=self.adv_train_epsilon)
                     self.train()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):

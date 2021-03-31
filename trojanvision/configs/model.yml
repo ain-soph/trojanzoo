@@ -1,3 +1,18 @@
 default_model:
   default: resnet18_comp
   mnist: net
+
+adv_train_iter:
+  default: 7
+
+adv_train_alpha:
+  default: 0.0078431372549 # 2/255
+  mnist: 0.1
+
+adv_train_epsilon:
+  default: 0.031372549 # 8/255
+  mnist: 0.3
+
+adv_train_valid_epsilon:
+  default: 0.031372549 # 8/255
+  mnist: 0.3
