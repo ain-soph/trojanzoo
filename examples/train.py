@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import trojanvision.environ
-import trojanvision.datasets
-import trojanvision.models
-import trojanvision.trainer
+import trojanvision
 from trojanvision.utils import summary
 import argparse
 

@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 
-import trojanvision.environ
-import trojanvision.datasets
-import trojanvision.models
-import trojanvision.marks
-import trojanvision.attacks
+import trojanvision
 from trojanvision.attacks import BadNet
 
 from trojanvision.utils import summary

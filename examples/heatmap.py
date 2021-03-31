@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import trojanvision.environ
-import trojanvision.datasets
-import trojanvision.models
+import trojanvision
 from trojanvision.utils import save_tensor_as_img
 from trojanvision.utils import summary, superimpose
 import argparse
