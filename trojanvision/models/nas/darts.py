@@ -2,8 +2,7 @@
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageSet
 from trojanvision.utils.model_archs.darts import FeatureExtractor, AuxiliaryHead, Genotype
-from trojanvision.utils.model_archs.darts import DARTS as DARTS_genotype
-from trojanvision.utils.model_archs.darts import ROBUST_DARTS
+from trojanvision.utils.model_archs.darts import genotypes
 
 import torch
 import torch.hub
@@ -34,7 +33,7 @@ class _DARTS(_ImageModel):
             self.auxiliary_head = AuxiliaryHead(C=self.features.feats_dim, num_classes=self.num_classes)
 
     @staticmethod
-    def define_features(genotype: Genotype = DARTS_genotype,
+    def define_features(genotype: Genotype = genotypes.DARTS,
                         C: int = 36, layer: int = 20,
                         dropout_p: float = 0.2, **kwargs) -> FeatureExtractor:
         return FeatureExtractor(genotype, C, layer, dropout_p, **kwargs)
@@ -47,12 +46,15 @@ class DARTS(ImageModel):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
         super().add_argument(group)
+        group.add_argument('--model_arch', dest='model_arch', default='DARTS',
+                           help='Model Architecture (genotype name), defaults to be "DARTS"')
         group.add_argument('--auxiliary', dest='auxiliary', action='store_true',
                            help='enable auxiliary classifier during training.')
         group.add_argument('--auxiliary_weight', dest='auxiliary_weight', type=float,
                            help='enable auxiliary classifier during training.')
 
-    def __init__(self, name: str = 'darts', layer: int = 20, C: int = 36, dropout_p: float = 0.2,
+    def __init__(self, name: str = 'darts', model_arch: str = 'DARTS',
+                 layer: int = 20, C: int = 36, dropout_p: float = 0.2,
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
@@ -62,7 +64,8 @@ class DARTS(ImageModel):
                 kwargs['norm_par'] = {'mean': [0.49139968, 0.48215827, 0.44653124],
                                       'std': [0.24703233, 0.24348505, 0.26158768], }
         if genotype is None:
-            genotype = ROBUST_DARTS if 'robust' in name else DARTS_genotype
+            genotype = getattr(genotypes, model_arch.upper())
+        name = model_arch.lower()
         self.C = C
         self.dropout_p = dropout_p
         self.genotype = genotype
@@ -75,6 +78,10 @@ class DARTS(ImageModel):
         self.param_list['darts'] = ['C', 'dropout_p', 'genotype']
         if auxiliary:
             self.param_list['darts'].insert(0, 'auxiliary_weight')
+
+    @classmethod
+    def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
+        return name, layer, width_factor
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
@@ -98,7 +105,7 @@ class DARTS(ImageModel):
         return super().load(*args, strict=strict, **kwargs)
 
     def get_official_weights(self, dataset: str = None, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        assert str(self.genotype) == str(DARTS_genotype)
+        assert str(self.genotype) == str(genotypes.DARTS)
         if dataset is None and isinstance(self.dataset, ImageSet):
             dataset = self.dataset.name
         file_name = f'darts_{dataset}.pt'
