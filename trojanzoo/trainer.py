@@ -90,7 +90,7 @@ class Trainer:
         prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         for key in self.param_list:
             value = getattr(self, key)
-            if value is not None:
+            if value:
                 prints('{green}{0:<10s}{reset}'.format(key, **ansi), indent=indent + 10)
                 prints(value, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
