@@ -46,6 +46,8 @@ class Trainer:
                            help='gamma passed to torch.optim.lr_scheduler.StepLR, defaults to 0.1.')
         group.add_argument('--amp', dest='amp', action='store_true',
                            help='Automatic Mixed Precision.')
+        group.add_argument('--grad_clip', dest='grad_clip', type=float,
+                           help='Gradient Clipping max norms.')
         group.add_argument('--validate_interval', dest='validate_interval', type=int,
                            help='validate interval during training epochs, defaults to 10.')
         group.add_argument('--save', dest='save', action='store_true',

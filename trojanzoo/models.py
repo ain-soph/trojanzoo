@@ -476,7 +476,7 @@ class Model:
         raise NotImplementedError(f'{self.name} has no official weights.')
 
     # -----------------------------------Train and Validate------------------------------------ #
-    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -553,6 +553,8 @@ class Model:
                     scaler.update()
                 else:
                     loss.backward()
+                    if grad_clip is not None:
+                        nn.utils.clip_grad_norm_(params)
                     if callable(after_loss_fn):
                         after_loss_fn(_input=_input, _label=_label, _output=_output,
                                       loss=loss, optimizer=optimizer, loss_fn=loss_fn,
@@ -676,7 +678,7 @@ class Model:
         for param in self._model.parameters():
             param.requires_grad_(False)
         for param in params:
-                param.requires_grad_()
+            param.requires_grad_()
 
     # Need to overload for other packages (GNN) since they are calling their own nn.DataParallel.
     # TODO: nn.parallel.DistributedDataParallel
