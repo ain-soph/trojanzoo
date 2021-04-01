@@ -7,6 +7,7 @@ from trojanzoo.utils import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
+import torch.nn as nn
 from torch import optim
 import time
 import datetime
@@ -69,7 +70,9 @@ class AdvTrain(BackdoorDefense):
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
-        params = [param_group['params'] for param_group in optimizer.param_groups]
+        params: list[nn.Parameter] = []
+        for param_group in optimizer.param_groups:
+            params.extend(param_group['params'])
         for _epoch in range(epoch):
             losses.reset()
             top1.reset()

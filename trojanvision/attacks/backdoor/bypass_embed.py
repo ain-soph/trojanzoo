@@ -100,7 +100,9 @@ class BypassEmbed(BadNet):
         ]))
         if env['num_gpus']:
             D.cuda()
-        optim_params = [param_group['params'] for param_group in optimizer.param_groups]
+        optim_params: list[nn.Parameter] = []
+        for param_group in optimizer.param_groups:
+            optim_params.extend(param_group['params'])
         optimizer.zero_grad()
 
         best_acc = 0.0
@@ -145,7 +147,7 @@ class BypassEmbed(BadNet):
         for _epoch in range(epoch):
             losses.reset()
             top1.reset()
-            self.model.activate_params([D.parameters()])
+            self.model.activate_params(D.parameters())
             D.train()
             for data in discrim_loader:
                 # train D

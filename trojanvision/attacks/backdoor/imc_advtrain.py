@@ -7,6 +7,7 @@ from trojanzoo.utils import AverageMeter
 from trojanvision.optim import PGD
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
 import math
 import random
@@ -71,7 +72,9 @@ class IMC_AdvTrain(IMC):
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         top5 = AverageMeter('Acc@5', ':6.2f')
-        params = [param_group['params'] for param_group in optimizer.param_groups]
+        params: list[nn.Parameter] = []
+        for param_group in optimizer.param_groups:
+            params.extend(param_group['params'])
         for _epoch in range(epoch):
             if callable(epoch_fn):
                 self.model.activate_params([])

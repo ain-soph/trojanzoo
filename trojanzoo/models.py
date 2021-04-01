@@ -509,7 +509,9 @@ class Model:
                                   writer=None, tag=tag, _epoch=start_epoch,
                                   verbose=verbose, indent=indent, **kwargs)
 
-        params: list[list[nn.Parameter]] = [param_group['params'] for param_group in optimizer.param_groups]
+        params: list[nn.Parameter] = []
+        for param_group in optimizer.param_groups:
+            params.extend(param_group['params'])
         total_iter = epoch * len(loader_train)
         for _epoch in range(epoch):
             _epoch += 1
@@ -670,11 +672,10 @@ class Model:
             raise NotImplementedError(f'{name=}')
         return params
 
-    def activate_params(self, param_groups: list[list[nn.Parameter]]):
+    def activate_params(self, params: Iterator[nn.Parameter]):
         for param in self._model.parameters():
             param.requires_grad_(False)
-        for param_group in param_groups:
-            for param in param_group:
+        for param in params:
                 param.requires_grad_()
 
     # Need to overload for other packages (GNN) since they are calling their own nn.DataParallel.
