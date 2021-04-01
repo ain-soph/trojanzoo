@@ -21,20 +21,7 @@ class GTSRB(ImageFolder):
                  loss_weights: bool = True, **kwargs):
         return super().__init__(norm_par=norm_par, loss_weights=loss_weights, **kwargs)
 
-    # @staticmethod
-    # def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
-    #     if mode == 'train':
-    #         transform = transforms.Compose([
-    #             transforms.Resize((32, 32)),
-    #             transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
-    #             transforms.ToTensor()])
-    #     else:
-    #         transform = transforms.Compose([
-    #             transforms.Resize((32, 32)),
-    #             transforms.ToTensor()])
-    #     return transform
-    @staticmethod
-    def get_transform(mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+    def get_transform(self, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomCrop((32, 32), padding=4),

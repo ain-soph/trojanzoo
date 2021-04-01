@@ -28,8 +28,7 @@ class ImageSet(Dataset):
         super().__init__(default_model=default_model, **kwargs)
         self.param_list['imageset'] = ['data_shape', 'norm_par']
 
-    @staticmethod
-    def get_transform(mode: str) -> transforms.Compose:
+    def get_transform(self, mode: str) -> transforms.Compose:
         if mode == 'train':
             transform = transforms.Compose([
                 transforms.RandomResizedCrop((224, 224)),
