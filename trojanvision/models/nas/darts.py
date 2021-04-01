@@ -58,13 +58,8 @@ class DARTS(ImageModel):
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
-        if 'norm_par' not in kwargs.keys() and 'dataset' in kwargs.keys():
-            dataset = kwargs['dataset']
-            if isinstance(dataset, ImageSet) and 'cifar' in dataset.name:
-                kwargs['norm_par'] = {'mean': [0.49139968, 0.48215827, 0.44653124],
-                                      'std': [0.24703233, 0.24348505, 0.26158768], }
         if genotype is None:
-            genotype = getattr(genotypes, model_arch.upper())
+            genotype = getattr(genotypes, model_arch)
         name = model_arch.lower()
         self.C = C
         self.dropout_p = dropout_p

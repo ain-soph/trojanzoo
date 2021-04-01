@@ -53,9 +53,6 @@ class NATSbench(ImageModel):
 
         if dataset is not None:
             assert isinstance(dataset, ImageSet)
-            if 'norm_par' not in kwargs.keys() and 'cifar' in dataset.name:
-                kwargs['norm_par'] = {'mean': [0.49139968, 0.48215827, 0.44653124],
-                                      'std': [0.24703233, 0.24348505, 0.26158768], }
             kwargs['dataset'] = dataset
             if dataset_name is None:
                 dataset_name = dataset.name

@@ -24,8 +24,8 @@ class CIFAR10(ImageSet):
         group.add_argument('--cutout', action='store_true', help='use cutout')
         group.add_argument('--cutout_length', type=int, default=16, help='cutout length')
 
-    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.4914, 0.4822, 0.4465],
-                                                           'std': [0.2023, 0.1994, 0.2010], },
+    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.49139968, 0.48215827, 0.44653124],
+                                                           'std': [0.24703233, 0.24348505, 0.26158768], },
                  cutout: bool = False, cutout_length: int = 16, **kwargs):
         self.cutout = cutout
         self.cutout_length = cutout_length
