@@ -63,29 +63,29 @@ You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/ma
 1. Train a model:  
     e.g. `ResNet18` on `CIFAR10` with 95% Acc
     ```python3
-    python ./examples/train.py --color --tqdm --verbose 1 --amp --dataset cifar10 --model resnet18_comp --epoch 300 --lr 0.1 --lr_scheduler --lr_step_size 100 --save
+    python ./examples/train.py --color --verbose 1 --dataset cifar10 --model resnet18_comp --lr_scheduler --save
     ```
 
 2. Test backdoor attack (e.g., BadNet):  
     e.g. `BadNet` with `ResNet18` on `CIFAR10`
     ```python3
-    python ./examples/backdoor_attack.py --color --tqdm --verbose 1 --pretrain --validate_interval 1 --amp --dataset cifar10 --model resnet18_comp --attack badnet --random_init --epoch 50 --lr 0.01 --save
+    python ./examples/backdoor_attack.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --random_init --epoch 50 --lr 0.01 --save
     ```
 
 3. Test backdoor defense (e.g., Neural Cleanse):  
     e.g. `Neural Cleanse` against `BadNet`
     ```python3
-    python ./examples/backdoor_defense.py --color --tqdm --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --defense neural_cleanse --random_init --epoch 50 --lr 0.01
+    python ./examples/backdoor_defense.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --defense neural_cleanse --random_init --epoch 50 --lr 0.01
     ```
 ## IMC
 ```python3
-python ./examples/backdoor_attack.py --color --tqdm --verbose 1 --pretrain --validate_interval 1 --amp --dataset cifar10 --model resnet18_comp --attack imc --random_init --epoch 50 --lr 0.01 --save
+python ./examples/backdoor_attack.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack imc --random_init --epoch 50 --lr 0.01 --save
 ```
 
 ## AdvMind
 (with `attack adaptive` and `model adaptive`)
 ```python3
-python ./examples/adv_defense.py --color --tqdm --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack pgd --defense advmind --attack_adapt --defense_adapt
+python ./examples/adv_defense.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack pgd --defense advmind --attack_adapt --defense_adapt
 ```
 ## Detailed Usage
 ### Configuration file structure
