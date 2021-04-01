@@ -35,7 +35,7 @@ class Trainer:
         group.add_argument('--momentum', dest='momentum', type=float,
                            help='momentum passed to Optimizer, defaults to 0.9.')
         group.add_argument('--weight_decay', dest='weight_decay', type=float,
-                           help='momentum passed to Optimizer, defaults to 1e-4.')
+                           help='momentum passed to Optimizer, defaults to 3e-4.')
         group.add_argument('--nesterov', dest='nesterov', action='store_true',
                            help='use nesterov for SGD.')
         group.add_argument('--lr_scheduler', dest='lr_scheduler', action='store_true',
