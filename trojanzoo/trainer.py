@@ -35,15 +35,11 @@ class Trainer:
         group.add_argument('--momentum', dest='momentum', type=float,
                            help='momentum passed to Optimizer, defaults to 0.9.')
         group.add_argument('--weight_decay', dest='weight_decay', type=float,
-                           help='momentum passed to Optimizer, defaults to 3e-4.')
+                           help='weight_decay passed to Optimizer, defaults to 3e-4.')
         group.add_argument('--nesterov', dest='nesterov', action='store_true',
-                           help='use nesterov for SGD.')
+                           help='enable nesterov for SGD optimizer.')
         group.add_argument('--lr_scheduler', dest='lr_scheduler', action='store_true',
-                           help='use torch.optim.lr_scheduler.StepLR.')
-        group.add_argument('--lr_step_size', dest='lr_step_size', type=int,
-                           help='step_size passed to torch.optim.lr_scheduler.StepLR, defaults to 50.')
-        group.add_argument('--lr_gamma', dest='lr_gamma', type=float,
-                           help='gamma passed to torch.optim.lr_scheduler.StepLR, defaults to 0.1.')
+                           help='enable CosineAnnealingLR scheduler.')
         group.add_argument('--amp', dest='amp', action='store_true',
                            help='Automatic Mixed Precision.')
         group.add_argument('--grad_clip', dest='grad_clip', type=float,
@@ -122,7 +118,7 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
         else:
             continue
         _dict[key] = value
-    optimizer, lr_scheduler = model.define_optimizer(**optim_args)
+    optimizer, lr_scheduler = model.define_optimizer(T_max=result['epoch'], **optim_args)
 
     writer = None
     if tensorboard:

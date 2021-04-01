@@ -362,7 +362,7 @@ class Model:
     def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
                          OptimType: Union[str, type[Optimizer]] = None,
                          lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 0.0,
-                         lr_scheduler: bool = True, lr_step_size: int = 50, lr_gamma: float = 0.1,
+                         lr_scheduler: bool = True, T_max: int = None,
                          **kwargs) -> tuple[Optimizer, _LRScheduler]:
         kwargs['momentum'] = momentum
         kwargs['weight_decay'] = weight_decay
@@ -377,8 +377,7 @@ class Model:
         optimizer = OptimType(parameters, lr, **kwargs)
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
-            _lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer, step_size=lr_step_size, gamma=lr_gamma)
+            _lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max)
         return optimizer, _lr_scheduler
 
     # define loss function

@@ -10,7 +10,7 @@ from trojanzoo.utils.output import prints
 import torch
 import torch.optim
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from collections.abc import Callable
 from typing import Any, Union
 
@@ -21,17 +21,15 @@ class Uname(trojanzoo.optim.Optimizer):
 
     name: str = 'uname'
 
-    def __init__(self, OptimType: Union[str, type[Optimizer]], optim_kwargs: dict[str, Any] = {},
-                 lr_scheduler: bool = False, lr_step_size: int = 50,
-                 input_transform: Union[str, Callable] = lambda x: x, **kwargs):    # TODO: Callable[[torch.Tensor], torch.Tensor]
+    def __init__(self, OptimType: Union[str, type[Optimizer]], optim_kwargs: dict[str, Any] = {}, lr_scheduler: bool = False,
+                 input_transform: Union[str, Callable[[torch.Tensor], torch.Tensor]] = lambda x: x, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'lr_step_size', 'input_transform']
+        self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'input_transform']
         if isinstance(OptimType, str):
             OptimType = getattr(torch.optim, OptimType)
         self.OptimType: type[Optimizer] = OptimType
         self.optim_kwargs: dict = optim_kwargs
         self.lr_scheduler: bool = lr_scheduler
-        self.lr_step_size: int = lr_step_size
         self.input_transform: Callable[[torch.Tensor], torch.Tensor] = input_transform
 
     def optimize(self, unbound_params: list[torch.Tensor],
@@ -54,7 +52,7 @@ class Uname(trojanzoo.optim.Optimizer):
         if iteration == 0:
             return real_params, None
         optimizer = self.OptimType(parameters=unbound_params, **self.optim_kwargs)
-        lr_scheduler = StepLR(optimizer, lr_step_size=self.lr_step_size) if self.lr_scheduler else None
+        lr_scheduler = CosineAnnealingLR(optimizer, T_max=iteration) if self.lr_scheduler else None
         optimizer.zero_grad()
 
         # ----------------------------------------------------------------------------------------- #

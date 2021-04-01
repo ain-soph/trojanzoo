@@ -95,15 +95,8 @@ class MagNet(Model):
             data[1] = _input.clone().detach()
         return to_tensor(data[0]), to_tensor(data[1])
 
-    # Define the optimizer
-    # lr: (default: )
-    # return: optimizer
-    def define_optimizer(self, lr: float = 0.1, parameters: str = 'full',
-                         OptimType='Adam', weight_decay=1e-9,
-                         lr_scheduler=True, lr_step_size=30, **kwargs):
-        return super().define_optimizer(lr=lr, parameters=parameters,
-                                        OptimType=OptimType, weight_decay=weight_decay,
-                                        lr_scheduler=lr_scheduler, lr_step_size=lr_step_size, **kwargs)
+    def define_optimizer(self, lr: float = 0.1, OptimType='Adam', weight_decay=1e-9, **kwargs):
+        return super().define_optimizer(lr=lr, OptimType=OptimType, weight_decay=weight_decay, **kwargs)
 
     # define MSE loss function
     def define_criterion(self, **kwargs):
