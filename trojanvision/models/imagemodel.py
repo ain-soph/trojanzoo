@@ -82,15 +82,16 @@ class ImageModel(Model):
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
                  adv_train: bool = False, adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255,
                  adv_train_eps: float = 8 / 255, adv_train_valid_eps: float = 8 / 255,
-                 sgm: bool = False, sgm_gamma: float = 1.0, **kwargs):
+                 sgm: bool = False, sgm_gamma: float = 1.0,
+                 norm_par: dict[str, list[float]] = None, **kwargs):
         name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
         self.layer = layer
         self.width_factor = width_factor
-        if 'norm_par' not in kwargs.keys() and isinstance(dataset, ImageSet):
-            kwargs['norm_par'] = dataset.norm_par
+        norm_par = dataset.norm_par if norm_par is None else norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
-        super().__init__(name=name, model=model, layer=layer, width_factor=width_factor, dataset=dataset, **kwargs)
+        super().__init__(name=name, model=model, layer=layer, width_factor=width_factor,
+                         dataset=dataset, norm_par=norm_par, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train

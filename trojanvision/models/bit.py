@@ -36,13 +36,13 @@ class BiT(ImageModel):
 
     def __init__(self, name: str = 'BiT', pretrained_dataset: str = 'M',
                  layer: int = 50, width_factor: int = 1,
-                 model: type[_BiT] = _BiT, **kwargs):
+                 model: type[_BiT] = _BiT, norm_par: dict[str, list[float]] = None, **kwargs):
         name, pretrained_dataset, layer = self.parse_name(name, pretrained_dataset, layer)
-        if 'norm_par' not in kwargs.keys():
-            kwargs['norm_par'] = {'mean': [0.5, 0.5, 0.5],
-                                  'std': [0.5, 0.5, 0.5], }
+        if norm_par is None:
+            norm_par = {'mean': [0.5, 0.5, 0.5],
+                        'std': [0.5, 0.5, 0.5], }
         super().__init__(name=name, layer=layer, width_factor=width_factor,
-                         model=model, **kwargs)
+                         model=model, norm_par=norm_par, **kwargs)
 
     @staticmethod
     def parse_name(name: str, pretrained_dataset: str = 'M', layer: int = 50) -> tuple[str, str, int]:
