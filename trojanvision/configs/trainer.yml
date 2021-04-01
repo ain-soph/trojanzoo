@@ -1,3 +1,2 @@
 epoch:
-  default: 100
-  cifar10: 200
+  default: 200
