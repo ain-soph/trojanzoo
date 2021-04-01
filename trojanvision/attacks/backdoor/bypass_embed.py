@@ -125,9 +125,9 @@ class BypassEmbed(BadNet):
                 loss = loss_f - self.lambd * loss_d
                 loss.backward()
                 optimizer.step()
-                if lr_scheduler:
-                    lr_scheduler.step()
                 optimizer.zero_grad()
+            if lr_scheduler:
+                lr_scheduler.step()
             self.model.activate_params([])
             self.model.eval()
             _, cur_acc = self.validate_fn(get_data_fn=self.bypass_get_data)
