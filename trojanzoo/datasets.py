@@ -122,7 +122,7 @@ class Dataset:
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
                         **kwargs) -> torch.utils.data.Dataset:
-        pass
+        raise NotImplementedError()
 
     def get_full_dataset(self, mode: str, transform='default', seed: int = None, **kwargs) -> torch.utils.data.Dataset:
         try:
