@@ -2,11 +2,13 @@
 
 from .imagemodel import ImageModel
 from .nas import *
+
 from .alexnet import AlexNet
 from .bit import BiT
 from .densenet import DenseNet
 from .dla import DLA
 from .magnet import MagNet
+from .mobilenet import MobileNet
 from .net import Net
 from .resnet import ResNet
 from .vgg import VGG
@@ -26,6 +28,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'densenet': DenseNet,
     'dla': DLA,
     'magnet': MagNet,
+    'mobilenet': MobileNet,
     'net': Net,
     'resnet': ResNet,
     'vgg': VGG,
