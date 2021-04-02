@@ -124,7 +124,7 @@ class Dataset:
                         **kwargs) -> torch.utils.data.Dataset:
         pass
 
-    def get_full_dataset(self, mode: str, transform='default', **kwargs) -> torch.utils.data.Dataset:
+    def get_full_dataset(self, mode: str, transform='default', seed: int = None, **kwargs) -> torch.utils.data.Dataset:
         try:
             if self.valid_set:
                 return self.get_org_dataset(mode=mode, transform=transform, **kwargs)
@@ -132,25 +132,25 @@ class Dataset:
                 dataset = self.get_org_dataset(mode='train', transform=transform, **kwargs)
                 subset = {}
                 subset['train'], subset['valid'] = self.split_set(
-                    dataset, percent=self.split_ratio)
+                    dataset, percent=self.split_ratio, seed=seed)
                 return subset[mode]
         except RuntimeError as e:
             print(f'{self.folder_path=}')
             raise e
 
     def get_dataset(self, mode: str = None, full: bool = True, dataset: torch.utils.data.Dataset = None,
-                    classes: list[int] = None, **kwargs) -> torch.utils.data.Dataset:
+                    classes: list[int] = None, seed: int = None, **kwargs) -> torch.utils.data.Dataset:
         if dataset is None:
             if full and mode != 'test':
                 dataset = self.get_full_dataset(mode=mode, **kwargs)
             elif mode == 'train':
                 fullset = self.get_full_dataset(mode='train', **kwargs)
-                dataset, _ = self.split_set(fullset, length=self.train_sample)
+                dataset, _ = self.split_set(fullset, length=self.train_sample, seed=seed)
             else:
                 fullset = self.get_full_dataset(mode='valid', **kwargs)
                 subset: dict[str, torch.utils.data.Subset] = {}
                 subset['test'], subset['valid'] = self.split_set(
-                    fullset, percent=self.test_ratio)
+                    fullset, percent=self.test_ratio, seed=seed)
                 dataset = subset[mode]
         if classes is not None:
             dataset = self.get_class_set(dataset=dataset, classes=classes)
@@ -192,11 +192,13 @@ class Dataset:
 
     @staticmethod
     def split_set(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                  length: int = None, percent=None) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
+                  length: int = None, percent=None, seed: int = None) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
         assert (length is None) != (percent is None)  # XOR check
+        seed = env['seed'] if seed is None else seed
         length = length if length is not None else int(len(dataset) * percent)
         indices = np.arange(len(dataset))
-        np.random.shuffle(indices)  # TODO: random seed?
+        np.random.seed(seed)
+        np.random.shuffle(indices)
         if isinstance(dataset, torch.utils.data.Subset):
             idx = np.array(dataset.indices)
             indices = idx[indices]
