@@ -13,8 +13,6 @@ if TYPE_CHECKING:
 
 def get_name(name: str = None, module: Union[str, object] = None, arg_list: list[str] = []) -> str:
     if module is not None:
-        assert name is None or module.name.startswith(
-            name), f'You can\'t pass arguments {name=} and {module=} at same time.'
         if isinstance(module, str):
             return module
         try:
