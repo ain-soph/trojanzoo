@@ -17,18 +17,12 @@ class _ResNet(_ImageModel):
     def __init__(self, layer: int = 18, sub_type: str = '', **kwargs):
         super().__init__(**kwargs)
         layer = int(layer)
+        module_list: list[nn.Module] = []
         if sub_type == 's':
             _model = ResNetS(nclasses=self.num_classes)
-            self.features = nn.Sequential(OrderedDict([
-                ('conv1', _model.conv1),
-                ('bn1', _model.bn1),  # nn.BatchNorm2d(64)
-                ('relu', nn.ReLU(inplace=True)),
-                # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-                ('layer1', _model.layer1),
-                ('layer2', _model.layer2),
-                ('layer3', _model.layer3),
-                ('layer4', _model.layer4)
-            ]))
+            module_list.append(('conv1', _model.conv1))
+            module_list.append(('bn1', _model.bn1))
+            module_list.append(('relu', nn.ReLU(inplace=True)))
             self.classifier = nn.Sequential(OrderedDict([
                 ('fc', _model.linear)  # nn.Linear(512 * block.expansion, num_classes)
             ]))
@@ -36,39 +30,28 @@ class _ResNet(_ImageModel):
             ModelClass: Callable[..., torchvision.models.ResNet] = getattr(torchvision.models, 'resnet' + str(layer))
             _model = ModelClass(num_classes=self.num_classes)
             if sub_type == 'comp':
-                conv: nn.Conv2d = _model.conv1
-                conv = nn.Conv2d(conv.in_channels, conv.out_channels,
-                                 kernel_size=3, stride=1, padding=1, bias=False)
-                self.features = nn.Sequential(OrderedDict([
-                    ('conv1', conv),
-                    ('bn1', _model.bn1),  # nn.BatchNorm2d(64)
-                    ('relu', _model.relu),  # nn.ReLU(inplace=True)
-                    # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-                    # ('maxpool', _model.maxpool),
-                    ('layer1', _model.layer1),
-                    ('layer2', _model.layer2),
-                    ('layer3', _model.layer3),
-                    ('layer4', _model.layer4)
-                ]))
+                conv1: nn.Conv2d = _model.conv1
+                _model.conv1 = nn.Conv2d(conv1.in_channels, conv1.out_channels,
+                                         kernel_size=3, stride=1, padding=1, bias=False)
+                module_list.append(('conv1', _model.conv1))
+                module_list.append(('bn1', _model.bn1))
+                module_list.append(('relu', _model.relu))
             else:
-                self.features = nn.Sequential(OrderedDict([
-                    # nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
-                    ('conv1', _model.conv1),
-                    ('bn1', _model.bn1),  # nn.BatchNorm2d(64)
-                    ('relu', _model.relu),  # nn.ReLU(inplace=True)
-                    # nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-                    ('maxpool', _model.maxpool),
-                    ('layer1', _model.layer1),
-                    ('layer2', _model.layer2),
-                    ('layer3', _model.layer3),
-                    ('layer4', _model.layer4)
-                ]))
+                module_list.append(('conv1', _model.conv1))
+                module_list.append(('bn1', _model.bn1))
+                module_list.append(('relu', _model.relu))
+                module_list.append(('maxpool', _model.maxpool))
             self.pool = _model.avgpool  # nn.AdaptiveAvgPool2d((1, 1))
             self.classifier = nn.Sequential(OrderedDict([
                 ('fc', _model.fc)  # nn.Linear(512 * block.expansion, num_classes)
             ]))
             # block.expansion = 1 if BasicBlock and 4 if Bottleneck
             # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
+        module_list.extend([('layer1', _model.layer1),
+                            ('layer2', _model.layer2),
+                            ('layer3', _model.layer3),
+                            ('layer4', _model.layer4)])
+        self.features = nn.Sequential(OrderedDict(module_list))
 
 
 class ResNet(ImageModel):
