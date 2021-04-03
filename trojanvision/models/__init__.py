@@ -11,6 +11,7 @@ from .magnet import MagNet
 from .mobilenet import MobileNet
 from .net import Net
 from .resnet import ResNet
+from .shufflenetv2 import ShuffleNetV2
 from .vgg import VGG
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
@@ -31,6 +32,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'mobilenet': MobileNet,
     'net': Net,
     'resnet': ResNet,
+    'shufflenetv2': ShuffleNetV2,
     'vgg': VGG,
 
     'natsbench': NATSbench,
@@ -75,5 +77,7 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None, folder_
 
 
 def get_model_class(name: str) -> str:
-    name: str = re.findall(r'[A-Za-z]+', name)[0]
-    return name.lower()
+    model_name: str = re.findall(r'[A-Za-z]+', name)[0]
+    if model_name[-1].lower() == 'v':
+        model_name = name.split('_')[0]
+    return model_name.lower()
