@@ -69,7 +69,7 @@ class PGD(Attack, PGD_Optimizer):
             if _iter:
                 correct += 1
                 total_iter += _iter
-                succ_conf += float(self.model.get_prob(_input).max())
+                succ_conf += float(self.model.get_prob(adv_input).max())
             else:
                 total_iter += self.iteration
             if verbose:
