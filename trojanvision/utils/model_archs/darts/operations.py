@@ -57,8 +57,8 @@ def get_op(op_name: str, C_in: int, stride: int = 1, affine: bool = True, p: flo
             seq = DilConv(C_in, C_out, 5, stride, 4, dilation=2,
                           std_conv=std_conv, affine=affine)
         elif op_name == 'conv_7x1_1x7':
-            seq.add_module('conv1', nn.Conv2d(C_in, C_out, (7, 1), stride, 3, bias=False))
-            seq.add_module('conv2', nn.Conv2d(C_in, C_out, (1, 7), stride, 3, bias=False))
+            seq.add_module('conv1', nn.Conv2d(C_in, C_out, (1, 7), (1, stride), (0, 3), bias=False))
+            seq.add_module('conv2', nn.Conv2d(C_in, C_out, (7, 1), (stride, 1), (3, 0), bias=False))
         elif op_name == 'conv_1x1':
             seq = nn.Conv2d(C_in, C_out, 1, stride, 0, bias=False)
         elif op_name == 'conv_3x3':
