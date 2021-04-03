@@ -57,6 +57,7 @@ class PGD(Attack, PGD_Optimizer):
         correct = 0
         total = 0
         total_iter = 0
+        succ_conf = 0.0
         for data in self.dataset.loader['test']:
             if total >= 100:
                 break
@@ -64,11 +65,11 @@ class PGD(Attack, PGD_Optimizer):
             if len(_label) == 0:
                 continue
             adv_input, _iter = self.craft_example(_input, **kwargs)
-
             total += 1
             if _iter:
                 correct += 1
                 total_iter += _iter
+                succ_conf += float(self.model.get_prob(_input).max())
             else:
                 total_iter += self.iteration
             if verbose:
@@ -76,6 +77,8 @@ class PGD(Attack, PGD_Optimizer):
                 print('current iter: ', _iter)
                 print('succ rate: ', float(correct) / total)
                 print('avg  iter: ', float(total_iter) / total)
+                if correct > 0:
+                    print('succ conf: ', float(succ_conf) / correct)
                 print('-------------------------------------------------')
                 print()
         return float(correct) / total, float(total_iter) / total
@@ -84,8 +87,7 @@ class PGD(Attack, PGD_Optimizer):
                       target: Union[torch.Tensor, int] = None, target_idx: int = None, **kwargs) -> tuple[torch.Tensor, int]:
         if len(_input) == 0:
             return _input, None
-        if target_idx is None:
-            target_idx = self.target_idx
+        target_idx = self.target_idx if target_idx is None else target_idx
         if loss_fn is None and self.loss_fn is None:
             if target is None:
                 target = self.generate_target(_input, idx=target_idx)
