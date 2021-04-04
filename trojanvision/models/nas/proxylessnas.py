@@ -13,7 +13,13 @@ class _ProxylessNAS(_ImageModel):
         super().__init__(**kwargs)
         _model = torch.hub.load('ain-soph/ProxylessNAS', target_platform)
         self.features = nn.Sequential(*_model.blocks)
-        self.classifier = nn.Sequential(OrderedDict(list(_model.classifier.named_children())))
+        if self.num_classes == 10:
+            self.classifier = nn.Sequential(OrderedDict(list(_model.classifier.named_children())))
+        else:
+            fc: nn.Linear = list(_model.classifier.children())[0]
+            self.classifier = self.define_classifier(conv_dim=fc.in_features,
+                                                     num_classes=self.num_classes,
+                                                     fc_depth=1)
 
 
 class ProxylessNAS(ImageModel):
