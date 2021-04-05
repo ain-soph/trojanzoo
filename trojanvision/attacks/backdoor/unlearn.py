@@ -4,7 +4,9 @@ from .badnet import BadNet
 import torch
 import argparse
 
-import torch.utils.data  # TODO: python 3.10
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
 
 
 class Unlearn(BadNet):

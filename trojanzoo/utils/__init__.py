@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import torch
 import torch.cuda
 
 from .tensor import *

@@ -10,11 +10,13 @@ from trojanzoo.utils.data import TensorListDataset
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data
 
 import argparse
 import os
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
 
 class CleanLabel(BadNet):
     r"""

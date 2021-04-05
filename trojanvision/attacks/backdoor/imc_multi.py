@@ -5,13 +5,14 @@ from trojanvision.marks import Watermark
 from trojanzoo.utils.output import prints
 
 import torch
-import torch.utils.data
 import numpy as np
 import math
 import random
 import os
 from typing import Callable
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
 
 class IMC_Multi(IMC):
     name: str = 'imc_multi'

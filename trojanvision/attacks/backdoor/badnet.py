@@ -11,12 +11,14 @@ from trojanzoo.utils.logger import SmoothedValue
 
 
 import torch
-import torch.utils.data
 import math
 import random
 import os
 import argparse
 from typing import Callable
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
 
 
 class BadNet(Attack):

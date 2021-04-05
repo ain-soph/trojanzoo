@@ -12,6 +12,10 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset
 import argparse
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
+
 mse_criterion = nn.MSELoss()
 
 

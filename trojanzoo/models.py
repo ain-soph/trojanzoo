@@ -24,8 +24,6 @@ from torch.optim.lr_scheduler import _LRScheduler
 import argparse
 from collections.abc import Callable
 if TYPE_CHECKING:
-    import torch.optim
-    import torch.cuda.amp
     import torch.utils.data
 # redirect = Indent_Redirect(buffer=True, indent=0)
 

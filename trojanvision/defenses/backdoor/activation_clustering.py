@@ -13,6 +13,10 @@ from sklearn import metrics
 import argparse
 from tqdm import tqdm
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
+
 
 class ActivationClustering(BackdoorDefense):
 

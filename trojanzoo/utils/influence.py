@@ -8,9 +8,7 @@ import torch.nn.functional as F
 from typing import TYPE_CHECKING
 from trojanzoo.models import Model    # TODO: python 3.10
 if TYPE_CHECKING:
-    import torch.autograd
     import torch.utils.data
-# from scipy.optimize import fmin_ncg
 
 
 class InfluenceFunction():

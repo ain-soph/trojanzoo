@@ -14,6 +14,9 @@ from torch.utils.data import TensorDataset
 import argparse
 from collections import OrderedDict
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
 
 class BypassEmbed(BadNet):
     name: str = 'bypass_embed'

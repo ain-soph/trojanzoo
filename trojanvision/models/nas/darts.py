@@ -13,7 +13,7 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING
 import argparse  # TODO: python 3.10
 if TYPE_CHECKING:
-    import torch.cuda
+    pass
 
 url = {
     'cifar10': '1Y13i4zKGKgjtWBdC0HWLavjO7wvEiGOc',
@@ -75,8 +75,8 @@ class DARTS(ImageModel):
             self.param_list['darts'].insert(0, 'auxiliary_weight')
 
     @classmethod
-    def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
-        return name, layer, width_factor
+    def split_model_name(cls, name: str, layer: int = None) -> tuple[str, int]:
+        return name, layer
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:

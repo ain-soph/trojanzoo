@@ -15,7 +15,6 @@ from typing import Union    # TODO: python 3.10
 from trojanzoo.configs import Config
 import argparse
 if TYPE_CHECKING:
-    import torch.cuda
     import torch.backends.cudnn
 
 

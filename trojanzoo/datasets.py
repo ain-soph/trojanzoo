@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from typing import Callable, Union    # TODO: python 3.10
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:
-    import torch.cuda
     import torch.utils.data
 
 

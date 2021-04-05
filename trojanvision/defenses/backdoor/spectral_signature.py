@@ -4,10 +4,12 @@ from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
 
 import torch
-import torch.utils.data
 from torch.utils.data import TensorDataset
 import argparse
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    import torch.utils.data
 
 class SpectralSignature(BackdoorDefense):
 

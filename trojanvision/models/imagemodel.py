@@ -21,9 +21,6 @@ import argparse
 from matplotlib.colors import Colormap  # type: ignore  # TODO
 from collections.abc import Callable
 if TYPE_CHECKING:
-    import torch.autograd
-    import torch.nn
-    import torch.cuda.amp
     import torch.utils.data
 
 from matplotlib.cm import get_cmap  # type: ignore  # TODO

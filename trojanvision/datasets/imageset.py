@@ -4,7 +4,6 @@ from trojanzoo.datasets import Dataset
 from trojanvision.environ import env
 
 import torch
-import torch.utils.data
 import torchvision.transforms as transforms
 import os
 
@@ -12,7 +11,7 @@ from typing import TYPE_CHECKING
 from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
 if TYPE_CHECKING:
-    pass
+    import torch.utils.data
 
 
 class ImageSet(Dataset):

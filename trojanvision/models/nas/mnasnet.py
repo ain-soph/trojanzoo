@@ -29,16 +29,9 @@ class MNASNet(ImageModel):
         name, self.mnas_alpha = self.parse_name(name, mnas_alpha)
         super().__init__(name=name, mnas_alpha=self.mnas_alpha, model=model, **kwargs)
 
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[self.parse_name('mnasnet', self.mnas_alpha)[0]]
-        print('get official model weights from: ', url)
-        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
-        new_dict = OrderedDict()
-        for key, value in _dict.items():
-            if key.startswith('layers.'):
-                key = 'features.' + key[7:]
-            new_dict[key] = value
-        return new_dict
+    @classmethod
+    def split_model_name(cls, name: str, layer: int = None) -> tuple[str, int]:
+        return name, layer
 
     @staticmethod
     def parse_name(name: str, mnas_alpha: float = 1.0) -> tuple[str, float]:
@@ -49,6 +42,13 @@ class MNASNet(ImageModel):
             mnas_alpha = float(name_list[1].replace('_', '.'))
         return f'{name}{mnas_alpha:.1f}'.replace('.', '_'), mnas_alpha
 
-    @classmethod
-    def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
-        return name, layer, width_factor
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
+        url = model_urls[self.parse_name('mnasnet', self.mnas_alpha)[0]]
+        print('get official model weights from: ', url)
+        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
+        new_dict = OrderedDict()
+        for key, value in _dict.items():
+            if key.startswith('layers.'):
+                key = 'features.' + key[7:]
+            new_dict[key] = value
+        return new_dict
