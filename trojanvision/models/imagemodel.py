@@ -56,8 +56,6 @@ class ImageModel(Model):
         super().add_argument(group)
         # group.add_argument('--layer', dest='layer', type=int,
         #                    help='layer (optional, maybe embedded in --model)')
-        # group.add_argument('--width_factor', dest='width_factor', type=int,
-        #                    help='width factor for wide-ResNet (optional, maybe embedded in --model)')
         group.add_argument('--adv_train', dest='adv_train', action='store_true',
                            help='enable adversarial training.')
         group.add_argument('--adv_train_iter', dest='adv_train_iter', type=int,
@@ -75,20 +73,18 @@ class ImageModel(Model):
                            help='sgm gamma, defaults to 1.0')
         return group
 
-    def __init__(self, name: str = 'imagemodel', layer: int = None, width_factor: int = None,
+    def __init__(self, name: str = 'imagemodel', layer: int = None,
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
                  adv_train: bool = False, adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255,
                  adv_train_eps: float = 8 / 255, adv_train_valid_eps: float = 8 / 255,
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
-        name, layer, width_factor = self.split_model_name(name, layer=layer, width_factor=width_factor)
-        self.layer = layer
-        self.width_factor = width_factor
+        name, layer = self.split_model_name(name, layer=layer)
         norm_par = dataset.norm_par if norm_par is None else norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
-        super().__init__(name=name, model=model, layer=layer, width_factor=width_factor,
-                         dataset=dataset, norm_par=norm_par, **kwargs)
+        super().__init__(name=name, model=model, dataset=dataset,
+                         layer=layer, norm_par=norm_par, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train
@@ -97,10 +93,6 @@ class ImageModel(Model):
         self.adv_train_eps = adv_train_eps
         self.adv_train_valid_eps = adv_train_valid_eps
         self.param_list['imagemodel'] = []
-        if layer is not None:
-            self.param_list['imagemodel'].append('layer')
-        if width_factor is not None:
-            self.param_list['imagemodel'].append('width_factor')
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
         if adv_train:
@@ -110,7 +102,20 @@ class ImageModel(Model):
         self._model: _ImageModel
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
-        self._ce_loss_fn = torch.nn.CrossEntropyLoss(weight=self.loss_weights)
+        self._ce_loss_fn = nn.CrossEntropyLoss(weight=self.loss_weights)
+
+    @classmethod
+    def split_model_name(cls, name: str, layer: int = None) -> tuple[str, int]:
+        full_list = name.split('_')
+        partial_name = full_list[0]
+        re_list = re.findall(r'\d+|\D+', partial_name)
+        if len(re_list) > 1:
+            layer = int(re_list[1])
+        elif layer is not None:
+            partial_name += str(layer)
+        full_list[0] = partial_name
+        name = '_'.join(full_list)
+        return name, layer
 
     def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
         _output = self(_input)
@@ -161,24 +166,6 @@ class ImageModel(Model):
             heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
-
-    @classmethod
-    def split_model_name(cls, name: str, layer: int = None, width_factor: int = None) -> tuple[str, int, int]:
-        full_list = name.split('_')
-        name = full_list[0]
-        re_list = re.findall(r'\d+|\D+', name)
-        if len(re_list) > 1:
-            name = re_list[0]
-            layer = int(re_list[1])
-            if len(re_list) > 2 and re_list[-2] == 'x':
-                width_factor = int(re_list[-1])
-        if layer is not None:
-            name += str(layer)
-        if width_factor is not None:
-            name += f'x{width_factor:d}'
-        full_list[0] = name
-        name = '_'.join(full_list)
-        return name, layer, width_factor
 
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0,

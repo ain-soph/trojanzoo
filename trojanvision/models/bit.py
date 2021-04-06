@@ -2,20 +2,20 @@
 
 from .imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageNet
-from trojanvision.utils.model_archs.bit import KNOWN_MODELS, tf2th
 
 import torch
 import torch.nn as nn
 import torch.hub
 import numpy as np
 import os
-import re
 from collections import OrderedDict
 
 
 class _BiT(_ImageModel):
-    def __init__(self, name: str = 'BiT-M-R50x1', **kwargs):
+    def __init__(self, name: str = 'bit-m-r50x1', **kwargs):
         super().__init__(**kwargs)
+        name = name.upper().replace('BIT', 'BiT').replace('X', 'x')
+        from trojanvision.utils.model_archs.bit import KNOWN_MODELS
         _model = KNOWN_MODELS[name](head_size=1)
         self.features = nn.Sequential()
         self.features.add_module('root', _model.root)
@@ -34,44 +34,38 @@ class _BiT(_ImageModel):
 
 class BiT(ImageModel):
 
-    def __init__(self, name: str = 'BiT', pretrained_dataset: str = 'M',
-                 layer: int = 50, width_factor: int = 1,
+    def __init__(self, name: str = 'bit-m-r50x1',
+                 pretrained_dataset: str = 'm', layer: int = 50, width_factor: int = 1,
                  model: type[_BiT] = _BiT, norm_par: dict[str, list[float]] = None, **kwargs):
-        name, pretrained_dataset, layer = self.parse_name(name, pretrained_dataset, layer)
+        name = self.parse_name(name, pretrained_dataset, layer, width_factor)
         if norm_par is None:
             norm_par = {'mean': [0.5, 0.5, 0.5],
                         'std': [0.5, 0.5, 0.5], }
-        super().__init__(name=name, layer=layer, width_factor=width_factor,
+        super().__init__(name=name, width_factor=width_factor,
                          model=model, norm_par=norm_par, **kwargs)
 
     @staticmethod
-    def parse_name(name: str, pretrained_dataset: str = 'M', layer: int = 50) -> tuple[str, str, int]:
-        if name[:3] == 'bit':
-            name = 'BiT' + name[3:]
-        full_name_list: list[str] = re.findall(r'[0-9]+|[A-Za-z]+|_', name)
-        name_list = full_name_list[0].split('-')
-        if len(name_list) == 1:
-            name_list.append(pretrained_dataset)
-            name_list.append('R')
-        elif len(name_list) == 2:
-            if name_list[1] == 'R':
-                name_list.insert(1, pretrained_dataset)
-            else:
-                name_list.append('R')
-        name_list[1] = name_list[1].upper()
-        name_list[2] = name_list[2].upper()
-        assert name_list[1] in ['S', 'M', 'L'] and name_list[2] == 'R', name
-        pretrained_dataset = name_list[1]
-        layer = int(name_list[3])
-        full_name_list[0] = '-'.join(name_list)
-        return ''.join(full_name_list), pretrained_dataset, layer
+    def parse_name(name: str, pretrained_dataset: str = 'm', layer: int = 50, width_factor: int = 1) -> str:
+        name_list = name.lower().split('-')
+        assert name_list[0] == 'bit'
+        if len(name_list) != 1:
+            for element in name_list[1:]:
+                if element[0] == 'r':
+                    sub_list = element[1:].split('x')
+                    layer = int(sub_list[0])
+                    if len(sub_list) == 2:
+                        width_factor = int(sub_list[1])
+                else:
+                    assert len(element) == 1
+                    pretrained_dataset = element
+        return '-'.join(['bit', pretrained_dataset, f'r{layer:d}x{width_factor:d}'])
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         # TODO: map_location argument
-        # TODO: model save_dir defaults to torch.hub.get_dir()
-        file_name = f'{self.name}.npz'
+        file_name = self.name.upper().replace('BIT', 'BiT').replace('X', 'x')
         if isinstance(self.dataset, ImageNet):
-            file_name = f'{self.name}-ILSVRC2012.npz'
+            file_name += '-ILSVRC2012'
+        file_name += '.npz'
         url = f'https://storage.googleapis.com/bit_models/{file_name}'
         print('get official model weights from: ', url)
         file_path = os.path.join(torch.hub.get_dir(), 'bit', file_name)
@@ -79,6 +73,7 @@ class BiT(ImageModel):
             torch.hub.download_url_to_file(url, file_path)
         weights: dict[str, np.ndarray] = np.load(file_path)
         _dict = OrderedDict()
+        from trojanvision.utils.model_archs.bit import tf2th
         _dict['features.conv.weight'] = tf2th(weights['resnet/root_block/standardized_conv2d/kernel'])
         for block_num in range(4):
             block_name = f'block{block_num+1:d}'
