@@ -12,13 +12,12 @@ import os
 import zipfile
 from collections import OrderedDict
 
-url = {
-    'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P',
-}
+
 cifar_arch = [2, 2, 0, 2, 1, 2, 0, 2, 2, 3, 2, 1, 2, 0, 0, 1, 1, 1, 2, 1, 1, 0, 3, 4, 3, 0, 3, 1]
 
 
 class LaNet(DARTS):
+    model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }
 
     def __init__(self, name: str = 'lanet', layer: int = 24, C: int = 128,
                  arch: list[int] = cifar_arch, model: type[_DARTS] = _DARTS, **kwargs):
@@ -35,13 +34,13 @@ class LaNet(DARTS):
         if not os.path.exists(file_path):
             zip_file_name = 'temp.zip'
             zip_path = os.path.join(folder_path, zip_file_name)
-            download_file_from_google_drive(file_id=url[dataset], root=folder_path, filename=zip_file_name)
+            download_file_from_google_drive(file_id=self.model_urls[dataset], root=folder_path, filename=zip_file_name)
             with zipfile.ZipFile(zip_path, 'r') as zf:
                 data = zf.read('lanas_128_99.03/top1.pt')
             with open(file_path, 'wb') as f:
                 f.write(data)
             os.remove(zip_path)
-        print('get official model weights from Google Drive: ', url[dataset])
+        print('get official model weights from Google Drive: ', self.model_urls[dataset])
         _dict: OrderedDict[str, torch.Tensor] = torch.load(file_path, map_location='cpu')
         if 'model_state_dict' in _dict.keys():
             _dict = _dict['model_state_dict']

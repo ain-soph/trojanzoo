@@ -2,12 +2,10 @@
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torchvision.models
-from torch.utils import model_zoo
-from torchvision.models.mnasnet import _MODEL_URLS as model_urls
+from torchvision.models.mnasnet import _MODEL_URLS as urls
 import re
 
 import torch
-# import torch.nn as nn
 from collections import OrderedDict
 
 
@@ -23,6 +21,7 @@ class _MNASNet(_ImageModel):
 
 
 class MNASNet(ImageModel):
+    model_urls = urls
 
     def __init__(self, name: str = 'mnasnet', mnas_alpha: float = 1.0,
                  model: type[_MNASNet] = _MNASNet, **kwargs):
@@ -43,9 +42,8 @@ class MNASNet(ImageModel):
         return f'{name}{mnas_alpha:.1f}'.replace('.', '_'), mnas_alpha
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[self.parse_name('mnasnet', self.mnas_alpha)[0]]
-        print('get official model weights from: ', url)
-        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
+        url = self.model_urls[self.parse_name('mnasnet', self.mnas_alpha)[0]]
+        _dict = super().get_official_weights(url=url)
         new_dict = OrderedDict()
         for key, value in _dict.items():
             if key.startswith('layers.'):

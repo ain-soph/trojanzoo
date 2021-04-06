@@ -5,9 +5,8 @@ from trojanvision.utils.model_archs.resnet_s import ResNetS
 
 import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import torchvision.models
-from torchvision.models.resnet import model_urls
+from torchvision.models.resnet import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
 
@@ -55,6 +54,7 @@ class _ResNet(_ImageModel):
 
 
 class ResNet(ImageModel):
+    model_urls = urls
 
     def __init__(self, name: str = 'resnet', layer: int = 18,
                  model: type[_ResNet] = _ResNet, **kwargs):
@@ -66,9 +66,7 @@ class ResNet(ImageModel):
         super().__init__(name=name, layer=layer, model=model, sub_type=sub_type, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[f'resnet{self.layer:d}']
-        print('get official model weights from: ', url)
-        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
+        _dict = super().get_official_weights(**kwargs)
         new_dict = OrderedDict()
         for i, (key, value) in enumerate(_dict.items()):
             prefix = 'features.' if i < len(_dict) - 2 else 'classifier.'

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
 
-import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import torchvision.models
-from torchvision.models.alexnet import model_urls
-from collections import OrderedDict
+from torchvision.models.alexnet import model_urls as urls
 
 
 class _AlexNet(_ImageModel):
@@ -47,11 +44,7 @@ class _AlexNet(_ImageModel):
 
 
 class AlexNet(ImageModel):
+    model_urls = urls
 
     def __init__(self, name: str = 'alexnet', model: type[_AlexNet] = _AlexNet, **kwargs):
         super().__init__(name=name, model=model, **kwargs)
-
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls['resnet' + str(self.layer)]
-        print('get official model weights from: ', url)
-        return model_zoo.load_url(url, **kwargs)

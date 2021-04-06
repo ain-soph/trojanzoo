@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
 
-import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import torchvision.models
-from collections import OrderedDict
 
-model_urls = {
-    'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
-    "mobilenet_v3_large": "https://download.pytorch.org/models/mobilenet_v3_large-8738ca79.pth",
-    "mobilenet_v3_small": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
-}
 
 cifar10_inverted_residual_setting = [
     # t, c, n, s
@@ -48,6 +40,11 @@ class _MobileNet(_ImageModel):
 
 
 class MobileNet(ImageModel):
+    model_urls = {
+        'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
+        "mobilenet_v3_large": "https://download.pytorch.org/models/mobilenet_v3_large-8738ca79.pth",
+        "mobilenet_v3_small": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
+    }
 
     def __init__(self, name: str = 'mobilenet', model: type[_MobileNet] = _MobileNet, **kwargs):
         try:
@@ -58,8 +55,3 @@ class MobileNet(ImageModel):
                                  "'mobilenet_v3_small', 'mobilenet_v3_large', "
                                  "'mobilenet_v3_small_comp', 'mobilenet_v3_large_comp']")
         super().__init__(name=name, model=model, sub_type=sub_type, **kwargs)
-
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[self.name]
-        print('get official model weights from: ', url)
-        return model_zoo.load_url(url, **kwargs)

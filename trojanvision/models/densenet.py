@@ -3,9 +3,8 @@ from .imagemodel import _ImageModel, ImageModel
 
 import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import torchvision.models
-from torchvision.models.densenet import model_urls
+from torchvision.models.densenet import model_urls as urls
 import re
 from collections import OrderedDict
 
@@ -31,6 +30,7 @@ class _DenseNet(_ImageModel):
 
 
 class DenseNet(ImageModel):
+    model_urls = urls
 
     def __init__(self, name: str = 'densenet', layer: int = 121,
                  model: type[_DenseNet] = _DenseNet, **kwargs):
@@ -38,9 +38,7 @@ class DenseNet(ImageModel):
         super().__init__(name=name, layer=layer, model=model, comp=comp, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[self.name]
-        print('get official model weights from: ', url)
-        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
+        _dict = super().get_official_weights(**kwargs)
         pattern = re.compile(
             r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
         for key in list(_dict.keys()):

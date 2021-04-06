@@ -10,6 +10,7 @@ from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
 
 import torch
 import torch.nn as nn
+from torch.utils import model_zoo
 import numpy as np
 import os
 from tqdm import tqdm
@@ -222,6 +223,7 @@ class _Model(nn.Module):
 
 
 class Model:
+    model_urls: dict[str, str] = []
 
     @staticmethod
     def add_argument(group: argparse._ArgumentGroup):
@@ -466,11 +468,12 @@ class Model:
             if verbose:
                 prints(f'Model {self.name} saved at: {file_path}', indent=indent)
 
-    # define in concrete model class.
-    # TODO: maybe write some generic style? model_url?
-    def get_official_weights(self, map_location: Union[str, Callable, torch.device, dict] = 'cpu',
+    def get_official_weights(self, url: str = None,
+                             map_location: Union[str, Callable, torch.device, dict] = 'cpu',
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
-        raise NotImplementedError(f'{self.name} has no official weights.')
+        url = self.model_urls[self.name] if url is None else url
+        print('get official model weights from: ', url)
+        return model_zoo.load_url(url, map_location=map_location, **kwargs)
 
     # -----------------------------------Train and Validate------------------------------------ #
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
@@ -685,7 +688,7 @@ class Model:
             return nn.DataParallel(_model)
         return _model
 
-    @ staticmethod
+    @staticmethod
     def output_layer_information(layer: nn.Module, depth: int = 0, verbose: bool = True,
                                  indent: int = 0, tree_length: int = None):
         tree_length = tree_length if tree_length is not None else 12 * (depth + 1)

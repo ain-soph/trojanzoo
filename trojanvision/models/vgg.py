@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 from .imagemodel import _ImageModel, ImageModel
 
-import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import torchvision.models
-from torchvision.models.vgg import model_urls
-from collections import OrderedDict
+from torchvision.models.vgg import model_urls as urls
 
 
 class _VGG(_ImageModel):
@@ -39,13 +36,10 @@ class _VGG(_ImageModel):
 
 
 class VGG(ImageModel):
+    model_urls = urls
+
     def __init__(self, name: str = 'vgg', layer: int = 13,
                  model: type[_VGG] = _VGG, **kwargs):
         comp = True if 'comp' in name else False
         batch_norm = True if 'bn' in name else False
         super().__init__(name=name, layer=layer, model=model, comp=comp, batch_norm=batch_norm, **kwargs)
-
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[self.name]
-        print('get official model weights from: ', url)
-        return model_zoo.load_url(url, **kwargs)

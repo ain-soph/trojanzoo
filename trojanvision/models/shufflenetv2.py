@@ -3,9 +3,8 @@ from .imagemodel import _ImageModel, ImageModel
 
 import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import torchvision.models
-from torchvision.models.shufflenetv2 import model_urls
+from torchvision.models.shufflenetv2 import model_urls as urls
 from collections import OrderedDict
 from collections.abc import Callable
 
@@ -40,6 +39,7 @@ class _ShuffleNetV2(_ImageModel):
 
 
 class ShuffleNetV2(ImageModel):
+    model_urls = urls
 
     def __init__(self, name: str = 'shufflenetv2', model: type[_ShuffleNetV2] = _ShuffleNetV2, **kwargs):
         try:
@@ -55,9 +55,7 @@ class ShuffleNetV2(ImageModel):
         super().__init__(name=name, model=model, sub_type=sub_type, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = model_urls[self.name]
-        print('get official model weights from: ', url)
-        _dict: OrderedDict[str, torch.Tensor] = model_zoo.load_url(url, **kwargs)
+        _dict = super().get_official_weights(**kwargs)
         new_dict = OrderedDict()
         for i, (key, value) in enumerate(_dict.items()):
             prefix = 'features.' if i < len(_dict) - 2 else 'classifier.'
