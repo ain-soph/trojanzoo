@@ -86,7 +86,6 @@ class MagNet(Model):
             v_noise = self.v_noise
         _input = data[0]
         if mode == 'train':
-            # future warning: to_tensor, to_valid_img
             noise: torch.Tensor = torch.normal(mean=0.0, std=v_noise, size=_input.shape)
             data[0] = (_input + noise).clamp(0.0, 1.0)
             data[1] = _input.detach()

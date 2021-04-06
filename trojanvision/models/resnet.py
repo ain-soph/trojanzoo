@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from .imagemodel import _ImageModel, ImageModel
-from trojanvision.utils.model_archs.resnet_s import ResNetS
 
 import torch
 import torch.nn as nn
@@ -18,6 +17,7 @@ class _ResNet(_ImageModel):
         layer = int(layer)
         module_list: list[nn.Module] = []
         if sub_type == 's':
+            from trojanvision.utils.model_archs.resnet_s import ResNetS
             _model = ResNetS(nclasses=self.num_classes)
             module_list.append(('conv1', _model.conv1))
             module_list.append(('bn1', _model.bn1))
