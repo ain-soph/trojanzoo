@@ -115,9 +115,9 @@ class PNASNet(nn.Module):
         return out
 
 
-def PNASNetA():
-    return PNASNet(CellA, num_cells=6, num_planes=44)
+def PNASNetA(**kwargs):
+    return PNASNet(CellA, num_cells=6, num_planes=44, **kwargs)
 
 
-def PNASNetB():
-    return PNASNet(CellB, num_cells=6, num_planes=32)
+def PNASNetB(**kwargs):
+    return PNASNet(CellB, num_cells=6, num_planes=32, **kwargs)

@@ -12,7 +12,8 @@ class _PNASNet(_ImageModel):
     def __init__(self, cell_type: str = 'b', **kwargs):
         super().__init__(**kwargs)
         assert cell_type in ['a', 'b'], cell_type
-        _model = PNASNetA() if cell_type == 'a' else PNASNetB()
+        ModelClass = PNASNetA if cell_type == 'a' else PNASNetB
+        _model = ModelClass(num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', _model.conv1),
             ('bn1', _model.bn1),
