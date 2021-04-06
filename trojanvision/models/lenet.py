@@ -5,7 +5,7 @@ import torch.nn as nn
 from collections import OrderedDict
 
 
-class _Net(_ImageModel):
+class _LeNet(_ImageModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -21,8 +21,8 @@ class _Net(_ImageModel):
         ]))
 
 
-class Net(ImageModel):
+class LeNet(ImageModel):
 
-    def __init__(self, name: str = 'net', model: type[_Net] = _Net, **kwargs):
+    def __init__(self, name: str = 'lenet', model: type[_LeNet] = _LeNet, **kwargs):
         super().__init__(name=name, model=model,
                          conv_dim=9216, fc_depth=2, fc_dim=128, **kwargs)

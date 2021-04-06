@@ -9,7 +9,7 @@ from .densenet import DenseNet
 from .dla import DLA
 from .magnet import MagNet
 from .mobilenet import MobileNet
-from .net import Net
+from .lenet import LeNet
 from .resnet import ResNet
 from .shufflenetv2 import ShuffleNetV2
 from .vgg import VGG
@@ -29,7 +29,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'dla': DLA,
     'magnet': MagNet,
     'mobilenet': MobileNet,
-    'net': Net,
+    'lenet': LeNet,
     'resnet': ResNet,
     'shufflenetv2': ShuffleNetV2,
     'vgg': VGG,
