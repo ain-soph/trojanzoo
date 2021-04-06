@@ -34,9 +34,7 @@ class _ImageModel(_Model):
                                       nn.ReLU, nn.Sigmoid)
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]},
-                 num_classes=None, **kwargs):
-        if num_classes is None:
-            num_classes = 1000
+                 num_classes: int = 1000, **kwargs):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
 
     def define_preprocess(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]}, **kwargs):
@@ -79,12 +77,12 @@ class ImageModel(Model):
                  adv_train_eps: float = 8 / 255, adv_train_valid_eps: float = 8 / 255,
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
-        name, layer = self.split_model_name(name, layer=layer)
+        name = self.split_model_name(name, layer=layer)
         norm_par = dataset.norm_par if norm_par is None else norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
         super().__init__(name=name, model=model, dataset=dataset,
-                         layer=layer, norm_par=norm_par, **kwargs)
+                         norm_par=norm_par, **kwargs)
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train
@@ -105,7 +103,7 @@ class ImageModel(Model):
         self._ce_loss_fn = nn.CrossEntropyLoss(weight=self.loss_weights)
 
     @classmethod
-    def split_model_name(cls, name: str, layer: int = None) -> tuple[str, int]:
+    def split_model_name(cls, name: str, layer: int = None) -> str:
         full_list = name.split('_')
         partial_name = full_list[0]
         re_list = re.findall(r'\d+|\D+', partial_name)
@@ -114,8 +112,7 @@ class ImageModel(Model):
         elif layer is not None:
             partial_name += str(layer)
         full_list[0] = partial_name
-        name = '_'.join(full_list)
-        return name, layer
+        return '_'.join(full_list)
 
     def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
         _output = self(_input)

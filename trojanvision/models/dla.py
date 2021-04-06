@@ -7,8 +7,9 @@ import torch.nn as nn
 
 class _DLA(_ImageModel):
 
-    def __init__(self, **kwargs):
-        super().__init__(conv_dim=512, fc_depth=1, **kwargs)
+    def __init__(self, name: str = 'dla', **kwargs):
+        simple = True if 'simple' in name else False
+        super().__init__(conv_dim=512, fc_depth=1, simple=simple, **kwargs)
 
     @staticmethod
     def define_features(block=BasicBlock, simple: bool = False, **kwargs) -> nn.Sequential:
@@ -39,5 +40,4 @@ class _DLA(_ImageModel):
 class DLA(ImageModel):
 
     def __init__(self, name: str = 'dla', model: type[_DLA] = _DLA, **kwargs):
-        simple = True if 'simple' in name else False
-        super().__init__(name=name, model=model, simple=simple, **kwargs)
+        super().__init__(name=name, model=model, **kwargs)

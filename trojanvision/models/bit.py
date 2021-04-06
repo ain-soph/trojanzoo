@@ -34,7 +34,7 @@ class _BiT(_ImageModel):
 
 class BiT(ImageModel):
 
-    def __init__(self, name: str = 'bit-m-r50x1',
+    def __init__(self, name: str = 'bit',
                  pretrained_dataset: str = 'm', layer: int = 50, width_factor: int = 1,
                  model: type[_BiT] = _BiT, norm_par: dict[str, list[float]] = None, **kwargs):
         name = self.parse_name(name, pretrained_dataset, layer, width_factor)

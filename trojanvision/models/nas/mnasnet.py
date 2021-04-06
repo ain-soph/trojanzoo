@@ -28,10 +28,6 @@ class MNASNet(ImageModel):
         name, self.mnas_alpha = self.parse_name(name, mnas_alpha)
         super().__init__(name=name, mnas_alpha=self.mnas_alpha, model=model, **kwargs)
 
-    @classmethod
-    def split_model_name(cls, name: str, layer: int = None) -> tuple[str, int]:
-        return name, layer
-
     @staticmethod
     def parse_name(name: str, mnas_alpha: float = 1.0) -> tuple[str, float]:
         name_list: list[str] = re.findall('[a-zA-Z]+|[\d_.]+', name)

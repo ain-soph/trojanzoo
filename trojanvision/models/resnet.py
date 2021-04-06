@@ -12,11 +12,10 @@ from collections.abc import Callable
 
 class _ResNet(_ImageModel):
 
-    def __init__(self, layer: int = 18, sub_type: str = '', **kwargs):
+    def __init__(self, name: str = 'resnet18', **kwargs):
         super().__init__(**kwargs)
-        layer = int(layer)
         module_list: list[nn.Module] = []
-        if sub_type == 's':
+        if 's' in name.split('_'):
             from trojanvision.utils.model_archs.resnet_s import ResNetS
             _model = ResNetS(nclasses=self.num_classes)
             module_list.append(('conv1', _model.conv1))
@@ -26,9 +25,10 @@ class _ResNet(_ImageModel):
                 ('fc', _model.linear)  # nn.Linear(512 * block.expansion, num_classes)
             ]))
         else:
-            ModelClass: Callable[..., torchvision.models.ResNet] = getattr(torchvision.models, 'resnet' + str(layer))
+            model_class = name.replace('_comp', '').replace('_s', '')
+            ModelClass: Callable[..., torchvision.models.ResNet] = getattr(torchvision.models, model_class)
             _model = ModelClass(num_classes=self.num_classes)
-            if sub_type == 'comp':
+            if 'comp' in name:
                 conv1: nn.Conv2d = _model.conv1
                 _model.conv1 = nn.Conv2d(conv1.in_channels, conv1.out_channels,
                                          kernel_size=3, stride=1, padding=1, bias=False)
@@ -58,12 +58,7 @@ class ResNet(ImageModel):
 
     def __init__(self, name: str = 'resnet', layer: int = 18,
                  model: type[_ResNet] = _ResNet, **kwargs):
-        sub_type = ''
-        if 'comp' in name:
-            sub_type = 'comp'
-        elif '_s' in name:
-            sub_type = 's'
-        super().__init__(name=name, layer=layer, model=model, sub_type=sub_type, **kwargs)
+        super().__init__(name=name, layer=layer, model=model, **kwargs)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)
@@ -72,3 +67,11 @@ class ResNet(ImageModel):
             prefix = 'features.' if i < len(_dict) - 2 else 'classifier.'
             new_dict[prefix + key] = value
         return new_dict
+
+    @classmethod
+    def split_model_name(cls, name: str, layer: int = None) -> str:
+        prefix = ''
+        if name.startswith('wide_'):
+            prefix = 'wide_'
+            name = name[5:]
+        return prefix + super().split_model_name(name, layer=layer)

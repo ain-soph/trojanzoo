@@ -34,9 +34,9 @@ class _DARTS(_ImageModel):
 
     @staticmethod
     def define_features(genotype: Genotype = genotypes.DARTS,
-                        C: int = 36, layer: int = 20,
+                        C: int = 36, layers: int = 20,
                         dropout_p: float = 0.2, **kwargs) -> FeatureExtractor:
-        return FeatureExtractor(genotype, C, layer, dropout_p, **kwargs)
+        return FeatureExtractor(genotype, C, layers, dropout_p, **kwargs)
 
     def get_fm(self, x: torch.Tensor) -> torch.Tensor:
         return self.features(self.normalize(x))
@@ -54,29 +54,26 @@ class DARTS(ImageModel):
                            help='enable auxiliary classifier during training.')
 
     def __init__(self, name: str = 'darts', model_arch: str = 'DARTS',
-                 layer: int = 20, C: int = 36, dropout_p: float = 0.2,
+                 layers: int = 20, C: int = 36, dropout_p: float = 0.2,
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
         if genotype is None:
             genotype = getattr(genotypes, model_arch)
         name = model_arch.lower()
+        self.layers = layers
         self.C = C
         self.dropout_p = dropout_p
         self.genotype = genotype
         self.auxiliary = auxiliary
         self.auxiliary_weight = auxiliary_weight
-        super().__init__(name=name, layer=layer, C=C, dropout_p=dropout_p,
+        super().__init__(name=name, layers=layers, C=C, dropout_p=dropout_p,
                          genotype=genotype, model=model,
                          auxiliary=auxiliary, **kwargs)
         self._model: _DARTS
-        self.param_list['darts'] = ['C', 'dropout_p', 'genotype']
+        self.param_list['darts'] = ['layers', 'C', 'dropout_p', 'genotype']
         if auxiliary:
             self.param_list['darts'].insert(0, 'auxiliary_weight')
-
-    @classmethod
-    def split_model_name(cls, name: str, layer: int = None) -> tuple[str, int]:
-        return name, layer
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:

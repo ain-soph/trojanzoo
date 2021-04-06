@@ -283,7 +283,9 @@ class Model:
         # ------------------------------ #
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
         if isinstance(model, type):
-            self._model = model(num_classes=num_classes, **kwargs)
+            if num_classes is not None:
+                kwargs['num_classes'] = num_classes
+            self._model = model(name=name, **kwargs)
         else:
             self._model = model
         self.model = self.get_parallel_model(self._model)

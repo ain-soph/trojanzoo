@@ -19,7 +19,14 @@ cifar10_inverted_residual_setting = [
 
 class _MobileNet(_ImageModel):
 
-    def __init__(self, sub_type: str = 'v3_small', **kwargs):
+    def __init__(self, name: str = 'mobilenet_v2', **kwargs):
+        try:
+            sub_type: str = name[10:]
+            assert sub_type in ['v2', 'v2_comp', 'v3_small', 'v3_large', 'v3_small_comp', 'v3_large_comp'], f'{name=}'
+        except:
+            raise AssertionError("model name should be in ['mobilenet_v2', 'mobilenet_v2_comp', "
+                                 "'mobilenet_v3_small', 'mobilenet_v3_large', "
+                                 "'mobilenet_v3_small_comp', 'mobilenet_v3_large_comp']")
         super().__init__(**kwargs)
         if 'v2' in sub_type:
             inverted_residual_setting = cifar10_inverted_residual_setting if 'comp' in sub_type else None
@@ -46,12 +53,5 @@ class MobileNet(ImageModel):
         "mobilenet_v3_small": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
     }
 
-    def __init__(self, name: str = 'mobilenet', model: type[_MobileNet] = _MobileNet, **kwargs):
-        try:
-            sub_type: str = name[10:]
-            assert sub_type in ['v2', 'v2_comp', 'v3_small', 'v3_large', 'v3_small_comp', 'v3_large_comp'], f'{name=}'
-        except:
-            raise AssertionError("model name should be in ['mobilenet_v2', 'mobilenet_v2_comp', "
-                                 "'mobilenet_v3_small', 'mobilenet_v3_large', "
-                                 "'mobilenet_v3_small_comp', 'mobilenet_v3_large_comp']")
-        super().__init__(name=name, model=model, sub_type=sub_type, **kwargs)
+    def __init__(self, name: str = 'mobilenet_v2', model: type[_MobileNet] = _MobileNet, **kwargs):
+        super().__init__(name=name, model=model, **kwargs)
