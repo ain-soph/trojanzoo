@@ -69,9 +69,9 @@ class ResNet(ImageModel):
         return new_dict
 
     @classmethod
-    def split_model_name(cls, name: str, layer: int = None) -> str:
+    def get_name(cls, name: str, layer: int = None) -> str:
         prefix = ''
         if name.startswith('wide_'):
             prefix = 'wide_'
             name = name[5:]
-        return prefix + super().split_model_name(name, layer=layer)
+        return prefix + super().get_name(name, layer=layer)

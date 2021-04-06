@@ -77,7 +77,7 @@ class ImageModel(Model):
                  adv_train_eps: float = 8 / 255, adv_train_valid_eps: float = 8 / 255,
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
-        name = self.split_model_name(name, layer=layer)
+        name = self.get_name(name, layer=layer)
         norm_par = dataset.norm_par if norm_par is None else norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
@@ -103,7 +103,7 @@ class ImageModel(Model):
         self._ce_loss_fn = nn.CrossEntropyLoss(weight=self.loss_weights)
 
     @classmethod
-    def split_model_name(cls, name: str, layer: int = None) -> str:
+    def get_name(cls, name: str, layer: int = None) -> str:
         full_list = name.split('_')
         partial_name = full_list[0]
         re_list = re.findall(r'\d+|\D+', partial_name)
