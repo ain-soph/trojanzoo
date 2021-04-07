@@ -5,6 +5,7 @@ from .mnist import MNIST
 from .cifar import CIFAR10, CIFAR100
 from .gtsrb import GTSRB
 from .imagenet import ImageNet, Sample_ImageNet
+from .imagenet16 import ImageNet16
 from .vggface2 import VGGface2, Sample_VGGface2
 from .isic import ISIC2018
 from .cub200 import CUB200, CUB200_2011
@@ -21,6 +22,7 @@ class_dict: dict[str, ImageSet] = {
     'cifar100': CIFAR100,
     'gtsrb': GTSRB,
     'imagenet': ImageNet,
+    'imagenet16': ImageNet16,
     'sample_imagenet': Sample_ImageNet,
     'isic2018': ISIC2018,
     'vggface2': VGGface2,
