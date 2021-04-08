@@ -106,7 +106,8 @@ class Dataset:
         raise NotImplementedError()
 
     def summary(self, indent: int = 0):
-        prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        prints(self.__class__.__name__, indent=indent)
         for key, value in self.param_list.items():
             prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
             prints({v: getattr(self, v) for v in value}, indent=indent + 10)

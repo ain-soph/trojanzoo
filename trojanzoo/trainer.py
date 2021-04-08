@@ -85,7 +85,8 @@ class Trainer:
         return keys
 
     def summary(self, indent: int = 0):
-        prints('{blue_light}{0:<20s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        prints(self.__class__.__name__, indent=indent)
         for key in self.param_list:
             value = getattr(self, key)
             if value:
