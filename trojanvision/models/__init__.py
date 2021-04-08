@@ -77,7 +77,11 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None, folder_
 
 
 def get_model_class(name: str, class_dict: dict[str, type[ImageModel]] = class_dict) -> str:
+    correct_name: str = None
     for class_name in class_dict.keys():
-        if class_name in name.lower():
-            return class_name
+        if class_name in name.lower() \
+                and (correct_name is None or len(class_name) > len(correct_name)):
+            correct_name = class_name
+    if correct_name is not None:
+        return correct_name
     raise KeyError(f'{class_name} not in {list(class_dict.keys())}')
