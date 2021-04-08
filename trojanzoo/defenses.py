@@ -39,7 +39,14 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defe
                  class_dict: dict[str, type[Defense]] = None) -> argparse._ArgumentGroup:
     defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi), description=defense_name)
-    DefenseType = class_dict[defense_name]
+    try:
+        DefenseType = class_dict[defense_name]
+    except KeyError as e:
+        if defense_name is None:
+            print('you need to first claim the defense name using "--defense".')
+            print('available defense name list: ')
+            print(list(class_dict.keys()))
+        raise e
     return DefenseType.add_argument(group)     # TODO: Linting problem
 
 
