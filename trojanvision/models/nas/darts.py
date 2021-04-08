@@ -33,7 +33,7 @@ class _DARTS(_ImageModel):
             self.auxiliary_head = AuxiliaryHead(C=self.features.feats_dim, num_classes=self.num_classes)
 
     @staticmethod
-    def define_features(genotype: Genotype = genotypes.DARTS,
+    def define_features(genotype: Genotype = genotypes.darts,
                         C: int = 36, layers: int = 20,
                         dropout_p: float = 0.2, **kwargs) -> FeatureExtractor:
         return FeatureExtractor(genotype, C, layers, dropout_p, **kwargs)
@@ -46,21 +46,29 @@ class DARTS(ImageModel):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
         super().add_argument(group)
-        group.add_argument('--model_arch', dest='model_arch', default='DARTS',
-                           help='Model Architecture (genotype name), defaults to be "DARTS"')
+        group.add_argument('--model_arch', dest='model_arch', default='darts',
+                           help='Model Architecture (genotype name), defaults to be "darts"')
         group.add_argument('--auxiliary', dest='auxiliary', action='store_true',
                            help='enable auxiliary classifier during training.')
         group.add_argument('--auxiliary_weight', dest='auxiliary_weight', type=float,
                            help='enable auxiliary classifier during training.')
 
-    def __init__(self, name: str = 'darts', model_arch: str = 'DARTS',
+    def __init__(self, name: str = 'darts', model_arch: str = 'darts',
                  layers: int = 20, C: int = 36, dropout_p: float = 0.2,
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
+        model_arch = model_arch.lower()
         if genotype is None:
-            genotype = getattr(genotypes, model_arch)
-        name = model_arch.lower()
+            try:
+                genotype = getattr(genotypes, model_arch)
+            except AttributeError as e:
+                print('Available Model Architectures: ')
+                model_arch_list = [element for element in dir(genotypes) if '__' not in element and
+                                   element not in ['Genotype', 'PRIMITIVES', 'namedtuple']]
+                print(model_arch_list)
+                raise e
+        name = model_arch
         self.layers = layers
         self.C = C
         self.dropout_p = dropout_p
@@ -97,7 +105,7 @@ class DARTS(ImageModel):
         return super().load(*args, strict=strict, **kwargs)
 
     def get_official_weights(self, dataset: str = None, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        assert str(self.genotype) == str(genotypes.DARTS)
+        assert str(self.genotype) == str(genotypes.darts)
         if dataset is None and isinstance(self.dataset, ImageSet):
             dataset = self.dataset.name
         file_name = f'darts_{dataset}.pt'
