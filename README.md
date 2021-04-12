@@ -63,7 +63,7 @@ You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/ma
 1. Train a model:  
     e.g. `ResNet18` on `CIFAR10` with 95% Acc
     ```python3
-    python ./examples/train.py --color --verbose 1 --dataset cifar10 --model resnet18_comp --lr_scheduler --save
+    python ./examples/train.py --color --verbose 1 --dataset cifar10 --model resnet18_comp --lr_scheduler --cutout --grad_clip 5.0 --save
     ```
 
 2. Test backdoor attack (e.g., BadNet):  
