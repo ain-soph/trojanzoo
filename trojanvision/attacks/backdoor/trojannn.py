@@ -100,14 +100,14 @@ class TrojanNN(BadNet):
     def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs) -> torch.Tensor:
         with torch.no_grad():
             print("Neuron Value Before Preprocessing: ",
-                  self.get_neuron_value(mark, neuron_idx))
+                  self.get_neuron_value(mark.unsqueeze(0), neuron_idx))
 
         def loss_fn(X: torch.Tensor):
             fm = self.model.get_layer(X, layer_output=self.preprocess_layer)
             loss = fm[:, neuron_idx].mean(dim=0) - self.target_value
             return loss.norm(p=2)
-        noise = torch.zeros_like(mark)
-        x = mark
+        noise = torch.zeros_like(mark.unsqueeze(0))
+        x = mark.unsqueeze(0)
         for _iter in range(self.neuron_epoch):
             cost = loss_fn(x)
             if cost < self.threshold:
@@ -119,7 +119,7 @@ class TrojanNN(BadNet):
         with torch.no_grad():
             print("Neuron Value After Preprocessing: ",
                   self.get_neuron_value(x, neuron_idx))
-        return x
+        return x[0]
 
     def validate_fn(self, get_data_fn=None, **kwargs) -> tuple[float, float]:
         if self.neuron_idx is not None:
