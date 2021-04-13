@@ -7,6 +7,7 @@ from .alexnet import AlexNet
 from .bit import BiT
 from .densenet import DenseNet
 from .dla import DLA
+from .dpn import DPN
 from .magnet import MagNet
 from .mobilenet import MobileNet
 from .lenet import LeNet
@@ -27,6 +28,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'bit': BiT,
     'densenet': DenseNet,
     'dla': DLA,
+    'dpn': DPN,
     'magnet': MagNet,
     'mobilenet': MobileNet,
     'lenet': LeNet,
