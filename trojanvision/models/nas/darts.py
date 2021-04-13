@@ -38,9 +38,6 @@ class _DARTS(_ImageModel):
                         dropout_p: float = 0.2, **kwargs) -> FeatureExtractor:
         return FeatureExtractor(genotype, C, layers, dropout_p, **kwargs)
 
-    def get_fm(self, x: torch.Tensor) -> torch.Tensor:
-        return self.features(self.normalize(x))
-
 
 class DARTS(ImageModel):
     @classmethod
