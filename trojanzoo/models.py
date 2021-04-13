@@ -818,7 +818,7 @@ class Model:
 
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, Model] = None,
-                 config: Config = config, class_dict: dict[str, type[Model]] = None) -> argparse._ArgumentGroup:
+                 config: Config = config, class_dict: dict[str, type[Model]] = {}) -> argparse._ArgumentGroup:
     dataset_name = get_name(arg_list=['-d', '--dataset'])
     if dataset_name is None:
         dataset_name = config.get_full_config()['dataset']['default_dataset']
@@ -828,8 +828,13 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
     model_name = get_model_class(model_name, class_dict=class_dict)
 
     group = parser.add_argument_group('{yellow}model{reset}'.format(**ansi), description=model_name)
-    ModelType = class_dict[get_model_class(model_name, class_dict=class_dict)]
-    return ModelType.add_argument(group)     # TODO: Linting problem
+    model_class_name = get_model_class(model_name, class_dict=class_dict)
+    try:
+        ModelType = class_dict[model_class_name]
+    except KeyError as e:
+        print(f'{model_class_name} not in \n{list(class_dict.keys())}')
+        raise e
+    return ModelType.add_argument(group)
 
 
 def create(model_name: str = None, model: Union[str, Model] = None,
@@ -849,8 +854,12 @@ def create(model_name: str = None, model: Union[str, Model] = None,
                  for name in sub_list]
     name_list = sorted(name_list)
     assert model_name in name_list, f'{model_name} not in \n{name_list}'
-
-    ModelType: type[Model] = class_dict[get_model_class(model_name, class_dict=class_dict)]
+    model_class_name = get_model_class(model_name, class_dict=class_dict)
+    try:
+        ModelType = class_dict[model_class_name]
+    except KeyError as e:
+        print(f'{model_class_name} not in \n{list(class_dict.keys())}')
+        raise e
     if folder_path is None and isinstance(dataset, Dataset):
         folder_path = os.path.join(result['model_dir'], dataset.data_type, dataset.name)
     return ModelType(name=model_name, dataset=dataset, folder_path=folder_path, **result)

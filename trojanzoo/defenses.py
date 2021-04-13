@@ -36,18 +36,17 @@ class Defense(Model_Process):
 
 
 def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defense: Union[str, Defense] = None,
-                 class_dict: dict[str, type[Defense]] = None) -> argparse._ArgumentGroup:
+                 class_dict: dict[str, type[Defense]] = {}) -> argparse._ArgumentGroup:
     defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi), description=defense_name)
     try:
         DefenseType = class_dict[defense_name]
     except KeyError as e:
         if defense_name is None:
-            print('you need to first claim the defense name using "--defense".')
-            print('available defense name list: ')
-            print(list(class_dict.keys()))
+            print('{red}you need to first claim the defense name using "--defense".{reset}'.format(**ansi))
+        print(f'{defense_name} not in \n{list(class_dict.keys())}')
         raise e
-    return DefenseType.add_argument(group)     # TODO: Linting problem
+    return DefenseType.add_argument(group)
 
 
 def create(defense_name: str = None, defense: Union[str, Defense] = None, folder_path: str = None,
@@ -62,8 +61,11 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None, folder
     general_config = config.get_config(dataset_name=dataset_name)['defense']
     specific_config = config.get_config(dataset_name=dataset_name)[defense_name]
     result = general_config._update(specific_config)._update(kwargs)    # TODO: linting issues
-
-    DefenseType: type[Defense] = class_dict[defense_name]
+    try:
+        DefenseType = class_dict[defense_name]
+    except KeyError as e:
+        print(f'{defense_name} not in \n{list(class_dict.keys())}')
+        raise e
     if folder_path is None:
         folder_path = result['defense_dir']
         if isinstance(dataset, Dataset):
