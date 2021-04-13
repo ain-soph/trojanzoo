@@ -26,5 +26,5 @@ if __name__ == '__main__':
         heatmap = model.get_heatmap(_input, _label, method='saliency_map')
         heatmap = superimpose(heatmap, _input, alpha=0.5)
         for i, map in enumerate(heatmap):
-            save_tensor_as_img(f'./result/{i}.jpg', heatmap[i])
+            save_tensor_as_img(f'./result/heatmap_{i}.jpg', heatmap[i])
         break
