@@ -41,6 +41,8 @@ class _ENAS(_ImageModel):
 
 
 class ENAS(ImageModel):
+    available_models = ['enas']
+
     def __init__(self, name: str = 'enas', model: type[_ENAS] = _ENAS, folder_path: str = None, **kwargs):
         import sys
         from trojanvision.utils.model_archs.enas import __file__ as file_path

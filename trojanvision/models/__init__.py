@@ -2,88 +2,47 @@
 
 from .imagemodel import ImageModel
 from .nas import *
+from .normal import *
+from .others import *
 
-from .alexnet import AlexNet
-from .bit import BiT
-from .densenet import DenseNet
-from .dla import DLA
-from .dpn import DPN
-from .magnet import MagNet
-from .mobilenet import MobileNet
-from .lenet import LeNet
-from .resnet import ResNet
-from .shufflenetv2 import ShuffleNetV2
-from .vgg import VGG
+from . import nas, normal, others
+
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
 import trojanzoo.models
-from trojanzoo.utils import get_name
 
 import argparse
-import os
 from typing import Union
 
-class_dict: dict[str, type[ImageModel]] = {
-    'alexnet': AlexNet,
-    'bit': BiT,
-    'densenet': DenseNet,
-    'dla': DLA,
-    'dpn': DPN,
-    'magnet': MagNet,
-    'mobilenet': MobileNet,
-    'lenet': LeNet,
-    'resnet': ResNet,
-    'resnext': ResNet,
-    'shufflenetv2': ShuffleNetV2,
-    'vgg': VGG,
+module_list = [nas, normal, others]
 
-    'natsbench': NATSbench,
-    'darts': DARTS,
-    'enas': ENAS,
-    'lanet': LaNet,
-    'mnasnet': MNASNet,
-    'pnasnet': PNASNet,
-    'proxylessnas': ProxylessNAS,
-}
+__all__ = ['ImageModel', 'class_dict', 'add_argument', 'create',
+           'get_available_models', 'output_available_models']
+class_dict: dict[str, type[ImageModel]] = {}
+for module in module_list:
+    __all__.extend(module.__all__)
+    class_dict.update(module.class_dict)
 
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, ImageModel] = None,
                  config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict) -> argparse._ArgumentGroup:
-    dataset_name = get_name(arg_list=['-d', '--dataset'])
-    if dataset_name is None:
-        dataset_name = config.get_full_config()['dataset']['default_dataset']
-    model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
-    if model_name is None:
-        model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
-    model_name = get_model_class(model_name, class_dict=class_dict)
     return trojanzoo.models.add_argument(parser=parser, model_name=model_name, model=model,
                                          config=config, class_dict=class_dict)
 
 
-def create(model_name: str = None, model: Union[str, ImageModel] = None, folder_path: str = None,
+def create(model_name: str = None, model: Union[str, ImageModel] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
+           folder_path: str = None,
            config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict, **kwargs) -> ImageModel:
-    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
-    if dataset_name is None:
-        dataset_name = config.get_full_config()['dataset']['default_dataset']
-    if model_name is None:
-        model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
-    result = config.get_config(dataset_name=dataset_name)['model']._update(kwargs)
-    model_name = model_name if model_name is not None else result['default_model']
-
-    ModelType: type[ImageModel] = class_dict[get_model_class(model_name, class_dict=class_dict)]
-    if folder_path is None and isinstance(dataset, ImageSet):
-        folder_path = os.path.join(result['model_dir'], dataset.data_type, dataset.name)
-    return ModelType(name=model_name, dataset=dataset, folder_path=folder_path, **result)
+    return trojanzoo.models.create(model_name=model_name, model=model,
+                                   dataset_name=dataset_name, dataset=dataset,
+                                   folder_path=folder_path,
+                                   config=config, class_dict=class_dict, **kwargs)
 
 
-def get_model_class(name: str, class_dict: dict[str, type[ImageModel]] = class_dict) -> str:
-    correct_name: str = None
-    for class_name in class_dict.keys():
-        if class_name in name.lower() \
-                and (correct_name is None or len(class_name) > len(correct_name)):
-            correct_name = class_name
-    if correct_name is not None:
-        return correct_name
-    raise KeyError(f'{class_name} not in {list(class_dict.keys())}')
+def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -> dict[str, list[str]]:
+    return trojanzoo.models.get_available_models(class_dict=class_dict)
+
+
+def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict, indent: int = 0) -> None:
+    return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)

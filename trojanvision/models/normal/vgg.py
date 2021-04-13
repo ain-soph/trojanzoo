@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
@@ -36,6 +36,12 @@ class _VGG(_ImageModel):
 
 
 class VGG(ImageModel):
+    available_models = ['vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp',
+                        'vgg11', 'vgg13', 'vgg16', 'vgg19',
+                        'vgg11_bn', 'vgg13_bn', 'vgg16_bn', 'vgg19_bn',
+                        'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
+                        'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp']
+
     model_urls = urls
 
     def __init__(self, name: str = 'vgg', layer: int = 13,

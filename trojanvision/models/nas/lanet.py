@@ -17,6 +17,7 @@ cifar_arch = [2, 2, 0, 2, 1, 2, 0, 2, 2, 3, 2, 1, 2, 0, 0, 1, 1, 1, 2, 1, 1, 0, 
 
 
 class LaNet(DARTS):
+    available_models = ['lanet']
     model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }
 
     def __init__(self, name: str = 'lanet', layer: int = 24, C: int = 128,

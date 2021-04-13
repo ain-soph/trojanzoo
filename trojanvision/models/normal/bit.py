@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-from .imagemodel import _ImageModel, ImageModel
+# https://github.com/google-research/big_transfer
+
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageNet
 
 import torch
@@ -33,6 +35,9 @@ class _BiT(_ImageModel):
 
 
 class BiT(ImageModel):
+    available_models = ['bit',
+                        'bit-m-r50x1', 'bit-m-r101x1', 'bit-m-r152x2',
+                        'bit-m-r50x3', 'bit-m-r101x3', 'bit-m-r152x4', ]
 
     def __init__(self, name: str = 'bit',
                  pretrained_dataset: str = 'm', layer: int = 50, width_factor: int = 1,

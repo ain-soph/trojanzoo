@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageSet
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.utils.model_archs.darts import FeatureExtractor, AuxiliaryHead, Genotype
 from trojanvision.utils.model_archs.darts import genotypes
 
@@ -40,6 +40,8 @@ class _DARTS(_ImageModel):
 
 
 class DARTS(ImageModel):
+    available_models = ['darts']
+
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
         super().add_argument(group)

@@ -21,6 +21,7 @@ class _MNASNet(_ImageModel):
 
 
 class MNASNet(ImageModel):
+    available_models = ['mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3']
     model_urls = urls
 
     def __init__(self, name: str = 'mnasnet', mnas_alpha: float = 1.0,

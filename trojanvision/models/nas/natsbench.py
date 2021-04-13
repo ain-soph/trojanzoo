@@ -26,6 +26,8 @@ class _NATSbench(_ImageModel):
 
 
 class NATSbench(ImageModel):
+    available_models = ['natsbench']
+
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
@@ -36,7 +38,7 @@ class NATSbench(ImageModel):
         group.add_argument('--search_space', dest='search_space')
         return group
 
-    def __init__(self, name: str = 'nats_bench', model: type[_NATSbench] = _NATSbench,
+    def __init__(self, name: str = 'natsbench', model: type[_NATSbench] = _NATSbench,
                  model_index: int = None, model_seed: int = None,
                  dataset: ImageSet = None, dataset_name: str = None,
                  nats_path: str = '/data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full',

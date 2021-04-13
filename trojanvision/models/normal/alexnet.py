@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
@@ -44,6 +44,7 @@ class _AlexNet(_ImageModel):
 
 
 class AlexNet(ImageModel):
+    available_models = ['alexnet']
     model_urls = urls
 
     def __init__(self, name: str = 'alexnet', model: type[_AlexNet] = _AlexNet, **kwargs):

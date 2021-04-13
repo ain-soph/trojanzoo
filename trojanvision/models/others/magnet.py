@@ -64,6 +64,8 @@ class _MagNet(nn.Module):
 
 
 class MagNet(Model):
+    available_models = ['magnet']
+
     def __init__(self, name: str = 'magnet', dataset: ImageSet = None, model: type = _MagNet,
                  structure: list = None, activation: str = None, v_noise: float = 0.1, **kwargs):
         self.v_noise: float = v_noise

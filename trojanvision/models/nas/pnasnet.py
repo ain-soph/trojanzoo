@@ -31,6 +31,7 @@ class _PNASNet(_ImageModel):
 
 
 class PNASNet(ImageModel):
+    available_models = ['pnasnet', 'pnasnet_a', 'pnasnet_b']
 
     def __init__(self, name: str = 'pnasnet', cell_type: str = 'b',
                  model: type[_PNASNet] = _PNASNet, **kwargs):

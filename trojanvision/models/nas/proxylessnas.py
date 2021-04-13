@@ -23,6 +23,8 @@ class _ProxylessNAS(_ImageModel):
 
 
 class ProxylessNAS(ImageModel):
+    available_models = ['proxylessnas']
+
     def __init__(self, name: str = 'proxylessnas', target_platform: str = 'proxyless_cifar',
                  model: type[_ProxylessNAS] = _ProxylessNAS, **kwargs):
         self.target_platform = target_platform

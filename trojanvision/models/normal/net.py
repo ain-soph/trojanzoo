@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 from collections import OrderedDict
 
 
-class _LeNet(_ImageModel):
+class _Net(_ImageModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -21,8 +21,9 @@ class _LeNet(_ImageModel):
         ]))
 
 
-class LeNet(ImageModel):
+class Net(ImageModel):
+    available_models = ['net']
 
-    def __init__(self, name: str = 'lenet', model: type[_LeNet] = _LeNet, **kwargs):
+    def __init__(self, name: str = 'net', model: type[_Net] = _Net, **kwargs):
         super().__init__(name=name, model=model,
                          conv_dim=9216, fc_depth=2, fc_dim=128, **kwargs)

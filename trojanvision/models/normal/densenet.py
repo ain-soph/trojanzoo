@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch
 import torch.nn as nn
@@ -30,6 +30,9 @@ class _DenseNet(_ImageModel):
 
 
 class DenseNet(ImageModel):
+    available_models = ['densenet', 'densenet_comp',
+                        'densenet121', 'densenet169', 'densenet201', 'densenet161',
+                        'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
     model_urls = urls
 
     def __init__(self, name: str = 'densenet', layer: int = 121,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 from trojanvision.utils.model_archs import dpn
 
@@ -44,6 +44,10 @@ class _DPN(_ImageModel):
 
 
 class DPN(ImageModel):
+    available_models = ['dpn', 'dpn_comp',
+                        'dpn68', 'dpn92', 'dpn98', 'dpn131', 'dpn107',
+                        'dpn68_comp', 'dpn92_comp', 'dpn98_comp', 'dpn131_comp', 'dpn107_comp']
+
     def __init__(self, name: str = 'dpn', layer: int = 92,
                  model: type[_DPN] = _DPN, **kwargs):
         super().__init__(name=name, layer=layer, model=model, **kwargs)

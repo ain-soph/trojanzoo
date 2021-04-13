@@ -28,6 +28,9 @@ if TYPE_CHECKING:
     import torch.utils.data
 # redirect = Indent_Redirect(buffer=True, indent=0)
 
+__all__ = ['Model', 'add_argument', 'create',
+           'get_available_models', 'output_available_models', 'get_model_class']
+
 
 class _Model(nn.Module):
     module_list = ['features', 'pool', 'flatten', 'classifier', 'softmax']
@@ -223,6 +226,7 @@ class _Model(nn.Module):
 
 
 class Model:
+    available_models: list[str] = []
     model_urls: dict[str, str] = []
 
     @staticmethod
@@ -821,23 +825,55 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
+    model_name = get_model_class(model_name, class_dict=class_dict)
 
     group = parser.add_argument_group('{yellow}model{reset}'.format(**ansi), description=model_name)
-    ModelType = class_dict[model_name]
+    ModelType = class_dict[get_model_class(model_name, class_dict=class_dict)]
     return ModelType.add_argument(group)     # TODO: Linting problem
 
 
-def create(model_name: str = None, model: Union[str, Model] = None, folder_path: str = None,
+def create(model_name: str = None, model: Union[str, Model] = None,
            dataset_name: str = None, dataset: Union[str, Dataset] = None,
+           folder_path: str = None,
            config: Config = config, class_dict: dict[str, type[Model]] = {}, **kwargs) -> Model:
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if dataset_name is None:
         dataset_name = config.get_full_config()['dataset']['default_dataset']
+    if model_name is None:
+        model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
     result = config.get_config(dataset_name=dataset_name)['model']._update(kwargs)
     model_name = model_name if model_name is not None else result['default_model']
 
-    ModelType: type[Model] = class_dict[model_name]
+    name_list = [name for sub_list in get_available_models(class_dict=class_dict).values()
+                 for name in sub_list]
+    name_list = sorted(name_list)
+    assert model_name in name_list, f'{model_name} not in \n{name_list}'
+
+    ModelType: type[Model] = class_dict[get_model_class(model_name, class_dict=class_dict)]
     if folder_path is None and isinstance(dataset, Dataset):
         folder_path = os.path.join(result['model_dir'], dataset.data_type, dataset.name)
     return ModelType(name=model_name, dataset=dataset, folder_path=folder_path, **result)
+
+
+def get_available_models(class_dict: dict[str, type[Model]] = {}) -> dict[str, list[str]]:
+    return {k: v.available_models for k, v in class_dict.items()}
+
+
+def output_available_models(class_dict: dict[str, type[Model]] = {}, indent: int = 0) -> None:
+    names_dict = get_available_models(class_dict)
+    for k in sorted(names_dict.keys()):
+        prints('{yellow}{k}{reset}'.format(k=k, **ansi), indent=indent)
+        prints(names_dict[k], indent=indent + 10)
+        print()
+
+
+def get_model_class(name: str, class_dict: dict[str, type[Model]] = {}) -> str:
+    correct_name: str = None
+    for class_name in class_dict.keys():
+        if class_name in name.lower() \
+                and (correct_name is None or len(class_name) > len(correct_name)):
+            correct_name = class_name
+    if correct_name is not None:
+        return correct_name
+    raise KeyError(f'{name} not in {list(class_dict.keys())}')

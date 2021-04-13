@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
@@ -47,10 +47,13 @@ class _MobileNet(_ImageModel):
 
 
 class MobileNet(ImageModel):
+    available_models = ['mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
+                        'mobilenet_v2_comp', 'mobilenet_v3_large_comp', 'mobilenet_v3_small_comp']
+
     model_urls = {
         'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
-        "mobilenet_v3_large": "https://download.pytorch.org/models/mobilenet_v3_large-8738ca79.pth",
-        "mobilenet_v3_small": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
+        'mobilenet_v3_large': 'https://download.pytorch.org/models/mobilenet_v3_large-8738ca79.pth',
+        'mobilenet_v3_small': 'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth',
     }
 
     def __init__(self, name: str = 'mobilenet_v2', model: type[_MobileNet] = _MobileNet, **kwargs):

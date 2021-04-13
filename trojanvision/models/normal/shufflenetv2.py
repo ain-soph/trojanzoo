@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from .imagemodel import _ImageModel, ImageModel
+from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch
 import torch.nn as nn
@@ -49,6 +49,10 @@ class _ShuffleNetV2(_ImageModel):
 
 
 class ShuffleNetV2(ImageModel):
+    available_models = ['shufflenetv2',
+                        'shufflenetv2_x0.5', 'shufflenetv2_x1.0', 'shufflenetv2_x1.5', 'shufflenetv2_x2.0',
+                        'shufflenetv2_x0.5_comp', 'shufflenetv2_x1.0_comp', 'shufflenetv2_x1.5_comp', 'shufflenetv2_x2.0_comp', ]
+
     model_urls = urls
 
     def __init__(self, name: str = 'shufflenetv2', model: type[_ShuffleNetV2] = _ShuffleNetV2, **kwargs):

@@ -7,50 +7,19 @@
 Reference:
     Deep Layer Aggregation. https://arxiv.org/abs/1707.06484
 '''
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torchvision.models.resnet import BasicBlock
+from collections import OrderedDict
 
 
-class BasicBlock(nn.Module):
-    expansion = 1
-
-    def __init__(self, in_planes, planes, stride=1):
-        super().__init__()
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
-                               stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion * planes,
-                          kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion * planes)
-            )
-
-    def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
-        out = F.relu(out)
-        return out
-
-
-class Root(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=1):
-        super().__init__()
-        self.conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size,
-            stride=1, padding=(kernel_size - 1) // 2, bias=False)
-        self.bn = nn.BatchNorm2d(out_channels)
-
-    def forward(self, xs):
-        x = torch.cat(xs, 1)
-        out = F.relu(self.bn(self.conv(x)))
-        return out
+def Root(in_channels: int, out_channels: int, kernel_size: int = 1) -> nn.Sequential:
+    return nn.Sequential(OrderedDict([
+        ('conv', nn.Conv2d(in_channels, out_channels, kernel_size,
+                           stride=1, padding=(kernel_size - 1) // 2,
+                           bias=False)),
+        ('bn', nn.BatchNorm2d(out_channels)),
+        ('relu', nn.ReLU(inplace=True))
+    ]))
 
 
 class Tree(nn.Module):
@@ -109,25 +78,26 @@ class DLA(nn.Module):
     def __init__(self, block: nn.Module = BasicBlock, num_classes: int = 10, simple: bool = False):
         super().__init__()
         TreeClass = SimpleTree if simple else Tree
-        self.features = nn.Sequential()
-        self.features.add_module('base', nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(16),
-            nn.ReLU(True)
-        ))
-        self.features.add_module('layer1', nn.Sequential(
-            nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(16),
-            nn.ReLU(True)
-        ))
-        self.features.add_module('layer2', nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(True)
-        ))
-        self.features.add_module('layer2', TreeClass(block, 32, 64, level=1, stride=1))
-        self.features.add_module('layer3', TreeClass(block, 32, 64, level=1, stride=1))
-        self.features.add_module('layer4', TreeClass(block, 32, 64, level=1, stride=1))
-        self.features.add_module('layer5', TreeClass(block, 32, 64, level=1, stride=1))
-        self.features.add_module('layer6', TreeClass(block, 32, 64, level=1, stride=1))
+        self.features = nn.Sequential(OrderedDict([
+            ('base', nn.Sequential(
+                nn.Conv2d(3, 16, kernel_size=7, stride=1, padding=3, bias=False),
+                nn.BatchNorm2d(16),
+                nn.ReLU(True)
+            )),
+            ('maxpool', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+            ('layer1', nn.Sequential(
+                nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(16),
+                nn.ReLU(True)
+            )),
+            ('layer2', nn.Sequential(
+                nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+                nn.BatchNorm2d(32),
+                nn.ReLU(True)
+            )),
+            ('layer3', TreeClass(block, 32, 64, level=1, stride=1)),
+            ('layer4', TreeClass(block, 64, 128, level=2, stride=2)),
+            ('layer5', TreeClass(block, 128, 256, level=2, stride=2)),
+            ('layer6', TreeClass(block, 256, 512, level=1, stride=2)),
+        ]))
         self.linear = nn.Linear(512, num_classes)
