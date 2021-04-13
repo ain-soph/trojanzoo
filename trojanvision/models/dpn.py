@@ -12,7 +12,7 @@ class _DPN(_ImageModel):
 
     def __init__(self, name: str = 'dpn92', **kwargs):
         super().__init__(**kwargs)
-        ModelClass: Callable[..., dpn.DPN] = getattr(dpn, name.replace('_comp', '').upper())
+        ModelClass: Callable[..., dpn.DPN] = getattr(dpn, name.replace('_comp', ''))
         _model = ModelClass(num_classes=self.num_classes)
         module_list: list[nn.Module] = []
         if 'comp' in name:
