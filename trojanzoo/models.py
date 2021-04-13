@@ -438,7 +438,11 @@ class Model:
                 _dict = OrderedDict([(key.removeprefix('classifier.'), value) for key, value in _dict.items()])
             else:
                 assert component == '', f'{component=}'
-            module.load_state_dict(_dict, strict=strict)
+            try:
+                module.load_state_dict(_dict, strict=strict)
+            except RuntimeError as e:
+                prints(f'Model {self.name} loaded from: {file_path}', indent=indent)
+                raise e
             if verbose:
                 prints(f'Model {self.name} loaded from: {file_path}', indent=indent)
             if env['num_gpus']:
