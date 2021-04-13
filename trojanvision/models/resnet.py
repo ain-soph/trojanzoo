@@ -16,13 +16,13 @@ class _ResNet(_ImageModel):
         super().__init__(**kwargs)
         module_list: list[nn.Module] = []
         if 's' in name.split('_'):
-            from trojanvision.utils.model_archs.resnet_s import ResNetS
-            _model = ResNetS(nclasses=self.num_classes)
+            from trojanvision.utils.model_archs.resnet_s import resnet_s
+            _model = resnet_s(nclasses=self.num_classes)
             module_list.append(('conv1', _model.conv1))
             module_list.append(('bn1', _model.bn1))
             module_list.append(('relu', nn.ReLU(inplace=True)))
             self.classifier = nn.Sequential(OrderedDict([
-                ('fc', _model.linear)  # nn.Linear(512 * block.expansion, num_classes)
+                ('fc', _model.fc)
             ]))
         else:
             model_class = name.replace('_comp', '').replace('_s', '')
@@ -48,8 +48,9 @@ class _ResNet(_ImageModel):
             # ResNet 18,34 use BasicBlock, 50 and higher use Bottleneck
         module_list.extend([('layer1', _model.layer1),
                             ('layer2', _model.layer2),
-                            ('layer3', _model.layer3),
-                            ('layer4', _model.layer4)])
+                            ('layer3', _model.layer3)])
+        if not ('comp' in name and 'resnext' in name):
+            module_list.append(('layer4', _model.layer4))
         self.features = nn.Sequential(OrderedDict(module_list))
 
 
