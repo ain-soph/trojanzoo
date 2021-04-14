@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --epoch 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset cifar10 --model resnet18_comp
+
 import trojanvision
 from trojanvision.utils import summary
 import argparse
