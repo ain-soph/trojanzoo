@@ -57,8 +57,9 @@ class DARTS(ImageModel):
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS, **kwargs):
         # TODO: ImageNet parameter settings
-        model_arch = model_arch.lower()
         if genotype is None:
+            model_arch = model_arch.lower()
+            name = model_arch
             try:
                 genotype = getattr(genotypes, model_arch)
             except AttributeError as e:
@@ -67,7 +68,6 @@ class DARTS(ImageModel):
                                    element not in ['Genotype', 'PRIMITIVES', 'namedtuple']]
                 print(model_arch_list)
                 raise e
-        name = model_arch
         self.layers = layers
         self.C = C
         self.dropout_p = dropout_p
