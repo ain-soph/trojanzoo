@@ -85,18 +85,18 @@ class _Model(nn.Module):
     # forward method
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.get_final_fm(x)
+    def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        x = self.get_final_fm(x, **kwargs)
         x = self.classifier(x)
         return x
 
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
-    def get_fm(self, x: torch.Tensor) -> torch.Tensor:
+    def get_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.features(x)
 
-    def get_final_fm(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.get_fm(x)
+    def get_final_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        x = self.get_fm(x, **kwargs)
         x = self.pool(x)
         x = self.flatten(x)
         return x
