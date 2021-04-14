@@ -32,6 +32,10 @@ class _ResNet(_ImageModel):
                 conv1: nn.Conv2d = _model.conv1
                 _model.conv1 = nn.Conv2d(conv1.in_channels, conv1.out_channels,
                                          kernel_size=3, stride=1, padding=1, bias=False)
+                if 'resnext' in name:
+                    _model.fc = nn.Linear(_model.fc.in_features // 2,
+                                          _model.fc.out_features,
+                                          bias=_model.fc.bias is None)
                 module_list.append(('conv1', _model.conv1))
                 module_list.append(('bn1', _model.bn1))
                 module_list.append(('relu', _model.relu))
