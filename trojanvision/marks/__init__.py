@@ -288,9 +288,10 @@ class Watermark:
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
         prints(self.__class__.__name__, indent=indent)
         for key, value in self.param_list.items():
-            prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
-            prints({v: getattr(self, v) for v in value}, indent=indent + 10)
-            prints('-' * 20, indent=indent + 10)
+            if value:
+                prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
+                prints({v: getattr(self, v) for v in value}, indent=indent + 10)
+                prints('-' * 20, indent=indent + 10)
 
     def __str__(self) -> str:
         sys.stdout = redirect

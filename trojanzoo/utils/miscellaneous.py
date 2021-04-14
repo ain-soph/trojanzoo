@@ -33,7 +33,7 @@ def summary(indent: int = 0, **kwargs):
         prints('{yellow}{0:<10s}{reset}'.format(key, **ansi), indent=indent)
         try:
             value.summary()
-        except Exception:
+        except AttributeError:
             prints(value, indent=10)
         prints('-' * 30, indent=indent)
         print()
