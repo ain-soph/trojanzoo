@@ -220,9 +220,9 @@ class Model:
     def get_all_layer(self, x: torch.Tensor,
                       layer_input: str = 'input', depth: int = 0,
                       prefix='', use_filter: bool = True, repeat: bool = False,
-                      seq_only: bool = True) -> dict[str, torch.Tensor]:
+                      seq_only: bool = True, verbose: int = 0) -> dict[str, torch.Tensor]:
         return get_all_layer(self._model, x, layer_input, depth,
-                             prefix, use_filter, repeat, seq_only)
+                             prefix, use_filter, repeat, seq_only, verbose)
 
     def get_layer(self, x: torch.Tensor, layer_output: str = 'classifier',
                   layer_input: str = 'input', prefix: str = '', seq_only: bool = True) -> torch.Tensor:

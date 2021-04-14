@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from trojanzoo.utils.output import ansi
 
 import torch
 import torch.nn as nn
@@ -29,7 +30,7 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
 def get_all_layer(module: nn.Module, x: torch.Tensor,
                   layer_input: str = 'input', depth: int = 0,
                   prefix='', use_filter: bool = True, repeat: bool = False,
-                  seq_only: bool = True) -> dict[str, torch.Tensor]:
+                  seq_only: bool = True, verbose: int = 0) -> dict[str, torch.Tensor]:
     layer_name_list = get_layer_name(module, depth=depth, prefix=prefix, use_filter=False)
     if layer_input == 'input':
         layer_input = 'record'
@@ -37,20 +38,24 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
         print('Model Layer Name List: ', layer_name_list)
         print('Input layer: ', layer_input)
         raise ValueError('Layer name not in model')
+    if verbose:
+        print(f'{ansi["green"]}{"layer name":<50s}{"output shape":<20}{"module information"}{ansi["reset"]}')
     return _get_all_layer(module, x, layer_input, depth,
-                          prefix, use_filter, repeat, seq_only, init=True)
+                          prefix, use_filter, repeat,
+                          seq_only, verbose=verbose, init=True)
 
 
 def _get_all_layer(module: nn.Module, x: torch.Tensor, layer_input: str = 'record', depth: int = 0,
                    prefix: str = '', use_filter: bool = True, repeat: bool = False,
-                   seq_only: bool = True, init: bool = False) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
+                   seq_only: bool = True, verbose: int = 0, init: bool = False
+                   ) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
     _dict: dict[str, torch.Tensor] = {}
-    if init or (not seq_only or isinstance(module, nn.Sequential)):
+    if init or (not seq_only or isinstance(module, nn.Sequential)) and depth != 0:
         for name, child in module.named_children():
             full_name = prefix + ('.' if prefix else '') + name  # prefix=full_name
             if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
                 sub_dict, x = _get_all_layer(child, x, layer_input, depth - 1,
-                                             full_name, use_filter, repeat, seq_only)
+                                             full_name, use_filter, repeat, seq_only, verbose)
                 _dict.update(sub_dict)
                 layer_input = 'record'
             elif layer_input == full_name:
@@ -60,6 +65,18 @@ def _get_all_layer(module: nn.Module, x: torch.Tensor, layer_input: str = 'recor
     if prefix and (not use_filter or filter_layer(module)) \
             and (repeat or depth == 0 or not isinstance(module, nn.Sequential)):
         _dict[prefix] = x.clone()
+        if verbose:
+            shape_str = str(list(x.shape))
+            module_str = ''
+            if verbose == 1:
+                module_str = module.__class__.__name__
+            elif verbose == 2:
+                module_str = type(module)
+            elif verbose == 3:
+                module_str = str(module).split('\n')[0].removesuffix('(')
+            else:
+                module_str = str(module)
+            print(f'{ansi["blue_light"]}{prefix:<50s}{ansi["reset"]}{ansi["yellow"]}{shape_str:<20}{ansi["reset"]}{module_str}')
     return _dict, x
 
 
