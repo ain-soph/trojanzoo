@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .latent_backdoor import LatentBackdoor
+from trojanvision.attacks.backdoor.latent_backdoor import LatentBackdoor
 
 
 class IMC_Latent(LatentBackdoor):
