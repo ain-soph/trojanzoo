@@ -1,31 +1,20 @@
 #!/usr/bin/env python3
 
-from .imc import IMC
+from trojanvision.attacks.backdoor.imc import IMC
 from trojanvision.environ import env
 from trojanzoo.utils import to_tensor
-from trojanzoo.utils.output import prints
 
 import torch
 import numpy as np
-import math
-import random
 import os
-import argparse
-from typing import Callable
 
 
-class IMC_Adaptive(IMC):
-    name: str = 'imc_adaptive'
-
-    @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
-        super().add_argument(group)
-        group.add_argument('--abs_weight', dest='abs_weight', type=float)
-        group.add_argument('--strip_percent', dest='strip_percent', type=float)
+class IMC_ABS(IMC):
+    name: str = 'imc_abs'
 
     def __init__(self, seed_num: int = -5, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
-                 strip_percent: float = 1.0, abs_weight: float = 1e-5, **kwargs):
+                 **kwargs):
         super().__init__(**kwargs)
 
         self.seed_num: int = seed_num
@@ -42,11 +31,8 @@ class IMC_Adaptive(IMC):
         self.seed_data = self.load_seed_data()
         self.neuron_list = []
 
-        self.strip_percent: float = strip_percent
-        self.abs_weight: float = abs_weight
-
     def attack(self, epoch: int, **kwargs):
-        super().attack(epoch, loss_fn=self.loss_fn, **kwargs)
+        super(IMC, self).attack(epoch, epoch_fn=self.epoch_fn, loss_fn=self.loss_fn, **kwargs)
 
     def epoch_fn(self, **kwargs):
         self.save()
@@ -173,85 +159,5 @@ class IMC_Adaptive(IMC):
         for sub_dict in self.neuron_list:
             layer = sub_dict['layer']
             neuron = sub_dict['neuron']
-            loss -= self.abs_weight * self.abs_loss(layer_dict, layer, neuron)
+            loss -= 1e-5 * self.abs_loss(layer_dict, layer, neuron)
         return loss
-
-    def add_strip_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self.mark.add_mark(x, alpha=1 - (1 - self.mark.mark_alpha) / 2, **kwargs)
-
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data)
-
-        decimal, integer = math.modf(self.poison_num)
-        integer = int(integer)
-        if random.uniform(0, 1) < decimal:
-            integer += 1
-        if integer:
-            org_input, org_label = _input, _label
-            poison_input = self.add_mark(org_input[:integer])
-            poison_label = self.target_class * torch.ones_like(org_label[:integer])
-            strip_num: float = integer * self.strip_percent
-            strip_decimal, strip_integer = math.modf(strip_num)
-            strip_integer = int(strip_integer)
-            if random.uniform(0, 1) < strip_decimal:
-                strip_integer += 1
-            if strip_integer:
-                strip_input = self.add_strip_mark(org_input[:strip_integer])
-                strip_label = org_label[:strip_integer]
-                _input = torch.cat((_input, strip_input))
-                _label = torch.cat((_label, strip_label))
-            _input = torch.cat((_input, poison_input))
-            _label = torch.cat((_label, poison_label))
-        return _input, _label
-
-    def get_poison_data(self, data: tuple[torch.Tensor, torch.Tensor], poison_label: bool = True, strip: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data)
-        integer = len(_label)
-        if strip:
-            _input = self.add_strip_mark(_input[:integer])
-        else:
-            _input = self.add_mark(_input[:integer])
-        if poison_label:
-            _label = self.target_class * torch.ones_like(_label[:integer])
-        else:
-            _label = _label[:integer]
-        return _input, _label
-
-    def validate_fn(self,
-                    get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                    loss_fn: Callable[..., torch.Tensor] = None,
-                    main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
-                                            get_data_fn=None, indent=indent, **kwargs)
-        _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
-                                             get_data_fn=self.get_poison_data, indent=indent, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
-                             get_data_fn=self.get_poison_data, poison_label=False,
-                             indent=indent, **kwargs)
-        self.model._validate(print_prefix='Validate STRIP Tgt', main_tag='',
-                             get_data_fn=self.get_poison_data, strip=True,
-                             indent=indent, **kwargs)
-        self.model._validate(print_prefix='Validate STRIP Org', main_tag='',
-                             get_data_fn=self.get_poison_data, strip=True, poison_label=False,
-                             indent=indent, **kwargs)
-        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
-            target_acc = 0.0
-        return clean_acc, target_acc
-
-    def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
-        if mark_alpha is None:
-            mark_alpha = self.mark.mark_alpha
-        if target_class is None:
-            target_class = self.target_class
-        _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({mark_height:d},{mark_width:d})'.format(
-            mark=os.path.split(self.mark.mark_path)[1][:-4],
-            target=target_class, mark_alpha=mark_alpha,
-            mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
-        if self.mark.random_pos:
-            _file = 'random_pos_' + _file
-        if self.mark.mark_distributed:
-            _file = 'distributed_' + _file
-        _file += f'strippercent_{self.strip_percent:f}_absweight_{self.abs_weight:f}'
-        return _file

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from .badnet import BadNet
+from trojanvision.attacks.backdoor.badnet import BadNet
+
 import torch
 import argparse
 

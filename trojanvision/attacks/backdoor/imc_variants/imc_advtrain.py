@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imc import IMC
+from trojanvision.attacks.backdoor.imc import IMC
 from trojanvision.environ import env
 from trojanzoo.utils.output import output_iter, ansi, prints
 from trojanzoo.utils import AverageMeter

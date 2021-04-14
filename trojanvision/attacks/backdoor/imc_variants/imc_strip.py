@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imc import IMC
+from trojanvision.attacks.backdoor.imc import IMC
 from trojanzoo.utils.output import prints
 
 import torch

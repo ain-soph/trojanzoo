@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .badnet import BadNet
+from trojanvision.attacks.backdoor.badnet import BadNet
 
 from trojanvision.environ import env
 from trojanzoo.utils import to_tensor, tanh_func
