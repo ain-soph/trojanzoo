@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from trojanzoo.utils.output import ansi
+from trojanzoo.utils.output import ansi, prints
 
 import torch
 import torch.nn as nn
@@ -123,3 +123,18 @@ def filter_layer(module: nn.Module, filter_tuple: tuple[nn.Module] = filter_tupl
     if isinstance(module, filter_tuple):
         return False
     return True
+
+
+def summary_layer(module: nn.Module, depth: int = 0, verbose: bool = True,
+                             indent: int = 0, tree_length: int = None, indent_atom: int = 12):
+    tree_length = tree_length if tree_length is not None else indent_atom * (depth + 1)
+    if depth > 0:
+        for name, child in module.named_children():
+            _str = f'{ansi["blue_light"]}{name}{ansi["reset"]}'
+            if verbose:
+                _str = _str.ljust(tree_length - indent +
+                                  len(ansi['blue_light']) + len(ansi['reset']))
+                _str += str(child).split('\n')[0].removesuffix('(')
+            prints(_str, indent=indent)
+            summary_layer(child, depth=depth - 1, indent=indent + indent_atom,
+                                     verbose=verbose, tree_length=tree_length)

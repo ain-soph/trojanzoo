@@ -6,7 +6,7 @@ from trojanzoo.environ import env
 from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
 from trojanzoo.utils import get_name
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
-from trojanzoo.utils.model import get_all_layer, get_layer, get_layer_name
+from trojanzoo.utils.model import get_all_layer, get_layer, get_layer_name, summary_layer
 from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
 
 import torch
@@ -589,24 +589,6 @@ class Model:
             return nn.DataParallel(_model)
         return _model
 
-    @staticmethod
-    def output_layer_information(layer: nn.Module, depth: int = 0, verbose: bool = True,
-                                 indent: int = 0, tree_length: int = None):
-        tree_length = tree_length if tree_length is not None else 12 * (depth + 1)
-        if depth > 0:
-            for name, module in layer.named_children():
-                _str = '{blue_light}{0}{reset}'.format(name, **ansi)
-                if verbose:
-                    _str = _str.ljust(
-                        tree_length - indent + len(ansi['blue_light']) + len(ansi['reset']))
-                    item = str(module).split('\n')[0]
-                    if item[-1] == '(':
-                        item = item[:-1]
-                    _str += item
-                prints(_str, indent=indent)
-                Model.output_layer_information(
-                    module, depth=depth - 1, indent=indent + 12, verbose=verbose, tree_length=tree_length)
-
     def summary(self, depth: int = None, verbose: bool = True, indent: int = 0, **kwargs):
         if depth is None:
             depth = env['verbose']
@@ -619,7 +601,7 @@ class Model:
                 prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
                 prints({v: getattr(self, v) for v in value}, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
-        self.output_layer_information(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
+        summary_layer(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
         prints('-' * 20, indent=indent + 10)
 
     # -----------------------------------------Reload------------------------------------------ #
