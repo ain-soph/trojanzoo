@@ -291,6 +291,7 @@ class Model:
                 kwargs['num_classes'] = num_classes
             self._model = model(name=name, **kwargs)
         else:
+            assert isinstance(model, nn.Module)
             self._model = model
         self.model = self.get_parallel_model(self._model)
         self.activate_params([])
