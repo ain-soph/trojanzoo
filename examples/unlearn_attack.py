@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# python backdoor_unlearn.py --attack badnet --defense neural_cleanse --percent 0.01 --validate_interval 1 --epoch 50 --lr 1e-2 --mark_height 3 --mark_width 3 --mark_alpha 0.0
+# CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_unlearn.py --color --verbose 1 --attack badnet --defense neural_cleanse --percent 0.01 --validate_interval 1 --epoch 50 --lr 1e-2
 
 import trojanvision
 
