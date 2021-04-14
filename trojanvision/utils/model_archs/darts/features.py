@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections import OrderedDict
 from .operations import get_op
 from .genotypes import Genotype
 
@@ -51,13 +52,12 @@ class Cell(nn.Module):
         return torch.cat([states[i] for i in self._concat], dim=1)
 
 
-class AuxiliaryHead(nn.Module):
     # stride = 3 if CIFAR10
     # stride = 2 if ImageNet
-    def __init__(self, C: int, num_classes: int = 10, stride: int = 3):
+def AuxiliaryHead(C: int, num_classes: int = 10, stride: int = 3) -> nn.Sequential:
         """assuming input size 8x8"""
-        super().__init__()
-        self.features = nn.Sequential(
+    return nn.Sequential(OrderedDict([
+        ('features', nn.Sequential(
             nn.ReLU(),
             nn.AvgPool2d(5, stride=stride, padding=0, count_include_pad=False),  # image size = 2 x 2
             nn.Conv2d(C, 128, 1, bias=False),
@@ -65,12 +65,10 @@ class AuxiliaryHead(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 768, 2, bias=False),
             nn.BatchNorm2d(768),
-            nn.ReLU(inplace=True))
-        self.flatten = nn.Flatten()
-        self.classifier = nn.Linear(768, num_classes)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.classifier(self.flatten(self.features(x)))
+            nn.ReLU(inplace=True))),
+        ('flatten', nn.Flatten()),
+        ('classifier', nn.Linear(768, num_classes))
+    ]))
 
 
 class FeatureExtractor(nn.Module):

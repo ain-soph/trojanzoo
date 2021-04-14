@@ -5,7 +5,7 @@ from trojanvision.utils.model_archs.darts import FeatureExtractor, AuxiliaryHead
 from trojanvision.utils.model_archs.darts import genotypes
 
 import torch
-import torch.hub
+import torch.nn as nn
 from torchvision.datasets.utils import download_file_from_google_drive
 import os
 from collections import OrderedDict
@@ -28,7 +28,7 @@ class _DARTS(_ImageModel):
         self.features: FeatureExtractor
         self.classifier = self.define_classifier(conv_dim=self.features.feats_dim,
                                                  num_classes=self.num_classes, fc_depth=1)
-        self.auxiliary_head: AuxiliaryHead = None
+        self.auxiliary_head: nn.Sequential = None
         if auxiliary:
             self.auxiliary_head = AuxiliaryHead(C=self.features.feats_dim, num_classes=self.num_classes)
 
@@ -85,7 +85,7 @@ class DARTS(ImageModel):
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
         if self.auxiliary:
-            assert isinstance(self._model.auxiliary_head, AuxiliaryHead)
+            assert isinstance(self._model.auxiliary_head, nn.Sequential)
             if amp:
                 with torch.cuda.amp.autocast():
                     return self.loss_with_aux(_input, _label)
