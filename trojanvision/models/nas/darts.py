@@ -50,7 +50,7 @@ class DARTS(ImageModel):
         group.add_argument('--auxiliary', dest='auxiliary', action='store_true',
                            help='enable auxiliary classifier during training.')
         group.add_argument('--auxiliary_weight', dest='auxiliary_weight', type=float,
-                           help='enable auxiliary classifier during training.')
+                           help='weight for auxiliary loss, defaults to be 0.4')
 
     def __init__(self, name: str = 'darts', model_arch: str = 'darts',
                  layers: int = 20, C: int = 36, dropout_p: float = 0.2,
