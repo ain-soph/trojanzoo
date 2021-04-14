@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from .imagemodel import ImageModel
+
 from .nas import *
 from .normal import *
 from .others import *
@@ -15,7 +16,6 @@ import argparse
 from typing import Union
 
 module_list = [nas, normal, others]
-
 __all__ = ['ImageModel', 'class_dict', 'add_argument', 'create',
            'get_available_models', 'output_available_models']
 class_dict: dict[str, type[ImageModel]] = {}
