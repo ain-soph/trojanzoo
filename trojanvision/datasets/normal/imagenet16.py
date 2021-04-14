@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imageset import ImageSet
+from trojanvision.datasets.imageset import ImageSet
 from trojanvision.utils.datasets.imagenet16 import ImageNet16 as Dataset
 
 import torchvision.transforms as transforms

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # from torchvision.transforms.autoaugment import AutoAugment, AutoAugmentPolicy
-from .imageset import ImageSet
+from trojanvision.datasets.imageset import ImageSet
 
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms

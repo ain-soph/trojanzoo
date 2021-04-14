@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imagefolder import ImageFolder
+from trojanvision.datasets.imagefolder import ImageFolder
 from trojanzoo.utils.param import Module
 
 from torchvision.datasets import ImageNet as ImageNet_Official

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imagefolder import ImageFolder
+from trojanvision.datasets.imagefolder import ImageFolder
 from trojanvision.environ import env
 
 import numpy as np

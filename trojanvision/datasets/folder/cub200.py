@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imagefolder import ImageFolder
+from trojanvision.datasets.imagefolder import ImageFolder
 from trojanzoo.utils.output import ansi, prints
 
 from torchvision.datasets.utils import download_file_from_google_drive, extract_archive, check_integrity

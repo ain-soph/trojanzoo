@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imagefolder import ImageFolder
+from trojanvision.datasets.imagefolder import ImageFolder
 import torchvision.transforms as transforms
 
 from typing import Union

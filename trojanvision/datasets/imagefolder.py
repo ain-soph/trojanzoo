@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imageset import ImageSet
+from trojanvision.datasets.imageset import ImageSet
 from trojanvision.utils.data import ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
