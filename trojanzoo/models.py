@@ -6,6 +6,7 @@ from trojanzoo.environ import env
 from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
 from trojanzoo.utils import get_name
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
+from trojanzoo.utils.model import get_all_layer, get_layer, get_layer_name
 from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
 
 import torch
@@ -33,20 +34,16 @@ __all__ = ['Model', 'add_argument', 'create',
 
 
 class _Model(nn.Module):
-    module_list = ['features', 'pool', 'flatten', 'classifier', 'softmax']
-    filter_tuple: tuple[nn.Module] = (nn.Dropout, nn.BatchNorm2d,
-                                      nn.ReLU, nn.Sigmoid)
-
     def __init__(self, num_classes: int = None, **kwargs):
         super().__init__()
         self.define_preprocess(**kwargs)
-        self.num_classes = num_classes
         self.features = self.define_features(**kwargs)   # feature extractor
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
         self.flatten = nn.Flatten()
         self.classifier = self.define_classifier(num_classes=num_classes, **kwargs)  # classifier
         self.softmax = nn.Softmax(dim=1)
-        self.layer_name_list: list[str] = None
+
+        self.num_classes = num_classes
 
     def define_preprocess(self, **kwargs):
         pass
@@ -100,129 +97,6 @@ class _Model(nn.Module):
         x = self.pool(x)
         x = self.flatten(x)
         return x
-
-    # get output for a certain layer
-    def get_layer(self, x: torch.Tensor, layer_output: str = 'classifier',
-                  layer_input: str = 'input', prefix: str = '') -> torch.Tensor:
-        if layer_input == 'input':
-            if layer_output == 'classifier':
-                return self(x)
-            elif layer_output == 'features':
-                return self.get_fm(x)
-            elif layer_output == 'flatten':
-                return self.get_final_fm(x)
-        if self.layer_name_list is None:
-            self.layer_name_list = self.get_layer_name(use_filter=False, repeat=True)
-        if layer_input == 'input':
-            layer_input = 'record'
-        elif layer_input not in self.layer_name_list or layer_output not in self.layer_name_list \
-                or self.layer_name_list.index(layer_input) > self.layer_name_list.index(layer_output):
-            print('Model Layer Name List: ', self.layer_name_list)
-            print('Input  layer: ', layer_input)
-            print('Output layer: ', layer_output)
-            raise ValueError('Layer name not in model')
-        for name in self.module_list:
-            full_name = prefix + ('.' if prefix else '') + name
-            if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
-                child_layer: nn.Module = getattr(self, name)
-                x = self._get_layer(child_layer, x, layer_output, layer_input, full_name)
-                layer_input = 'record'
-            elif layer_input == full_name:
-                layer_input = 'record'
-            if layer_output.startswith(full_name):
-                return x
-
-    @classmethod
-    def _get_layer(cls, layer: nn.Module, x: torch.Tensor, layer_output: str = 'classifier',
-                   layer_input: str = 'record', prefix: str = '') -> torch.Tensor:
-        if isinstance(layer, nn.Sequential):
-            for name, child_layer in layer.named_children():
-                full_name = prefix + ('.' if prefix else '') + name
-                if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
-                    x = cls._get_layer(child_layer, x, layer_output, layer_input, prefix=full_name)
-                    layer_input = 'record'
-                elif layer_input == full_name:
-                    layer_input = 'record'
-                if layer_output.startswith(full_name):
-                    return x
-        else:
-            x = layer(x)
-        return x
-
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input', depth: int = 0,
-                      prefix='', use_filter: bool = True, repeat: bool = False) -> dict[str, torch.Tensor]:
-        layer_name_list = self.get_layer_name(depth=depth, prefix=prefix, use_filter=False)
-        _dict = {}
-        if layer_input == 'input':
-            layer_input = 'record'
-        elif layer_input not in layer_name_list:
-            print('Model Layer Name List: ', layer_name_list)
-            print('Input layer: ', layer_input)
-            raise ValueError('Layer name not in model')
-        for name in self.module_list:
-            full_name = prefix + ('.' if prefix else '') + name
-            if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
-                child_layer: nn.Module = getattr(self, name)
-                sub_dict, x = self._get_all_layer(child_layer, x, layer_input, depth - 1,
-                                                  full_name, use_filter, repeat)
-                _dict.update(sub_dict)
-                layer_input = 'record'
-            elif layer_input == full_name:
-                layer_input = 'record'
-        return _dict
-
-    @classmethod
-    def _get_all_layer(cls, layer: nn.Module, x: torch.Tensor, layer_input: str = 'record', depth: int = 0,
-                       prefix: str = '', use_filter: bool = True, repeat: bool = False
-                       ) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
-        _dict: dict[str, torch.Tensor] = {}
-        if isinstance(layer, nn.Sequential):
-            for name, child_layer in layer.named_children():
-                full_name = prefix + ('.' if prefix else '') + name
-                if layer_input == 'record' or layer_input.startswith(f'{full_name}.'):
-                    sub_dict, x = cls._get_all_layer(child_layer, x, layer_input, depth - 1,
-                                                     full_name, use_filter, repeat)
-                    _dict.update(sub_dict)
-                    layer_input = 'record'
-                elif layer_input == full_name:
-                    layer_input = 'record'
-        else:
-            x = layer(x)
-        if prefix and (not use_filter or cls.filter_layer(layer)) \
-                and (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
-            _dict[prefix] = x.clone()
-        return _dict, x
-
-    def get_layer_name(self, depth: int = 0, prefix: str = '',
-                       use_filter: bool = True, repeat: bool = False) -> list[str]:
-        if depth <= 0 and self.layer_name_list is not None:
-            return self.layer_name_list
-        layer_name_list: list[str] = []
-        for name in self.module_list:
-            full_name = prefix + ('.' if prefix else '') + name
-            child_layer: nn.Module = getattr(self, name)
-            layer_name_list.extend(self._get_layer_name(child_layer, depth - 1,
-                                                        full_name, use_filter, repeat))
-        return layer_name_list
-
-    @classmethod
-    def _get_layer_name(cls, layer: nn.Module, depth: int = 1, prefix: str = '',
-                        use_filter: bool = True, repeat: bool = False) -> list[str]:
-        layer_name_list: list[str] = []
-        if isinstance(layer, nn.Sequential) and depth != 0:
-            for name, child_layer in layer.named_children():
-                full_name = prefix + ('.' if prefix else '') + name
-                layer_name_list.extend(cls._get_layer_name(child_layer, depth - 1, full_name, use_filter))
-        if prefix and (not use_filter or cls.filter_layer(layer)) \
-                and (repeat or depth == 0 or not isinstance(layer, nn.Sequential)):
-            layer_name_list.append(prefix)
-        return layer_name_list
-
-    @classmethod
-    def filter_layer(cls, layer: nn.Module):
-        if isinstance(layer, cls.filter_tuple):
-            return False
-        return True
 
 
 class Model:
@@ -283,6 +157,7 @@ class Model:
             loss_weights = loss_weights if 'loss_weights' in kwargs.keys() else dataset.loss_weights
         self.num_classes = num_classes  # number of classes
         self.loss_weights = loss_weights  # TODO: what device shall we save loss_weights? numpy, torch, or torch.cuda.
+        self.layer_name_list: list[str] = None
 
         # ------------------------------ #
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
@@ -337,18 +212,33 @@ class Model:
     def get_class(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         return self(_input, **kwargs).argmax(dim=-1)
 
+    def get_layer_name(self, depth: int = -1, prefix: str = '',
+                       use_filter: bool = True, repeat: bool = False,
+                       seq_only: bool = False) -> list[str]:
+        return get_layer_name(self._model, depth, prefix, use_filter, repeat, seq_only)
+
+    def get_all_layer(self, x: torch.Tensor,
+                      layer_input: str = 'input', depth: int = 0,
+                      prefix='', use_filter: bool = True, repeat: bool = False,
+                      seq_only: bool = True) -> dict[str, torch.Tensor]:
+        return get_all_layer(self._model, x, layer_input, depth,
+                             prefix, use_filter, repeat, seq_only)
+
     def get_layer(self, x: torch.Tensor, layer_output: str = 'classifier',
-                  layer_input: str = 'input', prefix: str = '') -> torch.Tensor:
-        return self._model.get_layer(x, layer_output=layer_output, layer_input=layer_input, prefix=prefix)
-
-    def get_layer_name(self, depth: int = 0, prefix: str = '',
-                       use_filter: bool = True, repeat: bool = False) -> list[str]:
-        return self._model.get_layer_name(depth, prefix, use_filter, repeat)
-
-    def get_all_layer(self, x: torch.Tensor, layer_input: str = 'input', depth: int = 0,
-                      prefix: str = '', use_filter: bool = True, repeat: bool = False) -> dict[str, torch.Tensor]:
-        return self._model.get_all_layer(x, layer_input=layer_input, depth=depth,
-                                         prefix=prefix, use_filter=use_filter, repeat=repeat)
+                  layer_input: str = 'input', prefix: str = '', seq_only: bool = True) -> torch.Tensor:
+        if layer_input == 'input':
+            if layer_output == 'classifier':
+                return self(x)
+            elif layer_output == 'features':
+                return self._model.get_fm(x)
+            elif layer_output == 'flatten':
+                return self.get_final_fm(x)
+        if self.layer_name_list is None:
+            self.layer_name_list: list[str] = self.get_layer_name()
+            self.layer_name_list.insert(0, 'input')
+            self.layer_name_list.append('output')
+        return get_layer(self._model, x, layer_output, layer_input, prefix,
+                         layer_name_list=self.layer_name_list, seq_only=seq_only)
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, **kwargs) -> torch.Tensor:

@@ -7,7 +7,6 @@ from trojanvision.utils import apply_cmap
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.transforms as transforms
 import re
 import functools
 
@@ -28,11 +27,6 @@ jet = get_cmap('jet')
 
 
 class _ImageModel(_Model):
-    module_list = ['normalize', 'features', 'pool', 'flatten', 'classifier', 'softmax']
-    filter_tuple: tuple[nn.Module] = (transforms.Normalize,
-                                      nn.Dropout, nn.BatchNorm2d,
-                                      nn.ReLU, nn.Sigmoid)
-
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]},
                  num_classes: int = 1000, **kwargs):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
@@ -52,8 +46,6 @@ class ImageModel(Model):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        # group.add_argument('--layer', dest='layer', type=int,
-        #                    help='layer (optional, maybe embedded in --model)')
         group.add_argument('--adv_train', dest='adv_train', action='store_true',
                            help='enable adversarial training.')
         group.add_argument('--adv_train_iter', dest='adv_train_iter', type=int,
