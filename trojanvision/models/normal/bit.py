@@ -36,8 +36,8 @@ class _BiT(_ImageModel):
 
 class BiT(ImageModel):
     available_models = ['bit',
-                        'bit-m-r50x1', 'bit-m-r101x1', 'bit-m-r152x2',
-                        'bit-m-r50x3', 'bit-m-r101x3', 'bit-m-r152x4', ]
+                        'bit-m-r50x1', 'bit-m-r50x3', 'bit-m-r101x1', 'bit-m-r101x3', 'bit-m-r152x2', 'bit-m-r152x4',
+                        'bit-s-r50x1', 'bit-s-r50x3', 'bit-s-r101x1', 'bit-s-r101x3', 'bit-s-r152x2', 'bit-s-r152x4']
 
     def __init__(self, name: str = 'bit',
                  pretrained_dataset: str = 'm', layer: int = 50, width_factor: int = 1,
