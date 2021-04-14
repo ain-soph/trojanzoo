@@ -58,8 +58,9 @@ class PGD(Attack, PGD_Optimizer):
         total = 0
         total_iter = 0
         succ_conf = 0.0
-        for data in self.dataset.loader['test']:
-            if total >= 100:
+        loader = self.dataset.get_dataloader(mode='test', shuffle=True)
+        for data in loader:
+            if total >= 1000:
                 break
             _input, _label = self.model.remove_misclassify(data)
             if len(_label) == 0:
