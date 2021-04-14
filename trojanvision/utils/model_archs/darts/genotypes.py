@@ -15,6 +15,8 @@ PRIMITIVES = [
     'none',  # zero
 ]
 
+# https://github.com/quark0/darts
+# https://github.com/automl/RobustDARTS
 nasnet = Genotype(
     normal=[('sep_conv_5x5', 1), ('sep_conv_3x3', 0), ('sep_conv_5x5', 0), ('sep_conv_3x3', 0), ('avg_pool_3x3', 1),
             ('skip_connect', 0), ('avg_pool_3x3', 0), ('avg_pool_3x3', 0), ('sep_conv_3x3', 1), ('skip_connect', 1), ],
@@ -105,6 +107,16 @@ robust_darts = Genotype(
             ('skip_connect', 2), ('max_pool_3x3', 0), ('max_pool_3x3', 0), ('max_pool_3x3', 1)],
     reduce_concat=range(2, 6))
 
+# https://github.com/chenxin061/pdarts
+pdarts = Genotype(
+    normal=[('skip_connect', 0), ('dil_conv_3x3', 1), ('skip_connect', 0), ('sep_conv_3x3', 1),
+            ('sep_conv_3x3', 1), ('sep_conv_3x3', 3), ('sep_conv_3x3', 0), ('dil_conv_5x5', 4)],
+    normal_concat=range(2, 6),
+    reduce=[('avg_pool_3x3', 0), ('sep_conv_5x5', 1), ('sep_conv_3x3', 0), ('dil_conv_5x5', 2),
+            ('max_pool_3x3', 0), ('dil_conv_3x3', 1), ('dil_conv_3x3', 1), ('dil_conv_5x5', 3)],
+    reduce_concat=range(2, 6))
+
+# https://github.com/yuhuixu1993/PC-DARTS
 pc_darts_cifar = Genotype(
     normal=[('sep_conv_3x3', 1), ('skip_connect', 0), ('sep_conv_3x3', 0), ('dil_conv_3x3', 1),
             ('sep_conv_5x5', 0), ('sep_conv_3x3', 1), ('avg_pool_3x3', 0), ('dil_conv_3x3', 1)],
@@ -121,6 +133,7 @@ pc_darts_image = Genotype(
     reduce_concat=range(2, 6))
 pc_darts = pc_darts_cifar
 
+# https://github.com/xiangning-chen/DrNAS
 drnas_cifar10 = Genotype(
     normal=[('sep_conv_3x3', 0), ('sep_conv_5x5', 1), ('sep_conv_3x3', 1), ('sep_conv_3x3', 2),
             ('skip_connect', 0), ('sep_conv_3x3', 1), ('sep_conv_3x3', 2), ('dil_conv_5x5', 3)],
@@ -137,6 +150,7 @@ drnas_imagenet = Genotype(
     reduce_concat=range(2, 6))
 drnas = drnas_cifar10
 
+# https://github.com/lightaime/sgas
 sgas = Genotype(
     normal=[('sep_conv_3x3', 0), ('dil_conv_3x3', 1), ('sep_conv_3x3', 0), ('sep_conv_3x3', 1),
             ('sep_conv_5x5', 1), ('sep_conv_5x5', 3), ('skip_connect', 0), ('dil_conv_5x5', 2)],
