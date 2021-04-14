@@ -30,7 +30,7 @@ class _DARTS(_ImageModel):
                                                  num_classes=self.num_classes, fc_depth=1)
         self.auxiliary_head: nn.Sequential = None
         if auxiliary:
-            self.auxiliary_head = AuxiliaryHead(C=self.features.feats_dim, num_classes=self.num_classes)
+            self.auxiliary_head = AuxiliaryHead(C=self.features.aux_dim, num_classes=self.num_classes)
 
     @staticmethod
     def define_features(genotype: Genotype = genotypes.darts,

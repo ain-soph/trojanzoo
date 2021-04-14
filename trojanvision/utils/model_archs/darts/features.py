@@ -52,10 +52,10 @@ class Cell(nn.Module):
         return torch.cat([states[i] for i in self._concat], dim=1)
 
 
-    # stride = 3 if CIFAR10
-    # stride = 2 if ImageNet
+# stride = 3 if CIFAR10
+# stride = 2 if ImageNet
 def AuxiliaryHead(C: int, num_classes: int = 10, stride: int = 3) -> nn.Sequential:
-        """assuming input size 8x8"""
+    """assuming input size 8x8"""
     return nn.Sequential(OrderedDict([
         ('features', nn.Sequential(
             nn.ReLU(),
@@ -111,6 +111,7 @@ class FeatureExtractor(nn.Module):
             if i == 2 * layers // 3:
                 self.aux_C = C_prev
                 self.aux_layer = i
+                self.aux_dim = C_prev
         self.feats_dim = C_prev
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
