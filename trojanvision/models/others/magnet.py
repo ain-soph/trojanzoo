@@ -57,7 +57,7 @@ class _MagNet(nn.Module):
         self.decoder.add_module('bn', bn)
         self.decoder.add_module('activation', activation_fn)
 
-    def forward(self, x, **kwargs):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.encoder(x)
         x = self.decoder(x)
         return x
