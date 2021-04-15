@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+
 from trojanzoo.utils.output import ansi, prints
 
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
+
+from typing import Iterator
 
 __all__ = ['get_all_layer', 'get_layer', 'get_layer_name']
 
@@ -119,14 +122,14 @@ def _get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
     return x
 
 
-def filter_layer(module: nn.Module, filter_tuple: tuple[nn.Module] = filter_tuple):
+def filter_layer(module: nn.Module, filter_tuple: tuple[nn.Module] = filter_tuple) -> bool:
     if isinstance(module, filter_tuple):
         return False
     return True
 
 
-def summary_layer(module: nn.Module, depth: int = 0, verbose: bool = True,
-                             indent: int = 0, tree_length: int = None, indent_atom: int = 12):
+def summary(module: nn.Module, depth: int = 0, verbose: bool = True,
+            indent: int = 0, tree_length: int = None, indent_atom: int = 12) -> None:
     tree_length = tree_length if tree_length is not None else indent_atom * (depth + 1)
     if depth > 0:
         for name, child in module.named_children():
@@ -136,5 +139,31 @@ def summary_layer(module: nn.Module, depth: int = 0, verbose: bool = True,
                                   len(ansi['blue_light']) + len(ansi['reset']))
                 _str += str(child).split('\n')[0].removesuffix('(')
             prints(_str, indent=indent)
-            summary_layer(child, depth=depth - 1, indent=indent + indent_atom,
-                                     verbose=verbose, tree_length=tree_length)
+            summary(child, depth=depth - 1, indent=indent + indent_atom,
+                    verbose=verbose, tree_length=tree_length)
+
+
+def activate_params(module: nn.Module, params: Iterator[nn.Parameter]) -> None:
+    for param in module.parameters():
+        param.requires_grad_(False)
+    for param in params:
+        param.requires_grad_()
+
+
+def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
+             topk: tuple[int] = (1, 5)) -> list[float]:
+    """Computes the accuracy over the k top predictions for the specified values of k"""
+    with torch.no_grad():
+        maxk = min(max(topk), num_classes)
+        batch_size = _label.size(0)
+        _, pred = _output.topk(maxk, 1, True, True)
+        pred = pred.t()
+        correct = pred.eq(_label[None])
+        res: list[float] = []
+        for k in topk:
+            if k > num_classes:
+                res.append(100.0)
+            else:
+                correct_k = float(correct[:k].sum(dtype=torch.float32))
+                res.append(correct_k * (100.0 / batch_size))
+        return res

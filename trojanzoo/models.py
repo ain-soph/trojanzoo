@@ -3,18 +3,17 @@
 from trojanzoo.configs import config
 from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
-from trojanzoo.utils import add_noise, empty_cache, repeat_to_batch, to_tensor
+from trojanzoo.utils import add_noise, repeat_to_batch, to_tensor
 from trojanzoo.utils import get_name
-from trojanzoo.utils.logger import MetricLogger, SmoothedValue
-from trojanzoo.utils.model import get_all_layer, get_layer, get_layer_name, summary_layer
-from trojanzoo.utils.output import ansi, get_ansi_len, prints, output_iter
+from trojanzoo.utils.model import get_all_layer, get_layer, get_layer_name, summary, activate_params, accuracy
+from trojanzoo.utils.train import train, validate
+from trojanzoo.utils.output import ansi, prints
 
 import torch
 import torch.nn as nn
 from torch.utils import model_zoo
 import numpy as np
 import os
-from tqdm import tqdm
 from collections import OrderedDict
 from collections.abc import Iterable    # TODO: callable (many places) (wait for python update)
 
@@ -373,6 +372,7 @@ class Model:
         return model_zoo.load_url(url, map_location=map_location, **kwargs)
 
     # -----------------------------------Train and Validate------------------------------------ #
+    # TODO: annotation and remove those arguments to be *args, **kwargs
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
@@ -384,7 +384,7 @@ class Model:
                validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
-               verbose: bool = True, indent: int = 0, **kwargs):
+               verbose: bool = True, indent: int = 0, **kwargs) -> None:
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
         get_data_fn = get_data_fn if callable(get_data_fn) else self.get_data
         loss_fn = loss_fn if callable(loss_fn) else self.loss
@@ -396,145 +396,30 @@ class Model:
             epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
+        return train(self, self.num_classes,
+                     epoch, optimizer, lr_scheduler, grad_clip,
+                     print_prefix, start_epoch, validate_interval, save, amp,
+                     loader_train, loader_valid, epoch_fn, get_data_fn, loss_fn, after_loss_fn, validate_fn,
+                     save_fn, file_path, folder_path, suffix,
+                     writer, main_tag, tag, verbose, indent, **kwargs)
 
-        scaler: torch.cuda.amp.GradScaler = None
-        if not env['num_gpus']:
-            amp = False
-        if amp:
-            scaler = torch.cuda.amp.GradScaler()
-        _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                  writer=None, tag=tag, _epoch=start_epoch,
-                                  verbose=verbose, indent=indent, **kwargs)
-
-        params: list[nn.Parameter] = []
-        for param_group in optimizer.param_groups:
-            params.extend(param_group['params'])
-        total_iter = epoch * len(loader_train)
-        for _epoch in range(epoch):
-            _epoch += 1
-            if callable(epoch_fn):
-                self.activate_params([])
-                epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
-                         _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
-                self.activate_params(params)
-            logger = MetricLogger()
-            logger.meters['loss'] = SmoothedValue()
-            logger.meters['top1'] = SmoothedValue()
-            logger.meters['top5'] = SmoothedValue()
-            loader_epoch = loader_train
-            if verbose:
-                header = '{blue_light}{0}: {1}{reset}'.format(
-                    print_prefix, output_iter(_epoch, epoch), **ansi)
-                header = header.ljust(30 + get_ansi_len(header))
-                if env['tqdm']:
-                    header = '{upline}{clear_line}'.format(**ansi) + header
-                    loader_epoch = tqdm(loader_epoch)
-                loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-            self.train()
-            self.activate_params(params)
-            optimizer.zero_grad()
-            for i, data in enumerate(loader_epoch):
-                _iter = _epoch * len(loader_train) + i
-                # data_time.update(time.perf_counter() - end)
-                _input, _label = get_data_fn(data, mode='train')
-                _output = self(_input, amp=amp)
-                loss = loss_fn(_input, _label, _output=_output, amp=amp)
-                if amp:
-                    scaler.scale(loss).backward()
-                    if callable(after_loss_fn):
-                        after_loss_fn(_input=_input, _label=_label, _output=_output,
-                                      loss=loss, optimizer=optimizer, loss_fn=loss_fn,
-                                      amp=amp, scaler=scaler,
-                                      _iter=_iter, total_iter=total_iter)
-                    scaler.step(optimizer)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    if grad_clip is not None:
-                        nn.utils.clip_grad_norm_(params)
-                    if callable(after_loss_fn):
-                        after_loss_fn(_input=_input, _label=_label, _output=_output,
-                                      loss=loss, optimizer=optimizer, loss_fn=loss_fn,
-                                      amp=amp, scaler=scaler,
-                                      _iter=_iter, total_iter=total_iter)
-                        # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
-                    optimizer.step()
-                optimizer.zero_grad()
-                acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                batch_size = int(_label.size(0))
-                logger.meters['loss'].update(float(loss), batch_size)
-                logger.meters['top1'].update(acc1, batch_size)
-                logger.meters['top5'].update(acc5, batch_size)
-                empty_cache()   # TODO: should it be outside of the dataloader loop?
-            self.eval()
-            self.activate_params([])
-            loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-            if writer is not None:
-                from torch.utils.tensorboard import SummaryWriter
-                assert isinstance(writer, SummaryWriter)
-                writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss},
-                                   global_step=_epoch + start_epoch)
-                writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc},
-                                   global_step=_epoch + start_epoch)
-            if lr_scheduler:
-                lr_scheduler.step()
-            if validate_interval != 0:
-                if _epoch % validate_interval == 0 or _epoch == epoch:
-                    _, cur_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                                             writer=writer, tag=tag, _epoch=_epoch + start_epoch,
-                                             verbose=verbose, indent=indent, **kwargs)
-                    if cur_acc >= best_acc:
-                        if verbose:
-                            prints('{green}best result update!{reset}'.format(**ansi), indent=indent)
-                            prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
-                        best_acc = cur_acc
-                        if save:
-                            save_fn(file_path=file_path, folder_path=folder_path, suffix=suffix, verbose=verbose)
-                    if verbose:
-                        prints('-' * 50, indent=indent)
-        self.zero_grad()
-
-    def _validate(self, full=True, print_prefix='Validate', indent=0, verbose=True,
-                  loader: torch.utils.data.DataLoader = None,
+    def _validate(self, module: nn.Module = None, num_classes: int = None,
+                  full=True, loader: torch.utils.data.DataLoader = None,
+                  print_prefix='Validate', indent=0, verbose=True,
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                   loss_fn: Callable[..., torch.Tensor] = None,
                   writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
                   **kwargs) -> tuple[float, float]:
-        self.eval()
+        module = self if module is None else module
+        num_classes = self.num_classes if num_classes is None else num_classes
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
         loss_fn = loss_fn if loss_fn is not None else self.loss
-        logger = MetricLogger()
-        logger.meters['loss'] = SmoothedValue()
-        logger.meters['top1'] = SmoothedValue()
-        logger.meters['top5'] = SmoothedValue()
-        loader_epoch = loader
-        if verbose:
-            header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
-            header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
-            if env['tqdm']:
-                header = '{upline}{clear_line}'.format(**ansi) + header
-                loader_epoch = tqdm(loader_epoch)
-            loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-        for data in loader_epoch:
-            _input, _label = get_data_fn(data, mode='valid', **kwargs)
-            with torch.no_grad():
-                _output = self(_input)
-                loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
-                acc1, acc5 = self.accuracy(_output, _label, topk=(1, 5))
-                batch_size = int(_label.size(0))
-                logger.meters['loss'].update(loss, batch_size)
-                logger.meters['top1'].update(acc1, batch_size)
-                logger.meters['top5'].update(acc5, batch_size)
-        loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
-        if writer is not None and _epoch is not None and main_tag:
-            from torch.utils.tensorboard import SummaryWriter
-            assert isinstance(writer, SummaryWriter)
-            writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
-            writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
-        return loss, acc
-
+        return validate(module, num_classes, loader,
+                        print_prefix, indent, verbose,
+                        get_data_fn, loss_fn,
+                        writer, main_tag, tag, _epoch, **kwargs)
     # -------------------------------------------Utility--------------------------------------- #
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
@@ -544,22 +429,8 @@ class Model:
             return data
 
     def accuracy(self, _output: torch.Tensor, _label: torch.Tensor,
-                 topk: tuple[int] = (1, 5)) -> tuple[float, ...]:
-        """Computes the accuracy over the k top predictions for the specified values of k"""
-        with torch.no_grad():
-            maxk = min(max(topk), self.num_classes)
-            batch_size = _label.size(0)
-            _, pred = _output.topk(maxk, 1, True, True)
-            pred = pred.t()
-            correct = pred.eq(_label[None])
-            res: list[float] = []
-            for k in topk:
-                if k > self.num_classes:
-                    res.append(100.0)
-                else:
-                    correct_k = float(correct[:k].sum(dtype=torch.float32))
-                    res.append(correct_k * (100.0 / batch_size))
-            return res
+                 topk: tuple[int] = (1, 5)) -> list[float]:
+        return accuracy(_output, _label, self.num_classes, topk)
 
     def get_parameter_from_name(self, name: str = '') -> Iterator[nn.Parameter]:
         params = self._model.parameters()
@@ -571,11 +442,8 @@ class Model:
             raise NotImplementedError(f'{name=}')
         return params
 
-    def activate_params(self, params: Iterator[nn.Parameter]):
-        for param in self._model.parameters():
-            param.requires_grad_(False)
-        for param in params:
-            param.requires_grad_()
+    def activate_params(self, params: Iterator[nn.Parameter]) -> None:
+        return activate_params(self._model, params)
 
     # Need to overload for other packages (GNN) since they are calling their own nn.DataParallel.
     # TODO: nn.parallel.DistributedDataParallel
@@ -597,7 +465,7 @@ class Model:
                 prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
                 prints({v: getattr(self, v) for v in value}, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
-        summary_layer(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
+        summary(self._model, depth=depth, verbose=verbose, indent=indent + 10, **kwargs)
         prints('-' * 20, indent=indent + 10)
 
     # -----------------------------------------Reload------------------------------------------ #
