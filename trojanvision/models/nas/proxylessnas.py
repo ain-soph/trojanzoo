@@ -16,7 +16,8 @@ class _ProxylessNAS(_ImageModel):
         if self.num_classes == 10:
             self.classifier = nn.Sequential(OrderedDict(list(_model.classifier.named_children())))
         else:
-            fc: nn.Linear = list(_model.classifier.children())[0]
+            classifier: nn.Sequential = _model.classifier
+            fc: nn.Linear = list(classifier.children())[0]
             self.classifier = self.define_classifier(conv_dim=fc.in_features,
                                                      num_classes=self.num_classes,
                                                      fc_depth=1)
