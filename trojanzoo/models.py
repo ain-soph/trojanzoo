@@ -55,27 +55,23 @@ class _Model(nn.Module):
     @staticmethod
     def define_classifier(conv_dim: int = 0, num_classes: int = None,
                           fc_depth: int = 0, fc_dim: int = 0,
-                          activation: str = 'relu', dropout: bool = True,
+                          activation: type[nn.Module] = nn.ReLU,
+                          dropout: float = 0.5,
                           **kwargs) -> nn.Sequential:
         seq = nn.Sequential()
         if fc_depth <= 0:
             return seq
         dim_list: list[int] = [fc_dim] * (fc_depth - 1)
         dim_list.insert(0, conv_dim)
-        ActivationType: type[nn.Module] = nn.ReLU
-        if activation == 'sigmoid':
-            ActivationType = nn.Sigmoid
-        elif not activation == 'relu':
-            raise NotImplementedError(f'{activation=}')
         if fc_depth == 1:
             seq.add_module('fc', nn.Linear(conv_dim, num_classes))
         else:
             for i in range(fc_depth - 1):
                 seq.add_module(f'fc{i + 1:d}', nn.Linear(dim_list[i], dim_list[i + 1]))
                 if activation:
-                    seq.add_module(f'{activation}{i + 1:d}', ActivationType(True))
-                if dropout:
-                    seq.add_module(f'dropout{i + 1:d}', nn.Dropout())
+                    seq.add_module(f'{activation}{i + 1:d}', activation(True))
+                if dropout > 0:
+                    seq.add_module(f'dropout{i + 1:d}', nn.Dropout(p=dropout))
             seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
         return seq
 
