@@ -61,13 +61,16 @@ class _Model(nn.Module):
             return seq
         dim_list: list[int] = [fc_dim] * (fc_depth - 1)
         dim_list.insert(0, conv_dim)
+        activation_name: str = 'none'
+        if activation:
+            activation_name = activation.__name__.split('.')[-1].lower()
         if fc_depth == 1:
             seq.add_module('fc', nn.Linear(conv_dim, num_classes))
         else:
             for i in range(fc_depth - 1):
                 seq.add_module(f'fc{i + 1:d}', nn.Linear(dim_list[i], dim_list[i + 1]))
                 if activation:
-                    seq.add_module(f'{activation}{i + 1:d}', activation(True))
+                    seq.add_module(f'{activation_name}{i + 1:d}', activation(True))
                 if dropout > 0:
                     seq.add_module(f'dropout{i + 1:d}', nn.Dropout(p=dropout))
             seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
