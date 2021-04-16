@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.utils.output import ansi, prints
+from trojanzoo.utils import repeat_to_batch
 
 import torch
 import torch.nn as nn
@@ -8,7 +9,7 @@ import torchvision.transforms as transforms
 
 from typing import Iterator
 
-__all__ = ['get_all_layer', 'get_layer', 'get_layer_name']
+__all__ = ['get_all_layer', 'get_layer', 'get_layer_name', 'summary', 'activate_params', 'accuracy', 'generate_target']
 
 filter_tuple: tuple[nn.Module] = (transforms.Normalize,
                                   nn.Dropout, nn.BatchNorm2d,
@@ -167,3 +168,12 @@ def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
                 correct_k = float(correct[:k].sum(dtype=torch.float32))
                 res.append(correct_k * (100.0 / batch_size))
         return res
+
+
+def generate_target(module: nn.Module, _input: torch.Tensor, idx: int = 1, same: bool = False) -> torch.Tensor:
+    with torch.no_grad():
+        _output: torch.Tensor = module(_input)
+    target = _output.argsort(dim=-1, descending=True)[:, idx]
+    if same:
+        target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
+    return target

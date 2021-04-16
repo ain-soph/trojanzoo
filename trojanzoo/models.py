@@ -3,9 +3,8 @@
 from trojanzoo.configs import config
 from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
-from trojanzoo.utils import add_noise, repeat_to_batch, to_tensor
-from trojanzoo.utils import get_name
-from trojanzoo.utils.model import get_all_layer, get_layer, get_layer_name, summary, activate_params, accuracy
+from trojanzoo.utils import add_noise, get_name, to_tensor
+from trojanzoo.utils.model import *
 from trojanzoo.utils.train import train, validate
 from trojanzoo.utils.output import ansi, prints
 
@@ -547,12 +546,7 @@ class Model:
         return _input[repeat_idx], _label[repeat_idx]
 
     def generate_target(self, _input: torch.Tensor, idx: int = 1, same: bool = False) -> torch.Tensor:
-        with torch.no_grad():
-            _output = self(_input)
-        target = _output.argsort(dim=-1, descending=True)[:, idx]
-        if same:
-            target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
-        return target
+        return generate_target(self, _input, idx, same)
 
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, Model] = None,
