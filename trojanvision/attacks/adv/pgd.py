@@ -84,7 +84,7 @@ class PGD(Attack, PGD_Optimizer):
                 total_iter += self.iteration
             if verbose:
                 print(f'{correct} / {total}')
-                print(f'current iter: {_iter:8}')
+                print(f'current iter: {str(_iter):8}')
                 print(f'org target conf: {org_conf:<10.3f}    adv target conf: {adv_conf:<10.3f}')
                 print('succ rate: ', float(correct) / total)
                 print('avg  iter: ', float(total_iter) / total)
