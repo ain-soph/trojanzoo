@@ -26,6 +26,8 @@ class Trainer:
     def add_argument(group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
         group.add_argument('--epoch', dest='epoch', type=int,
                            help='training epochs, defaults to config[train][epoch].')
+        group.add_argument('--resume', dest='resume', type=int,
+                           help='resume training from certain epoch, defaults to be 0.')
         group.add_argument('--lr', dest='lr', type=float,
                            help='learning rate, defaults to 0.1.')
         group.add_argument('--parameters', dest='parameters', default='full',

@@ -19,7 +19,7 @@ import torch.utils.data
 
 def train(module: nn.Module, num_classes: int,
           epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
-          print_prefix: str = 'Epoch', start_epoch: int = 0,
+          print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
           validate_interval: int = 10, save: bool = False, amp: bool = False,
           loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
           epoch_fn: Callable[..., None] = None,
@@ -46,8 +46,13 @@ def train(module: nn.Module, num_classes: int,
     params: list[nn.Parameter] = []
     for param_group in optimizer.param_groups:
         params.extend(param_group['params'])
-    total_iter = epoch * len(loader_train)
-    for _epoch in range(epoch):
+    len_loader_train = len(loader_train)
+    total_iter = (epoch - resume) * len_loader_train
+
+    if resume and lr_scheduler:
+        for _ in range(resume):
+            lr_scheduler.step()
+    for _epoch in range(resume, epoch):
         _epoch += 1
         if callable(epoch_fn):
             activate_params(module, [])
@@ -71,7 +76,7 @@ def train(module: nn.Module, num_classes: int,
         activate_params(module, params)
         optimizer.zero_grad()
         for i, data in enumerate(loader_epoch):
-            _iter = _epoch * len(loader_train) + i
+            _iter = _epoch * len_loader_train + i
             # data_time.update(time.perf_counter() - end)
             _input, _label = get_data_fn(data, mode='train')
             _output = module(_input, amp=amp)

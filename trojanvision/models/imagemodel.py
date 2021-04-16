@@ -157,7 +157,7 @@ class ImageModel(Model):
         return heatmap[0] if squeeze_flag else heatmap
 
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
-               print_prefix: str = 'Epoch', start_epoch: int = 0,
+               print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
@@ -217,7 +217,7 @@ class ImageModel(Model):
             validate_fn = validate_fn_new
 
         super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
-                       print_prefix=print_prefix, start_epoch=start_epoch,
+                       print_prefix=print_prefix, start_epoch=start_epoch, resume=resume,
                        validate_interval=validate_interval, save=save, amp=amp,
                        loader_train=loader_train, loader_valid=loader_valid,
                        epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn,

@@ -374,7 +374,7 @@ class Model:
     # -----------------------------------Train and Validate------------------------------------ #
     # TODO: annotation and remove those arguments to be *args, **kwargs
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
-               print_prefix: str = 'Epoch', start_epoch: int = 0,
+               print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
@@ -398,7 +398,7 @@ class Model:
             after_loss_fn = getattr(self, 'after_loss_fn')
         return train(self, self.num_classes,
                      epoch, optimizer, lr_scheduler, grad_clip,
-                     print_prefix, start_epoch, validate_interval, save, amp,
+                     print_prefix, start_epoch, resume, validate_interval, save, amp,
                      loader_train, loader_valid, epoch_fn, get_data_fn, loss_fn, after_loss_fn, validate_fn,
                      save_fn, file_path, folder_path, suffix,
                      writer, main_tag, tag, verbose, indent, **kwargs)
