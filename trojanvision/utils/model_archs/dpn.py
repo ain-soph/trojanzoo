@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # https://github.com/rwightman/pytorch-dpn-pretrained
+# https://github.com/rwightman/pytorch-image-models/tree/master/timm/models
 # https://github.com/kuangliu/pytorch-cifar/blob/master/models/dpn.py
 
 '''Dual Path Networks in PyTorch.'''
