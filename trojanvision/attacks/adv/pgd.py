@@ -28,16 +28,18 @@ class PGD(Attack, PGD_Optimizer):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float,
-                           help='PGD learning rate per step, defaults to 3.0/255')
+                           help='PGD learning rate per step, defaults to 2.0/255')
         group.add_argument('--pgd_eps', dest='pgd_eps', type=float,
                            help='Projection norm constraint, defaults to 8.0/255')
         group.add_argument('--iteration', dest='iteration', type=int,
-                           help='Attack Iteration, defaults to 20')
+                           help='Attack Iteration, defaults to 7')
         group.add_argument('--stop_threshold', dest='stop_threshold', type=float,
-                           help='early stop confidence, defaults to None')
+                           help='early stop confidence, defaults to 0.99')
         group.add_argument('--target_idx', dest='target_idx', type=int,
                            help='Target label order in original classification, defaults to 1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
+        group.add_argument('--test_num', dest='test_num', type=int,
+                           help='total number of test examples for PGD, defaults to 1000.')
 
         group.add_argument('--grad_method', dest='grad_method',
                            help='gradient estimation method, defaults to \'white\'')
@@ -46,9 +48,11 @@ class PGD(Attack, PGD_Optimizer):
         group.add_argument('--sigma', dest='sigma', type=float,
                            help='gaussian sampling std for black box gradient estimation, defaults to 1e-3')
 
-    def __init__(self, target_idx: int = 1, **kwargs):
-        self.target_idx: int = target_idx
+    def __init__(self, target_idx: int = 1, test_num: int = 1000, **kwargs):
+        self.target_idx = target_idx
+        self.test_num = test_num
         super().__init__(**kwargs)
+        self.param_list['pgd'].extend(['target_idx', 'test_num'])
         self.dataset: ImageSet
         self.model: ImageModel
 
@@ -60,7 +64,7 @@ class PGD(Attack, PGD_Optimizer):
         succ_conf = 0.0
         loader = self.dataset.get_dataloader(mode='test', shuffle=True)
         for data in loader:
-            if total >= 1000:
+            if total >= self.test_num:
                 break
             _input, _label = self.model.remove_misclassify(data)
             if len(_label) == 0:
