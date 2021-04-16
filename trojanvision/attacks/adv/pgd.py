@@ -61,6 +61,7 @@ class PGD(Attack, PGD_Optimizer):
         correct = 0
         total = 0
         total_iter = 0
+        total_conf = 0.0
         succ_conf = 0.0
         loader = self.dataset.get_dataloader(mode='test', shuffle=True)
         for data in loader:
@@ -69,21 +70,27 @@ class PGD(Attack, PGD_Optimizer):
             _input, _label = self.model.remove_misclassify(data)
             if len(_label) == 0:
                 continue
-            adv_input, _iter = self.craft_example(_input, **kwargs)
+            target = self.generate_target(_input, idx=self.target_idx)
+            adv_input, _iter = self.craft_example(_input, target=target, **kwargs)
             total += 1
+            org_conf = float(self.model.get_target_prob(_input, target))
+            adv_conf = float(self.model.get_target_prob(adv_input, target))
+            total_conf += adv_conf
             if _iter:
                 correct += 1
                 total_iter += _iter
-                succ_conf += float(self.model.get_prob(adv_input).max())
+                succ_conf += adv_conf
             else:
                 total_iter += self.iteration
             if verbose:
                 print(f'{correct} / {total}')
-                print('current iter: ', _iter)
+                print(f'current iter: {_iter:8}')
+                print(f'org target conf: {org_conf:<10.3f}    adv target conf: {adv_conf:<10.3f}')
                 print('succ rate: ', float(correct) / total)
                 print('avg  iter: ', float(total_iter) / total)
+                print(f'total conf: {total_conf / total:<10.3f}')
                 if correct > 0:
-                    print('succ conf: ', float(succ_conf) / correct)
+                    print(f'succ  conf: {succ_conf / correct:<10.3f}')
                 print('-------------------------------------------------')
                 print()
         return float(correct) / total, float(total_iter) / total
