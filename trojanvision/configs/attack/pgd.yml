@@ -1,4 +1,4 @@
-pgd_lpha: 0.0117647
+pgd_alpha: 0.0117647
 pgd_eps: 0.03137255
 iteration: 20
 stop_threshold: null
