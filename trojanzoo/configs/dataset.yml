@@ -1,2 +1,5 @@
 data_dir: ./data/data/
 default_dataset: default
+
+batch_size: 128
+valid_batch_size: 100

@@ -1,2 +1,12 @@
 epoch:
-  default: 600
+  default: 250
+  cifar10: 600
+  cifar100: 600
+  imagenet16: 600
+  gtsrb: 600
+lr:
+  default: 0.1
+  cifar10: 0.025
+  cifar100: 0.025
+  imagenet16: 0.025
+  gtsrb: 0.025

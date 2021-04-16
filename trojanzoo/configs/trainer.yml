@@ -1,5 +1,5 @@
-epoch: 150
-lr: 0.1
+epoch: 600
+lr: 0.025
 parameters: full
 OptimType: SGD
 momentum: 0.9
