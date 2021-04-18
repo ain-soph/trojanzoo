@@ -177,7 +177,7 @@ class Tree(nn.Module):
 
 class DLA(nn.Module):
     def __init__(self, block: nn.Module, levels: list[int], channels: list[int], num_classes: int = 1000,
-                 root_residual: bool = False, **kwargs):
+                 root_residual: bool = False, strides: list[int] = [2, 2, 2, 2], **kwargs):
         super().__init__()
         self.features = nn.Sequential(OrderedDict([
             ('stem', nn.Sequential(OrderedDict([
@@ -196,13 +196,13 @@ class DLA(nn.Module):
                 ('bn1', nn.BatchNorm2d(32)),
                 ('relu', nn.ReLU(True))
             ]))),
-            ('layer3', Tree(block, channels[1], channels[2], levels=levels[0], stride=2,
+            ('layer3', Tree(block, channels[1], channels[2], levels=levels[0], stride=strides[0],
                             level_root=False, root_residual=root_residual, **kwargs)),
-            ('layer4', Tree(block, channels[2], channels[3], levels=levels[1], stride=2,
+            ('layer4', Tree(block, channels[2], channels[3], levels=levels[1], stride=strides[1],
                             level_root=True, root_residual=root_residual, **kwargs)),
-            ('layer5', Tree(block, channels[3], channels[4], levels=levels[2], stride=2,
+            ('layer5', Tree(block, channels[3], channels[4], levels=levels[2], stride=strides[2],
                             level_root=True, root_residual=root_residual, **kwargs)),
-            ('layer6', Tree(block, channels[4], channels[5], levels=levels[3], stride=2,
+            ('layer6', Tree(block, channels[4], channels[5], levels=levels[3], stride=strides[3],
                             level_root=True, root_residual=root_residual, **kwargs)),
         ]))
         self.pool = nn.AdaptiveAvgPool2d(1)

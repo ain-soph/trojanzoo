@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from torchvision.models.resnet import conv3x3
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.utils.model_archs import dla
 
@@ -31,11 +32,14 @@ class _DLA(_ImageModel):
     def __init__(self, name: str = 'dla', **kwargs):
         super().__init__(**kwargs)
         ModelClass: Callable[..., dla.DLA] = getattr(dla, name.replace('_comp', ''))
-        _model = ModelClass(num_classes=self.num_classes)
         if 'comp' in name:
+            _model = ModelClass(num_classes=self.num_classes, strides=[1, 2, 2, 2])
             conv1: nn.Conv2d = _model.features[0][0]
-            _model.features[0][0] = nn.Conv2d(conv1.in_channels, conv1.out_channels,
-                                              kernel_size=3, stride=1, padding=1, bias=False)
+            _model.features[0][0] = dla.conv3x3(conv1.in_channels, conv1.out_channels)  # stem.conv kernel_size: 7 -> 3
+            conv3: nn.Conv2d = _model.features[2][0]
+            _model.features[2][0] = dla.conv3x3(conv3.in_channels, conv3.out_channels)  # layer2.conv stride: 2 -> 1
+        else:
+            _model = ModelClass(num_classes=self.num_classes)
         self.features = _model.features
         self.classifier = _model.classifier
 
