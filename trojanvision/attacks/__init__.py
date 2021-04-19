@@ -17,8 +17,9 @@ class_dict = {
     # 'advmind': AdvMind,
 
     # poisoning attack
-    'poison_basic': PoisonBasic,
     'imc_poison': IMC_Poison,
+    'poison_basic': PoisonBasic,
+    'poison_random': PoisonRandom,
 
     # backdoor attack
     'badnet': BadNet,
