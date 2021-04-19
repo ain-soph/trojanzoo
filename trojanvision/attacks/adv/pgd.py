@@ -36,7 +36,7 @@ class PGD(Attack, PGD_Optimizer):
         group.add_argument('--stop_threshold', dest='stop_threshold', type=float,
                            help='early stop confidence, defaults to 0.99')
         group.add_argument('--target_idx', dest='target_idx', type=int,
-                           help='Target label order in original classification, defaults to 1 '
+                           help='Target label order in original classification, defaults to -1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
         group.add_argument('--test_num', dest='test_num', type=int,
                            help='total number of test examples for PGD, defaults to 1000.')
@@ -48,7 +48,7 @@ class PGD(Attack, PGD_Optimizer):
         group.add_argument('--sigma', dest='sigma', type=float,
                            help='gaussian sampling std for black box gradient estimation, defaults to 1e-3')
 
-    def __init__(self, target_idx: int = 1, test_num: int = 1000, **kwargs):
+    def __init__(self, target_idx: int = -1, test_num: int = 1000, **kwargs):
         self.target_idx = target_idx
         self.test_num = test_num
         super().__init__(**kwargs)
