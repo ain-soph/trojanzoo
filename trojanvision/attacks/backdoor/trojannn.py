@@ -95,7 +95,9 @@ class TrojanNN(BadNet):
             return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
 
     def get_neuron_value(self, x: torch.Tensor, neuron_idx: torch.Tensor) -> torch.Tensor:
-        return self.model.get_layer(x, layer_output=self.preprocess_layer)[:, neuron_idx].abs().mean()
+        fm = self.model.get_layer(x, layer_output=self.preprocess_layer)
+        loss: torch.Tensor = fm[:, neuron_idx].flatten(1).norm(p=2, dim=1)
+        return loss.mean()
 
     # train the mark to activate the least-used neurons.
     def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs) -> torch.Tensor:
@@ -103,10 +105,10 @@ class TrojanNN(BadNet):
             print("Neuron Value Before Preprocessing: ",
                   float(self.get_neuron_value(mark.unsqueeze(0), neuron_idx)))
 
-        def loss_fn(X: torch.Tensor):
+        def loss_fn(X: torch.Tensor) -> torch.Tensor:
             fm = self.model.get_layer(X, layer_output=self.preprocess_layer)
-            loss = fm[:, neuron_idx].mean(dim=0) - self.target_value
-            return loss.norm(p=2)
+            loss: torch.Tensor = (fm[:, neuron_idx] - self.target_value).flatten(1).norm(p=2, dim=1)
+            return loss.mean()
         noise = torch.zeros_like(mark.unsqueeze(0))
         x = mark.unsqueeze(0)
         for _iter in range(self.neuron_epoch):
