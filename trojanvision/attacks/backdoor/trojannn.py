@@ -23,7 +23,7 @@ class TrojanNN(BadNet):
 
     Args:
         preprocess_layer (str): The preprocess layer.
-        threshold (float): the target class. Default: ``5``.
+        threshold (float): the target threshold. Default: ``5``.
         target_value (float): The proportion of malicious images in the training set (Max 0.5). Default: 10.
 
     .. _TrojanNN:
