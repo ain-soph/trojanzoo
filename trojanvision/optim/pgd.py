@@ -27,12 +27,11 @@ class PGD(trojanzoo.optim.Optimizer):
 
     name: str = 'pgd'
 
-    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_eps: float = 8.0 / 255,
-                 iteration: int = 7, stop_threshold: float = 0.99,
+    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_eps: float = 8.0 / 255, iteration: int = 7,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
                  grad_method: str = 'white', query_num: int = 100, sigma: float = 1e-3,
                  hess_b: int = 100, hess_p: int = 1, hess_lambda: float = 1, **kwargs):
-        super().__init__(iteration=iteration, stop_threshold=stop_threshold, **kwargs)
+        super().__init__(iteration=iteration, **kwargs)
         self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'norm', 'universal']
 
         self.pgd_alpha = pgd_alpha
