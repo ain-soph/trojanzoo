@@ -100,12 +100,13 @@ class PGD(Attack, PGD_Optimizer):
         if len(_input) == 0:
             return _input, None
         target_idx = self.target_idx if target_idx is None else target_idx
+        if target is None:
+            target = self.generate_target(_input, idx=target_idx)
+        elif isinstance(target, int):
+            target = target * torch.ones(len(_input), dtype=torch.long, device=_input.device)
+        else:
+            assert isinstance(target, torch.Tensor)
         if loss_fn is None and self.loss_fn is None:
-            if target is None:
-                target = self.generate_target(_input, idx=target_idx)
-            elif isinstance(target, int):
-                target = target * torch.ones(len(_input), dtype=torch.long, device=_input.device)
-
             def _loss_fn(_X: torch.Tensor, **kwargs):
                 t = target
                 if len(_X) != len(target) and len(target) == 1:
