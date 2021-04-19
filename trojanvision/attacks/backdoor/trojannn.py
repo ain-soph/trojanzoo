@@ -95,7 +95,7 @@ class TrojanNN(BadNet):
             return torch.stack(result).sum(dim=0).argsort(descending=False)[:self.neuron_num]
 
     def get_neuron_value(self, x: torch.Tensor, neuron_idx: torch.Tensor) -> torch.Tensor:
-        return self.model.get_layer(x, layer_output=self.preprocess_layer)[:, neuron_idx].mean()
+        return self.model.get_layer(x, layer_output=self.preprocess_layer)[:, neuron_idx].abs().mean()
 
     # train the mark to activate the least-used neurons.
     def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs) -> torch.Tensor:
