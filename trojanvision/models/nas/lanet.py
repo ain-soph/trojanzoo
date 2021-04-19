@@ -20,11 +20,11 @@ class LaNet(DARTS):
     available_models = ['lanet']
     model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }
 
-    def __init__(self, name: str = 'lanet', layer: int = 24, C: int = 128,
+    def __init__(self, name: str = 'lanet', layers: int = 24, C: int = 128,
                  arch: list[int] = cifar_arch, model: type[_DARTS] = _DARTS, **kwargs):
         genotype = translator(gen_code_from_list(arch))
         self.arch = arch
-        super().__init__(name=name, layer=layer, C=C, genotype=genotype, model=model, std_conv=True, **kwargs)
+        super().__init__(name=name, layers=layers, C=C, genotype=genotype, model=model, std_conv=True, **kwargs)
         self.param_list['lanet'] = ['arch']
 
     def get_official_weights(self, dataset: str = None, **kwargs) -> OrderedDict[str, torch.Tensor]:
