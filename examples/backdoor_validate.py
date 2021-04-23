@@ -6,9 +6,6 @@ from trojanvision.attacks import BadNet
 from trojanvision.utils import summary
 import argparse
 
-import warnings
-warnings.filterwarnings("ignore")
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     trojanvision.environ.add_argument(parser)

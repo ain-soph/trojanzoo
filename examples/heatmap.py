@@ -5,9 +5,6 @@ from trojanvision.utils import save_tensor_as_img
 from trojanvision.utils import summary, superimpose
 import argparse
 
-import warnings
-warnings.filterwarnings("ignore")
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     trojanvision.environ.add_argument(parser)

@@ -5,9 +5,6 @@ from trojanplot import *
 import argparse
 import numpy as np
 
-import warnings
-warnings.filterwarnings("ignore")
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

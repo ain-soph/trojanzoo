@@ -11,9 +11,6 @@ import os
 from trojanvision.attacks import BadNet, Unlearn
 from trojanvision.defenses import NeuralCleanse
 
-import warnings
-warnings.filterwarnings("ignore")
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
