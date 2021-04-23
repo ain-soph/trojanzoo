@@ -89,6 +89,8 @@ class ImageModel(Model):
             self.param_list['adv_train'] = ['adv_train_iter', 'adv_train_alpha',
                                             'adv_train_eps', 'adv_train_valid_eps']
             self.suffix += '_adv_train'
+            if 'suffix' not in self.param_list['model']:
+                self.param_list['model'].append('suffix')
         self._model: _ImageModel
         self.dataset: ImageSet
         self.pgd = None  # TODO: python 3.10 type annotation
@@ -211,7 +213,7 @@ class ImageModel(Model):
                                                get_data_fn=None, **kwargs)
                 _, adv_acc = validate_fn_old(print_prefix='Validate Adv', main_tag='valid adv',
                                              get_data_fn=functools.partial(get_data_fn, adv=True), **kwargs)
-                return adv_acc, clean_acc
+                return adv_acc, clean_acc + adv_acc
 
             after_loss_fn = after_loss_fn_new
             validate_fn = validate_fn_new
