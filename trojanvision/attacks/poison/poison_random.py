@@ -56,7 +56,7 @@ class PoisonRandom(Attack):
         _input = torch.stack(_input)
 
         _label = torch.tensor(_label, dtype=torch.long)
-        _label += torch.randint_like(_label, high=self.model.num_classes)
+        _label += torch.randint_like(_label, low=1, high=self.model.num_classes)
         _label %= self.model.num_classes
         _label = _label.tolist()
         poison_dataset = TensorListDataset(_input, _label)
