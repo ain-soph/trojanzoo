@@ -85,7 +85,7 @@ class PoisonRandom(Attack):
         if random.uniform(0, 1) < decimal:
             integer += 1
         if integer:
-            _label[:integer] += torch.randint_like(_label[:integer], high=self.model.num_classes)
+            _label[:integer] += torch.randint_like(_label[:integer], low=1, high=self.model.num_classes)
             _label[:integer] %= self.model.num_classes
         return _input, _label
 
