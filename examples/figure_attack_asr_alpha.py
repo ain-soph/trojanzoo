@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanplot import *
+from alpsplot import *
 
 import argparse
 import numpy as np

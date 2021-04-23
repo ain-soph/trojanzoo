@@ -1,4 +1,4 @@
-from trojanplot import Figure, ting_color
+from alpsplot import Figure, ting_color
 
 
 if __name__ == '__main__':

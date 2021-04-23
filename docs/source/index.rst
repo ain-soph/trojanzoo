@@ -44,7 +44,7 @@ TrojanZoo is a universal pytorch platform for conducting security researches (es
    :maxdepth: 1
    :caption: TrojanPlot
 
-   trojanplot/*
+   alpsplot/*
 
 ..    torchvision <https://pytorch.org/vision>
 ..    TrojanZoo on XLA Devices <http://pytorch.org/xla/>
