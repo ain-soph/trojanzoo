@@ -101,7 +101,7 @@ class Figure:
     def curve(self, x: np.ndarray, y: np.ndarray, color: str = 'black', linewidth: int = 2,
               label: str = None, markerfacecolor: str = 'white', linestyle: str = '-', zorder: int = 1, **kwargs) -> Line2D:
         # linestyle marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
-        ax = seaborn.lineplot(x, y, ax=self.ax, color=color, linewidth=linewidth,
+        ax = seaborn.lineplot(x=x, y=y, ax=self.ax, color=color, linewidth=linewidth,
                               markerfacecolor=markerfacecolor, zorder=zorder, **kwargs)
         line: Line2D = ax.get_lines()[-1]
         line.set_linestyle(linestyle)
@@ -121,7 +121,7 @@ class Figure:
         # marker markeredgecolor markeredgewidth markerfacecolor markersize alpha
         if label is not None:
             self.curve_legend(label=label, color=color, linewidth=linewidth, marker=marker, **kwargs)
-        return self.ax.scatter(x, y, color=color, linewidth=linewidth, marker=marker, facecolor=facecolor, zorder=zorder, **kwargs)
+        return self.ax.scatter(x=x, y=y, color=color, linewidth=linewidth, marker=marker, facecolor=facecolor, zorder=zorder, **kwargs)
 
 # Markers
 # '.' point marker
@@ -274,8 +274,8 @@ class Figure:
         new_x = torch.zeros_like(_x)
         for i in range(len(_x)):
             if i < window // 2:
-                new_x[i] = (_x[0] * (window // 2 - i)
-                            + _x[: i + (window + 1) // 2].sum()) / window
+                new_x[i] = (_x[0] * (window // 2 - i) +
+                            _x[: i + (window + 1) // 2].sum()) / window
             elif i >= len(_x) - (window - 1) // 2:
                 new_x[i] = (_x[-1] * ((window + 1) // 2 - len(_x) + i) +
                             _x[i - window // 2:].sum()) / window
