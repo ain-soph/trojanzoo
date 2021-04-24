@@ -52,6 +52,8 @@ class PoisonRandom(Attack):
     def mix_dataset(self) -> torch.utils.data.Dataset:
         clean_dataset = self.dataset.loader['train'].dataset
         subset, otherset = ImageSet.split_set(clean_dataset, percent=self.poison_percent)
+        if not len(subset):
+            return clean_dataset
         _input, _label = dataset_to_list(subset)
         _input = torch.stack(_input)
 
