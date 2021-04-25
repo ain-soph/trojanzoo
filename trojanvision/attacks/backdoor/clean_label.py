@@ -100,7 +100,7 @@ class CleanLabel(BadNet):
 
         target_class_dataset = self.dataset.get_dataset('train', full=True, classes=[self.target_class])
 
-        sample_target_class_dataset, target_original_dataset = self.dataset.split_set(
+        sample_target_class_dataset, target_original_dataset = self.dataset.split_dataset(
             target_class_dataset, self.poison_num)
         sample_target_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_target_class_dataset,
                                                                batch_size=self.poison_num, num_workers=0)
@@ -127,7 +127,7 @@ class CleanLabel(BadNet):
             for source_class in other_classes:
                 print('Process data of Source Class: ', source_class)
                 source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
-                sample_source_class_dataset, _ = self.dataset.split_set(
+                sample_source_class_dataset, _ = self.dataset.split_dataset(
                     source_class_dataset, self.poison_num)
                 sample_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_source_class_dataset,
                                                                              batch_size=self.poison_num, num_workers=0)

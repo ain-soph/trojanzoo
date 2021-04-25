@@ -132,7 +132,7 @@ class Dataset:
             else:
                 dataset = self.get_org_dataset(mode='train', transform=transform, **kwargs)
                 subset = {}
-                subset['train'], subset['valid'] = self.split_set(
+                subset['train'], subset['valid'] = self.split_dataset(
                     dataset, percent=self.split_ratio, seed=seed)
                 return subset[mode]
         except RuntimeError as e:
@@ -146,11 +146,11 @@ class Dataset:
                 dataset = self.get_full_dataset(mode=mode, **kwargs)
             elif mode == 'train':
                 fullset = self.get_full_dataset(mode='train', **kwargs)
-                dataset, _ = self.split_set(fullset, length=self.train_sample, seed=seed)
+                dataset, _ = self.split_dataset(fullset, length=self.train_sample, seed=seed)
             else:
                 fullset = self.get_full_dataset(mode='valid', **kwargs)
                 subset: dict[str, torch.utils.data.Subset] = {}
-                subset['test'], subset['valid'] = self.split_set(
+                subset['test'], subset['valid'] = self.split_dataset(
                     fullset, percent=self.test_ratio, seed=seed)
                 dataset = subset[mode]
         if classes is not None:
@@ -184,7 +184,7 @@ class Dataset:
                                            num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
     @staticmethod
-    def split_set(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
+    def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
                   length: int = None, percent=None, seed: int = None
                   ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
         seed = env['seed'] if seed is None else seed

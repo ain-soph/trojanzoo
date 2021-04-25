@@ -57,7 +57,7 @@ class SpectralSignature(BackdoorDefense):
         self.epsilon: int = epsilon
         self.retrain_epoch: int = retrain_epoch
 
-        self.clean_dataset, _ = self.dataset.split_set(
+        self.clean_dataset, _ = self.dataset.split_dataset(
             dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
         label_all = torch.empty([])    # TODO
         clean_input_all = torch.empty([])    # TODO
@@ -74,7 +74,7 @@ class SpectralSignature(BackdoorDefense):
         self.clean_dataset = TensorDataset(clean_input_all, label_all)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
 
-        self.poison_dataset, _ = self.dataset.split_set(dataset=_, length=self.poison_image_num)
+        self.poison_dataset, _ = self.dataset.split_dataset(dataset=_, length=self.poison_image_num)
         label_all = torch.empty([])    # TODO
         poison_input_all = torch.empty([])    # TODO
         for i, data in enumerate(iter(self.poison_dataset)):

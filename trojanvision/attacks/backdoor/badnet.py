@@ -83,7 +83,7 @@ class BadNet(Attack):
 
     def mix_dataset(self, poison_label: bool = True) -> torch.utils.data.Dataset:
         clean_dataset = self.dataset.loader['train'].dataset
-        subset, _ = ImageSet.split_set(clean_dataset, percent=self.poison_percent)
+        subset, _ = ImageSet.split_dataset(clean_dataset, percent=self.poison_percent)
         _input, _label = dataset_to_list(subset)
         _input = torch.stack(_input)
 

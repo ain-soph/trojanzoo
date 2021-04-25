@@ -57,7 +57,7 @@ class NeuronInspect(BackdoorDefense):
 
     def get_explation_feature(self) -> list[float]:
         dataset = self.dataset.get_dataset(mode='train')
-        subset, _ = self.dataset.split_set(dataset, percent=self.sample_ratio)
+        subset, _ = self.dataset.split_dataset(dataset, percent=self.sample_ratio)
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
         _input, _label = zip(*subset)

@@ -93,14 +93,14 @@ class ActivationClustering(BackdoorDefense):
 
         self.retrain_epoch = retrain_epoch
 
-        self.clean_dataset, _ = self.dataset.split_set(
+        self.clean_dataset, _ = self.dataset.split_dataset(
             self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
-        # clean_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
+        # clean_dataset, _ = self.dataset.split_dataset(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
         # clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=self.clean_image_num, num_workers=0)
         # clean_imgs, _ = self.model.get_data(next(iter(clean_dataloader)))
         # self.clean_dataset = TensorDataset(clean_imgs, _)
 
-        poison_dataset, _ = self.dataset.split_set(self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
+        poison_dataset, _ = self.dataset.split_dataset(self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
         poison_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=0)
         poison_imgs, _ = self.model.get_data(next(iter(poison_dataloader)))
