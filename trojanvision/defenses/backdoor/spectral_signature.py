@@ -120,7 +120,7 @@ class SpectralSignature(BackdoorDefense):
         """
         final_set = None    # TODO
         for k in range(self.dataset.num_classes):
-            # self.class_dataset = self.dataset.get_class_set(self.mix_dataset,classes = [k])
+            # self.class_dataset = self.dataset.get_class_subset(self.mix_dataset,classes = [k])
             idx = []
             for i, data in enumerate(self.mix_dataset):
                 _input, _label = self.model.get_data(data)

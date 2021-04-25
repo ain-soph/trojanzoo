@@ -154,7 +154,7 @@ class Dataset:
                     fullset, percent=self.test_ratio, seed=seed)
                 dataset = subset[mode]
         if classes is not None:
-            dataset = self.get_class_set(dataset=dataset, classes=classes)
+            dataset = self.get_class_subset(dataset=dataset, classes=classes)
         return dataset
 
     @staticmethod
