@@ -3,7 +3,7 @@
 from trojanzoo.configs import config, Config
 from trojanzoo.environ import env
 from trojanzoo.utils import get_name, to_tensor
-from trojanzoo.utils.data import dataset_to_list
+from trojanzoo.utils.data import dataset_to_list, split_dataset, get_class_subset
 from trojanzoo.utils.output import ansi, prints, Indent_Redirect
 
 import torch
@@ -158,17 +158,9 @@ class Dataset:
         return dataset
 
     @staticmethod
-    def get_class_set(dataset: torch.utils.data.Dataset, classes: list[int]) -> torch.utils.data.Subset:
-        indices = np.arange(len(dataset))
-        if isinstance(dataset, torch.utils.data.Subset):
-            idx = np.array(dataset.indices)
-            indices = idx[indices]
-            dataset = dataset.dataset
-        _, targets = dataset_to_list(dataset=dataset, label_only=True)
-        idx_bool = np.isin(targets, classes)
-        idx = np.arange(len(dataset))[idx_bool]
-        idx = np.intersect1d(idx, indices)
-        return torch.utils.data.Subset(dataset, idx)
+    def get_class_subset(dataset: torch.utils.data.Dataset,
+                         classes: list[int]) -> torch.utils.data.Subset:
+        return get_class_subset(dataset, classes)
 
     def get_dataloader(self, mode: str = None, dataset: torch.utils.data.Dataset = None,
                        batch_size: int = None, shuffle: bool = None,
@@ -193,20 +185,10 @@ class Dataset:
 
     @staticmethod
     def split_set(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                  length: int = None, percent=None, seed: int = None) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
-        assert (length is None) != (percent is None)  # XOR check
+                  length: int = None, percent=None, seed: int = None
+                  ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
         seed = env['seed'] if seed is None else seed
-        length = length if length is not None else int(len(dataset) * percent)
-        indices = np.arange(len(dataset))
-        np.random.seed(seed)
-        np.random.shuffle(indices)
-        if isinstance(dataset, torch.utils.data.Subset):
-            idx = np.array(dataset.indices)
-            indices = idx[indices]
-            dataset = dataset.dataset
-        subset1 = torch.utils.data.Subset(dataset, indices[:length])
-        subset2 = torch.utils.data.Subset(dataset, indices[length:])
-        return subset1, subset2
+        return split_dataset(dataset, length, percent, seed)
 
     def get_loss_weights(self, file_path: str = None, verbose: bool = None) -> np.ndarray:
         file_path = file_path if file_path is not None else os.path.join(self.folder_path, 'loss_weights.npy')

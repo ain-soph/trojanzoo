@@ -72,3 +72,35 @@ def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int = None,
         assert len(dataset) > max(idx)
     subset = torch.utils.data.Subset(dataset, idx)
     return dataset_to_list(subset)
+
+
+def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
+                  length: int = None, percent=None, seed: int = None
+                  ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
+    assert (length is None) != (percent is None)  # XOR check
+    length = length if length is not None else int(len(dataset) * percent)
+    indices = np.arange(len(dataset))
+    if seed is not None:
+        np.random.seed(seed)
+        np.random.shuffle(indices)
+    if isinstance(dataset, torch.utils.data.Subset):
+        idx = np.array(dataset.indices)
+        indices = idx[indices]
+        dataset = dataset.dataset
+    subset1 = torch.utils.data.Subset(dataset, indices[:length])
+    subset2 = torch.utils.data.Subset(dataset, indices[length:])
+    return subset1, subset2
+
+
+def get_class_subset(dataset: torch.utils.data.Dataset,
+                  classes: list[int]) -> torch.utils.data.Subset:
+    indices = np.arange(len(dataset))
+    if isinstance(dataset, torch.utils.data.Subset):
+        idx = np.array(dataset.indices)
+        indices = idx[indices]
+        dataset = dataset.dataset
+    _, targets = dataset_to_list(dataset=dataset, label_only=True)
+    idx_bool = np.isin(targets, classes)
+    idx = np.arange(len(dataset))[idx_bool]
+    idx = np.intersect1d(idx, indices)
+    return torch.utils.data.Subset(dataset, idx)
