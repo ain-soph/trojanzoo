@@ -22,6 +22,7 @@ __pycache__
 .pytest_cache
 
 # Filter Directory
+/bash
 /configs
 /cmd_config
 /data
