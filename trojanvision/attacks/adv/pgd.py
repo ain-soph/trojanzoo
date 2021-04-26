@@ -90,9 +90,14 @@ class PGD(Attack, PGD_Optimizer):
                 print('avg  iter: ', float(total_iter) / total)
                 print(f'total conf: {total_conf / total:<10.3f}')
                 if correct > 0:
-                    print(f'succ  conf: {succ_conf / correct:<10.3f}')
+                        print(f'succ  conf: {succ_conf / correct:<10.3f}')
                 print('-------------------------------------------------')
                 print()
+        print('succ rate: ', float(correct) / total)
+        print('avg  iter: ', float(total_iter) / total)
+        if correct > 0:
+            print(f'succ  conf: {succ_conf / correct:<10.3f}')
+                
         return float(correct) / total, float(total_iter) / total
 
     def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
