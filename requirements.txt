@@ -8,4 +8,3 @@ numpy
 scikit-learn
 scipy
 matplotlib
-seaborn
