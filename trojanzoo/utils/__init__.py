@@ -3,7 +3,7 @@
 import torch.cuda
 
 from .tensor import *
-from .miscellaneous import *
+from .others import *
 from .environ import env
 from .param import *
 
