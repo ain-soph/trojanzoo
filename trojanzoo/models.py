@@ -285,7 +285,7 @@ class Model:
         #     num_classes = num_classes if num_classes is not None else self.num_classes
 
         #     def jsd(_output: torch.Tensor, _label: torch.Tensor, **kwargs):
-        #         p = onehot_label(_label, num_classes)
+        #         p: torch.Tensor = F.one_hot(_label, num_classes)
         #         q: torch.Tensor = F.softmax(_output)
         #         log_q = F.log_softmax(_output)
         #         sum_pq = p + q
@@ -423,14 +423,13 @@ class Model:
                         get_data_fn, loss_fn,
                         writer, main_tag, tag, _epoch, **kwargs)
 
-
     def _compare(self, peer: nn.Module = None, num_classes: int = None,
-                  full=True, loader: torch.utils.data.DataLoader = None,
-                  print_prefix='Validate', indent=0, verbose=True,
-                  get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                  loss_fn: Callable[..., torch.Tensor] = None,
-                  writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
-                  **kwargs) -> tuple[float, float]:
+                 full=True, loader: torch.utils.data.DataLoader = None,
+                 print_prefix='Validate', indent=0, verbose=True,
+                 get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                 loss_fn: Callable[..., torch.Tensor] = None,
+                 writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
+                 **kwargs) -> tuple[float, float]:
         module1 = self
         module2 = peer
         num_classes = self.num_classes if num_classes is None else num_classes
@@ -439,11 +438,9 @@ class Model:
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
         loss_fn = loss_fn if loss_fn is not None else self.loss
         return compare(module1, module2, num_classes, loader,
-                        print_prefix, indent, verbose,
-                        get_data_fn, loss_fn,
-                        writer, main_tag, tag, _epoch, **kwargs)
-
-
+                       print_prefix, indent, verbose,
+                       get_data_fn, loss_fn,
+                       writer, main_tag, tag, _epoch, **kwargs)
 
     # -------------------------------------------Utility--------------------------------------- #
 

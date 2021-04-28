@@ -4,11 +4,11 @@ from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
 from trojanzoo.utils import to_tensor, normalize_mad, jaccard_idx
 from trojanzoo.utils import AverageMeter
-from trojanzoo.utils import onehot_label
 from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import time
@@ -203,7 +203,8 @@ class Generator(nn.Module):
             self.cuda()
 
     def forward(self, noise: torch.Tensor, poison_label: torch.Tensor) -> torch.Tensor:
-        _label = onehot_label(poison_label, self.num_classes).float()
+        _label: torch.Tensor = F.one_hot(poison_label, self.num_classes)
+        _label = _label.float()
         y_ = self.fc2(_label)
         y_ = self.relu(y_)
         x = torch.cat([noise, y_], dim=1)
