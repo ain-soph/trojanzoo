@@ -406,8 +406,8 @@ class Model:
                      writer, main_tag, tag, verbose, indent, **kwargs)
 
     def _validate(self, module: nn.Module = None, num_classes: int = None,
-                  full=True, loader: torch.utils.data.DataLoader = None,
-                  print_prefix='Validate', indent=0, verbose=True,
+                  full: bool = True, loader: torch.utils.data.DataLoader = None,
+                  print_prefix:str='Validate', indent:int=0, verbose:bool=True,
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                   loss_fn: Callable[..., torch.Tensor] = None,
                   writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
@@ -423,24 +423,18 @@ class Model:
                         get_data_fn, loss_fn,
                         writer, main_tag, tag, _epoch, **kwargs)
 
-    def _compare(self, peer: nn.Module = None, num_classes: int = None,
-                 full=True, loader: torch.utils.data.DataLoader = None,
-                 print_prefix='Validate', indent=0, verbose=True,
+    def _compare(self, peer: nn.Module = None, full: bool = True, loader: torch.utils.data.DataLoader = None,
+                 print_prefix: str = 'Validate', indent: int = 0, verbose: bool = True,
                  get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                 loss_fn: Callable[..., torch.Tensor] = None,
-                 writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
                  **kwargs) -> tuple[float, float]:
-        module1 = self
+        module1 = self  # TODO: type annotation issues (solve in python 3.10)
         module2 = peer
-        num_classes = self.num_classes if num_classes is None else num_classes
         if loader is None:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        loss_fn = loss_fn if loss_fn is not None else self.loss
-        return compare(module1, module2, num_classes, loader,
+        return compare(module1, module2, loader,
                        print_prefix, indent, verbose,
-                       get_data_fn, loss_fn,
-                       writer, main_tag, tag, _epoch, **kwargs)
+                       get_data_fn, **kwargs)
 
     # -------------------------------------------Utility--------------------------------------- #
 

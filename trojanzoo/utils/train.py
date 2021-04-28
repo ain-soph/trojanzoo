@@ -139,7 +139,7 @@ def train(module: nn.Module, num_classes: int,
 
 
 def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataLoader,
-             print_prefix='Validate', indent=0, verbose=True,
+             print_prefix: str = 'Validate', indent: int = 0, verbose: bool = True,
              get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
              loss_fn: Callable[..., torch.Tensor] = None,
              writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
@@ -178,23 +178,19 @@ def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataL
     return loss, acc
 
 
-
-def compare(module1: nn.Module, module2: nn.Module, num_classes: int, loader: torch.utils.data.DataLoader,
-             print_prefix='Validate', indent=0, verbose=True,
-             get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-             loss_fn: Callable[..., torch.Tensor] = None,
-             writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
-             **kwargs) -> tuple[float, float]:
+def compare(module1: nn.Module, module2: nn.Module, loader: torch.utils.data.DataLoader,
+            print_prefix='Validate', indent=0, verbose=True,
+            get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+            **kwargs) -> float:
+    logsoftmax = nn.LogSoftmax(dim=1)
+    softmax = nn.Softmax(dim=1)
     module1.eval()
     module2.eval()
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
 
-    def cross_entropy(output, target):
-        logsoftmax = nn.LogSoftmax(dim=1)
-        softmax = nn.Softmax(dim=1)
-        return torch.mean(torch.sum(-softmax(target) * logsoftmax(output), 1))
-
-    loss_fn = cross_entropy
+    def cross_entropy(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
+        result: torch.Tensor = -softmax(p) * logsoftmax(q)
+        return result.sum(1).mean()
 
     logger = MetricLogger()
     logger.meters['loss'] = SmoothedValue()
@@ -206,13 +202,11 @@ def compare(module1: nn.Module, module2: nn.Module, num_classes: int, loader: to
             header = '{upline}{clear_line}'.format(**ansi) + header
             loader_epoch = tqdm(loader_epoch)
         loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-    for data in loader_epoch:
-        _input, _label = get_data_fn(data, mode='valid', **kwargs)
-        with torch.no_grad():
-            _output1, _output2 = module1(_input), module2(_input) 
-            loss = float(loss_fn(_output1, _output2))
+    with torch.no_grad():
+        for data in loader_epoch:
+            _input, _label = get_data_fn(data, **kwargs)
+            _output1, _output2 = module1(_input), module2(_input)
+            loss = float(cross_entropy(_output1, _output2))
             batch_size = int(_label.size(0))
             logger.meters['loss'].update(loss, batch_size)
-    loss = logger.meters['loss'].global_avg
-    return loss
-
+    return logger.meters['loss'].global_avg
