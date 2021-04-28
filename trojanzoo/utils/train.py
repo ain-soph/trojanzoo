@@ -176,3 +176,43 @@ def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataL
         writer.add_scalars(main_tag='Loss/' + main_tag, tag_scalar_dict={tag: loss}, global_step=_epoch)
         writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc}, global_step=_epoch)
     return loss, acc
+
+
+
+def compare(module1: nn.Module, module2: nn.Module, num_classes: int, loader: torch.utils.data.DataLoader,
+             print_prefix='Validate', indent=0, verbose=True,
+             get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+             loss_fn: Callable[..., torch.Tensor] = None,
+             writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
+             **kwargs) -> tuple[float, float]:
+    module1.eval()
+    module2.eval()
+    get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
+
+    def cross_entropy(output, target):
+        logsoftmax = nn.LogSoftmax(dim=1)
+        softmax = nn.Softmax(dim=1)
+        return torch.mean(torch.sum(-softmax(target) * logsoftmax(output), 1))
+
+    loss_fn = cross_entropy
+
+    logger = MetricLogger()
+    logger.meters['loss'] = SmoothedValue()
+    loader_epoch = loader
+    if verbose:
+        header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
+        header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
+        if env['tqdm']:
+            header = '{upline}{clear_line}'.format(**ansi) + header
+            loader_epoch = tqdm(loader_epoch)
+        loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
+    for data in loader_epoch:
+        _input, _label = get_data_fn(data, mode='valid', **kwargs)
+        with torch.no_grad():
+            _output1, _output2 = module1(_input), module2(_input) 
+            loss = float(loss_fn(_output1, _output2))
+            batch_size = int(_label.size(0))
+            logger.meters['loss'].update(loss, batch_size)
+    loss = logger.meters['loss'].global_avg
+    return loss
+

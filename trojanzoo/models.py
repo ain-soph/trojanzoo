@@ -5,7 +5,7 @@ from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils import add_noise, get_name, to_tensor
 from trojanzoo.utils.model import *
-from trojanzoo.utils.train import train, validate
+from trojanzoo.utils.train import train, validate, compare
 from trojanzoo.utils.output import ansi, prints
 
 import torch
@@ -422,6 +422,29 @@ class Model:
                         print_prefix, indent, verbose,
                         get_data_fn, loss_fn,
                         writer, main_tag, tag, _epoch, **kwargs)
+
+
+    def _compare(self, peer: nn.Module = None, num_classes: int = None,
+                  full=True, loader: torch.utils.data.DataLoader = None,
+                  print_prefix='Validate', indent=0, verbose=True,
+                  get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+                  loss_fn: Callable[..., torch.Tensor] = None,
+                  writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
+                  **kwargs) -> tuple[float, float]:
+        module1 = self
+        module2 = peer
+        num_classes = self.num_classes if num_classes is None else num_classes
+        if loader is None:
+            loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
+        get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
+        loss_fn = loss_fn if loss_fn is not None else self.loss
+        return compare(module1, module2, num_classes, loader,
+                        print_prefix, indent, verbose,
+                        get_data_fn, loss_fn,
+                        writer, main_tag, tag, _epoch, **kwargs)
+
+
+
     # -------------------------------------------Utility--------------------------------------- #
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
