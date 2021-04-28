@@ -2,7 +2,7 @@
 
 from .output import ansi
 from .param import Param
-from .miscellaneous import get_name
+from .others import get_name
 from trojanzoo.configs import config
 
 import torch
