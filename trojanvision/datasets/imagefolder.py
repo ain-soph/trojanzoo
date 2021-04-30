@@ -35,8 +35,10 @@ class ImageFolder(ImageSet):
         super().add_argument(group)
         group.add_argument('--data_format', dest='data_format', type=str,
                            help='folder or zip. (zip is using ZIP_STORED)')
+        group.add_argument('--memory', dest='memory', action='store_true',
+                           help='put all dataset into memory initialization.')
 
-    def __init__(self, data_format: str = 'folder', memory: bool = True, **kwargs):
+    def __init__(self, data_format: str = 'folder', memory: bool = False, **kwargs):
         assert data_format in ['folder', 'zip']
         self.data_format: str = data_format
         self.memory: bool = memory
