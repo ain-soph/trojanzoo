@@ -5,7 +5,7 @@ batch_size:
   mnist: -512
   cifar10: 96
   cifar100: 96
-  imagenet16: 96
   gtsrb: 96
+  imagenet16: 96
 
 data_format: zip

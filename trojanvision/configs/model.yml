@@ -1,6 +1,10 @@
 default_model:
-  default: resnet18_comp
+  default: resnet18
   mnist: net
+  cifar10: resnet18_comp
+  cifar100: resnet18_comp
+  gtsrb: resnet18_comp
+  imagenet16: resnet18_comp
 
 adv_train_iter:
   default: 7
