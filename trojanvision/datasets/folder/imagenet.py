@@ -3,9 +3,10 @@
 from trojanvision.datasets.imagefolder import ImageFolder
 from trojanzoo.utils.param import Module
 
-from torchvision.datasets import ImageNet as ImageNet_Official
+from torchvision.datasets import ImageNet as PytorchImageNet
 import os
 import json
+
 from trojanvision import __file__ as root_file
 root_dir = os.path.dirname(root_file)
 
@@ -30,8 +31,8 @@ class ImageNet(ImageFolder):
         super().__init__(norm_par=norm_par, **kwargs)
 
     def initialize_folder(self):
-        ImageNet_Official(root=self.folder_path, split='train', download=True)
-        ImageNet_Official(root=self.folder_path, split='val', download=True)
+        PytorchImageNet(root=self.folder_path, split='train', download=True)
+        PytorchImageNet(root=self.folder_path, split='val', download=True)
         os.rename(os.path.join(self.folder_path, 'imagenet', 'val'),
                   os.path.join(self.folder_path, 'imagenet', 'valid'))
 
@@ -48,7 +49,7 @@ class Sample_ImageNet(ImageNet):
         _dict.__delattr__('folder_path')
         imagenet = ImageNet(**_dict)
         class_dict: dict = {}
-        json_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'class_dict.json'))
+        json_path = os.path.normpath(os.path.join(root_dir, 'data', 'sample_imagenet', 'class_dict.json'))
         with open(json_path, 'r', encoding='utf-8') as f:
             class_dict: dict = json.load(f)
         imagenet.sample(child_name=self.name, class_dict=class_dict)
