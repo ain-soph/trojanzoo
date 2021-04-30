@@ -17,14 +17,15 @@ class ISIC(ImageFolder):
 
     name: str = 'isic'
     data_shape = [3, 224, 224]
-    valid_set: bool = False
 
     def initialize_folder(self, **kwargs):
         super().initialize_folder(**kwargs)
-        self.split_class()
+        self.split_class('train')
+        if self.valid_set:
+            self.split_class('valid')
 
-    def split_class(self):
-        csv_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'label.csv'))
+    def split_class(self, mode: str = 'train'):
+        csv_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, f'{mode}.csv'))
         print(f'Collect Label Information from CSV file: {csv_path}')
         obj = pd.read_csv(csv_path)
         labels = list(obj.columns.values)
@@ -37,7 +38,7 @@ class ISIC(ImageFolder):
             new_dict[label] = org_dict['image'][org_dict[label]]
 
         print('Splitting dataset to class folders ...')
-        src_folder = os.path.normpath(os.path.join(self.folder_path, self.name, 'train'))
+        src_folder = os.path.normpath(os.path.join(self.folder_path, self.name, mode))
         if env['tqdm']:
             labels = tqdm(labels[1:])
         for label in labels:
@@ -55,6 +56,9 @@ class ISIC2018(ISIC):
 
     name: str = 'isic2018'
     num_classes = 7
-    url = {'train': 'https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip'}
-    md5 = {'train': '0c281f121070a8d63457caffcdec439a'}
-    org_folder_name = {'train': 'ISIC2018_Task3_Training_Input'}
+    url = {'train': 'https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip',
+           'valid': 'https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Validation_Input.zip'}
+    md5 = {'train': '0c281f121070a8d63457caffcdec439a',
+           'valid': 'c1fbdd4f5468b0d67c61a1b2def87077'}
+    org_folder_name = {'train': 'ISIC2018_Task3_Training_Input',
+                       'valid': 'ISIC2018_Task3_Validation_Input'}

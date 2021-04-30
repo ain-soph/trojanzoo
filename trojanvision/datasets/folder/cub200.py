@@ -42,6 +42,9 @@ class CUB200(ImageFolder):
 
     def initialize_folder(self, **kwargs):
         super().initialize_folder(**kwargs)
+        self.split()
+
+    def split(self):
         # Remove useless files
         os.remove(os.path.join(self.folder_path, '._images'))
         dirpath = os.path.join(self.folder_path, 'train')
@@ -51,7 +54,7 @@ class CUB200(ImageFolder):
                 os.remove(path)
 
         # Split Train and Valid Set
-        txt_path = os.path.normpath(os.path.join(root_dir, 'data', self.name, 'test.txt'))
+        txt_path = os.path.normpath(os.path.join(root_dir, 'data', 'cub200', 'test.txt'))
         file_list: list[str] = []
         with open(txt_path, 'r') as fp:
             file_list = fp.read().split('\n')[:-1]
@@ -79,8 +82,7 @@ class CUB200_2011(CUB200):
 
     org_folder_name = {'train': 'CUB_200_2011/images'}
 
-    def initialize_folder(self, **kwargs):
-        super(CUB200, self).initialize_folder(**kwargs)
+    def split(self):
         # Split Train and Valid Set
         src_dir = os.path.join(self.folder_path, 'total')
         dst_dir = {'train': os.path.join(self.folder_path, 'train'),
@@ -88,9 +90,9 @@ class CUB200_2011(CUB200):
         os.rename(dst_dir['train'], src_dir)
         os.remove(os.path.join(self.folder_path, 'attributes.txt'))
 
-        images = pd.read_csv(os.path.join(root_dir, 'data', self.name, 'images.txt'),
+        images = pd.read_csv(os.path.join(root_dir, 'data', 'cub200_2011', 'images.txt'),
                              sep=' ', names=['img_id', 'filepath'])
-        train_test_split = pd.read_csv(os.path.join(root_dir, 'data', self.name, 'train_test_split.txt'),
+        train_test_split = pd.read_csv(os.path.join(root_dir, 'data', 'cub200_2011', 'train_test_split.txt'),
                                        sep=' ', names=['img_id', 'is_training_img'])
         data = images.merge(train_test_split, on='img_id')
         file_dict: dict[str, list[str]] = {
