@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--nb_stolen', type=int, dest="nb_stolen", default=5000)
+    parser.add_argument('--nb_stolen', type=int, default=5000)
     trojanvision.environ.add_argument(parser)
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)

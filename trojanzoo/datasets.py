@@ -40,8 +40,7 @@ class Dataset(ABC, BasicObject):
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
-        group.add_argument('-d', '--dataset', dest='dataset_name', type=str,
-                           help='dataset name (lowercase).')
+        group.add_argument('-d', '--dataset', dest='dataset_name', help='dataset name (lowercase).')
         group.add_argument('--batch_size', type=int, help='batch size (negative number means batch_size for each gpu).')
         group.add_argument('--valid_batch_size', type=int, help='valid batch size.')
         group.add_argument('--test_batch_size', type=int, help='test batch size.')

@@ -60,22 +60,17 @@ class ActivationClustering(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--mix_image_num', dest='mix_image_num', type=int,
-                           help='the number of sampled image')
-        group.add_argument('--clean_image_ratio', dest='clean_image_ratio', type=float,
-                           help='the ratio of clean image')
-        group.add_argument('--retrain_epoch', dest='retrain_epoch', type=int,
-                           help='the epoch of retraining the model')
-        group.add_argument('--nb_clusters', dest='nb_clusters', type=int,
-                           help='')
-        group.add_argument('--clustering_method', dest='clustering_method', type=str,
-                           help='the amount of clusters')
-        group.add_argument('--nb_dims', dest='nb_dims', type=int,
+        group.add_argument('--mix_image_num', type=int, help='the number of sampled image')
+        group.add_argument('--clean_image_ratio', type=float, help='the ratio of clean image')
+        group.add_argument('--retrain_epoch', type=int, help='the epoch of retraining the model')
+        group.add_argument('--nb_clusters', type=int, help='')
+        group.add_argument('--clustering_method', type=str, help='the amount of clusters')
+        group.add_argument('--nb_dims', type=int,
                            help='the dimension set in the process of reduceing the dimensionality of data')
-        group.add_argument('--reduce_method', dest='reduce_method', type=str,
-                           help=' the method for reduing the dimensionality of data')
-        group.add_argument('--cluster_analysis', dest='cluster_analysis', type=str,
-                           help='the method chosen to analyze whether cluster is the poison cluster, including size, distance, relative-size, silhouette-scores')
+        group.add_argument('--reduce_method', type=str, help=' the method for reduing the dimensionality of data')
+        group.add_argument('--cluster_analysis', type=str, help='the method chosen to analyze whether cluster is the poison cluster, '
+                           'including size, distance, relative-size, silhouette-scores')
+        return group
 
     def __init__(self, mix_image_num: int = 100, clean_image_ratio: float = 0.95, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis: str = "exclusionary-reclassification", **kwargs):
         super().__init__(**kwargs)
@@ -100,7 +95,8 @@ class ActivationClustering(BackdoorDefense):
         # clean_imgs, _ = self.model.get_data(next(iter(clean_dataloader)))
         # self.clean_dataset = TensorDataset(clean_imgs, _)
 
-        poison_dataset, _ = self.dataset.split_dataset(self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
+        poison_dataset, _ = self.dataset.split_dataset(
+            self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
         poison_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=0)
         poison_imgs, _ = self.model.get_data(next(iter(poison_dataloader)))

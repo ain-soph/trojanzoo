@@ -24,8 +24,8 @@ class Defense(ABC, Model_Process):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('--defense', dest='defense_name')
-        group.add_argument('--defense_dir', dest='defense_dir',
-                           help='directory to contain defense results')
+        group.add_argument('--defense_dir', help='directory to contain defense results')
+        return group
 
     def __init__(self, attack: Attack = None, **kwargs):
         super().__init__(**kwargs)
@@ -37,7 +37,7 @@ class Defense(ABC, Model_Process):
 
 
 def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defense: Union[str, Defense] = None,
-                 class_dict: dict[str, type[Defense]] = {}) -> argparse._ArgumentGroup:
+                 class_dict: dict[str, type[Defense]] = {}):
     defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     group = parser.add_argument_group('{yellow}defense{reset}'.format(**ansi), description=defense_name)
     try:

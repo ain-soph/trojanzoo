@@ -23,9 +23,10 @@ class AdvTrain(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float)
-        group.add_argument('--pgd_eps', dest='pgd_eps', type=float)
-        group.add_argument('--pgd_iter', dest='pgd_iter', type=int)
+        group.add_argument('--pgd_alpha', type=float)
+        group.add_argument('--pgd_eps', type=float)
+        group.add_argument('--pgd_iter', type=int)
+        return group
 
     def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_eps: float = 8.0 / 255, pgd_iter: int = 7, **kwargs):
         super().__init__(**kwargs)

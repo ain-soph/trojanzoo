@@ -27,26 +27,20 @@ class PGD(Attack, PGD_Optimizer):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float,
-                           help='PGD learning rate per step, defaults to 2.0/255')
-        group.add_argument('--pgd_eps', dest='pgd_eps', type=float,
-                           help='Projection norm constraint, defaults to 8.0/255')
-        group.add_argument('--iteration', dest='iteration', type=int,
-                           help='Attack Iteration, defaults to 7')
-        group.add_argument('--stop_threshold', dest='stop_threshold', type=float,
-                           help='early stop confidence, defaults to 0.99')
-        group.add_argument('--target_idx', dest='target_idx', type=int,
-                           help='Target label order in original classification, defaults to -1 '
+        group.add_argument('--pgd_alpha', type=float, help='PGD learning rate per step, defaults to 2.0/255')
+        group.add_argument('--pgd_eps', type=float, help='Projection norm constraint, defaults to 8.0/255')
+        group.add_argument('--iteration', type=int, help='Attack Iteration, defaults to 7')
+        group.add_argument('--stop_threshold', type=float, help='early stop confidence, defaults to 0.99')
+        group.add_argument('--target_idx', type=int, help='Target label order in original classification, defaults to -1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
-        group.add_argument('--test_num', dest='test_num', type=int,
-                           help='total number of test examples for PGD, defaults to 1000.')
+        group.add_argument('--test_num', type=int, help='total number of test examples for PGD, defaults to 1000.')
 
-        group.add_argument('--grad_method', dest='grad_method',
-                           help='gradient estimation method, defaults to \'white\'')
-        group.add_argument('--query_num', dest='query_num', type=int,
+        group.add_argument('--grad_method', help='gradient estimation method, defaults to \'white\'')
+        group.add_argument('--query_num', type=int,
                            help='query numbers for black box gradient estimation, defaults to 100.')
-        group.add_argument('--sigma', dest='sigma', type=float,
+        group.add_argument('--sigma', type=float,
                            help='gaussian sampling std for black box gradient estimation, defaults to 1e-3')
+        return group
 
     def __init__(self, target_idx: int = -1, test_num: int = 1000, **kwargs):
         self.target_idx = target_idx
@@ -90,14 +84,14 @@ class PGD(Attack, PGD_Optimizer):
                 print('avg  iter: ', float(total_iter) / total)
                 print(f'total conf: {total_conf / total:<10.3f}')
                 if correct > 0:
-                        print(f'succ  conf: {succ_conf / correct:<10.3f}')
+                    print(f'succ  conf: {succ_conf / correct:<10.3f}')
                 print('-------------------------------------------------')
                 print()
         print('succ rate: ', float(correct) / total)
         print('avg  iter: ', float(total_iter) / total)
         if correct > 0:
             print(f'succ  conf: {succ_conf / correct:<10.3f}')
-                
+
         return float(correct) / total, float(total_iter) / total
 
     def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,

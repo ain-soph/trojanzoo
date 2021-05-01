@@ -24,8 +24,8 @@ for module in module_list:
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, ImageSet] = None,
                  config: Config = config, class_dict: dict[str, type[ImageSet]] = class_dict) -> argparse._ArgumentGroup:
-    trojanzoo.datasets.add_argument(parser=parser, dataset_name=dataset_name, dataset=dataset,
-                                    config=config, class_dict=class_dict)
+    return trojanzoo.datasets.add_argument(parser=parser, dataset_name=dataset_name, dataset=dataset,
+                                           config=config, class_dict=class_dict)
 
 
 def create(dataset_name: str = None, dataset: str = None,

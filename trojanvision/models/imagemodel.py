@@ -46,21 +46,14 @@ class ImageModel(Model):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--adv_train', dest='adv_train', action='store_true',
-                           help='enable adversarial training.')
-        group.add_argument('--adv_train_iter', dest='adv_train_iter', type=int,
-                           help='adversarial training PGD iteration, defaults to 7.')
-        group.add_argument('--adv_train_alpha', dest='adv_train_alpha', type=float,
-                           help='adversarial training PGD alpha, defaults to 2/255.')
-        group.add_argument('--adv_train_eps', dest='adv_train_eps', type=float,
-                           help='adversarial training PGD eps, defaults to 8/255.')
-        group.add_argument('--adv_train_valid_eps', dest='adv_train_valid_eps', type=float,
-                           help='adversarial training PGD eps, defaults to 8/255.')
+        group.add_argument('--adv_train', action='store_true', help='enable adversarial training.')
+        group.add_argument('--adv_train_iter', type=int, help='adversarial training PGD iteration, defaults to 7.')
+        group.add_argument('--adv_train_alpha', type=float, help='adversarial training PGD alpha, defaults to 2/255.')
+        group.add_argument('--adv_train_eps', type=float, help='adversarial training PGD eps, defaults to 8/255.')
+        group.add_argument('--adv_train_valid_eps', type=float, help='adversarial training PGD eps, defaults to 8/255.')
 
-        group.add_argument('--sgm', dest='sgm', action='store_true',
-                           help='whether to use sgm gradient, defaults to False')
-        group.add_argument('--sgm_gamma', dest='sgm_gamma', type=float,
-                           help='sgm gamma, defaults to 1.0')
+        group.add_argument('--sgm', action='store_true', help='whether to use sgm gradient, defaults to False')
+        group.add_argument('--sgm_gamma', type=float, help='sgm gamma, defaults to 1.0')
         return group
 
     def __init__(self, name: str = 'imagemodel', layer: int = None,

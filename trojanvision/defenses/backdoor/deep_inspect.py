@@ -28,18 +28,13 @@ class DeepInspect(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--sample_ratio', dest='sample_ratio', type=float,
-                           help='sample ratio from the full training data')
-        group.add_argument('--noise_dim', dest='noise_dim', type=int,
-                           help='GAN noise dimension')
-        group.add_argument('--remask_epoch', dest='remask_epoch', type=int,
-                           help='Remask optimizing epoch')
-        group.add_argument('--remask_lr', dest='remask_lr', type=float,
-                           help='Remask optimizing learning rate')
-        group.add_argument('--gamma_1', dest='gamma_1', type=float,
-                           help='control effect of GAN loss')
-        group.add_argument('--gamma_2', dest='gamma_2', type=float,
-                           help='control effect of perturbation loss')
+        group.add_argument('--sample_ratio', type=float, help='sample ratio from the full training data')
+        group.add_argument('--noise_dim', type=int, help='GAN noise dimension')
+        group.add_argument('--remask_epoch', type=int, help='Remask optimizing epoch')
+        group.add_argument('--remask_lr', type=float, help='Remask optimizing learning rate')
+        group.add_argument('--gamma_1', type=float, help='control effect of GAN loss')
+        group.add_argument('--gamma_2', type=float, help='control effect of perturbation loss')
+        return group
 
     def __init__(self, sample_ratio: float = 0.1, noise_dim: int = 100,
                  remask_epoch: int = 30, remask_lr=0.01,

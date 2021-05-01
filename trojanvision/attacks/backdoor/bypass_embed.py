@@ -18,15 +18,17 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import torch.utils.data
 
+
 class BypassEmbed(BadNet):
     name: str = 'bypass_embed'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--lambd', dest='lambd', type=int)
-        group.add_argument('--discrim_lr', dest='discrim_lr', type=float)
-        group.add_argument('--poison_num', dest='poison_num', type=int)
+        group.add_argument('--lambd', type=int)
+        group.add_argument('--discrim_lr', type=float)
+        group.add_argument('--poison_num', type=int)
+        return group
 
     def __init__(self, lambd: int = 10, discrim_lr: float = 0.001,
                  **kwargs):

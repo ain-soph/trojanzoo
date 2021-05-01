@@ -25,7 +25,8 @@ class ImageSet(Dataset):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--transform', dest='transform', choices=['pytorch', 'bit'])
+        group.add_argument('--transform', choices=['pytorch', 'bit'])
+        return group
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
                  default_model: str = 'resnet18_comp',

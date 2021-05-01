@@ -44,8 +44,9 @@ class FinePruning(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--prune_ratio', dest='prune_ratio', type=float,
+        group.add_argument('--prune_ratio', type=float,
                            help='the ratio of neuron number to prune, defaults to config[fine_pruning][prune_ratio]=0.95')
+        return group
 
     def __init__(self, prune_ratio: float = 0.95, **kwargs):
         super().__init__(**kwargs)

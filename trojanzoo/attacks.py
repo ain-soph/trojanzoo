@@ -19,13 +19,14 @@ if TYPE_CHECKING:
 
 
 class Attack(ABC, Model_Process):
-    name: str = 'attack'
+    name = 'attack'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('--attack', dest='attack_name')
         group.add_argument('--attack_dir', help='directory to contain attack results')
         group.add_argument('--output', type=int, help='output level, defaults to 0.')
+        return group
 
     @abstractmethod
     def attack(self, **kwargs):

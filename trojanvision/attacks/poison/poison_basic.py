@@ -19,11 +19,12 @@ class PoisonBasic(Attack):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--poison_percent', dest='poison_percent', type=float,
+        group.add_argument('--poison_percent', type=float,
                            help='malicious training data injection probability for each batch, defaults to 0.1')
-        group.add_argument('--target_idx', dest='target_idx', type=int,
+        group.add_argument('--target_idx', type=int,
                            help='Target label order in original classification, defaults to 1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
+        return group
 
     def __init__(self, poison_percent: float = 0.5, target_idx=1, **kwargs):
         super().__init__(**kwargs)

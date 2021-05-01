@@ -15,8 +15,9 @@ class BackdoorDefense(Defense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--original', dest='original', action='store_true',
+        group.add_argument('--original', action='store_true',
                            help='load original clean model, defaults to False.')
+        return group
 
     def __init__(self, original: bool = False, **kwargs):
         super().__init__(**kwargs)

@@ -25,7 +25,7 @@ for module in module_list:
 
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, ImageModel] = None,
-                 config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict) -> argparse._ArgumentGroup:
+                 config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict):
     return trojanzoo.models.add_argument(parser=parser, model_name=model_name, model=model,
                                          config=config, class_dict=class_dict)
 

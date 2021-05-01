@@ -25,37 +25,24 @@ class Trainer:
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
-        group.add_argument('--epoch', dest='epoch', type=int,
-                           help='training epochs, defaults to config[train][epoch].')
-        group.add_argument('--resume', dest='resume', type=int,
-                           help='resume training from certain epoch, defaults to be 0.')
-        group.add_argument('--lr', dest='lr', type=float,
-                           help='learning rate, defaults to 0.1.')
-        group.add_argument('--parameters', dest='parameters', default='full',
+        group.add_argument('--epoch', type=int, help='training epochs, defaults to config[train][epoch].')
+        group.add_argument('--resume', type=int, help='resume training from certain epoch, defaults to be 0.')
+        group.add_argument('--lr', type=float, help='learning rate, defaults to 0.1.')
+        group.add_argument('--parameters', default='full',
                            help='training parameters (\'features\', \'classifier\', \'full\'), defaults to \'full\'.')
-        group.add_argument('--OptimType', dest='OptimType',
-                           help='optimizer type, defaults to SGD.')
-        group.add_argument('--momentum', dest='momentum', type=float,
-                           help='momentum passed to Optimizer, defaults to 0.9.')
-        group.add_argument('--weight_decay', dest='weight_decay', type=float,
-                           help='weight_decay passed to Optimizer, defaults to 3e-4.')
-        group.add_argument('--nesterov', dest='nesterov', action='store_true',
-                           help='enable nesterov for SGD optimizer.')
-        group.add_argument('--lr_scheduler', dest='lr_scheduler', action='store_true',
-                           help='enable CosineAnnealingLR scheduler.')
-        group.add_argument('--amp', dest='amp', action='store_true',
-                           help='Automatic Mixed Precision.')
-        group.add_argument('--grad_clip', dest='grad_clip', type=float,
-                           help='Gradient Clipping max norms.')
-        group.add_argument('--validate_interval', dest='validate_interval', type=int,
+        group.add_argument('--OptimType', help='optimizer type, defaults to SGD.')
+        group.add_argument('--momentum', type=float, help='momentum passed to Optimizer, defaults to 0.9.')
+        group.add_argument('--weight_decay', type=float, help='weight_decay passed to Optimizer, defaults to 3e-4.')
+        group.add_argument('--nesterov', action='store_true', help='enable nesterov for SGD optimizer.')
+        group.add_argument('--lr_scheduler', action='store_true', help='enable CosineAnnealingLR scheduler.')
+        group.add_argument('--amp', action='store_true', help='Automatic Mixed Precision.')
+        group.add_argument('--grad_clip', type=float, help='Gradient Clipping max norms.')
+        group.add_argument('--validate_interval', type=int,
                            help='validate interval during training epochs, defaults to 10.')
-        group.add_argument('--save', dest='save', action='store_true',
-                           help='save training results.')
-        group.add_argument('--tensorboard', dest='tensorboard', action='store_true',
-                           help='save training logging for tensorboard.')
-        group.add_argument('--log_dir', dest='log_dir',
-                           help='save training logging for tensorboard.')
-        group.add_argument('--flush_secs', dest='flush_secs', type=int,
+        group.add_argument('--save', action='store_true', help='save training results.')
+        group.add_argument('--tensorboard', action='store_true', help='save training logging for tensorboard.')
+        group.add_argument('--log_dir', help='save training logging for tensorboard.')
+        group.add_argument('--flush_secs', type=int,
                            help='How often, in seconds, to flush the pending events and summaries to disk.')
         return group
 

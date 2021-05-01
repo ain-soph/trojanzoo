@@ -18,16 +18,12 @@ class NeuronInspect(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--lambd_sp', dest='lambd_sp', type=float,
-                           help='control sparse feature')
-        group.add_argument('--lambd_sm', dest='lambd_sm', type=float,
-                           help='control smooth feature')
-        group.add_argument('--lambd_pe', dest='lambd_pe', type=float,
-                           help='control persistence feature')
-        group.add_argument('--thre', dest='thre', type=float,
-                           help='Threshold for calculating persistence feature')
-        group.add_argument('--sample_ratio', dest='sample_ratio', type=float,
-                           help='sample ratio from the full training data')
+        group.add_argument('--lambd_sp', type=float, help='control sparse feature')
+        group.add_argument('--lambd_sm', type=float, help='control smooth feature')
+        group.add_argument('--lambd_pe', type=float, help='control persistence feature')
+        group.add_argument('--thre', type=float, help='Threshold for calculating persistence feature')
+        group.add_argument('--sample_ratio', type=float, help='sample ratio from the full training data')
+        return group
 
     def __init__(self, lambd_sp: float = 1e-5, lambd_sm: float = 1e-5, lambd_pe: float = 1,
                  thre: float = 0, sample_ratio: float = 0.1, **kwargs):

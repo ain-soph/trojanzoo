@@ -104,20 +104,13 @@ class Model:
     def add_argument(group: argparse._ArgumentGroup):
         group.add_argument('-m', '--model', dest='model_name',
                            help='model name, defaults to config[model][default_model]')
-        group.add_argument('--suffix', dest='suffix',
-                           help='model name suffix, e.g. _adv_train')
-        group.add_argument('--pretrain', dest='pretrain', action='store_true',
-                           help='load pretrained weights, defaults to False')
-        group.add_argument('--official', dest='official', action='store_true',
-                           help='load official weights, defaults to False')
-        group.add_argument('--model_dir', dest='model_dir',
-                           help='directory to contain pretrained models')
-        group.add_argument('--randomized_smooth', dest='randomized_smooth', action='store_true',
-                           help='whether to use randomized smoothing, defaults to False')
-        group.add_argument('--rs_sigma', dest='rs_sigma', type=float,
-                           help='randomized smoothing sampling std, defaults to 0.01')
-        group.add_argument('--rs_n', dest='rs_n', type=int,
-                           help='randomized smoothing sampling number, defaults to 100')
+        group.add_argument('--suffix', help='model name suffix, e.g. _adv_train')
+        group.add_argument('--pretrain', action='store_true', help='load pretrained weights, defaults to False')
+        group.add_argument('--official', action='store_true', help='load official weights, defaults to False')
+        group.add_argument('--model_dir', action='store_true', help='directory to contain pretrained models')
+        group.add_argument('--randomized_smooth', help='whether to use randomized smoothing, defaults to False')
+        group.add_argument('--rs_sigma', type=float, help='randomized smoothing sampling std, defaults to 0.01')
+        group.add_argument('--rs_n', type=int, help='randomized smoothing sampling number, defaults to 100')
         return group
 
     def __init__(self, name: str = 'model', model: Union[type[_Model], _Model] = _Model,
@@ -571,7 +564,7 @@ class Model:
 
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, Model] = None,
-                 config: Config = config, class_dict: dict[str, type[Model]] = {}) -> argparse._ArgumentGroup:
+                 config: Config = config, class_dict: dict[str, type[Model]] = {}):
     dataset_name = get_name(arg_list=['-d', '--dataset'])
     if dataset_name is None:
         dataset_name = config.get_full_config()['dataset']['default_dataset']

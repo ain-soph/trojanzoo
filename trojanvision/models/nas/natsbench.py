@@ -31,11 +31,11 @@ class NATSbench(ImageModel):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--model_index', dest='model_index', type=int, required=True)
-        group.add_argument('--model_seed', dest='model_seed', type=int)
-        group.add_argument('--nats_path', dest='nats_path')
-        group.add_argument('--autodl_path', dest='autodl_path')
-        group.add_argument('--search_space', dest='search_space')
+        group.add_argument('--model_index', type=int, required=True)
+        group.add_argument('--model_seed', type=int)
+        group.add_argument('--nats_path')
+        group.add_argument('--autodl_path')
+        group.add_argument('--search_space')
         return group
 
     def __init__(self, name: str = 'natsbench', model: type[_NATSbench] = _NATSbench,

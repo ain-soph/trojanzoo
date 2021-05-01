@@ -24,12 +24,12 @@ class NeuralCleanse(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--nc_epoch', dest='epoch', type=int,
-                           help='neural cleanse optimizing epoch, defaults to 10.')
-        group.add_argument('--penalize', dest='penalize', type=bool,
+        group.add_argument('--nc_epoch', type=int, help='neural cleanse optimizing epoch, defaults to 10.')
+        group.add_argument('--penalize', type=bool,
                            help='add the regularization terms, nc to tabor, defaults to False.')
-        group.add_argument('--hyperparams', dest='hyperparams', type=list,
+        group.add_argument('--hyperparams', type=list,
                            help='the hyperparameters of  all regularization terms, defaults to [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2].')
+        return group
 
     def __init__(self, epoch: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,

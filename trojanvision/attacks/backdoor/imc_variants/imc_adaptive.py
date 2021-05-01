@@ -20,8 +20,9 @@ class IMC_Adaptive(IMC):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--abs_weight', dest='abs_weight', type=float)
-        group.add_argument('--strip_percent', dest='strip_percent', type=float)
+        group.add_argument('--abs_weight', type=float)
+        group.add_argument('--strip_percent', type=float)
+        return group
 
     def __init__(self, seed_num: int = -5, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,

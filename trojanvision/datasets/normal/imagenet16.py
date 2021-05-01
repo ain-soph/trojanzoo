@@ -21,6 +21,7 @@ class ImageNet16(ImageSet):
         group.add_argument('--cutout', action='store_true', help='use cutout')
         group.add_argument('--cutout_length', type=int, default=8, help='cutout length')
         group.add_argument('--num_classes', type=int, help='number of classes')
+        return group
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [122.68 / 255, 116.66 / 255, 104.01 / 255],
                                                            'std': [63.22 / 255, 61.26 / 255, 65.09 / 255], },

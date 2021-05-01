@@ -30,8 +30,9 @@ class IMC(TrojanNN):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--inner_iter', dest='inner_iter', type=int)
-        group.add_argument('--inner_lr', dest='inner_lr', type=float)
+        group.add_argument('--inner_iter', type=int)
+        group.add_argument('--inner_lr', type=float)
+        return group
 
     def __init__(self, inner_iter: int = 20, inner_lr: float = 0.1,
                  **kwargs):

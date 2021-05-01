@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import torch.utils.data
 
+
 class CleanLabel(BadNet):
     r"""
     Contributor: Xiangshan Gao, Ren Pang
@@ -51,20 +52,21 @@ class CleanLabel(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--poison_generation_method', dest='poison_generation_method', type=str,
+        group.add_argument('--poison_generation_method', type=str,
                            help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]=pgd')
-        group.add_argument('--tau', dest='tau', type=float,
-                           help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
-        group.add_argument('--epsilon', dest='epsilon', type=float,
+        group.add_argument(
+            '--tau', type=float, help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
+        group.add_argument('--epsilon', type=float,
                            help='the perturbation bound in input space, defaults to config[clean_label][epsilon]=0.1, 300/(3*32*32)')
-        group.add_argument('--noise_dim', dest='noise_dim', type=int,
+        group.add_argument('--noise_dim', type=int,
                            help='the dimension of the input in the generator, defaults to config[clean_label][noise_dim]=100')
-        group.add_argument('--train_gan', dest='train_gan', action='store_true',
+        group.add_argument('--train_gan', action='store_true',
                            help='whether train the GAN if it already exists, defaults to False')
-        group.add_argument('--generator_iters', dest='generator_iters', type=int,
+        group.add_argument('--generator_iters', type=int,
                            help=' the epoch for training the generator, defaults to config[clean_label][generator_iters]=1000')
-        group.add_argument('--critic_iter', dest='critic_iter', type=int,
+        group.add_argument('--critic_iter', type=int,
                            help=' the critic iterations per generator training iteration, defaults to config[clean_label][critic_iter]=5')
+        return group
 
     def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
                  pgd_alpha: float = 2 / 255, pgd_eps: float = 16 / 255, pgd_iter=20,

@@ -20,28 +20,26 @@ if TYPE_CHECKING:
 
 class Env(Param):
 
-    @staticmethod
-    def add_argument(group: argparse._ArgumentGroup):
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('--config', dest='config_path',
                            help='cmd config file path. (``package < project < cmd_config < cmd_param``)')
 
-        group.add_argument('--seed', dest='seed', type=int,
+        group.add_argument('--seed', type=int,
                            help='the random seed for numpy, torch and cuda, defaults to config[env][seed]=1228')
-        group.add_argument('--cache_threshold', dest='cache_threshold', type=float,
+        group.add_argument('--cache_threshold', type=float,
                            help='the threshold (MB) to call torch.cuda.empty_cache(), defaults to config[env][cache_threshold]=None (never).')
 
-        group.add_argument('--device', dest='device',
-                           help='set to \'cpu\' to force cpu-only and \'gpu\', \'cuda\' for gpu-only, defaults to None.')
-        group.add_argument('--benchmark', dest='benchmark', action='store_true',
+        group.add_argument('--device', help='set to "cpu" to force cpu-only '
+                           'and "gpu", "cuda" for gpu-only, defaults to None.')
+        group.add_argument('--benchmark', action='store_true',
                            help='use torch.backends.cudnn.benchmark to accelerate without deterministic, defaults to False.')
-        group.add_argument('--verbose', dest='verbose', type=int, default=0,
-                           help='show arguments and module information, defaults to False.')
-        group.add_argument('--color', dest='color', action='store_true',
-                           help='Colorful Output, defaults to False.')
-        group.add_argument('--tqdm', dest='tqdm', action='store_true',
-                           help='Show tqdm Progress Bar, defaults to False.')
+        group.add_argument('--verbose', type=int, default=0,
+                           help='show arguments and module information, defaults to 0.')
+        group.add_argument('--color', action='store_true', help='colorful Output.')
+        group.add_argument('--tqdm', action='store_true', help='show tqdm progress bar.')
 
-        # group.add_argument('--world_size', dest='world_size', type=int, default=1)
+        # group.add_argument('--world_size', type=int, default=1)
         return group
 
 

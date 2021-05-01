@@ -33,10 +33,11 @@ class ImageFolder(ImageSet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--data_format', dest='data_format', choices=['folder', 'tar', 'zip'],
+        group.add_argument('--data_format', choices=['folder', 'tar', 'zip'],
                            help='file format of dataset. (zip is using ZIP_STORED)')
-        group.add_argument('--memory', dest='memory', action='store_true',
+        group.add_argument('--memory', action='store_true',
                            help='put all dataset into memory initialization.')
+        return group
 
     def __init__(self, data_format: str = 'folder', memory: bool = False, **kwargs):
         self.data_format: str = data_format

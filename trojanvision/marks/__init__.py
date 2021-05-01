@@ -25,7 +25,8 @@ def add_argument(parser: argparse.ArgumentParser):
     return Watermark.add_argument(group)
 
 
-def create(mark_path: str = None, data_shape: list[int] = None, dataset_name: str = None, dataset: ImageSet = None,
+def create(mark_path: str = None, data_shape: list[int] = None,
+           dataset_name: str = None, dataset: Union[str, ImageSet] = None,
            config: Config = config, **kwargs):
     if data_shape is None:
         assert isinstance(dataset, ImageSet)
@@ -41,26 +42,17 @@ class Watermark:
 
     @staticmethod
     def add_argument(group: argparse._ArgumentGroup):
-        group.add_argument('--edge_color', dest='edge_color',
-                           help='edge color in watermark image, defaults to \'auto\'.')
-        group.add_argument('--mark_path', dest='mark_path',
-                           help='edge color in watermark image, defaults to "trojanzoo/data/mark/square_white.png".')
-        group.add_argument('--mark_alpha', dest='mark_alpha', type=float,
-                           help='mark transparency, defaults to 0.0.')
-        group.add_argument('--mark_height', dest='mark_height', type=int,
-                           help='mark height, defaults to 3.')
-        group.add_argument('--mark_width', dest='mark_width', type=int,
-                           help='mark width, defaults to 3.')
-        group.add_argument('--height_offset', dest='height_offset', type=int,
-                           help='height offset, defaults to 0')
-        group.add_argument('--width_offset', dest='width_offset', type=int,
-                           help='width offset, defaults to 0')
-        group.add_argument('--random_pos', dest='random_pos', action='store_true',
-                           help='Random offset Location for add_mark.')
-        group.add_argument('--random_init', dest='random_init', action='store_true',
-                           help='random values for mark pixel.')
-        group.add_argument('--mark_distributed', dest='mark_distributed', action='store_true',
-                           help='Distributed Mark.')
+        group.add_argument('--edge_color', help='edge color in watermark image, defaults to \'auto\'.')
+        group.add_argument('--mark_path', help='edge color in watermark image, '
+                           'defaults to "trojanzoo/data/mark/square_white.png".')
+        group.add_argument('--mark_alpha', type=float, help='mark transparency, defaults to 0.0.')
+        group.add_argument('--mark_height', type=int, help='mark height, defaults to 3.')
+        group.add_argument('--mark_width', type=int, help='mark width, defaults to 3.')
+        group.add_argument('--height_offset', type=int, help='height offset, defaults to 0')
+        group.add_argument('--width_offset', type=int, help='width offset, defaults to 0')
+        group.add_argument('--random_pos', action='store_true', help='Random offset Location for add_mark.')
+        group.add_argument('--random_init', action='store_true', help='random values for mark pixel.')
+        group.add_argument('--mark_distributed', action='store_true', help='Distributed Mark.')
         return group
 
     def __init__(self, mark_path: str = 'trojanzoo/data/mark/square_white.png',

@@ -37,14 +37,14 @@ class HiddenTrigger(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--preprocess_layer', dest='preprocess_layer', type=str,
+        group.add_argument('--preprocess_layer', type=str,
                            help='the chosen feature layer patched by trigger where distance to poisoned images is minimized, defaults to ``flatten``')
-        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float,
+        group.add_argument('--pgd_alpha', type=float,
                            help='the learning rate to generate poison images, defaults to 0.01')
-        group.add_argument('--pgd_eps', dest='pgd_eps', type=int,
-                           help='the perturbation threshold in input space, defaults to 16')
-        group.add_argument('--pgd_iter', dest='pgd_iter', type=int,
+        group.add_argument('--pgd_eps', type=int, help='the perturbation threshold in input space, defaults to 16')
+        group.add_argument('--pgd_iter', type=int,
                            help='the iteration number to generate one poison image, defaults to 5000')
+        return group
 
     def __init__(self, preprocess_layer: str = 'features', pgd_eps: int = 16.0 / 255,
                  pgd_iter: int = 40, pgd_alpha: float = 4.0 / 255, **kwargs):

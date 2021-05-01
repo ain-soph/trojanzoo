@@ -33,16 +33,15 @@ class LatentBackdoor(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--class_sample_num', dest='class_sample_num', type=int,
+        group.add_argument('--class_sample_num', type=int,
                            help='the number of sampled images per class, defaults to config[latent_backdoor][class_sample_num][dataset]=100')
-        group.add_argument('--mse_weight', dest='mse_weight', type=float,
+        group.add_argument('--mse_weight', type=float,
                            help='the weight of mse loss during retraining, defaults to config[latent_backdoor][mse_weight][dataset]=100')
-        group.add_argument('--preprocess_layer', dest='preprocess_layer',
+        group.add_argument('--preprocess_layer',
                            help='the chosen feature layer patched by trigger, defaults to \'features\'')
-        group.add_argument('--preprocess_epoch', dest='preprocess_epoch', type=int,
-                           help='preprocess optimization epoch')
-        group.add_argument('--preprocess_lr', dest='preprocess_lr', type=float,
-                           help='preprocess learning rate')
+        group.add_argument('--preprocess_epoch', type=int, help='preprocess optimization epoch')
+        group.add_argument('--preprocess_lr', type=float, help='preprocess learning rate')
+        return group
 
     def __init__(self, class_sample_num: int = 100, mse_weight=0.5,
                  preprocess_layer: str = 'flatten', preprocess_epoch: int = 100, preprocess_lr: float = 0.1,

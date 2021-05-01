@@ -23,10 +23,11 @@ class PoisonRandom(Attack):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--poison_percent', dest='poison_percent', type=float,
+        group.add_argument('--poison_percent', type=float,
                            help='malicious training data injection probability for each batch, defaults to 0.01')
-        group.add_argument('--train_mode', dest='train_mode', choices=['batch', 'dataset'],
+        group.add_argument('--train_mode', choices=['batch', 'dataset'],
                            help='target class of backdoor, defaults to \'batch\'')
+        return group
 
     def __init__(self, poison_percent: float = 0.01, train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)

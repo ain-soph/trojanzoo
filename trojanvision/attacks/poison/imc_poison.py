@@ -22,14 +22,15 @@ class IMC_Poison(PoisonBasic):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--pgd_alpha', dest='pgd_alpha', type=float)
-        group.add_argument('--pgd_eps', dest='pgd_eps', type=float)
-        group.add_argument('--pgd_iter', dest='pgd_iter', type=int)
-        group.add_argument('--stop_conf', dest='stop_conf', type=float)
+        group.add_argument('--pgd_alpha', type=float)
+        group.add_argument('--pgd_eps', type=float)
+        group.add_argument('--pgd_iter', type=int)
+        group.add_argument('--stop_conf', type=float)
 
-        group.add_argument('--magnet', dest='magnet', action='store_true')
-        group.add_argument('--randomized_smooth', dest='randomized_smooth', action='store_true')
-        group.add_argument('--curvature', dest='curvature', action='store_true')
+        group.add_argument('--magnet', action='store_true')
+        group.add_argument('--randomized_smooth', action='store_true')
+        group.add_argument('--curvature', action='store_true')
+        return group
 
     def __init__(self, pgd_alpha: float = 1.0, pgd_eps: float = 8.0, pgd_iter: int = 8,
                  stop_conf: float = 0.9,

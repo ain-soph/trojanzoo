@@ -17,14 +17,12 @@ class ReflectionBackdoor(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--candidate_num', dest='candidate_num', type=int,
-                           help='number of candidate images')
-        group.add_argument('--selection_num', dest='selection_num', type=int,
-                           help='number of adv images')
-        group.add_argument('--selection_iter', dest='selection_iter', type=int,
+        group.add_argument('--candidate_num', type=int, help='number of candidate images')
+        group.add_argument('--selection_num', type=int, help='number of adv images')
+        group.add_argument('--selection_iter', type=int,
                            help='selection iteration to find optimal reflection images as trigger')
-        group.add_argument('--inner_epoch', dest='inner_epoch', type=int,
-                           help='retraining epoch during trigger selection')
+        group.add_argument('--inner_epoch', type=int, help='retraining epoch during trigger selection')
+        return group
 
     def __init__(self, candidate_num: int = 100, selection_num: int = 20, selection_iter: int = 10, inner_epoch: int = 1, **kwargs):
         super().__init__(**kwargs)

@@ -22,8 +22,8 @@ class TrojanNet(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--select_point', dest='select_point', type=int,
-                           help='the number of select_point, defaults to 2')
+        group.add_argument('--select_point', type=int, help='the number of select_point, defaults to 2')
+        return group
 
     def __init__(self, select_point: int = 2, **kwargs):
         super().__init__(**kwargs)
