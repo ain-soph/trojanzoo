@@ -43,7 +43,7 @@ class DARTS(ImageModel):
     available_models = ['darts']
 
     @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
+    def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--model_arch', dest='model_arch', default='darts',
                            help='Model Architecture (genotype name), defaults to be "darts"')
@@ -51,6 +51,7 @@ class DARTS(ImageModel):
                            help='enable auxiliary classifier during training.')
         group.add_argument('--auxiliary_weight', dest='auxiliary_weight', type=float,
                            help='weight for auxiliary loss, defaults to be 0.4')
+        return group
 
     def __init__(self, name: str = 'darts', model_arch: str = 'darts',
                  layers: int = 20, C: int = 36, dropout_p: float = 0.2,
