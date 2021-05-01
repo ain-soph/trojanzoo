@@ -8,4 +8,4 @@ batch_size:
   gtsrb: 96
   imagenet16: 96
 
-data_format: zip
+data_format: folder
