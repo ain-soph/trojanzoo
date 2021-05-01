@@ -36,7 +36,7 @@ if __name__ == '__main__':
     )
     model._validate()
     
-    from art.attacks.inference.membership_inference import LabelOnlyDecisionBoundary as Attack
+    from art.attacks.inference.membership_inference import LabelOnlyDecisionBoundary as Attack  # type: ignore
 
     attack = Attack(classifier)
     x_train, y_train = dataset_to_list(dataset.get_dataset('train'))

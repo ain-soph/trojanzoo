@@ -3,8 +3,7 @@
 from .output import prints
 
 from typing import TYPE_CHECKING
-from typing import Any, Union    # TODO: python 3.10
-from typing import Generic, MutableMapping, TypeVar,
+from typing import Generic, MutableMapping, TypeVar
 _KT = TypeVar("_KT")  # Key type.
 _VT = TypeVar("_VT")  # Value type.
 if TYPE_CHECKING:
