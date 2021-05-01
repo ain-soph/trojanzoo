@@ -107,7 +107,7 @@ class Model:
         group.add_argument('--suffix', help='model name suffix, e.g. _adv_train')
         group.add_argument('--pretrain', action='store_true', help='load pretrained weights, defaults to False')
         group.add_argument('--official', action='store_true', help='load official weights, defaults to False')
-        group.add_argument('--model_dir', action='store_true', help='directory to contain pretrained models')
+        group.add_argument('--model_dir', help='directory to contain pretrained models')
         group.add_argument('--randomized_smooth', help='whether to use randomized smoothing, defaults to False')
         group.add_argument('--rs_sigma', type=float, help='randomized smoothing sampling std, defaults to 0.01')
         group.add_argument('--rs_n', type=int, help='randomized smoothing sampling number, defaults to 100')

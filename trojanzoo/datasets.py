@@ -93,6 +93,14 @@ class Dataset(ABC, BasicObject):
             loss_weights: np.ndarray = self.get_loss_weights() if loss_weights else None    # TODO: issue 5 pylance
         self.loss_weights = loss_weights
 
+    @property
+    def batch_size(self):
+        return self.__batch_size
+
+    @batch_size.setter
+    def batch_size(self, value: int):
+        self.__batch_size = value if value >= 0 else -value * max(1, env['num_gpus'])
+
     def initialize(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -202,14 +210,6 @@ class Dataset(ABC, BasicObject):
         _str = redirect.buffer
         redirect.reset()
         return _str
-
-    @property
-    def batch_size(self):
-        return self.__batch_size
-
-    @batch_size.setter
-    def batch_size(self, value: int):
-        self.__batch_size = value if value >= 0 else -value * max(1, env['num_gpus'])
 
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, Dataset] = None,
