@@ -25,34 +25,43 @@ class ImageSet(Dataset):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--pytorch_official_transform', dest='pytorch_official_transform',
-                           action='store_true',
-                           help='Using pytorch official transform (might be non-square).')
+        group.add_argument('--transform', dest='transform', choices=['pytorch', 'bit'])
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
                  default_model: str = 'resnet18_comp',
-                 pytorch_official_transform: bool = False, **kwargs):
+                 transform: str = False, **kwargs):
         self.norm_par: dict[str, list[float]] = norm_par
-        self.pytorch_official_transform = pytorch_official_transform
+        self.transform = transform
         super().__init__(default_model=default_model, **kwargs)
         self.param_list['imageset'] = ['data_shape', 'norm_par']
 
     def get_transform(self, mode: str) -> transforms.Compose:
-        tuple = not self.pytorch_official_transform
-        if mode == 'train':
-            transform = transforms.Compose([
-                transforms.RandomResizedCrop((224, 224) if tuple else 224),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor()])
+        if self.transform == 'bit':
+            hyperrule = self.data_shape[-2] * self.data_shape[-1] < 96 * 96
+            precrop, crop = (160, 128) if hyperrule else (512, 480)
+            if mode == 'train':
+                transform = transforms.Compose([
+                    transforms.Resize((precrop, precrop)),
+                    transforms.RandomCrop((crop, crop)),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                ])
+            else:
+                transform = transforms.Compose([
+                    transforms.Resize((crop, crop)),
+                    transforms.ToTensor()])
         else:
-            transform = transforms.Compose([
-                transforms.Resize((256, 256) if tuple else 256),
-                transforms.CenterCrop((224, 224) if tuple else 224),
-                transforms.ToTensor()])
-            # BiT transform
-            # transform = transforms.Compose([
-            #     transforms.Resize((480, 480)),
-            #     transforms.ToTensor()])
+            tuple = self.transform != 'pytorch'
+            if mode == 'train':
+                transform = transforms.Compose([
+                    transforms.RandomResizedCrop((224, 224) if tuple else 224),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor()])
+            else:
+                transform = transforms.Compose([
+                    transforms.Resize((256, 256) if tuple else 256),
+                    transforms.CenterCrop((224, 224) if tuple else 224),
+                    transforms.ToTensor()])
         return transform
 
     def get_dataloader(self, mode: str = None, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
