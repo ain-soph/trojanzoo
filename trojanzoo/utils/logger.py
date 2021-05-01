@@ -103,12 +103,9 @@ class MetricLogger(object):
         self.meter_length = meter_length
         self.indent = indent
 
-    def update(self, **kwargs: Union[torch.Tensor, float, int]):
+    def update(self, **kwargs):
         for k, v in kwargs.items():
-            if isinstance(v, torch.Tensor):
-                v = v.item()
-            assert isinstance(v, (float, int))
-            self.meters[k].update(v)
+            self.meters[k].update(float(v))
 
     def __getattr__(self, attr: str) -> float:
         if attr in self.meters:
