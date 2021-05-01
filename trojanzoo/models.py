@@ -407,7 +407,7 @@ class Model:
 
     def _validate(self, module: nn.Module = None, num_classes: int = None,
                   full: bool = True, loader: torch.utils.data.DataLoader = None,
-                  print_prefix:str='Validate', indent:int=0, verbose:bool=True,
+                  print_prefix: str = 'Validate', indent: int = 0, verbose: bool = True,
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                   loss_fn: Callable[..., torch.Tensor] = None,
                   writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
@@ -423,10 +423,14 @@ class Model:
                         get_data_fn, loss_fn,
                         writer, main_tag, tag, _epoch, **kwargs)
 
+    # TODO: this method shall be removed
     def _compare(self, peer: nn.Module = None, full: bool = True, loader: torch.utils.data.DataLoader = None,
                  print_prefix: str = 'Validate', indent: int = 0, verbose: bool = True,
                  get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                  **kwargs) -> tuple[float, float]:
+        import warnings
+        warnings.warn('This method shall be removed. You should call `trojanvision.utils.train.compare` directly.',
+                      DeprecationWarning)
         module1 = self  # TODO: type annotation issues (solve in python 3.10)
         module2 = peer
         if loader is None:
