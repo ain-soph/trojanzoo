@@ -52,7 +52,7 @@ class BypassEmbed(BadNet):
         other_x, other_y = [], []
         poison_num = len(self.dataset.get_dataset('train')) * self.poison_percent / self.dataset.num_classes
         for _class in other_classes:
-            loader = self.dataset.get_dataloader(mode='train', batch_size=int(poison_num), classes=[_class],
+            loader = self.dataset.get_dataloader(mode='train', batch_size=int(poison_num), class_list=[_class],
                                                  shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)

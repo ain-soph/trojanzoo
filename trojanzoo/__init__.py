@@ -10,6 +10,6 @@ from trojanzoo.utils.tensor import to_tensor, to_numpy, to_list
 
 __all__ = ['to_tensor', 'to_numpy', 'to_list']
 
-# import trojanzoo.utils
 # import trojanzoo.configs
 # import trojanzoo.optim
+# import trojanzoo.utils

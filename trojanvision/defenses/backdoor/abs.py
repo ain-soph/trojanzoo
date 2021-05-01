@@ -244,7 +244,7 @@ class ABS(BackdoorDefense):
         seed_class_num: int = self.seed_num // self.model.num_classes
         x, y = [], []
         for _class in range(self.model.num_classes):
-            loader = self.dataset.get_dataloader(mode='train', batch_size=seed_class_num, classes=[_class],
+            loader = self.dataset.get_dataloader(mode='train', batch_size=seed_class_num, class_list=[_class],
                                                  shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             x.append(_input)

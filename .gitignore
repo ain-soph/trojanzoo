@@ -27,7 +27,7 @@ __pycache__
 /cmd_config
 /data
 /result
-/projects
+# /projects
 /tex
 
 # test file

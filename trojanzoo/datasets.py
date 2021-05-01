@@ -2,14 +2,16 @@
 
 from trojanzoo.configs import config, Config
 from trojanzoo.environ import env
-from trojanzoo.utils import get_name, to_tensor
+from trojanzoo.utils import get_name
 from trojanzoo.utils.data import dataset_to_list, split_dataset, get_class_subset
-from trojanzoo.utils.output import ansi, prints, Indent_Redirect
+from trojanzoo.utils.others import BasicObject
+from trojanzoo.utils.output import ansi, Indent_Redirect
 
 import torch
 import numpy as np
 import os
 import sys
+from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 from typing import Callable, Union    # TODO: python 3.10
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
 redirect = Indent_Redirect(buffer=True, indent=0)
 
 
-class Dataset:
+class Dataset(ABC, BasicObject):
     """An abstract class representing a Dataset.
 
     Args:
@@ -30,35 +32,33 @@ class Dataset:
         folder_path (string): directory path to store dataset.
 
     """
-    name: str = None
+    name = 'dataset'
     data_type: str = None
     num_classes: int = None
     label_names: list[int] = None
     valid_set = True
 
-    @staticmethod
-    def add_argument(group: argparse._ArgumentGroup):
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('-d', '--dataset', dest='dataset_name', type=str,
                            help='dataset name (lowercase).')
-        group.add_argument('--batch_size', dest='batch_size', type=int,
-                           help='batch size (negative number means batch_size for each gpu).')
-        group.add_argument('--valid_batch_size', dest='valid_batch_size', type=int,
-                           help='valid batch size.')
-        group.add_argument('--test_batch_size', dest='test_batch_size', type=int,
-                           help='test batch size.')
-        group.add_argument('--num_workers', dest='num_workers', type=int,
+        group.add_argument('--batch_size', type=int, help='batch size (negative number means batch_size for each gpu).')
+        group.add_argument('--valid_batch_size', type=int, help='valid batch size.')
+        group.add_argument('--test_batch_size', type=int, help='test batch size.')
+        group.add_argument('--num_workers', type=int,
                            help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4.')
-        group.add_argument('--download', dest='download', action='store_true',
+        group.add_argument('--download', action='store_true',
                            help='download dataset if not exist by calling dataset.initialize()')
-        group.add_argument('--data_dir', dest='data_dir',
-                           help='directory to contain datasets')
+        group.add_argument('--data_seed', type=int, help='seed to process data')
+        group.add_argument('--data_dir', help='directory to contain datasets')
         return group
 
     def __init__(self, batch_size: int = None, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
                  num_workers: int = 4, loss_weights: Union[bool, np.ndarray] = False,
-                 valid_batch_size: int = 100, test_batch_size: int = 1, **kwargs):
-        self.param_list: dict[str, list[str]] = {}
+                 valid_batch_size: int = 100, test_batch_size: int = 1,
+                 data_seed: int = None, **kwargs):
+        super().__init__(**kwargs)
         self.param_list['dataset'] = ['data_type', 'folder_path', 'label_names',
                                       'batch_size', 'num_classes', 'num_workers',
                                       'valid_batch_size', 'test_batch_size']
@@ -70,13 +70,14 @@ class Dataset:
         self.train_sample = train_sample
         self.test_ratio = test_ratio
         self.num_workers = num_workers
+        self.seed = data_seed
         # ----------------------------------------------------------------------------- #
 
-        self.folder_path = folder_path
         if folder_path is not None:
-            self.folder_path = os.path.normpath(folder_path)
+            folder_path = os.path.normpath(folder_path)
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
+        self.folder_path = folder_path
         # ----------------------------------------------------------------------------- #
         if download and not self.check_files():
             self.initialize()
@@ -89,11 +90,14 @@ class Dataset:
         self.loader['test'] = self.get_dataloader(mode='test')
         # ----------------------------------------------------------------------------- #
         # Loss Weights
-        self.loss_weights: np.ndarray = loss_weights
         if isinstance(loss_weights, bool):
-            self.loss_weights = self.get_loss_weights() if loss_weights else None
+            loss_weights: np.ndarray = self.get_loss_weights() if loss_weights else None    # TODO: issue 5 pylance
+        self.loss_weights = loss_weights
 
-    def check_files(self, transform: str = None, **kwargs) -> bool:
+    def initialize(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def check_files(self, transform: Union[str, object] = None, **kwargs):
         try:
             self.get_org_dataset(mode='train', transform=transform, **kwargs)
             if self.valid_set:
@@ -102,36 +106,25 @@ class Dataset:
             return False
         return True
 
-    def initialize(self, verbose: bool = None):
-        raise NotImplementedError()
-
-    def summary(self, indent: int = 0):
-        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
-        prints(self.__class__.__name__, indent=indent)
-        for key, value in self.param_list.items():
-            if value:
-                prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
-                prints({v: getattr(self, v) for v in value}, indent=indent + 10)
-                prints('-' * 20, indent=indent + 10)
-
+    @abstractmethod
     def get_transform(self, mode: str) -> Callable:
-        raise NotImplementedError()
+        ...
 
-    @staticmethod
-    def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_data(self, data, **kwargs):
         return data
 
+    @abstractmethod
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
                         **kwargs) -> torch.utils.data.Dataset:
-        raise NotImplementedError()
+        ...
 
-    def get_full_dataset(self, mode: str, transform='default', seed: int = None, **kwargs) -> torch.utils.data.Dataset:
+    def get_full_dataset(self, mode: str, transform: Union[str, object] = 'default', seed: int = None, **kwargs):
         try:
             if self.valid_set:
                 return self.get_org_dataset(mode=mode, transform=transform, **kwargs)
             else:
                 dataset = self.get_org_dataset(mode='train', transform=transform, **kwargs)
-                subset = {}
+                subset: dict[str, torch.utils.data.Subset] = {}
                 subset['train'], subset['valid'] = self.split_dataset(
                     dataset, percent=self.split_ratio, seed=seed)
                 return subset[mode]
@@ -140,7 +133,8 @@ class Dataset:
             raise e
 
     def get_dataset(self, mode: str = None, full: bool = True, dataset: torch.utils.data.Dataset = None,
-                    classes: list[int] = None, seed: int = None, **kwargs) -> torch.utils.data.Dataset:
+                    class_list: Union[int, list[int]] = None, seed: int = None, full_seed: int = None, **kwargs):
+        kwargs['seed'] = full_seed
         if dataset is None:
             if full and mode != 'test':
                 dataset = self.get_full_dataset(mode=mode, **kwargs)
@@ -153,18 +147,20 @@ class Dataset:
                 subset['test'], subset['valid'] = self.split_dataset(
                     fullset, percent=self.test_ratio, seed=seed)
                 dataset = subset[mode]
-        if classes is not None:
-            dataset = self.get_class_subset(dataset=dataset, classes=classes)
+        if class_list is not None:
+            dataset = get_class_subset(dataset=dataset, class_list=class_list)
         return dataset
 
-    @staticmethod
-    def get_class_subset(dataset: torch.utils.data.Dataset,
-                         classes: list[int]) -> torch.utils.data.Subset:
-        return get_class_subset(dataset, classes)
+    def split_dataset(self, dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
+                      length: int = None, percent=None, seed: int = None
+                      ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
+        seed = env['seed'] if seed is None else self.seed
+        return split_dataset(dataset, length, percent, seed)
 
     def get_dataloader(self, mode: str = None, dataset: torch.utils.data.Dataset = None,
                        batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
+                       num_workers: int = None, pin_memory: bool = True, drop_last: bool = False,
+                       **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
             # TODO: python 3.10 match
             if mode == 'train':
@@ -183,31 +179,25 @@ class Dataset:
         return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
                                            num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
 
-    @staticmethod
-    def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                  length: int = None, percent=None, seed: int = None
-                  ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
-        seed = env['seed'] if seed is None else seed
-        return split_dataset(dataset, length, percent, seed)
-
-    def get_loss_weights(self, file_path: str = None, verbose: bool = None) -> np.ndarray:
-        file_path = file_path if file_path is not None else os.path.join(self.folder_path, 'loss_weights.npy')
+    def get_loss_weights(self, file_path: str = None, verbose: bool = True) -> np.ndarray:
+        file_path = file_path if file_path is not None \
+            else os.path.join(self.folder_path, 'loss_weights.npy')
         if os.path.exists(file_path):
-            loss_weights = to_tensor(np.load(file_path), dtype='float')
-            return loss_weights
+            return np.load(file_path)
         else:
             if verbose:
                 print('Calculating Loss Weights')
             dataset = self.get_full_dataset('train', transform=None)
             _, targets = dataset_to_list(dataset, label_only=True)
-            loss_weights = np.bincount(targets)     # TODO: linting problem
+            loss_weights: np.ndarray = np.bincount(targets)     # TODO: linting problem
             assert len(loss_weights) == self.num_classes
-            loss_weights: np.ndarray = loss_weights.sum() / loss_weights     # TODO: linting problem
+            loss_weights = loss_weights.sum() / loss_weights     # TODO: linting problem
             np.save(file_path, loss_weights)
-            print('Loss Weights Saved at ', file_path)
+            if verbose:
+                print('Loss Weights Saved at ', file_path)
             return loss_weights
 
-    def __str__(self) -> str:
+    def __str__(self):
         sys.stdout = redirect
         self.summary()
         _str = redirect.buffer
@@ -220,11 +210,11 @@ class Dataset:
 
     @batch_size.setter
     def batch_size(self, value: int):
-        self.__batch_size = value if value >= 0 else -value * max(1, torch.cuda.device_count())
+        self.__batch_size = value if value >= 0 else -value * max(1, env['num_gpus'])
 
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, Dataset] = None,
-                 config: Config = config, class_dict: dict[str, type[Dataset]] = {}) -> argparse._ArgumentGroup:
+                 config: Config = config, class_dict: dict[str, type[Dataset]] = {}):
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
     group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi), description=dataset_name)
@@ -237,10 +227,10 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
 
 
 def create(dataset_name: str = None, dataset: str = None, folder_path: str = None,
-           config: Config = config, class_dict: dict[str, type[Dataset]] = {}, **kwargs) -> Dataset:
+           config: Config = config, class_dict: dict[str, type[Dataset]] = {}, **kwargs):
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
-    result = config.get_config(dataset_name=dataset_name)['dataset']._update(kwargs)
+    result = config.get_config(dataset_name=dataset_name)['dataset'].update(kwargs)
     try:
         DatasetType = class_dict[dataset_name]
     except KeyError as e:

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-# from torchvision.transforms.autoaugment import AutoAugment, AutoAugmentPolicy
 from trojanvision.datasets.imageset import ImageSet
+from trojanvision.utils.data import Cutout
 
+import torch
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+# from torchvision.transforms.autoaugment import AutoAugment, AutoAugmentPolicy
 
 import argparse
 from typing import Union
-
 
 class CIFAR10(ImageSet):
 
@@ -48,8 +49,7 @@ class CIFAR10(ImageSet):
         ]
         if self.cutout:
             # transforms.RandomErasing(value=self.norm_par['mean'])
-            from trojanvision.utils.data import Cutout
-            import torch
+
             fill_values = torch.tensor(self.norm_par['mean']).view(-1, 1, 1)
             transform_list.append(Cutout(self.cutout_length, fill_values=fill_values))
         return transforms.Compose(transform_list)

@@ -102,7 +102,7 @@ class ImageNet16(data.Dataset):
         #print ('Std  : {:}'.format(std_data))
 
     def __repr__(self):
-        return ('{name}({num} images, {classes} classes)'.format(name=self.__class__.__name__, num=len(self.data), classes=len(set(self.targets))))
+        return ('{name}({num} images, {classes} classes)'.format(name=self.__class__.__name__, num=len(self.data), class_list=len(set(self.targets))))
 
     def __getitem__(self, index):
         img, target = self.data[index], self.targets[index] - 1

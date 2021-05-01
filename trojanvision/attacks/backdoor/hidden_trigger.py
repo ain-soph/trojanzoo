@@ -57,7 +57,7 @@ class HiddenTrigger(BadNet):
         self.pgd_eps: float = pgd_eps
         self.pgd_iter: int = pgd_iter
 
-        self.target_loader = self.dataset.get_dataloader('train', full=True, classes=self.target_class,
+        self.target_loader = self.dataset.get_dataloader('train', full=True, class_list=[self.target_class],
                                                          drop_last=True, num_workers=0)
         self.pgd: PGD = PGD(pgd_alpha=self.pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, output=self.output)
 

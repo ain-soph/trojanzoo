@@ -97,7 +97,7 @@ def bytes2size(_bytes: int) -> str:
         return '%.3f GB' % (float(_bytes) / 1024 / 1024 / 1024)
 
 
-class AverageMeter(object):
+class AverageMeter:
     """Computes and stores the average and current value"""
 
     def __init__(self, name: str, fmt: str = ':f'):
@@ -120,6 +120,23 @@ class AverageMeter(object):
     def __str__(self):
         fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
         return fmtstr.format(**self.__dict__)
+
+
+class BasicObject:
+    name: str = 'basic_object'
+
+    def __init__(self, **kwargs):
+        self.param_list: dict[str, list[str]] = {}
+
+    # -----------------------------------Output-------------------------------------#
+    def summary(self, indent: int = 0):
+        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        prints(self.__class__.__name__, indent=indent)
+        for key, value in self.param_list.items():
+            if value:
+                prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
+                prints({v: getattr(self, v) for v in value}, indent=indent + 10)
+                prints('-' * 20, indent=indent + 10)
 
 
 # class CrossEntropy(nn.Module):

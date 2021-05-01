@@ -120,7 +120,7 @@ class Model:
                            help='randomized smoothing sampling number, defaults to 100')
         return group
 
-    def __init__(self, name: str = None, model: Union[type[_Model], _Model] = _Model,
+    def __init__(self, name: str = 'model', model: Union[type[_Model], _Model] = _Model,
                  dataset: Dataset = None,
                  num_classes: int = None, folder_path: str = None,
                  official: bool = False, pretrain: bool = False,
@@ -600,7 +600,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
         dataset_name = config.get_full_config()['dataset']['default_dataset']
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
-    result = config.get_config(dataset_name=dataset_name)['model']._update(kwargs)
+    result = config.get_config(dataset_name=dataset_name)['model'].update(kwargs)
     model_name = model_name if model_name is not None else result['default_model']
 
     name_list = [name for sub_list in get_available_models(class_dict=class_dict).values()

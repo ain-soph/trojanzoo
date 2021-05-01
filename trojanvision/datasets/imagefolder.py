@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets.imageset import ImageSet
-from trojanvision.utils.data import ZipFolder
+from trojanvision.utils.dataset import ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
 
@@ -33,13 +33,12 @@ class ImageFolder(ImageSet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--data_format', dest='data_format', type=str,
-                           help='folder or zip. (zip is using ZIP_STORED)')
+        group.add_argument('--data_format', dest='data_format', choices=['folder', 'tar', 'zip'],
+                           help='file format of dataset. (zip is using ZIP_STORED)')
         group.add_argument('--memory', dest='memory', action='store_true',
                            help='put all dataset into memory initialization.')
 
     def __init__(self, data_format: str = 'folder', memory: bool = False, **kwargs):
-        assert data_format in ['folder', 'zip']
         self.data_format: str = data_format
         self.memory: bool = memory
         super().__init__(**kwargs)
@@ -66,6 +65,7 @@ class ImageFolder(ImageSet):
                       f'{zip_path}')
                 print()
                 continue
+            tar_path = os.path.join(self.folder_path, f'{self.name}_{mode}_store.zip')
             self.download_and_extract_archive(mode=mode)
             os.rename(os.path.join(self.folder_path, self.org_folder_name[mode]),
                       os.path.join(self.folder_path, mode))
@@ -105,7 +105,7 @@ class ImageFolder(ImageSet):
                 print('{green}initialize zip finish{reset}'.format(**ansi))
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
-                        data_format: str = None, **kwargs) -> Union[datasets.ImageFolder, ZipFolder]:
+                        data_format: str = None, **kwargs) -> datasets.DatasetFolder:
         if transform == 'default':
             transform = self.get_transform(mode=mode)
         data_format = self.data_format if data_format is None else data_format

@@ -75,14 +75,14 @@ class LatentBackdoor(BadNet):
         other_classes.pop(self.target_class)
         other_x, other_y = [], []
         for _class in other_classes:
-            loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, classes=[_class],
+            loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, class_list=[_class],
                                                  shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)
             other_y.append(_label)
         other_x = torch.cat(other_x)
         other_y = torch.cat(other_y)
-        target_loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, classes=[self.target_class],
+        target_loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, class_list=[self.target_class],
                                                     shuffle=True, num_workers=0, pin_memory=False)
         target_x, target_y = next(iter(target_loader))
         data = {

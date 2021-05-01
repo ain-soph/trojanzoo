@@ -87,7 +87,7 @@ class ImageSet(Dataset):
             return getattr(self, 'class_to_idx')
         return {str(i): i for i in range(self.num_classes)}
 
-    def initialize_folder(self, img_type: str = '.png', **kwargs):
+    def make_folder(self, img_type: str = '.png', **kwargs):
         mode_list: list[str] = ['train', 'valid'] if self.valid_set else ['train']
         class_to_idx = self.get_class_to_idx(**kwargs)
         idx_to_class = {v: k for k, v in class_to_idx.items()}
@@ -101,5 +101,5 @@ class ImageSet(Dataset):
                 _dir = os.path.join(self.folder_path, self.name, mode, class_name)
                 if not os.path.exists(_dir):
                     os.makedirs(_dir)
-                image.save(_dir + f'{class_counters[target_class]}{img_type}')
+                image.save(os.path.join(_dir, f'{class_counters[target_class]}{img_type}'))
                 class_counters[target_class] += 1

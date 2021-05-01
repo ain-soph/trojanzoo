@@ -8,6 +8,7 @@ from trojanzoo.utils.output import ansi, prints
 
 
 from typing import TYPE_CHECKING
+from typing import Any
 from trojanzoo.configs import Config    # TODO: python 3.10
 from trojanzoo.datasets import Dataset
 from torch.optim.optimizer import Optimizer
@@ -19,11 +20,11 @@ if TYPE_CHECKING:
 
 class Trainer:
     name = 'trainer'
-    param_list: list[str] = ['optim_args', 'train_args', 'writer_args',
-                             'optimizer', 'lr_scheduler', 'writer']
+    param_list = ['optim_args', 'train_args', 'writer_args',
+                  'optimizer', 'lr_scheduler', 'writer']
 
-    @staticmethod
-    def add_argument(group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('--epoch', dest='epoch', type=int,
                            help='training epochs, defaults to config[train][epoch].')
         group.add_argument('--resume', dest='resume', type=int,
@@ -58,12 +59,13 @@ class Trainer:
                            help='How often, in seconds, to flush the pending events and summaries to disk.')
         return group
 
-    def __init__(self, optim_args: dict = {}, train_args: dict = {}, writer_args: dict = {},
+    def __init__(self, optim_args: dict[str, Any] = {}, train_args: dict[str, Any] = {},
+                 writer_args: dict[str, Any] = {},
                  optimizer: Optimizer = None, lr_scheduler: _LRScheduler = None,
                  writer=None):
-        self.optim_args = {} | optim_args   # to avoid BadAppend issues
-        self.train_args = {} | train_args
-        self.writer_args = {} | writer_args
+        self.optim_args = optim_args.copy()   # TODO: issue 6 why? to avoid BadAppend issues
+        self.train_args = train_args.copy()
+        self.writer_args = writer_args.copy()
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
         self.writer = writer
@@ -78,12 +80,12 @@ class Trainer:
             return self.train_args[key]
         raise AttributeError(key)
 
-    def keys(self) -> list[str]:
-        keys: list[str] = self.param_list.copy()
+    def keys(self):
+        keys = self.param_list.copy()
         keys.remove('optim_args')
         keys.remove('train_args')
         keys.remove('writer_args')
-        keys.extend(list(self.train_args.keys()))
+        keys.extend(self.train_args.keys())
         return keys
 
     def summary(self, indent: int = 0):
@@ -97,22 +99,22 @@ class Trainer:
                 prints('-' * 20, indent=indent + 10)
 
 
-def add_argument(parser: argparse.ArgumentParser, ClassType: type[Trainer] = Trainer) -> argparse._ArgumentGroup:
+def add_argument(parser: argparse.ArgumentParser, ClassType: type[Trainer] = Trainer):
     group = parser.add_argument_group('{yellow}trainer{reset}'.format(**ansi))
     return ClassType.add_argument(group)
 
 
 def create(dataset_name: str = None, dataset: Dataset = None, model: Model = None,
-           ClassType: type[Trainer] = Trainer,
-           tensorboard: bool = None, config: Config = config, **kwargs) -> Trainer:
+           ClassType: type[Trainer] = Trainer, tensorboard: bool = None,
+           config: Config = config, **kwargs):
     assert isinstance(model, Model)
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    result = config.get_config(dataset_name=dataset_name)['trainer']._update(kwargs)
+    result = config.get_config(dataset_name=dataset_name)['trainer'].update(kwargs)
 
     optim_keys = model.define_optimizer.__code__.co_varnames
     train_keys = model._train.__code__.co_varnames
-    optim_args = {}
-    train_args = {}
+    optim_args: dict[str, Any] = {}
+    train_args: dict[str, Any] = {}
     for key, value in result.items():
         if key in optim_keys:
             _dict = optim_args
@@ -124,14 +126,13 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
     optimizer, lr_scheduler = model.define_optimizer(T_max=result['epoch'], **optim_args)
 
     writer = None
+    writer_args: dict[str, Any] = {}
     if tensorboard:
         from torch.utils.tensorboard import SummaryWriter
-        writer_args = {}
         writer_keys = SummaryWriter.__init__.__code__.co_varnames   # log_dir, flush_secs, ...
         for key, value in result.items():
             if key in writer_keys:
                 writer_args[key] = value
         writer = SummaryWriter(**writer_args)
-    return ClassType(optim_args=optim_args, train_args=train_args,
-                     optimizer=optimizer, lr_scheduler=lr_scheduler,
-                     writer=writer)
+    return ClassType(optim_args=optim_args, train_args=train_args, writer_args=writer_args,
+                     optimizer=optimizer, lr_scheduler=lr_scheduler, writer=writer)

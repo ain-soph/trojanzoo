@@ -10,7 +10,7 @@ import argparse
 
 class BackdoorDefense(Defense):
 
-    name: str = None
+    name: str = 'backdoor_defense'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):

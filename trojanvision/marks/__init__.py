@@ -32,8 +32,7 @@ def create(mark_path: str = None, data_shape: list[int] = None, dataset_name: st
         data_shape = dataset.data_shape
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name
-    result = config.get_config(dataset_name=dataset_name)['mark']._update(kwargs)
-    result.update(mark_path=mark_path)
+    result = config.get_config(dataset_name=dataset_name)['mark'].update(kwargs).update(mark_path=mark_path)
     return Watermark(data_shape=data_shape, **result)
 
 

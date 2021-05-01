@@ -63,7 +63,7 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
     config.update_cmd(config_path)
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
-    result = config.get_config(dataset_name=dataset_name)['env']._update(other_kwargs)
+    result = config.get_config(dataset_name=dataset_name)['env'].update(other_kwargs)
     env.update(config_path=config_path, **result)
     ansi.switch(env['color'])
     if seed is None and 'seed' in env.keys():

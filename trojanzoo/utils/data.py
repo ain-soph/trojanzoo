@@ -92,15 +92,15 @@ def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subs
     return subset1, subset2
 
 
-def get_class_subset(dataset: torch.utils.data.Dataset,
-                  classes: list[int]) -> torch.utils.data.Subset:
+def get_class_subset(dataset: torch.utils.data.Dataset, class_list: Union[int, list[int]]) -> torch.utils.data.Subset:
+    class_list = [class_list] if isinstance(class_list, int) else class_list
     indices = np.arange(len(dataset))
     if isinstance(dataset, torch.utils.data.Subset):
         idx = np.array(dataset.indices)
         indices = idx[indices]
         dataset = dataset.dataset
     _, targets = dataset_to_list(dataset=dataset, label_only=True)
-    idx_bool = np.isin(targets, classes)
+    idx_bool = np.isin(targets, class_list)
     idx = np.arange(len(dataset))[idx_bool]
     idx = np.intersect1d(idx, indices)
     return torch.utils.data.Subset(dataset, idx)

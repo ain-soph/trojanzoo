@@ -75,7 +75,7 @@ class CleanLabel(BadNet):
         self.poison_generation_method: str = poison_generation_method
         if poison_generation_method == 'pgd':
             self.poison_num: int = int(len(self.dataset.get_dataset(
-                'train', classes=[self.target_class])) * self.poison_percent)
+                'train', class_list=[self.target_class])) * self.poison_percent)
         elif poison_generation_method == 'gan':
             self.poison_num: int = int(len(self.dataset.get_dataset('train')) * self.poison_percent)
 
@@ -98,7 +98,7 @@ class CleanLabel(BadNet):
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
 
-        target_class_dataset = self.dataset.get_dataset('train', full=True, classes=[self.target_class])
+        target_class_dataset = self.dataset.get_dataset('train', full=True, class_list=[self.target_class])
 
         sample_target_class_dataset, target_original_dataset = self.dataset.split_dataset(
             target_class_dataset, self.poison_num)
@@ -126,7 +126,7 @@ class CleanLabel(BadNet):
             y_list = []
             for source_class in other_classes:
                 print('Process data of Source Class: ', source_class)
-                source_class_dataset = self.dataset.get_dataset(mode='train', full=True, classes=[source_class])
+                source_class_dataset = self.dataset.get_dataset(mode='train', full=True, class_list=[source_class])
                 sample_source_class_dataset, _ = self.dataset.split_dataset(
                     source_class_dataset, self.poison_num)
                 sample_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_source_class_dataset,
