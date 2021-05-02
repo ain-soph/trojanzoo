@@ -18,6 +18,7 @@ class Process(BasicObject):
     name: str = 'process'
 
     def __init__(self, output: Union[int, Iterable[str]] = 0, indent: int = 0, **kwargs):
+        super().__init__(**kwargs)
         self.param_list['verbose'] = ['output', 'indent']
 
         self.output: set[str] = None
