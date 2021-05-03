@@ -48,15 +48,14 @@ class Dataset(ABC, BasicObject):
                            help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4.')
         group.add_argument('--download', action='store_true',
                            help='download dataset if not exist by calling dataset.initialize()')
-        group.add_argument('--data_seed', type=int, help='seed to process data')
+        # group.add_argument('--data_seed', type=int, help='seed to process data')
         group.add_argument('--data_dir', help='directory to contain datasets')
         return group
 
     def __init__(self, batch_size: int = None, folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
                  num_workers: int = 4, loss_weights: Union[bool, np.ndarray] = False,
-                 valid_batch_size: int = 100, test_batch_size: int = 1,
-                 data_seed: int = None, **kwargs):
+                 valid_batch_size: int = 100, test_batch_size: int = 1, **kwargs):
         super().__init__(**kwargs)
         self.param_list['dataset'] = ['data_type', 'folder_path', 'label_names',
                                       'batch_size', 'num_classes', 'num_workers',
@@ -69,7 +68,6 @@ class Dataset(ABC, BasicObject):
         self.train_sample = train_sample
         self.test_ratio = test_ratio
         self.num_workers = num_workers
-        self.seed = data_seed
         # ----------------------------------------------------------------------------- #
 
         if folder_path is not None:
@@ -161,7 +159,7 @@ class Dataset(ABC, BasicObject):
     @staticmethod
     def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
                       length: int = None, percent=None, seed: int = None):
-        seed = env['seed'] if seed is None else self.seed
+        seed = env['seed'] if seed is None else env['seed']
         return split_dataset(dataset, length, percent, seed)
 
     def get_dataloader(self, mode: str = None, dataset: torch.utils.data.Dataset = None,
