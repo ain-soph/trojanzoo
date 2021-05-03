@@ -158,9 +158,9 @@ class Dataset(ABC, BasicObject):
             dataset = get_class_subset(dataset=dataset, class_list=class_list)
         return dataset
 
-    def split_dataset(self, dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                      length: int = None, percent=None, seed: int = None
-                      ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
+    @staticmethod
+    def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
+                      length: int = None, percent=None, seed: int = None):
         seed = env['seed'] if seed is None else self.seed
         return split_dataset(dataset, length, percent, seed)
 
