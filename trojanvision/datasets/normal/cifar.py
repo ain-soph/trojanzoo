@@ -11,6 +11,7 @@ import torchvision.transforms as transforms
 import argparse
 from typing import Union
 
+
 class CIFAR10(ImageSet):
 
     name = 'cifar10'
@@ -50,9 +51,7 @@ class CIFAR10(ImageSet):
         ]
         if self.cutout:
             # transforms.RandomErasing(value=self.norm_par['mean'])
-
-            fill_values = torch.tensor(self.norm_par['mean']).view(-1, 1, 1)
-            transform_list.append(Cutout(self.cutout_length, fill_values=fill_values))
+            transform_list.append(Cutout(self.cutout_length))
         return transforms.Compose(transform_list)
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.CIFAR10:
