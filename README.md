@@ -15,6 +15,8 @@
 [![docker](https://img.shields.io/pypi/v/trojanzoo?label=docker)](https://hub.docker.com/r/local0state/trojanzoo)
 <!-- [![conda](https://img.shields.io/pypi/v/trojanzoo?label=conda)](https://anaconda.org/anaconda/trojanzoo) -->
 
+> **NOTE:** TrojanZoo requires `python>=3.9.2`, `pytorch>=1.8.1` and `torchvision>=0.9.1`, which must be installed manually. Recommend to use `conda` to install.
+
 This is the code implementation (pytorch) for our paper:  
 [TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
 
@@ -54,7 +56,7 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 1. `pip install trojanzoo`  
 2. **(todo)** `conda install trojanzoo`  
 3. `docker pull local0state/trojanzoo`  
-4. **(for develop)**`python setup.py develop`  
+4. **(RECOMMEND)**`python setup.py develop`  
     > This could install the github repo package but avoid copying files to `site_packages`, so that during developing `TrojanZoo`, you don't need move `example` files to the root directory of repo.  
 
 ## Quick Start
