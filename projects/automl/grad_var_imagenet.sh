@@ -3,12 +3,10 @@ declare -a models=("mobilenet_v2_comp" "resnet50_comp" "densenet161_comp" "wide_
 
 for model in "${models[@]}"
 do
-    echo $model
     python projects/automl/grad_var.py --pretrain --dataset imagenet16 --num_classes 120 --model $model
 done
 
 for arch in "${archs[@]}"
 do
-    echo $arch
     python projects/automl/grad_var.py --pretrain --dataset imagenet16 --num_classes 120 --model darts --model_arch $arch
 done

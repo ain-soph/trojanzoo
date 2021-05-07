@@ -45,11 +45,13 @@ if __name__ == '__main__':
         for param in model.parameters():
             grad_temp_list.append(param.grad.flatten())
         grad = torch.cat(grad_temp_list)
-        grad = grad * 5.0 / grad.norm(p=2)
+        norm = grad.norm(p=2)
+        if norm >= 5.0:
+            grad = grad * 5.0 / grad.norm(p=2)
         grad_list.append(grad.detach().cpu().clone())
         model.zero_grad()
     model.eval()
     model.activate_params([])
     grad_tensor = torch.stack(grad_list)
-    std = float(grad_tensor.sub_(grad_tensor.mean(0)).norm(p=2, dim=1).std())
-    print(f'{i:4d}    {std:f}')
+    std = float(grad_tensor.std(0).square().sum())
+    print(f'{model.name:20}  {str(grad_tensor.shape[-1]):10}    {std:f}')

@@ -3,10 +3,10 @@ declare -a models=("mobilenet_v2_comp" "vgg13_bn_comp" "resnet18_comp" "densenet
 
 for model in "${models[@]}"
 do
-    python projects/automl/grad_var.py --pretrain --dataset cifar100 --model $model
+    python projects/automl/grad_var_param.py --pretrain --dataset cifar10 --model $model
 done
 
 for arch in "${archs[@]}"
 do
-    python projects/automl/grad_var.py --pretrain --dataset cifar10 --model darts --model_arch $arch
+    python projects/automl/grad_var_param.py --pretrain --dataset cifar10 --model darts --model_arch $arch
 done

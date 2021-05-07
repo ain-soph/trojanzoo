@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     grad_list = []
 
-    for i, data in enumerate(dataset.get_dataloader('train', shuffle=True, batch_size=100)):
+    for i, data in enumerate(dataset.get_dataloader('valid', shuffle=True, batch_size=100)):
         _input, _label = model.get_data(data)
         _input.requires_grad_()
         loss = model.loss(_input, _label)
@@ -40,6 +40,6 @@ if __name__ == '__main__':
         grad = grad * 5.0 / grad.norm(p=2, dim=1, keepdim=True)
         grad = grad.detach().cpu().clone()
         grad_list.append(grad)
-    grad = torch.cat(grad_list, dim=0)
-    std = float(grad.sub_(grad.mean(0)).norm(p=2, dim=1).std())
-    print(f'{std:f}')
+    grad_tensor = torch.cat(grad_list, dim=0)
+    std = float(grad_tensor.std(0).square().sum())
+    print(f'{model.name:20}  {str(grad_tensor.shape[-1]):10}    {std:f}')
