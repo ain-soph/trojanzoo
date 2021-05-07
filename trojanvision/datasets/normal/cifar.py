@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets.imageset import ImageSet
-from trojanvision.utils.data import Cutout
 
-import torch
 import torchvision.datasets as datasets
-import torchvision.transforms as transforms
-# from torchvision.transforms.autoaugment import AutoAugment, AutoAugmentPolicy
 
-import argparse
 from typing import Union
 
 
@@ -20,39 +15,14 @@ class CIFAR10(ImageSet):
     class_to_idx = {'airplane': 0, 'automobile': 1, 'bird': 2, 'cat': 3,
                     'deer': 4, 'dog': 5, 'frog': 6, 'horse': 7, 'ship': 8, 'truck': 9}
 
-    @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
-        super().add_argument(group)
-        group.add_argument('--cutout', action='store_true', help='use cutout')
-        group.add_argument('--cutout_length', type=int, default=16, help='cutout length')
-        return group
-
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.49139968, 0.48215827, 0.44653124],
                                                            'std': [0.24703233, 0.24348505, 0.26158768], },
-                 cutout: bool = False, cutout_length: int = 16, **kwargs):
-        self.cutout = cutout
-        self.cutout_length = cutout_length
+                 **kwargs):
         super().__init__(norm_par=norm_par, **kwargs)
-        if cutout:
-            self.param_list['cifar10'] = ['cutout_length']
 
     def initialize(self):
         datasets.CIFAR10(root=self.folder_path, train=True, download=True)
         datasets.CIFAR10(root=self.folder_path, train=False, download=True)
-
-    def get_transform(self, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
-        if mode != 'train':
-            return transforms.ToTensor()
-        transform_list = [
-            transforms.RandomCrop((32, 32), padding=4),
-            transforms.RandomHorizontalFlip(),
-            # transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10),
-            transforms.ToTensor(),
-        ]
-        if self.cutout:
-            # transforms.RandomErasing(value=self.norm_par['mean'])
-            transform_list.append(Cutout(self.cutout_length))
-        return transforms.Compose(transform_list)
 
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs) -> datasets.CIFAR10:
         assert mode in ['train', 'valid']

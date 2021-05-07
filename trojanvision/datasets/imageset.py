@@ -2,6 +2,7 @@
 
 from trojanzoo.datasets import Dataset
 from trojanvision.environ import env
+from trojanvision.utils.data import Cutout
 
 import torch
 import torchvision.transforms as transforms
@@ -11,6 +12,7 @@ import os
 from typing import TYPE_CHECKING
 from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
+from typing import Union
 if TYPE_CHECKING:
     import torch.utils.data
 
@@ -25,44 +27,38 @@ class ImageSet(Dataset):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--transform', choices=['pytorch', 'bit'])
+        group.add_argument('--transform', choices=[None, 'bit', 'pytorch'])
+        group.add_argument('--auto_augment', action='store_true', help='use auto augment')
+        group.add_argument('--cutout', action='store_true', help='use cutout')
+        group.add_argument('--cutout_length', type=int, help='cutout length')
         return group
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
                  default_model: str = 'resnet18_comp',
-                 transform: str = False, **kwargs):
+                 transform: str = None, auto_augment: bool = False,
+                 cutout: bool = False, cutout_length: int = None, **kwargs):
         self.norm_par: dict[str, list[float]] = norm_par
         self.transform = transform
+        self.auto_augment = auto_augment
+        self.cutout = cutout
+        self.cutout_length = cutout_length
         super().__init__(default_model=default_model, **kwargs)
-        self.param_list['imageset'] = ['data_shape', 'norm_par']
+        self.param_list['imageset'] = ['data_shape', 'norm_par', 'transform', 'auto_augment', 'cutout']
+        if cutout:
+            self.param_list['imageset'].append('cutout_length')
 
-    def get_transform(self, mode: str) -> transforms.Compose:
+    def get_transform(self, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
         if self.transform == 'bit':
-            hyperrule = self.data_shape[-2] * self.data_shape[-1] < 96 * 96
-            precrop, crop = (160, 128) if hyperrule else (512, 480)
-            if mode == 'train':
-                transform = transforms.Compose([
-                    transforms.Resize((precrop, precrop)),
-                    transforms.RandomCrop((crop, crop)),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                ])
-            else:
-                transform = transforms.Compose([
-                    transforms.Resize((crop, crop)),
-                    transforms.ToTensor()])
+            return get_transform_bit(mode, self.data_shape)
+        elif self.data_shape == [3, 224, 224]:
+            transform = get_transform_imagenet(mode, use_tuple=self.transform != 'pytorch',
+                                               auto_augment=self.auto_augment)
+        elif self.data_shape in ([3, 16, 16], [3, 32, 32]):
+            transform = get_transform_cifar(mode, auto_augment=self.auto_augment,
+                                            cutout=self.cutout, cutout_length=self.cutout_length,
+                                            data_shape=self.data_shape)
         else:
-            tuple = self.transform != 'pytorch'
-            if mode == 'train':
-                transform = transforms.Compose([
-                    transforms.RandomResizedCrop((224, 224) if tuple else 224),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor()])
-            else:
-                transform = transforms.Compose([
-                    transforms.Resize((256, 256) if tuple else 256),
-                    transforms.CenterCrop((224, 224) if tuple else 224),
-                    transforms.ToTensor()])
+            transform = transforms.ToTensor()
         return transform
 
     def get_dataloader(self, mode: str = None, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
@@ -104,3 +100,57 @@ class ImageSet(Dataset):
                     os.makedirs(_dir)
                 image.save(os.path.join(_dir, f'{class_counters[target_class]}{img_type}'))
                 class_counters[target_class] += 1
+
+
+def get_transform_bit(mode: str, data_shape: list[int]) -> transforms.Compose:
+    hyperrule = data_shape[-2] * data_shape[-1] < 96 * 96
+    precrop, crop = (160, 128) if hyperrule else (512, 480)
+    if mode == 'train':
+        transform = transforms.Compose([
+            transforms.Resize((precrop, precrop)),
+            transforms.RandomCrop((crop, crop)),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+        ])
+    else:
+        transform = transforms.Compose([
+            transforms.Resize((crop, crop)),
+            transforms.ToTensor()])
+    return transform
+
+
+def get_transform_imagenet(mode: str, use_tuple: bool = False, auto_augment: bool = False) -> transforms.Compose:
+    if mode == 'train':
+        transform_list = [
+            transforms.RandomResizedCrop((224, 224) if use_tuple else 224),
+            transforms.RandomHorizontalFlip(),
+            # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+        ]
+        if auto_augment:
+            transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.IMAGENET))
+        transform_list.append(transforms.ToTensor())
+        transform = transforms.Compose(transform_list)
+    else:
+        transform = transforms.Compose([
+            transforms.Resize((256, 256) if use_tuple else 256),
+            transforms.CenterCrop((224, 224) if use_tuple else 224),
+            transforms.ToTensor()])
+    return transform
+
+
+def get_transform_cifar(mode: str, auto_augment: bool = False,
+                        cutout: bool = False, cutout_length: int = None,
+                        data_shape: list[int] = [3, 32, 32]) -> Union[transforms.Compose, transforms.ToTensor]:
+    if mode != 'train':
+        return transforms.ToTensor()
+    cutout_length = data_shape[-1] // 2 if cutout_length is None else cutout_length
+    transform_list = [
+        transforms.RandomCrop(data_shape[-2:], padding=data_shape[-1] // 8),
+        transforms.RandomHorizontalFlip(),
+    ]
+    if auto_augment:
+        transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10))
+    if cutout:
+        transform_list.append(Cutout(cutout_length))
+    transform_list.append(transforms.ToTensor())
+    return transforms.Compose(transform_list)
