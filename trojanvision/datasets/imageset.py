@@ -150,7 +150,7 @@ def get_transform_cifar(mode: str, auto_augment: bool = False,
     ]
     if auto_augment:
         transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10))
+    transform_list.append(transforms.ToTensor())
     if cutout:
         transform_list.append(Cutout(cutout_length))
-    transform_list.append(transforms.ToTensor())
     return transforms.Compose(transform_list)
