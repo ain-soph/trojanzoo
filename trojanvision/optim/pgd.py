@@ -54,7 +54,7 @@ class PGD(trojanzoo.optim.Optimizer):
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
                  pgd_alpha: float = None, pgd_eps: float = None,
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
-                 output: Union[int, list[str]] = None, add_noise_fn=None, **kwargs) -> tuple[torch.Tensor, int]:
+                 output: Union[int, list[str]] = None, add_noise_fn=None, random_init=False, **kwargs) -> tuple[torch.Tensor, int]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
 
         pgd_alpha = pgd_alpha if pgd_alpha is not None else self.pgd_alpha
@@ -62,7 +62,10 @@ class PGD(trojanzoo.optim.Optimizer):
         iteration = iteration if iteration is not None else self.iteration
         loss_fn = loss_fn if loss_fn is not None else self.loss_fn
         add_noise_fn = add_noise_fn if add_noise_fn is not None else add_noise
-        noise = noise if noise is not None else torch.zeros_like(_input[0] if self.universal else _input)
+        if random_init:
+            noise = pgd_alpha * (torch.rand_like(_input) * 2 - 1)
+        else:
+            noise = noise if noise is not None else torch.zeros_like(_input[0] if self.universal else _input)
         output = self.get_output(output)
 
         # ----------------------------------------------------------------------------------------- #

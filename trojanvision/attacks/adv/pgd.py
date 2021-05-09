@@ -34,7 +34,8 @@ class PGD(Attack, PGD_Optimizer):
         group.add_argument('--target_idx', type=int, help='Target label order in original classification, defaults to -1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
         group.add_argument('--test_num', type=int, help='total number of test examples for PGD, defaults to 1000.')
-
+        group.add_argument('--num_init', type=int, help='number of random init for PGD, defaults to 0 (without random initialization).')
+        
         group.add_argument('--grad_method', help='gradient estimation method, defaults to \'white\'')
         group.add_argument('--query_num', type=int,
                            help='query numbers for black box gradient estimation, defaults to 100.')
@@ -42,9 +43,10 @@ class PGD(Attack, PGD_Optimizer):
                            help='gaussian sampling std for black box gradient estimation, defaults to 1e-3')
         return group
 
-    def __init__(self, target_idx: int = -1, test_num: int = 1000, **kwargs):
+    def __init__(self, target_idx: int = -1, test_num: int = 1000, num_init: int = 0, **kwargs):
         self.target_idx = target_idx
         self.test_num = test_num
+        self.num_init = num_init
         super().__init__(**kwargs)
         self.param_list['pgd'].extend(['target_idx', 'test_num'])
         self.dataset: ImageSet
@@ -57,6 +59,7 @@ class PGD(Attack, PGD_Optimizer):
         total_iter = 0
         total_conf = 0.0
         succ_conf = 0.0
+        num_init = self.num_init
         loader = self.dataset.get_dataloader(mode='test', shuffle=True)
         for data in loader:
             if total >= self.test_num:
@@ -65,7 +68,13 @@ class PGD(Attack, PGD_Optimizer):
             if len(_label) == 0:
                 continue
             target = self.generate_target(_input, idx=self.target_idx)
-            adv_input, _iter = self.craft_example(_input, target=target, **kwargs)
+            if num_init == 0:
+                adv_input, _iter = self.craft_example(_input, target=target, random_init=False, **kwargs)
+            else:
+                for _ in range(num_init):
+                    adv_input, _iter = self.craft_example(_input, target=target, random_init=True, **kwargs)
+                    if _iter:
+                        break
             total += 1
             org_conf = float(self.model.get_target_prob(_input, target))
             adv_conf = float(self.model.get_target_prob(adv_input, target))
@@ -95,7 +104,7 @@ class PGD(Attack, PGD_Optimizer):
         return float(correct) / total, float(total_iter) / total
 
     def craft_example(self, _input: torch.Tensor, loss_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
-                      target: Union[torch.Tensor, int] = None, target_idx: int = None, **kwargs) -> tuple[torch.Tensor, int]:
+                      target: Union[torch.Tensor, int] = None, target_idx: int = None, random_init: bool = False, **kwargs) -> tuple[torch.Tensor, int]:
         if len(_input) == 0:
             return _input, None
         target_idx = self.target_idx if target_idx is None else target_idx
@@ -113,7 +122,7 @@ class PGD(Attack, PGD_Optimizer):
                 loss = self.model.loss(_X, t, **kwargs)
                 return loss if target_idx else -loss
             loss_fn = _loss_fn
-        return self.optimize(_input, loss_fn=loss_fn, target=target, **kwargs)
+        return self.optimize(_input, loss_fn=loss_fn, target=target, random_init=random_init, **kwargs)
 
     def early_stop_check(self, X: torch.Tensor, target: torch.Tensor = None, loss_fn=None, **kwargs):
         if not self.stop_threshold:
