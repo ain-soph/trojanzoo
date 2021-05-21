@@ -30,7 +30,7 @@ class Process(BasicObject):
         indent = indent if indent is not None else self.indent
         return super().summary(indent=indent)
 
-    def get_output(self, org_output: Union[int, Iterable[str]] = None):
+    def get_output(self, org_output: Union[int, Iterable[str]] = None) -> set[str]:
         if org_output is None:
             return self.output
         elif isinstance(org_output, int):
@@ -38,8 +38,8 @@ class Process(BasicObject):
         return set(org_output)
 
     @classmethod
-    def get_output_int(cls, org_output: int = 0):
-        result: set[str] = {}
+    def get_output_int(cls, org_output: int = 0) -> set[str]:
+        result: set[str] = set()
         if org_output >= 5:
             result.add('end')
         if org_output >= 10:
