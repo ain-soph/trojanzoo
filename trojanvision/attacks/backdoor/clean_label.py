@@ -5,7 +5,7 @@ from trojanvision.utils.model import weight_init
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
 from trojanvision.optim import PGD as PGD_Optimizer
 from trojanvision.environ import env
-from trojanzoo.utils.data import TensorListDataset
+from trojanzoo.utils.data import TensorListDataset, dataset_to_list
 
 import torch
 import torch.nn as nn
@@ -52,10 +52,10 @@ class CleanLabel(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--poison_generation_method', type=str,
-                           help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]=pgd')
-        group.add_argument(
-            '--tau', type=float, help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
+        group.add_argument('--poison_generation_method', type=str, choices=['pgd', 'gan'],
+                           help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]="pgd"')
+        group.add_argument('--tau', type=float,
+                           help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
         group.add_argument('--epsilon', type=float,
                            help='the perturbation bound in input space, defaults to config[clean_label][epsilon]=0.1, 300/(3*32*32)')
         group.add_argument('--noise_dim', type=int,
@@ -68,8 +68,8 @@ class CleanLabel(BadNet):
                            help=' the critic iterations per generator training iteration, defaults to config[clean_label][critic_iter]=5')
         return group
 
-    def __init__(self, preprocess_layer: str = 'classifier', poison_generation_method: str = 'pgd',
-                 pgd_alpha: float = 2 / 255, pgd_eps: float = 16 / 255, pgd_iter=20,
+    def __init__(self, poison_generation_method: str = 'pgd',
+                 pgd_alpha: float = 2 / 255, pgd_eps: float = 8 / 255, pgd_iter=7,
                  tau: float = 0.2, noise_dim: int = 100,
                  train_gan: bool = False, generator_iters: int = 1000, critic_iter: int = 5, **kwargs):
         super().__init__(**kwargs)
@@ -100,15 +100,11 @@ class CleanLabel(BadNet):
 
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
 
-        target_class_dataset = self.dataset.get_dataset('train', full=True, class_list=[self.target_class])
+        target_class_set = self.dataset.get_dataset('train', class_list=[self.target_class])
+        target_imgs_list, _ = dataset_to_list(target_class_set)
+        target_imgs = torch.stack(target_imgs_list[:self.poison_num]).to(env['device'])
 
-        sample_target_class_dataset, target_original_dataset = self.dataset.split_dataset(
-            target_class_dataset, self.poison_num)
-        sample_target_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_target_class_dataset,
-                                                               batch_size=self.poison_num, num_workers=0)
-        target_imgs, _ = self.model.get_data(next(iter(sample_target_dataloader)))
-
-        full_set = self.dataset.get_dataset('train', full=False)
+        full_set = self.dataset.get_dataset('train')
         poison_set: TensorListDataset = None    # TODO
         if self.poison_generation_method == 'pgd':
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
@@ -117,8 +113,7 @@ class CleanLabel(BadNet):
             poison_imgs, _ = self.pgd.craft_example(_input=poison_imgs)
             poison_imgs = self.add_mark(poison_imgs).cpu()
 
-            poison_label = [self.target_class] * len(target_imgs)
-            poison_set = TensorListDataset(poison_imgs, poison_label)
+            poison_set = TensorListDataset(poison_imgs, [self.target_class] * len(poison_imgs))
             # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
 
         elif self.poison_generation_method == 'gan':
@@ -144,7 +139,7 @@ class CleanLabel(BadNet):
                 else:
                     self.train_gan = True
                     self.wgan.reset_parameters()
-                    gan_dataset = torch.utils.data.ConcatDataset([source_class_dataset, target_class_dataset])
+                    gan_dataset = torch.utils.data.ConcatDataset([source_class_dataset, target_class_set])
                     gan_dataloader = self.dataset.get_dataloader(
                         mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
                     self.wgan.train(gan_dataloader)

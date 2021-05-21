@@ -34,8 +34,9 @@ class PGD(Attack, PGD_Optimizer):
         group.add_argument('--target_idx', type=int, help='Target label order in original classification, defaults to -1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
         group.add_argument('--test_num', type=int, help='total number of test examples for PGD, defaults to 1000.')
-        group.add_argument('--num_init', type=int, help='number of random init for PGD, defaults to 0 (without random initialization).')
-        
+        group.add_argument('--num_init', type=int,
+                           help='number of random init for PGD, defaults to 0 (without random initialization).')
+
         group.add_argument('--grad_method', help='gradient estimation method, defaults to \'white\'')
         group.add_argument('--query_num', type=int,
                            help='query numbers for black box gradient estimation, defaults to 100.')

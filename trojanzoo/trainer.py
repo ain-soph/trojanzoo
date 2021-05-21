@@ -105,7 +105,7 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
     for key, value in result.items():
         if key in optim_keys:
             _dict = optim_args
-        elif key in train_keys:
+        elif key in train_keys and key != 'verbose':
             _dict = train_args
         else:
             continue
