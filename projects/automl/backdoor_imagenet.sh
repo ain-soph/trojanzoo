@@ -6,11 +6,11 @@ attack="trojannn"
 for model in "${models[@]}"
 do
     echo $model
-    python examples/backdoor_attack.py --epoch 20 --batch_size 96 --lr 0.01 --pretrain --save --validate_interval 1 --attack $attack --dataset imagenet16 --num_classes 120 --model $model
+    python examples/backdoor_attack.py --mark_alpha 0.7 --epoch 20 --batch_size 96 --lr 0.01 --pretrain --save --validate_interval 1 --attack $attack --dataset imagenet16 --num_classes 120 --model $model
 done
 
 for arch in "${archs[@]}"
 do
     echo $arch
-    python examples/backdoor_attack.py --epoch 20 --batch_size 96 --lr 0.01 --pretrain --save --validate_interval 1 --attack $attack --dataset imagenet16 --num_classes 120 --model darts --model_arch $arch
+    python examples/backdoor_attack.py --mark_alpha 0.7 --epoch 20 --batch_size 96 --lr 0.01 --pretrain --save --validate_interval 1 --attack $attack --dataset imagenet16 --num_classes 120 --model darts --model_arch $arch
 done
