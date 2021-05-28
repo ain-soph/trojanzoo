@@ -54,10 +54,11 @@ class CleanLabel(BadNet):
         super().add_argument(group)
         group.add_argument('--poison_generation_method', type=str, choices=['pgd', 'gan'],
                            help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]="pgd"')
+        group.add_argument('--pgd_alpha', type=float)
+        group.add_argument('--pgd_eps', type=float)
+        group.add_argument('--pgd_iter', type=int)
         group.add_argument('--tau', type=float,
                            help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
-        group.add_argument('--epsilon', type=float,
-                           help='the perturbation bound in input space, defaults to config[clean_label][epsilon]=0.1, 300/(3*32*32)')
         group.add_argument('--noise_dim', type=int,
                            help='the dimension of the input in the generator, defaults to config[clean_label][noise_dim]=100')
         group.add_argument('--train_gan', action='store_true',
@@ -83,6 +84,8 @@ class CleanLabel(BadNet):
 
         if poison_generation_method == 'pgd':
             self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'pgd_iter']
+            if pgd_alpha is None:
+                pgd_alpha = 1.5 * pgd_eps / pgd_iter
             self.pgd_alpha: float = pgd_alpha
             self.pgd_eps: float = pgd_eps
             self.pgd_iter: int = pgd_iter
