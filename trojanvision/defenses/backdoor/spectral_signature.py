@@ -73,7 +73,6 @@ class SpectralSignature(BackdoorDefense):
         poison_input = torch.stack(poison_input)
         poison_label = torch.as_tensor(poison_label, dtype=torch.long)
         self.poison_dataset = TensorDataset(poison_input, poison_label)
-        self.poison_dataset = TensorDataset(poison_input, poison_label)
         self.poison_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
 
