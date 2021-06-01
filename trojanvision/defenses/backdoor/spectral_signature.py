@@ -64,13 +64,15 @@ class SpectralSignature(BackdoorDefense):
             dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
         clean_input, clean_label = dataset_to_list(clean_dataset)
         clean_input = torch.stack(clean_input)
+        clean_label = torch.as_tensor(clean_label, dtype=torch.long)
         self.clean_dataset = TensorDataset(clean_input, clean_label)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
 
         poison_dataset, _ = self.dataset.split_dataset(dataset=remain_dataset, length=self.poison_image_num)
         poison_input, poison_label = dataset_to_list(poison_dataset)
         poison_input = torch.stack(poison_input)
-        self.clean_dataset = TensorDataset(poison_input, poison_label)
+        poison_label = torch.as_tensor(poison_label, dtype=torch.long)
+        self.poison_dataset = TensorDataset(poison_input, poison_label)
         self.poison_dataset = TensorDataset(poison_input, poison_label)
         self.poison_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
