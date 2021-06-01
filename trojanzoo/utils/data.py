@@ -41,7 +41,7 @@ class IndexDataset(torch.utils.data.Dataset):
 
 
 def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False,
-                    force: bool = True) -> tuple[list, list[int]]:
+                    force: bool = True, shuffle: bool = False) -> tuple[list, list[int]]:
     if not force:
         if label_only and 'targets' in dataset.__dict__.keys():
             return None, list(dataset.targets)
@@ -63,6 +63,13 @@ def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False,
     return data, targets
 
 
+def shuffle_idx(len: int, seed: int = None) -> np.ndarray:
+    idx_arr: np.ndarray = np.arange(len)
+    if seed is not None:
+        np.random.seed(seed)
+    np.random.shuffle(idx_arr)
+
+
 def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int = None,
                  idx: list[int] = None) -> tuple[list, list[int]]:
     if idx is None:
@@ -75,13 +82,14 @@ def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int = None,
 
 
 def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
-                  length: int = None, percent=None, seed: int = None
+                  length: int = None, percent=None, shuffle: bool = True, seed: int = None
                   ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
     assert (length is None) != (percent is None)  # XOR check
     length = length if length is not None else int(len(dataset) * percent)
     indices = np.arange(len(dataset))
-    if seed is not None:
-        np.random.seed(seed)
+    if shuffle:
+        if seed is not None:
+            np.random.seed(seed)
         np.random.shuffle(indices)
     if isinstance(dataset, torch.utils.data.Subset):
         idx = np.array(dataset.indices)

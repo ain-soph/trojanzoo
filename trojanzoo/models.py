@@ -379,12 +379,14 @@ class Model:
                validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
+               accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs) -> None:
         loader_train = loader_train if loader_train is not None else self.dataset.loader['train']
         get_data_fn = get_data_fn if callable(get_data_fn) else self.get_data
         loss_fn = loss_fn if callable(loss_fn) else self.loss
         validate_fn = validate_fn if callable(validate_fn) else self._validate
         save_fn = save_fn if callable(save_fn) else self.save
+        accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
         # if not callable(iter_fn) and hasattr(self, 'iter_fn'):
         #     iter_fn = getattr(self, 'iter_fn')
         if not callable(epoch_fn) and hasattr(self, 'epoch_fn'):
@@ -396,7 +398,7 @@ class Model:
                      print_prefix, start_epoch, resume, validate_interval, save, amp,
                      loader_train, loader_valid, epoch_fn, get_data_fn, loss_fn, after_loss_fn, validate_fn,
                      save_fn, file_path, folder_path, suffix,
-                     writer, main_tag, tag, verbose, indent, **kwargs)
+                     writer, main_tag, tag, accuracy_fn, verbose, indent, **kwargs)
 
     def _validate(self, module: nn.Module = None, num_classes: int = None,
                   full: bool = True, loader: torch.utils.data.DataLoader = None,
@@ -404,6 +406,7 @@ class Model:
                   get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                   loss_fn: Callable[..., torch.Tensor] = None,
                   writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
+                  accuracy_fn: Callable[..., list[float]] = None,
                   **kwargs) -> tuple[float, float]:
         module = self if module is None else module
         num_classes = self.num_classes if num_classes is None else num_classes
@@ -411,10 +414,11 @@ class Model:
             loader = self.dataset.loader['valid'] if full else self.dataset.loader['valid2']
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
         loss_fn = loss_fn if loss_fn is not None else self.loss
+        accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
         return validate(module, num_classes, loader,
                         print_prefix, indent, verbose,
                         get_data_fn, loss_fn,
-                        writer, main_tag, tag, _epoch, **kwargs)
+                        writer, main_tag, tag, _epoch, accuracy_fn, **kwargs)
 
     # TODO: this method shall be removed
     def _compare(self, peer: nn.Module = None, full: bool = True, loader: torch.utils.data.DataLoader = None,

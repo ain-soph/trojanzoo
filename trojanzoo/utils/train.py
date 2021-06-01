@@ -29,10 +29,12 @@ def train(module: nn.Module, num_classes: int,
           validate_fn: Callable[..., tuple[float, float]] = None,
           save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
           writer=None, main_tag: str = 'train', tag: str = '',
+          accuracy_fn: Callable[..., list[float]] = None,
           verbose: bool = True, indent: int = 0, **kwargs) -> None:
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
     validate_fn = validate_fn if callable(validate_fn) else validate
+    accuracy_fn = accuracy_fn if callable(accuracy_fn) else accuracy
 
     scaler: torch.cuda.amp.GradScaler = None
     if not env['num_gpus']:
@@ -102,7 +104,7 @@ def train(module: nn.Module, num_classes: int,
                     # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                 optimizer.step()
             optimizer.zero_grad()
-            acc1, acc5 = accuracy(_output, _label, num_classes=num_classes, topk=(1, 5))
+            acc1, acc5 = accuracy_fn(_output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
             logger.meters['loss'].update(float(loss), batch_size)
             logger.meters['top1'].update(acc1, batch_size)
@@ -143,10 +145,12 @@ def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataL
              get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
              loss_fn: Callable[..., torch.Tensor] = None,
              writer=None, main_tag: str = 'valid', tag: str = '', _epoch: int = None,
+             accuracy_fn: Callable[..., list[float]] = None,
              **kwargs) -> tuple[float, float]:
     module.eval()
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
+    accuracy_fn = accuracy_fn if callable(accuracy_fn) else accuracy
     logger = MetricLogger()
     logger.meters['loss'] = SmoothedValue()
     logger.meters['top1'] = SmoothedValue()
@@ -164,7 +168,7 @@ def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataL
         with torch.no_grad():
             _output = module(_input)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
-            acc1, acc5 = accuracy(_output, _label, num_classes, topk=(1, 5))
+            acc1, acc5 = accuracy_fn(_output, _label, num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
             logger.meters['loss'].update(loss, batch_size)
             logger.meters['top1'].update(acc1, batch_size)
