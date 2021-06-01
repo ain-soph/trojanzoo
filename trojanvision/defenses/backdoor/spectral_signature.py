@@ -59,11 +59,12 @@ class SpectralSignature(BackdoorDefense):
         self.epsilon: int = epsilon
         self.retrain_epoch: int = retrain_epoch
 
-        self.clean_dataset, _ = self.dataset.split_dataset(
+        clean_dataset, _ = self.dataset.split_dataset(
             dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
+        clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=1, num_workers=1)
         label_all = torch.empty([])    # TODO
         clean_input_all = torch.empty([])    # TODO
-        for i, data in enumerate(iter(self.clean_dataset)):
+        for i, data in enumerate(clean_dataloader):
             _input, _label = self.model.get_data(data)
             clean_input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
             if i == 0:
