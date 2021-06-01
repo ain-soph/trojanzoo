@@ -2,6 +2,7 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
+from trojanzoo.utils.data import dataset_to_list
 
 import torch
 from torch.utils.data import TensorDataset
@@ -59,39 +60,18 @@ class SpectralSignature(BackdoorDefense):
         self.epsilon: int = epsilon
         self.retrain_epoch: int = retrain_epoch
 
-        clean_dataset, _ = self.dataset.split_dataset(
+        clean_dataset, remain_dataset = self.dataset.split_dataset(
             dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
-        clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=1, num_workers=1)
-        label_all = torch.empty([])    # TODO
-        clean_input_all = torch.empty([])    # TODO
-        for i, data in enumerate(clean_dataloader):
-            _input, _label = self.model.get_data(data)
-            clean_input = _input
-            if i == 0:
-                clean_input_all = clean_input
-                label_all = torch.unsqueeze(_label, 0)
-            else:
-                clean_input_all = torch.cat((clean_input_all, clean_input))
-                label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
-        label_all = torch.squeeze(label_all, 0)
-        self.clean_dataset = TensorDataset(clean_input_all, label_all)
+        clean_input, clean_label = dataset_to_list(clean_dataset)
+        clean_input = torch.stack(clean_input)
+        self.clean_dataset = TensorDataset(clean_input, clean_label)
         self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
 
-        self.poison_dataset, _ = self.dataset.split_dataset(dataset=_, length=self.poison_image_num)
-        label_all = torch.empty([])    # TODO
-        poison_input_all = torch.empty([])    # TODO
-        for i, data in enumerate(iter(self.poison_dataset)):
-            _input, _label = self.model.get_data(data)
-            poison_input = self.attack.add_mark(_input)
-            poison_input = poison_input.view(1, poison_input.shape[0], poison_input.shape[1], poison_input.shape[2])
-            if i == 0:
-                poison_input_all = poison_input
-                label_all = torch.unsqueeze(_label, 0)
-            else:
-                poison_input_all = torch.cat((poison_input_all, poison_input))
-                label_all = torch.cat((label_all, torch.unsqueeze(_label, 0)))
-        label_all = torch.squeeze(label_all, 0)
-        self.poison_dataset = TensorDataset(poison_input_all, label_all)
+        poison_dataset, _ = self.dataset.split_dataset(dataset=remain_dataset, length=self.poison_image_num)
+        poison_input, poison_label = dataset_to_list(poison_dataset)
+        poison_input = torch.stack(poison_input)
+        self.clean_dataset = TensorDataset(poison_input, poison_label)
+        self.poison_dataset = TensorDataset(poison_input, poison_label)
         self.poison_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
 
