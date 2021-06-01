@@ -1,8 +1,9 @@
 declare -a rates=("1000" "2000" "4000" "8000" "16000")
-declare -a archs=("enas" "pc_darts" "amoebanet" "snas_mild" "darts" "nasnet" "pdarts" "sgas" "drnas")
-declare -a models=("mobilenet_v2_comp" "vgg13_bn_comp" "densenet_comp" "resnet18_comp" "wide_resnet50_2_comp" "resnext50_32x4d_comp" "dla34_comp")
+declare -a archs=("amoebanet" "darts" "drnas" "enas" "nasnet" "pc_darts" "pdarts" "sgas" "snas_mild" "random")
+declare -a models=("bit_comp" "densenet_comp" "dla34_comp" "resnet18_comp" "resnext50_32x4d_comp" "vgg13_bn_comp" "wide_resnet50_2_comp")
 
 dataset="cifar100"
+# "mobilenet_v2_comp"
 
 for model in "${models[@]}"; do
     echo $model
