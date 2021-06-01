@@ -168,7 +168,7 @@ def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataL
         with torch.no_grad():
             _output = module(_input)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
-            acc1, acc5 = accuracy_fn(_output, _label, num_classes, topk=(1, 5))
+            acc1, acc5 = accuracy_fn(_output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
             logger.meters['loss'].update(loss, batch_size)
             logger.meters['top1'].update(acc1, batch_size)
