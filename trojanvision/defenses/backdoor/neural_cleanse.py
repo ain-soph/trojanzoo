@@ -84,8 +84,7 @@ class NeuralCleanse(BackdoorDefense):
             self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'))
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, mask, loss = self.remask(
-                label)
+            mark, mask, loss = self.remask(label)
             mark_list.append(mark)
             mask_list.append(mask)
             loss_list.append(loss)
@@ -93,7 +92,9 @@ class NeuralCleanse(BackdoorDefense):
                 overlap = jaccard_idx(mask, self.real_mask,
                                       select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
                 print(f'Jaccard index: {overlap:.3f}')
-            np.savez(file_path, mark_list=mark_list, mask_list=mask_list, loss_list=loss_list)
+            np.savez(file_path, mark_list=[to_numpy(mark) for mark in mark_list],
+                     mask_list=[to_numpy(mask) for mask in mask_list],
+                     loss_list=loss_list)
             print('Defense results saved at: ' + file_path)
         mark_list = torch.stack(mark_list)
         mask_list = torch.stack(mask_list)
