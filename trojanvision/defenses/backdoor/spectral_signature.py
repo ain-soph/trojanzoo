@@ -103,7 +103,7 @@ class SpectralSignature(BackdoorDefense):
         """
         final_set = None    # TODO
         for k in range(self.dataset.num_classes):
-            # self.class_dataset = self.dataset.get_class_subset(self.mix_dataset,classes = [k])
+            # class_dataset = self.dataset.get_class_subset(self.mix_dataset,classes = [k])
             idx = []
             for i, data in enumerate(self.mix_dataset):
                 _input, _label = self.model.get_data(data)
@@ -115,7 +115,7 @@ class SpectralSignature(BackdoorDefense):
             class_input = torch.stack(class_input)
             class_label = torch.as_tensor(class_label, dtype=torch.long)
             class_dataset = TensorDataset(class_input, class_label)
-            class_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.class_dataset, num_workers=0)
+            class_dataloader = self.dataset.get_dataloader(mode='train', dataset=class_dataset, num_workers=0)
 
             layer_output_all = []   # TODO
             for i, data in enumerate(class_dataloader):
@@ -125,22 +125,22 @@ class SpectralSignature(BackdoorDefense):
             layer_output_all = torch.cat(layer_output_all, dim=0)
             layer_output_mean = torch.mean(layer_output_all, dim=0)
 
-            for i in range(len(self.class_dataset)):
+            for i in range(len(class_dataset)):
                 layer_output_all[i] = layer_output_all[i] - layer_output_mean
 
             u, s, v = torch.svd(layer_output_all)
             v_transpose = torch.transpose(v, 1, 0)
             outlier_scores = torch.rand([layer_output_all.shape[0]], device=env['device'])
-            for i in range(len(self.class_dataset)):
+            for i in range(len(class_dataset)):
                 outlier_scores[i] = (layer_output_all[i].view(1, -1) @ v_transpose[i].view(-1, 1)) ** 2
             outlier_scores_sorted, indices = torch.sort(outlier_scores, descending=True)
 
             clean_indices = indices[self.epsilon:]
-            self.class_dataset = torch.utils.data.Subset(self.class_dataset, clean_indices)
+            class_dataset = torch.utils.data.Subset(class_dataset, clean_indices)
             if k == 0:
-                final_set = self.class_dataset
+                final_set = class_dataset
             else:
-                final_set = torch.utils.data.ConcatDataset([final_set, self.class_dataset])
+                final_set = torch.utils.data.ConcatDataset([final_set, class_dataset])
 
         final_dataloader = self.dataset.get_dataloader(mode=None, dataset=final_set, num_workers=0, pin_memory=False)
         return final_dataloader
