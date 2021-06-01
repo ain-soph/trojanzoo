@@ -66,7 +66,7 @@ class SpectralSignature(BackdoorDefense):
         clean_input_all = torch.empty([])    # TODO
         for i, data in enumerate(clean_dataloader):
             _input, _label = self.model.get_data(data)
-            clean_input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
+            clean_input = _input
             if i == 0:
                 clean_input_all = clean_input
                 label_all = torch.unsqueeze(_label, 0)
