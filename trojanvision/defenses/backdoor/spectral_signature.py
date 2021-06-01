@@ -52,13 +52,15 @@ class SpectralSignature(BackdoorDefense):
                            help='the epoch to retrain the model on clean image dataset, defaults to 5')
         return group
 
-    def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500, preprocess_layer: str = 'features', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
+    def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500, preprocess_layer: str = 'flatten', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.preprocess_layer: str = preprocess_layer
         self.poison_image_num: int = poison_image_num
         self.clean_image_num: int = clean_image_num
         self.epsilon: int = epsilon
         self.retrain_epoch: int = retrain_epoch
+        self.param_list['spectral_signature'] = ['preprocess_layer', 'poison_image_num', 'clean_image_num',
+                                                 ' epsilon', 'retrain_epoch']
 
         clean_dataset, remain_dataset = self.dataset.split_dataset(
             dataset=self.dataset.get_full_dataset(mode='train'), length=self.clean_image_num)
@@ -66,15 +68,12 @@ class SpectralSignature(BackdoorDefense):
         clean_input = torch.stack(clean_input)
         clean_label = torch.as_tensor(clean_label, dtype=torch.long)
         self.clean_dataset = TensorDataset(clean_input, clean_label)
-        self.clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.clean_dataset, num_workers=0)
 
         poison_dataset, _ = self.dataset.split_dataset(dataset=remain_dataset, length=self.poison_image_num)
         poison_input, poison_label = dataset_to_list(poison_dataset)
         poison_input = torch.stack(poison_input)
         poison_label = torch.as_tensor(poison_label, dtype=torch.long)
         self.poison_dataset = TensorDataset(poison_input, poison_label)
-        self.poison_dataloader = self.dataset.get_dataloader(
-            mode='train', dataset=self.poison_dataset, num_workers=0, pin_memory=False)
 
         self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
         self.mix_dataloader = self.dataset.get_dataloader(
@@ -111,18 +110,19 @@ class SpectralSignature(BackdoorDefense):
                 _input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
                 if _label.item() == k:
                     idx.append(k)
-            self.class_dataset = torch.utils.data.Subset(self.mix_dataset, idx)
+            class_dataset = torch.utils.data.Subset(self.mix_dataset, idx)
+            class_input, class_label = dataset_to_list(class_dataset)
+            class_input = torch.stack(class_input)
+            class_label = torch.as_tensor(class_label, dtype=torch.long)
+            class_dataset = TensorDataset(class_input, class_label)
+            class_dataloader = self.dataset.get_dataloader(mode='train', dataset=self.class_dataset, num_workers=0)
 
-            layer_output_all = torch.empty([])    # TODO
-            for i, data in enumerate(self.class_dataset):
+            layer_output_all = []   # TODO
+            for i, data in enumerate(class_dataloader):
                 _input, _label = self.model.get_data(data)
                 layer_output = self.model.get_layer(_input, layer_output=self.preprocess_layer)
-                layer_output = layer_output.view(1, -1)
-                if i == 0:
-                    layer_output_all = layer_output
-                else:
-                    layer_output_all = torch.cat((layer_output_all, layer_output))
-
+                layer_output_all.append(layer_output.flatten(1))
+            layer_output_all = torch.cat(layer_output_all, dim=0)
             layer_output_mean = torch.mean(layer_output_all, dim=0)
 
             for i in range(len(self.class_dataset)):
