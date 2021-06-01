@@ -7,7 +7,10 @@ from trojanvision.datasets import ImageSet
 
 import torch
 import torch.nn as nn
-from typing import Tuple
+
+from typing import Iterator, Tuple, Union
+from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 
 # Note that MagNet requires "eval" mode to train.
 
@@ -96,8 +99,14 @@ class MagNet(Model):
             data[1] = _input.clone().detach()
         return to_tensor(data[0]), to_tensor(data[1])
 
-    def define_optimizer(self, lr: float = 0.1, OptimType='Adam', weight_decay=1e-9, **kwargs):
-        return super().define_optimizer(lr=lr, OptimType=OptimType, weight_decay=weight_decay, **kwargs)
+    def define_optimizer(self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
+                         OptimType: Union[str, type[Optimizer]] = 'Adam',
+                         lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 1e-9,
+                         lr_scheduler: bool = False, T_max: int = None,
+                         **kwargs) -> tuple[Optimizer, _LRScheduler]:
+        return super().define_optimizer(parameters=parameters, OptimType=OptimType, lr=lr,
+                                        momentum=momentum, weight_decay=weight_decay,
+                                        lr_scheduler=lr_scheduler, T_max=T_max, **kwargs)
 
     # define MSE loss function
     def define_criterion(self, **kwargs):
@@ -108,7 +117,7 @@ class MagNet(Model):
             return entropy_fn(_output, _label)
         return loss_fn
 
-    def accuracy(self, _output: torch.Tensor, _label: torch.Tensor, topk=(1, 5)):
+    def accuracy(self, _output: torch.Tensor, _label: torch.Tensor, num_classes: int = None, topk=(1, 5)):
         res = []
         for k in topk:
             res.append(-self.criterion(_output, _label))

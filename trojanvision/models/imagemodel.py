@@ -162,6 +162,7 @@ class ImageModel(Model):
                validate_fn: Callable[..., tuple[float, float]] = None,
                save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
+               accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs):
         if self.adv_train:
             after_loss_fn_old = after_loss_fn
@@ -217,4 +218,5 @@ class ImageModel(Model):
                        loader_train=loader_train, loader_valid=loader_valid,
                        epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn,
                        save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix,
-                       writer=writer, main_tag=main_tag, tag=tag, verbose=verbose, indent=indent, **kwargs)
+                       writer=writer, main_tag=main_tag, tag=tag,
+                       accuracy_fn=accuracy_fn, verbose=verbose, indent=indent, **kwargs)

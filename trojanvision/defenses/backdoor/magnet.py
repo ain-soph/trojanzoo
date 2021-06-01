@@ -17,7 +17,10 @@ class MagNet(BackdoorDefense):
         super().detect(**kwargs)
         self.validate_fn()
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
+                 org: bool = False, keep_org: bool = True,
+                 poison_label=True, **kwargs
+                 ) -> tuple[torch.Tensor, torch.Tensor]:
         if org:
             _input, _label = self.model.get_data(data)
         else:
