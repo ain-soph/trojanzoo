@@ -445,9 +445,10 @@ class Model:
         else:
             return data
 
-    def accuracy(self, _output: torch.Tensor, _label: torch.Tensor,
+    def accuracy(self, _output: torch.Tensor, _label: torch.Tensor, num_classes: int = None,
                  topk: tuple[int] = (1, 5)) -> list[float]:
-        return accuracy(_output, _label, self.num_classes, topk)
+        num_classes = num_classes if num_classes is not None else self.num_classes
+        return accuracy(_output, _label, num_classes, topk)
 
     def get_parameter_from_name(self, name: str = '') -> Iterator[nn.Parameter]:
         params = self._model.parameters()
