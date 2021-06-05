@@ -224,7 +224,7 @@ class Model:
             elif layer_output == 'flatten':
                 return self.get_final_fm(x)
         if self.layer_name_list is None:
-            self.layer_name_list: list[str] = self.get_layer_name()
+            self.layer_name_list: list[str] = self.get_layer_name(use_filter=False, repeat=True)
             self.layer_name_list.insert(0, 'input')
             self.layer_name_list.append('output')
         return get_layer(self._model, x, layer_output, layer_input, prefix,

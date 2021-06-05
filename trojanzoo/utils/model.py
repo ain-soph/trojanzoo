@@ -91,7 +91,7 @@ def get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
     if layer_input == 'input' and layer_output == 'output':
         return module(x)
     if layer_name_list is None:
-        layer_name_list = get_layer_name(use_filter=False, repeat=True)
+        layer_name_list = get_layer_name(module, use_filter=False, repeat=True)
         layer_name_list.insert(0, 'input')
         layer_name_list.append('output')
     if layer_input not in layer_name_list or layer_output not in layer_name_list \
