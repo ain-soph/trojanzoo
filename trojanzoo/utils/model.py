@@ -46,7 +46,7 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
         print(f'{ansi["green"]}{"layer name":<50s}{"output shape":<20}{"module information"}{ansi["reset"]}')
     return _get_all_layer(module, x, layer_input, depth,
                           prefix, use_filter, repeat,
-                          seq_only, verbose=verbose, init=True)
+                          seq_only, verbose=verbose, init=True)[0]
 
 
 def _get_all_layer(module: nn.Module, x: torch.Tensor, layer_input: str = 'record', depth: int = 0,
