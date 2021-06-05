@@ -2,7 +2,7 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanzoo.utils import to_tensor, normalize_mad, jaccard_idx
+from trojanzoo.utils import to_numpy, to_tensor, normalize_mad, jaccard_idx
 from trojanzoo.utils import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 
@@ -61,7 +61,7 @@ class DeepInspect(BackdoorDefense):
             self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
         np.savez(os.path.join(self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'),
-                 mark_list=mark_list, loss_list=loss_list)
+                 mark_list=to_numpy(mark_list), loss_list=to_numpy(loss_list))
         print('loss: ', loss_list)
         print('loss MAD: ', normalize_mad(loss_list))
 
@@ -74,6 +74,7 @@ class DeepInspect(BackdoorDefense):
             loss_list.append(loss)
             mark_list.append(mark)
         loss_list = torch.as_tensor(loss_list)
+        mark_list = torch.stack(mark_list)
         return loss_list, mark_list
 
     def load(self, path: str = None):
@@ -89,7 +90,7 @@ class DeepInspect(BackdoorDefense):
             return _input + self.attack.mark.mark.to(_input.device)
         self.attack.mark.add_mark_fn = add_mark_fn
 
-    def remask(self, label: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def remask(self, label: int) -> tuple[float, torch.Tensor]:
         generator = Generator(self.noise_dim, self.dataset.num_classes, self.dataset.data_shape)
         for param in generator.parameters():
             param.requires_grad_()
