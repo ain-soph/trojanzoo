@@ -140,7 +140,7 @@ def get_transform_imagenet(mode: str, use_tuple: bool = False, auto_augment: boo
 
 def get_transform_cifar(mode: str, auto_augment: bool = False,
                         cutout: bool = False, cutout_length: int = None,
-                        data_shape: list[int] = [3, 32, 32]) -> Union[transforms.Compose, transforms.ToTensor]:
+                        data_shape: list[int] = [3, 32, 32]) -> transforms.Compose:
     if mode != 'train':
         return transforms.ToTensor()
     cutout_length = data_shape[-1] // 2 if cutout_length is None else cutout_length
