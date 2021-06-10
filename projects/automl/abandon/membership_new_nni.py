@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from art.attacks.inference.membership_inference import MembershipInferenceBlackBox as Attack
+from art.attacks.inference.membership_inference import MembershipInferenceBlackBox as Attack    # type: ignore
 from trojanzoo.utils.tensor import to_numpy
 import trojanvision.environ
 import trojanvision.datasets
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     import numpy as np
     from sklearn import metrics
     from trojanzoo.utils.data import dataset_to_list
-    from art.estimators.classification import PyTorchClassifier
+    from art.estimators.classification import PyTorchClassifier    # type: ignore
     fm_model = nn.Sequential(model._model.normalize, model._model.features, model._model.pool, model._model.flatten)
     if 'darts' in model.name:
         class Feature(nn.Module):

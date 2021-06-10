@@ -1,5 +1,5 @@
-declare -a archs=("enas" "nasnet")
-declare -a rates=("0.0" "0.025" "0.05" "0.1" "0.2" "0.4")
+declare -a archs=("sgas")
+declare -a rates=("0.05" "0.1" "0.2" "0.4")
 
 for arch in "${archs[@]}"; do
     echo $arch
