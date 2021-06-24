@@ -20,9 +20,6 @@ def weight_init(m: nn.Module) -> None:
     '''
     if hasattr(m, 'reset_parameters'):
         return m.reset_parameters()
-    for layer in m.children():
-        if hasattr(layer, 'reset_parameters'):
-            return layer.reset_parameters()
     if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d)):
         init.normal_(m.weight.data)
         if m.bias is not None:
@@ -44,6 +41,9 @@ def weight_init(m: nn.Module) -> None:
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)
+    else:
+        for layer in m.children():
+            weight_init(layer)
 
 
 def conv2d_same_padding(input: torch.Tensor, weight: torch.Tensor,
