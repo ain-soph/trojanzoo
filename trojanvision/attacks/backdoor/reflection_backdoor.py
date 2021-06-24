@@ -9,9 +9,6 @@ import torch.nn as nn
 import numpy as np
 import argparse
 from PIL import Image
-import cv2
-import os
-import xml.etree.ElementTree as ET
 import random
 from scipy import stats
 
@@ -90,7 +87,7 @@ class ReflectionBackdoor(BadNet):
         self.mark.mark, self.mark.mask, self.mark.alpha_mask = self.mark.mask_mark(
             height_offset=self.mark.height_offset, width_offset=self.mark.width_offset)
 
-    def generate_reflection_img(self, img_input, img_bg, img_rf, ghost_rate=0.39, max_image_size=560, alpha_t=-1., offset=(0,0), sigma=-1, ghost_alpha=-1.): 
+    def generate_reflection_img(self, img_input, img_bg, img_rf, ghost_rate=0.39, max_image_size=560, alpha_t=-1., offset=(0, 0), sigma=-1, ghost_alpha=-1.):
         '''
         Blend transmit layer and reflection layer together (include blurred & ghosted reflection layer) and
         return the blended image and precessed reflection image
@@ -98,7 +95,8 @@ class ReflectionBackdoor(BadNet):
         :param img_rf: candidate reflection image
         :param ghost_rate: ghost rate. 
         '''
-        
+
+        import cv2  # type: ignore
         t = np.float32(img_bg) / 255.
         r = np.float32(img_rf) / 255.
         h, w, _ = t.shape
@@ -120,9 +118,9 @@ class ReflectionBackdoor(BadNet):
             if offset[0] == 0 and offset[1] == 0:
                 offset = (random.randint(3, 8), random.randint(3, 8))
             r_1 = np.lib.pad(r, ((0, offset[0]), (0, offset[1]), (0, 0)),
-                            'constant', constant_values=0)
+                             'constant', constant_values=0)
             r_2 = np.lib.pad(r, ((offset[0], 0), (offset[1], 0), (0, 0)),
-                            'constant', constant_values=(0, 0))
+                             'constant', constant_values=(0, 0))
             if ghost_alpha < 0:
                 ghost_alpha_switch = 1 if random.random() > 0.5 else 0
                 ghost_alpha = abs(ghost_alpha_switch - random.uniform(0.15, 0.5))
@@ -203,8 +201,8 @@ class ReflectionBackdoor(BadNet):
             blended = np.uint8(blend * 255)
             # reflection_layer = np.uint8(r_blur_mask * 255)
             # transmission_layer = np.uint8(transmission_layer * 255)
-        
-        # blend the reflection into the input image.     
+
+        # blend the reflection into the input image.
         h, w = input.shape[:2]
         img_r = cv2.resize(blended, (w, h))
         weight_i = np.mean(img_input)
@@ -212,5 +210,5 @@ class ReflectionBackdoor(BadNet):
         param_i = weight_i / (weight_i + weight_r)
         param_r = weight_r / (weight_i + weight_r)
         img_blend = np.uint8(np.clip(param_i * img_input / 255. + param_r * img_r / 255., 0, 1) * 255)
-        
+
         return img_blend
