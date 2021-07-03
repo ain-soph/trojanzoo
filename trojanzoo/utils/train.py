@@ -163,9 +163,9 @@ def validate(module: nn.Module, num_classes: int, loader: torch.utils.data.DataL
             header = '{upline}{clear_line}'.format(**ansi) + header
             loader_epoch = tqdm(loader_epoch)
         loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-    for data in loader_epoch:
-        _input, _label = get_data_fn(data, mode='valid', **kwargs)
-        with torch.no_grad():
+    with torch.no_grad():
+        for data in loader_epoch:
+            _input, _label = get_data_fn(data, mode='valid', **kwargs)
             _output = module(_input)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
             acc1, acc5 = accuracy_fn(_output, _label, num_classes=num_classes, topk=(1, 5))
