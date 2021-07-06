@@ -81,3 +81,24 @@ class NATSbench(ImageModel):
             elif k.startswith('classifier'):
                 new_dict['classifier.fc' + k[10:]] = v
         return new_dict
+
+# test
+
+# import torch
+# import torch.nn as nn
+# from typing import Any
+
+# nats_path: str = '/data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full'
+# autodl_path: str = '/home/rbp5354/workspace/XAutoDL/lib'
+# search_space: str = 'tss'
+# import sys
+# sys.path.append(autodl_path)
+# from models import get_cell_based_tiny_net   # type: ignore
+# from nats_bench import create   # type: ignore
+
+# api = create(nats_path, search_space, fast_mode=True, verbose=False)
+
+# if __name__ == '__main__':
+
+#     config: dict[str, Any] = api.get_net_config(0, 'cifar10')   # 0-15624
+#     network: nn.Module = get_cell_based_tiny_net(config)
