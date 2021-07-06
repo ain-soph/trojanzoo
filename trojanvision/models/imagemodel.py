@@ -63,7 +63,9 @@ class ImageModel(Model):
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
         name = self.get_name(name, layer=layer)
-        norm_par = dataset.norm_par if norm_par is None else norm_par
+        if norm_par is None:
+            # TODO: what if dataset is None?
+            norm_par = {'mean': [0.0], 'std': [1.0]} if dataset.normalize else dataset.norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
         super().__init__(name=name, model=model, dataset=dataset,
