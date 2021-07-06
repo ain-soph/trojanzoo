@@ -7,7 +7,7 @@ import os
 
 config_path: dict[str, str] = {
     'package': os.path.dirname(__file__),
-    'user': None,
+    'user': os.path.normpath(os.path.expanduser('~/.trojanzoo/trojanvision')),
     'project': os.path.normpath('./configs/trojanvision'),
 }
 config = Config(_base=trojanzoo.configs.config, **config_path)
