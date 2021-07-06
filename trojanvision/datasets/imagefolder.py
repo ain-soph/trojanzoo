@@ -105,10 +105,7 @@ class ImageFolder(ImageSet):
                 ZipFolder.initialize_from_folder(root=src_path, zip_path=dst_path)
                 print('{green}initialize zip finish{reset}'.format(**ansi))
 
-    def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
-                        data_format: str = None, **kwargs) -> datasets.DatasetFolder:
-        if transform == 'default':
-            transform = self.get_transform(mode=mode)
+    def _get_org_dataset(self, mode: str, data_format: str = None, **kwargs) -> datasets.DatasetFolder:
         data_format = self.data_format if data_format is None else data_format
         root = os.path.join(self.folder_path, mode)
         DatasetClass = datasets.ImageFolder
@@ -117,7 +114,7 @@ class ImageFolder(ImageSet):
             DatasetClass = ZipFolder
             if 'memory' not in kwargs.keys():
                 kwargs['memory'] = self.memory
-        return DatasetClass(root=root, transform=transform, **kwargs)
+        return DatasetClass(root=root, **kwargs)
 
     def get_class_to_idx(self, file_path: str = None) -> dict[str, int]:
         if file_path is None:

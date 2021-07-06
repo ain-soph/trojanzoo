@@ -26,11 +26,9 @@ class ImageNet16(ImageSet):
     def initialize(self):
         raise NotImplementedError('You need to download Google Folder "1NE63Vdo2Nia0V7LK1CdybRLjBFY72w40" manually.')
 
-    def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs):
+    def _get_org_dataset(self, mode: str, **kwargs):
         assert mode in ['train', 'valid']
-        if transform == 'default':
-            transform = self.get_transform(mode=mode)
-        return di.ImageNet16(root=self.folder_path, train=(mode == 'train'), transform=transform,
+        return di.ImageNet16(root=self.folder_path, train=(mode == 'train'),
                              num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)
 
 
@@ -54,9 +52,7 @@ class ImageNet32(ImageSet):
     def initialize(self):
         raise NotImplementedError('You need to download manually.')
 
-    def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default', **kwargs):
+    def _get_org_dataset(self, mode: str, **kwargs):
         assert mode in ['train', 'valid']
-        if transform == 'default':
-            transform = self.get_transform(mode=mode)
-        return di.ImageNet32(root=self.folder_path, train=(mode == 'train'), transform=transform,
+        return di.ImageNet32(root=self.folder_path, train=(mode == 'train'),
                              num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)

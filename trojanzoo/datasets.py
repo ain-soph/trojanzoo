@@ -118,9 +118,15 @@ class Dataset(ABC, BasicObject):
     def get_data(self, data, **kwargs):
         return data
 
-    @abstractmethod
     def get_org_dataset(self, mode: str, transform: Union[str, object] = 'default',
                         **kwargs) -> torch.utils.data.Dataset:
+        if isinstance(transform, str) and transform == 'default':
+            transform = self.get_transform(mode=mode)
+        return self._get_org_dataset(mode=mode, transform=transform, **kwargs)
+
+    @abstractmethod
+    def _get_org_dataset(self, mode: str, transform: object = None,
+                         **kwargs) -> torch.utils.data.Dataset:
         ...
 
     def get_full_dataset(self, mode: str, transform: Union[str, object] = 'default', seed: int = None, **kwargs):
