@@ -30,7 +30,8 @@ def train(module: nn.Module, num_classes: int,
           save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
           writer=None, main_tag: str = 'train', tag: str = '',
           accuracy_fn: Callable[..., list[float]] = None,
-          verbose: bool = True, indent: int = 0, **kwargs) -> None:
+          verbose: bool = True, indent: int = 0,
+          change_train_eval: bool = True, **kwargs) -> None:
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
     validate_fn = validate_fn if callable(validate_fn) else validate
@@ -41,9 +42,10 @@ def train(module: nn.Module, num_classes: int,
         amp = False
     if amp:
         scaler = torch.cuda.amp.GradScaler()
-    _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
-                              writer=None, tag=tag, _epoch=start_epoch,
-                              verbose=verbose, indent=indent, **kwargs)
+    if validate_interval != 0:
+        _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn, loss_fn=loss_fn,
+                                  writer=None, tag=tag, _epoch=start_epoch,
+                                  verbose=verbose, indent=indent, **kwargs)
 
     params: list[nn.Parameter] = []
     for param_group in optimizer.param_groups:
@@ -74,7 +76,8 @@ def train(module: nn.Module, num_classes: int,
                 header = '{upline}{clear_line}'.format(**ansi) + header
                 loader_epoch = tqdm(loader_epoch)
             loader_epoch = logger.log_every(loader_epoch, header=header, indent=indent)
-        module.train()
+        if change_train_eval:
+            module.train()
         activate_params(module, params)
         optimizer.zero_grad()
         for i, data in enumerate(loader_epoch):
@@ -110,7 +113,8 @@ def train(module: nn.Module, num_classes: int,
             logger.meters['top1'].update(acc1, batch_size)
             logger.meters['top5'].update(acc5, batch_size)
             empty_cache()   # TODO: should it be outside of the dataloader loop?
-        module.eval()
+        if change_train_eval:
+            module.eval()
         activate_params(module, [])
         loss, acc = logger.meters['loss'].global_avg, logger.meters['top1'].global_avg
         if writer is not None:
