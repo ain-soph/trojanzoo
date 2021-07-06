@@ -81,6 +81,13 @@ class SmoothedValue(object):
             return 0.0
 
     @property
+    def min(self) -> float:
+        try:
+            return min(self.deque)
+        except Exception:
+            return 0.0
+
+    @property
     def value(self) -> float:
         try:
             return self.deque[-1]
@@ -92,6 +99,7 @@ class SmoothedValue(object):
             median=self.median,
             avg=self.avg,
             global_avg=self.global_avg,
+            min=self.min,
             max=self.max,
             value=self.value)
 
