@@ -11,13 +11,16 @@ from torch.types import _int, _size
 from typing import Optional, Union
 
 
-def weight_init(m: nn.Module) -> None:
+def weight_init(m: nn.Module, filter_list: tuple[type] = ()) -> None:
     # Function for Initialization
     '''
     Usage:
         model = Model()
         model.apply(weight_init)
     '''
+    if isinstance(m, filter_list):
+        return
+
     if hasattr(m, 'reset_parameters'):
         return m.reset_parameters()
     if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d)):
@@ -43,7 +46,7 @@ def weight_init(m: nn.Module) -> None:
                 init.normal_(param.data)
     else:
         for layer in m.children():
-            weight_init(layer)
+            weight_init(layer, filter_list=filter_list)
 
 
 def conv2d_same_padding(input: torch.Tensor, weight: torch.Tensor,
