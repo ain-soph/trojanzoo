@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 config_path: dict[str, str] = {
     'package': os.path.dirname(__file__),
-    'user': None,
+    'user': os.path.normpath(os.path.expanduser('~/.trojanzoo/trojanzoo')),
     'project': os.path.normpath('./configs/trojanzoo'),
 }
 
