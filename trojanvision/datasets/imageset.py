@@ -27,6 +27,9 @@ class ImageSet(Dataset):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
+        group.add_argument('--dataset_normalize', dest='normalize',
+                           action='store_true', help='use transforms.Normalize in dataset transform. '
+                           '(It\'s used in model as the first layer by default.)')
         group.add_argument('--transform', choices=[None, 'bit', 'pytorch'])
         group.add_argument('--auto_augment', action='store_true', help='use auto augment')
         group.add_argument('--cutout', action='store_true', help='use cutout')
@@ -35,19 +38,21 @@ class ImageSet(Dataset):
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
                  default_model: str = 'resnet18_comp',
-                 transform: str = None, auto_augment: bool = False,
+                 normalize: bool = False, transform: str = None, auto_augment: bool = False,
                  cutout: bool = False, cutout_length: int = None, **kwargs):
         self.norm_par: dict[str, list[float]] = norm_par
+        self.normalize = normalize
         self.transform = transform
         self.auto_augment = auto_augment
         self.cutout = cutout
         self.cutout_length = cutout_length
         super().__init__(default_model=default_model, **kwargs)
-        self.param_list['imageset'] = ['data_shape', 'norm_par', 'transform', 'auto_augment', 'cutout']
+        self.param_list['imageset'] = ['data_shape', 'norm_par', 'normalize', 'transform', 'auto_augment', 'cutout']
         if cutout:
             self.param_list['imageset'].append('cutout_length')
 
-    def get_transform(self, mode: str) -> Union[transforms.Compose, transforms.ToTensor]:
+    def get_transform(self, mode: str, normalize: bool = None) -> transforms.Compose:
+        normalize = normalize if normalize is not None else self.normalize
         if self.transform == 'bit':
             return get_transform_bit(mode, self.data_shape)
         elif self.data_shape == [3, 224, 224]:
@@ -58,7 +63,9 @@ class ImageSet(Dataset):
                                             cutout=self.cutout, cutout_length=self.cutout_length,
                                             data_shape=self.data_shape)
         else:
-            transform = transforms.ToTensor()
+            transform = transforms.Compose([transforms.ToTensor()])
+        if normalize:
+            transform.transforms.append(transforms.Normalize(mean=self.norm_par['mean'], std=self.norm_par['std']))
         return transform
 
     def get_dataloader(self, mode: str = None, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
