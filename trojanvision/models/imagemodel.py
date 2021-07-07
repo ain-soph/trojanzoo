@@ -47,6 +47,7 @@ class ImageModel(Model):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--adv_train', action='store_true', help='enable adversarial training.')
+        group.add_argument('--adv_train_random_init', action='store_true')
         group.add_argument('--adv_train_iter', type=int, help='adversarial training PGD iteration, defaults to 7.')
         group.add_argument('--adv_train_alpha', type=float, help='adversarial training PGD alpha, defaults to 2/255.')
         group.add_argument('--adv_train_eps', type=float, help='adversarial training PGD eps, defaults to 8/255.')
@@ -58,7 +59,8 @@ class ImageModel(Model):
 
     def __init__(self, name: str = 'imagemodel', layer: int = None,
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
-                 adv_train: bool = False, adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255,
+                 adv_train: bool = False, adv_train_random_init: bool = False,
+                 adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255,
                  adv_train_eps: float = 8 / 255, adv_train_valid_eps: float = 8 / 255,
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
@@ -73,6 +75,7 @@ class ImageModel(Model):
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train
+        self.adv_train_random_init = adv_train_random_init
         self.adv_train_iter = adv_train_iter
         self.adv_train_alpha = adv_train_alpha
         self.adv_train_eps = adv_train_eps
@@ -81,7 +84,7 @@ class ImageModel(Model):
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
         if adv_train:
-            self.param_list['adv_train'] = ['adv_train_iter', 'adv_train_alpha',
+            self.param_list['adv_train'] = ['adv_train_random_init', 'adv_train_iter', 'adv_train_alpha',
                                             'adv_train_eps', 'adv_train_valid_eps']
             self.suffix += '_adv_train'
             if 'suffix' not in self.param_list['model']:
@@ -180,6 +183,8 @@ class ImageModel(Model):
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
                 noise = torch.zeros_like(_input)
+                if self.adv_train_random_init:
+                    noise.uniform_(-self.adv_train_eps, self.adv_train_eps)
                 adv_loss_fn = functools.partial(self.adv_loss, _label=_label)
 
                 for m in range(self.pgd.iteration):
