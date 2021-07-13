@@ -6,7 +6,8 @@ import numpy as np
 import torch.nn.functional as F
 
 
-def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_metric: str) -> torch.Tensor:
+def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_metric: str,
+               fim_inv_list: list[torch.Tensor] = None) -> torch.Tensor:
     dis = torch.tensor(0.0).to(gw_syn[0].device)
 
     if dis_metric == 'ours':
@@ -14,6 +15,11 @@ def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_me
             gwr = gw_real[ig]
             gws = gw_syn[ig]
             dis += distance_wb(gwr, gws)
+    elif dis_metric == 'natural':
+        for ig in range(len(gw_real)):
+            gwr = gw_real[ig]
+            gws = gw_syn[ig]
+            dis += distance_natural(gwr, gws, fim_inv=fim_inv_list[ig])
     elif dis_metric == 'mse':
         gw_real_vec = []
         gw_syn_vec = []
@@ -35,6 +41,16 @@ def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_me
             (torch.norm(gw_real_vec, dim=-1) * torch.norm(gw_syn_vec, dim=-1) + 1e-6)
     else:
         exit('DC error: unknown distance function')
+    return dis
+
+
+def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor) -> torch.Tensor:
+    gwr = gwr.flatten()
+    gws = gws.flatten()
+    product = gwr.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1).flatten()
+    r_norm = (gwr.unsqueeze(0) @ fim_inv @ gwr.unsqueeze(1)).flatten().sqrt()
+    s_norm = (gws.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1)).flatten().sqrt()
+    dis = 1 - product / (r_norm * s_norm + 0.000001)
     return dis
 
 
