@@ -1,10 +1,6 @@
 default_model:
-  default: resnet18
+  default: resnet18_comp
   mnist: net
-  cifar10: resnet18_comp
-  cifar100: resnet18_comp
-  gtsrb: resnet18_comp
-  imagenet16: resnet18_comp
 
 adv_train_iter:
   default: 7
@@ -14,9 +10,5 @@ adv_train_alpha:
   mnist: 0.1
 
 adv_train_eps:
-  default: 0.031372549 # 8/255
-  mnist: 0.3
-
-adv_train_valid_eps:
   default: 0.031372549 # 8/255
   mnist: 0.3
