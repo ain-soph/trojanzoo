@@ -72,15 +72,15 @@ class InfluenceFunction():
     def compute_fim(self, _feats: torch.Tensor) -> torch.Tensor:
         # _feats: (N, D)
         def func(weight: nn.Parameter) -> torch.Tensor:
-            del self.module.weight
+            del self.module.weight  # (D, class_num)
             self.module.weight = weight
             log_prob = F.log_softmax(self.module(_feats))  # (N, class_num)
             return log_prob.mean(dim=0)  # (class_num)
         jacobian: torch.Tensor = torch.autograd.functional.jacobian(func, self.parameter)
-        jacobian = jacobian.flatten(start_dim=2)  # (class_num, D)
-        prob = F.softmax(self.module(_feats)).unsqueeze(-1).unsqueeze(-1)  # (class_num, 1, 1)
-        hess = prob * jacobian.unsqueeze(-1) * jacobian.unsqueeze(-2)  # (class_num, D, D)
-        hess = hess.sum(dim=1)  # (D, D)
+        jacobian = jacobian.flatten(start_dim=2)  # (class_num, D*class_num)
+        prob = F.softmax(self.module(_feats)).unsqueeze(-1).unsqueeze(-1)  # (N, class_num, 1, 1)
+        hess = prob * jacobian.unsqueeze(-1) * jacobian.unsqueeze(-2)  # (N, class_num, D*class_num, D*class_num)
+        hess = hess.sum(dim=1)  # (N, D*class_num, D*class_num)
         return hess
 
     def compute_hess(self, _feats: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
