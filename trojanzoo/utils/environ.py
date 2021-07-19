@@ -97,4 +97,7 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
     return env
 
 
+create()
+
+
 # def init_distributed_mode():
