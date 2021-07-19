@@ -6,6 +6,30 @@ import torch.nn.functional as F
 from typing import Iterable
 
 
+def fim_diag(module: nn.Module, _input: torch.Tensor, parameters: Iterable[nn.Parameter] = None) -> list[torch.Tensor]:
+    if parameters is None:
+        parameters = tuple(module.parameters())
+    _output = module(_input)  # (N, C)
+    with torch.no_grad():
+        prob = F.softmax(_output, dim=1).unsqueeze(-1)  # (N, C, 1)
+    log_prob = F.log_softmax(_output, dim=1)  # (N, C)
+    fim_dict: dict[int, list[torch.Tensor]] = {i: [] for i in range(len(parameters))}
+    N, C = log_prob.shape
+    for n in range(N):
+        for c in range(C):
+            grad_list = torch.autograd.grad(log_prob[n][c], parameters, retain_graph=True)
+            for i, grad in enumerate(grad_list):    # different layers
+                fim = grad.flatten().square()    # (D)
+                fim_dict[i].append(fim.detach().clone())
+    fim_list: list[torch.Tensor] = []
+    for i, value in fim_dict.items():    # different layers
+        D = value[0].shape[0]
+        fim = torch.stack(value).view(N, C, D) * prob    # (N, C, D)
+        fim = fim.sum(1).mean(0)   # (D)
+        fim_list.append(fim)
+    return fim_list
+
+
 def fim(module: nn.Module, _input: torch.Tensor, parameters: Iterable[nn.Parameter] = None) -> list[torch.Tensor]:
     if parameters is None:
         parameters = tuple(module.parameters())
