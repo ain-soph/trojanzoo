@@ -154,7 +154,7 @@ class Model:
         if isinstance(model, type):
             if num_classes is not None:
                 kwargs['num_classes'] = num_classes
-            self._model = model(name=name, **kwargs)
+            self._model = model(name=name, dataset=dataset, **kwargs)
         else:
             assert isinstance(model, nn.Module)
             self._model = model
@@ -178,7 +178,7 @@ class Model:
             rs_n = rs_n if rs_n is not None else self.rs_n
             _list = []
             for _ in range(rs_n):
-                _input_noise = add_noise(_input, std=rs_sigma)
+                _input_noise = add_noise(_input, std=rs_sigma)  # TODO: valid input clip issue
                 _list.append(self.model(_input_noise, **kwargs))
             return torch.stack(_list).mean(dim=0)
             # TODO: memory issues and parallel possibilities
