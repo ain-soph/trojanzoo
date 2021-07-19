@@ -21,7 +21,7 @@ sys.path.append('/home/rbp5354/workspace/XAutoDL/lib')
 try:
     from nats_bench import create  # type: ignore
     from models import get_cell_based_tiny_net  # type: ignore
-except:
+except Exception:
     pass
 
 
