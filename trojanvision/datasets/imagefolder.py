@@ -149,7 +149,7 @@ class ImageFolder(ImageSet):
         if class_dict is None:
             assert sample_num
             idx_list = np.arange(self.num_classes)
-            np.random.seed(env['seed'])
+            np.random.seed(env['data_seed'])
             np.random.shuffle(idx_list)
             idx_list = idx_list[:sample_num]
             mode = mode_list[0]

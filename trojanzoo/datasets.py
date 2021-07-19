@@ -165,7 +165,7 @@ class Dataset(ABC, BasicObject):
     @staticmethod
     def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
                       length: int = None, percent=None, seed: int = None):
-        seed = env['seed'] if seed is None else env['seed']
+        seed = env['data_seed'] if seed is None else seed
         return split_dataset(dataset, length, percent, seed)
 
     def get_dataloader(self, mode: str = None, dataset: torch.utils.data.Dataset = None,
