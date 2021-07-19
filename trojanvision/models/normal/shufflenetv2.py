@@ -15,7 +15,7 @@ class _ShuffleNetV2(_ImageModel):
             sub_type: str = name[13:]
             assert sub_type in ['x0.5', 'x1.0', 'x1.5', 'x2.0',
                                 'x0.5_comp', 'x1.0_comp', 'x1.5_comp', 'x2.0_comp'], f'{name=}'
-        except:
+        except Exception:
             raise AssertionError("model name should be in ["
                                  "'shufflenetv2_x0.5', 'shufflenetv2_x1.0', "
                                  "'shufflenetv2_x1.5', 'shufflenetv2_x2.0', "

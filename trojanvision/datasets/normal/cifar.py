@@ -4,8 +4,6 @@ from trojanvision.datasets.imageset import ImageSet
 
 import torchvision.datasets as datasets
 
-from typing import Union
-
 
 class CIFAR10(ImageSet):
 
