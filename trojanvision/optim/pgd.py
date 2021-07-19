@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
+from re import A
 import trojanzoo.optim
 
 from trojanzoo.utils import add_noise, cos_sim
 from trojanzoo.utils.output import prints
+from trojanzoo.environ import env
 
 import torch
 import torch.autograd
 from collections.abc import Callable
-from typing import Union
+from typing import Iterable, Union
 
 
 class PGD(trojanzoo.optim.Optimizer):
@@ -27,8 +29,12 @@ class PGD(trojanzoo.optim.Optimizer):
 
     name: str = 'pgd'
 
-    def __init__(self, pgd_alpha: float = 2.0 / 255, pgd_eps: float = 8.0 / 255, iteration: int = 7,
+    def __init__(self, pgd_alpha: Union[float, torch.Tensor] = 2.0 / 255,
+                 pgd_eps: Union[float, torch.Tensor] = 8.0 / 255, iteration: int = 7,
+                 random_init: bool = False,
                  norm: Union[int, float] = float('inf'), universal: bool = False,
+                 clip_min: Union[float, torch.Tensor] = 0.0,
+                 clip_max: Union[float, torch.Tensor] = 1.0,
                  grad_method: str = 'white', query_num: int = 100, sigma: float = 1e-3,
                  hess_b: int = 100, hess_p: int = 1, hess_lambda: float = 1, **kwargs):
         super().__init__(iteration=iteration, **kwargs)
@@ -36,9 +42,13 @@ class PGD(trojanzoo.optim.Optimizer):
 
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
+        self.random_init = random_init
 
         self.norm = norm
         self.universal = universal
+
+        self.clip_min = clip_min
+        self.clip_max = clip_max
 
         self.grad_method: str = grad_method
         if grad_method != 'white':
@@ -51,32 +61,60 @@ class PGD(trojanzoo.optim.Optimizer):
                 self.hess_p: int = hess_p
                 self.hess_lambda: float = hess_lambda
 
+    def init_noise(self, noise_shape: Iterable[int], pgd_eps: Union[float, torch.Tensor] = None,
+                   random_init: bool = None, device: Union[str, torch.device] = None) -> torch.Tensor:
+        pgd_eps = pgd_eps if pgd_eps is not None else self.pgd_eps
+        random_init = random_init if random_init is not None else self.random_init
+        device = device if device is not None else env['device']
+        noise: torch.Tensor = torch.zeros(noise_shape, dtype=torch.float, device=device)
+        if random_init:
+            if isinstance(pgd_eps, torch.Tensor) and pgd_eps.shape[0] != 1:
+                assert all([size == 1 for size in pgd_eps.shape[1:]])
+                for i in range(pgd_eps.shape[0]):
+                    data = noise[i, :, :] if noise.dim() == 3 else noise[:, i, :, :]
+                    data.uniform_(-pgd_eps[i].item(), pgd_eps[i].item())
+            else:
+                pgd_eps = float(pgd_eps)
+                noise.uniform_(-pgd_eps, pgd_eps)
+        return noise
+
     def optimize(self, _input: torch.Tensor, noise: torch.Tensor = None,
-                 pgd_alpha: float = None, pgd_eps: float = None,
+                 pgd_alpha: Union[float, torch.Tensor] = None,
+                 pgd_eps: Union[float, torch.Tensor] = None,
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                  output: Union[int, list[str]] = None, add_noise_fn=None,
-                 random_init: bool = False, **kwargs) -> tuple[torch.Tensor, int]:
+                 random_init: bool = None,
+                 clip_min: Union[float, torch.Tensor] = None,
+                 clip_max: Union[float, torch.Tensor] = None,
+                 **kwargs) -> tuple[torch.Tensor, int]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
+        clip_min = clip_min if clip_min is not None else self.clip_min
+        clip_max = clip_max if clip_max is not None else self.clip_max
 
         pgd_alpha = pgd_alpha if pgd_alpha is not None else self.pgd_alpha
         pgd_eps = pgd_eps if pgd_eps is not None else self.pgd_eps
         iteration = iteration if iteration is not None else self.iteration
+        random_init = random_init if random_init is not None else self.random_init
         loss_fn = loss_fn if loss_fn is not None else self.loss_fn
         add_noise_fn = add_noise_fn if add_noise_fn is not None else add_noise
-        if random_init:
-            noise = pgd_alpha * (torch.rand_like(_input) * 2 - 1)
-        else:
-            noise = noise if noise is not None else torch.zeros_like(_input[0] if self.universal else _input)
         output = self.get_output(output)
 
+        if noise is None:
+            noise_shape = _input.shape[1:] if self.universal else _input.shape
+            noise = self.init_noise(noise_shape, pgd_eps=pgd_eps, random_init=random_init, device=_input.device)
         # ----------------------------------------------------------------------------------------- #
 
         if 'start' in output:
             self.output_info(_input=_input, noise=noise, mode='start', loss_fn=loss_fn, **kwargs)
-        if iteration == 0 or pgd_alpha == 0.0 or pgd_eps == 0.0:
+        a = pgd_alpha if isinstance(pgd_alpha, torch.Tensor) else torch.tensor(pgd_alpha)
+        b = pgd_eps if isinstance(pgd_eps, torch.Tensor) else torch.tensor(pgd_eps)
+        condition_alpha = torch.allclose(a, torch.zeros_like(a))
+        condition_eps = torch.allclose(b, torch.zeros_like(b))
+        if iteration == 0 or condition_alpha or condition_eps:
             return _input, None
 
-        X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
+        X = add_noise_fn(_input=_input, noise=noise, batch=self.universal,
+                         clip_min=clip_min, clip_max=clip_max)
         # ----------------------------------------------------------------------------------------- #
 
         for _iter in range(iteration):
@@ -97,7 +135,8 @@ class PGD(trojanzoo.optim.Optimizer):
                 grad = grad.mean(dim=0)
             noise.data = (noise - pgd_alpha * torch.sign(grad)).data
             noise.data = self.projector(noise, pgd_eps, norm=self.norm).data
-            X = add_noise_fn(_input=_input, noise=noise, batch=self.universal)
+            X = add_noise_fn(_input=_input, noise=noise, batch=self.universal,
+                             clip_min=clip_min, clip_max=clip_max)
             if self.universal:
                 noise.data = (X - _input).mode(dim=0)[0].data
             else:
@@ -118,14 +157,19 @@ class PGD(trojanzoo.optim.Optimizer):
             prints(f'L-{self.norm} norm: {norm}    loss: {loss:.5f}', indent=self.indent)
 
     @staticmethod
-    def projector(noise: torch.Tensor, pgd_eps: float, norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
-        length = pgd_eps / noise.norm(p=norm)
-        if length < 1:
-            if norm == float('inf'):
-                noise = noise.clamp(min=-pgd_eps, max=pgd_eps)
-            else:
-                noise = length * noise
-        return noise
+    def projector(noise: torch.Tensor, pgd_eps: Union[float, torch.Tensor],
+                  norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
+        if norm == float('inf'):
+            noise = noise.clamp(min=-pgd_eps, max=pgd_eps)
+        elif isinstance(pgd_eps, float):
+            norm: torch.Tensor = noise.flatten(-3).norm(p=norm, dim=-1)
+            length = pgd_eps / norm.unsqueeze(-1).unsqueeze(-1)
+            noise = length * noise
+        else:
+            norm = noise.flatten(-2).norm(p=norm, dim=-1)
+            length = pgd_eps / norm.unsqueeze(-1).unsqueeze(-1)
+            noise = length * noise
+        return noise.detach()
 
     # -------------------------- Calculate Gradient ------------------------ #
     def calc_grad(self, f, X: torch.Tensor) -> torch.Tensor:

@@ -36,7 +36,7 @@ class ImageSet(Dataset):
         group.add_argument('--cutout_length', type=int, help='cutout length')
         return group
 
-    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0], },
+    def __init__(self, norm_par: dict[str, list[float]] = None,
                  default_model: str = 'resnet18_comp',
                  normalize: bool = False, transform: str = None, auto_augment: bool = False,
                  cutout: bool = False, cutout_length: int = None, **kwargs):
@@ -149,7 +149,7 @@ def get_transform_cifar(mode: str, auto_augment: bool = False,
                         cutout: bool = False, cutout_length: int = None,
                         data_shape: list[int] = [3, 32, 32]) -> transforms.Compose:
     if mode != 'train':
-        return transforms.ToTensor()
+        return transforms.Compose([transforms.ToTensor()])
     cutout_length = data_shape[-1] // 2 if cutout_length is None else cutout_length
     transform_list = [
         transforms.RandomCrop(data_shape[-2:], padding=data_shape[-1] // 8),

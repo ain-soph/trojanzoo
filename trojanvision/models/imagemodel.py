@@ -4,6 +4,7 @@ from trojanvision.datasets import ImageSet
 from trojanvision.optim import PGD
 from trojanvision.utils import apply_cmap
 from trojanzoo.models import _Model, Model
+from trojanzoo.environ import env
 
 import torch
 import torch.nn as nn
@@ -28,12 +29,13 @@ jet = get_cmap('jet')
 
 
 class _ImageModel(_Model):
-    def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]},
+    def __init__(self, norm_par: dict[str, list[float]] = None,
                  num_classes: int = 1000, **kwargs):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
 
-    def define_preprocess(self, norm_par: dict[str, list[float]] = {'mean': [0.0], 'std': [1.0]}, **kwargs):
-        self.normalize = Normalize(mean=norm_par['mean'], std=norm_par['std'])
+    def define_preprocess(self, norm_par: dict[str, list[float]] = None, **kwargs):
+        self.normalize = Normalize(mean=norm_par['mean'], std=norm_par['std']) \
+            if norm_par is not None else nn.Identity()
 
     # get feature map
     # input: (batch_size, channels, height, width)
@@ -69,9 +71,8 @@ class ImageModel(Model):
                  sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, **kwargs):
         name = self.get_name(name, layer=layer)
-        if norm_par is None:
-            # TODO: what if dataset is None?
-            norm_par = {'mean': [0.0], 'std': [1.0]} if dataset.normalize else dataset.norm_par
+        if norm_par is None and isinstance(dataset, ImageSet):
+            norm_par = None if dataset.normalize else dataset.norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
         super().__init__(name=name, model=model, dataset=dataset,
@@ -87,6 +88,7 @@ class ImageModel(Model):
         self.adv_train_eval_iter = adv_train_eval_iter if adv_train_eval_iter is not None else adv_train_iter
         self.adv_train_eval_alpha = adv_train_eval_alpha if adv_train_eval_alpha is not None else adv_train_alpha
         self.adv_train_eval_eps = adv_train_eval_eps if adv_train_eval_eps is not None else adv_train_eps
+
         self.param_list['imagemodel'] = []
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
@@ -97,8 +99,20 @@ class ImageModel(Model):
             self.suffix += '_adv_train'
             if 'suffix' not in self.param_list['model']:
                 self.param_list['model'].append('suffix')
+            clip_min, clip_max = 0.0, 1.0
+            if norm_par is None and isinstance(dataset, ImageSet):
+                if dataset.normalize and dataset.norm_par is not None:
+                    mean = torch.tensor(dataset.norm_par['mean'], device=env['device']).view(-1, 1, 1)
+                    std = torch.tensor(dataset.norm_par['std'], device=env['device']).view(-1, 1, 1)
+                    clip_min, clip_max = -mean / std, (1 - mean) / std
+                    self.adv_train_eval_alpha /= std
+                    self.adv_train_eval_eps /= std
+                    self.adv_train_alpha /= std
+                    self.adv_train_eps /= std
             self.pgd = PGD(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
-                           iteration=self.adv_train_eval_iter, stop_threshold=None)
+                           iteration=self.adv_train_eval_iter, stop_threshold=None,
+                           random_init=self.adv_train_random_init,
+                           clip_min=clip_min, clip_max=clip_max)
             self._ce_loss_fn = nn.CrossEntropyLoss(weight=self.loss_weights)
         self._model: _ImageModel
         self.dataset: ImageSet
@@ -200,15 +214,14 @@ class ImageModel(Model):
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
-                noise = torch.zeros_like(_input)
-                if self.adv_train_random_init:
-                    noise.uniform_(-self.adv_train_eps, self.adv_train_eps)
                 adv_loss_fn = functools.partial(self._adv_loss_helper, _label=_label)
 
                 if after_loss_fn_old is None and not self.adv_train_free:
                     self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn,
-                                                 iteration=self.adv_train_iter, pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
+                    adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn,
+                                                 iteration=self.adv_train_iter,
+                                                 pgd_alpha=self.adv_train_alpha,
+                                                 pgd_eps=self.adv_train_eps)
                     self.train()
                     loss = loss_fn(adv_x, _label)
                     if amp:
@@ -216,7 +229,7 @@ class ImageModel(Model):
                     else:
                         loss.backward()
                     return
-
+                noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps, device=_input.device)
                 for m in range(self.adv_train_iter):
                     if self.adv_train_free:
                         if amp:
@@ -225,8 +238,8 @@ class ImageModel(Model):
                         else:
                             optimizer.step()
                     self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn,
-                                                 iteration=1, pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn, iteration=1,
+                                                 pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
                     self.train()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):
