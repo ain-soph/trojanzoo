@@ -47,9 +47,14 @@ def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_me
 def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor) -> torch.Tensor:
     gwr = gwr.flatten()
     gws = gws.flatten()
-    product = gwr.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1).flatten()
-    r_norm = (gwr.unsqueeze(0) @ fim_inv @ gwr.unsqueeze(1)).flatten().sqrt()
-    s_norm = (gws.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1)).flatten().sqrt()
+    product = (gwr * fim_inv * gws).sum()
+    r_norm = (gwr.square() * fim_inv).sum().sqrt()
+    s_norm = (gws.square() * fim_inv).sum().sqrt()
+    # product = gwr.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1).flatten()
+    # r_norm = (gwr.unsqueeze(0) @ fim_inv @ gwr.unsqueeze(1)).flatten().sqrt()
+    # s_norm = (gws.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1)).flatten().sqrt()
+    # print(product.item(), r_norm.item(), s_norm.item())
+    # print('    ', gwr.abs().max().item(), gws.abs().max().item(), fim_inv.abs().max().item())
     dis = 1 - product / (r_norm * s_norm + 0.000001)
     return dis
 

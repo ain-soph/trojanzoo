@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import torch.nn as nn
+from trojanvision.datasets import ImageSet
 from trojanvision.models.imagemodel import ImageModel, _ImageModel
 from collections import OrderedDict
 
@@ -85,5 +86,8 @@ class _ConvNet(_ImageModel):
 class ConvNet(ImageModel):
     available_models = ['convnet']
 
-    def __init__(self, name: str = 'convnet', model: type[_ConvNet] = _ConvNet, **kwargs):
-        super().__init__(name=name, model=model, **kwargs)
+    def __init__(self, name: str = 'convnet', model: type[_ConvNet] = _ConvNet, dataset: ImageSet = None, **kwargs):
+        if dataset is not None:
+            kwargs['channel'] = dataset.data_shape[0]
+            kwargs['im_size'] = dataset.data_shape[1:]
+        super().__init__(name=name, model=model, dataset=dataset, **kwargs)

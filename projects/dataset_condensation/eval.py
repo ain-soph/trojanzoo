@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python eval.py --verbose 1 --color --lr 0.01 --validate_interval 0 --dataset mnist --batch_size 256 --weight_decay 5e-4 --lr_scheduler --epoch 300 --dataset_normalize
+# CUDA_VISIBLE_DEVICES=0 python eval.py --verbose 1 --color --lr 0.01 --validate_interval 0 --dataset mnist --batch_size 256 --weight_decay 5e-4 --epoch 300
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
-from typing import OrderedDict
 import trojanvision
 from trojanvision.utils import summary
 import argparse
@@ -13,12 +12,9 @@ import torch
 from torch.utils.data import TensorDataset
 from trojanzoo.utils.logger import SmoothedValue
 from trojanvision.utils.model import weight_init
-from utils import match_loss, augment, get_daparam
+from utils import augment, get_daparam
 
 from model import ConvNet
-
-num_eval = 5
-epoch_eval_train = 1000
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -26,7 +22,12 @@ if __name__ == '__main__':
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
     trojanvision.trainer.add_argument(parser)
+    parser.add_argument('--num_eval', type=int, default=5)
+    parser.add_argument('--epoch_eval_train', type=int, default=1000)
     args = parser.parse_args()
+
+    num_eval: int = args.num_eval
+    epoch_eval_train: int = args.epoch_eval_train
 
     trojanvision.models.class_dict['convnet'] = ConvNet
 
@@ -36,7 +37,7 @@ if __name__ == '__main__':
     eval_model = trojanvision.models.create(dataset=dataset, **args.__dict__)
     eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args.__dict__)
     eval_train_args = dict(**eval_trainer)
-    eval_train_args['epoch'] = epoch_eval_train // 2
+    eval_train_args['epoch'] = epoch_eval_train
 
     if env['verbose']:
         summary(env=env, dataset=dataset, model=eval_model, trainer=eval_trainer)
@@ -57,7 +58,8 @@ if __name__ == '__main__':
 
     def get_data_fn(data, **kwargs):
         _input, _label = dataset.get_data(data, **kwargs)
-        _input = augment(_input, param_augment, device=env['device'])
+        if dataset.name == 'mnist':
+            _input = augment(_input, param_augment, device=env['device'])
         return _input, _label
     accs = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     for _ in range(num_eval):
@@ -66,8 +68,6 @@ if __name__ == '__main__':
                                       label_syn.detach().clone())
         loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,
                                               dataset=dst_syn_train)
-        eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn, **eval_train_args)
-        eval_train_args['optimizer'].param_groups[0]['lr'] *= 0.1
         eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn, **eval_train_args)
         _, acc = eval_model._validate(verbose=False)
         accs.update(acc)
