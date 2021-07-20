@@ -2,6 +2,8 @@
 
 # CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --epoch 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset cifar10 --model resnet18_comp
 
+# CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --lr 0.1 --lr_scheduler --dataset cifar10 --model resnet18_comp --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --validate_interval 1 --epoch 15 --num_workers 0
+
 import trojanvision
 from trojanvision.utils import summary
 import argparse
