@@ -61,6 +61,11 @@ class PGD(trojanzoo.optim.Optimizer):
                 self.hess_p: int = hess_p
                 self.hess_lambda: float = hess_lambda
 
+    def valid_noise(self, X: torch.Tensor, _input: torch.Tensor) -> torch.Tensor:
+        if self.universal:
+            return (X - _input).mode(dim=0)[0].detach()
+        return (X - _input).detach()
+
     def init_noise(self, noise_shape: Iterable[int], pgd_eps: Union[float, torch.Tensor] = None,
                    random_init: bool = None, device: Union[str, torch.device] = None) -> torch.Tensor:
         pgd_eps = pgd_eps if pgd_eps is not None else self.pgd_eps
@@ -115,6 +120,7 @@ class PGD(trojanzoo.optim.Optimizer):
 
         X = add_noise_fn(_input=_input, noise=noise, batch=self.universal,
                          clip_min=clip_min, clip_max=clip_max)
+        noise.data = self.valid_noise(X, _input)
         # ----------------------------------------------------------------------------------------- #
 
         for _iter in range(iteration):
@@ -137,10 +143,7 @@ class PGD(trojanzoo.optim.Optimizer):
             noise.data = self.projector(noise, pgd_eps, norm=self.norm).data
             X = add_noise_fn(_input=_input, noise=noise, batch=self.universal,
                              clip_min=clip_min, clip_max=clip_max)
-            if self.universal:
-                noise.data = (X - _input).mode(dim=0)[0].data
-            else:
-                noise.data = (X - _input).data
+            noise.data = self.valid_noise(X, _input)
 
             if 'middle' in output:
                 self.output_info(_input=_input, noise=noise, mode='middle',
