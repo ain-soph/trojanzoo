@@ -163,7 +163,7 @@ class Model:
         if official:
             self.load('official')
         if pretrain:
-            self.load()
+            self.load(verbose=True)
         self.eval()
         if env['num_gpus']:
             self.cuda()
