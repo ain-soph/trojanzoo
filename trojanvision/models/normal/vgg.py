@@ -8,18 +8,21 @@ from torchvision.models.vgg import model_urls as urls
 
 class _VGG(_ImageModel):
 
-    def __init__(self, layer: int = 13, batch_norm: bool = False, comp: bool = False, **kwargs):
-        if comp:
+    def __init__(self, name: str = 'vgg', **kwargs):
+        if '_comp' in name:
             comp_dict = {'conv_dim': 512, 'fc_depth': 3, 'fc_dim': 512}
+            if '_s' in name:
+                comp_dict['fc_depth'] = 1
+                comp_dict['fc_dim'] = 0
             for key, value in comp_dict.items():
                 if key not in kwargs.keys():
                     kwargs[key] = value
         super().__init__(**kwargs)
-        name = f'vgg{layer:d}' + ('_bn' if batch_norm else '')
-        ModelClass: type[torchvision.models.VGG] = getattr(torchvision.models, name)
+        class_name = name.replace('_comp', '').replace('_s', '')
+        ModelClass: type[torchvision.models.VGG] = getattr(torchvision.models, class_name)
         _model = ModelClass(num_classes=self.num_classes)
         self.features: nn.Sequential = _model.features
-        if comp:
+        if '_comp' in name:
             self.pool = nn.AdaptiveAvgPool2d((1, 1))
         else:
             self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
@@ -32,7 +35,7 @@ class _VGG(_ImageModel):
         #     nn.ReLU(True),
         #     nn.Dropout(),
         #     nn.Linear(4096, num_classes),
-        # )
+        # ))
 
 
 class VGG(ImageModel):
@@ -40,12 +43,12 @@ class VGG(ImageModel):
                         'vgg11', 'vgg13', 'vgg16', 'vgg19',
                         'vgg11_bn', 'vgg13_bn', 'vgg16_bn', 'vgg19_bn',
                         'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
-                        'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp']
+                        'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp'
+                        'vgg11_comp_s', 'vgg13_comp_s', 'vgg16_comp_s', 'vgg19_comp_s',
+                        'vgg11_bn_comp_s', 'vgg13_bn_comp_s', 'vgg16_bn_comp_s', 'vgg19_bn_comp_s']
 
     model_urls = urls
 
     def __init__(self, name: str = 'vgg', layer: int = 13,
                  model: type[_VGG] = _VGG, **kwargs):
-        comp = True if 'comp' in name else False
-        batch_norm = True if 'bn' in name else False
-        super().__init__(name=name, layer=layer, model=model, comp=comp, batch_norm=batch_norm, **kwargs)
+        super().__init__(name=name, layer=layer, model=model, **kwargs)

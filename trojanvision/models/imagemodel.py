@@ -5,10 +5,12 @@ from trojanvision.optim import PGD
 from trojanvision.utils import apply_cmap
 from trojanzoo.models import _Model, Model
 from trojanzoo.environ import env
+from trojanzoo.utils import add_noise
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.transforms import Normalize
 import re
 import functools
 
@@ -17,7 +19,6 @@ from typing import TYPE_CHECKING
 from typing import Union
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
-from torchvision.transforms import Normalize
 import argparse
 from matplotlib.colors import Colormap  # type: ignore  # TODO
 from collections.abc import Callable
@@ -26,6 +27,31 @@ if TYPE_CHECKING:
 
 from matplotlib.cm import get_cmap  # type: ignore  # TODO
 jet = get_cmap('jet')
+
+
+def replace_bn_to_gn(model: nn.Module) -> None:
+    for name, module in model.named_children():
+        replace_bn_to_gn(module)
+        if isinstance(module, nn.BatchNorm2d):
+            device = module.weight.device
+            gn = nn.GroupNorm(module.num_features, module.num_features, device=device)
+            setattr(model, name, gn)
+
+
+def set_first_layer_channel(model: nn.Module, channel: int = 3, **kwargs) -> None:
+    for name, module in model.named_children():
+        if len(list(module.children())):
+            set_first_layer_channel(module, channel=channel)
+        elif isinstance(module, nn.Conv2d):
+            if module.in_channels == channel:
+                return
+            keys = ['out_channels', 'kernel_size', 'stride', 'padding']
+            args = {key: getattr(module, key) for key in keys}
+            args['device'] = module.weight.device
+            args.update(kwargs)
+            new_conv = nn.Conv2d(in_channels=channel, bias=False, **args)
+            setattr(model, name, new_conv)
+        break
 
 
 class _ImageModel(_Model):
@@ -59,24 +85,37 @@ class ImageModel(Model):
         group.add_argument('--adv_train_eval_alpha', type=float)
         group.add_argument('--adv_train_eval_eps', type=float)
 
+        group.add_argument('--norm_layer', choices=['bn', 'gn'], default='bn')
         group.add_argument('--sgm', action='store_true', help='whether to use sgm gradient, defaults to False')
         group.add_argument('--sgm_gamma', type=float, help='sgm gamma, defaults to 1.0')
         return group
 
     def __init__(self, name: str = 'imagemodel', layer: int = None,
-                 model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None,
+                 model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None, data_shape: list[int] = None,
                  adv_train: bool = False, adv_train_random_init: bool = False, adv_train_free: bool = True,
                  adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255, adv_train_eps: float = 8 / 255,
                  adv_train_eval_iter: int = None, adv_train_eval_alpha: float = None, adv_train_eval_eps: float = None,
-                 sgm: bool = False, sgm_gamma: float = 1.0,
-                 norm_par: dict[str, list[float]] = None, **kwargs):
+                 norm_layer: str = 'bn', sgm: bool = False, sgm_gamma: float = 1.0,
+                 norm_par: dict[str, list[float]] = None, suffix: str = '', **kwargs):
         name = self.get_name(name, layer=layer)
         if norm_par is None and isinstance(dataset, ImageSet):
             norm_par = None if dataset.normalize else dataset.norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
-        super().__init__(name=name, model=model, dataset=dataset,
-                         norm_par=norm_par, **kwargs)
+        if adv_train:
+            suffix += '_adv_train'
+        super().__init__(name=name, model=model, dataset=dataset, data_shape=data_shape,
+                         norm_par=norm_par, suffix=suffix, **kwargs)
+        assert norm_layer in ['bn', 'gn']
+        if norm_layer == 'gn':
+            replace_bn_to_gn(self._model)
+
+        if data_shape is None:
+            assert isinstance(dataset, ImageSet)
+            data_shape = dataset.data_shape
+        args = {'padding': 3} if 'vgg' in name else {}  # TODO: so ugly
+        set_first_layer_channel(self._model.features, channel=data_shape[0], **args)
+
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train
@@ -93,12 +132,11 @@ class ImageModel(Model):
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
         if adv_train:
+            if 'suffix' not in self.param_list['model']:
+                self.param_list['model'].append('suffix')
             self.param_list['adv_train'] = ['adv_train_random_init', 'adv_train_free',
                                             'adv_train_iter', 'adv_train_alpha', 'adv_train_eps',
                                             'adv_train_eval_iter', 'adv_train_eval_alpha', 'adv_train_eval_eps']
-            self.suffix += '_adv_train'
-            if 'suffix' not in self.param_list['model']:
-                self.param_list['model'].append('suffix')
             clip_min, clip_max = 0.0, 1.0
             if norm_par is None and isinstance(dataset, ImageSet):
                 if dataset.normalize and dataset.norm_par is not None:
@@ -217,12 +255,14 @@ class ImageModel(Model):
                 adv_loss_fn = functools.partial(self._adv_loss_helper, _label=_label)
 
                 if after_loss_fn_old is None and not self.adv_train_free:
-                    self.eval()
+                    optimizer.zero_grad()
+                    self.zero_grad()
+                    # self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn,
                                                  iteration=self.adv_train_iter,
                                                  pgd_alpha=self.adv_train_alpha,
                                                  pgd_eps=self.adv_train_eps)
-                    self.train()
+                    # self.train()
                     loss = loss_fn(adv_x, _label)
                     if amp:
                         scaler.scale(loss).backward()
@@ -230,26 +270,36 @@ class ImageModel(Model):
                         loss.backward()
                     return
                 noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps, device=_input.device)
+                adv_x = add_noise(_input=_input, noise=noise, batch=self.pgd.universal,
+                                  clip_min=self.pgd.clip_min, clip_max=self.pgd.clip_max)
+                noise.data = self.pgd.valid_noise(adv_x, _input)
                 for m in range(self.adv_train_iter):
                     if self.adv_train_free:
+                        optimizer.zero_grad()
+                        self.zero_grad()
+                        loss = loss_fn(adv_x, _label)
                         if amp:
+                            scaler.scale(loss).backward()
                             scaler.step(optimizer)
                             scaler.update()
                         else:
+                            loss.backward()
                             optimizer.step()
-                    self.eval()
+                    # self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn, iteration=1,
                                                  pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
-                    self.train()
+                    # self.train()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):
                         after_loss_fn_old(_input=_input, _label=_label, _output=_output,
                                           loss=loss, optimizer=optimizer, loss_fn=loss_fn,
                                           amp=amp, scaler=scaler, **kwargs)
-                    if amp:
-                        scaler.scale(loss).backward()
-                    else:
-                        loss.backward()
+                optimizer.zero_grad()
+                self.zero_grad()
+                if amp:
+                    scaler.scale(loss).backward()
+                else:
+                    loss.backward()
 
             after_loss_fn = after_loss_fn_new
 
