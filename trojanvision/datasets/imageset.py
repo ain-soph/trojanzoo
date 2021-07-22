@@ -64,7 +64,7 @@ class ImageSet(Dataset):
                                             data_shape=self.data_shape)
         else:
             transform = transforms.Compose([transforms.ToTensor()])
-        if normalize:
+        if normalize and self.norm_par is not None:
             transform.transforms.append(transforms.Normalize(mean=self.norm_par['mean'], std=self.norm_par['std']))
         return transform
 
