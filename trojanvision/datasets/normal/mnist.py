@@ -3,8 +3,6 @@
 from trojanvision.datasets.imageset import ImageSet
 
 import torchvision.datasets as datasets
-import torchvision.transforms as transforms
-from typing import Union
 
 
 class MNIST(ImageSet):
@@ -13,7 +11,7 @@ class MNIST(ImageSet):
     num_classes: int = 10
     data_shape = [1, 28, 28]
 
-    def __init__(self, norm_par={'mean': [0.1307], 'std': [0.3081]}, **kwargs):
+    def __init__(self, norm_par: dict[str, list[int]] = {'mean': [0.1307], 'std': [0.3081]}, **kwargs):
         super().__init__(norm_par=norm_par, **kwargs)
 
     def initialize(self):
