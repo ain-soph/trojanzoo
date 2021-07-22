@@ -289,13 +289,13 @@ class ImageModel(Model):
                     adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn, iteration=1,
                                                  pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
                     # self.train()
+                    optimizer.zero_grad()
+                    self.zero_grad()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):
                         after_loss_fn_old(_input=_input, _label=_label, _output=_output,
                                           loss=loss, optimizer=optimizer, loss_fn=loss_fn,
                                           amp=amp, scaler=scaler, **kwargs)
-                optimizer.zero_grad()
-                self.zero_grad()
                 if amp:
                     scaler.scale(loss).backward()
                 else:
