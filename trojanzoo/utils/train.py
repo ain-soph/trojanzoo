@@ -31,7 +31,7 @@ def train(module: nn.Module, num_classes: int,
           writer=None, main_tag: str = 'train', tag: str = '',
           accuracy_fn: Callable[..., list[float]] = None,
           verbose: bool = True, indent: int = 0,
-          change_train_eval: bool = True, **kwargs) -> None:
+          change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch', **kwargs) -> None:
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
     validate_fn = validate_fn if callable(validate_fn) else validate
@@ -106,6 +106,8 @@ def train(module: nn.Module, num_classes: int,
                                   _iter=_iter, total_iter=total_iter)
                     # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
                 optimizer.step()
+            if lr_scheduler and lr_scheduler_freq == 'step':
+                lr_scheduler.step()
             optimizer.zero_grad()
             acc1, acc5 = accuracy_fn(_output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
@@ -113,6 +115,8 @@ def train(module: nn.Module, num_classes: int,
             logger.meters['top1'].update(acc1, batch_size)
             logger.meters['top5'].update(acc5, batch_size)
             empty_cache()   # TODO: should it be outside of the dataloader loop?
+        if lr_scheduler and lr_scheduler_freq == 'epoch':
+            lr_scheduler.step()
         if change_train_eval:
             module.eval()
         activate_params(module, [])
@@ -124,8 +128,6 @@ def train(module: nn.Module, num_classes: int,
                                global_step=_epoch + start_epoch)
             writer.add_scalars(main_tag='Acc/' + main_tag, tag_scalar_dict={tag: acc},
                                global_step=_epoch + start_epoch)
-        if lr_scheduler:
-            lr_scheduler.step()
         if validate_interval != 0:
             if _epoch % validate_interval == 0 or _epoch == epoch:
                 _, cur_acc = validate_fn(module=module, num_classes=num_classes,
