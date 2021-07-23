@@ -254,9 +254,9 @@ class ImageModel(Model):
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
                 adv_loss_fn = functools.partial(self._adv_loss_helper, _label=_label)
 
+                optimizer.zero_grad()
+                self.zero_grad()
                 if after_loss_fn_old is None and not self.adv_train_free:
-                    optimizer.zero_grad()
-                    self.zero_grad()
                     # self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn,
                                                  iteration=self.adv_train_iter,
@@ -275,8 +275,6 @@ class ImageModel(Model):
                 noise.data = self.pgd.valid_noise(adv_x, _input)
                 for m in range(self.adv_train_iter):
                     if self.adv_train_free:
-                        optimizer.zero_grad()
-                        self.zero_grad()
                         loss = loss_fn(adv_x, _label)
                         if amp:
                             scaler.scale(loss).backward()
@@ -285,12 +283,12 @@ class ImageModel(Model):
                         else:
                             loss.backward()
                             optimizer.step()
+                        optimizer.zero_grad()
+                        self.zero_grad()
                     # self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn, iteration=1,
                                                  pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
                     # self.train()
-                    optimizer.zero_grad()
-                    self.zero_grad()
                     loss = loss_fn(adv_x, _label)
                     if callable(after_loss_fn_old):
                         after_loss_fn_old(_input=_input, _label=_label, _output=_output,
@@ -300,7 +298,6 @@ class ImageModel(Model):
                     scaler.scale(loss).backward()
                 else:
                     loss.backward()
-
             after_loss_fn = after_loss_fn_new
 
         super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
