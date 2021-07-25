@@ -135,8 +135,9 @@ if __name__ == '__main__':
         _input = augment(_input, param_augment, device=env['device'])
         return _input, _label
 
-    def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor) -> list[torch.Tensor]:
-        if model.adv_train:
+    def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor,
+                      adv_train: bool = False) -> list[torch.Tensor]:
+        if adv_train:
             adv_loss_fn = functools.partial(model._adv_loss_helper, _label=lab_real)
             img_real, _ = model.pgd.optimize(_input=img_real, loss_fn=adv_loss_fn,
                                              iteration=model.adv_train_iter,
@@ -151,7 +152,6 @@ if __name__ == '__main__':
         gw_syn = torch.autograd.grad(loss_syn, net_parameters, create_graph=True)
         return gw_syn
 
-    import numpy as np
     images_all, labels_all = dataset_to_list(train_set)
     images_all = torch.stack(images_all).to(env['device'])
     labels_all = torch.tensor(labels_all, dtype=torch.long, device=env['device'])
@@ -261,11 +261,15 @@ if __name__ == '__main__':
                 # img_real, lab_real = model.get_data(data_real)
                 img_real = get_real_data(c, dataset.batch_size)
                 lab_real = c * torch.ones(img_real.size(0), device=img_real.device, dtype=torch.long)
-                gw_real = get_real_grad(img_real, lab_real)
 
                 img_syn = image_syn[c]
                 lab_syn = label_syn[c]
+
                 gw_syn = get_syn_grad(img_syn, lab_syn)
+                if model.adv_train_free:
+                    gw_real = get_real_grad(img_real, lab_real, adv_train=False)
+                    loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list)
+                gw_real = get_real_grad(img_real, lab_real, adv_train=model.adv_train)
                 loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list)
             optimizer_img.zero_grad()
             loss.backward()
