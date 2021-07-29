@@ -112,6 +112,7 @@ if __name__ == '__main__':
     iter_list = [iter(loader) for loader in class_loader_list]
 
     train_args = dict(**trainer)
+    # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
     train_args['adv_train'] = False
@@ -185,10 +186,11 @@ if __name__ == '__main__':
     for it in range(Iteration):
         ''' Evaluate synthetic data '''
         # print(f'    {it+1:4d}')
-        if it % args.eval_interval == 0:
+        if (it + 1) % args.eval_interval == 0:
             accs = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             robusts = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             for _ in range(num_eval):
+                # eval_model.load(suffix='')
                 weight_init(eval_model._model)
                 dst_syn_train = TensorDataset(image_syn.detach().clone().flatten(0, 1),
                                               label_syn.detach().clone().flatten(0, 1))
@@ -206,7 +208,7 @@ if __name__ == '__main__':
                     accs.update(result_b)
                     prints('{green}acc: {yellow}{0:7.3f}{reset}'.format(
                         result_b, **ansi), indent=20)
-            print(f'{it:4d}    acc: ', accs, end='    ')
+            print(f'{it+1:4d}    acc: ', accs, end='    ')
             if model.adv_train:
                 print('robust: ', robusts, end='    ')
             print(
@@ -220,7 +222,7 @@ if __name__ == '__main__':
                             image = image.add(mean).mul(std)
                         image = image.clamp(0, 1)
                         save_tensor_as_img(filename, image)
-
+        # model.load(suffix='')
         weight_init(model._model)
 
         loss_avg = 0.0
@@ -288,6 +290,7 @@ if __name__ == '__main__':
             if ol == outer_loop - 1:
                 break
 
+            # model._train(verbose=False, **train_args)
             ''' update network '''
             dst_syn_train = TensorDataset(image_syn.detach().clone().flatten(0, 1),
                                           label_syn.detach().clone().flatten(0, 1))
