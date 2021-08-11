@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 
 # CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --model convnet
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eps 0.3 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --adv_train_eval_eps 0.031372549 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eps 0.3 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --adv_train_eval_eps 0.3 --model convnet
 
 
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 300 --image_per_class 10 --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --image_per_class 10 --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 300 --image_per_class 10 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --image_per_class 10 --model convnet
+
+
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --image_per_class 10
 
 # --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn
 #
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
+from projects.dataset_condensation.utils import freeze_bn
 import trojanvision
 from trojanvision.utils import summary
 import argparse
@@ -21,18 +26,29 @@ from trojanzoo.utils.tensor import save_tensor_as_img
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.fim import fim_diag
-from trojanzoo.utils.data import dataset_to_list
 
 import torch
-import torch.nn as nn
 from torch.utils.data import TensorDataset
 from torchvision import transforms
 import functools
 
-from utils import match_loss, augment, get_daparam
+from utils import match_loss, augment, get_daparam, get_loops
 from model import ConvNet
 
 trojanvision.models.class_dict['convnet'] = ConvNet
+
+fgsm_args = {
+    'cifar10': {
+        'iteration': 1,
+        'pgd_alpha': 2.0 / 255,
+        'pgd_eps': 8.0 / 255,
+    },
+    'mnist': {
+        'iteration': 1,
+        'pgd_alpha': 0.375,
+        'pgd_eps': 0.3,
+    },
+}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -50,6 +66,10 @@ if __name__ == '__main__':
     parser.add_argument('--lr_img', type=float, default=0.1)
     parser.add_argument('--save_img', action='store_true')
     parser.add_argument('--eval_interval', type=int, default=10)
+    parser.add_argument('--file_path', type=str)
+    parser.add_argument('--init', type=str, default='noise', choices=['noise', 'real'],
+                        help='noise/real: initialize synthetic images from random noise or randomly sampled real images.')
+    parser.add_argument('--linear_approx', action='store_true')
     args = parser.parse_args()
 
     dis_metric: str = args.dis_metric
@@ -58,20 +78,8 @@ if __name__ == '__main__':
     epoch_eval_train: int = args.epoch_eval_train
     Iteration: int = args.Iteration
     lr_img: float = args.lr_img
-    if image_per_class == 1:
-        outer_loop, inner_loop = 1, 1
-    elif image_per_class == 10:
-        outer_loop, inner_loop = 10, 50
-    elif image_per_class == 20:
-        outer_loop, inner_loop = 20, 25
-    elif image_per_class == 30:
-        outer_loop, inner_loop = 30, 20
-    elif image_per_class == 40:
-        outer_loop, inner_loop = 40, 15
-    elif image_per_class == 50:
-        outer_loop, inner_loop = 50, 10
-    else:
-        outer_loop, inner_loop = 0, 0
+    outer_loop, inner_loop = get_loops(image_per_class)
+
     args_dict = args.__dict__
     env = trojanvision.environ.create(**args_dict)
     dataset = trojanvision.datasets.create(**args_dict)
@@ -87,8 +95,17 @@ if __name__ == '__main__':
         args_dict['norm_layer'] = args_dict['eval_norm_layer']
     args_dict['momentum'] = 0.9
     args_dict['weight_decay'] = 5e-4
+    args_dict['adv_train'] = True
+    if args.linear_approx:
+        fgsm_dict = fgsm_args[dataset.name]
+        args_dict['adv_train_iter'] = fgsm_dict['iteration']
+        args_dict['adv_train_alpha'] = fgsm_dict['pgd_alpha']
+        args_dict['adv_train_eps'] = fgsm_dict['pgd_eps']
     eval_model = trojanvision.models.create(dataset=dataset, **args_dict)
     eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args_dict)
+
+    if env['verbose']:
+        summary(eval_model=eval_model, eval_trainer=eval_trainer)
 
     init_fn = torch.randn if dataset.normalize else torch.rand
     image_syn = init_fn(size=(model.num_classes, image_per_class, *dataset.data_shape),
@@ -115,16 +132,16 @@ if __name__ == '__main__':
     # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
-    train_args['adv_train'] = False
+    train_args['adv_train'] = False if not args.linear_approx else True
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epoch'] = epoch_eval_train
-    eval_train_args['adv_train'] = False
+    eval_train_args['adv_train'] = True  # if args.linear_approx else False
+    # eval_train_args['adv_train'] = False
+    mean_value = [0.0]
+    std_value = [1.0]
     if dataset.norm_par is not None:
         mean_value = dataset.norm_par['mean']
         std_value = dataset.norm_par['std']
-    else:
-        mean_value = [0.0]
-        std_value = [1.0]
     mean = torch.tensor(mean_value, device=env['device'])[:, None, None]
     std = torch.tensor(std_value, device=env['device'])[:, None, None]
 
@@ -132,7 +149,7 @@ if __name__ == '__main__':
     net_parameters = list(model.parameters())
 
     def get_data_fn(data, **kwargs):
-        _input, _label = model.get_data(data, **kwargs)
+        _input, _label = eval_model.get_data(data, **kwargs)
         _input = augment(_input, param_augment, device=env['device'])
         return _input, _label
 
@@ -153,21 +170,21 @@ if __name__ == '__main__':
         gw_syn = torch.autograd.grad(loss_syn, net_parameters, create_graph=True)
         return gw_syn
 
-    images_all, labels_all = dataset_to_list(train_set)
-    images_all = torch.stack(images_all).to(env['device'])
-    labels_all = torch.tensor(labels_all, dtype=torch.long, device=env['device'])
-    indices_class = [[] for c in range(dataset.num_classes)]
-    for i, lab in enumerate(labels_all):
-        indices_class[lab].append(i)
-
-    def get_real_data(c: int, *args, **kwargs) -> torch.Tensor:
+    def get_real_data(c: int, batch_size: int, **kwargs) -> torch.Tensor:
         try:
             data_real = next(iter_list[c])
         except StopIteration as e:
             iter_list[c] = iter(class_loader_list[c])   # don't use itertools.cycle because it's not random
             data_real = next(iter_list[c])
-        return model.get_data(data_real)[0]
+        return model.get_data(data_real)[0][:batch_size]
 
+    # images_all, labels_all = dataset_to_list(train_set)
+    # images_all = torch.stack(images_all).to(env['device'])
+    # labels_all = torch.tensor(labels_all, dtype=torch.long, device=env['device'])
+    # indices_class = [[] for c in range(dataset.num_classes)]
+    # for i, lab in enumerate(labels_all):
+    #     indices_class[lab].append(i)
+    #
     # def get_real_data(c: int, n: int) -> torch.Tensor:
     #     idx_shuffle = np.random.permutation(indices_class[c])[:n]
     #     return images_all[idx_shuffle].detach().clone()
@@ -183,10 +200,16 @@ if __name__ == '__main__':
     # from data import get_images
     # get_real_data = get_images
 
+    if args.init == 'real':
+        bn_size = image_syn.shape[1]
+        for c in range(dataset.num_classes):
+            image_syn[c].data = get_real_data(c, bn_size)
+    best_result = 0.0
     for it in range(Iteration):
         ''' Evaluate synthetic data '''
         # print(f'    {it+1:4d}')
         if (it + 1) % args.eval_interval == 0:
+            model._validate()
             accs = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             robusts = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             for _ in range(num_eval):
@@ -196,9 +219,10 @@ if __name__ == '__main__':
                                               label_syn.detach().clone().flatten(0, 1))
                 loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,
                                                       dataset=dst_syn_train)
-                eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn, **eval_train_args)
+                eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn,
+                                  **eval_train_args)
                 result_a, result_b = eval_model._validate(verbose=False)
-                if model.adv_train:
+                if eval_model.adv_train:
                     acc, robust = result_b - result_a, result_a
                     accs.update(acc)
                     robusts.update(robust)
@@ -211,39 +235,41 @@ if __name__ == '__main__':
             print(f'{it+1:4d}    acc: ', accs, end='    ')
             if model.adv_train:
                 print('robust: ', robusts, end='    ')
-            print(
-                f'images statistics: mean: {float(image_syn.mean()):.2f}  median: {float(image_syn.median()):.2f} ({float(image_syn.min()):.2f}, {float(image_syn.max()):.2f})')
-            if args.save_img:
-                for c in range(len(image_syn)):
-                    for i in range(len(image_syn[c])):
-                        filename = f'./result/dataset_condensation/{dataset.name}_{c}_{i}.png'
-                        image = image_syn[c][i]
-                        if dataset.normalize:
-                            image = image.add(mean).mul(std)
-                        image = image.clamp(0, 1)
-                        save_tensor_as_img(filename, image)
+            print(f'images statistics: mean: {float(image_syn.mean()):.2f}  '
+                  f'median: {float(image_syn.median()):.2f} '
+                  f'({float(image_syn.min()):.2f}, {float(image_syn.max()):.2f})')
+            cur_result = robusts.global_avg if eval_model.adv_train else accs.global_avg
+            if cur_result > best_result:
+                best_result = cur_result
+                print(' ' * 12, 'best result update')
+                if args.file_path:
+                    data = {'image_syn': image_syn, 'label_syn': label_syn}
+                    torch.save(data, args.file_path)
+                    print(' ' * 12, 'file save at: ', args.file_path)
+                if args.save_img:
+                    for c in range(len(image_syn)):
+                        for i in range(len(image_syn[c])):
+                            filename = f'./result/dataset_condensation/{dataset.name}_{c}_{i}.png'
+                            image = image_syn[c][i]
+                            if dataset.normalize:
+                                image = image.add(mean).mul(std)
+                            image = image.clamp(0, 1)
+                            save_tensor_as_img(filename, image)
         # model.load(suffix='')
         weight_init(model._model)
 
-        loss_avg = 0.0
+        # warmup_args = dict(**train_args)
+        # warmup_args['epoch'] = 3
+        # warmup_args['lr_scheduler'] = None
+        # warmup_args['adv_train'] = False
+        # model._train(verbose=False, change_train_eval=False, **warmup_args)
+
+        # loss_avg = 0.0
         for ol in range(outer_loop):
             model.activate_params(net_parameters)
             model.train()
 
-            # freeze the running mu and sigma for BatchNorm layers
-            BN_flag = False
-            BNSizePC = 16  # for batch normalization
-            for module in model.modules():
-                if 'BatchNorm' in module._get_name():  # BatchNorm
-                    BN_flag = True
-            if BN_flag:
-                img_real_list: list[torch.Tensor] = []
-                with torch.no_grad():
-                    img_real = torch.cat([get_real_data(c, BNSizePC) for c in range(model.num_classes)], dim=0)
-                    output_real = model(img_real)  # get running mu, sigma
-                for module in model.modules():
-                    if isinstance(module, nn.BatchNorm2d):
-                        module.eval()
+            freeze_bn(model, get_real_data)
 
             fim_inv_list: list[torch.Tensor] = None
             if dis_metric == 'natural':
@@ -252,6 +278,7 @@ if __name__ == '__main__':
                 # fim_inv_list = [torch.ones_like(fim) for fim in fim_list]   # 1/fim
                 fim_inv_list = [fim / (fim.abs().max() + 1e-6) for fim in fim_list]   # 1/fim
 
+            # for _ in range(10):
             model.zero_grad()
             loss = torch.tensor(0.0, device=env['device'])
             for c in range(model.num_classes):
@@ -267,6 +294,11 @@ if __name__ == '__main__':
                 img_syn = image_syn[c]
                 lab_syn = label_syn[c]
 
+                if args.linear_approx:
+                    adv_loss_fn = functools.partial(model._adv_loss_helper, _label=lab_syn)
+                    perturbed, _ = model.pgd.optimize(_input=img_syn.detach(), loss_fn=adv_loss_fn,
+                                                      **fgsm_args[dataset.name])
+                    img_syn = img_syn + (perturbed - img_syn).detach()
                 gw_syn = get_syn_grad(img_syn, lab_syn)
                 if model.adv_train_free:
                     gw_real = get_real_grad(img_real, lab_real, adv_train=False)
@@ -276,7 +308,7 @@ if __name__ == '__main__':
             optimizer_img.zero_grad()
             loss.backward()
             optimizer_img.step()
-            loss_avg += loss.item()
+            # loss_avg += loss.item()
             # lr_scheduler_img.step()
             # for c in range(dataset.data_shape[0]):
             #     mean = dataset.norm_par['mean'][c]
@@ -290,12 +322,13 @@ if __name__ == '__main__':
             if ol == outer_loop - 1:
                 break
 
-            # model._train(verbose=False, **train_args)
+            # sub_loader = dataset.get_dataloader(mode='train', full=False, seed=random.randint(0, 1000))
+            # model._train(verbose=False, loader_train=sub_loader, **train_args)
             ''' update network '''
             dst_syn_train = TensorDataset(image_syn.detach().clone().flatten(0, 1),
                                           label_syn.detach().clone().flatten(0, 1))
             loader_train = dataset.get_dataloader(mode='train', num_workers=0, pin_memory=False, dataset=dst_syn_train)
             model._train(loader_train=loader_train, verbose=False, change_train_eval=False, **train_args)
-        loss_avg /= (model.num_classes * outer_loop)
+        # loss_avg /= (model.num_classes * outer_loop)
         # if it % 10 == 0:
-        print('iter = %04d, loss = %.4f' % (it, loss_avg))
+        # print('iter = %04d, loss = %.4f' % (it, loss_avg))

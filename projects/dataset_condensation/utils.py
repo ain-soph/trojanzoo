@@ -1,9 +1,50 @@
 #!/usr/bin/env python3
 
 import torch
-from scipy.ndimage.interpolation import rotate as scipyrotate
-import numpy as np
+import torch.nn as nn
 import torch.nn.functional as F
+
+import numpy as np
+from scipy.ndimage.interpolation import rotate as scipyrotate
+from collections.abc import Callable
+
+from trojanzoo.models import Model
+
+
+def freeze_bn(model: Model, get_real_data: Callable[[int, int], torch.Tensor]) -> None:
+    # freeze the running mu and sigma for BatchNorm layers
+    BN_flag = False
+    BNSizePC = 16  # for batch normalization
+    for module in model.modules():
+        if 'BatchNorm' in module._get_name():  # BatchNorm
+            BN_flag = True
+    if BN_flag:
+        # img_real_list: list[torch.Tensor] = []
+        with torch.no_grad():
+            img_real = torch.cat([get_real_data(c, BNSizePC) for c in range(model.num_classes)], dim=0)
+            output_real = model(img_real)  # get running mu, sigma
+        for module in model.modules():
+            if isinstance(module, nn.BatchNorm2d):
+                module.eval()
+
+
+def get_loops(image_per_class: int) -> tuple[int, int]:
+    outer_loop, inner_loop = 0, 0
+    if image_per_class == 1:
+        outer_loop, inner_loop = 1, 1
+    elif image_per_class == 10:
+        outer_loop, inner_loop = 10, 50
+    elif image_per_class == 20:
+        outer_loop, inner_loop = 20, 25
+    elif image_per_class == 30:
+        outer_loop, inner_loop = 30, 20
+    elif image_per_class == 40:
+        outer_loop, inner_loop = 40, 15
+    elif image_per_class == 50:
+        outer_loop, inner_loop = 50, 10
+    else:
+        exit(f'loop hyper-parameters are not defined for {image_per_class:d} image_per_class')
+    return outer_loop, inner_loop
 
 
 def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_metric: str,
