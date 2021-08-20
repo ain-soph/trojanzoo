@@ -25,8 +25,9 @@ def apply_cmap(heatmap: torch.Tensor, cmap: Union[Colormap, torch.Tensor] = jet)
         cmap = torch.as_tensor(cmap)
         assert cmap.shape[0] == 256     # cmap: [256, 3|4]
         heatmap = cmap[(heatmap * 255).long()]  # (N, H, W, C)  uint8
-    heatmap = heatmap.transpose(1, 3).transpose(2, 3).float()  # (N, C, H, W)
-    heatmap = heatmap / 255 if heatmap.max() > 1 else heatmap  # (N, C, H, W) float
+    heatmap = heatmap.permute(0, 3, 1, 2).contiguous().float()  # (N, C, H, W)
+    if heatmap.max() > 1:
+        heatmap.div_(255)
     return heatmap[0] if squeeze_flag else heatmap
 
 

@@ -129,10 +129,10 @@ class SpectralSignature(BackdoorDefense):
                 layer_output_all[i] = layer_output_all[i] - layer_output_mean
 
             u, s, v = torch.svd(layer_output_all)
-            v_transpose = torch.transpose(v, 1, 0)
+            vt = v.transpose(0, 1)
             outlier_scores = torch.rand([layer_output_all.shape[0]], device=env['device'])
             for i in range(len(class_dataset)):
-                outlier_scores[i] = (layer_output_all[i].view(1, -1) @ v_transpose[i].view(-1, 1)) ** 2
+                outlier_scores[i] = (layer_output_all[i].view(1, -1) @ vt[i].view(-1, 1)) ** 2
             outlier_scores_sorted, indices = torch.sort(outlier_scores, descending=True)
 
             clean_indices = indices[self.epsilon:]

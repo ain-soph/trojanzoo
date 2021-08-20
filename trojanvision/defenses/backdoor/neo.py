@@ -71,7 +71,7 @@ class NEO(BackdoorDefense):
             low=0, high=width - self.size[1], size=[len(_input), self.sample_num])  # (N, sample_num)
         pos_list: torch.Tensor = torch.stack([pos_height, pos_width]).transpose(0, -1)    # (N, sample_num, 2)
         # block potential triggers on _input
-        block_input = _input.unsqueeze(1).repeat(1, self.sample_num, 1, 1, 1)  # (N, sample_num, C, H, W)
+        block_input = _input.unsqueeze(1).expand(-1, self.sample_num, -1, -1, -1)  # (N, sample_num, C, H, W)
         for i in range(len(_input)):
             for j in range(self.sample_num):
                 x = pos_list[i][j][0]
@@ -80,7 +80,7 @@ class NEO(BackdoorDefense):
         # get potential triggers
         _input = to_tensor(_input)
         block_input = to_tensor(block_input)
-        org_class = self.model.get_class(_input).unsqueeze(1).repeat(1, self.sample_num)   # (N, sample_num)
+        org_class = self.model.get_class(_input).unsqueeze(1).expand(-1, self.sample_num)   # (N, sample_num)
         block_class_list = []
         for i in range(self.sample_num):
             block_class = self.model.get_class(block_input[:, i])   # (N, sample_num)

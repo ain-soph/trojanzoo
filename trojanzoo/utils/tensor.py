@@ -109,7 +109,7 @@ def float2byte(img: torch.Tensor) -> torch.Tensor:
     if img.shape[0] == 1:
         img = img[0]
     elif img.dim() == 3:
-        img = img.transpose(0, 1).transpose(1, 2).contiguous()
+        img = img.permute(1, 2, 0).contiguous()
     # img = (((img - img.min()) / (img.max() - img.min())) * 255).astype(np.uint8).squeeze()
     return img.mul(255).byte()
 
@@ -118,7 +118,7 @@ def float2byte(img: torch.Tensor) -> torch.Tensor:
 #     if img.dim() == 2:
 #         img.unsqueeze_(dim=0)
 #     else:
-#         img = img.transpose(1, 2).transpose(0, 1).contiguous()
+#         img = img.permute(2, 0, 1).contiguous()
 #     img.div_(255.0)
 #     return img
 
@@ -155,15 +155,7 @@ def read_img_as_tensor(path: str) -> torch.Tensor:
 
 
 def repeat_to_batch(x: torch.Tensor, batch_size: int = 1) -> torch.Tensor:
-    try:
-        size = [batch_size]
-        size.extend([1] * x.dim())
-        x = x.repeat(list(size))
-    except Exception as e:
-        print('tensor shape: ', x.shape)
-        print('batch_size: ', batch_size)
-        raise e
-    return x
+    return x.expand([batch_size] + [-1] * x.dim())
 
 
 def add_noise(_input: torch.Tensor, noise: torch.Tensor = None,

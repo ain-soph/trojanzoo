@@ -12,7 +12,8 @@ class TABOR(NeuralCleanse):
         super().__init__(**kwargs)
         self.hyperparams = hyperparams
 
-    def regularization_loss(self, mask, mark, _input, _label, Y):
+    def regularization_loss(self, mask: torch.Tensor, mark: torch.Tensor,
+                            _input: torch.Tensor, _label: torch.Tensor, Y: torch.Tensor):
         # R1 - Overly large triggers
         mask_l1_norm = torch.sum(torch.abs(mask))
         mask_l2_norm = torch.sum(mask.pow(2))

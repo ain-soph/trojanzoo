@@ -24,17 +24,18 @@ class Grad_Train(Defense):
     def detect(self, **kwargs):
         self.model._train(loss_fn=self.loss_fn, validate_fn=self.validate_fn, verbose=True, **kwargs)
 
-    def loss_fn(self, _input, _label, **kwargs):
-        new_input = _input.repeat(4, 1, 1, 1)
-        new_label = _label.repeat(4)
+    def loss_fn(self, _input: torch.Tensor, _label: torch.Tensor, **kwargs) -> torch.Tensor:
+        new_input = _input.expand(4, -1, -1, -1)
+        new_label = _label.expand(4)
         noise = torch.randn_like(new_input)
-        noise = noise / noise.norm(p=float('inf')) * self.pgd_eps
+        noise: torch.Tensor = noise / noise.norm(p=float('inf')) * self.pgd_eps
         new_input = new_input + noise
         new_input = new_input.clamp(0, 1).detach()
         new_input.requires_grad_()
         loss = self.model.loss(new_input, new_label)
         grad = torch.autograd.grad(loss, new_input, create_graph=True)[0]
-        new_loss = loss + self.grad_lambda * grad.flatten(start_dim=1).norm(p=1, dim=1).mean()
+        grad_mean: torch.Tensor = grad.flatten(start_dim=1).norm(p=1, dim=1).mean()
+        new_loss = loss + self.grad_lambda * grad_mean
         return new_loss
 
     def validate_fn(self, get_data_fn=None, loss_fn=None, **kwargs) -> tuple[float, float]:

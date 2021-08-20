@@ -98,9 +98,7 @@ class IMC_Adaptive(IMC):
             cur_layer_output: torch.Tensor = layer_output[layer].detach().cpu()  # (batch_size, C, H, W)
             channel_num: int = cur_layer_output.shape[1]  # channels
 
-            repeat_shape = [channel_num, self.n_samples]
-            repeat_shape.extend([1] * cur_layer_output.dim())
-            h_t: torch.Tensor = cur_layer_output.repeat(repeat_shape)
+            h_t: torch.Tensor = cur_layer_output.expand([channel_num, self.n_samples] + [-1] * cur_layer_output.dim())
             # (C, n_samples, batch_size, C, H, W)
 
             vs = self.samp_k * torch.arange(self.n_samples, device=h_t.device, dtype=torch.float)
