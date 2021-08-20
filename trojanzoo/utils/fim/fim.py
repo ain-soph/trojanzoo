@@ -43,7 +43,6 @@ def fim(module: nn.Module, _input: torch.Tensor, parameters: Iterable[nn.Paramet
         for c in range(C):
             grad_list = torch.autograd.grad(log_prob[n][c], parameters, retain_graph=True)
             for i, grad in enumerate(grad_list):    # different layers
-                print(grad.shape)
                 flatten_grad = grad.flatten()    # (D)
                 fim = flatten_grad.unsqueeze(1) * flatten_grad.unsqueeze(0)   # (D, D)
                 fim_dict[i].append(fim.detach().clone())
@@ -64,6 +63,7 @@ def new_fim(module: nn.Module, _input: torch.Tensor, parameters: Iterable[nn.Par
 
     def func(*weights: torch.Tensor):
         # TODO: del parameters and reassign values
+        # del module.weight        
         _output = module(_input)  # (N, C)
         return F.log_softmax(_output)  # (N, C)
     jacobian_list: tuple[torch.Tensor] = torch.autograd.functional.jacobian(func, parameters)
