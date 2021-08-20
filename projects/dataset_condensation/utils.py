@@ -61,6 +61,11 @@ def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_me
             gwr = gw_real[ig]
             gws = gw_syn[ig]
             dis += distance_natural(gwr, gws, fim_inv=fim_inv_list[ig])
+    elif dis_metric == 'natural_full':
+        for ig in range(len(gw_real)):
+            gwr = gw_real[ig]
+            gws = gw_syn[ig]
+            dis += distance_natural(gwr, gws, fim_inv=fim_inv_list[ig], full=True)
     elif dis_metric == 'mse':
         gw_real_vec = []
         gw_syn_vec = []
@@ -85,19 +90,52 @@ def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_me
     return dis
 
 
-def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor) -> torch.Tensor:
-    gwr = gwr.flatten()
-    gws = gws.flatten()
-    product = (gwr * fim_inv * gws).sum()
-    r_norm = (gwr.square() * fim_inv).sum().sqrt()
-    s_norm = (gws.square() * fim_inv).sum().sqrt()
-    # product = gwr.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1).flatten()
-    # r_norm = (gwr.unsqueeze(0) @ fim_inv @ gwr.unsqueeze(1)).flatten().sqrt()
-    # s_norm = (gws.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1)).flatten().sqrt()
-    # print(product.item(), r_norm.item(), s_norm.item())
-    # print('    ', gwr.abs().max().item(), gws.abs().max().item(), fim_inv.abs().max().item())
-    dis = 1 - product / (r_norm * s_norm + 0.000001)
+def inner_product(a: torch.Tensor, M: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    return ((a.unsqueeze(-2) * M).sum(-2) * b).sum(1)
+
+
+def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor, full: bool = False) -> torch.Tensor:
+    shape = gwr.shape
+    if len(shape) == 4:  # conv, out*in*h*w
+        gwr = gwr.reshape(shape[0], shape[1] * shape[2] * shape[3])
+        gws = gws.reshape(shape[0], shape[1] * shape[2] * shape[3])
+    elif len(shape) == 3:  # layernorm, C*h*w
+        gwr = gwr.reshape(shape[0], shape[1] * shape[2])
+        gws = gws.reshape(shape[0], shape[1] * shape[2])
+    elif len(shape) == 2:  # linear, out*in
+        pass
+    elif len(shape) == 1:  # batchnorm/instancenorm, C; groupnorm x, bias
+        gwr = gwr.reshape(1, shape[0])
+        gws = gws.reshape(1, shape[0])
+        return 0
+
+    if not full:
+        fim_inv = fim_inv.reshape_as(gwr)
+        r_norm = (gwr.square() * fim_inv).sum(dim=-1).sqrt()
+        s_norm = (gws.square() * fim_inv).sum(dim=-1).sqrt()
+        product = torch.sum(gwr * fim_inv * gws, dim=-1)
+    else:
+        channel = gwr.shape[0]
+        fim_inv = fim_inv.view(*gwr.shape, *gwr.shape)
+        fim_inv = torch.stack([fim_inv[i, :, i, :] for i in range(channel)])
+        r_norm = inner_product(gwr, fim_inv, gwr)
+        s_norm = inner_product(gws, fim_inv, gws)
+        product = inner_product(gwr, fim_inv, gws)
+    dis_weight = torch.sum(1 - product / (r_norm * s_norm + 0.000001))
+    dis = dis_weight
     return dis
+    # gwr = gwr.flatten()
+    # gws = gws.flatten()
+    # product = (gwr * fim_inv * gws).sum()
+    # r_norm = (gwr.square() * fim_inv).sum().sqrt()
+    # s_norm = (gws.square() * fim_inv).sum().sqrt()
+    # # product = gwr.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1).flatten()
+    # # r_norm = (gwr.unsqueeze(0) @ fim_inv @ gwr.unsqueeze(1)).flatten().sqrt()
+    # # s_norm = (gws.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1)).flatten().sqrt()
+    # # print(product.item(), r_norm.item(), s_norm.item())
+    # # print('    ', gwr.abs().max().item(), gws.abs().max().item(), fim_inv.abs().max().item())
+    # dis = 1 - product / (r_norm * s_norm + 0.000001)
+    # return dis
 
 
 def distance_wb(gwr: torch.Tensor, gws: torch.Tensor) -> torch.Tensor:

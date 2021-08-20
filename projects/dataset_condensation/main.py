@@ -25,7 +25,7 @@ from trojanvision.utils.model import weight_init
 from trojanzoo.utils.tensor import save_tensor_as_img
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
-from trojanzoo.utils.fim import fim_diag
+from trojanzoo.utils.fim import fim, fim_diag
 
 import torch
 from torch.utils.data import TensorDataset
@@ -274,9 +274,16 @@ if __name__ == '__main__':
             fim_inv_list: list[torch.Tensor] = None
             if dis_metric == 'natural':
                 fim_list = fim_diag(model._model, image_syn.detach().clone().flatten(0, 1))
+                fim_inv_list = [fim.detach() for fim in fim_list]
                 fim_inv_list = [fim.add(1e-6).reciprocal() for fim in fim_list]   # 1/fim
-                # fim_inv_list = [torch.ones_like(fim) for fim in fim_list]   # 1/fim
-                fim_inv_list = [fim / (fim.abs().max() + 1e-6) for fim in fim_list]   # 1/fim
+                fim_inv_list = [fim / (fim.abs().max() + 1e-6) for fim in fim_list]
+            elif dis_metric == 'natural_full':
+                fim_list = fim(model._model, image_syn.detach().clone().flatten(0, 1))
+                fim_inv_list = [fim.detach() for fim in fim_list]
+                fim_inv_list = [fim.add(1e-6 * torch.eye(fim.shape[0], dtype=fim.device)).inverse()
+                                for fim in fim_list]
+                fim_inv_list = [(fim + fim.t()) / 2 for fim in fim_list]
+                fim_inv_list = [fim / (fim.abs().max() + 1e-6) for fim in fim_list]
 
             # for _ in range(10):
             model.zero_grad()
