@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from trojanzoo.utils.fim.kfac import KFAC
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,6 +10,7 @@ from scipy.ndimage.interpolation import rotate as scipyrotate
 from collections.abc import Callable
 
 from trojanzoo.models import Model
+from typing import Union
 
 
 def freeze_bn(model: Model, get_real_data: Callable[[int, int], torch.Tensor]) -> None:
@@ -48,24 +50,23 @@ def get_loops(image_per_class: int) -> tuple[int, int]:
 
 
 def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_metric: str,
-               fim_inv_list: list[torch.Tensor] = None) -> torch.Tensor:
+               fim_inv_list: list[torch.Tensor] = None, kfac: KFAC = None) -> torch.Tensor:
     dis = torch.tensor(0.0).to(gw_syn[0].device)
 
-    if dis_metric == 'ours':
+    gw_real_old = gw_real
+    gw_real = gw_real if kfac is None else kfac.calc_grad(list(gw_real_old))
+    if dis_metric in ['ours', 'kfac']:
         for ig in range(len(gw_real)):
             gwr = gw_real[ig]
             gws = gw_syn[ig]
-            dis += distance_wb(gwr, gws)
-    elif dis_metric == 'natural':
+            gwr_old = gw_real_old[ig]
+            dis += distance_wb(gwr, gws, gwr_old=gwr_old)
+    elif 'natural' in dis_metric:
         for ig in range(len(gw_real)):
             gwr = gw_real[ig]
             gws = gw_syn[ig]
-            dis += distance_natural(gwr, gws, fim_inv=fim_inv_list[ig])
-    elif dis_metric == 'natural_full':
-        for ig in range(len(gw_real)):
-            gwr = gw_real[ig]
-            gws = gw_syn[ig]
-            dis += distance_natural(gwr, gws, fim_inv=fim_inv_list[ig], full=True)
+            dis += distance_natural(gwr, gws, fim_inv=fim_inv_list[ig],
+                                    full='full' in dis_metric)
     elif dis_metric == 'mse':
         gw_real_vec = []
         gw_syn_vec = []
@@ -121,7 +122,7 @@ def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor
         r_norm = inner_product(gwr, fim_inv, gwr)
         s_norm = inner_product(gws, fim_inv, gws)
         product = inner_product(gwr, fim_inv, gws)
-    dis_weight = torch.sum(1 - product / (r_norm * s_norm + 0.000001))
+    dis_weight = torch.sum(1 - product / (r_norm * s_norm + 1e-6))
     dis = dis_weight
     return dis
     # gwr = gwr.flatten()
@@ -134,31 +135,36 @@ def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor
     # # s_norm = (gws.unsqueeze(0) @ fim_inv @ gws.unsqueeze(1)).flatten().sqrt()
     # # print(product.item(), r_norm.item(), s_norm.item())
     # # print('    ', gwr.abs().max().item(), gws.abs().max().item(), fim_inv.abs().max().item())
-    # dis = 1 - product / (r_norm * s_norm + 0.000001)
+    # dis = 1 - product / (r_norm * s_norm + 1e-6)
     # return dis
 
 
-def distance_wb(gwr: torch.Tensor, gws: torch.Tensor) -> torch.Tensor:
+def distance_wb(gwr: torch.Tensor, gws: torch.Tensor, gwr_old: torch.Tensor = None) -> torch.Tensor:
+    if gwr_old is None:
+        gwr_old = gwr
     shape = gwr.shape
     if len(shape) == 4:  # conv, out*in*h*w
         gwr = gwr.reshape(shape[0], shape[1] * shape[2] * shape[3])
         gws = gws.reshape(shape[0], shape[1] * shape[2] * shape[3])
+        gwr_old = gwr_old.reshape(shape[0], shape[1] * shape[2] * shape[3])
     elif len(shape) == 3:  # layernorm, C*h*w
         gwr = gwr.reshape(shape[0], shape[1] * shape[2])
         gws = gws.reshape(shape[0], shape[1] * shape[2])
+        gwr_old = gwr_old.reshape(shape[0], shape[1] * shape[2])
     elif len(shape) == 2:  # linear, out*in
         pass
     elif len(shape) == 1:  # batchnorm/instancenorm, C; groupnorm x, bias
         gwr = gwr.reshape(1, shape[0])
         gws = gws.reshape(1, shape[0])
+        gwr_old = gwr_old.reshape(1, shape[0])
         return 0
     dis_weight = torch.sum(1 - torch.sum(gwr * gws, dim=-1) /
-                           (torch.norm(gwr, dim=-1) * torch.norm(gws, dim=-1) + 0.000001))
+                           (torch.norm(gwr_old, dim=-1) * torch.norm(gws, dim=-1) + 1e-6))
     dis = dis_weight
     return dis
 
 
-def augment(images: torch.Tensor, param_augment: str, device: str):
+def augment(images: torch.Tensor, param_augment: dict[str, Union[str, float]], device: str):
     # This can be sped up in the future.
 
     if param_augment is not None and param_augment['strategy'] != 'none':
