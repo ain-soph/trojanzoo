@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --model convnet
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eps 0.3 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --adv_train_eval_eps 0.3 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eps 0.3 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --adv_train_eval_eps 0.3 --model convnet
 
 
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 300 --image_per_class 10 --model convnet
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --image_per_class 10 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --image_per_class 10 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --image_per_class 10 --model convnet
 
 
 # CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --image_per_class 1
@@ -25,7 +25,7 @@ from trojanvision.utils.model import weight_init
 from trojanzoo.utils.tensor import save_tensor_as_img
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
-from trojanzoo.utils.fim import fim, fim_diag
+from trojanzoo.utils.fim import fim, fim_diag, KFAC
 
 import torch
 from torch.utils.data import TensorDataset
@@ -148,6 +148,10 @@ if __name__ == '__main__':
     param_augment = get_daparam(dataset.name)
     net_parameters = list(model.parameters())
 
+    kfac = None
+    if dis_metric == 'kfac':
+        kfac = KFAC(model)
+
     def get_data_fn(data, **kwargs):
         _input, _label = eval_model.get_data(data, **kwargs)
         _input = augment(_input, param_augment, device=env['device'])
@@ -161,8 +165,15 @@ if __name__ == '__main__':
                                              iteration=model.adv_train_iter,
                                              pgd_alpha=model.adv_train_alpha,
                                              pgd_eps=model.adv_train_eps)
+
+        if dis_metric == 'kfac':
+            kfac.track.enable()
         loss_real = model.loss(img_real, lab_real)
         gw_real = list((grad.detach().clone() for grad in torch.autograd.grad(loss_real, net_parameters)))
+        if dis_metric == 'kfac':
+            kfac.track.disable()
+            kfac.update_covs()
+            kfac.update_inv_covs()
         return gw_real
 
     def get_syn_grad(img_syn: torch.Tensor, lab_syn: torch.Tensor) -> list[torch.Tensor]:
@@ -309,9 +320,9 @@ if __name__ == '__main__':
                 gw_syn = get_syn_grad(img_syn, lab_syn)
                 if model.adv_train_free:
                     gw_real = get_real_grad(img_real, lab_real, adv_train=False)
-                    loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list)
+                    loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list, kfac=kfac)
                 gw_real = get_real_grad(img_real, lab_real, adv_train=model.adv_train)
-                loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list)
+                loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list, kfac=kfac)
             optimizer_img.zero_grad()
             loss.backward()
             optimizer_img.step()
