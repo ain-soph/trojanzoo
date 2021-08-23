@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --model convnet
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eps 0.3 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --adv_train_eval_eps 0.3 --model convnet
+# Normal Train
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --model convnet --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --model convnet --image_per_class 10
 
+# ResNet Model
+# --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn --dataset_normalize
 
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --image_per_class 10 --model convnet
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --image_per_class 10 --model convnet
+# FGSM train
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --model convnet --linear_approx --eval_adv_train --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --model convnet --linear_approx --eval_adv_train --image_per_class 10
 
-
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --image_per_class 1
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --num_workers 0 --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --image_per_class 10
-
-# --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn
-#
+# PGD train
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --model convnet --linear_approx --eval_adv_train --image_per_class 1 --dis_metric kfac
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --linear_approx --eval_adv_train --image_per_class 10 --dis_metric kfac
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
@@ -70,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--init', type=str, default='noise', choices=['noise', 'real'],
                         help='noise/real: initialize synthetic images from random noise or randomly sampled real images.')
     parser.add_argument('--linear_approx', action='store_true')
+    parser.add_argument('--eval_adv_train', action='store_true')
     args = parser.parse_args()
 
     dis_metric: str = args.dis_metric
@@ -132,11 +134,10 @@ if __name__ == '__main__':
     # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
-    train_args['adv_train'] = False if not args.linear_approx else True
+    train_args['adv_train'] = True if args.linear_approx else False
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epoch'] = epoch_eval_train
-    eval_train_args['adv_train'] = True  # if args.linear_approx else False
-    # eval_train_args['adv_train'] = False
+    eval_train_args['adv_train'] = args.eval_adv_train
     mean_value = [0.0]
     std_value = [1.0]
     if dataset.norm_par is not None:
@@ -232,8 +233,8 @@ if __name__ == '__main__':
                                                       dataset=dst_syn_train)
                 eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn,
                                   **eval_train_args)
-                result_a, result_b = eval_model._validate(verbose=False)
-                if eval_model.adv_train:
+                result_a, result_b = eval_model._validate(adv_train=model.adv_train, verbose=False)
+                if model.adv_train:
                     acc, robust = result_b - result_a, result_a
                     accs.update(acc)
                     robusts.update(robust)
@@ -249,7 +250,7 @@ if __name__ == '__main__':
             print(f'images statistics: mean: {float(image_syn.mean()):.2f}  '
                   f'median: {float(image_syn.median()):.2f} '
                   f'({float(image_syn.min()):.2f}, {float(image_syn.max()):.2f})')
-            cur_result = robusts.global_avg if eval_model.adv_train else accs.global_avg
+            cur_result = robusts.global_avg + accs.global_avg if eval_model.adv_train else accs.global_avg
             if cur_result > best_result:
                 best_result = cur_result
                 print(' ' * 12, 'best result update')

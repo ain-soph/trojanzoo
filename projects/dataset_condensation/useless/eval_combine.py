@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=2 python eval_combine.py --verbose 1 --color --lr 0.01 --dataset cifar10 --batch_size 256 --epoch_eval_train 100 --file_path1 ./adv_train.pt --file_path2 ./normal.pt --num_workers 0 --validate_interval 0 --model convnet
+# CUDA_VISIBLE_DEVICES=2 python eval_combine.py --verbose 1 --color --lr 0.01 --dataset cifar10 --batch_size 256 --epoch_eval_train 100 --file_path1 ./adv_train.pt --file_path2 ./normal.pt --validate_interval 0 --model convnet
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
