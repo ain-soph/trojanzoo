@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-
 from trojanzoo.models import Model
 from trojanzoo.configs import config
 from trojanzoo.utils import get_name
 from trojanzoo.utils.output import ansi, prints
-
+from trojanzoo.utils.fim import KFAC
 
 from typing import TYPE_CHECKING
 from typing import Any
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 class Trainer:
     name = 'trainer'
     param_list = ['optim_args', 'train_args', 'writer_args',
-                  'optimizer', 'lr_scheduler', 'writer']
+                  'optimizer', 'lr_scheduler', 'kfac', 'writer']
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
@@ -35,6 +34,7 @@ class Trainer:
         group.add_argument('--weight_decay', type=float, help='weight_decay passed to Optimizer, defaults to 3e-4.')
         group.add_argument('--nesterov', action='store_true', help='enable nesterov for SGD optimizer.')
         group.add_argument('--lr_scheduler', action='store_true', help='enable CosineAnnealingLR scheduler.')
+        group.add_argument('--kfac', action='store_true', help='Using KFAC preconditioner.')
         group.add_argument('--amp', action='store_true', help='Automatic Mixed Precision.')
         group.add_argument('--grad_clip', type=float, help='Gradient Clipping max norms.')
         group.add_argument('--validate_interval', type=int,
@@ -49,12 +49,13 @@ class Trainer:
     def __init__(self, optim_args: dict[str, Any] = {}, train_args: dict[str, Any] = {},
                  writer_args: dict[str, Any] = {},
                  optimizer: Optimizer = None, lr_scheduler: _LRScheduler = None,
-                 writer=None):
+                 kfac: KFAC = None, writer=None):
         self.optim_args = optim_args.copy()   # TODO: issue 6 why? to avoid BadAppend issues
         self.train_args = train_args.copy()
         self.writer_args = writer_args.copy()
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
+        self.kfac = kfac
         self.writer = writer
 
     def __getitem__(self, key: str):
@@ -92,7 +93,7 @@ def add_argument(parser: argparse.ArgumentParser, ClassType: type[Trainer] = Tra
 
 
 def create(dataset_name: str = None, dataset: Dataset = None, model: Model = None,
-           ClassType: type[Trainer] = Trainer, tensorboard: bool = None,
+           kfac: bool = False, ClassType: type[Trainer] = Trainer, tensorboard: bool = None,
            config: Config = config, **kwargs):
     assert isinstance(model, Model)
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
@@ -112,6 +113,15 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
         _dict[key] = value
     optimizer, lr_scheduler = model.define_optimizer(T_max=result['epoch'], **optim_args)
 
+    module = model._model
+    if optim_args['parameters'] == 'features':
+        module = module.features
+    elif optim_args['parameters'] == 'classifier':
+        module = module.classifier
+    kfac_optimizer = None
+    if kfac:
+        kfac_optimizer = KFAC(module)
+
     writer = None
     writer_args: dict[str, Any] = {}
     if tensorboard:
@@ -122,4 +132,4 @@ def create(dataset_name: str = None, dataset: Dataset = None, model: Model = Non
                 writer_args[key] = value
         writer = SummaryWriter(**writer_args)
     return ClassType(optim_args=optim_args, train_args=train_args, writer_args=writer_args,
-                     optimizer=optimizer, lr_scheduler=lr_scheduler, writer=writer)
+                     optimizer=optimizer, lr_scheduler=lr_scheduler, kfac=kfac_optimizer, writer=writer)
