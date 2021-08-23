@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from trojanzoo.utils.fim.kfac import KFAC
 from trojanzoo.utils import empty_cache
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 from trojanzoo.utils.model import accuracy, activate_params
@@ -18,7 +19,8 @@ import torch.utils.data
 
 
 def train(module: nn.Module, num_classes: int,
-          epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
+          epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+          grad_clip: float = None, kfac: KFAC = None,
           print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
           validate_interval: int = 10, save: bool = False, amp: bool = False,
           loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -84,6 +86,8 @@ def train(module: nn.Module, num_classes: int,
             _iter = _epoch * len_loader_train + i
             # data_time.update(time.perf_counter() - end)
             _input, _label = get_data_fn(data, mode='train')
+            if kfac is not None:
+                kfac.track.enable()
             _output = module(_input, amp=amp)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
             if amp:
@@ -97,14 +101,17 @@ def train(module: nn.Module, num_classes: int,
                 scaler.update()
             else:
                 loss.backward()
-                if grad_clip is not None:
-                    nn.utils.clip_grad_norm_(params)
                 if callable(after_loss_fn):
                     after_loss_fn(_input=_input, _label=_label, _output=_output,
                                   loss=loss, optimizer=optimizer, loss_fn=loss_fn,
                                   amp=amp, scaler=scaler,
                                   _iter=_iter, total_iter=total_iter)
                     # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
+                if kfac is not None:
+                    kfac.track.disable()
+                    kfac.step()
+                if grad_clip is not None:
+                    nn.utils.clip_grad_norm_(params, grad_clip)
                 optimizer.step()
             if lr_scheduler and lr_scheduler_freq == 'step':
                 lr_scheduler.step()

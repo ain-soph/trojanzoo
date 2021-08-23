@@ -7,6 +7,7 @@ from trojanzoo.utils import add_noise, get_name, to_tensor
 from trojanzoo.utils.model import *
 from trojanzoo.utils.train import train, validate, compare
 from trojanzoo.utils.output import ansi, prints
+from trojanzoo.utils.fim import KFAC
 
 import torch
 import torch.nn as nn
@@ -368,7 +369,8 @@ class Model:
 
     # -----------------------------------Train and Validate------------------------------------ #
     # TODO: annotation and remove those arguments to be *args, **kwargs
-    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None,
+    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+               grad_clip: float = None, kfac: KFAC = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -394,7 +396,7 @@ class Model:
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
         return train(self, self.num_classes,
-                     epoch, optimizer, lr_scheduler, grad_clip,
+                     epoch, optimizer, lr_scheduler, grad_clip, kfac,
                      print_prefix, start_epoch, resume, validate_interval, save, amp,
                      loader_train, loader_valid, epoch_fn, get_data_fn, loss_fn, after_loss_fn, validate_fn,
                      save_fn, file_path, folder_path, suffix,

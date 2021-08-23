@@ -45,7 +45,7 @@ class Dataset(ABC, BasicObject):
         group.add_argument('--valid_batch_size', type=int, help='valid batch size.')
         group.add_argument('--test_batch_size', type=int, help='test batch size.')
         group.add_argument('--num_workers', type=int,
-                           help='num_workers passed to torch.utils.data.DataLoader for training set, defaults to 4.')
+                           help='num_workers passed to torch.utils.data.DataLoader, defaults to 4.')
         group.add_argument('--download', action='store_true',
                            help='download dataset if not exist by calling dataset.initialize()')
         # group.add_argument('--data_seed', type=int, help='seed to process data')
