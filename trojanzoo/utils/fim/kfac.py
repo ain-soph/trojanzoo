@@ -225,7 +225,7 @@ class KFAC(Optimizer):
             gb = g[:, -1].flatten()
             g = g[:, :-1]
         g = g.view_as(weight_grad)
-        return g, gb
+        return g.contiguous(), gb.contiguous()
 
     def _precond_sua(self, weight_grad: torch.Tensor, bias_grad: Optional[torch.Tensor],
                      state: dict[str, Union[torch.Tensor, int]]) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
@@ -241,7 +241,7 @@ class KFAC(Optimizer):
         if gb is not None:
             gb = g[:, -1, s[2] // 2, s[3] // 2]
             g = g[:, :-1]
-        return g, gb
+        return g.contiguous(), gb.contiguous()
 
     def _compute_covs(self, mod: LayerType):
         """Computes the covariances."""
@@ -255,7 +255,7 @@ class KFAC(Optimizer):
             if not self.sua:
                 x = F.unfold(x, mod.kernel_size, padding=mod.padding,
                              stride=mod.stride)
-            x = x.transpose(0, 1).flatten(1)   # (C, N*XXX)
+            x = x.transpose(0, 1).contiguous().flatten(1)   # (C, N*XXX)
         else:
             x.t_()   # (C, N)
         if mod.bias is not None:
@@ -272,7 +272,7 @@ class KFAC(Optimizer):
         # Computation of ggt
         if is_conv:
             state['num_locations'] = gy.shape[2] * gy.shape[3]
-            gy = gy.transpose(0, 1).flatten(1)
+            gy = gy.transpose(0, 1).contiguous().flatten(1)
         else:
             state['num_locations'] = 1
             gy.t_()
