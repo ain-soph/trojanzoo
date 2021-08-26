@@ -53,14 +53,15 @@ def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_me
                fim_inv_list: list[torch.Tensor] = None, kfac: KFAC = None) -> torch.Tensor:
     dis = torch.tensor(0.0).to(gw_syn[0].device)
 
-    gw_real_old = gw_real
-    gw_real = gw_real if kfac is None else kfac.calc_grad(list(gw_real_old))
     if dis_metric in ['ours', 'kfac']:
+        gw_real_new = gw_real if kfac is None else kfac.calc_grad(gw_real)
+        gw_syn_new = gw_syn if kfac is None else kfac.calc_grad(gw_syn)
         for ig in range(len(gw_real)):
             gwr = gw_real[ig]
             gws = gw_syn[ig]
-            gwr_old = gw_real_old[ig]
-            dis += distance_wb(gwr, gws, gwr_old=gwr_old)
+            gwr_new = gw_real_new[ig]
+            gws_new = gw_syn_new[ig]
+            dis += distance_wb(gwr, gws, gwr_new=gwr_new, gws_new=gws_new)
     elif 'natural' in dis_metric:
         for ig in range(len(gw_real)):
             gwr = gw_real[ig]
@@ -139,27 +140,49 @@ def distance_natural(gwr: torch.Tensor, gws: torch.Tensor, fim_inv: torch.Tensor
     # return dis
 
 
-def distance_wb(gwr: torch.Tensor, gws: torch.Tensor, gwr_old: torch.Tensor = None) -> torch.Tensor:
-    if gwr_old is None:
-        gwr_old = gwr
+def distance_wb(gwr: torch.Tensor, gws: torch.Tensor,
+                gwr_new: torch.Tensor = None, gws_new: torch.Tensor = None) -> torch.Tensor:
+    if gwr_new is None:
+        gwr_new = gwr
+    if gws_new is None:
+        gws_new = gwr
     shape = gwr.shape
     if len(shape) == 4:  # conv, out*in*h*w
         gwr = gwr.reshape(shape[0], shape[1] * shape[2] * shape[3])
         gws = gws.reshape(shape[0], shape[1] * shape[2] * shape[3])
-        gwr_old = gwr_old.reshape(shape[0], shape[1] * shape[2] * shape[3])
+        gwr_new = gwr_new.reshape(shape[0], shape[1] * shape[2] * shape[3])
+        gws_new = gws_new.reshape(shape[0], shape[1] * shape[2] * shape[3])
     elif len(shape) == 3:  # layernorm, C*h*w
         gwr = gwr.reshape(shape[0], shape[1] * shape[2])
         gws = gws.reshape(shape[0], shape[1] * shape[2])
-        gwr_old = gwr_old.reshape(shape[0], shape[1] * shape[2])
+        gwr_new = gwr_new.reshape(shape[0], shape[1] * shape[2])
+        gws_new = gws_new.reshape(shape[0], shape[1] * shape[2])
     elif len(shape) == 2:  # linear, out*in
         pass
     elif len(shape) == 1:  # batchnorm/instancenorm, C; groupnorm x, bias
         gwr = gwr.reshape(1, shape[0])
         gws = gws.reshape(1, shape[0])
-        gwr_old = gwr_old.reshape(1, shape[0])
+        gwr_new = gwr_new.reshape(1, shape[0])
+        gws_new = gws_new.reshape(1, shape[0])
         return 0
-    dis_weight = torch.sum(1 - torch.sum(gwr * gws, dim=-1) /
-                           (torch.norm(gwr_old, dim=-1) * torch.norm(gws, dim=-1) + 1e-6))
+
+    # gwr = gwr.flatten()
+    # gws = gws.flatten()
+    # gwr_new = gwr_new.flatten()
+    # gws_new = gws_new.flatten()
+
+    # gwr_prod = torch.sum(gwr_new * gwr, dim=-1)
+    # gws_prod = torch.sum(gws_new * gws, dim=-1)
+    # gwr_norm = torch.where(gwr_prod > 0, gwr_prod.square(), gwr.norm(dim=-1))
+    # gws_norm = torch.where(gws_prod > 0, gws_prod.square(), gws.norm(dim=-1))
+
+    gwr_norm = gwr.norm(dim=-1)
+    gws_norm = gws.norm(dim=-1)
+
+    # dis = 1 - torch.sum(gwr_new * gws) / (gwr_norm * gws_norm + 1e-6)
+
+    dis_weight = torch.sum(1 - torch.sum(gwr_new * gws, dim=-1) /
+                           (gwr_norm * gws_norm + 1e-6))
     dis = dis_weight
     return dis
 
@@ -202,7 +225,7 @@ def augment(images: torch.Tensor, param_augment: dict[str, Union[str, float]], d
 
         def rotatefun(i):
             im_ = scipyrotate(images[i].cpu().data.numpy(), angle=np.random.randint(-rotate,
-                              rotate), axes=(-2, -1), cval=np.mean(mean))
+                                                                                    rotate), axes=(-2, -1), cval=np.mean(mean))
             r = int((im_.shape[-2] - shape[-2]) / 2)
             c = int((im_.shape[-1] - shape[-1]) / 2)
             images[i] = torch.tensor(im_[:, r:r + shape[-2], c:c + shape[-1]], dtype=torch.float, device=device)

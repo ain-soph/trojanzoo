@@ -221,7 +221,8 @@ if __name__ == '__main__':
         ''' Evaluate synthetic data '''
         # print(f'    {it+1:4d}')
         if (it + 1) % args.eval_interval == 0:
-            model._validate()
+            if outer_loop > 1:
+                model._validate()
             accs = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             robusts = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             for _ in range(num_eval):
@@ -326,6 +327,7 @@ if __name__ == '__main__':
                 loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list, kfac=kfac)
             optimizer_img.zero_grad()
             loss.backward()
+            # image_syn.grad.data.sign_()
             optimizer_img.step()
             # loss_avg += loss.item()
             # lr_scheduler_img.step()

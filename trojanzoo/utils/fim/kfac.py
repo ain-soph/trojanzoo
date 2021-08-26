@@ -36,7 +36,9 @@ def inv_covs(xxt: torch.Tensor, ggt: torch.Tensor, num_locations: int = 1,
         pi = float(tx / tg)
     # Regularizes and inverse
     eps /= num_locations
-    return inverse(xxt, eps=eps, pi=pi).detach(), inverse(ggt, eps=eps, pi=pi).detach()
+    ixxt, iggt = inverse(xxt, eps=eps, pi=pi).detach(), inverse(ggt, eps=eps, pi=pi).detach()
+    ixxt, iggt = (ixxt + ixxt.t()) / 2, (iggt + iggt.t()) / 2
+    return ixxt, iggt
 
 
 def pack_list(param_list: list[torch.Tensor], pack_idx: dict[nn.Module, list[int]]) -> dict[nn.Module, list[torch.Tensor]]:
@@ -158,10 +160,14 @@ class KFAC(Optimizer):
                     param.grad.data *= scale
 
     def calc_grad(self, grad_list: list[torch.Tensor], constraint_norm: bool = None) -> list[torch.Tensor]:
+        if constraint_norm is None:
+            constraint_norm = self.constraint_norm
         if grad_list is None:
             grad_dict = {module: [param.grad for param in module.parameters()]
                          for module in self.module_list}
         else:
+            if not isinstance(grad_list, list):
+                grad_list = list(grad_list)
             grad_dict = pack_list(grad_list, self.pack_idx)
         fisher_norm = 0.
 
@@ -267,6 +273,7 @@ class KFAC(Optimizer):
             state['xxt'].addmm_(mat1=x, mat2=x.t(),
                                 beta=(1. - self.alpha),
                                 alpha=self.alpha / x.shape[1]).detach_()
+        state['xxt'] = (state['xxt'] + state['xxt'].t()) / 2
         del state['x']
 
         # Computation of ggt
@@ -282,6 +289,7 @@ class KFAC(Optimizer):
             state['ggt'].addmm_(mat1=gy, mat2=gy.t(),
                                 beta=(1. - self.alpha),
                                 alpha=self.alpha / float(gy.shape[1])).detach_()
+        state['ggt'] = (state['ggt'] + state['ggt'].t()) / 2
         del state['gy']
 
     def __del__(self):

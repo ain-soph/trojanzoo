@@ -34,6 +34,8 @@ def train(module: nn.Module, num_classes: int,
           accuracy_fn: Callable[..., list[float]] = None,
           verbose: bool = True, indent: int = 0,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch', **kwargs) -> None:
+    if epoch <= 0:
+        return
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
     validate_fn = validate_fn if callable(validate_fn) else validate
