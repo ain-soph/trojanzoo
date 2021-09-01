@@ -272,7 +272,7 @@ if __name__ == '__main__':
             cur_result = robusts.global_avg + accs.global_avg if eval_model.adv_train else accs.global_avg
             if cur_result > best_result:
                 best_result = cur_result
-                print(' ' * 12, 'best result update')
+                print(' ' * 12, '{purple}best result update{reset}'.format(**ansi))
                 if args.file_path:
                     data = {'image_syn': image_syn, 'label_syn': label_syn}
                     torch.save(data, args.file_path)
