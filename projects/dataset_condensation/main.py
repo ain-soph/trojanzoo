@@ -8,12 +8,12 @@
 # --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn --dataset_normalize
 
 # FGSM train
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --model convnet --linear_approx --eval_adv_train --image_per_class 1
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --model convnet --linear_approx --eval_adv_train --image_per_class 10
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --model convnet --first_term fgsm --eval_adv_train --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --model convnet --first_term fgsm --eval_adv_train --image_per_class 10
 
 # PGD train
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --model convnet --linear_approx --eval_adv_train --image_per_class 1 --dis_metric kfac
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --linear_approx --eval_adv_train --image_per_class 10 --dis_metric kfac
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --model convnet --first_term fgsm --eval_adv_train --image_per_class 1 --dis_metric kfac
+# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --first_term fgsm --eval_adv_train --image_per_class 10 --dis_metric kfac
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
@@ -41,12 +41,25 @@ trojanvision.models.class_dict['convnet'] = ConvNet
 fgsm_args = {
     'cifar10': {
         'iteration': 1,
-        'pgd_alpha': 2.0 / 255,
+        'pgd_alpha': 10.0 / 255,
         'pgd_eps': 8.0 / 255,
     },
     'mnist': {
         'iteration': 1,
         'pgd_alpha': 0.375,
+        'pgd_eps': 0.3,
+    },
+}
+
+pgd_args = {
+    'cifar10': {
+        'iteration': 7,
+        'pgd_alpha': 2.0 / 255,
+        'pgd_eps': 8.0 / 255,
+    },
+    'mnist': {
+        'iteration': 7,
+        'pgd_alpha': 0.1,
         'pgd_eps': 0.3,
     },
 }
@@ -70,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--file_path', type=str)
     parser.add_argument('--init', type=str, default='noise', choices=['noise', 'real'],
                         help='noise/real: initialize synthetic images from random noise or randomly sampled real images.')
-    parser.add_argument('--linear_approx', action='store_true')
+    parser.add_argument('--first_term', default='none', choices=['none', 'fgsm', 'pgd'])
     parser.add_argument('--eval_adv_train', action='store_true')
     args = parser.parse_args()
 
@@ -98,11 +111,16 @@ if __name__ == '__main__':
     args_dict['momentum'] = 0.9
     args_dict['weight_decay'] = 5e-4
     args_dict['adv_train'] = True
-    if args.linear_approx:
+    if args.first_term == 'fgsm':
         fgsm_dict = fgsm_args[dataset.name]
         args_dict['adv_train_iter'] = fgsm_dict['iteration']
         args_dict['adv_train_alpha'] = fgsm_dict['pgd_alpha']
         args_dict['adv_train_eps'] = fgsm_dict['pgd_eps']
+    if args.first_term == 'pgd':
+        pgd_dict = pgd_args[dataset.name]
+        args_dict['adv_train_iter'] = pgd_dict['iteration']
+        args_dict['adv_train_alpha'] = pgd_dict['pgd_alpha']
+        args_dict['adv_train_eps'] = pgd_dict['pgd_eps']
     eval_model = trojanvision.models.create(dataset=dataset, **args_dict)
     eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args_dict)
 
@@ -134,7 +152,7 @@ if __name__ == '__main__':
     # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
-    train_args['adv_train'] = True if args.linear_approx else False
+    train_args['adv_train'] = True if args.first_term != 'none' else False
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epoch'] = epoch_eval_train
     eval_train_args['adv_train'] = args.eval_adv_train
@@ -314,7 +332,7 @@ if __name__ == '__main__':
                 img_syn = image_syn[c]
                 lab_syn = label_syn[c]
 
-                if args.linear_approx:
+                if args.first_term != 'none':
                     adv_loss_fn = functools.partial(model._adv_loss_helper, _label=lab_syn)
                     perturbed, _ = model.pgd.optimize(_input=img_syn.detach(), loss_fn=adv_loss_fn,
                                                       **fgsm_args[dataset.name])
