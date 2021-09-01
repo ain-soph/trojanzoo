@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--file_path', type=str)
     parser.add_argument('--init', type=str, default='noise', choices=['noise', 'real'],
                         help='noise/real: initialize synthetic images from random noise or randomly sampled real images.')
-    parser.add_argument('--first_term', default='none', choices=['none', 'fgsm', 'pgd'])
+    parser.add_argument('--first_term', choices=['fgsm', 'pgd'])
     parser.add_argument('--eval_adv_train', action='store_true')
     args = parser.parse_args()
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
-    train_args['adv_train'] = True if args.first_term != 'none' else False
+    train_args['adv_train'] = False if args.first_term is None else True
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epoch'] = epoch_eval_train
     eval_train_args['adv_train'] = args.eval_adv_train
@@ -332,7 +332,7 @@ if __name__ == '__main__':
                 img_syn = image_syn[c]
                 lab_syn = label_syn[c]
 
-                if args.first_term != 'none':
+                if args.first_term is not None:
                     adv_loss_fn = functools.partial(model._adv_loss_helper, _label=lab_syn)
                     perturbed, _ = model.pgd.optimize(_input=img_syn.detach(), loss_fn=adv_loss_fn,
                                                       **fgsm_args[dataset.name])
