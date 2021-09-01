@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
 # Normal Train
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --model convnet --image_per_class 1
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --model convnet --image_per_class 10
+# CUDA_VISIBLE_DEVICES=0 python main.py --dataset mnist --epoch_eval_train 300 --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar10 --epoch_eval_train 100 --image_per_class 10
 
 # ResNet Model
 # --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn --dataset_normalize
 
 # FGSM train
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.375 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.1 --model convnet --first_term fgsm --eval_adv_train --image_per_class 1
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --adv_train_eval_iter 7 --adv_train_eval_alpha 0.0078431372549 --model convnet --first_term fgsm --eval_adv_train --image_per_class 10
+# CUDA_VISIBLE_DEVICES=0 python main.py --dataset mnist --epoch_eval_train 300 --adv_train --eval_adv_train --adv_train_iter 1 --adv_train_alpha 0.375 --first_term fgsm --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar10 --epoch_eval_train 100 --adv_train --eval_adv_train --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --first_term fgsm --image_per_class 10
 
 # PGD train
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset mnist --batch_size 256 --epoch 300 --epoch_eval_train 300 --adv_train --adv_train_random_init --model convnet --first_term fgsm --eval_adv_train --image_per_class 1 --dis_metric kfac
-# CUDA_VISIBLE_DEVICES=0 python main.py --verbose 1 --color --lr 0.01 --momentum 0.0 --weight_decay 0.0 --validate_interval 0 --dataset cifar10 --batch_size 256 --epoch 300 --epoch_eval_train 100 --adv_train --adv_train_random_init --model convnet --first_term fgsm --eval_adv_train --image_per_class 10 --dis_metric kfac
+# CUDA_VISIBLE_DEVICES=0 python main.py --dataset mnist --epoch_eval_train 300 --adv_train --eval_adv_train --first_term fgsm --dis_metric kfac --image_per_class 1
+# CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar10 --epoch_eval_train 100 --adv_train --eval_adv_train --first_term fgsm --dis_metric kfac --image_per_class 10
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
@@ -37,6 +37,25 @@ from utils import match_loss, augment, get_daparam, get_loops
 from model import ConvNet
 
 trojanvision.models.class_dict['convnet'] = ConvNet
+
+
+default_args = {
+    'verbose': 1,
+    'color': True,
+    'lr': 0.01,
+    'momentum': 0.0,
+    'weight_decay': 0.0,
+    'validate_interval': 0,
+    'batch_size': 256,
+    'model_name': 'convnet',
+    'adv_train_random_init': True,
+}
+
+eval_args = {
+    'momentum': 0.9,
+    'weight_decay': 5e-4,
+    'adv_train': True,
+}
 
 fgsm_args = {
     'cifar10': {
@@ -96,8 +115,15 @@ if __name__ == '__main__':
     outer_loop, inner_loop = get_loops(image_per_class)
 
     args_dict = args.__dict__
+    args_dict.update(default_args)
     env = trojanvision.environ.create(**args_dict)
     dataset = trojanvision.datasets.create(**args_dict)
+
+    fgsm_dict = fgsm_args[dataset.name]
+    pgd_dict = pgd_args[dataset.name]
+    args_dict['adv_train_eval_iter'] = pgd_dict['iteration']
+    args_dict['adv_train_eval_alpha'] = pgd_dict['pgd_alpha']
+    args_dict['adv_train_eval_eps'] = pgd_dict['pgd_eps']
     model = trojanvision.models.create(dataset=dataset, **args_dict)
     trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args_dict)
 
@@ -108,16 +134,12 @@ if __name__ == '__main__':
         args_dict['model_name'] = args_dict['eval_model']
     if args_dict['eval_norm_layer'] is not None:
         args_dict['norm_layer'] = args_dict['eval_norm_layer']
-    args_dict['momentum'] = 0.9
-    args_dict['weight_decay'] = 5e-4
-    args_dict['adv_train'] = True
+    args_dict.update(eval_args)
     if args.first_term == 'fgsm':
-        fgsm_dict = fgsm_args[dataset.name]
         args_dict['adv_train_iter'] = fgsm_dict['iteration']
         args_dict['adv_train_alpha'] = fgsm_dict['pgd_alpha']
         args_dict['adv_train_eps'] = fgsm_dict['pgd_eps']
     if args.first_term == 'pgd':
-        pgd_dict = pgd_args[dataset.name]
         args_dict['adv_train_iter'] = pgd_dict['iteration']
         args_dict['adv_train_alpha'] = pgd_dict['pgd_alpha']
         args_dict['adv_train_eps'] = pgd_dict['pgd_eps']
