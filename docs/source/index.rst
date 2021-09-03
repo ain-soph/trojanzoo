@@ -10,21 +10,6 @@ TrojanZoo documentation
 
 TrojanZoo is a universal pytorch platform for conducting security researches (especially for backdoor attacks/defenses) for image classification in deep learning.
 
-
-.. .. toctree::
-..    :glob:
-..    :maxdepth: 1
-..    :caption: Notes
-
-..    notes/*
-
-.. .. toctree::
-..    :maxdepth: 1
-..    :caption: Language Bindings
-
-..    cpp_index
-..    Javadoc <https://pytorch.org/javadoc/>
-
 .. toctree::
    :glob:
    :maxdepth: 1
@@ -38,23 +23,6 @@ TrojanZoo is a universal pytorch platform for conducting security researches (es
    :caption: TrojanVision
 
    trojanvision/*
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: TrojanPlot
-
-   alpsplot/*
-
-..    torchvision <https://pytorch.org/vision>
-..    TrojanZoo on XLA Devices <http://pytorch.org/xla/>
-
-.. .. toctree::
-..    :glob:
-..    :maxdepth: 1
-..    :caption: Community
-
-..    community/*
 
 Indices and tables
 ==================
