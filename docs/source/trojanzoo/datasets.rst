@@ -1,6 +1,6 @@
-.. _datasets:
+.. _trojanzoo.datasets:
 
-Datasets
+trojanzoo.datasets
 ==================================
 These are the basic building block for graphs
 

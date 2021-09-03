@@ -1,6 +1,6 @@
-.. _attacks:
+.. _trojanzoo.attacks:
 
-Attacks
+trojanzoo.attacks
 ==================================
 
 .. currentmodule:: trojanzoo.attacks

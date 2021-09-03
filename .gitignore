@@ -4,11 +4,15 @@
 .devcontainer
 .idea
 
+# doc files
+build
+generated
+_build
+
 # version files
 # version.py
 
 # Working on
-# /docs
 codecov.yml
 
 # Temp Files
