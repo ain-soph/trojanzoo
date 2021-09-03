@@ -18,6 +18,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r ./docs/requirements.txt
+          pip install git+https://github.com/ain-soph/trojanzoo_sphinx_theme.git#egg=trojanzoo_sphinx_theme
       - name: Compile Sphinx Docs
         run: |
           cd ./docs/
