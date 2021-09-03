@@ -4,7 +4,7 @@ from .badnet import BadNet
 from trojanvision.environ import env
 from trojanzoo.utils import to_tensor
 from trojanzoo.utils import AverageMeter
-from trojanzoo.utils.output import prints
+from trojanzoo.utils.output import prints, ansi
 
 import torch
 import torch.nn as nn
@@ -137,8 +137,8 @@ class BypassEmbed(BadNet):
             self.model.eval()
             _, cur_acc = self.validate_fn(get_data_fn=self.bypass_get_data)
             if cur_acc >= best_acc:
-                prints('best result update!', indent=0)
-                prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=0)
+                print('{purple}best result update!{reset}'.format(**ansi))
+                print(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}')
                 best_acc = cur_acc
                 if save:
                     self.save()

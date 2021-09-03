@@ -145,7 +145,7 @@ def train(module: nn.Module, num_classes: int,
                                          verbose=verbose, indent=indent, **kwargs)
                 if cur_acc >= best_acc:
                     if verbose:
-                        prints('{green}best result update!{reset}'.format(**ansi), indent=indent)
+                        prints('{purple}best result update!{reset}'.format(**ansi), indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
                     best_acc = cur_acc
                     if save:

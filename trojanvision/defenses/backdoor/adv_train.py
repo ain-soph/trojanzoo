@@ -133,7 +133,7 @@ class AdvTrain(BackdoorDefense):
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
                     _, cur_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
-                        prints('best result update!', indent=indent)
+                        prints('{purple}best result update!{reset}'.format(**ansi), indent=indent)
                         prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
                         best_acc = cur_acc
                     if save:
