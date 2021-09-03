@@ -211,6 +211,7 @@ class ImageModel(Model):
         return -self._ce_loss_fn(_output, _label)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        """In trainining process, `adv_train` args will not be passed to `get_data`. So it's always `False`."""
         if adv_train:
             assert self.pgd is not None
             _input, _label = super().get_data(data, **kwargs)
@@ -258,6 +259,7 @@ class ImageModel(Model):
                 optimizer.zero_grad()
                 self.zero_grad()
                 if after_loss_fn_old is None and not self.adv_train_free:
+                    kfac.reset()
                     # self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn,
                                                  iteration=self.adv_train_iter,

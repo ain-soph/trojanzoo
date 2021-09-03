@@ -110,6 +110,10 @@ class KFAC(Optimizer):
             if name in name_dict.keys():
                 self.pack_idx[name_dict[name]].append(i)
 
+    def reset(self):
+        for k in self.state.keys():
+            self.state[k] = {}
+
     def step(self, update_stats: bool = True, update_params: bool = True, force: bool = False):
         """Performs one step of preconditioning."""
         if update_stats:

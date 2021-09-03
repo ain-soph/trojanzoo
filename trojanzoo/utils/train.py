@@ -88,7 +88,7 @@ def train(module: nn.Module, num_classes: int,
             _iter = _epoch * len_loader_train + i
             # data_time.update(time.perf_counter() - end)
             _input, _label = get_data_fn(data, mode='train')
-            if kfac is not None:
+            if kfac is not None and not amp:
                 kfac.track.enable()
             _output = module(_input, amp=amp)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
