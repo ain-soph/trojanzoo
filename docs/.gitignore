@@ -4,7 +4,5 @@ package.json
 yarn.lock
 
 build
-src/
-source/.vscode
-source/_build
-source/generated
+generated
+_build

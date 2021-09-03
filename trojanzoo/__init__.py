@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .version import __version__
+from .trojanzoo_version import __version__ as __version__
 
 from trojanzoo import environ as environ
 from trojanzoo import datasets as datasets

@@ -4,6 +4,9 @@
 .devcontainer
 .idea
 
+# version files
+# version.py
+
 # Working on
 # /docs
 codecov.yml

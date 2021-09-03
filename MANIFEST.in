@@ -1,0 +1,11 @@
+include MANIFEST.in
+include LICENSE
+include requirements.txt
+recursive-include trojanzoo *.*
+recursive-include trojanvision *.*
+recursive-include examples *.*
+recursive-include projects *.*
+recursive-include test *.*
+recursive-include docs *.*
+prune */__pycache__
+global-exclude *.o *.so *.dylib *.a .git *.pyc *.swp
