@@ -79,12 +79,12 @@ root_doc = 'index'
 project = 'TrojanZoo'
 copyright = '2020, Alps Lab'
 author = 'Ren Pang'
-trojanzoo_version = trojanzoo.__version__
+trojanzoo_version = str(trojanzoo.__version__)
 
 # Customized html_title here.
 # Default is " ".join(project, release, "documentation") if not set
 # remove hash (start with 'a') from version number if any
-version_end = trojanzoo.__version__.find('a')
+version_end = trojanzoo_version.find('a')
 if version_end == -1:
     html_title = " ".join((project, trojanzoo_version, "documentation"))
 else:
