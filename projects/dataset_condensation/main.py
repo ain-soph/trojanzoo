@@ -99,8 +99,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr_img', type=float, default=0.1)
     parser.add_argument('--save_img', action='store_true')
     parser.add_argument('--eval_interval', type=int, default=10)
-    parser.add_argument('--file_path', type=str)
-    parser.add_argument('--init', type=str, default='noise', choices=['noise', 'real'],
+    parser.add_argument('--file_path')
+    parser.add_argument('--init', default='noise', choices=['noise', 'real'],
                         help='noise/real: initialize synthetic images from random noise or randomly sampled real images.')
     parser.add_argument('--first_term', choices=['fgsm', 'pgd'])
     parser.add_argument('--eval_adv_train', action='store_true')

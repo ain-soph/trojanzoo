@@ -52,7 +52,7 @@ class CleanLabel(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--poison_generation_method', type=str, choices=['pgd', 'gan'],
+        group.add_argument('--poison_generation_method', choices=['pgd', 'gan'],
                            help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]="pgd"')
         group.add_argument('--pgd_alpha', type=float)
         group.add_argument('--pgd_eps', type=float)

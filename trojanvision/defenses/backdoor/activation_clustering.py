@@ -64,11 +64,11 @@ class ActivationClustering(BackdoorDefense):
         group.add_argument('--clean_image_ratio', type=float, help='the ratio of clean image')
         group.add_argument('--retrain_epoch', type=int, help='the epoch of retraining the model')
         group.add_argument('--nb_clusters', type=int, help='')
-        group.add_argument('--clustering_method', type=str, help='the amount of clusters')
+        group.add_argument('--clustering_method', help='the amount of clusters')
         group.add_argument('--nb_dims', type=int,
                            help='the dimension set in the process of reduceing the dimensionality of data')
-        group.add_argument('--reduce_method', type=str, help=' the method for reduing the dimensionality of data')
-        group.add_argument('--cluster_analysis', type=str, help='the method chosen to analyze whether cluster is the poison cluster, '
+        group.add_argument('--reduce_method', help=' the method for reduing the dimensionality of data')
+        group.add_argument('--cluster_analysis', help='the method chosen to analyze whether cluster is the poison cluster, '
                            'including size, distance, relative-size, silhouette-scores')
         return group
 

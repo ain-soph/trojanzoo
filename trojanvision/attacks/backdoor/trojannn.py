@@ -38,7 +38,7 @@ class TrojanNN(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--preprocess_layer', type=str,
+        group.add_argument('--preprocess_layer',
                            help='the chosen feature layer patched by trigger where rare neuron activation is maxmized, defaults to ``flatten``')
         group.add_argument('--threshold', type=float, help='Trojan Net Threshold, defaults to 5')
         group.add_argument('--target_value', type=float,
