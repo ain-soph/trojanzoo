@@ -32,6 +32,12 @@ class SmoothedValue(object):
         self.count += n
         self.total += value * n
 
+    def update_list(self, value_list: list[float]):
+        for value in value_list:
+            self.deque.append(value)
+            self.total += value
+        self.count += len(value_list)
+
     def reset(self):
         self.deque = deque(maxlen=self.deque.maxlen)
         self.count = 0
