@@ -28,7 +28,7 @@ class Trainer:
         group.add_argument('--resume', type=int, help='resume training from certain epoch, defaults to be 0.')
         group.add_argument('--lr', type=float, help='learning rate, defaults to 0.1.')
         group.add_argument('--parameters', default='full',
-                           help='training parameters (\'features\', \'classifier\', \'full\'), defaults to \'full\'.')
+                           help='training parameters ("features", "classifier", "full"), defaults to "full".')
         group.add_argument('--OptimType', help='optimizer type, defaults to SGD.')
         group.add_argument('--momentum', type=float, help='momentum passed to Optimizer, defaults to 0.9.')
         group.add_argument('--weight_decay', type=float, help='weight_decay passed to Optimizer, defaults to 3e-4.')

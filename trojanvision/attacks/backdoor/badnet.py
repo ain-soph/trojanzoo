@@ -50,7 +50,7 @@ class BadNet(Attack):
         group.add_argument('--target_class', type=int, help='target class of backdoor, defaults to 0')
         group.add_argument('--poison_percent', type=float,
                            help='malicious training data injection probability for each batch, defaults to 0.01')
-        group.add_argument('--train_mode', help='target class of backdoor, defaults to \'batch\'')
+        group.add_argument('--train_mode', help='target class of backdoor, defaults to "batch"')
         return group
 
     def __init__(self, mark: Watermark = None, target_class: int = 0, poison_percent: float = 0.01, train_mode: str = 'batch', **kwargs):

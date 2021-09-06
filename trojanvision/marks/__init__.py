@@ -42,7 +42,7 @@ class Watermark:
 
     @staticmethod
     def add_argument(group: argparse._ArgumentGroup):
-        group.add_argument('--edge_color', help='edge color in watermark image, defaults to \'auto\'.')
+        group.add_argument('--edge_color', help='edge color in watermark image, defaults to "auto".')
         group.add_argument('--mark_path', help='edge color in watermark image, '
                            'defaults to "trojanzoo/data/mark/square_white.png".')
         group.add_argument('--mark_alpha', type=float, help='mark transparency, defaults to 0.0.')
