@@ -7,11 +7,11 @@
 # ResNet Model
 # --model resnet18_ap_comp --eval_model resnet18_comp --eval_norm_layer gn --dataset_normalize
 
-# FGSM train
+# FGSM adv train
 # CUDA_VISIBLE_DEVICES=0 python main.py --dataset mnist --epoch_eval_train 300 --adv_train --eval_adv_train --adv_train_iter 1 --adv_train_alpha 0.375 --first_term fgsm --image_per_class 1
 # CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar10 --epoch_eval_train 100 --adv_train --eval_adv_train --adv_train_iter 1 --adv_train_alpha 0.0392156862745 --first_term fgsm --image_per_class 10
 
-# PGD train
+# PGD adv train
 # CUDA_VISIBLE_DEVICES=0 python main.py --dataset mnist --epoch_eval_train 300 --adv_train --eval_adv_train --first_term fgsm --dis_metric kfac --image_per_class 1
 # CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar10 --epoch_eval_train 100 --adv_train --eval_adv_train --first_term fgsm --dis_metric kfac --image_per_class 10
 
