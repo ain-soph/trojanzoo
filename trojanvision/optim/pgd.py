@@ -198,16 +198,17 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         X.requires_grad = False
         return grad
 
-    def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor) -> torch.Tensor:
-        seq = self.gen_seq(X)
+    def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor,
+                      query_num: int = None, sigma: float = None) -> torch.Tensor:
+        seq = self.gen_seq(X, query_num=query_num, sigma=sigma)
         grad = self.calc_seq(f, seq)
         return grad
 
     # X: (1, C, H, W)
     # return: (query_num+1, C, H, W)
-    def gen_seq(self, X: torch.Tensor, query_num: int = None) -> torch.Tensor:
+    def gen_seq(self, X: torch.Tensor, query_num: int = None, sigma: float = None) -> torch.Tensor:
         query_num = query_num if query_num is not None else self.query_num
-        sigma = self.sigma
+        sigma = sigma if sigma is not None else self.sigma
         shape = list(X.shape)
         shape[0] = query_num
         if self.grad_method == 'nes':
