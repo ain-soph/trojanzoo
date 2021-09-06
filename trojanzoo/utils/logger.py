@@ -10,8 +10,6 @@ import datetime
 import time
 
 
-from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
 from typing import Generator, Iterable, TypeVar    # TODO: python 3.10
 _T = TypeVar("_T")
 
