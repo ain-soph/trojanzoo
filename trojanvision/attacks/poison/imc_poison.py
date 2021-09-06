@@ -3,7 +3,7 @@
 from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD
 from trojanvision.defenses.adv.curvature import Curvature
-from trojanvision.optim import PGD as PGD_Optimizer
+from trojanvision.optim import PGDoptimizer
 from trojanvision.models import MagNet
 from trojanzoo.utils import to_list
 
@@ -40,8 +40,8 @@ class IMC_Poison(PoisonBasic):
         self.pgd_alpha: float = pgd_alpha
         self.pgd_eps: float = pgd_eps
         self.pgd_iter: int = pgd_iter
-        self.pgd = PGD_Optimizer(pgd_alpha=self.pgd_alpha / 255, pgd_eps=self.pgd_eps / 255,
-                                 iteration=self.pgd_iter)
+        self.pgd = PGDoptimizer(pgd_alpha=self.pgd_alpha / 255, pgd_eps=self.pgd_eps / 255,
+                                iteration=self.pgd_iter)
         self.stop_conf: float = stop_conf
         if magnet:
             self.magnet: MagNet = MagNet(dataset=self.dataset, pretrain=True)
@@ -91,7 +91,7 @@ class IMC_Poison(PoisonBasic):
             target_label = self.model.generate_target(_input, idx=self.target_idx)
             self.temp_input = _input
             self.temp_label = target_label
-            _, _iter = pgd_checker.craft_example(_input)
+            _, _iter = pgd_checker.optimize(_input)
             if _iter is None:
                 difficult += 1
                 continue
@@ -101,7 +101,7 @@ class IMC_Poison(PoisonBasic):
             normal += 1
             target_conf, target_acc, clean_acc = self.validate_fn()
             noise = torch.zeros_like(_input)
-            poison_input = self.craft_example(_input=_input, _label=target_label, epoch=epoch, noise=noise, **kwargs)
+            poison_input = self.optimize(_input=_input, _label=target_label, epoch=epoch, noise=noise, **kwargs)
             pgd_norm = float(noise.norm(p=float('inf')))
             target_conf, target_acc, clean_acc = self.validate_fn()
             target_conf_list.append(target_conf)
@@ -147,7 +147,7 @@ class IMC_Poison(PoisonBasic):
                 print()
             total += 1
 
-    def craft_example(self, _input: torch.Tensor, _label: torch.Tensor, noise: torch.Tensor = None, save=False, **kwargs):
+    def optimize(self, _input: torch.Tensor, _label: torch.Tensor, noise: torch.Tensor = None, save=False, **kwargs):
         if noise is None:
             noise = torch.zeros_like(_input)
         poison_input = None

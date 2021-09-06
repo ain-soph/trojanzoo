@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets import ImageSet
-from trojanvision.optim import PGD
+from trojanvision.optim import PGDoptimizer
 from trojanvision.utils import apply_cmap
 from trojanzoo.models import _Model, Model
 from trojanzoo.environ import env
@@ -148,10 +148,10 @@ class ImageModel(Model):
                     self.adv_train_eval_eps /= std
                     self.adv_train_alpha /= std
                     self.adv_train_eps /= std
-            self.pgd = PGD(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
-                           iteration=self.adv_train_eval_iter, stop_threshold=None,
-                           random_init=self.adv_train_random_init,
-                           clip_min=clip_min, clip_max=clip_max)
+            self.pgd = PGDoptimizer(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
+                                    iteration=self.adv_train_eval_iter, stop_threshold=None,
+                                    random_init=self.adv_train_random_init,
+                                    clip_min=clip_min, clip_max=clip_max)
             self._ce_loss_fn = nn.CrossEntropyLoss(weight=self.loss_weights)
         self._model: _ImageModel
         self.dataset: ImageSet

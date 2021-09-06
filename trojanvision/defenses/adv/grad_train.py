@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanvision.optim import PGD
+from trojanvision.optim import PGDoptimizer
 from trojanzoo.defenses import Defense
 import torch
 
@@ -19,7 +19,7 @@ class Grad_Train(Defense):
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.pgd_iter = pgd_iter
-        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
+        self.pgd = PGDoptimizer(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
 
     def detect(self, **kwargs):
         self.model._train(loss_fn=self.loss_fn, validate_fn=self.validate_fn, verbose=True, **kwargs)

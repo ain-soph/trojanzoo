@@ -74,7 +74,8 @@ def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
     new_args = []
     for arg in args:
         new_args.append(indent_str(arg, indent=indent))
-    new_args[0] = prefix + str(new_args[0])
+    if len(new_args):
+        new_args[0] = prefix + str(new_args[0])
     print(*new_args, **kwargs)
 
 

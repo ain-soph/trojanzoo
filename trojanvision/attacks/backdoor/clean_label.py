@@ -3,7 +3,7 @@
 from .badnet import BadNet
 from trojanvision.utils.model import weight_init
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
-from trojanvision.optim import PGD as PGD_Optimizer
+from trojanvision.optim import PGDoptimizer
 from trojanvision.environ import env
 from trojanzoo.utils.data import TensorListDataset, dataset_to_list
 
@@ -113,7 +113,7 @@ class CleanLabel(BadNet):
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
 
             poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, poison_label))
-            poison_imgs, _ = self.pgd.craft_example(_input=poison_imgs)
+            poison_imgs, _ = self.pgd.optimize(_input=poison_imgs)
             poison_imgs = self.add_mark(poison_imgs).cpu()
 
             poison_set = TensorListDataset(poison_imgs, [self.target_class] * len(poison_imgs))
@@ -256,7 +256,7 @@ class WGAN(object):
         self.critic_iter = critic_iter
         self.mse_loss = torch.nn.MSELoss()
 
-        self.gan_pgd: PGD_Optimizer = PGD_Optimizer(pgd_eps=1.0, iteration=500, output=0)
+        self.gan_pgd = PGDoptimizer(pgd_eps=1.0, iteration=500, output=0)
 
     def reset_parameters(self):
         self.G.apply(weight_init)

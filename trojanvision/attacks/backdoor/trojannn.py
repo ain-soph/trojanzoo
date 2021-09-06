@@ -114,7 +114,7 @@ class TrojanNN(BadNet):
             cost = loss_fn(x)
             if cost < self.threshold:
                 break
-            x, _ = self.pgd.craft_example(x, noise=noise, iteration=1, loss_fn=loss_fn)
+            x, _ = self.pgd.optimize(x, noise=noise, iteration=1, loss_fn=loss_fn)
             noise = noise * self.mark.mask
             x = x * self.mark.mask
         x = x.detach()

@@ -2,7 +2,7 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanvision.optim import PGD
+from trojanvision.optim import PGDoptimizer
 from trojanzoo.utils import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 
@@ -34,7 +34,7 @@ class AdvTrain(BackdoorDefense):
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.pgd_iter = pgd_iter
-        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
+        self.pgd = PGDoptimizer(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
 
     def detect(self, **kwargs):
         super().detect(**kwargs)

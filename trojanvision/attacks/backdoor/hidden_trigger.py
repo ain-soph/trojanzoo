@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from .badnet import BadNet
-from trojanvision.optim import PGD
+from trojanvision.optim import PGDoptimizer
 from trojanzoo.utils.output import prints
 
 import torch
@@ -59,7 +59,7 @@ class HiddenTrigger(BadNet):
 
         self.target_loader = self.dataset.get_dataloader('train', full=True, class_list=[self.target_class],
                                                          drop_last=True, num_workers=0)
-        self.pgd: PGD = PGD(pgd_alpha=self.pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, output=self.output)
+        self.pgd = PGDoptimizer(pgd_alpha=self.pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, output=self.output)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, training=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)

@@ -66,6 +66,8 @@ class SmoothedValue(object):
     def avg(self) -> float:
         try:
             d = torch.tensor(list(self.deque), dtype=torch.float32)
+            if len(d) == 0:
+                return 0.0
             return d.mean().item()
         except Exception:
             return 0.0
@@ -106,6 +108,12 @@ class SmoothedValue(object):
             min=self.min,
             max=self.max,
             value=self.value)
+
+    def __format__(self, format_spec: str) -> str:
+        return self.__str__()
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class MetricLogger(object):

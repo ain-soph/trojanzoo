@@ -4,7 +4,7 @@ from trojanvision.attacks.backdoor.imc import IMC
 from trojanvision.environ import env
 from trojanzoo.utils.output import output_iter, ansi, prints
 from trojanzoo.utils import AverageMeter
-from trojanvision.optim import PGD
+from trojanvision.optim import PGDoptimizer
 
 import torch
 import torch.nn as nn
@@ -42,7 +42,7 @@ class IMC_AdvTrain(IMC):
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.pgd_iter = pgd_iter
-        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
+        self.pgd = PGDoptimizer(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
 
     def get_poison_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
