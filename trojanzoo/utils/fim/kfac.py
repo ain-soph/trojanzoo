@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-# https://raw.githubusercontent.com/Thrandis/EKFAC-pytorch/master/kfac.py
+# https://github.com/Thrandis/EKFAC-pytorch/blob/master/kfac.py
 # https://github.com/n-gao/pytorch-kfac
 
-from .lock import Lock
+from trojanzoo.utils.lock import Lock
 
 import torch
 import torch.nn as nn
