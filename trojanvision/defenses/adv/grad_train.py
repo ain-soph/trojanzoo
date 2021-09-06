@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanvision.optim import PGDoptimizer
+from trojanvision.attacks import PGD
 from trojanzoo.defenses import Defense
 import torch
 
@@ -19,7 +19,8 @@ class Grad_Train(Defense):
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.pgd_iter = pgd_iter
-        self.pgd = PGDoptimizer(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
+        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter,
+                       target_idx=0, stop_threshold=None, model=self.model, dataset=self.dataset)
 
     def detect(self, **kwargs):
         self.model._train(loss_fn=self.loss_fn, validate_fn=self.validate_fn, verbose=True, **kwargs)
@@ -51,10 +52,7 @@ class Grad_Train(Defense):
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data, **kwargs)
-
-        def loss_fn(X: torch.FloatTensor):
-            return -self.model.loss(X, _label)
-        adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn)
+        adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
         return adv_x, _label
 
     def save(self, **kwargs):

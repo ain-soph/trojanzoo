@@ -201,8 +201,7 @@ if __name__ == '__main__':
     def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor,
                       adv_train: bool = False) -> list[torch.Tensor]:
         if adv_train:
-            adv_loss_fn = functools.partial(model._adv_loss_helper, _label=lab_real)
-            img_real, _ = model.pgd.optimize(_input=img_real, loss_fn=adv_loss_fn,
+            img_real, _ = model.pgd.optimize(_input=img_real, target=lab_real,
                                              iteration=model.adv_train_iter,
                                              pgd_alpha=model.adv_train_alpha,
                                              pgd_eps=model.adv_train_eps)
@@ -355,8 +354,7 @@ if __name__ == '__main__':
                 lab_syn = label_syn[c]
 
                 if args.first_term is not None:
-                    adv_loss_fn = functools.partial(model._adv_loss_helper, _label=lab_syn)
-                    perturbed, _ = model.pgd.optimize(_input=img_syn.detach(), loss_fn=adv_loss_fn,
+                    perturbed, _ = model.pgd.optimize(_input=img_syn.detach(), target=lab_syn,
                                                       **fgsm_args[dataset.name])
                     img_syn = img_syn + (perturbed - img_syn).detach()
                 gw_syn = get_syn_grad(img_syn, lab_syn)

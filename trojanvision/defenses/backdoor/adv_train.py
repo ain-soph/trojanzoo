@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+from trojanvision.attacks import PGD
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanvision.optim import PGDoptimizer
 from trojanzoo.utils import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 
@@ -34,7 +34,8 @@ class AdvTrain(BackdoorDefense):
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.pgd_iter = pgd_iter
-        self.pgd = PGDoptimizer(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
+        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None, target_idx=0,
+                       model=self.model, dataset=self.dataset)
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
@@ -54,10 +55,7 @@ class AdvTrain(BackdoorDefense):
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data, **kwargs)
-
-        def loss_fn(X: torch.FloatTensor):
-            return -self.model.loss(X, _label)
-        adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=loss_fn)
+        adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
         return adv_x, _label
 
     def adv_train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
@@ -86,9 +84,6 @@ class AdvTrain(BackdoorDefense):
             for data in loader_train:
                 _input, _label = self.model.get_data(data)
                 noise = torch.zeros_like(_input)
-
-                def loss_fn(X: torch.FloatTensor):
-                    return -self.model.loss(X, _label)
                 adv_x = _input
                 self.model.train()
                 loss = self.model.loss(adv_x, _label)
@@ -97,7 +92,7 @@ class AdvTrain(BackdoorDefense):
                 optimizer.zero_grad()
                 for m in range(self.pgd.iteration):
                     self.model.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn, iteration=1)
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, target=_label, iteration=1)
                     optimizer.zero_grad()
                     self.model.train()
                     loss = self.model.loss(adv_x, _label)

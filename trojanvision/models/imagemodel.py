@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
+from trojanvision.shortcut.pgd import PGD
 from trojanvision.datasets import ImageSet
-from trojanvision.optim import PGDoptimizer
 from trojanvision.utils import apply_cmap
 from trojanzoo.models import _Model, Model
 from trojanzoo.environ import env
@@ -148,11 +148,12 @@ class ImageModel(Model):
                     self.adv_train_eval_eps /= std
                     self.adv_train_alpha /= std
                     self.adv_train_eps /= std
-            self.pgd = PGDoptimizer(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
-                                    iteration=self.adv_train_eval_iter, stop_threshold=None,
-                                    random_init=self.adv_train_random_init,
-                                    clip_min=clip_min, clip_max=clip_max)
-            self._ce_loss_fn = nn.CrossEntropyLoss(weight=self.loss_weights)
+            self.pgd = PGD(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
+                           iteration=self.adv_train_eval_iter, stop_threshold=None,
+                           target_idx=0,
+                           random_init=self.adv_train_random_init,
+                           clip_min=clip_min, clip_max=clip_max,
+                           model=self, dataset=self.dataset)
         self._model: _ImageModel
         self.dataset: ImageSet
 
@@ -206,17 +207,12 @@ class ImageModel(Model):
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
-    def _adv_loss_helper(self, _input: torch.Tensor, _label: torch.Tensor) -> torch.Tensor:
-        _output = self(_input)
-        return -self._ce_loss_fn(_output, _label)
-
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         """In trainining process, `adv_train` args will not be passed to `get_data`. So it's always `False`."""
         if adv_train:
             assert self.pgd is not None
             _input, _label = super().get_data(data, **kwargs)
-            adv_loss_fn = functools.partial(self._adv_loss_helper, _label=_label)
-            adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn)
+            adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
             return adv_x, _label
         return super().get_data(data, **kwargs)
 
@@ -254,15 +250,13 @@ class ImageModel(Model):
             def after_loss_fn_new(_input: torch.Tensor, _label: torch.Tensor, _output: torch.Tensor,
                                   loss: torch.Tensor, optimizer: Optimizer, loss_fn: Callable[..., torch.Tensor] = None,
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
-                adv_loss_fn = functools.partial(self._adv_loss_helper, _label=_label)
-
                 optimizer.zero_grad()
                 self.zero_grad()
                 if after_loss_fn_old is None and not self.adv_train_free:
                     if kfac is not None:
                         kfac.reset()
                     # self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn,
+                    adv_x, _ = self.pgd.optimize(_input=_input, target=_label,
                                                  iteration=self.adv_train_iter,
                                                  pgd_alpha=self.adv_train_alpha,
                                                  pgd_eps=self.adv_train_eps)
@@ -290,7 +284,7 @@ class ImageModel(Model):
                         optimizer.zero_grad()
                         self.zero_grad()
                     # self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=adv_loss_fn, iteration=1,
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, target=_label, iteration=1,
                                                  pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
                     # self.train()
                     loss = loss_fn(adv_x, _label)

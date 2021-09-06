@@ -101,10 +101,11 @@ class HiddenTrigger(BadNet):
             target_acc = 0.0
         return clean_acc, target_acc
 
-    def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor) -> torch.Tensor:
+    def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor,
+             reduction: str = 'mean', **kwargs) -> torch.Tensor:
         poison_feats = self.model.get_layer(poison_imgs, layer_output=self.preprocess_layer)
         result: torch.Tensor = (poison_feats - source_feats).flatten(start_dim=1).norm(p=2, dim=1)
-        return result.mean()
+        return result if reduction == 'none' else result.mean()
 
     def generate_poisoned_data(self, source_imgs: torch.FloatTensor) -> torch.Tensor:
         r"""
@@ -136,7 +137,8 @@ class HiddenTrigger(BadNet):
         target_imgs = target_imgs[:len(source_imgs)]
         # -----------------------------Poison Frog--------------------------------- #
 
-        def loss_func(poison_imgs):
-            return self.loss(poison_imgs, source_feats=source_feats)
-        poison_imgs, _ = self.pgd.optimize(_input=target_imgs, loss_fn=loss_func)
+        def loss_func(poison_imgs: torch.Tensor, source_feats: torch.Tensor, **kwargs):
+            return self.loss(poison_imgs, source_feats=source_feats, **kwargs)
+        poison_imgs, _ = self.pgd.optimize(_input=target_imgs, loss_fn=loss_func,
+                                           loss_kwargs={'source_feats': source_feats})
         return poison_imgs

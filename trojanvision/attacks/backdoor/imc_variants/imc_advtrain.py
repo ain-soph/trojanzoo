@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
+from trojanvision.attacks.adv import PGD
 from trojanvision.attacks.backdoor.imc import IMC
 from trojanvision.environ import env
 from trojanzoo.utils.output import output_iter, ansi, prints
 from trojanzoo.utils import AverageMeter
-from trojanvision.optim import PGDoptimizer
 
 import torch
 import torch.nn as nn
@@ -42,7 +42,8 @@ class IMC_AdvTrain(IMC):
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.pgd_iter = pgd_iter
-        self.pgd = PGDoptimizer(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, stop_threshold=None)
+        self.pgd = PGD(pgd_alpha=pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter,
+                       target_idx=0, stop_threshold=None, model=self.model, dataset=self.dataset)
 
     def get_poison_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
@@ -93,8 +94,6 @@ class IMC_AdvTrain(IMC):
 
                 poison_input, poison_label = self.get_poison_data(data)
 
-                def loss_fn(X: torch.FloatTensor):
-                    return -self.model.loss(X, _label)
                 adv_x = _input
                 self.model.train()
                 loss = self.model.loss(adv_x, _label)
@@ -103,7 +102,8 @@ class IMC_AdvTrain(IMC):
                 optimizer.zero_grad()
                 for m in range(self.pgd.iteration):
                     self.model.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, loss_fn=loss_fn, iteration=1)
+                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise,
+                                                 target=_label, iteration=1)
 
                     optimizer.zero_grad()
                     self.model.train()

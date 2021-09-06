@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from .badnet import BadNet
-from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
+from trojanvision.optim import PGDoptimizer    # TODO: Need to check whether this will cause ImportError
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi
 
@@ -67,8 +67,8 @@ class TrojanNN(BadNet):
         self.neuron_num: int = neuron_num
         self.neuron_idx = None
 
-        self.pgd = PGD(pgd_alpha=self.neuron_lr, pgd_eps=1.0,
-                       iteration=self.neuron_epoch, output=0, **kwargs)
+        self.pgd = PGDoptimizer(pgd_alpha=self.neuron_lr, pgd_eps=1.0,
+                                iteration=self.neuron_epoch, output=0, **kwargs)
 
     def attack(self, *args, **kwargs):
         self.neuron_idx = self.get_neuron_idx()
@@ -104,10 +104,10 @@ class TrojanNN(BadNet):
             print("Neuron Value Before Preprocessing: ",
                   float(self.get_neuron_value(mark.unsqueeze(0), neuron_idx)))
 
-        def loss_fn(X: torch.Tensor) -> torch.Tensor:
-            fm = self.model.get_layer(X, layer_output=self.preprocess_layer)
+        def loss_fn(_input: torch.Tensor, reduction: str = 'mean', **kwargs) -> torch.Tensor:
+            fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
             loss: torch.Tensor = (fm[:, neuron_idx] - self.target_value).flatten(1).norm(p=2, dim=1)
-            return loss.mean()
+            return loss if reduction == 'none' else loss.mean()
         noise = torch.zeros_like(mark.unsqueeze(0))
         x = mark.unsqueeze(0)
         for _iter in range(self.neuron_epoch):

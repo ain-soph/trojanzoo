@@ -173,5 +173,5 @@ class IMC_Poison(PoisonBasic):
     def get_filename(self, **kwargs):
         return self.model.name
 
-    def loss_pgd(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model.loss(x, self.temp_label)
+    def loss_pgd(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        return self.model.loss(x, self.temp_label, **kwargs)

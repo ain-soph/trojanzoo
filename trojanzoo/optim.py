@@ -89,13 +89,15 @@ class Optimizer(ABC, Process):
                          loss_value: torch.Tensor = None,
                          loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                          stop_threshold: float = None,
+                         loss_kwargs: dict[str, torch.Tensor] = {},
                          *args, **kwargs) -> torch.Tensor:
         stop_threshold = stop_threshold if stop_threshold is not None else self.stop_threshold
         if stop_threshold is None:
             return torch.zeros(len(current_idx), dtype=torch.bool)
         if loss_value is None:
             with torch.no_grad():
-                loss_value = loss_fn(adv_input[current_idx])
+                current_loss_kwargs = {k: v[current_idx] for k, v in loss_kwargs.items()}
+                loss_value = loss_fn(adv_input[current_idx], **current_loss_kwargs)
         assert loss_value.dim == 1
         if adv_input[current_idx] is not None:
             assert len(loss_value) == len(current_idx)

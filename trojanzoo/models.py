@@ -152,6 +152,7 @@ class Model:
 
         # ------------------------------ #
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
+        self.criterion_noreduction = self.define_criterion(weight=to_tensor(loss_weights), reduction='none')
         if isinstance(model, type):
             if num_classes is not None:
                 kwargs['num_classes'] = num_classes
@@ -232,10 +233,12 @@ class Model:
                          layer_name_list=self.layer_name_list, seq_only=seq_only)
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
-             _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+             _output: torch.Tensor = None, reduction: str = 'mean',
+             **kwargs) -> torch.Tensor:
+        criterion = self.criterion_noreduction if reduction == 'none' else self.criterion
         if _output is None:
             _output = self(_input, **kwargs)
-        return self.criterion(_output, _label)
+        return criterion(_output, _label)
 
     # -------------------------------------------------------- #
 

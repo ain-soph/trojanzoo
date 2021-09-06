@@ -124,10 +124,13 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                      clip_min: Union[float, torch.Tensor],
                      clip_max: Union[float, torch.Tensor],
                      loss_fn: Callable[[torch.Tensor], torch.Tensor],
-                     output: list[str], *args, **kwargs):
-        grad = self.calc_grad(loss_fn, adv_input[current_idx])
+                     output: list[str],
+                     loss_kwargs: dict[str, torch.Tensor] = {},
+                     *args, **kwargs):
+        current_loss_kwargs = {k: v[current_idx] for k, v in loss_kwargs.items()}
+        grad = self.calc_grad(loss_fn, adv_input[current_idx], loss_kwargs=current_loss_kwargs)
         if self.grad_method != 'white' and 'middle' in output:
-            real_grad = self.whitebox_grad(loss_fn, adv_input[current_idx])
+            real_grad = self.whitebox_grad(loss_fn, adv_input[current_idx], loss_kwargs=current_loss_kwargs)
             prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
                    indent=self.indent + 2)
         if self.universal:
@@ -151,10 +154,11 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
 
     def output_info(self, org_input: torch.Tensor, noise: torch.Tensor,
                     loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
+                    loss_kwargs: dict[str, torch.Tensor] = {},
                     *args, **kwargs):
-        super().output_info(**kwargs)
+        super().output_info(*args, **kwargs)
         with torch.no_grad():
-            loss = float(loss_fn(org_input + noise))
+            loss = float(loss_fn(org_input + noise, **loss_kwargs))
             norm = noise.norm(p=self.norm)
             prints(f'L-{self.norm} norm: {norm}    loss: {loss:.5f}', indent=self.indent)
 
@@ -184,38 +188,37 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         return noise.detach()
 
     # -------------------------- Calculate Gradient ------------------------ #
-    def calc_grad(self, f, X: torch.Tensor) -> torch.Tensor:
-        if self.grad_method != 'white':
-            return self.blackbox_grad(f, X, query_num=self.query_num, sigma=self.sigma)
-        else:
-            return self.whitebox_grad(f, X)
+    def calc_grad(self, f, x: torch.Tensor, grad_method: str = None, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
+        grad_method = grad_method if grad_method is not None else self.grad_method
+        return self.whitebox_grad(f, x, loss_kwargs=loss_kwargs) if grad_method == 'white' \
+            else self.blackbox_grad(f, x, query_num=self.query_num, sigma=self.sigma, loss_kwargs=loss_kwargs)
 
     @staticmethod
-    def whitebox_grad(f, X: torch.Tensor) -> torch.Tensor:
-        X.requires_grad_()
-        loss = f(X)
-        grad = torch.autograd.grad(loss, X)[0]
-        X.requires_grad = False
+    def whitebox_grad(f, x: torch.Tensor, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
+        x.requires_grad_()
+        loss = f(x, **loss_kwargs)
+        grad = torch.autograd.grad(loss, x)[0]
+        x.requires_grad_(False)
         return grad
 
-    def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor,
-                      query_num: int = None, sigma: float = None) -> torch.Tensor:
-        seq = self.gen_seq(X, query_num=query_num, sigma=sigma)
-        grad = self.calc_seq(f, seq)
+    def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], x: torch.Tensor,
+                      query_num: int = None, sigma: float = None, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
+        seq = self.gen_seq(x, query_num=query_num, sigma=sigma)
+        grad = self.calc_seq(f, seq, loss_kwargs=loss_kwargs)
         return grad
 
-    # X: (1, C, H, W)
-    # return: (query_num+1, C, H, W)
-    def gen_seq(self, X: torch.Tensor, query_num: int = None, sigma: float = None) -> torch.Tensor:
+    # x: (N, C, H, W)
+    # return: (query_num+1, N, C, H, W)
+    def gen_seq(self, x: torch.Tensor, query_num: int = None, sigma: float = None) -> torch.Tensor:
         query_num = query_num if query_num is not None else self.query_num
         sigma = sigma if sigma is not None else self.sigma
-        shape = list(X.shape)
-        shape[0] = query_num
+        shape = list(x.shape)
+        shape.insert(0, query_num)
         if self.grad_method == 'nes':
             shape[0] = shape[0] // 2
-        noise = sigma * torch.normal(mean=0.0, std=1.0, size=shape, device=X.device)
+        noise = sigma * torch.normal(mean=0.0, std=1.0, size=shape, device=x.device)
 
-        zeros = torch.zeros_like(X)
+        zeros = torch.zeros_like(x)
         seq = [zeros]
         if self.grad_method == 'nes':
             seq.extend([noise, -noise])
@@ -224,6 +227,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         elif self.grad_method == 'sgd':
             seq.append(noise)
         elif self.grad_method == 'hess':
+            raise NotImplementedError(self.grad_method)
             noise = (self.hess @ noise.view(-1, 1)).view(X.shape)
             seq.append(noise)
         elif self.grad_method == 'zoo':
@@ -231,15 +235,19 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         else:
             print('Current method: ', self.grad_method)
             raise ValueError("Argument 'method' should be 'nes', 'sgd' or 'hess'!")
-        seq = torch.cat(seq).add(X)
+        seq = torch.cat(seq).add(x)  # (query_num+1, N, C, H, W)
         return seq
 
-    def calc_seq(self, f: Callable[[torch.Tensor], torch.Tensor], seq: torch.Tensor) -> torch.Tensor:
-        X = seq[0].unsqueeze(0)
-        seq = seq[1:]
+    def calc_seq(self, f: Callable[[torch.Tensor], torch.Tensor], seq: torch.Tensor,
+                 loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
+        X = seq[0]  # (N, C, H, W)
+        seq = seq[1:]  # (query_num, N, C, H, W)
         noise = seq.sub(X)
         with torch.no_grad():
-            g = f(seq, reduction='none')[:, None, None, None].mul(noise).sum(dim=0)
+            temp_list: list[torch.Tensor] = []
+            for sub_seq in seq:
+                temp_list.append(f(sub_seq, reduction='none', **loss_kwargs))   # (query_num, N)
+            g = torch.stack(temp_list)[:, :, None, None, None].mul(noise).sum(dim=0)  # (N, C, H, W)
             if self.grad_method in ['sgd', 'hess']:
                 g -= f(X) * noise.sum(dim=0)
             g /= len(seq) * self.sigma * self.sigma

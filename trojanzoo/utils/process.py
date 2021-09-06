@@ -69,5 +69,10 @@ class Model_Process(Process):
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
         self.folder_path = folder_path
+        self.__clean_acc: float = None
 
-        _, self.clean_acc = self.model._validate(verbose=False)
+    @property
+    def clean_acc(self) -> float:
+        if self.__clean_acc is None:
+            _, self.__clean_acc = self.model._validate(verbose=False)
+        return self.__clean_acc
