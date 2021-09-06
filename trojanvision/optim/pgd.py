@@ -190,8 +190,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
     # -------------------------- Calculate Gradient ------------------------ #
     def calc_grad(self, f, x: torch.Tensor, grad_method: str = None, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
         grad_method = grad_method if grad_method is not None else self.grad_method
-        return self.whitebox_grad(f, x, loss_kwargs=loss_kwargs) if grad_method == 'white' \
-            else self.blackbox_grad(f, x, query_num=self.query_num, sigma=self.sigma, loss_kwargs=loss_kwargs)
+        grad_func = self.whitebox_grad if grad_method == 'white' else self.blackbox_grad
+        return grad_func(f, x, loss_kwargs=loss_kwargs)
 
     @staticmethod
     def whitebox_grad(f, x: torch.Tensor, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
@@ -218,7 +218,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
             shape[0] = shape[0] // 2
         noise = sigma * torch.normal(mean=0.0, std=1.0, size=shape, device=x.device)
 
-        zeros = torch.zeros_like(x)
+        zeros = torch.zeros_like(x.unsqueeze(0))
         seq = [zeros]
         if self.grad_method == 'nes':
             seq.extend([noise, -noise])
