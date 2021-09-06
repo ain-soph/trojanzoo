@@ -71,7 +71,7 @@ class PGD(Attack, PGDoptimizer):
         self.model: ImageModel
 
     def attack(self, verbose: bool = True, **kwargs) -> tuple[float, float]:
-        loader = self.dataset.get_dataloader(mode='test', batch_size=self.dataset.batch_size,
+        loader = self.dataset.get_dataloader(mode='test', batch_size=self.dataset.valid_batch_size,
                                              shuffle=True)
         fmt_str = '{global_avg:7.3f} ({min:7.3f}  {max:7.3f})'
         total_adv_target_conf = SmoothedValue(fmt=fmt_str)
