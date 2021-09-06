@@ -259,7 +259,8 @@ class ImageModel(Model):
                 optimizer.zero_grad()
                 self.zero_grad()
                 if after_loss_fn_old is None and not self.adv_train_free:
-                    kfac.reset()
+                    if kfac is not None:
+                        kfac.reset()
                     # self.eval()
                     adv_x, _ = self.pgd.optimize(_input=_input, loss_fn=adv_loss_fn,
                                                  iteration=self.adv_train_iter,
