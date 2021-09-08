@@ -69,7 +69,7 @@ class PGD(Attack, PGDoptimizer):
         self.dataset: ImageSet
         self.model: 'ImageModel'
 
-    def attack(self, verbose: bool = True, **kwargs) -> tuple[float, float]:
+    def attack(self, verbose: int = 1, **kwargs) -> tuple[float, float]:
         loader = self.dataset.get_dataloader(mode='test', batch_size=self.dataset.valid_batch_size,
                                              shuffle=True)
         fmt_str = '{global_avg:7.3f} ({min:7.3f}  {max:7.3f})'
@@ -130,8 +130,9 @@ class PGD(Attack, PGDoptimizer):
 
             total_iter_list.update_list(to_list(torch.where(iter_list != -1, iter_list, 2 * self.iteration)))
             succ_iter_list.update_list(to_list(iter_list[iter_list != -1]))
-            if verbose:
+            if verbose >= 3:
                 prints(f'{ansi["green"]}{succ_iter_list.count} / {total_iter_list.count}{ansi["reset"]}')
+            if verbose >= 4:
                 prints(f'{total_iter_list=:}', indent=4)
                 prints(f'{succ_iter_list=:}', indent=4)
                 prints()
@@ -146,6 +147,23 @@ class PGD(Attack, PGDoptimizer):
                 prints(f'{total_adv_org_conf=:}', indent=8)
                 prints(f'{total_org_org_conf=:}', indent=8)
                 prints(f'{succ_adv_org_conf=:}', indent=8)
+        if verbose:
+            prints(f'{ansi["green"]}{succ_iter_list.count} / {total_iter_list.count}{ansi["reset"]}')
+        if verbose >= 2:
+            prints(f'{total_iter_list=:}', indent=4)
+            prints(f'{succ_iter_list=:}', indent=4)
+            prints()
+            prints('-------------------------------------------------', indent=4)
+            prints(f'{ansi["yellow"]}Target Class:{ansi["reset"]}', indent=4)
+            prints(f'{total_adv_target_conf=:}', indent=8)
+            prints(f'{total_org_target_conf=:}', indent=8)
+            prints(f'{succ_adv_target_conf=:}', indent=8)
+            prints()
+            prints('-------------------------------------------------', indent=4)
+            prints(f'{ansi["yellow"]}Original Class:{ansi["reset"]}', indent=4)
+            prints(f'{total_adv_org_conf=:}', indent=8)
+            prints(f'{total_org_org_conf=:}', indent=8)
+            prints(f'{succ_adv_org_conf=:}', indent=8)
         return float(succ_iter_list.count) / total_iter_list.count, total_iter_list.global_avg
 
     def optimize(self, _input: torch.Tensor, target: Union[torch.Tensor, int] = None, target_idx: int = None,

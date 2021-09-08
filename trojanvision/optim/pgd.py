@@ -60,6 +60,9 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         super().__init__(iteration=iteration, **kwargs)
         self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'random_init', 'norm', 'universal']
 
+        pgd_alpha = pgd_alpha if pgd_alpha < 1.0 else pgd_alpha / 255
+        pgd_eps = pgd_eps if pgd_eps < 1.0 else pgd_eps / 255
+
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
         self.random_init = random_init
