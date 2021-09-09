@@ -32,7 +32,8 @@ jobs:
         uses: actions/github-script@v4
         with:
           scripts: |
-            const version = context.event.release.tag_name.substring(1)
+            const version = context.payload.release.tag_name.substring(1)
+            core.exportVariable('VERISION', version)
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up Docker Buildx
@@ -57,7 +58,9 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.version }}-${{ github.job }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
+            ghcr.io/${{ github.repository }}:${{ env.version }}-${{ github.job }}
             ghcr.io/${{ github.repository }}:${{ github.job }}
           cache-from: type=gha
           cache-to: type=gha
@@ -70,7 +73,8 @@ jobs:
         uses: actions/github-script@v4
         with:
           scripts: |
-            const version = context.event.release.tag_name.substring(1)
+            const version = context.payload.release.tag_name.substring(1)
+            core.exportVariable('VERISION', version)
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up Docker Buildx
@@ -95,7 +99,13 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.version.outputs.id }}-${{ github.job }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.version }}-${{ github.job }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:latest
+            ghcr.io/${{ github.repository }}:${{ env.version }}-${{ github.job }}
+            ghcr.io/${{ github.repository }}:${{ env.version }}
             ghcr.io/${{ github.repository }}:${{ github.job }}
+            ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha
