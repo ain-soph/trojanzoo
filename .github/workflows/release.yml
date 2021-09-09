@@ -33,7 +33,7 @@ jobs:
         with:
           scripts: |
             const version = context.payload.release.tag_name.substring(1)
-            core.exportVariable('VERISION', version)
+            core.exportVariable('VERSION', version)
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up Docker Buildx
@@ -74,7 +74,7 @@ jobs:
         with:
           scripts: |
             const version = context.payload.release.tag_name.substring(1)
-            core.exportVariable('VERISION', version)
+            core.exportVariable('VERSION', version)
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up Docker Buildx
