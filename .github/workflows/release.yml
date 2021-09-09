@@ -25,7 +25,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
   cpu:
     name: docker-cpu
-    needs: [pypi, version]
+    needs: pypi
     runs-on: ubuntu-latest
     steps:
       - name: version
@@ -66,7 +66,7 @@ jobs:
           cache-to: type=gha
   gpu:
     name: docker-gpu
-    needs: [pypi, version]
+    needs: pypi
     runs-on: ubuntu-latest
     steps:
       - name: version
