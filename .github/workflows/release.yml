@@ -30,11 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: version
+        id: get-version
         uses: actions/github-script@v4
         with:
-          script: |
-            const version = context.payload.release.tag_name.substring(1)
-            core.exportVariable('VERSION', version)
+          script: return context.payload.release.tag_name.substring(1)
+          result-encoding: string
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up Docker Buildx
@@ -59,9 +59,9 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.version }}-${{ github.job }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.get-version.outputs.result }}-${{ github.job }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
-            ghcr.io/${{ github.repository }}:${{ env.version }}-${{ github.job }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}-${{ github.job }}
             ghcr.io/${{ github.repository }}:${{ github.job }}
           cache-from: type=gha
           cache-to: type=gha
@@ -71,11 +71,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: version
+        id: get-version
         uses: actions/github-script@v4
         with:
-          script: |
-            const version = context.payload.release.tag_name.substring(1)
-            core.exportVariable('VERSION', version)
+          script: return context.payload.release.tag_name.substring(1)
+          result-encoding: string
       - name: Checkout
         uses: actions/checkout@v2.3.4
       - name: Set up Docker Buildx
@@ -100,12 +100,12 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.version }}-${{ github.job }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ env.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.get-version.outputs.result }}-${{ github.job }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.get-version.outputs.result }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:latest
-            ghcr.io/${{ github.repository }}:${{ env.version }}-${{ github.job }}
-            ghcr.io/${{ github.repository }}:${{ env.version }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}-${{ github.job }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}
             ghcr.io/${{ github.repository }}:${{ github.job }}
             ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
