@@ -31,7 +31,7 @@ jobs:
       - name: version
         uses: actions/github-script@v4
         with:
-          scripts: |
+          script: |
             const version = context.payload.release.tag_name.substring(1)
             core.exportVariable('VERSION', version)
       - name: Checkout
@@ -72,7 +72,7 @@ jobs:
       - name: version
         uses: actions/github-script@v4
         with:
-          scripts: |
+          script: |
             const version = context.payload.release.tag_name.substring(1)
             core.exportVariable('VERSION', version)
       - name: Checkout
