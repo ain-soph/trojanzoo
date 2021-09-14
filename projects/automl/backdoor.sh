@@ -4,7 +4,7 @@
 # declare -a models=("bit_comp" "densenet_comp" "dla34_comp" "resnet18_comp" "resnext50_32x4d_comp" "vgg13_bn_comp" "wide_resnet50_2_comp")
 
 # declare -a archs=("random")
-declare -a models=("bit_comp")
+declare -a models=("dla34_comp")
 
 attack="trojannn"
 dataset="cifar10"
