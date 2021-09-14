@@ -1,6 +1,4 @@
-docutils
 sphinx>=4.0
 sphinxcontrib.katex
-trojanzoo_sphinx_theme
-# required to build torch.distributed.elastic.rendezvous.etcd* docs
-# sphinx_copybutton
+# trojanzoo_sphinx_theme
+-e git+https://github.com/ain-soph/trojanzoo_sphinx_theme.git#egg=trojanzoo_sphinx_theme
