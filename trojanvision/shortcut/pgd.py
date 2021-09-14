@@ -84,6 +84,7 @@ class PGD(Attack, PGDoptimizer):
         total_iter_list = SmoothedValue(fmt=fmt_str)
         succ_iter_list = SmoothedValue(fmt=fmt_str)
 
+        succ_idx_list: list[int] = []
         for data in loader:
             rest_length = self.test_num - total_adv_target_conf.count
             if rest_length <= 0:
@@ -99,23 +100,19 @@ class PGD(Attack, PGDoptimizer):
                 else self.target_class * torch.ones_like(_label)
             adv_input = _input.clone().detach()
             iter_list = -torch.ones(len(_label), dtype=torch.long)
-            current_input = _input
-            current_target = target
-            current_adv_input = adv_input
-            current_iter_list = iter_list
             current_idx = torch.arange(len(iter_list))
             for _ in range(max(self.num_restart, 1)):
-                temp_adv_input, temp_iter_list = self.optimize(current_input, target=current_target, **kwargs)
+                temp_adv_input, temp_iter_list = self.optimize(_input[current_idx],
+                                                               target=target[current_idx], **kwargs)
                 adv_input[current_idx] = temp_adv_input
                 iter_list[current_idx] = temp_iter_list
                 fail_idx = iter_list == -1
                 if (~fail_idx).all():
                     break
-                current_input = current_input[fail_idx]
-                current_target = current_target[fail_idx]
-                current_adv_input = current_adv_input[fail_idx]
-                current_iter_list = current_iter_list[fail_idx]
                 current_idx = current_idx[fail_idx]
+            for i, _iter in enumerate(iter_list):
+                if _iter != -1:
+                    succ_idx_list.append(total_iter_list.count + i)
             adv_target_conf = self.model.get_target_prob(adv_input, target)
             adv_org_conf = self.model.get_target_prob(adv_input, _label)
             org_target_conf = self.model.get_target_prob(_input, target)
@@ -149,6 +146,7 @@ class PGD(Attack, PGDoptimizer):
                 prints(f'{succ_adv_org_conf=:}', indent=8)
         if verbose:
             prints(f'{ansi["green"]}{succ_iter_list.count} / {total_iter_list.count}{ansi["reset"]}')
+            prints(succ_idx_list)
         if verbose >= 2:
             prints(f'{total_iter_list=:}', indent=4)
             prints(f'{succ_iter_list=:}', indent=4)
