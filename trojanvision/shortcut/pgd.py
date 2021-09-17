@@ -167,6 +167,7 @@ class PGD(Attack, PGDoptimizer):
     def optimize(self, _input: torch.Tensor, target: Union[torch.Tensor, int] = None, target_idx: int = None,
                  loss_fn: Callable[..., torch.Tensor] = None,
                  require_class: bool = None,
+                 loss_kwargs: dict[str, torch.Tensor] = {},
                  *args, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if len(_input) == 0:
             return _input, None
@@ -185,9 +186,10 @@ class PGD(Attack, PGDoptimizer):
                 loss = self.model.loss(_input, target, reduction=reduction)
                 return -loss if untarget_condition else loss
             loss_fn = _loss_fn
+        loss_kwargs.update(target=target)
         return super().optimize(_input, target=target,
                                 loss_fn=loss_fn, require_class=require_class,
-                                loss_kwargs={'target': target},
+                                loss_kwargs=loss_kwargs,
                                 *args, **kwargs)
 
     def early_stop_check(self, current_idx: torch.Tensor,

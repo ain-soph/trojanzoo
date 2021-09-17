@@ -119,11 +119,13 @@ class Model:
                  num_classes: int = None, folder_path: str = None,
                  official: bool = False, pretrain: bool = False,
                  randomized_smooth: bool = False, rs_sigma: float = 0.01, rs_n: int = 100,
-                 suffix: str = '', **kwargs):
+                 suffix: str = None, **kwargs):
         self.param_list: dict[str, list[str]] = {}
         self.param_list['model'] = ['folder_path']
-        if suffix:
+        if suffix is not None:
             self.param_list['model'].append('suffix')
+        else:
+            suffix = ''
         if randomized_smooth:
             self.param_list['model'].extend(['randomized_smooth', 'rs_sigma', 'rs_n'])
         self.name: str = name

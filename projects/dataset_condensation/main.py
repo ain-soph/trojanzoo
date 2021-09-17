@@ -31,7 +31,6 @@ from trojanzoo.utils.fim import fim, fim_diag, KFAC
 import torch
 from torch.utils.data import TensorDataset
 from torchvision import transforms
-import functools
 
 from utils import match_loss, augment, get_daparam, get_loops
 from model import ConvNet
@@ -54,7 +53,7 @@ default_args = {
 eval_args = {
     'momentum': 0.9,
     'weight_decay': 5e-4,
-    'adv_train': True,
+    'adv_train': 'pgd',
 }
 
 fgsm_args = {
@@ -113,6 +112,7 @@ if __name__ == '__main__':
     Iteration: int = args.Iteration
     lr_img: float = args.lr_img
     outer_loop, inner_loop = get_loops(image_per_class)
+    first_term: str = args.first_term
 
     args_dict = args.__dict__
     args_dict.update(default_args)
@@ -134,12 +134,14 @@ if __name__ == '__main__':
         args_dict['model_name'] = args_dict['eval_model']
     if args_dict['eval_norm_layer'] is not None:
         args_dict['norm_layer'] = args_dict['eval_norm_layer']
+    if args.adv_train == 'trades':
+        eval_args.update(adv_train='trades')
     args_dict.update(eval_args)
-    if args.first_term == 'fgsm':
+    if first_term == 'fgsm':
         args_dict['adv_train_iter'] = fgsm_dict['iteration']
         args_dict['adv_train_alpha'] = fgsm_dict['pgd_alpha']
         args_dict['adv_train_eps'] = fgsm_dict['pgd_eps']
-    if args.first_term == 'pgd':
+    if first_term == 'pgd':
         args_dict['adv_train_iter'] = pgd_dict['iteration']
         args_dict['adv_train_alpha'] = pgd_dict['pgd_alpha']
         args_dict['adv_train_eps'] = pgd_dict['pgd_eps']
@@ -174,7 +176,7 @@ if __name__ == '__main__':
     # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
-    train_args['adv_train'] = False if args.first_term is None else True
+    train_args['adv_train'] = False if first_term is None else True
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epoch'] = epoch_eval_train
     eval_train_args['adv_train'] = args.eval_adv_train
@@ -200,15 +202,11 @@ if __name__ == '__main__':
 
     def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor,
                       adv_train: bool = False) -> list[torch.Tensor]:
-        if adv_train:
-            img_real, _ = model.pgd.optimize(_input=img_real, target=lab_real,
-                                             iteration=model.adv_train_iter,
-                                             pgd_alpha=model.adv_train_alpha,
-                                             pgd_eps=model.adv_train_eps)
 
         if dis_metric == 'kfac':
             kfac.track.enable()
-        loss_real = model.loss(img_real, lab_real)
+        loss_fn = model.adv_loss if adv_train else model.loss
+        loss_real = loss_fn(_input=img_real, _label=lab_real)
         gw_real = list((grad.detach().clone() for grad in torch.autograd.grad(loss_real, net_parameters)))
         if dis_metric == 'kfac':
             kfac.track.disable()
@@ -216,9 +214,11 @@ if __name__ == '__main__':
             kfac.update_inv_covs()
         return gw_real
 
-    def get_syn_grad(img_syn: torch.Tensor, lab_syn: torch.Tensor) -> list[torch.Tensor]:
-        loss_syn = model.loss(img_syn, lab_syn)
-        gw_syn = torch.autograd.grad(loss_syn, net_parameters, create_graph=True)
+    def get_syn_grad(img_syn: torch.Tensor, lab_syn: torch.Tensor,
+                     adv_train: bool = False) -> list[torch.Tensor]:
+        loss_fn = model.adv_loss if adv_train else model.loss
+        loss_syn = loss_fn(_input=img_syn, _label=lab_syn)
+        gw_syn = list(torch.autograd.grad(loss_syn, net_parameters, create_graph=True))
         return gw_syn
 
     def get_real_data(c: int, batch_size: int, **kwargs) -> torch.Tensor:
@@ -273,8 +273,8 @@ if __name__ == '__main__':
                                                       dataset=dst_syn_train)
                 eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn,
                                   **eval_train_args)
-                result_a, result_b = eval_model._validate(adv_train=model.adv_train, verbose=False)
-                if model.adv_train:
+                result_a, result_b = eval_model._validate(adv_train=bool(model.adv_train), verbose=False)
+                if model.adv_train is not None:
                     acc, robust = result_b - result_a, result_a
                     accs.update(acc)
                     robusts.update(robust)
@@ -353,15 +353,11 @@ if __name__ == '__main__':
                 img_syn = image_syn[c]
                 lab_syn = label_syn[c]
 
-                if args.first_term is not None:
-                    perturbed, _ = model.pgd.optimize(_input=img_syn.detach(), target=lab_syn,
-                                                      **fgsm_args[dataset.name])
-                    img_syn = img_syn + (perturbed - img_syn).detach()
-                gw_syn = get_syn_grad(img_syn, lab_syn)
-                if model.adv_train_free:
+                gw_syn = get_syn_grad(img_syn, lab_syn, adv_train=bool(first_term))
+                if model.adv_train == 'free':
                     gw_real = get_real_grad(img_real, lab_real, adv_train=False)
                     loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list, kfac=kfac)
-                gw_real = get_real_grad(img_real, lab_real, adv_train=model.adv_train)
+                gw_real = get_real_grad(img_real, lab_real, adv_train=bool(model.adv_train))
                 loss += match_loss(gw_syn, gw_real, dis_metric, fim_inv_list=fim_inv_list, kfac=kfac)
             optimizer_img.zero_grad()
             loss.backward()

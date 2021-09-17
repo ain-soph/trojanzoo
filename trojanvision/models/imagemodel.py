@@ -13,8 +13,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Normalize
 import re
-import functools
-
 
 from typing import TYPE_CHECKING
 from typing import Union
@@ -28,6 +26,9 @@ if TYPE_CHECKING:
 
 from matplotlib.cm import get_cmap  # type: ignore  # TODO
 jet = get_cmap('jet')
+
+log_softmax = nn.LogSoftmax(1)
+criterion_kl = nn.KLDivLoss(reduction='batchmean')
 
 
 def replace_bn_to_gn(model: nn.Module) -> None:
@@ -76,15 +77,16 @@ class ImageModel(Model):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--adv_train', action='store_true', help='enable adversarial training.')
+        group.add_argument('--adv_train', choices=['pgd', 'free', 'trades'], help='adversarial training.')
         group.add_argument('--adv_train_random_init', action='store_true')
-        group.add_argument('--adv_train_free', action='store_true')
         group.add_argument('--adv_train_iter', type=int, help='adversarial training PGD iteration, defaults to 7.')
         group.add_argument('--adv_train_alpha', type=float, help='adversarial training PGD alpha, defaults to 2/255.')
         group.add_argument('--adv_train_eps', type=float, help='adversarial training PGD eps, defaults to 8/255.')
         group.add_argument('--adv_train_eval_iter', type=int)
         group.add_argument('--adv_train_eval_alpha', type=float)
         group.add_argument('--adv_train_eval_eps', type=float)
+        group.add_argument('--adv_train_trades_beta', type=float,
+                           help='regularization, i.e., 1/lambda in TRADES')
 
         group.add_argument('--norm_layer', choices=['bn', 'gn'], default='bn')
         group.add_argument('--sgm', action='store_true', help='whether to use sgm gradient, defaults to False')
@@ -93,18 +95,19 @@ class ImageModel(Model):
 
     def __init__(self, name: str = 'imagemodel', layer: int = None,
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None, data_shape: list[int] = None,
-                 adv_train: bool = False, adv_train_random_init: bool = False, adv_train_free: bool = True,
+                 adv_train: str = None, adv_train_random_init: bool = False, adv_train_eval_random_init: bool = None,
                  adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255, adv_train_eps: float = 8 / 255,
                  adv_train_eval_iter: int = None, adv_train_eval_alpha: float = None, adv_train_eval_eps: float = None,
+                 adv_train_trades_beta: float = 6.0,
                  norm_layer: str = 'bn', sgm: bool = False, sgm_gamma: float = 1.0,
-                 norm_par: dict[str, list[float]] = None, suffix: str = '', **kwargs):
+                 norm_par: dict[str, list[float]] = None, suffix: str = None, **kwargs):
         name = self.get_name(name, layer=layer)
         if norm_par is None and isinstance(dataset, ImageSet):
             norm_par = None if dataset.normalize else dataset.norm_par
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
-        if adv_train:
-            suffix += '_adv_train'
+        if adv_train is not None and suffix is None:
+            suffix = '_adv_train'
         super().__init__(name=name, model=model, dataset=dataset, data_shape=data_shape,
                          norm_par=norm_par, suffix=suffix, **kwargs)
         assert norm_layer in ['bn', 'gn']
@@ -121,23 +124,26 @@ class ImageModel(Model):
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train
         self.adv_train_random_init = adv_train_random_init
-        self.adv_train_free = adv_train_free
+        self.adv_train_eval_random_init = adv_train_eval_random_init if adv_train_eval_random_init is not None else adv_train_random_init
         self.adv_train_iter = adv_train_iter
         self.adv_train_alpha = adv_train_alpha
         self.adv_train_eps = adv_train_eps
         self.adv_train_eval_iter = adv_train_eval_iter if adv_train_eval_iter is not None else adv_train_iter
         self.adv_train_eval_alpha = adv_train_eval_alpha if adv_train_eval_alpha is not None else adv_train_alpha
         self.adv_train_eval_eps = adv_train_eval_eps if adv_train_eval_eps is not None else adv_train_eps
+        self.adv_train_trades_beta = adv_train_trades_beta
 
         self.param_list['imagemodel'] = []
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
-        if adv_train:
+        if adv_train is not None:
             if 'suffix' not in self.param_list['model']:
                 self.param_list['model'].append('suffix')
-            self.param_list['adv_train'] = ['adv_train_random_init', 'adv_train_free',
+            self.param_list['adv_train'] = ['adv_train', 'adv_train_random_init', 'adv_train_eval_random_init',
                                             'adv_train_iter', 'adv_train_alpha', 'adv_train_eps',
                                             'adv_train_eval_iter', 'adv_train_eval_alpha', 'adv_train_eval_eps']
+            if adv_train == 'trades':
+                self.param_list['adv_train'].append('adv_train_trades_beta')
             clip_min, clip_max = 0.0, 1.0
             if norm_par is None and isinstance(dataset, ImageSet):
                 if dataset.normalize and dataset.norm_par is not None:
@@ -151,11 +157,14 @@ class ImageModel(Model):
             self.pgd = PGD(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
                            iteration=self.adv_train_eval_iter, stop_threshold=None,
                            target_idx=0,
-                           random_init=self.adv_train_random_init,
+                           random_init=self.adv_train_eval_random_init,
                            clip_min=clip_min, clip_max=clip_max,
                            model=self, dataset=self.dataset)
         self._model: _ImageModel
         self.dataset: ImageSet
+
+    def trades_loss_fn(self, _input: torch.Tensor, org_prob: torch.Tensor, **kwargs):
+        return -criterion_kl(log_softmax(self(_input)), org_prob)
 
     @classmethod
     def get_name(cls, name: str, layer: int = None) -> str:
@@ -209,15 +218,15 @@ class ImageModel(Model):
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         """In trainining process, `adv_train` args will not be passed to `get_data`. So it's always `False`."""
+        _input, _label = super().get_data(data, **kwargs)
         if adv_train:
             assert self.pgd is not None
-            _input, _label = super().get_data(data, **kwargs)
             adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
             return adv_x, _label
-        return super().get_data(data, **kwargs)
+        return _input, _label
 
     def _validate(self, adv_train: bool = None, **kwargs) -> tuple[float, float]:
-        adv_train = adv_train if adv_train is not None else self.adv_train
+        adv_train = adv_train if adv_train is not None else bool(self.adv_train)
         if not adv_train:
             return super()._validate(**kwargs)
         _, clean_acc = super()._validate(print_prefix='Validate Clean', main_tag='valid clean',
@@ -240,7 +249,7 @@ class ImageModel(Model):
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs):
-        adv_train = adv_train if adv_train is not None else self.adv_train
+        adv_train = adv_train if adv_train is not None else bool(self.adv_train)
         if adv_train:
             after_loss_fn_old = after_loss_fn
             if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
@@ -252,27 +261,17 @@ class ImageModel(Model):
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
                 optimizer.zero_grad()
                 self.zero_grad()
-                if after_loss_fn_old is None and not self.adv_train_free:
-                    if kfac is not None:
-                        kfac.reset()
-                    # self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, target=_label,
-                                                 iteration=self.adv_train_iter,
-                                                 pgd_alpha=self.adv_train_alpha,
-                                                 pgd_eps=self.adv_train_eps)
-                    # self.train()
-                    loss = loss_fn(adv_x, _label)
-                    if amp:
-                        scaler.scale(loss).backward()
-                    else:
-                        loss.backward()
-                    return
-                noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps, device=_input.device)
-                adv_x = add_noise(_input=_input, noise=noise, batch=self.pgd.universal,
-                                  clip_min=self.pgd.clip_min, clip_max=self.pgd.clip_max)
-                noise.data = self.pgd.valid_noise(adv_x, _input)
-                for m in range(self.adv_train_iter):
-                    if self.adv_train_free:
+                if kfac is not None:
+                    kfac.reset()
+
+                if self.adv_train == 'free':
+                    noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps,
+                                                random_init=self.adv_train_random_init,
+                                                device=_input.device)
+                    adv_x = add_noise(_input=_input, noise=noise, batch=self.pgd.universal,
+                                      clip_min=self.pgd.clip_min, clip_max=self.pgd.clip_max)
+                    noise.data = self.pgd.valid_noise(adv_x, _input)
+                    for m in range(self.adv_train_iter):
                         loss = loss_fn(adv_x, _label)
                         if amp:
                             scaler.scale(loss).backward()
@@ -283,19 +282,22 @@ class ImageModel(Model):
                             optimizer.step()
                         optimizer.zero_grad()
                         self.zero_grad()
-                    # self.eval()
-                    adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, target=_label, iteration=1,
-                                                 pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
-                    # self.train()
-                    loss = loss_fn(adv_x, _label)
-                    if callable(after_loss_fn_old):
-                        after_loss_fn_old(_input=_input, _label=_label, _output=_output,
-                                          loss=loss, optimizer=optimizer, loss_fn=loss_fn,
-                                          amp=amp, scaler=scaler, **kwargs)
+                        # self.eval()
+                        adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, target=_label, iteration=1,
+                                                     pgd_alpha=self.adv_train_alpha, pgd_eps=self.adv_train_eps)
+                        # self.train()
+                        loss = loss_fn(adv_x, _label)
+                else:
+                    loss = self.adv_loss(_input=_input, _label=_label, loss_fn=loss_fn)
+
                 if amp:
                     scaler.scale(loss).backward()
                 else:
                     loss.backward()
+                if callable(after_loss_fn_old):
+                    after_loss_fn_old(_input=_input, _label=_label, _output=_output,
+                                      loss=loss, optimizer=optimizer, loss_fn=loss_fn,
+                                      amp=amp, scaler=scaler, **kwargs)
             after_loss_fn = after_loss_fn_new
 
         super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
@@ -307,3 +309,28 @@ class ImageModel(Model):
                        save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix,
                        writer=writer, main_tag=main_tag, tag=tag,
                        accuracy_fn=accuracy_fn, verbose=verbose, indent=indent, **kwargs)
+
+    def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor,
+                 loss_fn: Callable[..., torch.Tensor] = None, adv_train: str = None) -> torch.Tensor:
+        adv_train = adv_train if adv_train is not None else self.adv_train
+        loss_fn = loss_fn if callable(loss_fn) else self.loss
+        if adv_train == 'trades':
+            noise = 1e-3 * torch.randn_like(_input)
+            org_prob = self.get_prob(_input)
+            adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, target=_label,
+                                         iteration=self.adv_train_iter,
+                                         pgd_alpha=self.adv_train_alpha,
+                                         pgd_eps=self.adv_train_eps,
+                                         loss_fn=self.trades_loss_fn,
+                                         loss_kwargs={'org_prob': org_prob.detach()})
+            adv_x = _input + (adv_x - _input).detach()
+            return loss_fn(_input, _label) - self.adv_train_trades_beta * \
+                self.trades_loss_fn(_input=adv_x, org_prob=org_prob)
+        else:
+            adv_x, _ = self.pgd.optimize(_input=_input, target=_label,
+                                         iteration=self.adv_train_iter,
+                                         pgd_alpha=self.adv_train_alpha,
+                                         pgd_eps=self.adv_train_eps,
+                                         random_init=self.adv_train_random_init)
+            adv_x = _input + (adv_x - _input).detach()
+            return loss_fn(adv_x, _label)

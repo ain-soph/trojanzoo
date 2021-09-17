@@ -12,3 +12,7 @@ adv_train_alpha:
 adv_train_eps:
   default: 0.031372549 # 8/255
   mnist: 0.3
+
+adv_train_trades_beta:
+  default: 6.0
+  mnist: 1.0
