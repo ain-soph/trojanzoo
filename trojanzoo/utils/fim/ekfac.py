@@ -1,34 +1,27 @@
 #!/usr/bin/env python3
 
 # https://github.com/Thrandis/EKFAC-pytorch/blob/master/ekfac.py
-from trojanzoo.utils.lock import Lock
+
+from .kfac import BaseKFAC, BaseState, LayerType
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.optim.optimizer import Optimizer
 
-from typing import Iterable, Union, Optional
-from torch.utils.hooks import RemovableHandle
-
-LayerType = Union[nn.Conv2d, nn.Linear]
-_LayerType = (nn.Conv2d, nn.Linear)
+from typing import Optional
 
 
-def grad_wrt_kernel(a: torch.Tensor, g: torch.Tensor,
-                    padding: Union[str, int, tuple], stride: int,
-                    target_size=None) -> torch.Tensor:
-    gk = F.conv2d(a.transpose(0, 1), g.transpose(0, 1).contiguous(),
-                  padding=padding, dilation=stride).transpose(0, 1)
-    if target_size is not None and target_size != gk.size():
-        return gk[:, :, :target_size[2], :target_size[3]].contiguous()
-    return gk
+class EKFACState(BaseState):
+    def __init__(self):
+        super().__init__()
+        self.kfe_x: torch.Tensor = None    # (in [* kh * kw] + 1, in [* kh * kw] + 1)
+        self.kfe_gy: torch.Tensor = None    # (out, out)
+        self.m2: torch.Tensor = None  # (out, in [* kh * kw] + 1 {, kh, kw})
 
 
-class EKFAC(Optimizer):
+class EKFAC(BaseKFAC):
 
-    def __init__(self, net: nn.Module, eps: float = 0.1, sua: bool = False, ra: bool = False, update_freq: int = 1,
-                 alpha: float = 1.0):
+    def __init__(self, net: nn.Module, ra: bool = False, *args, **kwargs):
         """ EKFAC Preconditionner for Linear and Conv2d layers.
         Computes the EKFAC of the second moment of the gradients.
         It works for Linear and Conv2d layers and silently skip other layers.
@@ -40,421 +33,218 @@ class EKFAC(Optimizer):
                 instead of using a intra minibatch estimate
             update_freq (int): Perform inverses every update_freq updates.
             alpha (float): Running average parameter
+            constraint_norm (bool): Scale the gradients by the squared
+                fisher norm.
         """
-
-        self.track = Lock()
-
-        self.eps = eps
-        self.sua = sua
+        super().__init__(net=net, state_type=EKFACState, *args, **kwargs)
         self.ra = ra
-        self.update_freq = update_freq
-        self.alpha = alpha
-
-        self._fwd_handles: list[RemovableHandle] = []
-        self._bwd_handles: list[RemovableHandle] = []
-        self._iteration_counter = 0
-        params = []
-        name_dict: dict[str, LayerType] = {}
-
         if not self.ra and self.alpha != 1.:
-            raise NotImplementedError
+            raise NotImplementedError()
+        self.filter_dict = self.get_gathering_filters(net)
+        self.state_storage: dict[LayerType, EKFACState]
 
-        for name, mod in net.named_modules():
-            if isinstance(mod, _LayerType):
-                handle = mod.register_forward_pre_hook(self._save_input)
-                self._fwd_handles.append(handle)
-                handle = mod.register_full_backward_hook(self._save_grad_output)
-                self._bwd_handles.append(handle)
-                params_ = {'params': mod.parameters(), 'mod': mod}
-                if len(name):
-                    name += '.'
-                name_dict[name + 'weight'] = mod
+    def update_stats(self, **kwargs):
+        for module in self.module_list:
+            self.compute_kfe(module)
 
-                if mod.bias is not None:
-                    name_dict[name + 'bias'] = mod
+    def get_gathering_filters(self, net: nn.Module) -> dict[nn.Conv2d, nn.Conv2d]:
+        filter_dict: dict[nn.Conv2d, nn.Conv2d] = {}
+        if not self.sua:
+            filter_dict = {mod: self._get_gathering_filter(mod)
+                           for mod in net.modules() if isinstance(mod, nn.Conv2d)}
+        return filter_dict
 
-                if isinstance(mod, nn.Conv2d):
-                    if not self.sua:
-                        # Adding gathering filter for convolution
-                        params_['gathering_filter'] = self._get_gathering_filter(mod)
-
-                params.append(params_)
-
-        super().__init__(params, {})
-        self.state: dict[nn.Module, dict[str, Union[torch.Tensor, int]]]
-        self.param_groups: list[dict[str, Union[LayerType, Iterable[torch.Tensor]]]]
-
-        self.module_list: list[LayerType] = [group['mod'] for group in self.param_groups]
-
-        self.pack_idx: dict[LayerType, list[int]] = {module: [] for module in self.module_list}
-        for i, (name, _) in enumerate(net.named_parameters()):
-            if name in name_dict.keys():
-                self.pack_idx[name_dict[name]].append(i)
-
-    def reset(self):
-        for k in self.state.keys():
-            self.state[k] = {}
-
-    def _get_gathering_filter(self, mod: nn.Conv2d):
+    @staticmethod
+    def _get_gathering_filter(mod: nn.Conv2d) -> nn.Conv2d:
         """Convolution filter that extracts input patches."""
-        kw, kh = mod.kernel_size
-        g_filter = mod.weight.data.new(kw * kh * mod.in_channels, 1, kw, kh)
-        g_filter.fill_(0)
-        for i in range(mod.in_channels):
+        kh, kw = mod.kernel_size
+        shape = (mod.in_channels, kh, kw, 1, kh, kw)
+        g_filter = mod.weight.new_zeros(shape)
+        for i in range(kh):
             for j in range(kw):
-                for k in range(kh):
-                    g_filter[k + kh * j + kw * kh * i, 0, j, k] = 1
-        return g_filter
+                g_filter[:, i, j, :, i, j] = 1  # TODO: avoid for loop
+        g_filter = g_filter.flatten(0, 2)   # (in * kh * kw, 1, kh, kw)
+        filter_conv = nn.Conv2d(in_channels=1, out_channels=mod.in_channels * kh * kw,
+                                kernel_size=(kh, kw), bias=False,
+                                stride=mod.stride, padding=mod.padding, groups=mod.in_channels,
+                                device=g_filter.device, dtype=g_filter.dtype)
+        filter_conv.weight.copy_(g_filter)
+        return filter_conv
 
-    @torch.no_grad()
-    def _save_input(self, mod: LayerType, i: tuple[torch.Tensor]):
-        """Saves input of layer to compute covariance."""
-        if self.track and mod.training:
-            self.state[mod]['x'] = i[0]
-
-    @torch.no_grad()
-    def _save_grad_output(self, mod: LayerType,
-                          grad_input: tuple[torch.Tensor],
-                          grad_output: tuple[torch.Tensor]):
-        """Saves grad on output of layer to compute covariance."""
-        if self.track and mod.training:
-            self.state[mod]['gy'] = grad_output[0] * grad_output[0].size(0)
-
-    def step(self, update_stats: bool = True, update_params: bool = True, force: bool = False):
-        """Performs one step of preconditioning."""
-        if update_stats:
-            compute_kfe = self._iteration_counter % self.update_freq == 0
-            if force or compute_kfe:
-                self.update_kfe()
-        if update_params:
-            self.update_params()
-        if update_stats:
-            self._iteration_counter += 1
-
-    def update_kfe(self):
-        for group in self.param_groups:
-            self._compute_kfe(group)
-
-    def update_params(self):
-        for group in self.param_groups:
-            module = group['mod']
-            weight_grad = module.weight.grad
-            bias_grad = None if module.bias is None else module.bias.grad
-            gw, gb = self._precond(group, weight_grad, bias_grad)
-            weight_grad.data = gw
-            if bias_grad is not None:
-                bias_grad.data = gb
-
-    def _precond(self, group: dict[str, Union[LayerType, Iterable[torch.Tensor]]], weight_grad: torch.Tensor = None, bias_grad: Optional[torch.Tensor] = None
-                 ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
-
-        # state = self.state[mod]
-
-        is_conv = isinstance(group['mod'], nn.Conv2d)
-        if is_conv and self.sua:
-
-            if self.ra:
-                return self._precond_sua_ra(group, weight_grad, bias_grad)
-            else:
-                return self._precond_intra_sua(group, weight_grad, bias_grad)
-        else:
-
-            if self.ra:
-                return self._precond_ra(group, weight_grad, bias_grad)
-            else:
-                return self._precond_intra(group, weight_grad, bias_grad)
-
-    def _precond_sua_ra(self, group: dict[str, Union[LayerType, Iterable[torch.Tensor]]], weight_grad: torch.Tensor, bias_grad: Optional[torch.Tensor],
-                        ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """Preconditioning for KFAC SUA."""
-        mod = group['mod']
-        state = self.state[mod]
-        gb: Optional[torch.Tensor] = None
-
-        kfe_x = state['kfe_x']
-        kfe_gy = state['kfe_gy']
-        m2 = state['m2']
-        g = weight_grad
-        s = g.shape
-
-        bs = self.state[mod]['x'].size(0)
-
-        if bias_grad is not None:
-            gb = bias_grad.view(-1, 1, 1, 1).expand(-1, -1, s[2], s[3])
-            g = torch.cat([g, gb], dim=1)
-
-        g_kfe = self._to_kfe_sua(g, kfe_x, kfe_gy)
-        m2.mul_(self.alpha).add_((1. - self.alpha) * bs, g_kfe ** 2)
-        g_nat_kfe = g_kfe / (m2 + self.eps)
-        g_nat = self._to_kfe_sua(g_nat_kfe, kfe_x.t(), kfe_gy.t())
-        if bias_grad is not None:
-            gb = g_nat[:, -1, s[2] // 2, s[3] // 2]
-            # bias.grad.data = gb
-            g_nat = g_nat[:, :-1]
-        # weight.grad.data = g_nat
-
-        return g_nat.contiguous(), gb.contiguous()
-
-    def _precond_intra_sua(self, group: dict[str, Union[LayerType, Iterable[torch.Tensor]]], weight_grad: torch.Tensor, bias_grad: Optional[torch.Tensor],
-                           ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """Preconditioning for KFAC SUA."""
-
-        mod = group['mod']
-        state = self.state[mod]
-        gb: Optional[torch.Tensor] = None
-
-        kfe_x = state['kfe_x']
-        kfe_gy = state['kfe_gy']
-
-        x = self.state[mod]['x']
-        gy = self.state[mod]['gy']
-
-        g = weight_grad
-        s = g.shape
-        s_x = x.size()
-        s_gy = gy.size()
-        s_cin = 0
-        bs = x.size(0)
-        if bias_grad is not None:
-            ones = torch.ones_like(x[:, :1])
-            x = torch.cat([x, ones], dim=1)
-            s_cin += 1
-        # intra minibatch m2
-
-        x = x.transpose(0, 1).view(s_x[1] + s_cin, -1)
-
-        x_kfe = kfe_x.t().mm(x).view(s_x[1] + s_cin, -1, s_x[2], s_x[3]).transpose(0, 1)
-
-        gy = gy.transpose(0, 1).view(s_gy[1], -1)
-        gy_kfe = kfe_gy.t().mm(gy).view(s_gy[1], -1, s_gy[2], s_gy[3]).transpose(0, 1)
-
-        m2 = torch.zeros((s[0], s[1] + s_cin, s[2], s[3]), device=g.device)
-        # g_kfe = torch.zeros((s[0], s[1] + s_cin, s[2], s[3]), device=g.device)
-        for i in range(x_kfe.size(0)):
-            g_this = grad_wrt_kernel(x_kfe[i:i + 1], gy_kfe[i:i + 1], mod.padding, mod.stride)
-            m2 += g_this ** 2
-        m2 /= bs
-        g_kfe = grad_wrt_kernel(x_kfe, gy_kfe, mod.padding, mod.stride) / bs
-
-        g_nat_kfe = g_kfe / (m2 + self.eps)
-        g_nat = self._to_kfe_sua(g_nat_kfe, kfe_x.t(), kfe_gy.t())
-        if bias_grad is not None:
-            gb = g_nat[:, -1, s[2] // 2, s[3] // 2]
-            # bias.grad.data = gb
-            g_nat = g_nat[:, :-1]
-        # weight.grad.data = g_nat
-
-        return g_nat.contiguous(), gb.contiguous()
-
-    def _precond_ra(self, group: dict[str, Union[LayerType, Iterable[torch.Tensor]]], weight_grad: torch.Tensor, bias_grad: Optional[torch.Tensor],
+    def precond_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
+                    bias_grad: Optional[torch.Tensor]
                     ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """Applies preconditioning."""
+        precond_func = self._precond_sua_ra if self.ra else self._precond_intra_sua
+        return precond_func(mod, weight_grad, bias_grad)
 
-        mod = group['mod']
-        state = self.state[mod]
-        gb: Optional[torch.Tensor] = None
+    def precond_nosua(self, mod: LayerType, weight_grad: torch.Tensor,
+                      bias_grad: Optional[torch.Tensor]
+                      ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+        precond_func = self._precond_ra if self.ra else self._precond_intra
+        return precond_func(mod, weight_grad, bias_grad)
 
-        kfe_x = state['kfe_x']
-        kfe_gy = state['kfe_gy']
-        m2 = state['m2']
+    def _precond_sua_ra(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
+                        bias_grad: Optional[torch.Tensor]
+                        ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+        state = self.state_storage[mod]
+        g, gb = weight_grad, bias_grad
+        s = weight_grad.size()    # (out, in, kh, kw)
+        if gb is not None:
+            gb = gb[None, :, None, None].repeat(1, 1, s[2], s[3])    # (out, 1, kh, kw)
+            g = torch.cat([g, gb], dim=1)    # (out, in + 1, kh, kw)
 
-        g = weight_grad
-        s = g.shape
+        N = state.x.size(0)
+        g_kfe = self.to_kfe_sua(g, state.kfe_x, state.kfe_gy)  # (out, in + 1, kh, kw)
+        m2 = self.alpha * state.m2 + (1 - self.alpha) * N * (g_kfe.square())  # (out, in + 1, kh, kw)
+        g_nat_kfe = g_kfe / (m2 + self.eps)  # (out, in + 1, kh, kw)
+        g = self.to_kfe_sua(g_nat_kfe, state.kfe_x.t(), state.kfe_gy.t())  # (out, in + 1, kh, kw)
 
-        bs = state['x'].size(0)
-        is_conv = isinstance(mod, nn.Conv2d)
-        if is_conv:
-            # g = g.contiguous().view(s[0], s[1] * s[2] * s[3])
-            g = g.contiguous().flatten(1)
+        if gb is not None:
+            gb = g[:, -1, s[2] // 2, s[3] // 2].contiguous()  # (out)
+            g = g[:, :-1]  # (out, in, kh, kw)
+        g = g.contiguous()
+        return g, gb
 
-        if bias_grad is not None:
-            gb = bias_grad
-            # g = torch.cat([g, gb.view(gb.shape[0], 1)], dim=1)
-            g = torch.cat([g, gb.unsqueeze(1)], dim=1)
+    def _precond_intra_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
+                           bias_grad: Optional[torch.Tensor]
+                           ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+        state = self.state_storage[mod]
+        g, gb = weight_grad, bias_grad
+        s = weight_grad.size()    # (out, in, kh, kw)
 
-        g_kfe = torch.mm(torch.mm(kfe_gy.t(), g), kfe_x)
-        m2.mul_(self.alpha).add_((1. - self.alpha) * bs, g_kfe ** 2)
+        x = state.x  # (N, in, xh, xw)
+        if gb is not None:
+            ones = torch.ones_like(x[:, :1])
+            x = torch.cat([x, ones], dim=1)  # (N, in + 1, xh, xw)
+        # intra minibatch m2
+        x = x.transpose(0, 1)  # (in + 1, N, xh, xw)
+        gy = state.gy.transpose(0, 1)  # (out, N, yh, yw)
+        x_kfe = state.kfe_x.t().mm(x.flatten(1)).view_as(x).transpose(0, 1)  # (N, in + 1, xh, xw)
+        gy_kfe = state.kfe_gy.t().mm(gy.flatten(1)).view_as(gy).transpose(0, 1)  # (N, out, yh, yw)
 
+        m2 = torch.zeros_like(state.m2)  # (out, in + 1, kh, kw)
+        N = state.x.size(0)
+        for i in range(N):  # N
+            g_this = F.conv2d(x_kfe[i].unsqueeze(1),  # (in + 1, 1, xh, xw)
+                              gy_kfe[i].unsqueeze(1).contiguous(),  # (out, 1, yh, yw)
+                              padding=mod.padding, dilation=mod.stride).transpose(0, 1)  # (out, in + 1, kh, kw)
+            m2 += g_this.square()
+        m2 /= N
+        g_kfe = F.conv2d(x_kfe.transpose(0, 1),  # (in + 1, N, xh, xw)
+                         gy_kfe.transpose(0, 1).contiguous(),  # (out, N, yh, yw)
+                         padding=mod.padding, dilation=mod.stride).transpose(0, 1) / N  # (out, in + 1, kh, kw)
+        g_nat_kfe = g_kfe / (m2 + self.eps)  # (out, in + 1, kh, kw)
+        g = self.to_kfe_sua(g_nat_kfe, state.kfe_x.t(), state.kfe_gy.t())  # (out, in + 1, kh, kw)
+
+        if gb is not None:
+            gb = g[:, -1, s[2] // 2, s[3] // 2].contiguous()  # (out)
+            g = g[:, :-1]  # (out, in, kh, kw)
+        g = g.contiguous()
+        return g, gb
+
+    def _precond_ra(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
+                    bias_grad: Optional[torch.Tensor]
+                    ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+        state = self.state_storage[mod]
+        g, gb = weight_grad, bias_grad
+        g = g.flatten(1)  # (out, in * kh * kw)
+        if gb is not None:
+            g = torch.cat([g, gb.unsqueeze(1)], dim=1)  # (out, in * kh * kw + 1)
+
+        N = state.x.size(0)
+        g_kfe = state.kfe_gy.t().mm(g).mm(state.kfe_x)  # (out, in * kh * kw + 1)
+        m2 = self.alpha * state.m2 + (1 - self.alpha) * N * (g_kfe.square())  # (out, in * kh * kw + 1)
         g_nat_kfe = g_kfe / (m2 + self.eps)
-        g_nat = torch.mm(torch.mm(kfe_gy, g_nat_kfe), kfe_x.t())
-        if bias_grad is not None:
-            gb = g_nat[:, -1].contiguous().view(*bias_grad.shape)
-            # bias.grad.data = gb
-            g_nat = g_nat[:, :-1]
-        g_nat = g_nat.contiguous().view(*s)
-        # weight.grad.data = g_nat
+        g = state.kfe_gy.mm(g_nat_kfe).mm(state.kfe_x.t())
 
-        return g_nat.contiguous(), gb.contiguous()
+        if gb is not None:
+            gb = g[:, -1].contiguous()  # (out)
+            g = g[:, :-1]  # (out, in * kh * kw)
+        g = g.view_as(weight_grad).contiguous()  # (out, in, kh, kw)
+        return g, gb
 
-    def _precond_intra(self, group: dict[str, Union[LayerType, Iterable[torch.Tensor]]], weight_grad: torch.Tensor, bias_grad: Optional[torch.Tensor],
+    def _precond_intra(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
+                       bias_grad: Optional[torch.Tensor]
                        ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """Applies preconditioning."""
-        mod = group['mod']
-        state = self.state[mod]
-        gb: Optional[torch.Tensor] = None
+        state = self.state_storage[mod]
+        g, gb = weight_grad, bias_grad
 
-        kfe_x = state['kfe_x']
-        kfe_gy = state['kfe_gy']
+        x = state.x  # (N, in, xh, xw)
+        N = state.x.size(0)
+        if isinstance(mod, nn.Conv2d):
+            x: torch.Tensor = self.filter_dict[mod](x)    # (N, in * kh * kw, yh, yw)
+        if gb is not None:
+            ones = torch.ones_like(x[:, :1])
+            x = torch.cat([x, ones], dim=1)  # (N, in * kh * kw + 1, yh, yw)
 
-        x = self.state[mod]['x']
-        gy = self.state[mod]['gy']
-
-        g = weight_grad
-        s = g.shape
-
-        s_x = x.size()
-        s_cin = 0
-        s_gy = gy.size()
-        bs = x.size(0)
-
-        is_conv = isinstance(mod, nn.Conv2d)
-        if is_conv:
-            x: torch.Tensor = F.conv2d(x, group['gathering_filter'],
-                                       stride=mod.stride, padding=mod.padding,
-                                       groups=mod.in_channels)
-
-            s_x = x.size()
-            x = x.data.transpose(0, 1).contiguous().view(x.shape[1], -1)
-            if mod.bias is not None:
-                ones = torch.ones_like(x[:1])
-                x = torch.cat([x, ones], dim=0)
-                s_cin = 1  # adding a channel in dim for the bias
-
+        if isinstance(mod, nn.Conv2d):
             # intra minibatch m2
-            x_kfe = kfe_x.t().mm(x).view(s_x[1] + s_cin, -1, s_x[2], s_x[3]).transpose(0, 1)
-            gy = gy.transpose(0, 1).contiguous().view(s_gy[1], -1)
-            gy_kfe = kfe_gy.t().mm(gy).view(s_gy[1], -1, s_gy[2], s_gy[3]).transpose(0, 1)
-            m2 = torch.zeros((s[0], s[1] * s[2] * s[3] + s_cin), device=g.device)
-            g_kfe = torch.zeros((s[0], s[1] * s[2] * s[3] + s_cin), device=g.device)
-            for i in range(x_kfe.size(0)):
-                g_this = gy_kfe[i].view(s_gy[1], -1).mm(x_kfe[i].permute(1, 2, 0).view(-1, s_x[1] + s_cin))
-                m2 += g_this ** 2
-            m2 /= bs
-            g_kfe = gy_kfe.transpose(0, 1).contiguous().view(
-                s_gy[1], -1).mm(x_kfe.permute(0, 2, 3, 1).contiguous().view(-1, s_x[1] + s_cin)) / bs
-            # sanity check did we obtain the same grad ?
-            # g = torch.mm(torch.mm(kfe_gy, g_kfe), kfe_x.t())
-            # gb = g[:,-1]
-            # gw = g[:,:-1].view(*s)
-            # print('bias', torch.dist(gb, bias.grad.data))
-            # print('weight', torch.dist(gw, weight.grad.data))
-            # end sanity check
-            g_nat_kfe = g_kfe / (m2 + self.eps)
-            g_nat = torch.mm(torch.mm(kfe_gy, g_nat_kfe), kfe_x.t())
-            if bias_grad is not None:
-                gb = g_nat[:, -1].contiguous().view(*bias_grad.shape)
-                # bias.grad.data = gb
-                g_nat = g_nat[:, :-1]
-            g_nat = g_nat.contiguous().view(*s)
-            # weight.grad.data = g_nat
+            x = x.transpose(0, 1)  # (in * kh * kw + 1, N, yh, yw)
+            gy = state.gy.transpose(0, 1)  # (out, N, yh, yw)
+            x_kfe = state.kfe_x.t().mm(x.flatten(1)).view_as(x).transpose(0, 1)  # (N, in * kh * kw + 1, yh, yw)
+            gy_kfe = state.kfe_gy.t().mm(gy.flatten(1)).view_as(gy).transpose(0, 1)  # (N, out, yh, yw)
 
-            return g_nat.contiguous(), gb.contiguous()
-
+            m2 = torch.zeros_like(state.m2)  # (out, in * kh * kw + 1)
+            for i in range(N):
+                g_this = gy_kfe[i].flatten(1).mm(x_kfe[i].flatten(1).t())  # (out, in * kh * kw + 1)
+                m2 += g_this.square()
+            m2 /= N
         else:
-            if bias_grad is not None:
-                ones = torch.ones_like(x[:, :1])
-                x = torch.cat([x, ones], dim=1)
-            x_kfe = x.mm(kfe_x)
-            gy_kfe = gy.mm(kfe_gy)
-            m2 = (gy_kfe.t() ** 2).mm(x_kfe ** 2) / bs
-            g_kfe = gy_kfe.t().mm(x_kfe) / bs
-            g_nat_kfe = g_kfe / (m2 + self.eps)
-            g_nat = torch.mm(torch.mm(kfe_gy, g_nat_kfe), kfe_x.t())
-            if bias_grad is not None:
-                gb = g_nat[:, -1].contiguous().view(*bias_grad.shape)
-                # bias.grad.data = gb
-                g_nat = g_nat[:, :-1]
-            g_nat = g_nat.contiguous().view(*s)
-            # weight.grad.data = g_nat
-            return g_nat.contiguous(), gb.contiguous()
+            x_kfe = x.mm(state.kfe_x)  # (N, in + 1)
+            gy_kfe = state.gy.mm(state.kfe_gy)  # (N, out)
+            m2 = gy_kfe.square().t().mm(x_kfe.square()) / N  # (out, in + 1)
+            g_kfe = gy_kfe.t().mm(x_kfe) / N  # (out, in + 1)
 
-    def _compute_kfe(self, group: dict[str, Union[LayerType, Iterable[torch.Tensor]]]):
+        g_nat_kfe = g_kfe / (m2 + self.eps)  # (out, in * kh * kw + 1)
+        g = state.kfe_gy.mm(g_nat_kfe).mm(state.kfe_x.t())  # (out, in * kh * kw + 1)
+        if gb is not None:
+            gb = g[:, -1].contiguous()  # (out)
+            g = g[:, :-1]  # (out, in * kh * kw)
+        g = g.view_as(weight_grad).contiguous()  # (out, in, kh, kw)
+        return g, gb
+
+    def compute_kfe(self, mod: LayerType):
         """Computes the covariances."""
+        state = self.state_storage[mod]
+        x = state.x  # (N, in, xh, xw)
+        gy = state.gy  # (N, out, yh, yw)
 
-        mod = group['mod']
-        state = self.state[mod]
-
-        x = self.state[mod]['x']
-        gy = self.state[mod]['gy']
-        # Computation of xxt
-        is_conv = isinstance(mod, nn.Conv2d)
-        if is_conv:
+        if isinstance(mod, nn.Conv2d):
             if not self.sua:
-                x = F.conv2d(x, group['gathering_filter'],
-                             stride=mod.stride, padding=mod.padding,
-                             groups=mod.in_channels)
-            x = x.data.transpose(0, 1).contiguous().view(x.shape[1], -1)
+                x = self.filter_dict[mod](x)    # (N, in * kh * kw, yh, yw)
+            x = x.transpose(0, 1).flatten(1)    # (in [* kh * kw], N * yh * yw)
+            gy = gy.transpose(0, 1).flatten(1)  # (out, N * yh * yw)
+            state.num_locations = gy.size(2) * gy.size(3)  # yh * yw
         else:
-            x = x.data.t()
+            x.t_()  # (in, N)
+            gy.t_()  # (out, N)
+            state.num_locations = 1
 
         if mod.bias is not None:
             ones = torch.ones_like(x[:1])
-            x = torch.cat([x, ones], dim=0)
+            x = torch.cat([x, ones])    # (in [* kh * kw] + 1, N * yh * yw)
+        xxt = x.mm(x.t()) / x.size(1)    # (in [* kh * kw] + 1, in [* kh * kw] + 1)
+        ggt = gy.mm(gy.t()) / gy.size(1)  # (out, out)
 
-        xxt = x.mm(x.t()) / float(x.shape[1])
-        Ex, state['kfe_x'] = torch.symeig(xxt, eigenvectors=True)
-
-        # Computation of ggt
-        if is_conv:
-            gy = gy.data.transpose(0, 1)
-            state['num_locations'] = gy.shape[2] * gy.shape[3]
-            gy = gy.contiguous().view(gy.shape[0], -1)
-        else:
-            gy = gy.data.t()
-            state['num_locations'] = 1
-
-        ggt = gy.mm(gy.t()) / float(gy.shape[1])
-        Eg, state['kfe_gy'] = torch.symeig(ggt, eigenvectors=True)
-        state['m2'] = Eg.unsqueeze(1) * Ex.unsqueeze(0) * state['num_locations']
-        if is_conv and self.sua:
-            ws = next(mod.parameters()).grad.data.size()
-            state['m2'] = state['m2'].view(Eg.size(0), Ex.size(0), 1, 1).expand(-1, -1, ws[2], ws[3])
-
-    def __del__(self):
-        for handle in self._fwd_handles + self._bwd_handles:
-            handle.remove()
+        Ex, state.kfe_x = torch.linalg.eigh(xxt)
+        Eg, state.kfe_gy = torch.linalg.eigh(ggt)
+        Ex: torch.Tensor  # (in [* kh * kw] + 1)
+        Eg: torch.Tensor  # (out)
+        state.m2 = state.num_locations * Eg.outer(Ex)     # (out, in [* kh * kw] + 1)
+        if isinstance(mod, nn.Conv2d) and self.sua:
+            kh, kw = mod.kernel_size
+            state.m2 = state.m2[:, :, None, None].repeat(1, 1, kh, kw)  # (out, in + 1, kh, kw)
+        # else (out, in * kh * kw + 1)
 
     @staticmethod
-    def _to_kfe_sua(g: torch.Tensor, vx: torch.Tensor, vg: torch.Tensor) -> torch.Tensor:
+    def to_kfe_sua(g: torch.Tensor, kfe_x: torch.Tensor, kfe_gy: torch.Tensor) -> torch.Tensor:  # TODO
         """Project g to the kfe"""
+        # g: (out, in + 1, kh, kw)
+        # kfe_x: (in + 1, in + 1)
+        # kfe_gy: (out, out)
         sg = g.size()
-        g = torch.mm(vg.t(), g.view(sg[0], -1)).view(vg.size(1), sg[1], sg[2], sg[3])
-        g = torch.mm(g.permute(0, 2, 3, 1).contiguous().view(-1, sg[1]), vx)
-        g = g.view(vg.size(1), sg[2], sg[3], vx.size(1)).permute(0, 3, 1, 2)
-        return g
-
-
-if __name__ == '__main__':
-    import trojanvision
-    from trojanvision.utils import summary
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    trojanvision.environ.add_argument(parser)
-    trojanvision.datasets.add_argument(parser)
-    trojanvision.models.add_argument(parser)
-    trojanvision.trainer.add_argument(parser)
-    args = parser.parse_args('--verbose 1 --color --dataset mnist --model net')
-
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
-
-    if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, trainer=trainer)
-
-    preconditioner = EKFAC(model._model, 0.1, update_freq=100)
-    loader_train = dataset.loader['train']
-    optimizer = trainer.optimizer
-    for idx in range(10):
-        data = next(loader_train)
-        _input, _label = model.get_data(data)
-
-        optimizer.zero_grad()
-        with preconditioner.track():
-            loss = model.loss(_input, _label)
-            loss.backward()
-        preconditioner.step()  # Add a step of preconditioner before the optimizer step.
-        optimizer.step()
-        model._validate()
+        g = torch.mm(kfe_gy.t(), g.flatten(1)).view(kfe_gy.size(
+            1), sg[1], sg[2], sg[3])    # (out, in + 1, kh, kw)
+        g = torch.mm(g.permute(0, 2, 3, 1).flatten(end_dim=-2), kfe_x)  # (out * kh * kw, in + 1)
+        g = g.view(kfe_gy.size(1), sg[2], sg[3], kfe_x.size(1)).permute(0, 3, 1, 2)  # (out, in + 1, kh, kw)
+        return g.contiguous()
