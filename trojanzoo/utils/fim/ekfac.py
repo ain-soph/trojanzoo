@@ -190,6 +190,7 @@ class EKFAC(BaseKFAC):
                 g_this = gy_kfe[i].flatten(1).mm(x_kfe[i].flatten(1).t())  # (out, in * kh * kw + 1)
                 m2 += g_this.square()
             m2 /= N
+            g_kfe = torch.mm(gy_kfe.transpose(0, 1).flatten(1), x_kfe.transpose(0, 1).flatten(1).t()) / N
         else:
             x_kfe = x.mm(state.kfe_x)  # (N, in + 1)
             gy_kfe = state.gy.mm(state.kfe_gy)  # (N, out)
@@ -214,12 +215,12 @@ class EKFAC(BaseKFAC):
             state.num_locations = gy.size(2) * gy.size(3)  # yh * yw
             if not self.sua:
                 x = self.filter_dict[mod](x)    # (N, in * kh * kw, yh, yw)
-            x = x.transpose(0, 1).flatten(1)    # (in [* kh * kw], N * yh * yw)
+            x = x.transpose(0, 1).flatten(1)    # (in [* kh * kw], N * [yh * yw]{xh * xw})
             gy = gy.transpose(0, 1).flatten(1)  # (out, N * yh * yw)
         else:
             state.num_locations = 1
-            x.t_()  # (in, N)
-            gy.t_()  # (out, N)
+            x = x.t()  # (in, N)
+            gy = gy.t()  # (out, N)
 
         if mod.bias is not None:
             ones = torch.ones_like(x[:1])

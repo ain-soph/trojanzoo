@@ -187,7 +187,7 @@ class BaseKFAC(ABC, Optimizer):
     def _save_input(self, mod: LayerType, i: tuple[torch.Tensor]):
         """Saves input of layer to compute covariance."""
         if self.track and mod.training:
-            self.state_storage[mod].x = i[0].detach()
+            self.state_storage[mod].x = i[0].detach().clone()
 
     @torch.no_grad()
     def _save_grad_output(self, mod: LayerType,
@@ -195,8 +195,8 @@ class BaseKFAC(ABC, Optimizer):
                           grad_output: tuple[torch.Tensor]):
         """Saves grad on output of layer to compute covariance."""
         if self.track and mod.training:
-            gy = grad_output[0].detach()
-            self.state_storage[mod].gy = gy.size(0) * gy.detach()
+            gy = grad_output[0]
+            self.state_storage[mod].gy = gy.size(0) * gy.detach().clone()
 
     def reset(self):
         for k, v in self.state_storage.items():

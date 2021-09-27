@@ -204,13 +204,12 @@ if __name__ == '__main__':
 
     def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor,
                       adv_train: bool = False) -> list[torch.Tensor]:
-
         if dis_metric in ['kfac', 'ekfac']:
             kfac.track.enable()
         loss_fn = model.adv_loss if adv_train else model.loss
         loss_real = loss_fn(_input=img_real, _label=lab_real)
         gw_real = list((grad.detach().clone() for grad in torch.autograd.grad(loss_real, net_parameters)))
-        if dis_metric == 'kfac':
+        if dis_metric in ['kfac', 'ekfac']:
             kfac.track.disable()
             kfac.update_stats()
         return gw_real
