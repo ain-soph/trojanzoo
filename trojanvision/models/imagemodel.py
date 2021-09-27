@@ -6,7 +6,7 @@ from trojanvision.utils import apply_cmap
 from trojanzoo.models import _Model, Model
 from trojanzoo.environ import env
 from trojanzoo.utils import add_noise
-from trojanzoo.utils.fim import KFAC
+from trojanzoo.utils.fim import KFAC, EKFAC
 
 import torch
 import torch.nn as nn
@@ -236,7 +236,7 @@ class ImageModel(Model):
         return adv_acc, clean_acc + adv_acc
 
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
-               grad_clip: float = None, kfac: KFAC = None, adv_train: bool = None,
+               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None, adv_train: bool = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -261,8 +261,8 @@ class ImageModel(Model):
                                   amp: bool = False, scaler: torch.cuda.amp.GradScaler = None, **kwargs):
                 optimizer.zero_grad()
                 self.zero_grad()
-                if kfac is not None:
-                    kfac.reset()
+                if pre_conditioner is not None:
+                    pre_conditioner.reset()
 
                 if self.adv_train == 'free':
                     noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps,
@@ -301,7 +301,7 @@ class ImageModel(Model):
             after_loss_fn = after_loss_fn_new
 
         super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
-                       grad_clip=grad_clip, kfac=kfac, adv_train=adv_train,
+                       grad_clip=grad_clip, pre_conditioner=pre_conditioner, adv_train=adv_train,
                        print_prefix=print_prefix, start_epoch=start_epoch, resume=resume,
                        validate_interval=validate_interval, save=save, amp=amp,
                        loader_train=loader_train, loader_valid=loader_valid,

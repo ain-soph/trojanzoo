@@ -91,10 +91,8 @@ class BaseKFAC(ABC, Optimizer):
 
     def step(self, update_stats: bool = True, update_params: bool = True, force: bool = False):
         """Performs one step of preconditioning."""
-        if update_stats:
-            compute_inv_covs = self._iteration_counter % self.update_freq == 0
-            if force or compute_inv_covs:
-                self.update_stats()
+        if update_stats and (force or self._iteration_counter % self.update_freq == 0):
+            self.update_stats()
         if update_params:
             self.update_params()
         if update_stats:
@@ -197,7 +195,7 @@ class BaseKFAC(ABC, Optimizer):
                           grad_output: tuple[torch.Tensor]):
         """Saves grad on output of layer to compute covariance."""
         if self.track and mod.training:
-            gy = grad_output[0]
+            gy = grad_output[0].detach()
             self.state_storage[mod].gy = gy.size(0) * gy.detach()
 
     def reset(self):
@@ -225,7 +223,7 @@ class BaseKFAC(ABC, Optimizer):
 
 class KFAC(BaseKFAC):
 
-    def __init__(self, pi: bool = False, *args, **kwargs):
+    def __init__(self, *args, pi: bool = False, **kwargs):
         """ K-FAC Preconditionner for Linear and Conv2d layers.
 
         Computes the K-FAC of the second moment of the gradients.
@@ -233,9 +231,9 @@ class KFAC(BaseKFAC):
 
         Args:
             net (torch.nn.Module): Network to precondition.
+            pi (bool): Computes pi correction for Tikhonov regularization.
             eps (float): Tikhonov regularization parameter for the inverses.
             sua (bool): Applies SUA approximation.
-            pi (bool): Computes pi correction for Tikhonov regularization.
             update_freq (int): Perform inverses every update_freq updates.
             alpha (float): Running average parameter (if == 1, no r. ave.).
             constraint_norm (bool): Scale the gradients by the squared
@@ -323,8 +321,8 @@ class KFAC(BaseKFAC):
                              alpha=self.alpha / gy.size(1))
         # state.xxt = (state.xxt + state.xxt.t()) / 2
         # state.ggt = (state.ggt + state.ggt.t()) / 2
-        del state['x']
-        del state['gy']
+        state.x = None
+        state.gy = None
 
     @staticmethod
     def inverse(matrix: torch.Tensor, eps: float = 0.1, pi: float = 1.0) -> torch.Tensor:

@@ -26,7 +26,7 @@ from trojanvision.utils.model import weight_init
 from trojanzoo.utils.tensor import save_tensor_as_img
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
-from trojanzoo.utils.fim import fim, fim_diag, KFAC
+from trojanzoo.utils.fim import fim, fim_diag, KFAC, EKFAC
 
 import torch
 from torch.utils.data import TensorDataset
@@ -194,6 +194,8 @@ if __name__ == '__main__':
     kfac = None
     if dis_metric == 'kfac':
         kfac = KFAC(model)
+    elif dis_metric == 'ekfac':
+        kfac = EKFAC(model)
 
     def get_data_fn(data, **kwargs):
         _input, _label = eval_model.get_data(data, **kwargs)
@@ -203,15 +205,14 @@ if __name__ == '__main__':
     def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor,
                       adv_train: bool = False) -> list[torch.Tensor]:
 
-        if dis_metric == 'kfac':
+        if dis_metric in ['kfac', 'ekfac']:
             kfac.track.enable()
         loss_fn = model.adv_loss if adv_train else model.loss
         loss_real = loss_fn(_input=img_real, _label=lab_real)
         gw_real = list((grad.detach().clone() for grad in torch.autograd.grad(loss_real, net_parameters)))
         if dis_metric == 'kfac':
             kfac.track.disable()
-            kfac.update_covs()
-            kfac.update_inv_covs()
+            kfac.update_stats()
         return gw_real
 
     def get_syn_grad(img_syn: torch.Tensor, lab_syn: torch.Tensor,

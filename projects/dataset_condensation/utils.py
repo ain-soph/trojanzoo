@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils.fim.kfac import KFAC
+from trojanzoo.utils.fim import KFAC, EKFAC
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -50,10 +50,11 @@ def get_loops(image_per_class: int) -> tuple[int, int]:
 
 
 def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_metric: str,
-               fim_inv_list: list[torch.Tensor] = None, kfac: KFAC = None) -> torch.Tensor:
+               fim_inv_list: list[torch.Tensor] = None,
+               kfac: Union[KFAC, EKFAC] = None) -> torch.Tensor:
     dis = torch.tensor(0.0).to(gw_syn[0].device)
 
-    if dis_metric in ['ours', 'kfac']:
+    if dis_metric in ['ours', 'kfac', 'ekfac']:
         gw_real_new = gw_real if kfac is None else kfac.calc_grad(gw_real)
         gw_syn_new = gw_syn if kfac is None else kfac.calc_grad(gw_syn)
         for ig in range(len(gw_real)):

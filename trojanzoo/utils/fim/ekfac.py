@@ -64,10 +64,11 @@ class EKFAC(BaseKFAC):
             for j in range(kw):
                 g_filter[:, i, j, :, i, j] = 1  # TODO: avoid for loop
         g_filter = g_filter.flatten(0, 2)   # (in * kh * kw, 1, kh, kw)
-        filter_conv = nn.Conv2d(in_channels=1, out_channels=mod.in_channels * kh * kw,
+        filter_conv = nn.Conv2d(in_channels=mod.in_channels, out_channels=mod.in_channels * kh * kw,
                                 kernel_size=(kh, kw), bias=False,
                                 stride=mod.stride, padding=mod.padding, groups=mod.in_channels,
                                 device=g_filter.device, dtype=g_filter.dtype)
+        filter_conv.requires_grad_(False)
         filter_conv.weight.copy_(g_filter)
         return filter_conv
 
@@ -210,15 +211,15 @@ class EKFAC(BaseKFAC):
         gy = state.gy  # (N, out, yh, yw)
 
         if isinstance(mod, nn.Conv2d):
+            state.num_locations = gy.size(2) * gy.size(3)  # yh * yw
             if not self.sua:
                 x = self.filter_dict[mod](x)    # (N, in * kh * kw, yh, yw)
             x = x.transpose(0, 1).flatten(1)    # (in [* kh * kw], N * yh * yw)
             gy = gy.transpose(0, 1).flatten(1)  # (out, N * yh * yw)
-            state.num_locations = gy.size(2) * gy.size(3)  # yh * yw
         else:
+            state.num_locations = 1
             x.t_()  # (in, N)
             gy.t_()  # (out, N)
-            state.num_locations = 1
 
         if mod.bias is not None:
             ones = torch.ones_like(x[:1])

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils.fim.kfac import KFAC
+from trojanzoo.utils.fim import KFAC, EKFAC
 from trojanzoo.utils import empty_cache
 from trojanzoo.utils.logger import MetricLogger, SmoothedValue
 from trojanzoo.utils.model import accuracy, activate_params
@@ -12,6 +12,7 @@ import torch.nn as nn
 
 from tqdm import tqdm
 
+from typing import Union
 from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -20,7 +21,7 @@ import torch.utils.data
 
 def train(module: nn.Module, num_classes: int,
           epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
-          grad_clip: float = None, kfac: KFAC = None,
+          grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
           print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
           validate_interval: int = 10, save: bool = False, amp: bool = False,
           loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -88,8 +89,8 @@ def train(module: nn.Module, num_classes: int,
             _iter = _epoch * len_loader_train + i
             # data_time.update(time.perf_counter() - end)
             _input, _label = get_data_fn(data, mode='train')
-            if kfac is not None and not amp:
-                kfac.track.enable()
+            if pre_conditioner is not None and not amp:
+                pre_conditioner.track.enable()
             _output = module(_input, amp=amp)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
             if amp:
@@ -109,9 +110,9 @@ def train(module: nn.Module, num_classes: int,
                                   amp=amp, scaler=scaler,
                                   _iter=_iter, total_iter=total_iter)
                     # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
-                if kfac is not None:
-                    kfac.track.disable()
-                    kfac.step()
+                if pre_conditioner is not None:
+                    pre_conditioner.track.disable()
+                    pre_conditioner.step()
                 if grad_clip is not None:
                     nn.utils.clip_grad_norm_(params, grad_clip)
                 optimizer.step()

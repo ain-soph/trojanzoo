@@ -7,7 +7,7 @@ from trojanzoo.utils import add_noise, get_name, to_tensor
 from trojanzoo.utils.model import *
 from trojanzoo.utils.train import train, validate, compare
 from trojanzoo.utils.output import ansi, prints
-from trojanzoo.utils.fim import KFAC
+from trojanzoo.utils.fim import KFAC, EKFAC
 
 import torch
 import torch.nn as nn
@@ -375,7 +375,7 @@ class Model:
     # -----------------------------------Train and Validate------------------------------------ #
     # TODO: annotation and remove those arguments to be *args, **kwargs
     def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
-               grad_clip: float = None, kfac: KFAC = None,
+               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
@@ -400,12 +400,16 @@ class Model:
             epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
-        return train(self, self.num_classes,
-                     epoch, optimizer, lr_scheduler, grad_clip, kfac,
-                     print_prefix, start_epoch, resume, validate_interval, save, amp,
-                     loader_train, loader_valid, epoch_fn, get_data_fn, loss_fn, after_loss_fn, validate_fn,
-                     save_fn, file_path, folder_path, suffix,
-                     writer, main_tag, tag, accuracy_fn, verbose, indent, **kwargs)
+        return train(module=self, num_classes=self.num_classes,
+                     epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                     grad_clip=grad_clip, pre_conditioner=pre_conditioner,
+                     print_prefix=print_prefix, start_epoch=start_epoch, resume=resume,
+                     validate_interval=validate_interval, save=save, amp=amp,
+                     loader_train=loader_train, loader_valid=loader_valid,
+                     epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn,
+                     save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix,
+                     writer=writer, main_tag=main_tag, tag=tag,
+                     accuracy_fn=accuracy_fn, verbose=verbose, indent=indent, **kwargs)
 
     def _validate(self, module: nn.Module = None, num_classes: int = None,
                   full: bool = True, loader: torch.utils.data.DataLoader = None,
@@ -422,10 +426,11 @@ class Model:
         get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
         loss_fn = loss_fn if loss_fn is not None else self.loss
         accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
-        return validate(module, num_classes, loader,
-                        print_prefix, indent, verbose,
-                        get_data_fn, loss_fn,
-                        writer, main_tag, tag, _epoch, accuracy_fn, **kwargs)
+        return validate(module=module, num_classes=num_classes, loader=loader,
+                        print_prefix=print_prefix, indent=indent, verbose=verbose,
+                        get_data_fn=get_data_fn, loss_fn=loss_fn,
+                        writer=writer, main_tag=main_tag, tag=tag,
+                        _epoch=_epoch, accuracy_fn=accuracy_fn, **kwargs)
 
     # TODO: this method shall be removed
     def _compare(self, peer: nn.Module = None, full: bool = True, loader: torch.utils.data.DataLoader = None,
