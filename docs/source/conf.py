@@ -133,6 +133,7 @@ autodoc_docstring_signature = True
 
 html_theme = 'trojanzoo_sphinx_theme'
 html_theme_path = [trojanzoo_sphinx_theme.get_html_theme_path()]
+html_permalinks_icon = '\uf0c1'  # '\uf08e'  font-family = FontAwesome
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
