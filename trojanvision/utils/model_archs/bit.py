@@ -21,7 +21,6 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.nn.utils.parametrize as parametrize
 import numpy as np
 from collections import OrderedDict
