@@ -18,9 +18,11 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r ./docs/requirements.txt
-      - name: Install trojanzoo_sphinx_theme
+      - name: Install katex
         run: |
-          pip install git+https://github.com/ain-soph/trojanzoo_sphinx_theme.git#egg=trojanzoo_sphinx_theme
+          apt update
+          apt install -y npm
+          npm install -g katex
       - name: Compile Sphinx Docs
         run: |
           cd ./docs/
