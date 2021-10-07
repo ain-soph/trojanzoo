@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: version
         id: get-version
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         with:
           script: return context.payload.release.tag_name.substring(1)
           result-encoding: string
@@ -72,7 +72,7 @@ jobs:
     steps:
       - name: version
         id: get-version
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         with:
           script: return context.payload.release.tag_name.substring(1)
           result-encoding: string
