@@ -1,5 +1,5 @@
 # TrojanZoo
-![logo](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/images/trojanzoo-logo-readme.svg)
+![logo](https://github.com/ain-soph/trojanzoo/raw/main/docs/source/images/trojanzoo-logo-readme.svg)
 
 [![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
 
@@ -22,17 +22,17 @@ This is the code implementation (pytorch) for our paper:
 
 TrojanZoo provides a universal pytorch platform to conduct security researches (especially backdoor attacks/defenses) of image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
-[Dataset List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/datasets/__init__.py)  
-[Model List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/models/__init__.py)  
-[Attack List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/attacks/__init__.py)  
-[Defense List](https://github.com/ain-soph/trojanzoo/blob/master/trojanvision/defenses/__init__.py)
+[Dataset List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/__init__.py)  
+[Model List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/__init__.py)  
+[Attack List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/attacks/__init__.py)  
+[Defense List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/__init__.py)
 
 > Note: This repository is also maintained to cover the implementation of  
 > our kdd 2020 paper [AdvMind: Inferring Adversary Intent of Black-Box Attacks](https://arxiv.org/abs/2006.09539)  
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
 
 ## Screenshot
-![screenshot](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/images/screenshot.png)
+![screenshot](https://github.com/ain-soph/trojanzoo/raw/main/docs/source/images/screenshot.png)
 
 
 ## Features
@@ -61,7 +61,7 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 
 ## Quick Start
 
-You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/master/examples) scripts to reproduce the evaluation results in our paper.  
+You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/main/examples) scripts to reproduce the evaluation results in our paper.  
 > Note: The program won't save results without `--save`  
 1. Train a model:  
     e.g. `ResNet18` on `CIFAR10` with 95% Acc
@@ -137,7 +137,7 @@ Modify them in corresponding config files and command-line arguments.
 2. **Unit test**
 
 ## License
-TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/master/LICENSE) file.
+TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/main/LICENSE) file.
 ## Cite our paper
 ```
 @InProceedings{pang2020trojanzoo,

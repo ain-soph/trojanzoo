@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from typing import Iterable
+from typing import Sequence
 
 
 class MixedOp(nn.Module):
@@ -86,7 +86,7 @@ class FeatureExtractor(nn.Module):
             nn.BatchNorm2d(C_curr)
         )
 
-        self.cells: Iterable[Cell] = nn.ModuleList()
+        self.cells: Sequence[Cell] = nn.ModuleList()
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         reduction_prev = False
         for i in range(layers):
