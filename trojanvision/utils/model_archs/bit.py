@@ -19,32 +19,12 @@
 # https://github.com/google-research/big_transfer/blob/master/bit_pytorch/models.py
 """Bottleneck ResNet v2 with GroupNorm and Weight Standardization."""
 
+from trojanvision.utils.model_archs import StdConv2d
+
 import torch
 import torch.nn as nn
-import torch.nn.utils.parametrize as parametrize
 import numpy as np
 from collections import OrderedDict
-
-
-class Std(nn.Module):
-    def forward(self, X: torch.Tensor):
-        v, m = torch.var_mean(X, dim=[1, 2, 3], keepdim=True, unbiased=False)
-        return (X - m) / torch.sqrt(v + 1e-10)
-
-
-class StdConv2d(nn.Conv2d):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        parametrize.register_parametrization(self, "weight", Std())
-
-
-# class StdConv2d(nn.Conv2d):
-#     def forward(self, x: torch.Tensor) -> torch.Tensor:
-#         w = self.weight
-#         v, m = torch.var_mean(w, dim=[1, 2, 3], keepdim=True, unbiased=False)
-#         w = (w - m) / torch.sqrt(v + 1e-10)
-#         return F.conv2d(x, w, self.bias, self.stride, self.padding, self.dilation, self.groups)
-#     # TODO: Linting for __call__
 
 
 def conv3x3(cin: int, cout: int, stride: int = 1, groups: int = 1, bias: bool = False):

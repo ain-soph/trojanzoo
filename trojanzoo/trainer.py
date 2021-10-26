@@ -34,6 +34,7 @@ class Trainer:
         group.add_argument('--weight_decay', type=float, help='weight_decay passed to Optimizer, defaults to 3e-4.')
         group.add_argument('--nesterov', action='store_true', help='enable nesterov for SGD optimizer.')
         group.add_argument('--lr_scheduler', action='store_true', help='enable CosineAnnealingLR scheduler.')
+        group.add_argument('--lr_min', type=float, help='min learning rate for `eta_min` in CosineAnnealingLR, defaults to 0.0.')
         group.add_argument('--pre_conditioner', choices=['kfac', 'ekfac'], help='Using KFAC preconditioner.')
         group.add_argument('--amp', action='store_true', help='Automatic Mixed Precision.')
         group.add_argument('--grad_clip', type=float, help='Gradient Clipping max norms.')

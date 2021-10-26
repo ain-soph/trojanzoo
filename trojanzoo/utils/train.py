@@ -84,7 +84,6 @@ def train(module: nn.Module, num_classes: int,
         if change_train_eval:
             module.train()
         activate_params(module, params)
-        optimizer.zero_grad()
         for i, data in enumerate(loader_epoch):
             _iter = _epoch * len_loader_train + i
             # data_time.update(time.perf_counter() - end)
@@ -93,6 +92,7 @@ def train(module: nn.Module, num_classes: int,
                 pre_conditioner.track.enable()
             _output = module(_input, amp=amp)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
+            optimizer.zero_grad()
             if amp:
                 scaler.scale(loss).backward()
                 if callable(after_loss_fn):
@@ -118,13 +118,13 @@ def train(module: nn.Module, num_classes: int,
                 optimizer.step()
             if lr_scheduler and lr_scheduler_freq == 'step':
                 lr_scheduler.step()
-            optimizer.zero_grad()
             acc1, acc5 = accuracy_fn(_output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
             logger.meters['loss'].update(float(loss), batch_size)
             logger.meters['top1'].update(acc1, batch_size)
             logger.meters['top5'].update(acc5, batch_size)
             empty_cache()   # TODO: should it be outside of the dataloader loop?
+        optimizer.zero_grad()
         if lr_scheduler and lr_scheduler_freq == 'epoch':
             lr_scheduler.step()
         if change_train_eval:

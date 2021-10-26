@@ -1,6 +1,6 @@
 .. _trojanzoo:
 
-trojanzoo
+:mod:`trojanzoo`
 ===================================
 
 .. toctree::

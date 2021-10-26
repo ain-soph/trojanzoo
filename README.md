@@ -1,5 +1,5 @@
 # TrojanZoo
-![logo](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/_static/img/trojanzoo-logo-readme.svg)
+![logo](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/images/trojanzoo-logo-readme.svg)
 
 [![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
 
@@ -32,7 +32,7 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
 
 ## Screenshot
-![screenshot](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/_static/img/screenshot.png)
+![screenshot](https://github.com/ain-soph/trojanzoo/raw/master/docs/source/images/screenshot.png)
 
 
 ## Features

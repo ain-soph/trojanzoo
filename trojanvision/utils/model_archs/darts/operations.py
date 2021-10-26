@@ -1,14 +1,26 @@
 #!/usr/bin/env python3
 
+from trojanvision.utils.model_archs import StdConv2d
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from collections import OrderedDict
 
 
-def get_op(op_name: str, C_in: int, stride: int = 1, affine: bool = True, p: float = None,
+PRIMITIVES = [
+    'max_pool_3x3',
+    'avg_pool_3x3',
+    'skip_connect',  # identity
+    'sep_conv_3x3',
+    'sep_conv_5x5',
+    'dil_conv_3x3',
+    'dil_conv_5x5',
+    'none',  # zero
+]
+
+
+def get_op(op_name: str, C_in: int, stride: int = 1, affine: bool = True, dropout_p: float = None,
            C_out: int = None, std_conv: bool = False):
     C_out = C_out if C_out is not None else C_in
     if op_name == 'none':
@@ -68,8 +80,8 @@ def get_op(op_name: str, C_in: int, stride: int = 1, affine: bool = True, p: flo
 
         if 'pool' not in op_name and 'sep_conv' not in op_name and 'dil_conv' not in op_name:
             seq.add_module('bn', nn.BatchNorm2d(C_out, affine=affine))
-        if p is not None:
-            seq.add_module('dropout', nn.Dropout(p=p))
+        if dropout_p is not None:
+            seq.add_module('dropout', nn.Dropout(p=dropout_p))
         return seq
 
 
@@ -121,12 +133,3 @@ class FactorizedReduce(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.cat([self.conv1(x), self.conv2(x[:, :, 1:, 1:])], dim=1)
-
-
-class StdConv2d(nn.Conv2d):
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        weight = self.weight.flatten(start_dim=1)
-        weight = weight.sub(weight.mean(dim=1, keepdim=True)).div(
-            weight.std(dim=1, keepdim=True) + 1e-5).view_as(self.weight)
-        return F.conv2d(x, weight, self.bias, self.stride,
-                        self.padding, self.dilation, self.groups)

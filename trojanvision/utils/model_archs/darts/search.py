@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 
-from .genotypes import PRIMITIVES
-from .operations import get_op
+from .genotypes import Genotype
+from .operations import get_op, PRIMITIVES
+
+from trojanzoo.utils import to_numpy
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import numpy as np
+
+from typing import Iterable
 
 
 class MixedOp(nn.Module):
     """ Mixed operation """
 
-    def __init__(self, C: int, stride: int):
+    def __init__(self, C: int, stride: int,
+                 primitives: list[str] = PRIMITIVES,
+                 **kwargs):
         super().__init__()
         self._ops = nn.ModuleList()
-        for primitive in PRIMITIVES:
-            op = get_op(primitive, C, stride, affine=False)
+        for primitive in primitives:
+            op = get_op(primitive, C, stride, affine=False, **kwargs)
             self._ops.append(op)
 
     def forward(self, x: torch.Tensor, weights: torch.Tensor) -> torch.Tensor:
@@ -30,7 +36,8 @@ class MixedOp(nn.Module):
 class Cell(nn.Module):
     def __init__(self, steps: int, multiplier: int,
                  C_prev_prev: int, C_prev: int, C: int,
-                 reduction: bool, reduction_prev: bool):
+                 reduction: bool, reduction_prev: bool,
+                 **kwargs):
         super().__init__()
         self.reduction = reduction
 
@@ -45,7 +52,7 @@ class Cell(nn.Module):
         for i in range(self._steps):
             for j in range(2 + i):
                 stride = 2 if reduction and j < 2 else 1
-                op = MixedOp(C, stride)
+                op = MixedOp(C, stride, **kwargs)
                 self._ops.append(op)
 
     def forward(self, s0: torch.Tensor, s1: torch.Tensor, weights: torch.Tensor) -> torch.Tensor:
@@ -60,14 +67,18 @@ class Cell(nn.Module):
         return torch.cat(states[-self._multiplier:], dim=1)
 
 
-class Feature_Extractor(nn.Module):
+class FeatureExtractor(nn.Module):
     def __init__(self, C: int, layers: int,
-                 steps: int = 4, multiplier: int = 4, stem_multiplier: int = 3):
+                 steps: int = 4, multiplier: int = 4,
+                 stem_multiplier: int = 3,
+                 primitives: list[str] = PRIMITIVES,
+                 **kwargs):
         super().__init__()
         self._C = C
         self._layers = layers
         self._steps = steps
         self._multiplier = multiplier
+        self.primitives = primitives
 
         C_curr = stem_multiplier * C
         self.stem = nn.Sequential(
@@ -75,27 +86,66 @@ class Feature_Extractor(nn.Module):
             nn.BatchNorm2d(C_curr)
         )
 
-        self.cells = nn.ModuleList()
+        self.cells: Iterable[Cell] = nn.ModuleList()
         C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         reduction_prev = False
         for i in range(layers):
+            reduction = False
             if i in [layers // 3, 2 * layers // 3]:
                 C_curr *= 2
                 reduction = True
-            else:
-                reduction = False
-            cell = Cell(steps, multiplier, C_prev_prev, C_prev, C_curr, reduction, reduction_prev)
+            cell = Cell(steps, multiplier, C_prev_prev, C_prev, C_curr,
+                        reduction, reduction_prev, primitives=primitives)
             reduction_prev = reduction
             self.cells.append(cell)
             C_prev_prev, C_prev = C_prev, multiplier * C_curr
+        self.feats_dim = C_prev
+
+        # k = sum(1 for i in range(self._steps) for n in range(2 + i))
+        k = 2 * self._steps + ((self._steps - 1) * self._steps) // 2
+        num_ops = len(self.primitives)
+        self.register_buffer('alphas_normal', 1e-3 * torch.randn(k, num_ops))
+        self.register_buffer('alphas_reduce', 1e-3 * torch.randn(k, num_ops))
+        self.alphas_normal: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
+        self.alphas_reduce: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, input):
         s0 = s1 = self.stem(input)
         for i, cell in enumerate(self.cells):
-            cell: Cell
-            if cell.reduction:
-                weights = F.softmax(self.alphas_reduce, dim=-1)
-            else:
-                weights = F.softmax(self.alphas_normal, dim=-1)
+            weights = self.softmax(self.alphas_reduce if cell.reduction
+                                   else self.alphas_normal)
             s0, s1 = s1, cell(s0, s1, weights)
         return s1
+
+    def genotype(self) -> Genotype:
+        gene_normal = self._parse(to_numpy(self.softmax(self.alphas_normal)))
+        gene_reduce = self._parse(to_numpy(self.softmax(self.alphas_reduce)))
+
+        concat = range(2 + self._steps - self._multiplier, self._steps + 2)
+        genotype = Genotype(normal=gene_normal, normal_concat=concat,
+                            reduce=gene_reduce, reduce_concat=concat)
+        return genotype
+
+    def _parse(self, weights: np.ndarray):
+        gene: list[tuple[str, int]] = []
+        n = 2
+        start = 0
+        for i in range(self._steps):
+            end = start + n
+            W = weights[start:end].copy()
+            edges = sorted(range(i + 2), key=lambda x: -max(W[x][k]
+                           for k in range(len(W[x]))
+                           if k != self.primitives.index('none'))
+                           )[:2]
+            for j in edges:
+                k_best = -1
+                for k in range(len(W[j])):
+                    if (k != self.primitives.index('none') and
+                            (k_best == -1 or
+                             W[j][k] > W[j][k_best])):
+                        k_best = k
+                gene.append((self.primitives[k_best], j))
+            start = end
+            n += 1
+        return gene

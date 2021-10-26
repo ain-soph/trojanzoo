@@ -35,7 +35,7 @@ class Cell(nn.Module):
         self._ops = nn.ModuleList()
         for name, index in zip(op_names, indices):
             stride = 2 if reduction and index < 2 else 1
-            op = get_op(name, C, stride, p=dropout_p, std_conv=std_conv)
+            op = get_op(name, C, stride, dropout_p=dropout_p, std_conv=std_conv)
             self._ops.append(op)
 
     def forward(self, s0: torch.Tensor, s1: torch.Tensor) -> torch.Tensor:
@@ -81,21 +81,21 @@ class FeatureExtractor(nn.Module):
     #   layer: 14
     #   dropout_p: None
     def __init__(self, genotype: Genotype, C: int = 36, layers: int = 20,
-                 dropout_p: float = 0.2, std_conv: bool = False, **kwargs):
+                 dropout_p: float = 0.2, std_conv: bool = False,
+                 stem_multiplier: int = 3, **kwargs):
         super().__init__()
         self.genotype = genotype
         self.aux_C: int = 0
         self.aux_layer: int = 0
 
-        stem_multiplier = 3
         C_curr = stem_multiplier * C
         self.stem = nn.Sequential(
             nn.Conv2d(3, C_curr, 3, padding=1, bias=False),
             nn.BatchNorm2d(C_curr)
         )
 
-        C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         self.cells = nn.ModuleList()
+        C_prev_prev, C_prev, C_curr = C_curr, C_curr, C
         reduction_prev = False
         for i in range(layers):
             reduction = False

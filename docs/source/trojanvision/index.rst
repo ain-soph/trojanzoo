@@ -1,6 +1,6 @@
 .. _trojanvision:
 
-trojanvision
+:mod:`trojanvision`
 ===================================
 
 .. toctree::

@@ -2,7 +2,7 @@
 
 from .darts import _DARTS, DARTS
 from trojanvision.datasets import ImageSet
-from trojanvision.utils.model_archs.lanet import gen_code_from_list, translator
+from trojanvision.utils.model_archs.lanet import operations, gen_code_from_list, translator
 
 import torch
 import torch.hub
@@ -21,11 +21,17 @@ class LaNet(DARTS):
     model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }
 
     def __init__(self, name: str = 'lanet', layers: int = 24, C: int = 128,
-                 arch: list[int] = cifar_arch, model: type[_DARTS] = _DARTS, **kwargs):
-        genotype = translator(gen_code_from_list(arch))
-        self.arch = arch
-        super().__init__(name=name, layers=layers, C=C, genotype=genotype, model=model, std_conv=True, **kwargs)
-        self.param_list['lanet'] = ['arch']
+                 arch: list[int] = cifar_arch, model: type[_DARTS] = _DARTS,
+                 supernet: bool = False, **kwargs):
+        genotype = None
+        if not supernet:
+            genotype = translator(gen_code_from_list(arch))
+            self.arch = arch
+        super().__init__(name=name, layers=layers, C=C,
+                         genotype=genotype, model=model, std_conv=True,
+                         primitives=operations, supernet=supernet, **kwargs)
+        if not supernet:
+            self.param_list['lanet'] = ['arch']
 
     def get_official_weights(self, dataset: str = None, **kwargs) -> OrderedDict[str, torch.Tensor]:
         if dataset is None and isinstance(self.dataset, ImageSet):

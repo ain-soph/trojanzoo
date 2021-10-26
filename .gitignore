@@ -1,40 +1,51 @@
-
-abandon
-unused
-useless
-
-# Configureation Files
+# Configuration Files
 .vs
 .vscode
 .devcontainer
 .idea
 
-# version files
-# version.py
+# Authorization Secrets
+.ssh
 
-# Working on
+# Not implement
+mypy*
 codecov.yml
 
 # Temp Files
 .DS_Store
 .dropbox
-.ssh
-.ipynb_checkpoints
-*.pyc
-*.ini
+
 __pycache__
-/build
+*.pyc
+*build/
+generated/
+.pytest_cache
+.coverage
+coverage.xml
+
+.ipynb_checkpoints
+*.map
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
 /dist
 /*.egg-info
-.pytest_cache
 
 # Filter Directory
+/result
+/output
+# /projects
+
+abandon
+unused
+useless
+
 /bash
 /configs
 /cmd_config
 /data
-/result
-# /projects
 /tex
 
 # test file

@@ -53,7 +53,7 @@ class Dataset(ABC, BasicObject):
         return group
 
     def __init__(self, batch_size: int = None, folder_path: str = None, download: bool = False,
-                 split_ratio: float = 0.8, train_sample: int = 1024, test_ratio: float = 0.3,
+                 split_ratio: float = 0.8, train_ratio: float = 0.5, test_ratio: float = 0.3,
                  num_workers: int = 4, loss_weights: Union[bool, np.ndarray] = False,
                  valid_batch_size: int = 100, test_batch_size: int = 1, **kwargs):
         super().__init__(**kwargs)
@@ -65,7 +65,7 @@ class Dataset(ABC, BasicObject):
         self.valid_batch_size = valid_batch_size
         self.test_batch_size = test_batch_size
         self.split_ratio = split_ratio
-        self.train_sample = train_sample
+        self.train_ratio = train_ratio
         self.test_ratio = test_ratio
         self.num_workers = num_workers
         # ----------------------------------------------------------------------------- #
@@ -79,12 +79,18 @@ class Dataset(ABC, BasicObject):
         if download and not self.check_files():
             self.initialize()
         # Preset Loader
-        self.loader: dict[str, torch.utils.data.DataLoader] = {}
-        self.loader['train'] = self.get_dataloader(mode='train')
-        self.loader['train2'] = self.get_dataloader(mode='train', full=False)
-        self.loader['valid'] = self.get_dataloader(mode='valid')
-        self.loader['valid2'] = self.get_dataloader(mode='valid', full=False)
-        self.loader['test'] = self.get_dataloader(mode='test')
+        try:
+            self.loader: dict[str, torch.utils.data.DataLoader] = {}
+            self.loader['train'] = self.get_dataloader(mode='train')
+            train2, train3 = self.split_dataset(self.loader['train'].dataset, percent=self.train_ratio)
+            self.loader['train2'] = self.get_dataloader(mode='train', dataset=train2)
+            self.loader['train3'] = self.get_dataloader(mode='train', dataset=train3)
+            self.loader['valid'] = self.get_dataloader(mode='valid')
+            self.loader['valid2'] = self.get_dataloader(mode='valid', full=False)
+            self.loader['test'] = self.get_dataloader(mode='test')
+        except Exception:
+            print(f'Dataset Folder Path: {self.folder_path}')
+            raise
         # ----------------------------------------------------------------------------- #
         # Loss Weights
         if isinstance(loss_weights, bool):
@@ -151,7 +157,7 @@ class Dataset(ABC, BasicObject):
                 dataset = self.get_full_dataset(mode=mode, **kwargs)
             elif mode == 'train':
                 fullset = self.get_full_dataset(mode='train', **kwargs)
-                dataset, _ = self.split_dataset(fullset, length=self.train_sample, seed=seed)
+                dataset, _ = self.split_dataset(fullset, percent=self.train_ratio, seed=seed)
             else:
                 fullset = self.get_full_dataset(mode='valid', **kwargs)
                 subset: dict[str, torch.utils.data.Subset] = {}

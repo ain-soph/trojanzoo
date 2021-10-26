@@ -12,7 +12,6 @@ import os
 from typing import TYPE_CHECKING
 from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
-from typing import Union
 if TYPE_CHECKING:
     import torch.utils.data
 

@@ -21,16 +21,18 @@ class DownsampledImageNet(VisionDataset):
     # A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets
     # https://arxiv.org/pdf/1707.08819.pdf
 
+    data_shape: list[int] = []
     train_list: list[list[str]] = []
     test_list: list[list[str]] = []
-    data_shape: list[int] = []
 
-    def __init__(self, root: str, train: bool = True, num_classes: int = None,
+    def __init__(self, root: str, train: bool = True,
+                 num_classes: int = None,
                  transform: Optional[Callable] = None,
                  target_transform: Optional[Callable] = None,
                  download: bool = False,
                  ) -> None:
-        super().__init__(root, transform=transform, target_transform=target_transform)
+        super().__init__(root, transform=transform,
+                         target_transform=target_transform)
 
         self.num_classes = num_classes
         self.train = train  # training set or test set
@@ -39,8 +41,7 @@ class DownsampledImageNet(VisionDataset):
             self.download()
 
         if not self._check_integrity():
-            raise RuntimeError('Dataset not found or corrupted.' +
-                               ' You can use download=True to download it')
+            raise RuntimeError('Dataset not found or corrupted.')
 
         if self.train:
             downloaded_list = self.train_list
@@ -87,8 +88,7 @@ class DownsampledImageNet(VisionDataset):
 
     def _check_integrity(self) -> bool:
         root = self.root
-        for fentry in (self.train_list + self.test_list):
-            filename, md5 = fentry[0], fentry[1]
+        for filename, md5 in (self.train_list + self.test_list):
             fpath = os.path.join(root, filename)
             if not check_integrity(fpath, md5):
                 return False
@@ -102,6 +102,7 @@ class DownsampledImageNet(VisionDataset):
 
 
 class ImageNet16(DownsampledImageNet):
+    data_shape: list[int] = [3, 16, 16]
     train_list = [
         ['train_data_batch_1', '27846dcaa50de8e21a7d1a35f30f0e91'],
         ['train_data_batch_2', 'c7254a054e0e795c69120a5727050e3f'],
@@ -117,10 +118,10 @@ class ImageNet16(DownsampledImageNet):
     test_list = [
         ['val_data', '3410e3017fdaefba8d5073aaa65e4bd6'],
     ]
-    data_shape: list[int] = [3, 16, 16]
 
 
 class ImageNet32(DownsampledImageNet):
+    data_shape: list[int] = [3, 32, 32]
     train_list = [
         ['train_data_batch_1', 'dd6683a336ab645d336f7b47c67d8456'],
         ['train_data_batch_2', 'b9b1f5ad237638a41e80944fc03b42af'],
@@ -136,4 +137,3 @@ class ImageNet32(DownsampledImageNet):
     test_list = [
         ['val_data', '4836a1eec28cd4476eb017126cd0f059'],
     ]
-    data_shape: list[int] = [3, 32, 32]

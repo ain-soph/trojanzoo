@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.http import MediaIoBaseDownload
 
 import io
 import os
 import pickle
 
+try:
+    from googleapiclient.discovery import build
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.auth.transport.requests import Request
+    from googleapiclient.http import MediaIoBaseDownload
+except ImportError:
+    print('You haven\'t installed "google-api-python-client" and "google-auth-oauthlib".')
+    print('pip install google-api-python-client google-auth-oauthlib')
+    raise
+
 from typing import TYPE_CHECKING
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import Resource
 from googleapiclient.http import HttpRequest
+if TYPE_CHECKING:   # TODO: python 3.10
+    pass
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -50,11 +58,12 @@ def downloadfiles(service: Resource, dowid: str, name: str, dfilespath: str):
         f.write(fh.read())
 
 
-def download_folder(folder_id: str, output_path: str = './', token_path: str = 'token.pickle'):
+def download_folder(folder_id: str, output_path: str = './',
+                    token_path: str = './token.pickle',
+                    credential_path: str = './credentials.json'):
     """Shows basic usage of the Drive v3 API.
     Prints the names and ids of the first 10 files the user has access to.
     """
-
     creds: Credentials = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -68,7 +77,7 @@ def download_folder(folder_id: str, output_path: str = './', token_path: str = '
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)  # credentials.json download from drive API
+                credential_path, SCOPES)  # credentials.json download from drive API
             creds = flow.run_local_server()
         # Save the credentials for the next run
         with open(token_path, 'wb') as token:

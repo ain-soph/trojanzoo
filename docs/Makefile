@@ -2,19 +2,14 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    ?= -j auto -WT --keep-going
+SPHINXOPTS    ?= -j auto -T
 SPHINXBUILD   ?= sphinx-build
-SPHINXPROJ    ?= TrojanZoo
 SOURCEDIR     ?= source
 BUILDDIR      ?= build
-PYCMD         ?= python
 
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
-# docset: html
-# 	doc2dash --name $(SPHINXPROJ) --icon $(SOURCEDIR)/_static/img/pytorch-logo-flame.png --enable-js --online-redirect-url https://pytorch.org/docs/ --force $(BUILDDIR)/html/
 
 .PHONY: help Makefile
 
