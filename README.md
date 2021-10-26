@@ -3,12 +3,9 @@
 
 [![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
 
+[![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
 ![python>=3.9](https://img.shields.io/badge/python->=3.9.2-informational.svg)
 [![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://opensource.org/licenses/GPL-3.0)
-
-[![build](https://github.com/ain-soph/trojanzoo/workflows/build/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3Abuild)
-[![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
-[![CodeQL](https://github.com/ain-soph/trojanzoo/workflows/CodeQL/badge.svg)](https://github.com/ain-soph/trojanzoo/actions?query=workflow%3ACodeQL)
 
 [![release](https://img.shields.io/github/v/release/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/releases)
 [![pypi](https://img.shields.io/pypi/v/trojanzoo)](https://pypi.org/project/trojanzoo/)
@@ -101,8 +98,7 @@ Parameters Config: (priority ascend order)
 1. Package Default: `/trojanzoo/configs/`, `/trojanvision/configs/`
    > These are package default settings. Please don't modify them.  
    > You can use this as a template to set other configs.
-2. User Default: Not decided yet. 
-   > (Enable it in the code `trojanzoo/configs/__init__.py`, `trojanvision/configs/__init__.py`)
+2. User Default:  `~/.trojanzoo/configs/trojanzoo/`, `~/.trojanzoo/configs/trojanvision/`
 3. Workspace Default: `/configs/trojanzoo/`, `/configs/trojanvision/`
 4. Custom Config: `--config [config location]`
 5. CMD parameters: `--[parameter] [value]`

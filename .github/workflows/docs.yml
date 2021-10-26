@@ -6,28 +6,27 @@ on:
       - main
 
 jobs:
-  publish:
+  docs:
     runs-on: ubuntu-latest
     container:
       image: local0state/base:cpu
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Install requirements
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r ./docs/requirements.txt
       - name: Install katex
         run: |
           apt update
           apt install -y npm
           npm install -g katex
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r ./docs/requirements.txt
+          pip install -e .
       - name: Compile Sphinx Docs
         run: |
           cd ./docs/
           make html
-          touch ./build/html/.nojekyll
       - name: Check GitHub Pages status
         uses: crazy-max/ghaction-github-status@v2.2.0
         with:
@@ -36,7 +35,7 @@ jobs:
         if: success()
         uses: crazy-max/ghaction-github-pages@v2.5.0
         with:
-          target_branch: gh-pages
+          target_branch: docs
           build_dir: ./docs/build/html
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
