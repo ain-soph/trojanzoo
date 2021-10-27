@@ -70,7 +70,8 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
             to get data and targets.
             If ``False``, it will return
             ``(datasets.data, datasets.targets)`` if possible.
-            It should be ``True`` when :attr:`dataset` has transform.
+            It should be ``True`` when there is extra operations
+            for ``__getitem__`` or ``transform``.
             Defaults to ``True``.
 
     Returns:
@@ -110,15 +111,40 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
     return data, targets
 
 
-def shuffle_idx(len: int, seed: int = None) -> np.ndarray:
-    idx_arr: np.ndarray = np.arange(len)
-    if seed is not None:
-        np.random.seed(seed)
-    np.random.shuffle(idx_arr)
+def sample_batch(dataset: Dataset, idx: list[int] = None,
+                 batch_size: int = None) -> tuple[list, list[int]]:
+    r"""Sample a batch from dataset.
 
+    .. parsed-literal::
+        :any:`dataset_to_list`\(:any:`torch.utils.data.Subset`\(dataset, idx))
 
-def sample_batch(dataset: Dataset, batch_size: int = None,
-                 idx: list[int] = None) -> tuple[list, list[int]]:
+    Args:
+        dataset (torch.utils.data.Dataset): The dataset to sample.
+        idx (list[int]): The index list of each sample in dataset.
+            If ``None``, randomly sample a batch with given :attr:`batch_size`.
+            Defaults to ``None``.
+        batch_size (int): The batch size to sample
+            when :attr:`idx` is ``None``.
+            Defaults to ``None``.
+
+    Returns:
+        (list, list[int]): The tuple of sampled batch ``(data, targets)``.
+
+    :Example:
+        >>> from trojanzoo.utils.data import TensorListDataset, sample_batch
+        >>> import torch
+        >>> data = torch.ones(10, 3, 32, 32)
+        >>> targets = list(range(10))
+        >>> dataset = TensorListDataset(data, targets)
+        >>> x, y = sample_batch(dataset, [1, 2])
+        >>> torch.stack(x).shape
+        torch.Size([2, 3, 32, 32])
+        >>> y
+        [1, 2]
+        >>> x, y = sample_batch(dataset, batch_size=4)
+        >>> y
+        [6, 3, 2, 5]
+    """
     if idx is None:
         assert len(dataset) >= batch_size
         idx = torch.randperm(len(dataset))[:batch_size]

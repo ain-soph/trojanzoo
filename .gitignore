@@ -9,7 +9,7 @@
 
 # Not implement
 mypy*
-codecov.yml
+test.yml
 
 # Temp Files
 .DS_Store
