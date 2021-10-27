@@ -225,7 +225,7 @@ class Dataset(ABC, BasicObject):
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, Dataset] = None,
                  config: Config = config, class_dict: dict[str, type[Dataset]] = {}):
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
+    dataset_name = dataset_name if dataset_name is not None else config.full_config['dataset']['default_dataset']
     group = parser.add_argument_group('{yellow}dataset{reset}'.format(**ansi), description=dataset_name)
     try:
         DatasetType = class_dict[dataset_name]
@@ -238,7 +238,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
 def create(dataset_name: str = None, dataset: str = None, folder_path: str = None,
            config: Config = config, class_dict: dict[str, type[Dataset]] = {}, **kwargs):
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
+    dataset_name = dataset_name if dataset_name is not None else config.full_config['dataset']['default_dataset']
     result = config.get_config(dataset_name=dataset_name)['dataset'].update(kwargs)
     try:
         DatasetType = class_dict[dataset_name]

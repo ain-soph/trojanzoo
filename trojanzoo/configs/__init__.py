@@ -9,34 +9,31 @@ import yaml
 
 from typing import TYPE_CHECKING
 from typing import Any, Union    # TODO: python 3.10
-ConfigFileType = Module[str, Union[Any, Param[str, Any]]]    # config_dict['package']['dataset'] dataset.yml
-ConfigType = Module[str, ConfigFileType]                     # config_dict['package']
+# config_dict['package']['dataset'] dataset.yml
+ConfigFileType = Module[str, Union[Any, Param[str, Any]]]
+# config_dict['package']
+ConfigType = Module[str, ConfigFileType]
 if TYPE_CHECKING:
     pass    # TODO: python 3.10
 
 
 config_path: dict[str, str] = {
     'package': os.path.dirname(__file__),
-    'user': os.path.normpath(os.path.expanduser('~/.trojanzoo/configs/trojanzoo')),
+    'user': os.path.normpath(os.path.expanduser(
+        '~/.trojanzoo/configs/trojanzoo')),
     'project': os.path.normpath('./configs/trojanzoo'),
 }
 
 
 class Config:
+    r"""The configuration class.
+
+    """
     name = 'config'
     cmd: str = None
     cmd_config: ConfigType = None
 
-    @classmethod
-    def update_cmd(cls, cmd_path: str = None) -> ConfigType:
-        if cmd_path is not None and cmd_path != cls.cmd:
-            if not os.path.exists(cmd_path):
-                raise FileNotFoundError(cmd_path)
-            cls.cmd = os.path.normpath(cmd_path)
-            config = cls.load_config(cls.cmd)
-            cls.cmd_config = config if len(config) else cls.cmd_config
-
-    def __init__(self, _base=None, **kwargs: str):
+    def __init__(self, _base: 'Config' = None, **kwargs: str):
         self.config_path = kwargs
         # self._base = _base
         self.config_dict: dict[str, ConfigType] = {}
@@ -46,17 +43,19 @@ class Config:
                 self.config_dict[key] = value
         if _base is not None:
             self.config_dict = self.combine_base(self.config_dict, _base)
-        self.full_config = self.combine()
-        self.cmd_updated: bool = False
+        self.__full_config = self.combine()
+        self.__cmd_updated: bool = False
 
-    def get_full_config(self):
-        if not self.cmd_updated and self.cmd_config is not None:
-            self.full_config.update(self.cmd_config)
-            self.cmd_updated = True
-        return self.full_config
+    @property
+    def full_config(self):
+        if not self.__cmd_updated and self.cmd_config is not None:
+            self.__full_config.update(self.cmd_config)
+            self.__cmd_updated = True
+        return self.__full_config
 
     def get_config(self, dataset_name: str, config: ConfigType = None, **kwargs) -> Param[str, Module[str, Any]]:
-        config = config if config is not None else Param(self.get_full_config(), default=Module())
+        config = config if config is not None else Param(
+            self.full_config, default=Module())
         # remove dataset_name Param
         for file_name, file_value in config.items():
             if not isinstance(file_value, Module) and not isinstance(file_value, dict):
@@ -104,7 +103,8 @@ class Config:
                 for _file in files:
                     name, ext = os.path.splitext(_file)
                     file_path = os.path.normpath(os.path.join(root, _file))
-                    assert name not in _dict.keys(), f'filename conflicts: {file_path}'
+                    assert name not in _dict.keys(
+                    ), f'filename conflicts: {file_path}'
                     if ext in ['.yml', '.yaml', 'json']:
                         _dict.update(Config.load_config(file_path))
             return _dict
@@ -132,6 +132,15 @@ class Config:
             module[key] = value  # TODO: Shall we Param(value) ?
         return module
 
+    @classmethod
+    def update_cmd(cls, cmd_path: str = None) -> ConfigType:
+        if cmd_path is not None and cmd_path != cls.cmd:
+            if not os.path.exists(cmd_path):
+                raise FileNotFoundError(cmd_path)
+            cls.cmd = os.path.normpath(cmd_path)
+            config = cls.load_config(cls.cmd)
+            cls.cmd_config = config if len(config) else cls.cmd_config
+
     def __getitem__(self, k: str):
         return self.config_dict[k]
 
@@ -143,25 +152,30 @@ class Config:
 
     def summary(self, keys: Union[list[str], str] = None, config: ConfigType = None, indent: int = 0):
         if keys is None:
-            prints('{yellow}{0:<20s}{reset} '.format(self.name, **ansi), indent=indent)
-            self.summary(keys='final', config=self.get_full_config(), indent=indent + 10)
+            prints('{yellow}{0:<20s}{reset} '.format(
+                self.name, **ansi), indent=indent)
+            self.summary(
+                keys='final', config=self.full_config, indent=indent + 10)
         elif isinstance(keys, list):
-            prints('{yellow}{0:<20s}{reset} '.format(self.name, **ansi), indent=indent)
+            prints('{yellow}{0:<20s}{reset} '.format(
+                self.name, **ansi), indent=indent)
             for key in keys:
                 if key in self.config_dict.items():
                     config = self.config_dict[key]
                 elif key == 'cmd':
                     config = self.cmd_config
                 elif key == 'final':
-                    config = self.get_full_config()
+                    config = self.full_config
                 else:
                     raise KeyError(key)
                 self.summary(keys=key, config=config, indent=indent + 10)
         else:
             assert isinstance(keys, str) and config is not None
-            prints('{green}{0:<20s}{reset}'.format(keys, **ansi), indent=indent)
+            prints('{green}{0:<20s}{reset}'.format(
+                keys, **ansi), indent=indent)
             for key, value in config.items():
-                prints('{blue_light}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
+                prints('{blue_light}{0:<20s}{reset}'.format(
+                    key, **ansi), indent=indent + 10)
                 prints(value, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
             prints('-' * 30, indent=indent)

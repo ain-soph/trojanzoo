@@ -60,7 +60,7 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
     other_kwargs = {'cache_threshold': cache_threshold, 'verbose': verbose, 'color': color, 'tqdm': tqdm}
     config.update_cmd(config_path)
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    dataset_name = dataset_name if dataset_name is not None else config.get_full_config()['dataset']['default_dataset']
+    dataset_name = dataset_name if dataset_name is not None else config.full_config['dataset']['default_dataset']
     result = config.get_config(dataset_name=dataset_name)['env'].update(other_kwargs)
     env.update(config_path=config_path, **result)
     ansi.switch(env['color'])

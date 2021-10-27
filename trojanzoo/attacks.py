@@ -59,7 +59,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None, folder_pa
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     attack_name = get_name(name=attack_name, module=attack, arg_list=['--attack'])
     if dataset_name is None:
-        dataset_name = config.get_full_config()['dataset']['default_dataset']
+        dataset_name = config.full_config['dataset']['default_dataset']
     general_config = config.get_config(dataset_name=dataset_name)['attack']
     specific_config = config.get_config(dataset_name=dataset_name)[attack_name]
     result = general_config.update(specific_config).update(kwargs)

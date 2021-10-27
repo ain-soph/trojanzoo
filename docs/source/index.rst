@@ -6,7 +6,6 @@ TrojanZoo is a universal pytorch platform for conducting security researches (es
 .. toctree::
    :caption: TrojanZoo Documentation
    :titlesonly:
-   :maxdepth: 2
 
    trojanzoo <trojanzoo/index>
    trojanvision <trojanvision/index>

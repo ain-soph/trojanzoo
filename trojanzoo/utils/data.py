@@ -1,59 +1,106 @@
 #!/usr/bin/env python3
 
-from .tensor import to_list
-
 import torch
+from torch.utils.data import Dataset, Subset
 import numpy as np
 
-from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
+from typing import TYPE_CHECKING, overload
+from typing import Optional, Union    # TODO: python 3.10
 if TYPE_CHECKING:
-    import torch.utils.data
+    pass
 
 
-class TensorListDataset(torch.utils.data.Dataset):
-    def __init__(self, data: torch.Tensor = None, targets: list[int] = None, **kwargs):
+class TensorListDataset(Dataset):
+    r"""The dataset class that has a :any:`torch.Tensor` as inputs
+    and :any:`list`\[:any:`int`\] as labels.
+    It inherits :any:`torch.utils.data.Dataset`.
+
+    Args:
+        data (torch.Tensor): The inputs.
+        targets (list[int]): The labels.
+        **kwargs: Keyword arguments passed to
+            :any:`torch.utils.data.Dataset`.
+
+    :Example:
+        >>> from trojanzoo.utils.data import TensorListDataset
+        >>> import torch
+        >>> data = torch.ones(10, 3, 32, 32)
+        >>> targets = list(range(10))
+        >>> dataset = TensorListDataset(data, targets)
+        >>> x, y = dataset[3]
+        >>> x.shape
+        torch.Size([3, 32, 32])
+        >>> y
+        3
+    """
+
+    def __init__(self, data: torch.Tensor = None,
+                 targets: list[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.data = data
-        self.targets = to_list(targets)
+        self.targets = targets
         assert len(self.data) == len(self.targets)
+        self.__length = len(self.targets)
 
-    def __getitem__(self, index: Union[int, slice]) -> tuple[torch.Tensor, int]:
+    @overload
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> tuple[torch.Tensor, list[int]]:
+        ...
+
+    def __getitem__(self, index):
         return self.data[index], self.targets[index]
 
-    def __len__(self):
-        return len(self.targets)
+    def __len__(self) -> int:
+        return self.__length
 
 
-class IndexDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset: torch.utils.data.Dataset, indices: list[int] = None, **kwargs):
-        super().__init__(**kwargs)
-        self.dataset = dataset
-        if indices is None:
-            indices = list(range(len(self.dataset)))
-        self.indices = indices
+def dataset_to_list(dataset: Dataset, label_only: bool = False,
+                    force: bool = True) -> tuple[Optional[list], list[int]]:
+    r"""transform a :any:`torch.utils.data.Dataset` to ``(data, targets)`` lists.
 
-    def __getitem__(self, index: Union[int, slice]) -> tuple:
-        return (*self.dataset[index], self.indices[index])
+    Args:
+        dataset (torch.utils.data.Dataset): The dataset.
+        label_only (bool): Whether to only return the ``targets``.
+            If ``True``, the first return element ``data`` will be ``None``.
+            Defaults to ``False``.
+        force (bool): Whether to force traversing the dataset
+            to get data and targets.
+            If ``False``, it will return
+            ``(datasets.data, datasets.targets)`` if possible.
+            It should be ``True`` when :attr:`dataset` has transform.
+            Defaults to ``True``.
 
-    def __len__(self):
-        return len(self.dataset)
+    Returns:
+        (Optional[list], list[int]): The tuple of ``(data, targets)``.
 
-
-def dataset_to_list(dataset: torch.utils.data.Dataset, label_only: bool = False,
-                    force: bool = True, shuffle: bool = False) -> tuple[list, list[int]]:
+    :Example:
+        >>> from trojanzoo.utils.data import dataset_to_list
+        >>> from torchvision.datasets import MNIST
+        >>> from torchvision.transforms import ToTensor
+        >>> dataset = MNIST('./', train=False, download=True)
+        >>> data, targets = dataset_to_list(dataset)
+        >>> type(data[0])
+        <PIL.Image.Image image mode=L size=28x28 at 0x19FCF226D30>
+        >>> data, targets = dataset_to_list(dataset, force=False)
+        >>> type(data[0])
+        <class 'torch.Tensor'>
+    """  # noqa: E501
     if not force:
-        if label_only and 'targets' in dataset.__dict__.keys():
-            return None, list(dataset.targets)
-        if 'data' in dataset.__dict__.keys() and 'targets' in dataset.__dict__.keys():
+        targets = list(dataset.targets)
+        if label_only and hasattr(dataset, 'targets'):
+            return None, targets
+        if hasattr(dataset, 'data') and hasattr(dataset, 'targets'):
             data = dataset.data
             if isinstance(data, np.ndarray):
-                data = torch.as_tensor(data)
+                data = torch.from_numpy(data)
             if isinstance(data, torch.Tensor):
                 if data.max() > 2:
                     data = data.to(dtype=torch.float) / 255
                 data = [img for img in data]
-            return data, list(dataset.targets)
+            return data, targets
     data, targets = list(zip(*dataset))[:2]
     if label_only:
         data = None
@@ -70,20 +117,20 @@ def shuffle_idx(len: int, seed: int = None) -> np.ndarray:
     np.random.shuffle(idx_arr)
 
 
-def sample_batch(dataset: torch.utils.data.Dataset, batch_size: int = None,
+def sample_batch(dataset: Dataset, batch_size: int = None,
                  idx: list[int] = None) -> tuple[list, list[int]]:
     if idx is None:
         assert len(dataset) >= batch_size
         idx = torch.randperm(len(dataset))[:batch_size]
     else:
         assert len(dataset) > max(idx)
-    subset = torch.utils.data.Subset(dataset, idx)
+    subset = Subset(dataset, idx)
     return dataset_to_list(subset)
 
 
-def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subset],
+def split_dataset(dataset: Union[Dataset, Subset],
                   length: int = None, percent=None, shuffle: bool = True, seed: int = None
-                  ) -> tuple[torch.utils.data.Subset, torch.utils.data.Subset]:
+                  ) -> tuple[Subset, Subset]:
     assert (length is None) != (percent is None)  # XOR check
     length = length if length is not None else int(len(dataset) * percent)
     indices = np.arange(len(dataset))
@@ -91,19 +138,19 @@ def split_dataset(dataset: Union[torch.utils.data.Dataset, torch.utils.data.Subs
         if seed is not None:
             np.random.seed(seed)
         np.random.shuffle(indices)
-    if isinstance(dataset, torch.utils.data.Subset):
+    if isinstance(dataset, Subset):
         idx = np.array(dataset.indices)
         indices = idx[indices]
         dataset = dataset.dataset
-    subset1 = torch.utils.data.Subset(dataset, indices[:length])
-    subset2 = torch.utils.data.Subset(dataset, indices[length:])
+    subset1 = Subset(dataset, indices[:length])
+    subset2 = Subset(dataset, indices[length:])
     return subset1, subset2
 
 
-def get_class_subset(dataset: torch.utils.data.Dataset, class_list: Union[int, list[int]]) -> torch.utils.data.Subset:
+def get_class_subset(dataset: Dataset, class_list: Union[int, list[int]]) -> Subset:
     class_list = [class_list] if isinstance(class_list, int) else class_list
     indices = np.arange(len(dataset))
-    if isinstance(dataset, torch.utils.data.Subset):
+    if isinstance(dataset, Subset):
         idx = np.array(dataset.indices)
         indices = idx[indices]
         dataset = dataset.dataset
@@ -111,4 +158,4 @@ def get_class_subset(dataset: torch.utils.data.Dataset, class_list: Union[int, l
     idx_bool = np.isin(targets, class_list)
     idx = np.arange(len(dataset))[idx_bool]
     idx = np.intersect1d(idx, indices)
-    return torch.utils.data.Subset(dataset, idx)
+    return Subset(dataset, idx)

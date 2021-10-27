@@ -5,11 +5,11 @@
 
 .. toctree::
    :glob:
-   :maxdepth: 2
+   :maxdepth: 3
 
    attacks<attacks>
    datasets<datasets>
    defenses<defenses>
    environ<environ>
    models<models>
-   utils<utils>
+   utils<utils/index>

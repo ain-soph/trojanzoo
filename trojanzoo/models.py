@@ -584,7 +584,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
                  config: Config = config, class_dict: dict[str, type[Model]] = {}):
     dataset_name = get_name(arg_list=['-d', '--dataset'])
     if dataset_name is None:
-        dataset_name = config.get_full_config()['dataset']['default_dataset']
+        dataset_name = config.full_config['dataset']['default_dataset']
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
@@ -607,7 +607,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
     dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     if dataset_name is None:
-        dataset_name = config.get_full_config()['dataset']['default_dataset']
+        dataset_name = config.full_config['dataset']['default_dataset']
     if model_name is None:
         model_name = config.get_config(dataset_name=dataset_name)['model']['default_model']
     result = config.get_config(dataset_name=dataset_name)['model'].update(kwargs)

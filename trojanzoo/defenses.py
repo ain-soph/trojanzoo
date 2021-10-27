@@ -58,7 +58,7 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None, folder
     model_name = get_name(name=model_name, module=model, arg_list=['-m', '--model'])
     defense_name = get_name(name=defense_name, module=defense, arg_list=['--defense'])
     if dataset_name is None:
-        dataset_name = config.get_full_config()['dataset']['default_dataset']
+        dataset_name = config.full_config['dataset']['default_dataset']
     general_config = config.get_config(dataset_name=dataset_name)['defense']
     specific_config = config.get_config(dataset_name=dataset_name)[defense_name]
     result = general_config.update(specific_config).update(kwargs)    # TODO: linting issues

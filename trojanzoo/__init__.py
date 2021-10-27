@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 
-from .trojanzoo_version import __version__ as __version__
+from .version import __version__ as internal_version
+from torch.torch_version import TorchVersion
 
 from trojanzoo import environ as environ
 from trojanzoo import datasets as datasets
 from trojanzoo import models as models
 from trojanzoo import trainer as trainer
-from trojanzoo.utils.tensor import to_tensor, to_numpy, to_list
 
-__all__ = ['to_tensor', 'to_numpy', 'to_list']
+from trojanzoo.utils import summary, to_tensor, to_numpy, to_list
 
-# import trojanzoo.configs
-# import trojanzoo.optim
-# import trojanzoo.utils
+__all__ = ['summary', 'to_tensor', 'to_numpy', 'to_list']
+__version__ = TorchVersion(internal_version)
