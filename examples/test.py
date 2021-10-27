@@ -2,7 +2,6 @@
 
 import trojanvision
 
-
 env = trojanvision.environ.create(verbose=1, color=True, tqdm=True)
 dataset = trojanvision.datasets.create()
 model = trojanvision.models.create(dataset=dataset)

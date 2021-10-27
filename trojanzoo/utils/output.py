@@ -3,6 +3,7 @@
 import io
 import re
 import sys
+from contextlib import contextmanager
 
 
 class ANSI:
@@ -36,7 +37,8 @@ class ANSI:
         'clear': '\033[2J', }
 
     def __init__(self):
-        self._dict = ANSI.ansi_color if ('--color' in sys.argv) else ANSI.ansi_nocolor
+        self._dict = ANSI.ansi_color if (
+            '--color' in sys.argv) else ANSI.ansi_nocolor
 
     def switch(self, color: bool):
         self._dict = ANSI.ansi_color if color else ANSI.ansi_nocolor
@@ -51,10 +53,10 @@ class ANSI:
         return self._dict[key]
 
     def __str__(self):
-        return self._dict.__str__()
+        return str(self._dict)
 
     def __repr__(self):
-        return self._dict.__repr__()
+        return repr(self._dict)
 
 
 ansi = ANSI()
@@ -81,11 +83,14 @@ def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
 
 def output_iter(_iter: int, iteration: int = None) -> str:
     if iteration is None:
-        return '{blue_light}[ {red}{0:s}{blue_light} ]{reset}'.format(str(_iter).rjust(3), **ansi)
+        pattern = '{blue_light}[ {red}{0:s}{blue_light} ]{reset}'
+        return pattern.format(str(_iter).rjust(3), **ansi)
     else:
         length = len(str(iteration))
-        return '{blue_light}[ {red}{0:s}{blue_light} / {red}{1:d}{blue_light} ]{reset}'.format(
-            str(_iter).rjust(length), iteration, **ansi)
+        pattern = '{blue_light}[ {red}{0:s}{blue_light} ' + \
+            '/ {red}{1:d}{blue_light} ]{reset}'
+        return pattern.format(str(_iter).rjust(length),
+                              iteration, **ansi)
 
 
 def indent_str(s_: str, indent: int = 0) -> str:
@@ -104,29 +109,47 @@ def indent_str(s_: str, indent: int = 0) -> str:
     return s
 
 
-class Indent_Redirect:
-    def __init__(self, buffer: bool = False, indent: int = 0):
+class IndentRedirect:
+    def __init__(self, buffer: bool = True, indent: int = 0):
         self.__console__: io.TextIOWrapper = sys.stdout
         self.indent: int = indent
-        self.buffer: str = None
+        self.__buffer: str = None
         if buffer:
-            self.buffer = ''
+            self.__buffer = ''
 
     def write(self, text: str, indent: int = None):
         indent = indent if indent is not None else self.indent
         text = indent_str(text, indent=indent)
-        if self.buffer is None:
+        if self.__buffer is None:
             self.__console__.write(text)
         else:
-            self.buffer += text
+            self.__buffer += text
 
     def flush(self):
-        if self.buffer:
-            self.__console__.write(self.buffer)
-            self.buffer = ''
+        if self.__buffer is not None:
+            self.__console__.write(self.__buffer)
+            self.__buffer = ''
         self.__console__.flush()
 
-    def reset(self):
-        if self.buffer:
-            self.buffer = ''
+    @contextmanager
+    def __call__(self) -> None:
+        try:
+            sys.stdout = self
+            yield
+        finally:
+            sys.stdout = self.__console__
+
+    def enable(self):
+        sys.stdout = self
+
+    def disable(self):
+        if self.__buffer is not None:
+            self.__buffer = ''
         sys.stdout = self.__console__
+
+    @property
+    def buffer(self) -> str:
+        return self.__buffer
+
+
+redirect = IndentRedirect()

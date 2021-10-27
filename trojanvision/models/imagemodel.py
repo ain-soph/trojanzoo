@@ -5,8 +5,8 @@ from trojanvision.datasets import ImageSet
 from trojanvision.utils import apply_cmap
 from trojanzoo.models import _Model, Model
 from trojanzoo.environ import env
-from trojanzoo.utils import add_noise
 from trojanzoo.utils.fim import KFAC, EKFAC
+from trojanzoo.utils.tensor import add_noise
 
 import torch
 import torch.nn as nn

@@ -11,7 +11,8 @@ try:
     from google.auth.transport.requests import Request
     from googleapiclient.http import MediaIoBaseDownload
 except ImportError:
-    print('You haven\'t installed "google-api-python-client" and "google-auth-oauthlib".')
+    print('You haven\'t installed "google-api-python-client" '
+          'and "google-auth-oauthlib".')
     print('pip install google-api-python-client google-auth-oauthlib')
     raise
 
@@ -76,8 +77,9 @@ def download_folder(folder_id: str, output_path: str = './',
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
+            # credentials.json download from drive API
             flow = InstalledAppFlow.from_client_secrets_file(
-                credential_path, SCOPES)  # credentials.json download from drive API
+                credential_path, SCOPES)
             creds = flow.run_local_server()
         # Save the credentials for the next run
         with open(token_path, 'wb') as token:
@@ -86,8 +88,9 @@ def download_folder(folder_id: str, output_path: str = './',
     service = build('drive', 'v3', credentials=creds)
     # Call the Drive v3 API
 
-    results: dict = service.files().list(q=f"'{folder_id}' in parents",
-                                         fields="nextPageToken, files(id, name, mimeType)").execute()
+    kwds = dict(q=f"'{folder_id}' in parents",
+                fields="nextPageToken, files(id, name, mimeType)")
+    results: dict = service.files().list(**kwds).execute()
     items = results.get('files', [])
     if not items:
         print('No files found.')

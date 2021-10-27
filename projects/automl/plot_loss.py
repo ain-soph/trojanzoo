@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import trojanvision
-from trojanvision.utils import summary
 
 import torch
 import numpy as np
@@ -24,7 +23,7 @@ if __name__ == '__main__':
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model)
+        trojanvision.summary(env=env, dataset=dataset, model=model)
     # loss, acc1 = model._validate()
 
     # 生成x,y的数据

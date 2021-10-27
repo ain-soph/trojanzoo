@@ -15,7 +15,6 @@ import glob
 import shutil
 from tqdm import tqdm
 
-from typing import Union
 from typing import TYPE_CHECKING
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:

@@ -2,8 +2,9 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanzoo.utils import to_numpy, to_tensor, normalize_mad, jaccard_idx
-from trojanzoo.utils import AverageMeter
+from trojanzoo.utils.metric import normalize_mad, mask_jaccard
+from trojanzoo.utils.module import AverageMeter
+from trojanzoo.utils.tensor import to_numpy, to_tensor
 from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch
@@ -156,7 +157,7 @@ class DeepInspect(BackdoorDefense):
         self.model._validate(print_prefix='Validate Trigger Tgt', get_data_fn=get_data_fn, indent=4)
 
         if not self.attack.mark.random_pos:
-            overlap = jaccard_idx(mark.mean(dim=0), self.real_mask,
+            overlap = mask_jaccard(mark.mean(dim=0), self.real_mask,
                                   select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
             print(f'    Jaccard index: {overlap:.3f}')
 

@@ -8,3 +8,5 @@
 .. autoclass:: TensorListDataset
 .. autofunction:: dataset_to_list
 .. autofunction:: sample_batch
+.. autofunction:: split_dataset
+.. autofunction:: get_class_subset

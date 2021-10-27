@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import trojanvision
-from trojanvision.utils import save_tensor_as_img
-from trojanvision.utils import summary, superimpose
+from trojanzoo.utils.tensor import save_tensor_as_img
+from trojanvision.utils import superimpose
 import argparse
 
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model)
+        trojanvision.summary(env=env, dataset=dataset, model=model)
     for data in dataset.loader['valid']:
         _input, _label = model.get_data(data)
         heatmap = model.get_heatmap(_input, _label, method='saliency_map')

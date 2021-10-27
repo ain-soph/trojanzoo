@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from ..backdoor_defense import BackdoorDefense
-from trojanzoo.utils import AverageMeter, jaccard_idx
-from trojanzoo.utils import to_tensor, to_numpy
+from trojanzoo.utils.metric import mask_jaccard
+from trojanzoo.utils.module import AverageMeter
+from trojanzoo.utils.tensor import to_tensor, to_numpy
 
 import torch
 import numpy as np
@@ -109,7 +110,7 @@ class NEO(BackdoorDefense):
                 target_acc = self.confirm_backdoor()
                 output_str = f'    {j:3d}  Acc: {target_acc:5.2f}'
                 if not self.attack.mark.random_pos:
-                    overlap = jaccard_idx(mark_class.mask.detach().cpu(), self.real_mask.detach().cpu(),
+                    overlap = mask_jaccard(mark_class.mask.detach().cpu(), self.real_mask.detach().cpu(),
                                           select_num=self.size[0] * self.size[1])
                     output_str += f'  Jaccard Idx: {overlap:5.3f}'
                 print(output_str)

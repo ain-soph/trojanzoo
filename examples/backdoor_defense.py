@@ -3,8 +3,6 @@
 # CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_defense.py --color --verbose 1 --attack badnet --defense neural_cleanse --pretrain --validate_interval 1 --epoch 50 --lr 1e-2
 
 import trojanvision
-
-from trojanvision.utils import summary
 import argparse
 
 if __name__ == '__main__':
@@ -27,5 +25,5 @@ if __name__ == '__main__':
     defense = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
+        trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
     defense.detect(**trainer)

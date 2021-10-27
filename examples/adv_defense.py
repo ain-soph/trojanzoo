@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import trojanvision
-
-from trojanvision.utils import summary
 import argparse
 
 if __name__ == '__main__':
@@ -23,5 +21,5 @@ if __name__ == '__main__':
     defense = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, trainer=trainer, attack=attack, defense=defense)
+        trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer, attack=attack, defense=defense)
     defense.detect(**trainer)

@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
-from .output import prints
+from trojanzoo.utils.output import prints
 
-from typing import TYPE_CHECKING
 from typing import Generic, MutableMapping, TypeVar
 _KT = TypeVar("_KT")  # Key type.
 _VT = TypeVar("_VT")  # Value type.
-if TYPE_CHECKING:
-    pass
 
 
-class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):  # TODO: issue 3 why need Generic
+# TODO: issue 3 why need Generic
+class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     _marker = 'M'
 
     def __init__(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT):
@@ -26,7 +24,8 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):  # TODO: issue 3 why 
             self._update(module)
         return self
 
-    def _update(self, module: MutableMapping[_KT, _VT]):    # TODO: issue 4 Union[dict, Module]
+    # TODO: issue 4 Union[dict, Module]
+    def _update(self, module: MutableMapping[_KT, _VT]):
         for key, value in module.items():
             if value is None:
                 continue
@@ -100,11 +99,13 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):  # TODO: issue 3 why 
         prints(self, indent=indent)
 
 
-class Param(Module, Generic[_KT, _VT]):  # TODO: issue 3 why need Generic, Module[_KT, _VT]
+# TODO: issue 3 why need Generic, Module[_KT, _VT]
+class Param(Module, Generic[_KT, _VT]):
     _marker = 'P'
 
     def update(self, *args: dict[_KT, _VT], **kwargs: _VT):
-        if len(kwargs) == 0 and len(args) == 1 and not isinstance(args[0], (dict, Module)):
+        if len(kwargs) == 0 and len(args) == 1 and \
+                not isinstance(args[0], (dict, Module)):
             self.default = args[0]
             return self
         return super().update(*args, **kwargs)
@@ -123,7 +124,8 @@ class Param(Module, Generic[_KT, _VT]):  # TODO: issue 3 why need Generic, Modul
         :rtype: Module
         """
         for key in list(self.__data.keys()):
-            if self.__data[key] is None and not (isinstance(key, str) and key == 'default'):
+            if self.__data[key] is None and \
+                    not (isinstance(key, str) and key == 'default'):
                 del self.__data[key]
         return self
 

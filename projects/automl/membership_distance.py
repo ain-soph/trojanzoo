@@ -6,7 +6,6 @@ from trojanzoo.utils.tensor import to_numpy
 import trojanvision.environ
 import trojanvision.datasets
 import trojanvision.models
-from trojanvision.utils import summary
 import argparse
 import warnings
 import os
@@ -22,7 +21,7 @@ if __name__ == '__main__':
     dataset = trojanvision.datasets.create(**args.__dict__)
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model)
+        trojanvision.summary(env=env, dataset=dataset, model=model)
     import torch
     import numpy as np
     from sklearn import metrics

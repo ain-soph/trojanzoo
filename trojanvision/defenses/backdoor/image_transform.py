@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from ..backdoor_defense import BackdoorDefense
-from trojanzoo.utils import to_pil_image, to_tensor
+from trojanzoo.utils.tensor import to_pil_image, to_tensor
 
 import torch
 import torchvision.transforms.functional as F

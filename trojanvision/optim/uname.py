@@ -4,8 +4,8 @@
 
 import trojanzoo.optim
 
-from trojanzoo.utils import atan_func, tanh_func
 from trojanzoo.utils.output import prints
+from trojanzoo.utils.tensor import atan_func, tanh_func
 
 import torch
 import torch.optim

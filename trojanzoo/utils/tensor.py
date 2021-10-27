@@ -79,7 +79,8 @@ def to_list(x: Any) -> list:
 # ----------------------- Image Utils ------------------------------ #
 
 
-def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=None) -> Image.Image:
+def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
+                 mode=None) -> Image.Image:
     # TODO: Linting for mode
     if isinstance(x, Image.Image):
         return x
@@ -87,13 +88,15 @@ def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image], mode=Non
     return F.to_pil_image(x, mode=mode)
 
 
-def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1) -> Image.Image:
+def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image],
+             num_output_channels: int = 1) -> Image.Image:
     if not isinstance(x, Image.Image):
         x = to_pil_image(x)
     return F.to_grayscale(x, num_output_channels=num_output_channels)
 
 
-def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image], num_output_channels: int = 1, **kwargs) -> torch.Tensor:
+def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image],
+                num_output_channels: int = 1, **kwargs) -> torch.Tensor:
     if isinstance(x, torch.Tensor):
         if 'device' not in kwargs.keys():
             kwargs['device'] = x.device
@@ -110,7 +113,8 @@ def float2byte(img: torch.Tensor) -> torch.Tensor:
         img = img[0]
     elif img.dim() == 3:
         img = img.permute(1, 2, 0).contiguous()
-    # img = (((img - img.min()) / (img.max() - img.min())) * 255).astype(np.uint8).squeeze()
+    # img = (((img - img.min()) / (img.max() - img.min())) * 255
+    #       ).astype(np.uint8).squeeze()
     return img.mul(255).byte()
 
 # def byte2float(img) -> torch.Tensor:
@@ -166,9 +170,11 @@ def add_noise(_input: torch.Tensor, noise: torch.Tensor = None,
         shape = _input.shape
         if batch:
             shape = shape[1:]
-        noise = torch.normal(mean=mean, std=std, size=shape, device=_input.device)
+        noise = torch.normal(mean=mean, std=std,
+                             size=shape, device=_input.device)
     batch_noise = noise
     if batch:
         batch_noise = repeat_to_batch(noise, _input.shape[0])
-    noisy_input: torch.Tensor = (_input + batch_noise).clamp(clip_min, clip_max)
+    noisy_input: torch.Tensor = (
+        _input + batch_noise).clamp(clip_min, clip_max)
     return noisy_input

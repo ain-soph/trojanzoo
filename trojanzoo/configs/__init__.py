@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.utils.output import prints, ansi
-from trojanzoo.utils.param import Module, Param
+from trojanzoo.utils.module.param import Module, Param
 
 import os
 import json
@@ -53,12 +53,14 @@ class Config:
             self.__cmd_updated = True
         return self.__full_config
 
-    def get_config(self, dataset_name: str, config: ConfigType = None, **kwargs) -> Param[str, Module[str, Any]]:
+    def get_config(self, dataset_name: str, config: ConfigType = None,
+                   **kwargs) -> Param[str, Module[str, Any]]:
         config = config if config is not None else Param(
             self.full_config, default=Module())
         # remove dataset_name Param
         for file_name, file_value in config.items():
-            if not isinstance(file_value, Module) and not isinstance(file_value, dict):
+            if not isinstance(file_value, Module) and \
+                    not isinstance(file_value, dict):
                 # TODO: remove the latter condition?
                 continue
             if isinstance(file_value, Param):
@@ -68,11 +70,13 @@ class Config:
                 if isinstance(param_value, Param):
                     config[file_name][param_name] = param_value[dataset_name]
                 # else:
-                #     raise TypeError(f'{type(param_value)=}    {param_value=}')
+                #     raise TypeError(f'{type(param_value)=}    '
+                #                     f'{param_value=}')
         config.update(kwargs)
         return config
 
-    def combine(self, keys: list[str] = ['package', 'user', 'project']) -> ConfigType:
+    def combine(self, keys: list[str] = ['package', 'user', 'project']
+                ) -> ConfigType:
         config = Module()
         for key in keys:
             if key in self.config_dict.keys():
@@ -124,7 +128,8 @@ class Config:
             raise Exception(f'unknown: {path}')
 
     @staticmethod
-    def organize_config_file(_dict: dict[str, Union[Any, dict[str, Any]]]) -> ConfigFileType:
+    def organize_config_file(_dict: dict[str, Union[Any, dict[str, Any]]]
+                             ) -> ConfigFileType:
         module = Module()
         for key, value in _dict.items():
             if isinstance(value, dict):
@@ -150,7 +155,8 @@ class Config:
     def keys(self):
         return self.config_dict.keys()
 
-    def summary(self, keys: Union[list[str], str] = None, config: ConfigType = None, indent: int = 0):
+    def summary(self, keys: Union[list[str], str] = None,
+                config: ConfigType = None, indent: int = 0):
         if keys is None:
             prints('{yellow}{0:<20s}{reset} '.format(
                 self.name, **ansi), indent=indent)

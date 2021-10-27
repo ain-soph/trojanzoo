@@ -14,7 +14,7 @@ from typing import Generator, Iterable, TypeVar    # TODO: python 3.10
 _T = TypeVar("_T")
 
 
-class SmoothedValue(object):
+class SmoothedValue:
     """Track a series of values and provide access to smoothed values over a
     window or the global series average.
     """
@@ -47,7 +47,8 @@ class SmoothedValue(object):
         """
         if not is_dist_avail_and_initialized():
             return
-        t = torch.tensor([self.count, self.total], dtype=torch.float64, device='cuda')
+        t = torch.tensor([self.count, self.total],
+                         dtype=torch.float64, device='cuda')
         dist.barrier()
         dist.all_reduce(t)
         t = t.tolist()
@@ -116,9 +117,11 @@ class SmoothedValue(object):
         return self.__str__()
 
 
-class MetricLogger(object):
-    def __init__(self, delimiter: str = '', meter_length: int = 20, indent: int = 0):
-        self.meters: defaultdict[str, SmoothedValue] = defaultdict(SmoothedValue)
+class MetricLogger:
+    def __init__(self, delimiter: str = '',
+                 meter_length: int = 20, indent: int = 0):
+        self.meters: defaultdict[str,
+                                 SmoothedValue] = defaultdict(SmoothedValue)
         self.delimiter = delimiter
         self.meter_length = meter_length
         self.indent = indent
@@ -141,7 +144,8 @@ class MetricLogger(object):
             _str = '{green}{}{reset}: {}'.format(name, str(meter), **ansi)
             max_length = self.meter_length + get_ansi_len(_str)
             if len(_str) > max_length:
-                _str = '{green}{}{reset}: {}'.format(name, str(meter)[:5], **ansi)
+                _str = '{green}{}{reset}: {}'.format(
+                    name, str(meter)[:5], **ansi)
             _str = _str.ljust(max_length)
             loss_str.append(_str)
         return self.delimiter.join(loss_str)
@@ -164,7 +168,8 @@ class MetricLogger(object):
             header = ''
         iter_time = SmoothedValue(fmt='{avg:.4f}')
         data_time = SmoothedValue(fmt='{avg:.4f}')
-        memory = SmoothedValue(fmt='{max:.0f}')  # Memory is measured by Max value
+        # Memory is measured by Max value
+        memory = SmoothedValue(fmt='{max:.0f}')
         MB = 1024.0 * 1024.0
 
         end = time.time()
@@ -178,17 +183,25 @@ class MetricLogger(object):
             if print_freq and i % print_freq == 0:
                 middle_header = '' if total is None else output_iter(i, total)
                 length = max(len(remove_ansi(header)) - 10, 0)
-                middle_header = middle_header.ljust(length + get_ansi_len(middle_header))
+                middle_header = middle_header.ljust(
+                    length + get_ansi_len(middle_header))
                 log_msg = self.delimiter.join([middle_header, str(self)])
                 if env['verbose'] > 1:
-                    iter_time_str = '{green}iter{reset}: {iter_time} s'.format(iter_time=str(iter_time), **ansi)
-                    data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
-                    iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
-                    data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
-                    log_msg = self.delimiter.join([log_msg, iter_time_str, data_time_str])
+                    iter_time_str = '{green}iter{reset}: {iter_time} s'.format(
+                        iter_time=str(iter_time), **ansi)
+                    data_time_str = '{green}data{reset}: {data_time} s'.format(
+                        data_time=str(data_time), **ansi)
+                    iter_time_str = iter_time_str.ljust(
+                        self.meter_length + get_ansi_len(iter_time_str))
+                    data_time_str = data_time_str.ljust(
+                        self.meter_length + get_ansi_len(data_time_str))
+                    log_msg = self.delimiter.join(
+                        [log_msg, iter_time_str, data_time_str])
                 if env['verbose'] > 2 and torch.cuda.is_available():
-                    memory_str = '{green}memory{reset}: {memory} MB'.format(memory=str(memory), **ansi)
-                    memory_str = memory_str.ljust(self.meter_length + get_ansi_len(memory_str))
+                    memory_str = '{green}memory{reset}: {memory} MB'.format(
+                        memory=str(memory), **ansi)
+                    memory_str = memory_str.ljust(
+                        self.meter_length + get_ansi_len(memory_str))
                     log_msg = self.delimiter.join([log_msg, memory_str])
                 prints(log_msg, indent=indent + 10)
             end = time.time()
@@ -196,18 +209,27 @@ class MetricLogger(object):
         total_time = time.time() - start_time
         total_time = str(datetime.timedelta(seconds=int(total_time)))
 
-        total_time_str = '{green}time{reset}: {time}'.format(time=total_time, **ansi)
-        total_time_str = total_time_str.ljust(self.meter_length + get_ansi_len(total_time_str))
+        total_time_str = '{green}time{reset}: {time}'.format(
+            time=total_time, **ansi)
+        total_time_str = total_time_str.ljust(
+            self.meter_length + get_ansi_len(total_time_str))
         log_msg = self.delimiter.join([header, str(self), total_time_str])
         if env['verbose'] > 1:
-            iter_time_str = '{green}iter{reset}: {iter_time} s'.format(iter_time=str(iter_time), **ansi)
-            data_time_str = '{green}data{reset}: {data_time} s'.format(data_time=str(data_time), **ansi)
-            iter_time_str = iter_time_str.ljust(self.meter_length + get_ansi_len(iter_time_str))
-            data_time_str = data_time_str.ljust(self.meter_length + get_ansi_len(data_time_str))
-            log_msg = self.delimiter.join([log_msg, iter_time_str, data_time_str])
+            iter_time_str = '{green}iter{reset}: {iter_time} s'.format(
+                iter_time=str(iter_time), **ansi)
+            data_time_str = '{green}data{reset}: {data_time} s'.format(
+                data_time=str(data_time), **ansi)
+            iter_time_str = iter_time_str.ljust(
+                self.meter_length + get_ansi_len(iter_time_str))
+            data_time_str = data_time_str.ljust(
+                self.meter_length + get_ansi_len(data_time_str))
+            log_msg = self.delimiter.join(
+                [log_msg, iter_time_str, data_time_str])
         if env['verbose'] > 2 and torch.cuda.is_available():
-            memory_str = '{green}memory{reset}: {memory} MB'.format(memory=str(memory), **ansi)
-            memory_str = memory_str.ljust(self.meter_length + get_ansi_len(memory_str))
+            memory_str = '{green}memory{reset}: {memory} MB'.format(
+                memory=str(memory), **ansi)
+            memory_str = memory_str.ljust(
+                self.meter_length + get_ansi_len(memory_str))
             log_msg = self.delimiter.join([log_msg, memory_str])
         prints(log_msg, indent=indent)
 

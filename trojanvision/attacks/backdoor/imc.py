@@ -2,7 +2,8 @@
 
 from .trojannn import TrojanNN
 from trojanvision.utils.sgm import register_hook, remove_hook
-from trojanzoo.utils import AverageMeter, tanh_func
+from trojanzoo.utils.module import AverageMeter
+from trojanzoo.utils.tensor import tanh_func
 
 import torch
 import torch.optim as optim

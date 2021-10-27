@@ -3,7 +3,7 @@
 from trojanvision.attacks import PGD
 from trojanvision.environ import env
 from trojanzoo.defenses import Defense
-from trojanzoo.utils import repeat_to_batch, to_list, cos_sim
+from trojanzoo.utils.tensor import repeat_to_batch, to_list, cos_sim
 from trojanzoo.utils.output import prints
 
 import torch

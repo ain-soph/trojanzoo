@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.models import ImageModel
-from trojanzoo.utils import to_list
+from trojanzoo import to_list
 import torch
 
 

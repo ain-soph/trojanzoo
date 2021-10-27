@@ -3,7 +3,6 @@
 # CUDA_VISIBLE_DEVICES=0 python examples/validate.py --color --verbose 1 --dataset cifar10 --pretrain --model resnet18_comp
 
 import trojanvision
-from trojanvision.utils import summary
 import argparse
 
 if __name__ == '__main__':
@@ -18,5 +17,5 @@ if __name__ == '__main__':
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model)
+        trojanvision.summary(env=env, dataset=dataset, model=model)
     loss, acc1 = model._validate()

@@ -2,10 +2,10 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanzoo.utils import jaccard_idx, normalize_mad
-from trojanzoo.utils import AverageMeter
-from trojanzoo.utils import to_tensor, to_numpy, tanh_func
+from trojanzoo.utils.metric import mask_jaccard, normalize_mad
+from trojanzoo.utils.module import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.tensor import to_tensor, to_numpy, tanh_func
 
 import torch
 import torch.optim as optim
@@ -67,7 +67,7 @@ class NeuralCleanse(BackdoorDefense):
         print('loss MAD: ', normalize_mad(loss_list))
 
         if not self.random_pos:
-            overlap = jaccard_idx(mask_list[self.attack.target_class], self.real_mask,
+            overlap = mask_jaccard(mask_list[self.attack.target_class], self.real_mask,
                                   select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
             print(f'Jaccard index: {overlap:.3f}')
 
@@ -89,7 +89,7 @@ class NeuralCleanse(BackdoorDefense):
             mask_list.append(mask)
             loss_list.append(loss)
             if not self.random_pos:
-                overlap = jaccard_idx(mask, self.real_mask,
+                overlap = mask_jaccard(mask, self.real_mask,
                                       select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
                 print(f'Jaccard index: {overlap:.3f}')
             np.savez(file_path, mark_list=[to_numpy(mark) for mark in mark_list],

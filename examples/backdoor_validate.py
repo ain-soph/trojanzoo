@@ -2,8 +2,6 @@
 
 import trojanvision
 from trojanvision.attacks import BadNet
-
-from trojanvision.utils import summary
 import argparse
 
 if __name__ == '__main__':
@@ -22,6 +20,6 @@ if __name__ == '__main__':
     attack: BadNet = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, mark=mark, attack=attack)
+        trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark, attack=attack)
     attack.load()
     attack.validate_fn()

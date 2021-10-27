@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 from .output import ansi
-from .param import Param
-from .others import get_name
+from .module.param import Param
+from .module import get_name
 from trojanzoo.configs import config
 
 import torch
-# import torch.distributed as dist
 import numpy as np
 import random
 
@@ -23,23 +22,31 @@ class Env(Param):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('--config', dest='config_path',
-                           help='cmd config file path. (``package < project < cmd_config < cmd_param``)')
+                           help='cmd config file path '
+                           '(package < project < cmd_config < cmd_param)')
 
         group.add_argument('--seed', type=int,
-                           help='the random seed for numpy, torch and cuda, defaults to config[env][seed]=1228')
+                           help='the random seed for numpy, torch and cuda '
+                           '(default: config[env][seed]=1228)')
+        group.add_argument('--data_seed', type=int,
+                           help='seed to process data')
         group.add_argument('--cache_threshold', type=float,
-                           help='the threshold (MB) to call torch.cuda.empty_cache(), defaults to config[env][cache_threshold]=None (never).')
+                           help='the threshold (MB) to call '
+                           'torch.cuda.empty_cache(). None means never.'
+                           '(default: config[env][cache_threshold]=None).')
 
         group.add_argument('--device', help='set to "cpu" to force cpu-only '
-                           'and "gpu", "cuda" for gpu-only, defaults to None.')
+                           'and "gpu", "cuda" for gpu-only (default: None)')
         group.add_argument('--benchmark', action='store_true',
-                           help='use torch.backends.cudnn.benchmark to accelerate without deterministic, defaults to False.')
+                           help='use torch.backends.cudnn.benchmark '
+                           'to accelerate without deterministic')
         group.add_argument('--verbose', type=int, default=0,
-                           help='show arguments and module information, defaults to 0.')
-        group.add_argument('--color', action='store_true', help='colorful Output.')
-        group.add_argument('--tqdm', action='store_true', help='show tqdm progress bar.')
-
-        # group.add_argument('--world_size', type=int, default=1)
+                           help='show arguments and module information '
+                           '(default: 0)')
+        group.add_argument('--color', action='store_true',
+                           help='show colorful output')
+        group.add_argument('--tqdm', action='store_true',
+                           help='show tqdm progress bar')
         return group
 
 
@@ -52,16 +59,21 @@ def add_argument(parser: argparse.ArgumentParser):
     return group
 
 
-def create(config_path: str = None, dataset_name: str = None, dataset: str = None,
-           seed: int = None, benchmark: bool = None,
+def create(config_path: str = None, dataset_name: str = None,
+           dataset: str = None,
+           seed: int = None, data_seed: int = None, benchmark: bool = None,
            config: Config = config,
            cache_threshold: float = None, verbose: int = None,
            color: bool = None, tqdm: bool = None, **kwargs) -> Env:
-    other_kwargs = {'cache_threshold': cache_threshold, 'verbose': verbose, 'color': color, 'tqdm': tqdm}
+    other_kwargs = {'data_seed': data_seed, 'cache_threshold': cache_threshold,
+                    'verbose': verbose, 'color': color, 'tqdm': tqdm}
     config.update_cmd(config_path)
-    dataset_name = get_name(name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    dataset_name = dataset_name if dataset_name is not None else config.full_config['dataset']['default_dataset']
-    result = config.get_config(dataset_name=dataset_name)['env'].update(other_kwargs)
+    dataset_name = get_name(
+        name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
+    dataset_name = dataset_name if dataset_name is not None \
+        else config.full_config['dataset']['default_dataset']
+    result = config.get_config(dataset_name=dataset_name)[
+        'env'].update(other_kwargs)
     env.update(config_path=config_path, **result)
     ansi.switch(env['color'])
     if seed is None and 'seed' in env.keys():
@@ -90,14 +102,9 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
         benchmark = env['benchmark']
     if benchmark:
         torch.backends.cudnn.benchmark = benchmark
-
-    # dist_backend = 'nccl' if num_gpus and dist.is_nccl_available() else 'gloo'
-    # dist.init_process_group(backend=dist_backend)
-    env.update(seed=seed, device=device, benchmark=benchmark, num_gpus=num_gpus)
+    env.update(seed=seed, device=device,
+               benchmark=benchmark, num_gpus=num_gpus)
     return env
 
 
 create()
-
-
-# def init_distributed_mode():

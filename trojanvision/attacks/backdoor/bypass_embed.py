@@ -2,9 +2,9 @@
 
 from .badnet import BadNet
 from trojanvision.environ import env
-from trojanzoo.utils import to_tensor
-from trojanzoo.utils import AverageMeter
-from trojanzoo.utils.output import prints, ansi
+from trojanzoo.utils.module import AverageMeter
+from trojanzoo.utils.output import ansi
+from trojanzoo.utils.tensor import to_tensor
 
 import torch
 import torch.nn as nn

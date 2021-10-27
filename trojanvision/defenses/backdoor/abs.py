@@ -4,10 +4,10 @@ from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
 from trojanvision.utils.loss import total_variation
 from trojanvision.utils.ssim import SSIM
-from trojanzoo.utils import normalize_mad, jaccard_idx
-from trojanzoo.utils import to_tensor, to_numpy, tanh_func
-from trojanzoo.utils import AverageMeter
+from trojanzoo.utils.metric import normalize_mad, mask_jaccard
+from trojanzoo.utils.module import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.tensor import to_tensor, to_numpy, tanh_func
 
 import torch
 import torch.optim as optim
@@ -138,7 +138,7 @@ class ABS(BackdoorDefense):
                 _str += f'    Norm: {mask.norm(p=1):.3f}'
                 _str += f'    Score: {score:.3f}'
                 if not self.attack.mark.random_pos:
-                    overlap = jaccard_idx(mask, self.real_mask)
+                    overlap = mask_jaccard(mask, self.real_mask)
                     _dict['jaccard'] = overlap
                     _str += f'    Jaccard: {overlap:.3f}'
                     if attack_acc > 90:

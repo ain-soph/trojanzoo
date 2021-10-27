@@ -3,7 +3,7 @@
 from trojanvision.attacks import PGD
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanzoo.utils import AverageMeter
+from trojanzoo.utils.module import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 
 import torch

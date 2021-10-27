@@ -8,7 +8,8 @@ from trojanzoo import datasets as datasets
 from trojanzoo import models as models
 from trojanzoo import trainer as trainer
 
-from trojanzoo.utils import summary, to_tensor, to_numpy, to_list
+from trojanzoo.utils.module import summary
+from trojanzoo.utils.tensor import to_tensor, to_numpy, to_list
 
 __all__ = ['summary', 'to_tensor', 'to_numpy', 'to_list']
 __version__ = TorchVersion(internal_version)

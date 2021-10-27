@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils import *
-
 import torch
 from typing import Union
 

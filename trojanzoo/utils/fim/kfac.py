@@ -21,40 +21,58 @@ _LayerType = (nn.Conv2d, nn.Linear)
 
 
 class BaseState:
+    r"""A basic storage class.
+
+    Attributes:
+        x (torch.Tensor): ``(N, in, xh, xw)``.
+        gy (torch.Tensor): ``(N, out, yh, yw)``.
+        num_locations (int): ``yh * yw``.
+    """
+
     def __init__(self):
-        self.x: torch.Tensor = None   # (N, in, xh, xw)
-        self.gy: torch.Tensor = None   # (N, out, yh, yw)
-        self.num_locations: int = None  # yh * yw
+        self.x: torch.Tensor = None
+        self.gy: torch.Tensor = None
+        self.num_locations: int = None
 
 
 class KFACState(BaseState):
+    r"""A storage class for :class:`KFAC`.
+
+    Attributes:
+        xxt (torch.Tensor): ``(in [* kh * kw] + 1, in [* kh * kw] + 1)``.
+        ggt (torch.Tensor): ``(out, out)``.
+        ixxt (torch.Tensor): ``(in [* kh * kw] + 1, in [* kh * kw] + 1)``.
+        iggt (torch.Tensor): ``(out, out)``.
+    """
+
     def __init__(self):
         super().__init__()
-        self.xxt: torch.Tensor = None   # (in [* kh * kw] + 1, in [* kh * kw] + 1)
-        self.ggt: torch.Tensor = None   # (out, out)
-        self.ixxt: torch.Tensor = None   # (in [* kh * kw] + 1, in [* kh * kw] + 1)
-        self.iggt: torch.Tensor = None   # (out, out)
+        self.xxt: torch.Tensor = None
+        self.ggt: torch.Tensor = None
+        self.ixxt: torch.Tensor = None
+        self.iggt: torch.Tensor = None
 
 
 class BaseKFAC(ABC, Optimizer):
+    """ Base K-FAC Preconditionner for Linear and Conv2d layers.
+
+    Computes the K-FAC of the second moment of the gradients.
+    It works for Linear and Conv2d layers and silently skip other layers.
+
+    Args:
+        net (torch.nn.Module): Network to precondition.
+        eps (float): Tikhonov regularization parameter for the inverses.
+        sua (bool): Applies SUA approximation.
+        update_freq (int): Perform inverses every update_freq updates.
+        alpha (float): Running average parameter (if == 1, no r. ave.).
+        constraint_norm (bool): Scale the gradients by the squared
+            fisher norm.
+    """
+
     def __init__(self, net: nn.Module, eps: float = 0.1,
                  sua: bool = False, update_freq: int = 1,
                  alpha: float = 1.0, constraint_norm: bool = False,
                  state_type: type = BaseState):
-        """ Base K-FAC Preconditionner for Linear and Conv2d layers.
-
-        Computes the K-FAC of the second moment of the gradients.
-        It works for Linear and Conv2d layers and silently skip other layers.
-
-        Args:
-            net (torch.nn.Module): Network to precondition.
-            eps (float): Tikhonov regularization parameter for the inverses.
-            sua (bool): Applies SUA approximation.
-            update_freq (int): Perform inverses every update_freq updates.
-            alpha (float): Running average parameter (if == 1, no r. ave.).
-            constraint_norm (bool): Scale the gradients by the squared
-                fisher norm.
-        """
         self.track = Lock()
 
         self.eps = eps
@@ -72,7 +90,8 @@ class BaseKFAC(ABC, Optimizer):
             if isinstance(mod, _LayerType):
                 handle = mod.register_forward_pre_hook(self._save_input)
                 self._fwd_handles.append(handle)
-                handle = mod.register_full_backward_hook(self._save_grad_output)
+                handle = mod.register_full_backward_hook(
+                    self._save_grad_output)
                 self._bwd_handles.append(handle)
                 params.append({'params': mod.parameters(), 'mod': mod})
                 if len(name):
@@ -81,17 +100,24 @@ class BaseKFAC(ABC, Optimizer):
                 if mod.bias is not None:
                     name_dict[name + 'bias'] = mod
         super().__init__(params, {})
-        self.param_groups: list[dict[str, Union[LayerType, Iterable[torch.Tensor]]]]
-        self.module_list: list[LayerType] = [group['mod'] for group in self.param_groups]
-        self.pack_idx: dict[LayerType, list[int]] = {module: [] for module in self.module_list}
+        self.param_groups: list[dict[str,
+                                     Union[LayerType, Iterable[torch.Tensor]]]]
+        self.module_list: list[LayerType] = [group['mod']
+                                             for group in self.param_groups]
+        self.pack_idx: dict[LayerType, list[int]] = {
+            module: [] for module in self.module_list}
         for i, (name, _) in enumerate(net.named_parameters()):
             if name in name_dict.keys():
                 self.pack_idx[name_dict[name]].append(i)
-        self.state_storage: dict[LayerType, BaseState] = {mod: state_type() for mod in self.module_list}
+        self.state_storage: dict[LayerType, BaseState] = {
+            mod: state_type() for mod in self.module_list}
 
-    def step(self, update_stats: bool = True, update_params: bool = True, force: bool = False):
+    def step(self, update_stats: bool = True,
+             update_params: bool = True,
+             force: bool = False):
         """Performs one step of preconditioning."""
-        if update_stats and (force or self._iteration_counter % self.update_freq == 0):
+        if update_stats and (force or
+                             self._iteration_counter % self.update_freq == 0):
             self.update_stats()
         if update_params:
             self.update_params()
@@ -127,7 +153,8 @@ class BaseKFAC(ABC, Optimizer):
                 for param in module.parameters():
                     param.grad.data *= scale
 
-    def calc_grad(self, grad_list: list[torch.Tensor], constraint_norm: bool = None) -> list[torch.Tensor]:
+    def calc_grad(self, grad_list: list[torch.Tensor],
+                  constraint_norm: bool = None) -> list[torch.Tensor]:
         if constraint_norm is None:
             constraint_norm = self.constraint_norm
         if grad_list is None:
@@ -168,7 +195,8 @@ class BaseKFAC(ABC, Optimizer):
             weight_grad = mod.weight.grad
             if mod.bias is not None:
                 bias_grad = mod.bias.grad
-        precond_func = self.precond_sua if isinstance(mod, nn.Conv2d) and self.sua else self.precond_nosua
+        precond_func = self.precond_sua if isinstance(
+            mod, nn.Conv2d) and self.sua else self.precond_nosua
         return precond_func(mod, weight_grad, bias_grad)
 
     @abstractmethod
@@ -208,12 +236,17 @@ class BaseKFAC(ABC, Optimizer):
             handle.remove()
 
     @staticmethod
-    def pack_list(param_list: list[torch.Tensor], pack_idx: dict[nn.Module, list[int]]) -> dict[nn.Module, list[torch.Tensor]]:
-        return {module: [param_list[idx] for idx in idx_list] for module, idx_list in pack_idx.items()}
+    def pack_list(param_list: list[torch.Tensor],
+                  pack_idx: dict[nn.Module, list[int]]
+                  ) -> dict[nn.Module, list[torch.Tensor]]:
+        return {module: [param_list[idx] for idx in idx_list]
+                for module, idx_list in pack_idx.items()}
 
     @staticmethod
-    def unpack_list(param_list: list[torch.Tensor], param_dict: dict[nn.Module, list[torch.Tensor]],
-                    pack_idx: dict[nn.Module, list[int]]) -> dict[nn.Module, list[torch.Tensor]]:
+    def unpack_list(param_list: list[torch.Tensor],
+                    param_dict: dict[nn.Module, list[torch.Tensor]],
+                    pack_idx: dict[nn.Module, list[int]]
+                    ) -> dict[nn.Module, list[torch.Tensor]]:
         new_list = [param for param in param_list]
         for module, idx_list in pack_idx.items():
             for i, idx in enumerate(idx_list):
@@ -222,23 +255,23 @@ class BaseKFAC(ABC, Optimizer):
 
 
 class KFAC(BaseKFAC):
+    """ K-FAC Preconditionner for Linear and Conv2d layers.
+
+    Computes the K-FAC of the second moment of the gradients.
+    It works for Linear and Conv2d layers and silently skip other layers.
+
+    Args:
+        net (torch.nn.Module): Network to precondition.
+        pi (bool): Computes pi correction for Tikhonov regularization.
+        eps (float): Tikhonov regularization parameter for the inverses.
+        sua (bool): Applies SUA approximation.
+        update_freq (int): Perform inverses every update_freq updates.
+        alpha (float): Running average parameter (if == 1, no r. ave.).
+        constraint_norm (bool): Scale the gradients by the squared
+            fisher norm.
+    """
 
     def __init__(self, *args, pi: bool = False, **kwargs):
-        """ K-FAC Preconditionner for Linear and Conv2d layers.
-
-        Computes the K-FAC of the second moment of the gradients.
-        It works for Linear and Conv2d layers and silently skip other layers.
-
-        Args:
-            net (torch.nn.Module): Network to precondition.
-            pi (bool): Computes pi correction for Tikhonov regularization.
-            eps (float): Tikhonov regularization parameter for the inverses.
-            sua (bool): Applies SUA approximation.
-            update_freq (int): Perform inverses every update_freq updates.
-            alpha (float): Running average parameter (if == 1, no r. ave.).
-            constraint_norm (bool): Scale the gradients by the squared
-                fisher norm.
-        """
         super().__init__(*args, state_type=KFACState, **kwargs)
         self.pi = pi
         self.state_storage: dict[LayerType, KFACState]
@@ -247,9 +280,10 @@ class KFAC(BaseKFAC):
         for module in self.module_list:
             self.compute_covs(module)
             state = self.state_storage[module]
+            kwds = dict(num_locations=state.num_locations,
+                        eps=self.eps, pi=self.pi)
             state.ixxt, state.iggt = self.inv_covs(state.xxt, state.ggt,
-                                                   num_locations=state.num_locations,
-                                                   eps=self.eps, pi=self.pi)
+                                                   **kwds)
 
     def precond_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
                     bias_grad: Optional[torch.Tensor]
@@ -259,12 +293,15 @@ class KFAC(BaseKFAC):
         g, gb = weight_grad, bias_grad
         s = weight_grad.size()  # (out, in, kh, kw)
         if bias_grad is not None:
-            gb = gb[None, :, None, None].repeat(1, 1, s[2], s[3])  # (out, 1, kh, kw)
+            gb = gb[None, :, None, None].repeat(
+                1, 1, s[2], s[3])  # (out, 1, kh, kw)
             g = torch.cat([g, gb], dim=1)  # (out, in + 1, kh, kw)
 
         g = g.transpose(0, 1)  # (in + 1, out, kh, kw)
-        g = state.ixxt.mm(g.flatten(1)).view_as(g).transpose(0, 1)  # (out, in + 1, kh, kw)
-        g = state.iggt.mm(g.flatten(1)).view_as(g) / state.num_locations  # (out, in + 1, kh, kw)
+        g = state.ixxt.mm(g.flatten(1)).view_as(
+            g).transpose(0, 1)  # (out, in + 1, kh, kw)
+        g = state.iggt.mm(g.flatten(1)).view_as(
+            g) / state.num_locations  # (out, in + 1, kh, kw)
 
         if gb is not None:
             gb = g[:, -1, s[2] // 2, s[3] // 2].contiguous()  # (out)
@@ -279,8 +316,10 @@ class KFAC(BaseKFAC):
         g, gb = weight_grad, bias_grad
         g = g.flatten(1)  # (out, in * kh * kw)
         if gb is not None:
-            g = torch.cat([g, gb.unsqueeze(1)], dim=1)  # (out, in * kh * kw + 1)
-        g = state.iggt.mm(g).mm(state.ixxt) / state.num_locations  # (out, in * kh * kw + 1)
+            # (out, in * kh * kw + 1)
+            g = torch.cat([g, gb.unsqueeze(1)], dim=1)
+        g = state.iggt.mm(g).mm(state.ixxt) / \
+            state.num_locations  # (out, in * kh * kw + 1)
         if gb is not None:
             gb = g[:, -1].contiguous()  # (out)
             g = g[:, :-1]  # (out, in * kh * kw)
@@ -310,7 +349,8 @@ class KFAC(BaseKFAC):
             ones = torch.ones_like(x[:1])
             x = torch.cat([x, ones])   # (in [* kh * kw] + 1, N * xh * xw)
         if self._iteration_counter == 0:
-            state.xxt = x.mm(x.t()) / x.size(1)   # (in [* kh * kw] + 1, in [* kh * kw] + 1)
+            # (in [* kh * kw] + 1, in [* kh * kw] + 1)
+            state.xxt = x.mm(x.t()) / x.size(1)
             state.ggt = gy.mm(gy.t()) / gy.size(1)   # (out, out)
         else:
             state.xxt.addmm_(mat1=x, mat2=x.t(),
@@ -325,13 +365,17 @@ class KFAC(BaseKFAC):
         state.gy = None
 
     @staticmethod
-    def inverse(matrix: torch.Tensor, eps: float = 0.1, pi: float = 1.0) -> torch.Tensor:
+    def inverse(matrix: torch.Tensor,
+                eps: float = 0.1, pi: float = 1.0
+                ) -> torch.Tensor:
         diag = math.sqrt(eps * pi) * matrix.new_ones(matrix.size(0))
         return (matrix + torch.diag(diag)).inverse()
 
     @classmethod
-    def inv_covs(cls, xxt: torch.Tensor, ggt: torch.Tensor, num_locations: int = 1,
-                 eps: float = 0.1, pi: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
+    def inv_covs(cls, xxt: torch.Tensor, ggt: torch.Tensor,
+                 num_locations: int = 1,
+                 eps: float = 0.1, pi: bool = False
+                 ) -> tuple[torch.Tensor, torch.Tensor]:
         """Inverses the covariances."""
         # Computes pi
         pi_value = 1.0

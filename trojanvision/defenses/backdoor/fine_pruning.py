@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from ..backdoor_defense import BackdoorDefense
-from trojanzoo.utils import to_list
+from trojanzoo import to_list
 from trojanzoo.utils.output import output_iter
 
 import torch

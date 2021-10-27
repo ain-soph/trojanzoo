@@ -5,7 +5,7 @@ from trojanvision.attacks import PGD
 from trojanvision.defenses.adv.curvature import Curvature
 from trojanvision.optim import PGDoptimizer
 from trojanvision.models import MagNet
-from trojanzoo.utils import to_list
+from trojanzoo import to_list
 
 import torch
 import numpy as np

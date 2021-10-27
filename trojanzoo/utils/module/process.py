@@ -1,23 +1,44 @@
 #!/usr/bin/env python3
 
-from .others import BasicObject
-from .output import prints, output_iter
+from trojanzoo.utils.output import ansi, output_iter, prints
 
 import os
 from collections.abc import Iterable
 
 from typing import TYPE_CHECKING
 from typing import Union    # TODO: python 3.10
-from trojanzoo.datasets import Dataset    # TODO: python 3.10
-from trojanzoo.models import Model
 if TYPE_CHECKING:
-    pass
+    from trojanzoo.datasets import Dataset    # TODO: python 3.10
+    from trojanzoo.models import Model
+
+__all__ = ['BasicObject', 'Process', 'ModelProcess']
+
+
+class BasicObject:
+    name: str = 'basic_object'
+
+    def __init__(self, **kwargs):
+        self.param_list: dict[str, list[str]] = {}
+
+    # -----------------------------------Output-------------------------------------#
+    def summary(self, indent: int = 0):
+        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
+            self.name, **ansi), indent=indent)
+        prints(self.__class__.__name__, indent=indent)
+        for key, value in self.param_list.items():
+            if value:
+                prints('{green}{0:<20s}{reset}'.format(
+                    key, **ansi), indent=indent + 10)
+                prints({v: getattr(self, v)
+                       for v in value}, indent=indent + 10)
+                prints('-' * 20, indent=indent + 10)
 
 
 class Process(BasicObject):
     name: str = 'process'
 
-    def __init__(self, output: Union[int, Iterable[str]] = 0, indent: int = 0, **kwargs):
+    def __init__(self, output: Union[int, Iterable[str]] = 0,
+                 indent: int = 0, **kwargs):
         super().__init__(**kwargs)
         self.param_list['verbose'] = ['output', 'indent']
 
@@ -30,7 +51,8 @@ class Process(BasicObject):
         indent = indent if indent is not None else self.indent
         return super().summary(indent=indent)
 
-    def get_output(self, org_output: Union[int, Iterable[str]] = None) -> set[str]:
+    def get_output(self, org_output: Union[int, Iterable[str]] = None
+                   ) -> set[str]:
         if org_output is None:
             return self.output
         elif isinstance(org_output, int):
@@ -51,14 +73,18 @@ class Process(BasicObject):
         return result
 
     @staticmethod
-    def output_iter(name: str, _iter: int, iteration: int = None, indent: int = 0):
-        prints(f'{name} Iter: {output_iter(_iter + 1, iteration)}', indent=indent)
+    def output_iter(name: str, _iter: int,
+                    iteration: int = None,
+                    indent: int = 0):
+        prints(f'{name} Iter: {output_iter(_iter + 1, iteration)}',
+               indent=indent)
 
 
-class Model_Process(Process):
-    name: str = 'model_process'
+class ModelProcess(Process):
+    name: str = 'ModelProcess'
 
-    def __init__(self, dataset: Dataset = None, model: Model = None, folder_path: str = None, **kwargs):
+    def __init__(self, dataset: 'Dataset' = None, model: 'Model' = None,
+                 folder_path: str = None, **kwargs):
         super().__init__(**kwargs)
         self.param_list['process'] = ['clean_acc', 'folder_path']
         self.dataset = dataset

@@ -9,8 +9,11 @@
    :maxdepth: 2
 
    data<data>
+   fim<fim>
 
-----------------------------------
+-------------------------------
 
 .. autofunction:: empty_cache
+.. autoclass:: trojanzoo.utils.lock.Lock
+   :members:
 

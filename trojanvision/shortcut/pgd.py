@@ -2,7 +2,7 @@
 
 from trojanvision.optim import PGDoptimizer
 from trojanzoo.attacks import Attack
-from trojanzoo.utils import to_list
+from trojanzoo import to_list
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.logger import SmoothedValue
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from trojanvision.utils.model import Conv2d_SAME
-from trojanzoo.utils import to_tensor
+from trojanzoo import to_tensor
 from trojanzoo.models import Model
 from trojanvision.datasets import ImageSet
+from trojanvision.utils.model import Conv2d_SAME
 
 import torch
 import torch.nn as nn

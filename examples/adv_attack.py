@@ -3,7 +3,6 @@
 # CUDA_VISIBLE_DEVICES=1 python examples/adv_attack.py --verbose 1 --color --attack pgd --dataset cifar10 --model resnet18_comp --pretrain --stop_threshold 0.0 --target_idx 1 --require_class --grad_method nes --valid_batch_size 200
 
 import trojanvision
-from trojanvision.utils import summary
 import argparse
 
 if __name__ == '__main__':
@@ -22,5 +21,5 @@ if __name__ == '__main__':
     attack = trojanvision.attacks.create(dataset=dataset, model=model, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, train=trainer, attack=attack)
+        trojanvision.summary(env=env, dataset=dataset, model=model, train=trainer, attack=attack)
     attack.attack(**trainer)

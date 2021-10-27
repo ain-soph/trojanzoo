@@ -2,7 +2,7 @@
 
 from trojanvision.attacks.backdoor.imc import IMC
 from trojanvision.environ import env
-from trojanzoo.utils import to_tensor
+from trojanzoo import to_tensor
 
 import torch
 import numpy as np

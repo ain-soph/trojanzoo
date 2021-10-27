@@ -3,8 +3,6 @@
 # CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_unlearn.py --color --verbose 1 --attack badnet --defense neural_cleanse --percent 0.01 --validate_interval 1 --epoch 50 --lr 1e-2
 
 import trojanvision
-
-from trojanvision.utils import summary
 import argparse
 import os
 
@@ -32,7 +30,7 @@ if __name__ == '__main__':
     defense: NeuralCleanse = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
+        trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
 
     simple_parser = argparse.ArgumentParser()
     simple_parser.add_argument('--mark_source', default='defense')

@@ -12,7 +12,6 @@ from trojanvision.utils.model_archs.darts.operations import PRIMITIVES
 import torch
 import torch.nn as nn
 from torchvision.datasets.utils import download_file_from_google_drive
-import numpy as np
 import os
 from collections import OrderedDict
 

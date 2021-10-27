@@ -3,8 +3,8 @@
 from trojanvision.datasets.imageset import ImageSet
 from trojanvision.models.imagemodel import ImageModel
 from trojanvision.marks import Watermark
+from trojanzoo import to_list
 from trojanzoo.attacks import Attack
-from trojanzoo.utils import to_list
 from trojanzoo.utils.data import TensorListDataset, dataset_to_list
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue

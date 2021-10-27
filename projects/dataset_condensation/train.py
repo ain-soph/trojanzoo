@@ -4,7 +4,6 @@
 # CUDA_VISIBLE_DEVICES=0 python train.py --verbose 1 --color --epoch 300 --batch_size 256 --lr 0.01 --dataset cifar10 --model convnet --adv_train --adv_train_random_init
 
 import trojanvision
-from trojanvision.utils import summary
 import argparse
 
 from torchvision import transforms
@@ -31,5 +30,5 @@ if __name__ == '__main__':
     loader_train = dataset.get_dataloader(mode='train', transform=transforms.Compose(transform))
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, trainer=trainer)
+        trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)
     model._train(loader_train=loader_train, **trainer)

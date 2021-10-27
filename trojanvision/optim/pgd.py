@@ -2,8 +2,8 @@
 
 import trojanzoo.optim
 
-from trojanzoo.utils import add_noise, cos_sim
 from trojanzoo.utils.output import prints
+from trojanzoo.utils.tensor import add_noise, cos_sim
 from trojanzoo.environ import env
 
 import torch

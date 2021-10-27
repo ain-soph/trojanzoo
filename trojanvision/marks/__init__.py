@@ -3,8 +3,9 @@
 from trojanvision.configs import Config, config
 from trojanvision.datasets import ImageSet
 from trojanvision.environ import env
-from trojanzoo.utils import to_tensor, to_numpy, byte2float, gray_img, save_tensor_as_img
-from trojanzoo.utils.output import ansi, prints, Indent_Redirect
+from trojanzoo.utils.tensor import (to_tensor, to_numpy, byte2float,
+                                    gray_img, save_tensor_as_img)
+from trojanzoo.utils.output import ansi, prints, redirect
 
 import os
 import sys
@@ -16,7 +17,6 @@ import PIL.Image as Image
 from collections.abc import Callable
 from typing import Union
 
-redirect = Indent_Redirect(buffer=True, indent=0)
 dir_path = os.path.dirname(__file__)
 
 
@@ -33,7 +33,8 @@ def create(mark_path: str = None, data_shape: list[int] = None,
         data_shape = dataset.data_shape
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name
-    result = config.get_config(dataset_name=dataset_name)['mark'].update(kwargs).update(mark_path=mark_path)
+    result = config.get_config(dataset_name=dataset_name)[
+        'mark'].update(kwargs).update(mark_path=mark_path)
     return Watermark(data_shape=data_shape, **result)
 
 
@@ -42,17 +43,26 @@ class Watermark:
 
     @staticmethod
     def add_argument(group: argparse._ArgumentGroup):
-        group.add_argument('--edge_color', help='edge color in watermark image, defaults to "auto".')
+        group.add_argument(
+            '--edge_color', help='edge color in watermark image, defaults to "auto".')
         group.add_argument('--mark_path', help='edge color in watermark image, '
                            'defaults to "trojanzoo/data/mark/square_white.png".')
-        group.add_argument('--mark_alpha', type=float, help='mark transparency, defaults to 0.0.')
-        group.add_argument('--mark_height', type=int, help='mark height, defaults to 3.')
-        group.add_argument('--mark_width', type=int, help='mark width, defaults to 3.')
-        group.add_argument('--height_offset', type=int, help='height offset, defaults to 0')
-        group.add_argument('--width_offset', type=int, help='width offset, defaults to 0')
-        group.add_argument('--random_pos', action='store_true', help='Random offset Location for add_mark.')
-        group.add_argument('--random_init', action='store_true', help='random values for mark pixel.')
-        group.add_argument('--mark_distributed', action='store_true', help='Distributed Mark.')
+        group.add_argument('--mark_alpha', type=float,
+                           help='mark transparency, defaults to 0.0.')
+        group.add_argument('--mark_height', type=int,
+                           help='mark height, defaults to 3.')
+        group.add_argument('--mark_width', type=int,
+                           help='mark width, defaults to 3.')
+        group.add_argument('--height_offset', type=int,
+                           help='height offset, defaults to 0')
+        group.add_argument('--width_offset', type=int,
+                           help='width offset, defaults to 0')
+        group.add_argument('--random_pos', action='store_true',
+                           help='Random offset Location for add_mark.')
+        group.add_argument('--random_init', action='store_true',
+                           help='random values for mark pixel.')
+        group.add_argument('--mark_distributed',
+                           action='store_true', help='Distributed Mark.')
         return group
 
     def __init__(self, mark_path: str = 'trojanzoo/data/mark/square_white.png',
@@ -81,9 +91,12 @@ class Watermark:
         # --------------------------------------------------- #
 
         if self.mark_distributed:
-            self.mark = torch.rand(data_shape, dtype=torch.float, device=env['device'])
-            mask = torch.zeros(data_shape[-2:], dtype=torch.bool, device=env['device']).flatten()
-            idx = np.random.choice(len(mask), self.mark_height * self.mark_width, replace=False).tolist()
+            self.mark = torch.rand(
+                data_shape, dtype=torch.float, device=env['device'])
+            mask = torch.zeros(
+                data_shape[-2:], dtype=torch.bool, device=env['device']).flatten()
+            idx = np.random.choice(
+                len(mask), self.mark_height * self.mark_width, replace=False).tolist()
             mask[idx] = 1.0
             mask = mask.view(data_shape[-2:])
             self.mask = mask
@@ -95,11 +108,14 @@ class Watermark:
             self.org_mark: torch.Tensor = byte2float(org_mark_img)
             self.edge_color: torch.Tensor = self.get_edge_color(
                 self.org_mark, data_shape, edge_color)
-            self.org_mask, self.org_alpha_mask = self.org_mask_mark(self.org_mark, self.edge_color, self.mark_alpha)
+            self.org_mask, self.org_alpha_mask = self.org_mask_mark(
+                self.org_mark, self.edge_color, self.mark_alpha)
             if random_init:
-                self.org_mark = self.random_init_mark(self.org_mark, self.org_mask)
+                self.org_mark = self.random_init_mark(
+                    self.org_mark, self.org_mask)
             if not random_pos:
-                self.param_list['mark'].extend(['height_offset', 'width_offset'])
+                self.param_list['mark'].extend(
+                    ['height_offset', 'width_offset'])
                 self.height_offset: int = height_offset
                 self.width_offset: int = width_offset
                 self.mark, self.mask, self.alpha_mask = self.mask_mark()
@@ -115,9 +131,12 @@ class Watermark:
             # batch_size = _input.size(0)
             # height_offset = torch.randint(high=self.data_shape[-2] - self.mark_height, size=[batch_size])
             # width_offset = torch.randint(high=self.data_shape[-1] - self.mark_width, size=[batch_size])
-            height_offset = random.randint(0, self.data_shape[-2] - self.mark_height)
-            width_offset = random.randint(0, self.data_shape[-1] - self.mark_width)
-            mark, mask, alpha_mask = self.mask_mark(height_offset=height_offset, width_offset=width_offset)
+            height_offset = random.randint(
+                0, self.data_shape[-2] - self.mark_height)
+            width_offset = random.randint(
+                0, self.data_shape[-1] - self.mark_width)
+            mark, mask, alpha_mask = self.mask_mark(
+                height_offset=height_offset, width_offset=width_offset)
         else:
             mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
             if alpha is not None:
@@ -276,17 +295,18 @@ class Watermark:
 
     # ------------------------------Verbose Information--------------------------- #
     def summary(self, indent: int = 0):
-        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(self.name, **ansi), indent=indent)
+        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
+            self.name, **ansi), indent=indent)
         prints(self.__class__.__name__, indent=indent)
         for key, value in self.param_list.items():
             if value:
-                prints('{green}{0:<20s}{reset}'.format(key, **ansi), indent=indent + 10)
-                prints({v: getattr(self, v) for v in value}, indent=indent + 10)
+                prints('{green}{0:<20s}{reset}'.format(
+                    key, **ansi), indent=indent + 10)
+                prints({v: getattr(self, v)
+                       for v in value}, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
 
     def __str__(self) -> str:
-        sys.stdout = redirect
-        self.summary()
-        _str = redirect.buffer
-        redirect.reset()
-        return _str
+        with redirect():
+            self.summary()
+            return redirect.buffer

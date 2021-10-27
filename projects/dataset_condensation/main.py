@@ -19,7 +19,6 @@
 
 from projects.dataset_condensation.utils import freeze_bn
 import trojanvision
-from trojanvision.utils import summary
 import argparse
 
 from trojanvision.utils.model import weight_init
@@ -128,7 +127,7 @@ if __name__ == '__main__':
     trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args_dict)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model, trainer=trainer)
+        trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)
 
     if args_dict['eval_model'] is not None:
         args_dict['model_name'] = args_dict['eval_model']
@@ -149,7 +148,7 @@ if __name__ == '__main__':
     eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args_dict)
 
     if env['verbose']:
-        summary(eval_model=eval_model, eval_trainer=eval_trainer)
+        trojanvision.summary(eval_model=eval_model, eval_trainer=eval_trainer)
 
     init_fn = torch.randn if dataset.normalize else torch.rand
     image_syn = init_fn(size=(model.num_classes, image_per_class, *dataset.data_shape),

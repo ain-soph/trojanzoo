@@ -5,7 +5,6 @@
 # https://github.com/VICO-UoE/DatasetCondensation
 
 import trojanvision
-from trojanvision.utils import summary
 import argparse
 
 import torch
@@ -41,7 +40,7 @@ if __name__ == '__main__':
     eval_train_args['epoch'] = epoch_eval_train
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=eval_model, trainer=eval_trainer)
+        trojanvision.summary(env=env, dataset=dataset, model=eval_model, trainer=eval_trainer)
 
     # a: OrderedDict = torch.load('./result.pth')
     # b = OrderedDict()

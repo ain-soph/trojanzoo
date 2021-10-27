@@ -4,10 +4,8 @@ import torch
 from torch.utils.data import Dataset, Subset
 import numpy as np
 
-from typing import TYPE_CHECKING, overload
+from typing import overload
 from typing import Optional, Union    # TODO: python 3.10
-if TYPE_CHECKING:
-    pass
 
 
 class TensorListDataset(Dataset):
@@ -113,7 +111,7 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
 
 def sample_batch(dataset: Dataset, idx: list[int] = None,
                  batch_size: int = None) -> tuple[list, list[int]]:
-    r"""Sample a batch from dataset.
+    r"""Sample a batch from dataset by calling
 
     .. parsed-literal::
         :any:`dataset_to_list`\(:any:`torch.utils.data.Subset`\(dataset, idx))
@@ -155,8 +153,39 @@ def sample_batch(dataset: Dataset, idx: list[int] = None,
 
 
 def split_dataset(dataset: Union[Dataset, Subset],
-                  length: int = None, percent=None, shuffle: bool = True, seed: int = None
+                  length: int = None, percent: float = None,
+                  shuffle: bool = True, seed: int = None
                   ) -> tuple[Subset, Subset]:
+    r"""Split a dataset into two subsets.
+
+    Args:
+        dataset (torch.utils.data.Dataset): The dataset to split.
+        length (int): The length of the first subset.
+            This argument cannot be used together with :attr:`percent`.
+            If ``None``, use :attr:`percent` to calculate length instead.
+            Defaults to ``None``.
+        percent (int): The split ratio for the first subset.
+            This argument cannot be used together with :attr:`length`.
+            ``length = percent * len(dataset)``.
+            Defaults to ``None``.
+
+    Returns:
+        (torch.utils.data.Subset, torch.utils.data.Subset):
+            The two splitted subsets.
+
+    :Example:
+        >>> from trojanzoo.utils.data import TensorListDataset, split_dataset
+        >>> import torch
+        >>> data = torch.ones(11, 3, 32, 32)
+        >>> targets = list(range(11))
+        >>> dataset = TensorListDataset(data, targets)
+        >>> set1, set2 = split_dataset(dataset, length=3)
+        >>> len(set1), len(set2)
+        (3, 8)
+        >>> set3, set4 = split_dataset(dataset, percent=0.5)
+        >>> len(set3), len(set4)
+        (5, 6)
+    """
     assert (length is None) != (percent is None)  # XOR check
     length = length if length is not None else int(len(dataset) * percent)
     indices = np.arange(len(dataset))
@@ -173,7 +202,29 @@ def split_dataset(dataset: Union[Dataset, Subset],
     return subset1, subset2
 
 
-def get_class_subset(dataset: Dataset, class_list: Union[int, list[int]]) -> Subset:
+def get_class_subset(dataset: Dataset,
+                     class_list: Union[int, list[int]]
+                     ) -> Subset:
+    r"""Get a subset from dataset with certain classes.
+
+    Args:
+        dataset (torch.utils.data.Dataset): The entire dataset.
+        class_list (int | list[int]): The class list to pick.
+
+    Returns:
+        torch.utils.data.Subset: The subset with labels in :attr:`class_list`.
+
+    :Example:
+        >>> from trojanzoo.utils.data import TensorListDataset
+        >>> from trojanzoo.utils.data import get_class_subset
+        >>> import torch
+        >>> data = torch.ones(11, 3, 32, 32)
+        >>> targets = list(range(11))
+        >>> dataset = TensorListDataset(data, targets)
+        >>> subset = get_class_subset(dataset, class_list=[2, 3])
+        >>> len(subset)
+        2
+    """
     class_list = [class_list] if isinstance(class_list, int) else class_list
     indices = np.arange(len(dataset))
     if isinstance(dataset, Subset):

@@ -2,7 +2,7 @@
 
 from .badnet import BadNet
 from trojanvision.environ import env
-from trojanzoo.utils import to_pil_image, byte2float
+from trojanzoo.utils.tensor import to_pil_image, byte2float
 
 import torch
 import torch.nn as nn

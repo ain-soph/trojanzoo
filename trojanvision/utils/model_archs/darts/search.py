@@ -3,7 +3,7 @@
 from .genotypes import Genotype
 from .operations import get_op, PRIMITIVES
 
-from trojanzoo.utils import to_numpy
+from trojanzoo import to_numpy
 
 import torch
 import torch.nn as nn

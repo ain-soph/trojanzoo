@@ -2,7 +2,7 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
-from trojanzoo.utils import to_numpy
+from trojanzoo import to_numpy
 
 import torch
 import numpy as np
