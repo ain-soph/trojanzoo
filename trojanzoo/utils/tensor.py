@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .environ import env
+from trojanzoo.environ import env
 
 import torch
 import torchvision.transforms.functional as F

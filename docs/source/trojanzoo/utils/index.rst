@@ -13,7 +13,6 @@
 
 -------------------------------
 
-.. autofunction:: empty_cache
 .. autoclass:: trojanzoo.utils.lock.Lock
    :members:
 

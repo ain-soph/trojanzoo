@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-from .environ import env
-
 from .output import prints
+from trojanzoo.environ import env
+
 import torch
 import torch.cuda
 from typing import Union    # TODO: python 3.10

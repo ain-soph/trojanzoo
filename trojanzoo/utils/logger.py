@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from .environ import env
 from .output import ansi, output_iter, prints, get_ansi_len, remove_ansi
+from trojanzoo.environ import env
 
 import torch
 import torch.distributed as dist
