@@ -1,6 +1,6 @@
 .. _trojanvision.models:
 
-trojanvision.models
+:mod:`trojanvision.models`
 ==================================
 
 .. currentmodule:: trojanvision.models

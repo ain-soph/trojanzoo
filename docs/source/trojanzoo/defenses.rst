@@ -1,6 +1,6 @@
 .. _trojanzoo.defenses:
 
-trojanzoo.defenses
+:mod:`trojanzoo.defenses`
 ==================================
 
 .. currentmodule:: trojanzoo.defenses

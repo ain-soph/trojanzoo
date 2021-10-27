@@ -1,6 +1,6 @@
 .. _trojanvision.datasets:
 
-trojanvision.datasets
+:mod:`trojanvision.datasets`
 ==================================
 These are the basic building block for graphs
 

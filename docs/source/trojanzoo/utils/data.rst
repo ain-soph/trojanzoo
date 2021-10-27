@@ -1,6 +1,6 @@
 .. _trojanzoo.utils.data:
 
-trojanzoo.utils.data
+:mod:`trojanzoo.utils.data`
 ==================================
 
 .. currentmodule:: trojanzoo.utils.data

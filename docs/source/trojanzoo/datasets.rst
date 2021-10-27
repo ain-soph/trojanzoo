@@ -1,6 +1,6 @@
 .. _trojanzoo.datasets:
 
-trojanzoo.datasets
+:mod:`trojanzoo.datasets`
 ==================================
 .. currentmodule:: trojanzoo.datasets
 

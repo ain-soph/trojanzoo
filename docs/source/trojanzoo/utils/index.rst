@@ -1,6 +1,6 @@
 .. _trojanzoo.utils:
 
-trojanzoo.utils
+:mod:`trojanzoo.utils`
 ==================================
 
 .. currentmodule:: trojanzoo.utils

@@ -1,6 +1,6 @@
 .. _trojanzoo.attacks:
 
-trojanzoo.attacks
+:mod:`trojanzoo.attacks`
 ==================================
 
 .. currentmodule:: trojanzoo.attacks
