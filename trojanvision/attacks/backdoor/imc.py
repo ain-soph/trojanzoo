@@ -2,7 +2,7 @@
 
 from .trojannn import TrojanNN
 from trojanvision.utils.sgm import register_hook, remove_hook
-from trojanzoo.utils.module import AverageMeter
+from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.tensor import tanh_func
 
 import torch

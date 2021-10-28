@@ -3,7 +3,7 @@
 from trojanvision.attacks.backdoor.badnet import BadNet
 
 from trojanvision.environ import env
-from trojanzoo.utils.module import AverageMeter
+from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.tensor import to_tensor, tanh_func
 
 import torch

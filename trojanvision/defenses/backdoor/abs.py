@@ -4,8 +4,8 @@ from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
 from trojanvision.utils.loss import total_variation
 from trojanvision.utils.ssim import SSIM
+from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.metric import normalize_mad, mask_jaccard
-from trojanzoo.utils.module import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.tensor import to_tensor, to_numpy, tanh_func
 

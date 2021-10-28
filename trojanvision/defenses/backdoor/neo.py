@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from ..backdoor_defense import BackdoorDefense
+from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.metric import mask_jaccard
-from trojanzoo.utils.module import AverageMeter
 from trojanzoo.utils.tensor import to_tensor, to_numpy
 
 import torch

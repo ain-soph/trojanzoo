@@ -13,52 +13,78 @@ import time
 from typing import Generator, Iterable, TypeVar    # TODO: python 3.10
 _T = TypeVar("_T")
 
+__all__ = ['SmoothedValue', 'MetricLogger', 'AverageMeter']
+
 
 class SmoothedValue:
-    """Track a series of values and provide access to smoothed values over a
+    r"""Track a series of values and provide access to smoothed values over a
     window or the global series average.
+
+    Args:
+        window_size (int): The :attr:`maxlen` of :class:`~collections.deque`.
+        fmt (str): The format pattern of ``str(self)``.
+
+    Attributes:
+        __deque (~collections.deque): The data series.
+        __total (float): The sum of all data.
+        __count (int): The amount of data.
+        __fmt (str): The string pattern.
     """
 
     def __init__(self, window_size: int = None, fmt: str = '{global_avg:.3f}'):
-        self.deque = deque(maxlen=window_size)
-        self.total = 0.0
-        self.count = 0
-        self.fmt = fmt
+        self.__deque = deque(maxlen=window_size)
+        self.__total = 0.0
+        self.__count = 0
+        self.__fmt = fmt
 
-    def update(self, value: float, n: int = 1):
-        self.deque.append(value)
-        self.count += n
-        self.total += value * n
+    def update(self, value: float, n: int = 1) -> 'SmoothedValue':
+        r"""update :attr:`n` pieces of data with same :attr:`value`
+        into :class:`~collections.deque`.
 
-    def update_list(self, value_list: list[float]):
+        Args:
+            value (float): the value to update.
+            n (int): the number of data with same :attr:`value`.
+
+        Returns
+        -------
+            self: :class:`SmoothedValue`
+                return self for stream usage.
+        """
+        self.__deque.append(value)
+        self.__count += n
+        self.__total += value * n
+        return self
+
+    def update_list(self, value_list: list[float]) -> 'SmoothedValue':
         for value in value_list:
-            self.deque.append(value)
-            self.total += value
-        self.count += len(value_list)
+            self.__deque.append(value)
+            self.__total += value
+        self.__count += len(value_list)
+        return self
 
     def reset(self):
-        self.deque = deque(maxlen=self.deque.maxlen)
-        self.count = 0
-        self.total = 0.0
+        self.__deque = deque(maxlen=self.__deque.maxlen)
+        self.__count = 0
+        self.__total = 0.0
 
     def synchronize_between_processes(self):
-        """
+        r"""
         Warning: does not synchronize the deque!
         """
-        if not is_dist_avail_and_initialized():
+        if not (dist.is_available() and dist.is_initialized()):
             return
-        t = torch.tensor([self.count, self.total],
+        t = torch.tensor([self.__count, self.__total],
                          dtype=torch.float64, device='cuda')
         dist.barrier()
         dist.all_reduce(t)
         t = t.tolist()
-        self.count = int(t[0])
-        self.total = float(t[1])
+        self.__count = int(t[0])
+        self.__total = float(t[1])
 
     @property
     def median(self) -> float:
         try:
-            d = torch.tensor(list(self.deque))
+            d = torch.tensor(list(self.__deque))
             return d.median().item()
         except Exception:
             return 0.0
@@ -66,7 +92,7 @@ class SmoothedValue:
     @property
     def avg(self) -> float:
         try:
-            d = torch.tensor(list(self.deque), dtype=torch.float32)
+            d = torch.tensor(list(self.__deque), dtype=torch.float32)
             if len(d) == 0:
                 return 0.0
             return d.mean().item()
@@ -76,33 +102,33 @@ class SmoothedValue:
     @property
     def global_avg(self) -> float:
         try:
-            return self.total / self.count
+            return self.__total / self.__count
         except Exception:
             return 0.0
 
     @property
     def max(self) -> float:
         try:
-            return max(self.deque)
+            return max(self.__deque)
         except Exception:
             return 0.0
 
     @property
     def min(self) -> float:
         try:
-            return min(self.deque)
+            return min(self.__deque)
         except Exception:
             return 0.0
 
     @property
     def value(self) -> float:
         try:
-            return self.deque[-1]
+            return self.__deque[-1]
         except Exception:
             return 0.0
 
     def __str__(self):
-        return self.fmt.format(
+        return self.__fmt.format(
             median=self.median,
             avg=self.avg,
             global_avg=self.global_avg,
@@ -234,9 +260,26 @@ class MetricLogger:
         prints(log_msg, indent=indent)
 
 
-def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
+class AverageMeter:
+    r"""Computes and stores the average and current value"""
+
+    def __init__(self, name: str, fmt: str = ':f'):
+        self.name: str = name
+        self.__fmt = fmt
+        self.reset()
+
+    def reset(self):
+        self.val = 0.
+        self.avg = 0.
+        self.sum = 0.
+        self.__count = 0
+
+    def update(self, val: float, n: int = 1):
+        self.val = val
+        self.sum += val * n
+        self.__count += n
+        self.avg = self.sum / self.__count
+
+    def __str__(self):
+        fmtstr = '{name} {val' + self.__fmt + '} ({avg' + self.__fmt + '})'
+        return fmtstr.format(**self.__dict__)

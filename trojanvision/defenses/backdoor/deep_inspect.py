@@ -2,8 +2,8 @@
 
 from ..backdoor_defense import BackdoorDefense
 from trojanvision.environ import env
+from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.metric import normalize_mad, mask_jaccard
-from trojanzoo.utils.module import AverageMeter
 from trojanzoo.utils.tensor import to_numpy, to_tensor
 from trojanzoo.utils.output import prints, ansi, output_iter
 

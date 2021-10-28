@@ -44,13 +44,13 @@ class Lock:
         return self.__entered
 
     def enable(self):
-        """Set lock boolean value as `True`.
+        r"""Set lock boolean value as `True`.
         It's used together with :meth:`disable()`
         when contextmanager is not suitable for the case."""
         self.__entered = True
 
     def disable(self):
-        """Set lock boolean value as `False`.
+        r"""Set lock boolean value as `False`.
         It's used together with :meth:`enable()`
         when contextmanager is not suitable for the case."""
         self.__entered = False

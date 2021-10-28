@@ -10,9 +10,6 @@
 
    data<data>
    fim<fim>
-
--------------------------------
-
-.. autoclass:: trojanzoo.utils.lock.Lock
-   :members:
-
+   memory<memory>
+   logger<logger>
+   lock<lock>
