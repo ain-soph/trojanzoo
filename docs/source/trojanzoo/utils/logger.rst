@@ -7,3 +7,9 @@
 
 .. autoclass:: SmoothedValue
    :members:
+
+.. autoclass:: MetricLogger
+   :members:
+
+.. autoclass:: AverageMeter
+   :members:

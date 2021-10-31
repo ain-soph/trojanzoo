@@ -38,6 +38,8 @@ def train(module: nn.Module, num_classes: int,
           verbose: bool = True, indent: int = 0,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch',
           **kwargs) -> None:
+    r"""Train function.
+    """
     if epoch <= 0:
         return
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
@@ -78,7 +80,7 @@ def train(module: nn.Module, num_classes: int,
         logger.meters['top5'] = SmoothedValue()
         loader_epoch = loader_train
         if verbose:
-            header = '{blue_light}{0}: {1}{reset}'.format(
+            header: str = '{blue_light}{0}: {1}{reset}'.format(
                 print_prefix, output_iter(_epoch, epoch), **ansi)
             header = header.ljust(30 + get_ansi_len(header))
             if env['tqdm']:
@@ -190,6 +192,8 @@ def validate(module: nn.Module, num_classes: int,
              tag: str = '', _epoch: int = None,
              accuracy_fn: Callable[..., list[float]] = None,
              **kwargs) -> tuple[float, float]:
+    r"""Validate function.
+    """
     module.eval()
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
@@ -200,7 +204,7 @@ def validate(module: nn.Module, num_classes: int,
     logger.meters['top5'] = SmoothedValue()
     loader_epoch = loader
     if verbose:
-        header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
+        header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
         header = header.ljust(
             max(len(print_prefix), 30) + get_ansi_len(header))
         if env['tqdm']:
@@ -251,7 +255,7 @@ def compare(module1: nn.Module, module2: nn.Module,
     logger.meters['loss'] = SmoothedValue()
     loader_epoch = loader
     if verbose:
-        header = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
+        header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
         header = header.ljust(
             max(len(print_prefix), 30) + get_ansi_len(header))
         if env['tqdm']:

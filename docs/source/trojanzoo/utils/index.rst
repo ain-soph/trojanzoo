@@ -10,6 +10,7 @@
 
    data<data>
    fim<fim>
-   memory<memory>
    logger<logger>
    lock<lock>
+   memory<memory>
+   train<train>

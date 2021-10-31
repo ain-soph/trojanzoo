@@ -56,7 +56,7 @@ class KFACState(BaseState):
 class BaseKFAC(ABC, Optimizer):
     """ Base K-FAC Preconditionner for Linear and Conv2d layers.
 
-    Computes the K-FAC of the second moment of the gradients.
+    Compute the K-FAC of the second moment of the gradients.
     It works for Linear and Conv2d layers and silently skip other layers.
 
     Args:
@@ -257,7 +257,7 @@ class BaseKFAC(ABC, Optimizer):
 class KFAC(BaseKFAC):
     """ K-FAC Preconditionner for Linear and Conv2d layers.
 
-    Computes the K-FAC of the second moment of the gradients.
+    Compute the K-FAC of the second moment of the gradients.
     It works for Linear and Conv2d layers and silently skip other layers.
 
     Args:
@@ -327,7 +327,7 @@ class KFAC(BaseKFAC):
         return g, gb
 
     def compute_covs(self, mod: LayerType):
-        """Computes the covariances."""
+        """Compute the covariances."""
         state = self.state_storage[mod]
         x = state.x   # (N, in, xh, xw)
         gy = state.gy   # (N, out, yh, yw)

@@ -23,10 +23,15 @@ class DownsampledImageNet(ImageSet):
 
     def initialize(self):
         raise NotImplementedError(
-            'You need to visit \'https://image-net.org/download-images.php\'.\n'
-            'to download downsampled image data.\n'
-            'There are direct links to files, but illegal to distribute.\n'
-            'Please apply for access permission and find links yourself.')
+            '\n\n'
+            'You need to visit \'https://image-net.org/download-images.php\' '
+            'to download downsampled image data (raw format).\n'
+            'There are direct links to files, but not legal to distribute. '
+            'Please apply for access permission and find links yourself.\n\n'
+            f'folder_path: {self.folder_path}\n'
+            'expected files:\n'
+            '{folder_path}/train_data_batch_*\n'
+            '{folder_path}/val_data')
 
 
 class ImageNet16(DownsampledImageNet):
