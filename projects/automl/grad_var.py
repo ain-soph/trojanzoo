@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import argparse
 
-seed = 40
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -23,22 +23,41 @@ if __name__ == '__main__':
         trojanvision.summary(env=env, dataset=dataset, model=model)
     # loss, acc1 = model._validate()
 
-    import random
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    model.activate_params(model.parameters())
+    model.zero_grad()
 
-    grad_list = []
+    torch.random.manual_seed(int(time.time()))
+    grad_x = None
+    grad_xx = None
+    n_sample = 512
 
-    for i, data in enumerate(dataset.get_dataloader('valid', shuffle=True, batch_size=100)):
+    loader = dataset.get_dataloader('valid', shuffle=True,
+                                    batch_size=1, drop_last=True)
+    for i, data in enumerate(loader):
+        if i >= n_sample:
+            break
         _input, _label = model.get_data(data)
-        _input.requires_grad_()
         loss = model.loss(_input, _label)
-        grad = torch.autograd.grad(loss, _input)[0].flatten(1)
-        grad = grad * 5.0 / grad.norm(p=2, dim=1, keepdim=True)
-        grad = grad.detach().cpu().clone()
-        grad_list.append(grad)
-    grad_tensor = torch.cat(grad_list, dim=0)
-    std = float(grad_tensor.std(0).square().sum())
-    print(f'{model.name:20}  {str(grad_tensor.shape[-1]):10}    {std:f}')
+        loss.backward()
+        grad_temp_list = []
+        for param in model.parameters():
+            grad_temp_list.append(param.grad.flatten())
+        grad = torch.cat(grad_temp_list)
+        grad = grad if grad.norm(p=2) <= 5.0 else grad / grad.norm(p=2) * 5.0
+        grad_temp = grad.detach().cpu().clone()
+        if grad_x is None:
+            grad_x = grad_temp / n_sample
+            grad_xx = grad_temp.square() / n_sample
+        else:
+            grad_x += grad_temp / n_sample
+            grad_xx += grad_temp.square() / n_sample
+        model.zero_grad()
+
+    model.eval()
+    model.activate_params([])
+
+    grad_tensor = trojanvision.to_numpy(grad_xx - grad_x.square())
+    grad_tensor[grad_tensor < 0] = 0
+    var = float(np.sum(np.sqrt(grad_tensor)))
+
+    print(f'{model.name:20}  {var:f}')

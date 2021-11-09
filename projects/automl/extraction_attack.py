@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import trojanvision
-from trojanvision import to_numpy
+from trojanvision import summary, to_numpy
 from trojanzoo.utils.data import dataset_to_list
 
 import torch
@@ -12,7 +12,8 @@ import argparse
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--nb_stolen', type=int, dest="nb_stolen", default=5000)
+    parser.add_argument('--nb_stolen', type=int,
+                        dest="nb_stolen", default=5000)
     parser.add_argument('--tmodel', dest="tmodel", default=None)
     parser.add_argument('--tmodel_arch', dest="tmodel_arch", default=None)
     trojanvision.environ.add_argument(parser)
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
 
     if env['verbose']:
-        trojanvision.summary(env=env, dataset=dataset, model=model)
+        summary(env=env, dataset=dataset, model=model)
     # model._validate()
     model.eval()
     # print('\n\n')
@@ -59,8 +60,10 @@ if __name__ == '__main__':
         elif 'model_arch' in args.__dict__.keys():
             args_dict['model_arch'] = args.model_arch
 
-        thieved_model = trojanvision.models.create(dataset=dataset, **args_dict)
-        trainer = trojanvision.trainer.create(dataset=dataset, model=thieved_model, **args.__dict__)
+        thieved_model = trojanvision.models.create(
+            dataset=dataset, **args_dict)
+        trainer = trojanvision.trainer.create(
+            dataset=dataset, model=thieved_model, **args.__dict__)
 
         thieved_model.train()
         params: list[nn.Parameter] = []
@@ -77,13 +80,16 @@ if __name__ == '__main__':
         )
 
         # thieved_model._validate(print_prefix='Before Stealing')
-        attack = AttackClass(classifier, batch_size_fit=dataset.batch_size, batch_size_query=dataset.batch_size,
-                             nb_epochs=25, nb_stolen=nb_stolen, use_probability=True, sampling_strategy=mode, verbose=False)
-        attack.extract(x=x_train, y=y_train, thieved_classifier=thieved_classifier)
+        attack = AttackClass(classifier, batch_size_fit=dataset.batch_size,
+                             batch_size_query=dataset.batch_size,
+                             nb_epochs=25, nb_stolen=nb_stolen,
+                             use_probability=True, sampling_strategy=mode,
+                             verbose=False)
+        attack.extract(x=x_train, y=y_train,
+                       thieved_classifier=thieved_classifier)
 
         thieved_model.activate_params([])
         thieved_model.eval()
         thieved_model._validate(print_prefix='KnockoffNets-' + mode)
         model._compare(thieved_model)
         print('-' * 20)
-        # print('\n\n')
