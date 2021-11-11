@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import trojanvision
-from trojanvision import summary, to_numpy
+from trojanvision import to_numpy
 from trojanzoo.utils.data import dataset_to_list
 
 import torch
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
 
     if env['verbose']:
-        summary(env=env, dataset=dataset, model=model)
+        trojanvision.summary(env=env, dataset=dataset, model=model)
     # model._validate()
     model.eval()
     # print('\n\n')

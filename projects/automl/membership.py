@@ -4,6 +4,10 @@
 
 import trojanvision
 from trojanvision import to_numpy
+from trojanzoo.utils.data import dataset_to_list
+
+import torch
+from sklearn import metrics
 from scipy.special import softmax
 import argparse
 import warnings
@@ -22,9 +26,6 @@ if __name__ == '__main__':
     dataset = trojanvision.datasets.create(**args.__dict__)
     model = trojanvision.models.create(dataset=dataset, **args.__dict__)
 
-    import torch
-    from sklearn import metrics
-    from trojanzoo.utils.data import dataset_to_list
     from art.estimators.classification import PyTorchClassifier  # type: ignore
     classifier = PyTorchClassifier(
         model=model._model,
@@ -38,8 +39,6 @@ if __name__ == '__main__':
     sample_size = 50
     init_size = 50
     init_eval = 25
-
-    from art.attacks.evasion.hop_skip_jump import HopSkipJump  # type: ignore
 
     x_train, y_train = dataset_to_list(dataset.get_dataset('train'))
     x_train, y_train = to_numpy(torch.stack(x_train)), to_numpy(y_train)
@@ -64,6 +63,7 @@ if __name__ == '__main__':
     y = np.concatenate((y_train[train_idx], y_valid[valid_idx]))
     y_truth = np.concatenate(([0] * sample_size, [1] * sample_size))
 
+    from art.attacks.evasion.hop_skip_jump import HopSkipJump  # type: ignore
     hsj = HopSkipJump(classifier=classifier, targeted=False,
                       norm=2, max_iter=max_iter,
                       init_size=init_size, init_eval=init_eval,
