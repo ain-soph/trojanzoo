@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 import trojanvision
-
-import torch
-import numpy as np
-import argparse
 import alpsplot
 
+import torch
 import torch.nn as nn
+import numpy as np
+import argparse
+
 
 eps = 2.5e-2
 seed = 40
@@ -79,8 +79,9 @@ if __name__ == '__main__':
             z = np.zeros_like(x)
             for i in range(x.shape[0]):
                 for j in range(x.shape[0]):
-                    layer.data = param + x_direct * \
-                        x[i][j] + y_direct * y[i][j]
+                    layer.data = param \
+                        + x_direct * x[i][j] \
+                        + y_direct * y[i][j]
                     z[i][j] = float(model.loss(_input[num], _label[num]))
             return z
         fig = alpsplot.Figure(name=f'{dataset.name}_{model.name}_{num}',
