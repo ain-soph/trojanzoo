@@ -110,6 +110,9 @@ class FeatureExtractor(nn.Module):
         self.alphas_reduce: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
         self.softmax = nn.Softmax(dim=-1)
 
+    def arch_parameters(self) -> list[torch.Tensor]:
+        return [self.alphas_normal, self.alphas_reduce]
+
     def forward(self, input):
         s0 = s1 = self.stem(input)
         for i, cell in enumerate(self.cells):

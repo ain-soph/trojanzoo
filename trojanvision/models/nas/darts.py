@@ -191,7 +191,7 @@ class DARTS(ImageModel):
         return new_dict
 
     def arch_parameters(self) -> list[torch.Tensor]:
-        return [self._model.features.alphas_normal, self._model.features.alphas_reduce]
+        return self._model.features.arch_parameters()
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False,
                  mode: str = 'train', **kwargs) -> tuple[torch.Tensor, torch.Tensor]:

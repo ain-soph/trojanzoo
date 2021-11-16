@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.utils.parametrize as parametrize
 
+
 class Std(nn.Module):
     def forward(self, X: torch.Tensor):
         v, m = torch.var_mean(X, dim=[1, 2, 3], keepdim=True, unbiased=False)
@@ -13,7 +14,7 @@ class Std(nn.Module):
 class StdConv2d(nn.Conv2d):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        parametrize.register_parametrization(self, "weight", Std())
+        parametrize.register_parametrization(self, 'weight', Std())
 
 
 # class StdConv2d(nn.Conv2d):
