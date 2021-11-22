@@ -73,7 +73,6 @@ def train(module: nn.Module, num_classes: int,
             activate_params(module, [])
             epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
                      _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
-            activate_params(module, params)
         logger = MetricLogger()
         logger.meters['loss'] = SmoothedValue()
         logger.meters['top1'] = SmoothedValue()
