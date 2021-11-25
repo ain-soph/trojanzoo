@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from trojanzoo.environ import env
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.tensor import repeat_to_batch
 
@@ -7,6 +8,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 
+from collections import Callable
 from typing import Iterator
 
 __all__ = ['get_all_layer', 'get_layer', 'get_layer_name',
@@ -207,3 +209,35 @@ def generate_target(module: nn.Module, _input: torch.Tensor,
     if same:
         target = repeat_to_batch(target.mode(dim=0)[0], len(_input))
     return target
+
+
+# https://github.com/pytorch/vision/blob/main/references/classification/utils.py
+class ExponentialMovingAverage(torch.optim.swa_utils.AveragedModel):
+    """Maintains moving averages of model parameters using an exponential decay.
+    ``ema_avg = decay * avg_model_param + (1 - decay) * model_param``
+    `torch.optim.swa_utils.AveragedModel <https://pytorch.org/docs/stable/optim.html#custom-averaging-strategies>`_
+    is used to compute the EMA.
+    """
+
+    def __init__(self, model: nn.Module, decay: float):
+        def ema_avg(avg_model_param: torch.Tensor, model_param: torch.Tensor,
+                    num_averaged: torch.Tensor) -> torch.Tensor:
+            return decay * avg_model_param + (1 - decay) * model_param
+
+        super().__init__(model, device=env['device'], avg_fn=ema_avg)
+        self.n_averaged: torch.Tensor
+        self.module: nn.Module
+        self.avg_fn: Callable[[torch.Tensor, torch.Tensor, torch.Tensor],
+                              torch.Tensor]
+
+    def update_parameters(self, model: nn.Module):
+        for p_swa, p_model in zip(self.module.state_dict().values(),
+                                  model.state_dict().values()):
+            device = p_swa.device
+            p_model_ = p_model.detach().to(device)
+            if self.n_averaged.eq(0):
+                p_swa.detach().copy_(p_model_)
+            else:
+                p_swa.detach().copy_(self.avg_fn(p_swa.detach(), p_model_,
+                                                 self.n_averaged.to(device)))
+        self.n_averaged += 1
