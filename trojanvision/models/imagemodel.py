@@ -36,11 +36,15 @@ def replace_bn_to_gn(model: nn.Module) -> None:
         replace_bn_to_gn(module)
         if isinstance(module, nn.BatchNorm2d):
             device = module.weight.device
-            gn = nn.GroupNorm(module.num_features, module.num_features, device=device)
+            gn = nn.GroupNorm(module.num_features,
+                              module.num_features,
+                              device=device)
             setattr(model, name, gn)
 
 
-def set_first_layer_channel(model: nn.Module, channel: int = 3, **kwargs) -> None:
+def set_first_layer_channel(model: nn.Module,
+                            channel: int = 3,
+                            **kwargs) -> None:
     for name, module in model.named_children():
         if len(list(module.children())):
             set_first_layer_channel(module, channel=channel)
@@ -61,15 +65,18 @@ class _ImageModel(_Model):
                  num_classes: int = 1000, **kwargs):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
 
-    def define_preprocess(self, norm_par: dict[str, list[float]] = None, **kwargs):
-        self.normalize = Normalize(mean=norm_par['mean'], std=norm_par['std']) \
+    def define_preprocess(self,
+                          norm_par: dict[str, list[float]] = None,
+                          **kwargs):
+        self.preprocess = Normalize(mean=norm_par['mean'],
+                                    std=norm_par['std']) \
             if norm_par is not None else nn.Identity()
 
     # get feature map
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
     def get_fm(self, x: torch.Tensor) -> torch.Tensor:
-        return self.features(self.normalize(x))
+        return self.features(self.preprocess(x))
 
 
 class ImageModel(Model):
@@ -77,11 +84,15 @@ class ImageModel(Model):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--adv_train', choices=['pgd', 'free', 'trades'], help='adversarial training.')
+        group.add_argument('--adv_train', choices=['pgd', 'free', 'trades'],
+                           help='adversarial training.')
         group.add_argument('--adv_train_random_init', action='store_true')
-        group.add_argument('--adv_train_iter', type=int, help='adversarial training PGD iteration, defaults to 7.')
-        group.add_argument('--adv_train_alpha', type=float, help='adversarial training PGD alpha, defaults to 2/255.')
-        group.add_argument('--adv_train_eps', type=float, help='adversarial training PGD eps, defaults to 8/255.')
+        group.add_argument('--adv_train_iter', type=int,
+                           help='adversarial training PGD iteration, defaults to 7.')
+        group.add_argument('--adv_train_alpha', type=float,
+                           help='adversarial training PGD alpha, defaults to 2/255.')
+        group.add_argument('--adv_train_eps', type=float,
+                           help='adversarial training PGD eps, defaults to 8/255.')
         group.add_argument('--adv_train_eval_iter', type=int)
         group.add_argument('--adv_train_eval_alpha', type=float)
         group.add_argument('--adv_train_eval_eps', type=float)
@@ -89,8 +100,10 @@ class ImageModel(Model):
                            help='regularization, i.e., 1/lambda in TRADES')
 
         group.add_argument('--norm_layer', choices=['bn', 'gn'], default='bn')
-        group.add_argument('--sgm', action='store_true', help='whether to use sgm gradient, defaults to False')
-        group.add_argument('--sgm_gamma', type=float, help='sgm gamma, defaults to 1.0')
+        group.add_argument('--sgm', action='store_true',
+                           help='whether to use sgm gradient, defaults to False')
+        group.add_argument('--sgm_gamma', type=float,
+                           help='sgm gamma, defaults to 1.0')
         return group
 
     def __init__(self, name: str = 'imagemodel', layer: int = None,
@@ -118,7 +131,8 @@ class ImageModel(Model):
             assert isinstance(dataset, ImageSet)
             data_shape = dataset.data_shape
         args = {'padding': 3} if 'vgg' in name else {}  # TODO: so ugly
-        set_first_layer_channel(self._model.features, channel=data_shape[0], **args)
+        set_first_layer_channel(self._model.features,
+                                channel=data_shape[0], **args)
 
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
@@ -147,8 +161,10 @@ class ImageModel(Model):
             clip_min, clip_max = 0.0, 1.0
             if norm_par is None and isinstance(dataset, ImageSet):
                 if dataset.normalize and dataset.norm_par is not None:
-                    mean = torch.tensor(dataset.norm_par['mean'], device=env['device']).view(-1, 1, 1)
-                    std = torch.tensor(dataset.norm_par['std'], device=env['device']).view(-1, 1, 1)
+                    mean = torch.tensor(dataset.norm_par['mean'],
+                                        device=env['device']).view(-1, 1, 1)
+                    std = torch.tensor(dataset.norm_par['std'],
+                                       device=env['device']).view(-1, 1, 1)
                     clip_min, clip_max = -mean / std, (1 - mean) / std
                     self.adv_train_eval_alpha /= std
                     self.adv_train_eval_eps /= std
@@ -201,7 +217,8 @@ class ImageModel(Model):
             weights = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N, C',1,1)
             heatmap = (feats * weights).sum(dim=1, keepdim=True).clamp(0)  # (N, 1, H', W')
             # heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
-            heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
+            heatmap.div_(heatmap.max(dim=-2, keepdim=True)
+                         [0].max(dim=-1, keepdim=True)[0])
             heatmap: torch.Tensor = F.upsample(heatmap, _input.shape[-2:], mode='bilinear')[:, 0]   # (N, H, W)
             # Note that we violate the image order convension (W, H, C)
         elif method == 'saliency_map':
@@ -211,8 +228,10 @@ class ImageModel(Model):
             _input.requires_grad_(False)
 
             heatmap = grad.abs().max(dim=1)[0]   # (N,H,W)
-            heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
-            heatmap.div_(heatmap.max(dim=-2, keepdim=True)[0].max(dim=-1, keepdim=True)[0])
+            heatmap.sub_(heatmap.min(dim=-2, keepdim=True)
+                         [0].min(dim=-1, keepdim=True)[0])
+            heatmap.div_(heatmap.max(dim=-2, keepdim=True)
+                         [0].max(dim=-1, keepdim=True)[0])
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
