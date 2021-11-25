@@ -28,7 +28,7 @@ class ActivationClustering(BackdoorDefense):
     Args:
         mix_image_num (int): the number of sampled image, including clean image and poison image. Default: 50.
         clean_image_ratio (float): the ratio of clean image, compared to mix_image_num. Default: 0.5.
-        retrain_epoch (int): the epoch of retraining the model, only with the detected clean image. Default: 10.
+        retrain_epoch (int): the epochs of retraining the model, only with the detected clean image. Default: 10.
         nb_clusters (int): the amount of clusters. Default: 2. 
         clustering_method (str): the method for clustering the data, only support KMeans. Default: 'KMeans'.
         nb_dims (int): the dimension set in the process of reduceing the dimensionality of data. Default: 10.
@@ -62,7 +62,7 @@ class ActivationClustering(BackdoorDefense):
         super().add_argument(group)
         group.add_argument('--mix_image_num', type=int, help='the number of sampled image')
         group.add_argument('--clean_image_ratio', type=float, help='the ratio of clean image')
-        group.add_argument('--retrain_epoch', type=int, help='the epoch of retraining the model')
+        group.add_argument('--retrain_epoch', type=int, help='the epochs of retraining the model')
         group.add_argument('--nb_clusters', type=int, help='')
         group.add_argument('--clustering_method', help='the amount of clusters')
         group.add_argument('--nb_dims', type=int,

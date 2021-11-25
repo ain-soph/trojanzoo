@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python eval.py --verbose 1 --color --lr 0.01 --validate_interval 0 --dataset mnist --batch_size 256 --weight_decay 5e-4 --epoch 300
+# CUDA_VISIBLE_DEVICES=0 python eval.py --verbose 1 --color --lr 0.01 --validate_interval 0 --dataset mnist --batch_size 256 --weight_decay 5e-4 --epochs 300
 
 # https://github.com/VICO-UoE/DatasetCondensation
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     eval_model = trojanvision.models.create(dataset=dataset, **args.__dict__)
     eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args.__dict__)
     eval_train_args = dict(**eval_trainer)
-    eval_train_args['epoch'] = epoch_eval_train
+    eval_train_args['epochs'] = epoch_eval_train
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=eval_model, trainer=eval_trainer)

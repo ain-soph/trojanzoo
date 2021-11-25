@@ -37,7 +37,7 @@ class PoisonBasic(Attack):
 
         self.poison_num = self.dataset.batch_size * self.poison_percent
 
-    def attack(self, epoch: int, **kwargs):
+    def attack(self, epochs: int, **kwargs):
         # model._validate()
         total = 0
         target_conf_list = []
@@ -51,7 +51,7 @@ class PoisonBasic(Attack):
             if len(_label) == 0:
                 continue
             _label = self.model.generate_target(_input, idx=self.target_idx)
-            self._train(_input=_input, _label=_label, epoch=epoch, **kwargs)
+            self._train(_input=_input, _label=_label, epochs=epochs, **kwargs)
             target_conf, target_acc, clean_acc = self.validate_fn()
             target_conf_list.append(target_conf)
             target_acc_list.append(target_acc)
@@ -62,11 +62,11 @@ class PoisonBasic(Attack):
                   f'target accuracy: {np.mean(target_acc_list)}({np.std(target_acc_list)})\n'
                   f'clean accuracy: {np.mean(clean_acc_list)}({np.std(clean_acc_list)})\n\n\n')
 
-    def _train(self, _input: torch.Tensor, _label: torch.Tensor, epoch: int, save=False, indent=0, **kwargs):
+    def _train(self, _input: torch.Tensor, _label: torch.Tensor, epochs: int, save=False, indent=0, **kwargs):
         self.temp_input = _input
         self.temp_label = _label
 
-        self.model._train(epoch=epoch, save=save,
+        self.model._train(epochs=epochs, save=save,
                           get_data_fn=self.get_data, save_fn=self.save,
                           validate_fn=self.validate_fn, indent=indent + 4, **kwargs)
 

@@ -29,8 +29,8 @@ class IMC_Multi(IMC):
                              random_init=True, random_pos=False, mark_distributed=self.mark.mark_distributed)
             self.mark_list.append((mark, i))
 
-    def attack(self, epoch: int, save=False, **kwargs):
-        self.model._train(epoch, save=save,
+    def attack(self, epochs: int, save=False, **kwargs):
+        self.model._train(epochs, save=save,
                           validate_fn=self.validate_fn, get_data_fn=self.get_train_data,
                           save_fn=self.save, **kwargs)
 

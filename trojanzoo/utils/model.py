@@ -217,7 +217,7 @@ class ExponentialMovingAverage(torch.optim.swa_utils.AveragedModel):
     ``ema_avg = decay * avg_model_param + (1 - decay) * model_param``
     `torch.optim.swa_utils.AveragedModel <https://pytorch.org/docs/stable/optim.html#custom-averaging-strategies>`_
     is used to compute the EMA.
-    """
+    """  # noqa: E501
 
     def __init__(self, model: nn.Module, decay: float):
         def ema_avg(avg_model_param: torch.Tensor, model_param: torch.Tensor,

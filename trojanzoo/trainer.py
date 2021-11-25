@@ -2,6 +2,8 @@
 
 from trojanzoo.models import Model
 from trojanzoo.configs import config
+from trojanzoo.environ import env
+from trojanzoo.utils.model import ExponentialMovingAverage
 from trojanzoo.utils.module import get_name
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.fim import KFAC, EKFAC
@@ -24,11 +26,11 @@ class Trainer:
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
-        group.add_argument('--epoch', type=int,
+        group.add_argument('--epochs', type=int,
                            help='training epochs '
-                           '(default: config[train][epoch])')
+                           '(default: config[train][epochs])')
         group.add_argument('--resume', type=int,
-                           help='resume training from certain epoch '
+                           help='resume training from certain epochs '
                            '(default: 0)')
         group.add_argument('--lr', type=float,
                            help='learning rate (default: 0.1)')
@@ -37,6 +39,7 @@ class Trainer:
                            help='training parameters '
                            '("features", "classifier", "full") '
                            '(default: "full")')
+
         group.add_argument('--OptimType',
                            help='optimizer type (default: SGD)')
         group.add_argument('--momentum', type=float,
@@ -45,31 +48,50 @@ class Trainer:
                            help='weight_decay passed to Optimizer '
                            '(default: 3e-4)')
         group.add_argument('--nesterov', action='store_true',
-                           help='enable nesterov for SGD optimizer.')
+                           help='enable nesterov for SGD optimizer')
+
         group.add_argument('--lr_scheduler', action='store_true',
-                           help='enable CosineAnnealingLR scheduler.')
+                           help='enable lr scheduler')
+        group.add_argument('--lr_scheduler_type', default='cosineannealinglr',
+                           help='the lr scheduler '
+                           '(default: cosineannealinglr)')
         group.add_argument('--lr_min', type=float,
                            help='min learning rate for `eta_min` '
                            'in CosineAnnealingLR (default: 0.0)')
+
+        group.add_argument('--model_ema', action='store_true',
+                           help='enable tracking Exponential Moving Average '
+                           'of model parameters')
+        group.add_argument('--model_ema_steps', type=int, default=32,
+                           help='the number of iterations that controls '
+                           'how often to update the EMA model (default: 32)')
+        group.add_argument('--model_ema_decay', type=float, default=0.99998,
+                           help='decay factor for Exponential Moving Average '
+                           'of model parameters (default: 0.99998)')
+
         group.add_argument('--pre_conditioner', choices=['kfac', 'ekfac'],
-                           help='Using kfac/ekfac preconditioner.')
+                           help='Using kfac/ekfac preconditioner')
+
         group.add_argument('--amp', action='store_true',
-                           help='Automatic Mixed Precision.')
+                           help='Use torch.cuda.amp '
+                           'for mixed precision training')
         group.add_argument('--grad_clip', type=float,
-                           help='Gradient Clipping max norms.')
+                           help='Gradient Clipping max norms')
+
         group.add_argument('--validate_interval', type=int,
                            help='validate interval during training epochs '
                            '(default: 10)')
         group.add_argument('--save', action='store_true',
-                           help='save training results.')
+                           help='save training results')
+
         group.add_argument('--tensorboard', action='store_true',
-                           help='save training logging for tensorboard.')
+                           help='save training logging for tensorboard')
         group.add_argument('--log_dir',
-                           help='save training logging for tensorboard.')
+                           help='save training logging for tensorboard')
         group.add_argument('--flush_secs', type=int,
                            help='How often (seconds) '
                            'to flush the pending events '
-                           'and summaries to disk.')
+                           'and summaries to disk')
         return group
 
     def __init__(self, optim_args: dict[str, Any] = {},
@@ -77,6 +99,7 @@ class Trainer:
                  writer_args: dict[str, Any] = {},
                  optimizer: Optimizer = None,
                  lr_scheduler: _LRScheduler = None,
+                 model_ema: ExponentialMovingAverage = None,
                  pre_conditioner: Union[KFAC, EKFAC] = None, writer=None):
         # TODO: issue 6 why? to avoid BadAppend issues
         self.optim_args = optim_args.copy()
@@ -84,6 +107,7 @@ class Trainer:
         self.writer_args = writer_args.copy()
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
+        self.model_ema = model_ema
         self.pre_conditioner = pre_conditioner
         self.writer = writer
 
@@ -126,14 +150,16 @@ def add_argument(parser: argparse.ArgumentParser,
 
 def create(dataset_name: str = None,
            dataset: Dataset = None, model: Model = None,
-           pre_conditioner: str = None, ClassType: type[Trainer] = Trainer,
+           model_ema: bool = False,
+           pre_conditioner: str = None,
+           ClassType: type[Trainer] = Trainer,
            tensorboard: bool = None,
            config: Config = config, **kwargs):
     assert isinstance(model, Model)
-    dataset_name = get_name(
-        name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
-    result = config.get_config(dataset_name=dataset_name)[
-        'trainer'].update(kwargs)
+    dataset_name = get_name(name=dataset_name, module=dataset,
+                            arg_list=['-d', '--dataset'])
+    result = config.get_config(dataset_name=dataset_name
+                               )['trainer'].update(kwargs)
 
     optim_keys = model.define_optimizer.__code__.co_varnames
     train_keys = model._train.__code__.co_varnames
@@ -141,22 +167,38 @@ def create(dataset_name: str = None,
     train_args: dict[str, Any] = {}
     for key, value in result.items():
         if key in optim_keys:
-            _dict = optim_args
+            optim_args[key] = value
         elif key in train_keys and key != 'verbose':
-            _dict = train_args
-        else:
-            continue
-        _dict[key] = value
-    optimizer, lr_scheduler = model.define_optimizer(
-        T_max=result['epoch'], **optim_args)
+            train_args[key] = value
+    train_args['epochs'] = result['epochs']
+    train_args['lr_warmup_epochs'] = result['lr_warmup_epochs']
+
+    optimizer, lr_scheduler = model.define_optimizer(**optim_args)
 
     module = model._model
     if optim_args['parameters'] == 'features':
         module = module.features
     elif optim_args['parameters'] == 'classifier':
         module = module.classifier
+
+    # https://github.com/pytorch/vision/blob/main/references/classification/train.py
+    model_ema_module = None
+    if model_ema:
+        # Decay adjustment that aims to keep the decay independent from other hyper-parameters originally proposed at:
+        # https://github.com/facebookresearch/pycls/blob/f8cd9627/pycls/core/net.py#L123
+        #
+        # total_ema_updates = (Dataset_size / n_GPUs) * epochs / (batch_size_per_gpu * EMA_steps)
+        # We consider constant = Dataset_size for a given dataset/setup and ommit it. Thus:
+        # adjust = 1 / total_ema_updates ~= n_GPUs * batch_size_per_gpu * EMA_steps / epochs
+        adjust = env['world_size'] * dataset.batch_size * \
+            result['model_ema_steps'] / result['epochs']
+        alpha = 1.0 - result['model_ema_decay']
+        alpha = min(1.0, alpha * adjust)
+        model_ema_module = ExponentialMovingAverage(
+            model._model, decay=1.0 - alpha)
+
     kfac_optimizer = None
-    if pre_conditioner == 'kfac':
+    if pre_conditioner == 'kfac':   # TODO: python 3.10
         kfac_optimizer = KFAC(module)
     elif pre_conditioner == 'ekfac':
         kfac_optimizer = EKFAC(module)
@@ -174,4 +216,5 @@ def create(dataset_name: str = None,
     return ClassType(optim_args=optim_args, train_args=train_args,
                      writer_args=writer_args,
                      optimizer=optimizer, lr_scheduler=lr_scheduler,
+                     model_ema=model_ema_module,
                      pre_conditioner=kfac_optimizer, writer=writer)

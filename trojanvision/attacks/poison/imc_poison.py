@@ -49,7 +49,7 @@ class IMC_Poison(PoisonBasic):
         if curvature:
             self.curvature: Curvature = Curvature(model=self.model)
 
-    def attack(self, epoch: int, **kwargs):
+    def attack(self, epochs: int, **kwargs):
         # model._validate()
         total = 0
         target_conf_list = []
@@ -101,7 +101,7 @@ class IMC_Poison(PoisonBasic):
             normal += 1
             target_conf, target_acc, clean_acc = self.validate_fn()
             noise = torch.zeros_like(_input)
-            poison_input = self.optimize(_input=_input, _label=target_label, epoch=epoch, noise=noise, **kwargs)
+            poison_input = self.optimize(_input=_input, _label=target_label, epochs=epochs, noise=noise, **kwargs)
             pgd_norm = float(noise.norm(p=float('inf')))
             target_conf, target_acc, clean_acc = self.validate_fn()
             target_conf_list.append(target_conf)

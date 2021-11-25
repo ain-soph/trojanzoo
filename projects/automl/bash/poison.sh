@@ -12,7 +12,7 @@ for model in "${models[@]}"; do
     echo $model
     for rate in "${rates[@]}"; do
         echo $rate
-        python examples/adv_attack.py --epoch 50 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --validate_interval 1 \
+        python examples/adv_attack.py --epochs 50 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --validate_interval 1 \
             --attack $attack --dataset $dataset --poison_percent $rate --model $model --train_mode dataset $args
     done
 done
@@ -21,7 +21,7 @@ for arch in "${archs[@]}"; do
     echo $arch
     for rate in "${rates[@]}"; do
         echo $rate
-        python examples/adv_attack.py --epoch 50 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --validate_interval 1 \
+        python examples/adv_attack.py --epochs 50 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --validate_interval 1 \
             --attack $attack --dataset $dataset --poison_percent $rate --model darts --model_arch $arch --train_mode dataset $args
     done
 done

@@ -75,7 +75,7 @@ class TrojanNet(BadNet):
         y = [combination_number] * random_size
         return x, y
 
-    def attack(self, epoch: int = 500, optimizer=None, lr_scheduler=None, save=False, get_data_fn='self', loss_fn=None, **kwargs):
+    def attack(self, epochs: int = 500, optimizer=None, lr_scheduler=None, save=False, get_data_fn='self', loss_fn=None, **kwargs):
         # TODO: not good to use 'self' as default value
         if isinstance(get_data_fn, str) and get_data_fn == 'self':
             get_data = self.get_data
@@ -87,7 +87,7 @@ class TrojanNet(BadNet):
         loader_valid = [(valid_x, torch.tensor(valid_y, dtype=torch.long))]
 
         optimizer = torch.optim.Adam(params=self.mlp_model.parameters(), lr=1e-2)
-        self.mlp_model._train(epoch=epoch, optimizer=optimizer,
+        self.mlp_model._train(epochs=epochs, optimizer=optimizer,
                               loader_train=loader_train, loader_valid=loader_valid,
                               save=save, save_fn=self.save)
         self.validate_fn()

@@ -1,4 +1,4 @@
-epoch:
+epochs:
   default: 250
   cifar10: 600
   cifar100: 600

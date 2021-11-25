@@ -172,12 +172,12 @@ if __name__ == '__main__':
     iter_list = [iter(loader) for loader in class_loader_list]
 
     train_args = dict(**trainer)
-    # train_args['epoch'] = 1
-    train_args['epoch'] = inner_loop
+    # train_args['epochs'] = 1
+    train_args['epochs'] = inner_loop
     train_args['lr_scheduler'] = None
     train_args['adv_train'] = first_term is not None
     eval_train_args = dict(**eval_trainer)
-    eval_train_args['epoch'] = epoch_eval_train
+    eval_train_args['epochs'] = epoch_eval_train
     eval_train_args['adv_train'] = args.eval_adv_train
     mean_value = [0.0]
     std_value = [1.0]
@@ -310,7 +310,7 @@ if __name__ == '__main__':
         weight_init(model._model)
 
         # warmup_args = dict(**train_args)
-        # warmup_args['epoch'] = 3
+        # warmup_args['epochs'] = 3
         # warmup_args['lr_scheduler'] = None
         # warmup_args['adv_train'] = False
         # model._train(verbose=False, change_train_eval=False, **warmup_args)

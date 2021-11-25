@@ -57,12 +57,12 @@ class IMC_AdvTrain(IMC):
             _label = self.target_class * torch.ones_like(org_label[:integer])
         return _input, _label
 
-    def attack(self, epoch: int, save=False, **kwargs):
-        self.adv_train(epoch, save=save,
+    def attack(self, epochs: int, save=False, **kwargs):
+        self.adv_train(epochs, save=save,
                        validate_fn=self.validate_fn, get_data_fn=self.get_data,
                        epoch_fn=self.epoch_fn, save_fn=self.save, **kwargs)
 
-    def adv_train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+    def adv_train(self, epochs: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                   validate_interval=10, save=False, verbose=True, indent=0, epoch_fn: Callable = None,
                   **kwargs):
         loader_train = self.dataset.loader['train']
@@ -76,7 +76,7 @@ class IMC_AdvTrain(IMC):
         params: list[nn.Parameter] = []
         for param_group in optimizer.param_groups:
             params.extend(param_group['params'])
-        for _epoch in range(epoch):
+        for _epoch in range(epochs):
             if callable(epoch_fn):
                 self.model.activate_params([])
                 epoch_fn()
@@ -127,7 +127,7 @@ class IMC_AdvTrain(IMC):
             self.model.activate_params([])
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
+                    output_iter(_epoch + 1, epochs), **ansi).ljust(64 if env['color'] else 35)
                 _str = ' '.join([
                     f'Loss: {losses.avg:.4f},'.ljust(20),
                     f'Top1 Clean Acc: {top1.avg:.3f}, '.ljust(30),
@@ -140,7 +140,7 @@ class IMC_AdvTrain(IMC):
                 lr_scheduler.step()
 
             if validate_interval != 0:
-                if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
+                if (_epoch + 1) % validate_interval == 0 or _epoch == epochs - 1:
                     _, cur_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
                         prints('{purple}best result update!{reset}'.format(**ansi), indent=indent)

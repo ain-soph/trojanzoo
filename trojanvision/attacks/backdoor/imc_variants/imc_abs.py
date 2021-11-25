@@ -31,8 +31,8 @@ class IMC_ABS(IMC):
         self.seed_data = self.load_seed_data()
         self.neuron_list = []
 
-    def attack(self, epoch: int, **kwargs):
-        super(IMC, self).attack(epoch, epoch_fn=self.epoch_fn, loss_fn=self.loss_fn, **kwargs)
+    def attack(self, epochs: int, **kwargs):
+        super(IMC, self).attack(epochs, epoch_fn=self.epoch_fn, loss_fn=self.loss_fn, **kwargs)
 
     def epoch_fn(self, **kwargs):
         self.save()

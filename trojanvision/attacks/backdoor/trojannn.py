@@ -45,7 +45,7 @@ class TrojanNN(BadNet):
                            help='Trojan Net Target_Value, defaults to 10')
         group.add_argument('--neuron_lr', type=float,
                            help='Trojan Net learning rate in neuron preprocessing, defaults to 0.015')
-        group.add_argument('--neuron_epoch', type=int, help='Trojan Net epoch in neuron preprocessing, defaults to 20')
+        group.add_argument('--neuron_epoch', type=int, help='Trojan Net epochs in neuron preprocessing, defaults to 20')
         group.add_argument('--neuron_num', type=int,
                            help='Trojan Net neuron numbers in neuron preprocessing, defaults to 2')
         return group

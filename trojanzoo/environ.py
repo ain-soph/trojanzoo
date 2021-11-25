@@ -104,6 +104,8 @@ def create(config_path: str = None, dataset_name: str = None,
         torch.backends.cudnn.benchmark = benchmark
     env.update(seed=seed, device=device,
                benchmark=benchmark, num_gpus=num_gpus)
+
+    env['world_size'] = 1   # TODO
     return env
 
 

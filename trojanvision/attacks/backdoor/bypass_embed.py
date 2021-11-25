@@ -37,15 +37,15 @@ class BypassEmbed(BadNet):
         self.lambd = lambd
         self.discrim_lr = discrim_lr
 
-    def attack(self, epoch: int, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+    def attack(self, epochs: int, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                save: bool = False, **kwargs):
         print('Sample Data')
         poison_loader, discrim_loader = self.sample_data()  # with poisoned images
         print('Joint Training')
-        super().attack(epoch=10, lr_scheduler=lr_scheduler, **kwargs)
+        super().attack(epochs=10, lr_scheduler=lr_scheduler, **kwargs)
         if isinstance(lr_scheduler, optim.lr_scheduler._LRScheduler):
             lr_scheduler.step(0)
-        self.joint_train(epoch=epoch, poison_loader=poison_loader, discrim_loader=discrim_loader,
+        self.joint_train(epochs=epochs, poison_loader=poison_loader, discrim_loader=discrim_loader,
                          save=save, lr_scheduler=lr_scheduler, **kwargs)
 
     def sample_data(self):
@@ -91,7 +91,7 @@ class BypassEmbed(BadNet):
     def bypass_get_data(data: tuple[torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         return to_tensor(data[0]), to_tensor(data[1], dtype='long'), to_tensor(data[2], dtype='long')
 
-    def joint_train(self, epoch: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+    def joint_train(self, epochs: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                     poison_loader=None, discrim_loader=None, save=False, **kwargs):
         in_dim = self.model._model.classifier[0].in_features
         D = nn.Sequential(OrderedDict([
@@ -114,8 +114,8 @@ class BypassEmbed(BadNet):
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
 
-        for _epoch in range(epoch):
-            self.discrim_train(epoch=100, D=D, discrim_loader=discrim_loader)
+        for _epoch in range(epochs):
+            self.discrim_train(epochs=100, D=D, discrim_loader=discrim_loader)
 
             self.model.train()
             self.model.activate_params(optim_params)
@@ -144,12 +144,12 @@ class BypassEmbed(BadNet):
                     self.save()
             print('-' * 50)
 
-    def discrim_train(self, epoch: int, D: nn.Sequential, discrim_loader: torch.utils.data.DataLoader):
+    def discrim_train(self, epochs: int, D: nn.Sequential, discrim_loader: torch.utils.data.DataLoader):
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
         d_optimizer = optim.Adam(D.parameters(), lr=self.discrim_lr)
         d_optimizer.zero_grad()
-        for _epoch in range(epoch):
+        for _epoch in range(epochs):
             losses.reset()
             top1.reset()
             self.model.activate_params(D.parameters())
@@ -169,6 +169,6 @@ class BypassEmbed(BadNet):
                 loss_d.backward()
                 d_optimizer.step()
                 d_optimizer.zero_grad()
-            print(f'Discriminator - epoch {_epoch:4d} / {epoch:4d} | loss {losses.avg:.4f} | acc {top1.avg:.4f}')
+            print(f'Discriminator - epochs {_epoch:4d} / {epochs:4d} | loss {losses.avg:.4f} | acc {top1.avg:.4f}')
             self.model.activate_params([])
             D.eval()

@@ -64,19 +64,19 @@ class BadNet(Attack):
         self.poison_num = self.dataset.batch_size * self.poison_percent
         self.train_mode: str = train_mode
 
-    def attack(self, epoch: int, save=False, **kwargs):
+    def attack(self, epochs: int, save=False, **kwargs):
         if self.train_mode == 'batch':
-            self.model._train(epoch, save=save,
+            self.model._train(epochs, save=save,
                               validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
             dataset = self.mix_dataset()
             loader = self.dataset.get_dataloader('train', dataset=dataset)
-            self.model._train(epoch, save=save,
+            self.model._train(epochs, save=save,
                               validate_fn=self.validate_fn, loader_train=loader,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'loss':
-            self.model._train(epoch, save=save,
+            self.model._train(epochs, save=save,
                               validate_fn=self.validate_fn, loss_fn=self.loss_fn,
                               save_fn=self.save, **kwargs)
 

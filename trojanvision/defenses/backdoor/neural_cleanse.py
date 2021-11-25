@@ -24,20 +24,20 @@ class NeuralCleanse(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--nc_epoch', type=int, help='neural cleanse optimizing epoch, defaults to 10.')
+        group.add_argument('--nc_epoch', type=int, help='neural cleanse optimizing epochs, defaults to 10.')
         group.add_argument('--penalize', action='store_true',
                            help='add the regularization terms, nc to tabor, defaults to False.')
         group.add_argument('--hyperparams', type=list,
                            help='the hyperparameters of  all regularization terms, defaults to [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2].')
         return group
 
-    def __init__(self, epoch: int = 10,
+    def __init__(self, epochs: int = 10,
                  init_cost: float = 1e-3, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99, early_stop_threshold: float = 0.99,
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.epoch: int = epoch
+        self.epochs: int = epochs
 
         self.init_cost = init_cost
         self.cost_multiplier_up = cost_multiplier
@@ -108,7 +108,7 @@ class NeuralCleanse(BackdoorDefense):
         return self.model.criterion(_output, Y)
 
     def remask(self, label: int):
-        epoch = self.epoch
+        epochs = self.epochs
         # no bound
         atanh_mark = torch.randn(self.dataset.data_shape, device=env['device'])
         atanh_mark.requires_grad_()
@@ -143,7 +143,7 @@ class NeuralCleanse(BackdoorDefense):
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
 
-        for _epoch in range(epoch):
+        for _epoch in range(epochs):
             losses.reset()
             entropy.reset()
             norm.reset()
@@ -178,7 +178,7 @@ class NeuralCleanse(BackdoorDefense):
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
+                output_iter(_epoch + 1, epochs), **ansi).ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Acc: {acc.avg:.2f}, '.ljust(20),

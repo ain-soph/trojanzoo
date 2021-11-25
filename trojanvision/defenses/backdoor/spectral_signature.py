@@ -26,7 +26,7 @@ class SpectralSignature(BackdoorDefense):
         poison_image_num (int): the number of sampled poison image to train the  initial model. Default: 50.
         clean_image_num (int): the number of sampled clean image to train the  initial model. Default: 500.
         epsilon (int): the number of examples to remove from each class. Default: 5.
-        retrain_epoch (int): the epoch to retrain the model on clean image dataset. Default: 10.
+        retrain_epoch (int): the epochs to retrain the model on clean image dataset. Default: 10.
 
     .. _Spectral_Signature:
         https://arxiv.org/abs/1811.00636
@@ -49,7 +49,7 @@ class SpectralSignature(BackdoorDefense):
         group.add_argument('--epsilon', type=int,
                            help='the number of examples to remove from each class, defaults to 5')
         group.add_argument('--retrain_epoch', type=int,
-                           help='the epoch to retrain the model on clean image dataset, defaults to 5')
+                           help='the epochs to retrain the model on clean image dataset, defaults to 5')
         return group
 
     def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500, preprocess_layer: str = 'flatten', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
@@ -87,7 +87,7 @@ class SpectralSignature(BackdoorDefense):
         initial_model = self.model
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, loader_train=self.mix_dataloader, **kwargs)
         final_loader = self.get_clean_dataloader()
-        initial_model._train(epoch=self.retrain_epoch, optimizer=optimizer,
+        initial_model._train(epochs=self.retrain_epoch, optimizer=optimizer,
                              lr_scheduler=lr_scheduler, loader_train=final_loader)
 
     def get_clean_dataloader(self):

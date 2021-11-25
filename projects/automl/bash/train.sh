@@ -8,12 +8,12 @@ args=$1
 
 for model in "${models[@]}"; do
     echo $model
-    python examples/train.py --verbose 1 --epoch 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset $dataset --model $model $args
+    python examples/train.py --verbose 1 --epochs 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset $dataset --model $model $args
     echo ""
 done
 
 for arch in "${archs[@]}"; do
     echo $arch
-    python examples/train.py --verbose 1 --epoch 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset $dataset --model darts --model_arch $arch $args
+    python examples/train.py --verbose 1 --epochs 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset $dataset --model darts --model_arch $arch $args
     echo ""
 done

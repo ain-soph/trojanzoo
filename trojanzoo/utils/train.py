@@ -13,6 +13,7 @@ import torch.nn as nn
 from tqdm import tqdm
 
 from typing import Union
+from trojanzoo.utils.model import ExponentialMovingAverage
 from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -20,7 +21,10 @@ import torch.utils.data
 
 
 def train(module: nn.Module, num_classes: int,
-          epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+          epochs: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+          lr_warmup_epochs: int = 0,
+          model_ema: ExponentialMovingAverage = None,
+          model_ema_steps: int = 32,
           grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
           print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
           validate_interval: int = 10, save: bool = False, amp: bool = False,
@@ -36,11 +40,11 @@ def train(module: nn.Module, num_classes: int,
           writer=None, main_tag: str = 'train', tag: str = '',
           accuracy_fn: Callable[..., list[float]] = None,
           verbose: bool = True, indent: int = 0,
-          change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch',
+          change_train_eval: bool = True, lr_scheduler_freq: str = 'epochs',
           **kwargs) -> None:
     r"""Train function.
     """
-    if epoch <= 0:
+    if epochs <= 0:
         return
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
     loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
@@ -62,17 +66,17 @@ def train(module: nn.Module, num_classes: int,
     for param_group in optimizer.param_groups:
         params.extend(param_group['params'])
     len_loader_train = len(loader_train)
-    total_iter = (epoch - resume) * len_loader_train
+    total_iter = (epochs - resume) * len_loader_train
 
     if resume and lr_scheduler:
         for _ in range(resume):
             lr_scheduler.step()
-    for _epoch in range(resume, epoch):
+    for _epoch in range(resume, epochs):
         _epoch += 1
         if callable(epoch_fn):
             activate_params(module, [])
             epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
-                     _epoch=_epoch, epoch=epoch, start_epoch=start_epoch)
+                     _epoch=_epoch, epochs=epochs, start_epoch=start_epoch)
         logger = MetricLogger()
         logger.meters['loss'] = SmoothedValue()
         logger.meters['top1'] = SmoothedValue()
@@ -80,7 +84,7 @@ def train(module: nn.Module, num_classes: int,
         loader_epoch = loader_train
         if verbose:
             header: str = '{blue_light}{0}: {1}{reset}'.format(
-                print_prefix, output_iter(_epoch, epoch), **ansi)
+                print_prefix, output_iter(_epoch, epochs), **ansi)
             header = header.ljust(30 + get_ansi_len(header))
             if env['tqdm']:
                 header = '{upline}{clear_line}'.format(**ansi) + header
@@ -108,6 +112,9 @@ def train(module: nn.Module, num_classes: int,
                                   loss_fn=loss_fn,
                                   amp=amp, scaler=scaler,
                                   _iter=_iter, total_iter=total_iter)
+                if grad_clip is not None:
+                    scaler.unscale_(optimizer)
+                    nn.utils.clip_grad_norm_(params, grad_clip)
                 scaler.step(optimizer)
                 scaler.update()
             else:
@@ -119,13 +126,21 @@ def train(module: nn.Module, num_classes: int,
                                   loss_fn=loss_fn,
                                   amp=amp, scaler=scaler,
                                   _iter=_iter, total_iter=total_iter)
-                    # start_epoch=start_epoch, _epoch=_epoch, epoch=epoch)
+                    # start_epoch=start_epoch, _epoch=_epoch, epochs=epochs)
                 if pre_conditioner is not None:
                     pre_conditioner.track.disable()
                     pre_conditioner.step()
                 if grad_clip is not None:
                     nn.utils.clip_grad_norm_(params, grad_clip)
                 optimizer.step()
+
+            if model_ema and i % model_ema_steps == 0:
+                model_ema.update_parameters(module)
+                if _epoch <= lr_warmup_epochs:
+                    # Reset ema buffer to keep copying weights
+                    # during warmup period
+                    model_ema.n_averaged.fill_(0)
+
             if lr_scheduler and lr_scheduler_freq == 'step':
                 lr_scheduler.step()
             acc1, acc5 = accuracy_fn(
@@ -137,7 +152,7 @@ def train(module: nn.Module, num_classes: int,
             # TODO: should it be outside of the dataloader loop?
             empty_cache()
         optimizer.zero_grad()
-        if lr_scheduler and lr_scheduler_freq == 'epoch':
+        if lr_scheduler and lr_scheduler_freq == 'epochs':
             lr_scheduler.step()
         if change_train_eval:
             module.eval()
@@ -154,7 +169,7 @@ def train(module: nn.Module, num_classes: int,
                                tag_scalar_dict={tag: acc},
                                global_step=_epoch + start_epoch)
         if validate_interval != 0:
-            if _epoch % validate_interval == 0 or _epoch == epoch:
+            if _epoch % validate_interval == 0 or _epoch == epochs:
                 _, cur_acc = validate_fn(module=module,
                                          num_classes=num_classes,
                                          loader=loader_valid,

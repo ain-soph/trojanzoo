@@ -1,4 +1,4 @@
-epoch: 600
+epochs: 600
 lr: 0.025
 parameters: full
 OptimType: SGD

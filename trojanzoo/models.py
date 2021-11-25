@@ -297,7 +297,12 @@ class Model:
             self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
             OptimType: Union[str, type[Optimizer]] = None,
             lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 0.0,
-            lr_scheduler: bool = True, T_max: int = None, lr_min: float = 0.0,
+            lr_scheduler: bool = True,
+            lr_scheduler_type: str = 'cosineannealinglr',
+            lr_step_size: int = 100, lr_gamma: float = 0.1,
+            epochs: int = None, lr_min: float = 0.0,
+            lr_warmup_epochs: int = 0, lr_warmup_method: str = 'constant',
+            lr_warmup_decay: float = 0.01,
             **kwargs) -> tuple[Optimizer, _LRScheduler]:
         kwargs['momentum'] = momentum
         kwargs['weight_decay'] = weight_decay
@@ -312,8 +317,40 @@ class Model:
         optimizer = OptimType(parameters, lr, **kwargs)
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
-            _lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=T_max, eta_min=lr_min)
+            main_lr_scheduler: _LRScheduler = None
+            if lr_scheduler_type == 'steplr':    # TODO: python 3.10
+                main_lr_scheduler = torch.optim.lr_scheduler.StepLR(
+                    optimizer, step_size=lr_step_size, gamma=lr_gamma)
+            elif lr_scheduler_type == 'cosineannealinglr':
+                main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                    optimizer, T_max=epochs - lr_warmup_epochs, eta_min=lr_min)
+            elif lr_scheduler_type == 'exponentiallr':
+                main_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                    optimizer, gamma=lr_gamma)
+            else:
+                raise RuntimeError(
+                    f'Invalid lr scheduler "{lr_scheduler_type}".'
+                    'Only StepLR, CosineAnnealingLR and ExponentialLR '
+                    'are supported.')
+            if lr_warmup_epochs > 0:
+                if lr_warmup_method == "linear":
+                    warmup_lr_scheduler = torch.optim.lr_scheduler.LinearLR(
+                        optimizer, start_factor=lr_warmup_decay,
+                        total_iters=lr_warmup_epochs)
+                elif lr_warmup_method == "constant":
+                    warmup_lr_scheduler = torch.optim.lr_scheduler.ConstantLR(
+                        optimizer, factor=lr_warmup_decay,
+                        total_iters=lr_warmup_epochs)
+                else:
+                    raise RuntimeError(
+                        f'Invalid warmup lr method "{lr_warmup_method}".'
+                        'Only linear and constant are supported.')
+                lr_scheduler = torch.optim.lr_scheduler.SequentialLR(
+                    optimizer,
+                    schedulers=[warmup_lr_scheduler, main_lr_scheduler],
+                    milestones=[lr_warmup_epochs])
+            else:
+                lr_scheduler = main_lr_scheduler
         return optimizer, _lr_scheduler
 
     # define loss function
@@ -439,7 +476,7 @@ class Model:
 
     # ---------------------Train and Validate--------------------- #
     # TODO: annotation and remove those arguments to be *args, **kwargs
-    def _train(self, epoch: int, optimizer: Optimizer,
+    def _train(self, epochs: int, optimizer: Optimizer,
                lr_scheduler: _LRScheduler = None,
                grad_clip: float = None,
                pre_conditioner: Union[KFAC, EKFAC] = None,
@@ -473,7 +510,7 @@ class Model:
             epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
-        return train(module=self, num_classes=self.num_classes, epoch=epoch,
+        return train(module=self, num_classes=self.num_classes, epochs=epochs,
                      optimizer=optimizer, lr_scheduler=lr_scheduler,
                      grad_clip=grad_clip, pre_conditioner=pre_conditioner,
                      print_prefix=print_prefix, start_epoch=start_epoch,
@@ -662,8 +699,7 @@ class Model:
     def modules(self):
         return self._model.modules()
 
-    # TODO: why use the '' for 'nn.Module'?
-    def named_modules(self, memo: Optional[Set['nn.Module']] = None,
+    def named_modules(self, memo: Optional[Set[nn.Module]] = None,
                       prefix: str = ''
                       ) -> Generator[tuple[str, nn.Module], None, None]:
         return self._model.named_modules(memo=memo, prefix=prefix)

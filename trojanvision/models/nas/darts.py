@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model darts --supernet --arch_search --layers 8 --init_channels 16 --batch_size 64 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epoch 50
-# CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model lanet --supernet --arch_search --layers 8 --init_channels 48 --batch_size 80 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epoch 300
+# CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model darts --supernet --arch_search --layers 8 --init_channels 16 --batch_size 64 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epochs 50
+# CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model lanet --supernet --arch_search --layers 8 --init_channels 48 --batch_size 80 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epochs 300
 
 import trojanvision.utils.model_archs.darts as darts
 from trojanvision.datasets import ImageSet
@@ -208,12 +208,12 @@ class DARTS(ImageModel):
             self.arch_optimizer.step()
         return _input, _label
 
-    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None, adv_train: bool = None, print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0, validate_interval: int = 10, save: bool = False, amp: bool = False, loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, epoch_fn: Callable[..., None] = None, get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None, loss_fn: Callable[..., torch.Tensor] = None, after_loss_fn: Callable[..., None] = None, validate_fn: Callable[..., tuple[float, float]] = None, save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None, writer=None, main_tag: str = 'train', tag: str = '', accuracy_fn: Callable[..., list[float]] = None, verbose: bool = True, indent: int = 0, **kwargs):
+    def _train(self, epochs: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None, grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None, adv_train: bool = None, print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0, validate_interval: int = 10, save: bool = False, amp: bool = False, loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None, epoch_fn: Callable[..., None] = None, get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None, loss_fn: Callable[..., torch.Tensor] = None, after_loss_fn: Callable[..., None] = None, validate_fn: Callable[..., tuple[float, float]] = None, save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None, writer=None, main_tag: str = 'train', tag: str = '', accuracy_fn: Callable[..., list[float]] = None, verbose: bool = True, indent: int = 0, **kwargs):
         if self.arch_search and not self.full:
             loader_train = loader_train or self.dataset.loader['train2']
         self.optimizer = optimizer
         # self.lr_scheduler = lr_scheduler
-        return super()._train(epoch, optimizer, lr_scheduler=lr_scheduler, grad_clip=grad_clip, pre_conditioner=pre_conditioner, adv_train=adv_train, print_prefix=print_prefix, start_epoch=start_epoch, resume=resume, validate_interval=validate_interval, save=save, amp=amp, loader_train=loader_train, loader_valid=loader_valid, epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn, save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix, writer=writer, main_tag=main_tag, tag=tag, accuracy_fn=accuracy_fn, verbose=verbose, indent=indent, **kwargs)
+        return super()._train(epochs, optimizer, lr_scheduler=lr_scheduler, grad_clip=grad_clip, pre_conditioner=pre_conditioner, adv_train=adv_train, print_prefix=print_prefix, start_epoch=start_epoch, resume=resume, validate_interval=validate_interval, save=save, amp=amp, loader_train=loader_train, loader_valid=loader_valid, epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn, save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix, writer=writer, main_tag=main_tag, tag=tag, accuracy_fn=accuracy_fn, verbose=verbose, indent=indent, **kwargs)
 
     def _validate(self, adv_train: bool = None,
                   loader: torch.utils.data.DataLoader = None,

@@ -22,7 +22,7 @@ class FinePruning(BackdoorDefense):
     Args:
         clean_image_num (int): the number of sampled clean image to prune and finetune the model. Default: 50.
         prune_ratio (float): the ratio of neurons to prune. Default: 0.02.
-        # finetune_epoch (int): the epoch of finetuning. Default: 10.
+        # finetune_epoch (int): the epochs of finetuning. Default: 10.
 
 
     .. _Fine Pruning:

@@ -39,7 +39,7 @@ class LatentBackdoor(BadNet):
                            help='the weight of mse loss during retraining, defaults to config[latent_backdoor][mse_weight][dataset]=100')
         group.add_argument('--preprocess_layer',
                            help='the chosen feature layer patched by trigger, defaults to "features"')
-        group.add_argument('--preprocess_epoch', type=int, help='preprocess optimization epoch')
+        group.add_argument('--preprocess_epoch', type=int, help='preprocess optimization epochs')
         group.add_argument('--preprocess_lr', type=float, help='preprocess learning rate')
         return group
 

@@ -58,7 +58,7 @@ class AdvTrain(BackdoorDefense):
         adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
         return adv_x, _label
 
-    def adv_train(self, epoch: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+    def adv_train(self, epochs: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                   validate_interval=10, save=False, verbose=True, indent=0,
                   **kwargs):
         loader_train = self.dataset.loader['train']
@@ -72,7 +72,7 @@ class AdvTrain(BackdoorDefense):
         params: list[nn.Parameter] = []
         for param_group in optimizer.param_groups:
             params.extend(param_group['params'])
-        for _epoch in range(epoch):
+        for _epoch in range(epochs):
             losses.reset()
             top1.reset()
             top5.reset()
@@ -112,7 +112,7 @@ class AdvTrain(BackdoorDefense):
             self.model.activate_params([])
             if verbose:
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, epoch), **ansi).ljust(64 if env['color'] else 35)
+                    output_iter(_epoch + 1, epochs), **ansi).ljust(64 if env['color'] else 35)
                 _str = ' '.join([
                     f'Loss: {losses.avg:.4f},'.ljust(20),
                     f'Top1 Clean Acc: {top1.avg:.3f}, '.ljust(30),
@@ -125,7 +125,7 @@ class AdvTrain(BackdoorDefense):
                 lr_scheduler.step()
 
             if validate_interval != 0:
-                if (_epoch + 1) % validate_interval == 0 or _epoch == epoch - 1:
+                if (_epoch + 1) % validate_interval == 0 or _epoch == epochs - 1:
                     _, cur_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
                     if cur_acc < best_acc:
                         prints('{purple}best result update!{reset}'.format(**ansi), indent=indent)

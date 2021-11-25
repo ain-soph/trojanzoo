@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python train.py --verbose 1 --color --epoch 300 --batch_size 256 --lr 0.01 --dataset cifar10 --model convnet
-# CUDA_VISIBLE_DEVICES=0 python train.py --verbose 1 --color --epoch 300 --batch_size 256 --lr 0.01 --dataset cifar10 --model convnet --adv_train --adv_train_random_init
+# CUDA_VISIBLE_DEVICES=0 python train.py --verbose 1 --color --epochs 300 --batch_size 256 --lr 0.01 --dataset cifar10 --model convnet
+# CUDA_VISIBLE_DEVICES=0 python train.py --verbose 1 --color --epochs 300 --batch_size 256 --lr 0.01 --dataset cifar10 --model convnet --adv_train --adv_train_random_init
 
 import trojanvision
 import argparse

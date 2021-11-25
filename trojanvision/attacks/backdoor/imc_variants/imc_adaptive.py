@@ -46,8 +46,8 @@ class IMC_Adaptive(IMC):
         self.strip_percent: float = strip_percent
         self.abs_weight: float = abs_weight
 
-    def attack(self, epoch: int, **kwargs):
-        super().attack(epoch, loss_fn=self.loss_fn, **kwargs)
+    def attack(self, epochs: int, **kwargs):
+        super().attack(epochs, loss_fn=self.loss_fn, **kwargs)
 
     def epoch_fn(self, **kwargs):
         self.save()

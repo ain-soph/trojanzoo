@@ -31,7 +31,7 @@ class DeepInspect(BackdoorDefense):
         super().add_argument(group)
         group.add_argument('--sample_ratio', type=float, help='sample ratio from the full training data')
         group.add_argument('--noise_dim', type=int, help='GAN noise dimension')
-        group.add_argument('--remask_epoch', type=int, help='Remask optimizing epoch')
+        group.add_argument('--remask_epoch', type=int, help='Remask optimizing epochs')
         group.add_argument('--remask_lr', type=float, help='Remask optimizing learning rate')
         group.add_argument('--gamma_1', type=float, help='control effect of GAN loss')
         group.add_argument('--gamma_2', type=float, help='control effect of perturbation loss')

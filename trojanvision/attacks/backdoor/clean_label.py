@@ -34,7 +34,7 @@ class CleanLabel(BadNet):
         tau (float): the interpolation constant used to balance source imgs and target imgs. Default: 0.4.
         epsilon (float): the perturbation bound in input space. Default: 0.1.
         noise_dim (int): the dimension of the input in the generator. Default: 100.
-        generator_iters (int): the epoch for training the generator. Default: 1000.
+        generator_iters (int): the epochs for training the generator. Default: 1000.
         critic_iter (int): the critic iterations per generator training iteration. Default: 5.
 
 
@@ -64,7 +64,7 @@ class CleanLabel(BadNet):
         group.add_argument('--train_gan', action='store_true',
                            help='whether train the GAN if it already exists, defaults to False')
         group.add_argument('--generator_iters', type=int,
-                           help=' the epoch for training the generator, defaults to config[clean_label][generator_iters]=1000')
+                           help=' the epochs for training the generator, defaults to config[clean_label][generator_iters]=1000')
         group.add_argument('--critic_iter', type=int,
                            help=' the critic iterations per generator training iteration, defaults to config[clean_label][critic_iter]=5')
         return group

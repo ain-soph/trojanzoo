@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --epoch 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset cifar10 --model resnet18_comp
+# CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --epochs 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset cifar10 --model resnet18_comp
 
 import trojanvision
 
@@ -11,9 +11,9 @@ import argparse
 
 class Cyclic_Scheduler():
     def __init__(self, optimizer: torch.optim.Optimizer,
-                 epoch: int, lr_max: float, loader_length: int) -> None:
+                 epochs: int, lr_max: float, loader_length: int) -> None:
         self.optimizer = optimizer
-        self.epoch = epoch
+        self.epochs = epochs
         self.lr_max = lr_max
         self.loader_length = loader_length
         self._step = 0
@@ -23,7 +23,7 @@ class Cyclic_Scheduler():
         self.optimizer.param_groups[0]['lr'] = self.get_lr(self._step / self.loader_length)
 
     def get_lr(self, t: float) -> float:
-        return np.interp([t], [0, self.epoch * 2 // 5, self.epoch], [0, self.lr_max, 0])[0]
+        return np.interp([t], [0, self.epochs * 2 // 5, self.epochs], [0, self.lr_max, 0])[0]
 
 
 if __name__ == '__main__':
@@ -54,10 +54,10 @@ if __name__ == '__main__':
     trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
 
     if isinstance(trainer.optimizer, torch.optim.Adam):
-        trainer.lr_scheduler = Cyclic_Scheduler(trainer.optimizer, epoch=args.epoch,
+        trainer.lr_scheduler = Cyclic_Scheduler(trainer.optimizer, epochs=args.epochs,
                                                 lr_max=args.lr, loader_length=len(dataset.loader['train']))
     else:
-        lr_steps = args.epoch * len(dataset.loader['train'])
+        lr_steps = args.epochs * len(dataset.loader['train'])
         trainer.lr_scheduler = torch.optim.lr_scheduler.CyclicLR(trainer.optimizer,
                                                                  base_lr=0.0, max_lr=args.lr,
                                                                  step_size_up=lr_steps // 2,
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)
     # model._train(lr_scheduler_freq='step', **trainer)
 
-    args.epochs = args.epoch
+    args.epochs = args.epochs
     args.lr_max = args.lr
     args.attack = 'fgsm'
     args.alpha = args.adv_train_alpha
@@ -88,13 +88,13 @@ if __name__ == '__main__':
 
     # model._validate()
     model.train()
-    for epoch in range(args.epochs):
+    for _epoch in range(args.epochs):
         train_loss = 0
         train_acc = 0
         train_n = 0
         for i, (X, y) in enumerate(train_loader):
             X, y = X.cuda(), y.cuda()
-            lr = lr_schedule(epoch + (i + 1) / len(train_loader))
+            lr = lr_schedule(_epoch + (i + 1) / len(train_loader))
             opt.param_groups[0].update(lr=lr)
 
             if args.attack == 'fgsm':
@@ -132,6 +132,6 @@ if __name__ == '__main__':
             train_loss += loss.item() * y.size(0)
             train_acc += (output.max(1)[1] == y).sum().item()
             train_n += y.size(0)
-        print(epoch)
+        print(_epoch)
         model._validate()
         model.train()

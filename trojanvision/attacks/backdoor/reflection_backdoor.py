@@ -23,7 +23,7 @@ class ReflectionBackdoor(BadNet):
         group.add_argument('--selection_num', type=int, help='number of adv images')
         group.add_argument('--selection_iter', type=int,
                            help='selection iteration to find optimal reflection images as trigger')
-        group.add_argument('--inner_epoch', type=int, help='retraining epoch during trigger selection')
+        group.add_argument('--inner_epoch', type=int, help='retraining epochs during trigger selection')
         return group
 
     def __init__(self, candidate_num: int = 100, selection_num: int = 20, selection_iter: int = 10, inner_epoch: int = 1, **kwargs):
@@ -40,7 +40,7 @@ class ReflectionBackdoor(BadNet):
         self.conv2d = nn.Conv2d(1, 1, 3, bias=False, padding=1)
         self.conv2d.weight = nn.Parameter(kernel.view_as(self.conv2d.weight))
 
-    def attack(self, epoch: int, save=False, validate_interval: int = 10, lr_scheduler=None, **kwargs):
+    def attack(self, epochs: int, save=False, validate_interval: int = 10, lr_scheduler=None, **kwargs):
         W = torch.zeros(self.candidate_num)
 
         loader = self.dataset.get_dataloader(mode='train', batch_size=self.candidate_num, class_list=[self.target_class],
@@ -70,7 +70,7 @@ class ReflectionBackdoor(BadNet):
             adv_images = candidate_images[pick_img_ind]
         # final training, see performance of best reflection trigger
         self.get_mark(adv_images[0])
-        super().attack(epoch, save=save, lr_scheduler=lr_scheduler, **kwargs)
+        super().attack(epochs, save=save, lr_scheduler=lr_scheduler, **kwargs)
 
     def get_mark(self, conv_ref_img: torch.Tensor):
         '''

@@ -27,7 +27,7 @@ class ABS(BackdoorDefense):
         group.add_argument('--seed_num', type=int, help='ABS seed number, defaults to -5.')
         group.add_argument('--max_troj_size', type=int,
                            help='ABS max trojan trigger size (pixel number), defaults to 64.')
-        group.add_argument('--remask_epoch', type=int, help='ABS optimizing epoch, defaults to 1000.')
+        group.add_argument('--remask_epoch', type=int, help='ABS optimizing epochs, defaults to 1000.')
         group.add_argument('--remask_lr', type=float, help='ABS optimization learning rate, defaults to 0.1.')
         group.add_argument('--remask_weight', type=float, help='ABS optimization remask loss weight, defaults to 0.1.')
         return group

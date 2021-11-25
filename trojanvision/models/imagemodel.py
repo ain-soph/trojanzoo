@@ -254,7 +254,7 @@ class ImageModel(Model):
                                        adv_train=True, **kwargs)
         return adv_acc, clean_acc + adv_acc
 
-    def _train(self, epoch: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
+    def _train(self, epochs: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
                grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None, adv_train: bool = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
@@ -319,7 +319,7 @@ class ImageModel(Model):
                                       amp=amp, scaler=scaler, **kwargs)
             after_loss_fn = after_loss_fn_new
 
-        super()._train(epoch=epoch, optimizer=optimizer, lr_scheduler=lr_scheduler,
+        super()._train(epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
                        grad_clip=grad_clip, pre_conditioner=pre_conditioner, adv_train=adv_train,
                        print_prefix=print_prefix, start_epoch=start_epoch, resume=resume,
                        validate_interval=validate_interval, save=save, amp=amp,

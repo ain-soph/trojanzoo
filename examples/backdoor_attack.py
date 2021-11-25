@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_attack.py --color --verbose 1 --attack badnet --pretrain --validate_interval 1 --epoch 50 --lr 1e-2
+# CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_attack.py --color --verbose 1 --attack badnet --pretrain --validate_interval 1 --epochs 50 --lr 1e-2
 
 import trojanvision
 import argparse
