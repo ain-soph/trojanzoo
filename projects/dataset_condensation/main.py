@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # train_args['epoch'] = 1
     train_args['epoch'] = inner_loop
     train_args['lr_scheduler'] = None
-    train_args['adv_train'] = False if first_term is None else True
+    train_args['adv_train'] = first_term is not None
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epoch'] = epoch_eval_train
     eval_train_args['adv_train'] = args.eval_adv_train

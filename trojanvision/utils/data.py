@@ -6,11 +6,13 @@ import random
 from typing import Union  # TODO: python 3.10
 
 
-__all__ = ['Cutout', 'get_transform_bit', 'get_transform_imagenet', 'get_transform_cifar']
+__all__ = ['Cutout', 'get_transform_bit',
+           'get_transform_imagenet', 'get_transform_cifar']
 
 
 class Cutout:
-    def __init__(self, length: int, fill_values: Union[float, torch.Tensor] = 0.0):
+    def __init__(self, length: int,
+                 fill_values: Union[float, torch.Tensor] = 0.0):
         self.length = length
         self.fill_values = fill_values
 
@@ -44,15 +46,17 @@ def get_transform_bit(mode: str, data_shape: list[int]) -> transforms.Compose:
     return transform
 
 
-def get_transform_imagenet(mode: str, use_tuple: bool = False, auto_augment: bool = False) -> transforms.Compose:
+def get_transform_imagenet(mode: str, use_tuple: bool = False,
+                           auto_augment: bool = False) -> transforms.Compose:
     if mode == 'train':
         transform_list = [
             transforms.RandomResizedCrop((224, 224) if use_tuple else 224),
             transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+            # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4), # noqa
         ]
         if auto_augment:
-            transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.IMAGENET))
+            transform_list.append(transforms.AutoAugment(
+                transforms.AutoAugmentPolicy.IMAGENET))
         transform_list.append(transforms.ToTensor())
         transform = transforms.Compose(transform_list)
     else:
@@ -65,16 +69,18 @@ def get_transform_imagenet(mode: str, use_tuple: bool = False, auto_augment: boo
 
 def get_transform_cifar(mode: str, auto_augment: bool = False,
                         cutout: bool = False, cutout_length: int = None,
-                        data_shape: list[int] = [3, 32, 32]) -> transforms.Compose:
+                        data_shape: list[int] = [3, 32, 32]
+                        ) -> transforms.Compose:
     if mode != 'train':
         return transforms.Compose([transforms.ToTensor()])
-    cutout_length = data_shape[-1] // 2 if cutout_length is None else cutout_length
+    cutout_length = cutout_length or data_shape[-1] // 2
     transform_list = [
         transforms.RandomCrop(data_shape[-2:], padding=data_shape[-1] // 8),
         transforms.RandomHorizontalFlip(),
     ]
     if auto_augment:
-        transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10))
+        transform_list.append(transforms.AutoAugment(
+            transforms.AutoAugmentPolicy.CIFAR10))
     transform_list.append(transforms.ToTensor())
     if cutout:
         transform_list.append(Cutout(cutout_length))
