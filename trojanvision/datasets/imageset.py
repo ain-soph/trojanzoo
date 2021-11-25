@@ -2,7 +2,9 @@
 
 from trojanzoo.datasets import Dataset
 from trojanvision.environ import env
-from trojanvision.utils.data import Cutout
+from trojanvision.utils.data import (get_transform_bit,
+                                     get_transform_imagenet,
+                                     get_transform_cifar)
 
 import torch
 import torchvision.transforms as transforms
@@ -26,11 +28,12 @@ class ImageSet(Dataset):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--dataset_normalize', dest='normalize',
-                           action='store_true', help='use transforms.Normalize in dataset transform. '
+        group.add_argument('--dataset_normalize', dest='normalize', action='store_true',
+                           help='use transforms.Normalize in dataset transform. '
                            '(It\'s used in model as the first layer by default.)')
         group.add_argument('--transform', choices=[None, 'bit', 'pytorch'])
-        group.add_argument('--auto_augment', action='store_true', help='use auto augment')
+        group.add_argument('--auto_augment', action='store_true',
+                           help='use auto augment')
         group.add_argument('--cutout', action='store_true', help='use cutout')
         group.add_argument('--cutout_length', type=int, help='cutout length')
         return group
@@ -46,7 +49,9 @@ class ImageSet(Dataset):
         self.cutout = cutout
         self.cutout_length = cutout_length
         super().__init__(default_model=default_model, **kwargs)
-        self.param_list['imageset'] = ['data_shape', 'norm_par', 'normalize', 'transform', 'auto_augment', 'cutout']
+        self.param_list['imageset'] = ['data_shape', 'norm_par',
+                                       'normalize', 'transform',
+                                       'auto_augment']
         if cutout:
             self.param_list['imageset'].append('cutout_length')
 
@@ -64,11 +69,15 @@ class ImageSet(Dataset):
         else:
             transform = transforms.Compose([transforms.ToTensor()])
         if normalize and self.norm_par is not None:
-            transform.transforms.append(transforms.Normalize(mean=self.norm_par['mean'], std=self.norm_par['std']))
+            transform.transforms.append(transforms.Normalize(
+                mean=self.norm_par['mean'], std=self.norm_par['std']))
         return transform
 
-    def get_dataloader(self, mode: str = None, dataset: Dataset = None, batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True, drop_last=False, **kwargs) -> torch.utils.data.DataLoader:
+    def get_dataloader(self, mode: str = None, dataset: Dataset = None,
+                       batch_size: int = None, shuffle: bool = None,
+                       num_workers: int = None, pin_memory=True,
+                       drop_last=False, **kwargs
+                       ) -> torch.utils.data.DataLoader:
         if batch_size is None:
             batch_size = self.test_batch_size if mode == 'test' else self.batch_size
         if shuffle is None:
@@ -78,12 +87,16 @@ class ImageSet(Dataset):
             dataset = self.get_dataset(mode, **kwargs)
         if env['num_gpus'] == 0:
             pin_memory = False
-        return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
-                                           num_workers=num_workers, pin_memory=pin_memory, drop_last=drop_last)
+        return torch.utils.data.DataLoader(
+            dataset, batch_size=batch_size, shuffle=shuffle,
+            num_workers=num_workers, pin_memory=pin_memory,
+            drop_last=drop_last)
 
     @staticmethod
-    def get_data(data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        return data[0].to(env['device'], non_blocking=True), data[1].to(env['device'], dtype=torch.long, non_blocking=True)
+    def get_data(data: tuple[torch.Tensor, torch.Tensor],
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        return (data[0].to(env['device'], non_blocking=True),
+                data[1].to(env['device'], dtype=torch.long, non_blocking=True))
 
     def get_class_to_idx(self, **kwargs) -> dict[str, int]:
         if hasattr(self, 'class_to_idx'):
@@ -106,57 +119,3 @@ class ImageSet(Dataset):
                     os.makedirs(_dir)
                 image.save(os.path.join(_dir, f'{class_counters[target_class]}{img_type}'))
                 class_counters[target_class] += 1
-
-
-def get_transform_bit(mode: str, data_shape: list[int]) -> transforms.Compose:
-    hyperrule = data_shape[-2] * data_shape[-1] < 96 * 96
-    precrop, crop = (160, 128) if hyperrule else (512, 480)
-    if mode == 'train':
-        transform = transforms.Compose([
-            transforms.Resize((precrop, precrop)),
-            transforms.RandomCrop((crop, crop)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-        ])
-    else:
-        transform = transforms.Compose([
-            transforms.Resize((crop, crop)),
-            transforms.ToTensor()])
-    return transform
-
-
-def get_transform_imagenet(mode: str, use_tuple: bool = False, auto_augment: bool = False) -> transforms.Compose:
-    if mode == 'train':
-        transform_list = [
-            transforms.RandomResizedCrop((224, 224) if use_tuple else 224),
-            transforms.RandomHorizontalFlip(),
-            # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-        ]
-        if auto_augment:
-            transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.IMAGENET))
-        transform_list.append(transforms.ToTensor())
-        transform = transforms.Compose(transform_list)
-    else:
-        transform = transforms.Compose([
-            transforms.Resize((256, 256) if use_tuple else 256),
-            transforms.CenterCrop((224, 224) if use_tuple else 224),
-            transforms.ToTensor()])
-    return transform
-
-
-def get_transform_cifar(mode: str, auto_augment: bool = False,
-                        cutout: bool = False, cutout_length: int = None,
-                        data_shape: list[int] = [3, 32, 32]) -> transforms.Compose:
-    if mode != 'train':
-        return transforms.Compose([transforms.ToTensor()])
-    cutout_length = data_shape[-1] // 2 if cutout_length is None else cutout_length
-    transform_list = [
-        transforms.RandomCrop(data_shape[-2:], padding=data_shape[-1] // 8),
-        transforms.RandomHorizontalFlip(),
-    ]
-    if auto_augment:
-        transform_list.append(transforms.AutoAugment(transforms.AutoAugmentPolicy.CIFAR10))
-    transform_list.append(transforms.ToTensor())
-    if cutout:
-        transform_list.append(Cutout(cutout_length))
-    return transforms.Compose(transform_list)
