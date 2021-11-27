@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
+
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
 from torchvision.models.vgg import model_urls as urls
 
+from collections import Callable
+
 
 class _VGG(_ImageModel):
 
     def __init__(self, name: str = 'vgg', **kwargs):
-        if '_comp' in name:
+        if 'comp' in name:
             comp_dict = {'conv_dim': 512, 'fc_depth': 3, 'fc_dim': 512}
             if '_s' in name:
                 comp_dict['fc_depth'] = 1
@@ -19,10 +22,10 @@ class _VGG(_ImageModel):
                     kwargs[key] = value
         super().__init__(**kwargs)
         class_name = name.replace('_comp', '').replace('_s', '')
-        ModelClass: type[torchvision.models.VGG] = getattr(torchvision.models, class_name)
+        ModelClass: Callable[..., torchvision.models.VGG] = getattr(torchvision.models, class_name)
         _model = ModelClass(num_classes=self.num_classes)
         self.features: nn.Sequential = _model.features
-        if '_comp' in name:
+        if 'comp' in name:
             self.pool = nn.AdaptiveAvgPool2d((1, 1))
         else:
             self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))

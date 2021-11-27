@@ -8,7 +8,6 @@ from trojanzoo.utils.tensor import (to_tensor, to_numpy, byte2float,
 from trojanzoo.utils.output import ansi, prints, redirect
 
 import os
-import sys
 import random
 import numpy as np
 import torch

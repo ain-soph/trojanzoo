@@ -216,9 +216,8 @@ class ImageModel(Model):
             feats.requires_grad_(False)
             weights = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N, C',1,1)
             heatmap = (feats * weights).sum(dim=1, keepdim=True).clamp(0)  # (N, 1, H', W')
-            # heatmap.sub_(heatmap.min(dim=-2, keepdim=True)[0].min(dim=-1, keepdim=True)[0])
-            heatmap.div_(heatmap.max(dim=-2, keepdim=True)
-                         [0].max(dim=-1, keepdim=True)[0])
+            # heatmap.sub_(heatmap.amin(dim=-2, keepdim=True).amin(dim=-1, keepdim=True))
+            heatmap.div_(heatmap.amax(dim=-2, keepdim=True).amax(dim=-1, keepdim=True))
             heatmap: torch.Tensor = F.upsample(heatmap, _input.shape[-2:], mode='bilinear')[:, 0]   # (N, H, W)
             # Note that we violate the image order convension (W, H, C)
         elif method == 'saliency_map':
@@ -227,11 +226,9 @@ class ImageModel(Model):
             grad = torch.autograd.grad(_output, _input)[0]   # (N,C,H,W)
             _input.requires_grad_(False)
 
-            heatmap = grad.abs().max(dim=1)[0]   # (N,H,W)
-            heatmap.sub_(heatmap.min(dim=-2, keepdim=True)
-                         [0].min(dim=-1, keepdim=True)[0])
-            heatmap.div_(heatmap.max(dim=-2, keepdim=True)
-                         [0].max(dim=-1, keepdim=True)[0])
+            heatmap = grad.abs().amax(dim=1)   # (N,H,W)
+            heatmap.sub_(heatmap.amin(dim=-2, keepdim=True).amin(dim=-1, keepdim=True))
+            heatmap.div_(heatmap.amax(dim=-2, keepdim=True).amax(dim=-1, keepdim=True))
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 

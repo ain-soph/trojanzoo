@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from torchvision.models.resnet import conv3x3
+
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.utils.model_archs import dla
 

@@ -31,7 +31,7 @@ class MNASNet(ImageModel):
 
     @staticmethod
     def parse_name(name: str, mnas_alpha: float = 1.0) -> tuple[str, float]:
-        name_list: list[str] = re.findall('[a-zA-Z]+|[\d_.]+', name)
+        name_list: list[str] = re.findall(r'[a-zA-Z]+|[\d_.]+', name)
         name = name_list[0]
         if len(name_list) > 1:
             assert len(name_list) == 2

@@ -97,10 +97,7 @@ def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image],
 
 def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image],
                 num_output_channels: int = 1, **kwargs) -> torch.Tensor:
-    if isinstance(x, torch.Tensor):
-        if 'device' not in kwargs.keys():
-            kwargs['device'] = x.device
-    img = gray_img(x, num_output_channels=num_output_channels)
+    img = F.rgb_to_grayscale(x, num_output_channels=num_output_channels)
     return to_tensor(img, **kwargs)
 
 

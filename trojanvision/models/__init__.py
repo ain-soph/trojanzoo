@@ -5,8 +5,9 @@ from .imagemodel import ImageModel
 from .nas import *
 from .normal import *
 from .others import *
+from .torchvision import *
 
-from . import nas, normal, others
+from . import nas, normal, others, torchvision
 
 from trojanvision.datasets import ImageSet
 from trojanvision.configs import Config, config
@@ -15,7 +16,7 @@ import trojanzoo.models
 import argparse
 from typing import Union
 
-module_list = [nas, normal, others]
+module_list = [nas, normal, others, torchvision]
 __all__ = ['ImageModel', 'class_dict', 'add_argument', 'create',
            'get_available_models', 'output_available_models']
 class_dict: dict[str, type[ImageModel]] = {}

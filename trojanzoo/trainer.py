@@ -34,7 +34,7 @@ class Trainer:
                            '(default: 0)')
         group.add_argument('--lr', type=float,
                            help='learning rate (default: 0.1)')
-        group.add_argument('--parameters', default='full',
+        group.add_argument('--parameters',
                            choices=['features', 'classifier', 'full'],
                            help='training parameters '
                            '("features", "classifier", "full") '
@@ -52,12 +52,25 @@ class Trainer:
 
         group.add_argument('--lr_scheduler', action='store_true',
                            help='enable lr scheduler')
-        group.add_argument('--lr_scheduler_type', default='cosineannealinglr',
+        group.add_argument('--lr_scheduler_type',
+                           choices=['StepLR', 'CosineAnnealingLR',
+                                    'ExponentialLR'],
                            help='the lr scheduler '
-                           '(default: cosineannealinglr)')
+                           '(default: CosineAnnealingLR)')
         group.add_argument('--lr_min', type=float,
                            help='min learning rate for `eta_min` '
                            'in CosineAnnealingLR (default: 0.0)')
+        group.add_argument('--lr_warmup_epochs', type=int,
+                           help='the number of epochs to warmup (default: 0)')
+        group.add_argument('--lr_warmup_method',
+                           choices=['constant', 'linear'],
+                           help='the warmup method (default: constant)')
+        group.add_argument('--lr_step_size',
+                           help='decrease lr every step-size epochs '
+                           '(default: 30)')
+        group.add_argument('--lr_gamma', type=float,
+                           help='decrease lr by a factor of lr-gamma '
+                           '(default: 0.1)')
 
         group.add_argument('--model_ema', action='store_true',
                            help='enable tracking Exponential Moving Average '
@@ -131,13 +144,14 @@ class Trainer:
 
     def summary(self, indent: int = 0):
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
-            self.name, **ansi), indent=indent)
+            self.name, **ansi),
+            indent=indent)
         prints(self.__class__.__name__, indent=indent)
         for key in self.param_list:
             value = getattr(self, key)
             if value:
-                prints('{green}{0:<10s}{reset}'.format(
-                    key, **ansi), indent=indent + 10)
+                prints('{green}{0:<10s}{reset}'.format(key, **ansi),
+                       indent=indent + 10)
                 prints(value, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
 

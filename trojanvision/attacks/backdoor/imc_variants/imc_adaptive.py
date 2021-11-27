@@ -133,8 +133,8 @@ class IMC_Adaptive(IMC):
         _label = _label.cpu()
         for layer in all_ps.keys():
             ps = all_ps[layer]  # (C, n_samples, batch_size, num_classes)
-            vs: torch.Tensor = ps[:, self.n_samples // 5:].max(dim=1)[0] \
-                - ps[:, :self.n_samples // 5].min(dim=1)[0]  # (C, batch_size, num_classes)
+            vs: torch.Tensor = ps[:, self.n_samples // 5:].amax(dim=1) \
+                - ps[:, :self.n_samples // 5].amin(dim=1)  # (C, batch_size, num_classes)
             values, labels = vs.sort(dim=-1, descending=True)
             condition1 = labels[:, :, 0].eq(_label)  # exclude the ground-truth labels
             values = torch.where(condition1, values[:, :, 1] - values[:, :, 2],

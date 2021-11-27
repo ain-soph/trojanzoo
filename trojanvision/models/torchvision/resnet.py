@@ -10,6 +10,7 @@ import torchvision.models
 from torchvision.models.resnet import model_urls as urls
 from torchvision.models.resnet import conv3x3
 from collections import OrderedDict
+
 from typing import Union
 
 
@@ -72,8 +73,10 @@ class ResNet(ImageModel):
                         'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
                         'resnet18_comp', 'resnet34_comp', 'resnet50_comp', 'resnet101_comp', 'resnet152_comp',
                         'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
-                        'resnext50_32x4d', 'resnext101_32x8d', 'wide_resnet50_2', 'wide_resnet101_2',
-                        'resnext50_32x4d_comp', 'resnext101_32x8d_comp', 'wide_resnet50_2_comp', 'wide_resnet101_2_comp',
+                        'resnext50_32x4d', 'resnext101_32x8d',
+                        'wide_resnet50_2', 'wide_resnet101_2',
+                        'resnext50_32x4d_comp', 'resnext101_32x8d_comp',
+                        'wide_resnet50_2_comp', 'wide_resnet101_2_comp',
                         'resnet18_ap_comp']
 
     model_urls = urls

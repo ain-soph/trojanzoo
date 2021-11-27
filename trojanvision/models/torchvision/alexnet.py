@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
@@ -13,7 +14,8 @@ class _AlexNet(_ImageModel):
         _model = torchvision.models.alexnet(num_classes=self.num_classes)
         self.features = _model.features
         self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((6, 6))
-        if len(self.classifier) == 1 and isinstance(self.classifier[0], nn.Identity):
+        if len(self.classifier) == 1 and \
+                isinstance(self.classifier[0], nn.Identity):
             self.classifier = _model.classifier
 
         # nn.Sequential(
@@ -47,5 +49,6 @@ class AlexNet(ImageModel):
     available_models = ['alexnet']
     model_urls = urls
 
-    def __init__(self, name: str = 'alexnet', model: type[_AlexNet] = _AlexNet, **kwargs):
+    def __init__(self, name: str = 'alexnet',
+                 model: type[_AlexNet] = _AlexNet, **kwargs):
         super().__init__(name=name, model=model, **kwargs)

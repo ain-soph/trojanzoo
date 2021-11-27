@@ -15,9 +15,13 @@ class _Net(_ImageModel):
             ('conv2', nn.Conv2d(32, 64, 3, 1)),
             ('relu2', nn.ReLU()),
         ]))
-        self.pool = nn.Sequential(OrderedDict([
-            ('maxpool', nn.MaxPool2d(2)),
-            ('dropout', nn.Dropout2d(0.25)),
+        self.pool = nn.MaxPool2d(2)
+        self.classifier = nn.Sequential(OrderedDict([
+            ('dropout1', nn.Dropout(0.25)),
+            ('fc1', self.classifier.fc1),
+            ('relu1', self.classifier.relu1),
+            ('dropout2', nn.Dropout(0.5)),
+            ('fc2', self.classifier.fc2),
         ]))
 
 

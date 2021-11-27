@@ -14,7 +14,6 @@ from trojanzoo.utils.train import train, validate, compare
 
 import torch
 import torch.nn as nn
-from torch.utils import model_zoo
 import numpy as np
 import os
 from collections import OrderedDict
@@ -295,11 +294,11 @@ class Model:
 
     def define_optimizer(
             self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
-            OptimType: Union[str, type[Optimizer]] = None,
+            OptimType: Union[str, type[Optimizer]] = 'SGD',
             lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 0.0,
-            lr_scheduler: bool = True,
-            lr_scheduler_type: str = 'cosineannealinglr',
-            lr_step_size: int = 100, lr_gamma: float = 0.1,
+            lr_scheduler: bool = False,
+            lr_scheduler_type: str = 'CosineAnnealingLR',
+            lr_step_size: int = 30, lr_gamma: float = 0.1,
             epochs: int = None, lr_min: float = 0.0,
             lr_warmup_epochs: int = 0, lr_warmup_method: str = 'constant',
             lr_warmup_decay: float = 0.01,
@@ -318,13 +317,13 @@ class Model:
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
             main_lr_scheduler: _LRScheduler = None
-            if lr_scheduler_type == 'steplr':    # TODO: python 3.10
+            if lr_scheduler_type == 'StepLR':    # TODO: python 3.10
                 main_lr_scheduler = torch.optim.lr_scheduler.StepLR(
                     optimizer, step_size=lr_step_size, gamma=lr_gamma)
-            elif lr_scheduler_type == 'cosineannealinglr':
+            elif lr_scheduler_type == 'CosineAnnealingLR':
                 main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                     optimizer, T_max=epochs - lr_warmup_epochs, eta_min=lr_min)
-            elif lr_scheduler_type == 'exponentiallr':
+            elif lr_scheduler_type == 'ExponentialLR':
                 main_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
                     optimizer, gamma=lr_gamma)
             else:
@@ -472,7 +471,7 @@ class Model:
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = self.model_urls[self.name] if url is None else url
         print('get official model weights from: ', url)
-        return model_zoo.load_url(url, map_location=map_location, **kwargs)
+        return torch.hub.load_state_dict_from_url(url, map_location=map_location, **kwargs)
 
     # ---------------------Train and Validate--------------------- #
     # TODO: annotation and remove those arguments to be *args, **kwargs

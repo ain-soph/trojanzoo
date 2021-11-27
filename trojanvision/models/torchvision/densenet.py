@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch
@@ -8,12 +9,14 @@ from torchvision.models.densenet import model_urls as urls
 import re
 from collections import OrderedDict
 
+from collections import Callable
+
 
 class _DenseNet(_ImageModel):
 
     def __init__(self, name: str = 'densenet121', **kwargs):
         super().__init__(**kwargs)
-        ModelClass: type[torchvision.models.DenseNet] = getattr(torchvision.models, name.split('_')[0])
+        ModelClass: Callable[..., torchvision.models.DenseNet] = getattr(torchvision.models, name.split('_')[0])
         _model = ModelClass(num_classes=self.num_classes)
         self.features = _model.features
         self.features.add_module('relu', nn.ReLU(inplace=True))

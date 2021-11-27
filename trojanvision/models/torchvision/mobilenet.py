@@ -23,7 +23,7 @@ class _MobileNet(_ImageModel):
         try:
             sub_type: str = name[10:]
             assert sub_type in ['v2', 'v2_comp', 'v3_small', 'v3_large', 'v3_small_comp', 'v3_large_comp'], f'{name=}'
-        except Exception as e:
+        except Exception:
             raise AssertionError("model name should be in ['mobilenet_v2', 'mobilenet_v2_comp', "
                                  "'mobilenet_v3_small', 'mobilenet_v3_large', "
                                  "'mobilenet_v3_small_comp', 'mobilenet_v3_large_comp']")
