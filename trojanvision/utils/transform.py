@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import torch
+import torch.nn as nn
 import torchvision.transforms as transforms
 from torchvision.transforms import functional as F
 from torch.nn.functional import one_hot
@@ -17,7 +18,7 @@ __all__ = ['RandomMixup', 'RandomCutmix', 'Cutout',
            'get_transform_cifar']
 
 
-class RandomMixup(torch.nn.Module):
+class RandomMixup(nn.Module):
     """Randomly apply Mixup to the provided batch and targets.
     The class implements the data augmentations as described in the paper
     `"mixup: Beyond Empirical Risk Minimization" <https://arxiv.org/abs/1710.09412>`_.
@@ -99,7 +100,7 @@ class RandomMixup(torch.nn.Module):
         return s.format(**self.__dict__)
 
 
-class RandomCutmix(torch.nn.Module):
+class RandomCutmix(nn.Module):
     """Randomly apply Cutmix to the provided batch and targets.
     The class implements the data augmentations as described in the paper
     `"CutMix: Regularization Strategy to Train Strong Classifiers with Localizable Features"
@@ -197,23 +198,34 @@ class RandomCutmix(torch.nn.Module):
         return s.format(**self.__dict__)
 
 
-class Cutout:
+def cutout(img: torch.Tensor, length: Union[int, tuple[int, int]],
+           fill_values: Union[float, torch.Tensor] = 0.0) -> torch.Tensor:
+    if isinstance(length, int):
+        length = (length, length)
+    h, w = img.size(-2), img.size(-1)
+    mask = torch.ones(h, w, dtype=torch.bool, device=img.device)
+    y = torch.randint(0, h, [1])
+    x = torch.randint(0, w, [1])
+    first_half = [length[0] // 2, length[1] // 2]
+    second_half = [length[0] - first_half[0], length[1] - first_half[1]]
+
+    y1 = max(y - first_half[0], 0)
+    y2 = min(y + second_half[0], h)
+    x1 = max(x - first_half[1], 0)
+    x2 = min(x + second_half[1], w)
+    mask[y1: y2, x1: x2] = False
+    return mask * img + ~mask * fill_values
+
+
+class Cutout(nn.Module):
     def __init__(self, length: int,
                  fill_values: Union[float, torch.Tensor] = 0.0):
+        super().__init__()
         self.length = length
         self.fill_values = fill_values
 
-    def __call__(self, img: torch.Tensor):
-        h, w = img.size(1), img.size(2)
-        mask = torch.ones(h, w, dtype=torch.bool, device=img.device)
-        y = random.randint(0, h)
-        x = random.randint(0, w)
-        y1 = max(y - self.length // 2, 0)
-        y2 = min(y + self.length // 2, h)
-        x1 = max(x - self.length // 2, 0)
-        x2 = min(x + self.length // 2, w)
-        mask[y1: y2, x1: x2] = False
-        return (mask * img + ~mask * self.fill_values).detach()
+    def __call__(self, img: torch.Tensor) -> torch.Tensor:
+        return cutout(img, self.length, self.fill_values)
 
 
 def get_transform_bit(mode: str, data_shape: list[int]) -> transforms.Compose:
