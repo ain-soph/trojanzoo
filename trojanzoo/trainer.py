@@ -22,7 +22,9 @@ if TYPE_CHECKING:
 class Trainer:
     name = 'trainer'
     param_list = ['optim_args', 'train_args', 'writer_args',
-                  'optimizer', 'lr_scheduler', 'pre_conditioner', 'writer']
+                  'optimizer', 'lr_scheduler',
+                  'pre_conditioner', 'model_ema',
+                  'writer']
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
