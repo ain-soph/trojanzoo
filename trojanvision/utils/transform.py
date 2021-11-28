@@ -7,7 +7,6 @@ from torchvision.transforms import functional as F
 from torch.nn.functional import one_hot
 
 import math
-import random
 
 from typing import Union  # TODO: python 3.10
 
