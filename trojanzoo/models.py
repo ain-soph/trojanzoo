@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 # TODO: python 3.10
 from typing import Generator, Iterator, Mapping, Optional, Set, Union
 from trojanzoo.configs import Config    # TODO: python 3.10
+from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import argparse
@@ -477,11 +478,12 @@ class Model:
     # TODO: annotation and remove those arguments to be *args, **kwargs
     def _train(self, epochs: int, optimizer: Optimizer,
                lr_scheduler: _LRScheduler = None,
-               grad_clip: float = None,
-               pre_conditioner: Union[KFAC, EKFAC] = None,
-               print_prefix: str = 'Epoch', start_epoch: int = 0,
-               resume: int = 0, validate_interval: int = 10,
-               save: bool = False, amp: bool = False,
+               lr_warmup_epochs: int = 0,
+               model_ema: ExponentialMovingAverage = None,
+               model_ema_steps: int = 32,
+               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
+               print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
+               validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None,
                loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
@@ -490,9 +492,8 @@ class Model:
                loss_fn: Callable[..., torch.Tensor] = None,
                after_loss_fn: Callable[..., None] = None,
                validate_fn: Callable[..., tuple[float, float]] = None,
-               save_fn: Callable[..., None] = None,
-               file_path: str = None, folder_path: str = None,
-               suffix: str = None,
+               save_fn: Callable[..., None] = None, file_path: str = None,
+               folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs) -> None:
@@ -509,8 +510,10 @@ class Model:
             epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
-        return train(module=self, num_classes=self.num_classes, epochs=epochs,
-                     optimizer=optimizer, lr_scheduler=lr_scheduler,
+        return train(module=self, num_classes=self.num_classes,
+                     epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
+                     lr_warmup_epochs=lr_warmup_epochs,
+                     model_ema=model_ema, model_ema_steps=model_ema_steps,
                      grad_clip=grad_clip, pre_conditioner=pre_conditioner,
                      print_prefix=print_prefix, start_epoch=start_epoch,
                      resume=resume, validate_interval=validate_interval,

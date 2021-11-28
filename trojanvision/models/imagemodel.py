@@ -16,6 +16,7 @@ import re
 
 from typing import TYPE_CHECKING
 from typing import Union
+from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import argparse
@@ -252,19 +253,26 @@ class ImageModel(Model):
         return adv_acc, clean_acc + adv_acc
 
     def _train(self, epochs: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
-               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None, adv_train: bool = None,
+               adv_train: bool = None,
+               lr_warmup_epochs: int = 0,
+               model_ema: ExponentialMovingAverage = None,
+               model_ema_steps: int = 32,
+               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
-               loader_train: torch.utils.data.DataLoader = None, loader_valid: torch.utils.data.DataLoader = None,
+               loader_train: torch.utils.data.DataLoader = None,
+               loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
-               get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+               get_data_fn: Callable[...,
+                                     tuple[torch.Tensor, torch.Tensor]] = None,
                loss_fn: Callable[..., torch.Tensor] = None,
                after_loss_fn: Callable[..., None] = None,
                validate_fn: Callable[..., tuple[float, float]] = None,
-               save_fn: Callable[..., None] = None, file_path: str = None, folder_path: str = None, suffix: str = None,
+               save_fn: Callable[..., None] = None, file_path: str = None,
+               folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
-               verbose: bool = True, indent: int = 0, **kwargs):
+               verbose: bool = True, indent: int = 0, **kwargs) -> None:
         adv_train = adv_train if adv_train is not None else bool(self.adv_train)
         if adv_train:
             after_loss_fn_old = after_loss_fn
@@ -317,14 +325,22 @@ class ImageModel(Model):
             after_loss_fn = after_loss_fn_new
 
         super()._train(epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
-                       grad_clip=grad_clip, pre_conditioner=pre_conditioner, adv_train=adv_train,
-                       print_prefix=print_prefix, start_epoch=start_epoch, resume=resume,
-                       validate_interval=validate_interval, save=save, amp=amp,
+                       adv_train=adv_train,
+                       lr_warmup_epochs=lr_warmup_epochs,
+                       model_ema=model_ema, model_ema_steps=model_ema_steps,
+                       grad_clip=grad_clip, pre_conditioner=pre_conditioner,
+                       print_prefix=print_prefix, start_epoch=start_epoch,
+                       resume=resume, validate_interval=validate_interval,
+                       save=save, amp=amp,
                        loader_train=loader_train, loader_valid=loader_valid,
-                       epoch_fn=epoch_fn, get_data_fn=get_data_fn, loss_fn=loss_fn, after_loss_fn=after_loss_fn, validate_fn=validate_fn,
-                       save_fn=save_fn, file_path=file_path, folder_path=folder_path, suffix=suffix,
+                       epoch_fn=epoch_fn, get_data_fn=get_data_fn,
+                       loss_fn=loss_fn, after_loss_fn=after_loss_fn,
+                       validate_fn=validate_fn,
+                       save_fn=save_fn, file_path=file_path,
+                       folder_path=folder_path, suffix=suffix,
                        writer=writer, main_tag=main_tag, tag=tag,
-                       accuracy_fn=accuracy_fn, verbose=verbose, indent=indent, **kwargs)
+                       accuracy_fn=accuracy_fn,
+                       verbose=verbose, indent=indent, **kwargs)
 
     def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor,
                  loss_fn: Callable[..., torch.Tensor] = None, adv_train: str = None) -> torch.Tensor:
