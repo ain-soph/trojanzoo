@@ -18,6 +18,7 @@ from collections import OrderedDict
 from typing import Union
 from typing import TYPE_CHECKING
 from trojanzoo.utils.fim import KFAC, EKFAC
+from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import torch.utils.data

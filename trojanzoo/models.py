@@ -345,12 +345,12 @@ class Model:
                     raise RuntimeError(
                         f'Invalid warmup lr method "{lr_warmup_method}".'
                         'Only linear and constant are supported.')
-                lr_scheduler = torch.optim.lr_scheduler.SequentialLR(
+                _lr_scheduler = torch.optim.lr_scheduler.SequentialLR(
                     optimizer,
                     schedulers=[warmup_lr_scheduler, main_lr_scheduler],
                     milestones=[lr_warmup_epochs])
             else:
-                lr_scheduler = main_lr_scheduler
+                _lr_scheduler = main_lr_scheduler
         return optimizer, _lr_scheduler
 
     # define loss function
