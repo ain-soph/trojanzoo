@@ -106,6 +106,7 @@ def train(module: nn.Module, num_classes: int,
             if amp:
                 scaler.scale(loss).backward()
                 if callable(after_loss_fn):
+                    scaler.unscale_(optimizer)
                     after_loss_fn(_input=_input, _label=_label,
                                   _output=_output,
                                   loss=loss, optimizer=optimizer,
