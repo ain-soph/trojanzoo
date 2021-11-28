@@ -4,5 +4,6 @@ parameters: full
 OptimType: SGD
 momentum: 0.9
 weight_decay: 0.0005
+lr_warmup_epochs: 0
 validate_interval: 10
 flush_secs: 30
