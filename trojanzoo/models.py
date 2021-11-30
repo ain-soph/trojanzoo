@@ -179,7 +179,7 @@ class Model:
         self.layer_name_list: list[str] = None
 
         # ------------------------------ #
-        self.criterion = self.define_criterion(weight=to_tensor(loss_weights))
+        self.criterion = self.define_criterion(weight=to_tensor(loss_weights, dtype=torch.float))
         self.criterion_noreduction = self.define_criterion(
             weight=to_tensor(loss_weights), reduction='none')
         if isinstance(model, type):
