@@ -197,14 +197,15 @@ class RandomCutmix(nn.Module):
         return s.format(**self.__dict__)
 
 
-def cutout(img: torch.Tensor, length: Union[int, tuple[int, int]],
+def cutout(img: torch.Tensor, length: Union[int, tuple[int, int], torch.Tensor],
            fill_values: Union[float, torch.Tensor] = 0.0) -> torch.Tensor:
     if isinstance(length, int):
         length = (length, length)
     h, w = img.size(-2), img.size(-1)
     mask = torch.ones(h, w, dtype=torch.bool, device=img.device)
-    y = torch.randint(0, h, [1])
-    x = torch.randint(0, w, [1])
+    device = length.device if isinstance(length, torch.Tensor) else img.device
+    y = torch.randint(0, h, [1], device=device)
+    x = torch.randint(0, w, [1], device=device)
     first_half = [length[0] // 2, length[1] // 2]
     second_half = [length[0] - first_half[0], length[1] - first_half[1]]
 
