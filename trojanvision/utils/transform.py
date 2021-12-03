@@ -179,7 +179,7 @@ class RandomCutmix(nn.Module):
         x2 = int(torch.clamp(r_x + r_w_half, max=W))
         y2 = int(torch.clamp(r_y + r_h_half, max=H))
 
-        batch[:, :, y1:y2, x1:x2] = batch_rolled[:, :, y1:y2, x1:x2]
+        batch[..., y1:y2, x1:x2] = batch_rolled[..., y1:y2, x1:x2]
         lambda_param = float(1.0 - (x2 - x1) * (y2 - y1) / (W * H))
 
         target_rolled.mul_(1.0 - lambda_param)

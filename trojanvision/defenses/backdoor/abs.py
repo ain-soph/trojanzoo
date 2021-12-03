@@ -287,7 +287,7 @@ class ABS(BackdoorDefense):
             # (n_samples, 1, 1, 1)
             # todo: might use parallel to avoid for loop (torch.Tensor.scatter?)
             for neuron in range(channel_num):
-                h_t[neuron, :, :, neuron] = vs
+                h_t[neuron, ..., neuron] = vs
             # todo: the shape is too large
             # result = self.model.get_layer(h_t.flatten(end_dim=2), layer_input=layer).detach().cpu()
             result = []
@@ -311,10 +311,10 @@ class ABS(BackdoorDefense):
             vs: torch.Tensor = ps[:, self.n_samples // 5:].amax(dim=1) \
                 - ps[:, :self.n_samples // 5].amin(dim=1)  # (C, batch_size, num_classes)
             values, labels = vs.sort(dim=-1, descending=True)
-            condition1 = labels[:, :, 0].eq(_label)  # exclude the ground-truth labels
-            values = torch.where(condition1, values[:, :, 1] - values[:, :, 2],
-                                 values[:, :, 0] - values[:, :, 1])  # (C, batch_size)
-            labels = torch.where(condition1, labels[:, :, 1], labels[:, :, 0])  # (C, batch_size)
+            condition1 = labels[..., 0].eq(_label)  # exclude the ground-truth labels
+            values = torch.where(condition1, values[..., 1] - values[..., 2],
+                                 values[..., 0] - values[..., 1])  # (C, batch_size)
+            labels = torch.where(condition1, labels[..., 1], labels[..., 0])  # (C, batch_size)
 
             mode_labels = labels.mode(keepdim=True)[0]  # (C, 1) The most frequent label
             mode_idx = labels.eq(mode_labels)  # (C, batch_size)

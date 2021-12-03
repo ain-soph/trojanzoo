@@ -169,7 +169,7 @@ class _Combined_Model(_ImageModel):
 
     def forward(self, x: torch.FloatTensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
-        trigger = x[:, :, self.mark.height_offset:self.mark.height_offset + self.mark.mark_height,
+        trigger = x[..., self.mark.height_offset:self.mark.height_offset + self.mark.mark_height,
                     self.mark.width_offset:self.mark.width_offset + self.mark.mark_width]
         trigger = trigger.mean(1).flatten(start_dim=1)
         mlp_output = self.mlp_model(trigger)

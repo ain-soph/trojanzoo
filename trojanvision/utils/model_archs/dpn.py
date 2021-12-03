@@ -57,8 +57,8 @@ class Bottleneck(nn.Module):
             identity = self.downsample(x)
 
         d = self.out_planes  # difference
-        out = torch.cat([identity[:, :d, :, :] + out[:, :d, :, :],
-                         identity[:, d:, :, :], out[:, d:, :, :]], dim=1)
+        out = torch.cat([identity[:, :d] + out[:, :d],
+                         identity[:, d:], out[:, d:]], dim=1)
         out = self.relu(out)
 
         return out

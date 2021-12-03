@@ -38,8 +38,8 @@ def total_variation(images: torch.Tensor, reduction: str = 'sum') -> torch.Tenso
         images = images.unsqueeze(0)
     # Calculate the difference of neighboring pixel-values.
     # The images are shifted one pixel along the height and width by slicing.
-    pixel_dif1 = images[:, :, 1:, :] - images[:, :, :-1, :]
-    pixel_dif2 = images[:, :, :, 1:] - images[:, :, :, :-1]
+    pixel_dif1 = images[..., 1:, :] - images[..., :-1, :]
+    pixel_dif2 = images[..., :, 1:] - images[..., :, :-1]
     # Calculate the total variation by taking the absolute value of the
     # pixel-differences and summing over the appropriate axis.
     tot_var1 = pixel_dif1.abs().flatten(start_dim=1).sum(dim=1)

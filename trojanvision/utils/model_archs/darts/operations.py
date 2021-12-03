@@ -107,7 +107,7 @@ class Zero(nn.Module):
         self.stride = stride
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x.mul(0.) if self.stride == 1 else x[:, :, ::self.stride, ::self.stride].mul(0.)
+        return x.mul(0.) if self.stride == 1 else x[..., ::self.stride, ::self.stride].mul(0.)
 
 
 class Noise(nn.Module):
@@ -119,7 +119,7 @@ class Noise(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         result = torch.randn_like(x).mul_(self.std).add_(self.std)
-        return result if self.stride == 1 else result[:, :, ::self.stride, ::self.stride]
+        return result if self.stride == 1 else result[..., ::self.stride, ::self.stride]
 
 
 class FactorizedReduce(nn.Module):
@@ -132,4 +132,4 @@ class FactorizedReduce(nn.Module):
         self.conv2 = nn.Conv2d(C_in, C_out - C_out_1, 1, stride=2, padding=0, bias=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.cat([self.conv1(x), self.conv2(x[:, :, 1:, 1:])], dim=1)
+        return torch.cat([self.conv1(x), self.conv2(x[..., 1:, 1:])], dim=1)

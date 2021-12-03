@@ -264,7 +264,7 @@ class EKFAC(BaseKFAC):
             Eg.outer(Ex)     # (out, in [* kh * kw] + 1)
         if isinstance(mod, nn.Conv2d) and self.sua:
             kh, kw = mod.kernel_size
-            state.m2 = state.m2[:, :, None, None].repeat(
+            state.m2 = state.m2[..., None, None].repeat(
                 1, 1, kh, kw)  # (out, in + 1, kh, kw)
         # else (out, in * kh * kw + 1)
 

@@ -163,9 +163,9 @@ class ReflectionBackdoor(BadNet):
             # get the reflection layers' proper range
             att = 1.08 + np.random.random() / 10.0
             for i in range(3):
-                maski = blend[:, :, i] > 1
-                mean_i = max(1., np.sum(blend[:, :, i] * maski) / (maski.sum() + 1e-6))
-                r_blur[:, :, i] = r_blur[:, :, i] - (mean_i - 1) * att
+                maski = blend[..., i] > 1
+                mean_i = max(1., np.sum(blend[..., i] * maski) / (maski.sum() + 1e-6))
+                r_blur[..., i] = r_blur[..., i] - (mean_i - 1) * att
             r_blur[r_blur >= 1] = 1
             r_blur[r_blur <= 0] = 0
 

@@ -30,7 +30,7 @@ class TABOR(NeuralCleanse):
         mask_r2 = pixel_dif_mask_col + pixel_dif_mask_row
 
         pixel_dif_pat_col = torch.sum((pattern_tensor[:, :-1, :] - pattern_tensor[:, 1:, :]).pow(2))
-        pixel_dif_pat_row = torch.sum((pattern_tensor[:, :, :-1] - pattern_tensor[:, :, 1:]).pow(2))
+        pixel_dif_pat_row = torch.sum((pattern_tensor[..., :-1] - pattern_tensor[..., 1:]).pow(2))
         pattern_r2 = pixel_dif_pat_col + pixel_dif_pat_row
 
         # R3 - Blocking triggers

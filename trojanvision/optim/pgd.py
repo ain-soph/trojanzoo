@@ -250,7 +250,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
             temp_list: list[torch.Tensor] = []
             for sub_seq in seq:
                 temp_list.append(f(sub_seq, reduction='none', **loss_kwargs))   # (query_num, N)
-            g = torch.stack(temp_list)[:, :, None, None, None].mul(noise).sum(dim=0)  # (N, C, H, W)
+            g = torch.stack(temp_list)[..., None, None, None].mul(noise).sum(dim=0)  # (N, C, H, W)
             if self.grad_method in ['sgd', 'hess']:
                 g -= f(X) * noise.sum(dim=0)
             g /= len(seq) * self.sigma * self.sigma
