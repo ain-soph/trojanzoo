@@ -111,7 +111,7 @@ class BadNet(Attack):
     # ---------------------- I/O ----------------------------- #
 
     def save(self, filename: str = None, **kwargs):
-        filename = filename if filename is not None else self.get_filename(**kwargs)
+        filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
         self.mark.save_npz(file_path + '.npz')
         self.mark.save_img(file_path + '.png')
@@ -119,7 +119,7 @@ class BadNet(Attack):
         print('attack results saved at: ', file_path)
 
     def load(self, filename: str = None, **kwargs):
-        filename = filename if filename is not None else self.get_filename(**kwargs)
+        filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
         self.mark.load_npz(file_path + '.npz')
         self.model.load(file_path + '.pth')

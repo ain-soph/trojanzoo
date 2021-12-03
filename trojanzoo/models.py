@@ -545,8 +545,8 @@ class Model:
         if loader is None:
             loader = self.dataset.loader['valid'] if full \
                 else self.dataset.loader['valid2']
-        get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
-        loss_fn = loss_fn if loss_fn is not None else self.loss
+        get_data_fn = get_data_fn or self.get_data
+        loss_fn = loss_fn or self.loss
         accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
         return validate(module=module, num_classes=num_classes, loader=loader,
                         print_prefix=print_prefix,
@@ -562,21 +562,18 @@ class Model:
                  indent: int = 0, verbose: bool = True,
                  get_data_fn: Callable[
                      ..., tuple[torch.Tensor, torch.Tensor]] = None,
+                 criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
                  **kwargs) -> tuple[float, float]:
-        import warnings
-        warnings.warn('This method shall be removed.'
-                      'You should call `trojanvision.utils.train.compare` '
-                      'directly.',
-                      DeprecationWarning)
         module1 = self  # TODO: type annotation issues (solve in python 3.10)
         module2 = peer
         if loader is None:
             loader = self.dataset.loader['valid'] if full \
                 else self.dataset.loader['valid2']
-        get_data_fn = get_data_fn if get_data_fn is not None else self.get_data
+        get_data_fn = get_data_fn or self.get_data
+        criterion = criterion or self.criterion
         return compare(module1, module2, loader,
                        print_prefix, indent, verbose,
-                       get_data_fn, **kwargs)
+                       get_data_fn, criterion=self.criterion, **kwargs)
 
     # ----------------------------Utility--------------------------- #
 

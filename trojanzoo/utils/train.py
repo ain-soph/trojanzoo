@@ -46,8 +46,8 @@ def train(module: nn.Module, num_classes: int,
     """
     if epochs <= 0:
         return
-    get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
-    loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
+    get_data_fn = get_data_fn or (lambda x: x)
+    loss_fn = loss_fn or nn.CrossEntropyLoss()
     validate_fn = validate_fn if callable(validate_fn) else validate
     accuracy_fn = accuracy_fn if callable(accuracy_fn) else accuracy
 
@@ -210,9 +210,9 @@ def validate(module: nn.Module, num_classes: int,
     r"""Validate function.
     """
     module.eval()
-    get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
-    loss_fn = loss_fn if loss_fn is not None else nn.CrossEntropyLoss()
-    accuracy_fn = accuracy_fn if callable(accuracy_fn) else accuracy
+    get_data_fn = get_data_fn or (lambda x: x)
+    loss_fn = loss_fn or nn.CrossEntropyLoss()
+    accuracy_fn = accuracy_fn or accuracy
     logger = MetricLogger()
     logger.meters['loss'] = SmoothedValue()
     logger.meters['top1'] = SmoothedValue()
@@ -255,16 +255,11 @@ def compare(module1: nn.Module, module2: nn.Module,
             print_prefix='Validate', indent=0, verbose=True,
             get_data_fn: Callable[...,
                                   tuple[torch.Tensor, torch.Tensor]] = None,
+            criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = nn.CrossEntropyLoss(),
             **kwargs) -> float:
-    logsoftmax = nn.LogSoftmax(dim=1)
-    softmax = nn.Softmax(dim=1)
     module1.eval()
     module2.eval()
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
-
-    def cross_entropy(p: torch.Tensor, q: torch.Tensor) -> torch.Tensor:
-        result: torch.Tensor = -softmax(p) * logsoftmax(q)
-        return result.sum(1).mean()
 
     logger = MetricLogger()
     logger.meters['loss'] = SmoothedValue()
@@ -281,8 +276,9 @@ def compare(module1: nn.Module, module2: nn.Module,
     with torch.no_grad():
         for data in loader_epoch:
             _input, _label = get_data_fn(data, **kwargs)
-            _output1, _output2 = module1(_input), module2(_input)
-            loss = float(cross_entropy(_output1, _output2))
+            _output1: torch.Tensor = module1(_input)
+            _output2: torch.Tensor = module2(_input)
+            loss = criterion(_output1, _output2.softmax()).item()
             batch_size = int(_label.size(0))
             logger.meters['loss'].update(loss, batch_size)
     return logger.meters['loss'].global_avg

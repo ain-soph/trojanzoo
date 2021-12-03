@@ -14,7 +14,7 @@ from typing import Iterable, Union
 
 def init_noise(noise_shape: Iterable[int], pgd_eps: Union[float, torch.Tensor],
                random_init: bool = False, device: Union[str, torch.device] = None) -> torch.Tensor:
-    device = device if device is not None else env['device']
+    device = device or env['device']
     noise: torch.Tensor = torch.zeros(noise_shape, dtype=torch.float, device=device)
     if random_init:
         if isinstance(pgd_eps, torch.Tensor) and pgd_eps.shape[0] != 1:
@@ -99,7 +99,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         pgd_alpha = pgd_alpha if pgd_alpha is not None else self.pgd_alpha
         pgd_eps = pgd_eps if pgd_eps is not None else self.pgd_eps
         random_init = random_init if random_init is not None else self.random_init
-        add_noise_fn = add_noise_fn if add_noise_fn is not None else add_noise
+        add_noise_fn = add_noise_fn or add_noise
         if noise is None:
             noise_shape = _input.shape[1:] if self.universal else _input.shape
             noise = self.init_noise(noise_shape, pgd_eps=pgd_eps, random_init=random_init, device=_input.device)
@@ -192,7 +192,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
 
     # -------------------------- Calculate Gradient ------------------------ #
     def calc_grad(self, f, x: torch.Tensor, grad_method: str = None, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
-        grad_method = grad_method if grad_method is not None else self.grad_method
+        grad_method = grad_method or self.grad_method
         grad_func = self.whitebox_grad if grad_method == 'white' else self.blackbox_grad
         return grad_func(f, x, loss_kwargs=loss_kwargs)
 

@@ -55,8 +55,7 @@ class Config:
 
     def get_config(self, dataset_name: str, config: ConfigType = None,
                    **kwargs) -> Param[str, Module[str, Any]]:
-        config = config if config is not None else Param(
-            self.full_config, default=Module())
+        config = config or Param(self.full_config, default=Module())
         # remove dataset_name Param
         for file_name, file_value in config.items():
             if not isinstance(file_value, Module) and \

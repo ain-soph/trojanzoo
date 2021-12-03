@@ -37,7 +37,7 @@ class Uname(trojanzoo.optim.Optimizer):
                  output: Union[int, list[str]] = None, **kwargs) -> tuple[list[torch.Tensor], int]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
         iteration = iteration if iteration is not None else self.iteration
-        loss_fn = loss_fn if loss_fn is not None else self.loss_fn
+        loss_fn = loss_fn or self.loss_fn
         output = self.get_output(output)
         if isinstance(unbound_params, torch.Tensor):
             unbound_params = [unbound_params]

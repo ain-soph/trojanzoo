@@ -37,7 +37,7 @@ class Optimizer(ABC, Process):
                  *args, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         # --------------- Parameter Initialization ------------- #
         iteration = iteration if iteration is not None else self.iteration
-        loss_fn = loss_fn if loss_fn is not None else self.loss_fn
+        loss_fn = loss_fn or self.loss_fn
         stop_threshold = stop_threshold if stop_threshold is not None \
             else self.stop_threshold
         output = self.get_output(output)

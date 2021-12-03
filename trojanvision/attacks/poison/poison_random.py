@@ -71,13 +71,13 @@ class PoisonRandom(Attack):
         return f'{self.train_mode}_{self.poison_percent}'
 
     def save(self, filename: str = None, **kwargs):
-        filename = filename if filename is not None else self.get_filename(**kwargs)
+        filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 
     def load(self, filename: str = None, **kwargs):
-        filename = filename if filename is not None else self.get_filename(**kwargs)
+        filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
         self.model.load(file_path + '.pth')
         print('attack results loaded from: ', file_path)
