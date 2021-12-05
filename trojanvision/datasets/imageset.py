@@ -4,16 +4,21 @@ from trojanzoo.datasets import Dataset
 from trojanvision.environ import env
 from trojanvision.utils.transform import (get_transform_bit,
                                           get_transform_imagenet,
-                                          get_transform_cifar)
+                                          get_transform_cifar,
+                                          RandomMixup,
+                                          RandomCutmix)
 
 import torch
 import torchvision.transforms as transforms
+from torch.utils.data.dataloader import default_collate
 import argparse
 import os
 
 from typing import TYPE_CHECKING
+from typing import Iterable
 from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
+from collections import Callable
 if TYPE_CHECKING:
     import torch.utils.data
 
@@ -35,6 +40,10 @@ class ImageSet(Dataset):
         group.add_argument('--transform', choices=[None, 'bit', 'pytorch'])
         group.add_argument('--auto_augment', action='store_true',
                            help='use auto augment')
+        group.add_argument('--mixup', action='store_true', help='use mixup')
+        group.add_argument('--mixup_alpha', type=float, help='mixup alpha (default: 0.0)')
+        group.add_argument('--cutmix', action='store_true', help='use cutmix')
+        group.add_argument('--cutmix_alpha', type=float, help='cutmix alpha (default: 0.0)')
         group.add_argument('--cutout', action='store_true', help='use cutout')
         group.add_argument('--cutout_length', type=int, help='cutout length')
         return group
@@ -43,11 +52,18 @@ class ImageSet(Dataset):
                  default_model: str = 'resnet18_comp',
                  normalize: bool = False, transform: str = None,
                  auto_augment: bool = False,
-                 cutout: bool = False, cutout_length: int = None, **kwargs):
+                 mixup: bool = False, mixup_alpha: float = 0.0,
+                 cutmix: bool = False, cutmix_alpha: float = 0.0,
+                 cutout: bool = False, cutout_length: int = None,
+                 **kwargs):
         self.norm_par: dict[str, list[float]] = norm_par
         self.normalize = normalize
         self.transform = transform
         self.auto_augment = auto_augment
+        self.mixup = mixup
+        self.mixup_alpha = mixup_alpha
+        self.cutmix = cutmix
+        self.cutmix_alpha = cutmix_alpha
         self.cutout = cutout
         self.cutout_length = cutout_length
         super().__init__(default_model=default_model, **kwargs)
@@ -56,6 +72,21 @@ class ImageSet(Dataset):
                                        'auto_augment']
         if cutout:
             self.param_list['imageset'].append('cutout_length')
+
+        self.collate_fn: Callable[[Iterable[torch.Tensor]], Iterable[torch.Tensor]] = None
+        mixup_transforms = []
+        if mixup:
+            self.param_list['imageset'].append('mixup_alpha')
+            mixup_transforms.append(RandomMixup(self.num_classes, p=1.0, alpha=mixup_alpha))
+        if cutmix:
+            self.param_list['imageset'].append('cutmix_alpha')
+            mixup_transforms.append(RandomCutmix(self.num_classes, p=1.0, alpha=cutmix_alpha))
+        if len(mixup_transforms):
+            mixupcutmix = transforms.RandomChoice(mixup_transforms)
+
+            def collate_fn(batch: Iterable[torch.Tensor]) -> Iterable[torch.Tensor]:
+                return mixupcutmix(*default_collate(batch))  # noqa: E731
+            self.collate_fn = collate_fn
 
     def get_transform(self, mode: str, normalize: bool = None
                       ) -> transforms.Compose:
@@ -81,8 +112,8 @@ class ImageSet(Dataset):
     def get_dataloader(self, mode: str = None, dataset: Dataset = None,
                        batch_size: int = None, shuffle: bool = None,
                        num_workers: int = None, pin_memory=True,
-                       drop_last=False, **kwargs
-                       ) -> torch.utils.data.DataLoader:
+                       drop_last=False, collate_fn=None,
+                       **kwargs) -> torch.utils.data.DataLoader:
         if batch_size is None:
             batch_size = self.test_batch_size if mode == 'test' \
                 else self.batch_size
@@ -94,10 +125,11 @@ class ImageSet(Dataset):
             dataset = self.get_dataset(mode, **kwargs)
         if env['num_gpus'] == 0:
             pin_memory = False
+        collate_fn = collate_fn or self.collate_fn
         return torch.utils.data.DataLoader(
             dataset, batch_size=batch_size, shuffle=shuffle,
             num_workers=num_workers, pin_memory=pin_memory,
-            drop_last=drop_last)
+            drop_last=drop_last, collate_fn=collate_fn)
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor],

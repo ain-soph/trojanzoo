@@ -77,10 +77,10 @@ class Trainer:
         group.add_argument('--model_ema', action='store_true',
                            help='enable tracking Exponential Moving Average '
                            'of model parameters')
-        group.add_argument('--model_ema_steps', type=int, default=32,
+        group.add_argument('--model_ema_steps', type=int,
                            help='the number of iterations that controls '
                            'how often to update the EMA model (default: 32)')
-        group.add_argument('--model_ema_decay', type=float, default=0.99998,
+        group.add_argument('--model_ema_decay', type=float,
                            help='decay factor for Exponential Moving Average '
                            'of model parameters (default: 0.99998)')
 

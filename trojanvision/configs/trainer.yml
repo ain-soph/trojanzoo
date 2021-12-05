@@ -10,3 +10,9 @@ lr:
   cifar100: 0.025
   gtsrb: 0.025
   imagenet16: 0.025
+model_ema_steps:
+  default: 32
+  cifar10: 1
+model_ema_decay:
+  default: 0.99998
+  cifar10: 0.9999

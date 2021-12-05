@@ -8,4 +8,8 @@ batch_size:
   gtsrb: 96
   imagenet16: 96
 
+cutout_length:
+  default: null
+  cifar10: 16
+
 data_format: folder
