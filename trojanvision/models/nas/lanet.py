@@ -20,14 +20,14 @@ class LaNet(DARTS):
     available_models = ['lanet']
     model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }
 
-    def __init__(self, name: str = 'lanet', layers: int = 24, C: int = 128,
+    def __init__(self, name: str = 'lanet', layers: int = 24, init_channels: int = 128,
                  arch: list[int] = cifar_arch, model: type[_DARTS] = _DARTS,
                  supernet: bool = False, **kwargs):
         genotype = None
         if not supernet:
             genotype = translator(gen_code_from_list(arch))
             self.arch = arch
-        super().__init__(name=name, layers=layers, C=C,
+        super().__init__(name=name, layers=layers, init_channels=init_channels,
                          genotype=genotype, model=model, std_conv=True,
                          primitives=operations, supernet=supernet, **kwargs)
         if not supernet:

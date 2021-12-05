@@ -66,6 +66,21 @@ class ImageSet(Dataset):
         self.cutmix_alpha = cutmix_alpha
         self.cutout = cutout
         self.cutout_length = cutout_length
+
+        self.collate_fn: Callable[[Iterable[torch.Tensor]], Iterable[torch.Tensor]] = None
+        mixup_transforms = []
+        if mixup:
+            mixup_transforms.append(RandomMixup(self.num_classes, p=1.0, alpha=mixup_alpha))
+        if cutmix:
+            mixup_transforms.append(RandomCutmix(self.num_classes, p=1.0, alpha=cutmix_alpha))
+        if len(mixup_transforms):
+            mixupcutmix = mixup_transforms[0] if len(mixup_transforms) == 1 \
+                else transforms.RandomChoice(mixup_transforms)
+
+            def collate_fn(batch: Iterable[torch.Tensor]) -> Iterable[torch.Tensor]:
+                return mixupcutmix(*default_collate(batch))  # noqa: E731
+            self.collate_fn = collate_fn
+
         super().__init__(default_model=default_model, **kwargs)
         self.param_list['imageset'] = ['data_shape', 'norm_par',
                                        'normalize', 'transform',
@@ -73,20 +88,10 @@ class ImageSet(Dataset):
         if cutout:
             self.param_list['imageset'].append('cutout_length')
 
-        self.collate_fn: Callable[[Iterable[torch.Tensor]], Iterable[torch.Tensor]] = None
-        mixup_transforms = []
         if mixup:
             self.param_list['imageset'].append('mixup_alpha')
-            mixup_transforms.append(RandomMixup(self.num_classes, p=1.0, alpha=mixup_alpha))
         if cutmix:
             self.param_list['imageset'].append('cutmix_alpha')
-            mixup_transforms.append(RandomCutmix(self.num_classes, p=1.0, alpha=cutmix_alpha))
-        if len(mixup_transforms):
-            mixupcutmix = transforms.RandomChoice(mixup_transforms)
-
-            def collate_fn(batch: Iterable[torch.Tensor]) -> Iterable[torch.Tensor]:
-                return mixupcutmix(*default_collate(batch))  # noqa: E731
-            self.collate_fn = collate_fn
 
     def get_transform(self, mode: str, normalize: bool = None
                       ) -> transforms.Compose:
