@@ -173,8 +173,7 @@ def summary(module: nn.Module, depth: int = 0, verbose: bool = True,
 
 
 def activate_params(module: nn.Module, params: Iterator[nn.Parameter]) -> None:
-    for param in module.parameters():
-        param.requires_grad_(False)
+    module.requires_grad_(False)
     for param in params:
         param.requires_grad_()
 
