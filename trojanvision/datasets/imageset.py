@@ -37,7 +37,7 @@ class ImageSet(Dataset):
             '--dataset_normalize', dest='normalize', action='store_true',
             help='use transforms.Normalize in dataset transform. '
             '(It\'s used in model as the first layer by default.)')
-        group.add_argument('--transform', choices=[None, 'bit', 'pytorch'])
+        group.add_argument('--transform', choices=[None, 'none', 'bit', 'pytorch'])
         group.add_argument('--auto_augment', action='store_true',
                            help='use auto augment')
         group.add_argument('--mixup', action='store_true', help='use mixup')
@@ -102,7 +102,7 @@ class ImageSet(Dataset):
             transform = get_transform_imagenet(
                 mode, use_tuple=self.transform != 'pytorch',
                 auto_augment=self.auto_augment)
-        elif self.data_shape in ([3, 16, 16], [3, 32, 32]):
+        elif self.transform != 'none' and self.data_shape in ([3, 16, 16], [3, 32, 32]):
             transform = get_transform_cifar(
                 mode, auto_augment=self.auto_augment,
                 cutout=self.cutout, cutout_length=self.cutout_length,
