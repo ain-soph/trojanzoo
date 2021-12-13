@@ -111,10 +111,13 @@ class CleanLabel(BadNet):
         poison_set: TensorListDataset = None    # TODO
         if self.poison_generation_method == 'pgd':
             poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
-
-            poison_imgs, _ = self.model.remove_misclassify(data=(target_imgs, poison_label))
-            poison_imgs, _ = self.pgd.optimize(_input=poison_imgs)
-            poison_imgs = self.add_mark(poison_imgs).cpu()
+            result = []
+            for data in zip(target_imgs.chunk(self.dataset.batch_size), poison_label.chunk(self.dataset.batch_size)):
+                poison_img, _ = self.model.remove_misclassify(data)
+                poison_img, _ = self.pgd.optimize(poison_img)
+                poison_img = self.add_mark(poison_img).cpu()
+                result.append(poison_img)
+            poison_imgs = torch.cat(result)
 
             poison_set = TensorListDataset(poison_imgs, [self.target_class] * len(poison_imgs))
             # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
@@ -129,9 +132,7 @@ class CleanLabel(BadNet):
                 source_class_dataset = self.dataset.get_dataset(mode='train', full=True, class_list=[source_class])
                 sample_source_class_dataset, _ = self.dataset.split_dataset(
                     source_class_dataset, self.poison_num)
-                sample_source_class_dataloader = self.dataset.get_dataloader(mode='train', dataset=sample_source_class_dataset,
-                                                                             batch_size=self.poison_num, num_workers=0)
-                source_imgs, _ = self.model.get_data(next(iter(sample_source_class_dataloader)))
+                source_imgs = torch.stack(dataset_to_list(sample_source_class_dataset)[0]).to(device=env['device'])
 
                 g_path = f'{self.folder_path}gan_dim{self.noise_dim}_class{source_class}_g.pth'
                 d_path = f'{self.folder_path}gan_dim{self.noise_dim}_class{source_class}_d.pth'
@@ -150,25 +151,27 @@ class CleanLabel(BadNet):
                     torch.save(self.wgan.D.state_dict(), d_path)
                     print(f'GAN Model Saved at : \n{g_path}\n{d_path}')
                     continue
-                source_encode = self.wgan.get_encode_value(source_imgs).detach()
-                target_encode = self.wgan.get_encode_value(target_imgs).detach()
-                # noise = torch.randn_like(source_encode)
-                # from trojanzoo.utils.tensor import save_tensor_as_img
-                # source_img = self.wgan.G(source_encode)
-                # target_img = self.wgan.G(target_encode)
-                # for i in range(len(source_img)):
-                #     save_tensor_as_img(f'./imgs/source_{i}.png', source_img[i])
-                # for i in range(len(target_img)):
-                #     save_tensor_as_img(f'./imgs/target_{i}.png', target_img[i])
-                # exit()
-                interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
-                poison_imgs = self.wgan.G(interpolation_encode).detach()
-                poison_imgs = self.add_mark(poison_imgs)
 
-                poison_label = [self.target_class] * len(poison_imgs)
-                poison_imgs = poison_imgs.cpu()
-                x_list.append(poison_imgs)
-                y_list.extend(poison_label)
+                for source_chunk, target_chunk in zip(source_imgs.chunk(self.dataset.batch_size),
+                                                      target_imgs.chunk(self.dataset.batch_size)):
+                    source_encode = self.wgan.get_encode_value(source_chunk).detach()
+                    target_encode = self.wgan.get_encode_value(target_chunk).detach()
+                    # noise = torch.randn_like(source_encode)
+                    # from trojanzoo.utils.tensor import save_tensor_as_img
+                    # source_img = self.wgan.G(source_encode)
+                    # target_img = self.wgan.G(target_encode)
+                    # for i in range(len(source_img)):
+                    #     save_tensor_as_img(f'./imgs/source_{i}.png', source_img[i])
+                    # for i in range(len(target_img)):
+                    #     save_tensor_as_img(f'./imgs/target_{i}.png', target_img[i])
+                    # exit()
+                    interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
+                    poison_imgs = self.wgan.G(interpolation_encode).detach()
+                    poison_imgs = self.add_mark(poison_imgs)
+
+                    poison_imgs = poison_imgs.cpu()
+                    x_list.append(poison_imgs)
+                y_list.extend([self.target_class] * len(source_imgs))
             assert not self.train_gan
             x_list = torch.cat(x_list)
             poison_set = TensorListDataset(x_list, y_list)
