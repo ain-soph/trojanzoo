@@ -521,7 +521,7 @@ class Model:
                      save=save, amp=amp,
                      loader_train=loader_train, loader_valid=loader_valid,
                      epoch_fn=epoch_fn, get_data_fn=get_data_fn,
-                     loss_fn=loss_fn, forward_fn=self.__call__,
+                     loss_fn=loss_fn,
                      after_loss_fn=after_loss_fn,
                      validate_fn=validate_fn,
                      save_fn=save_fn, file_path=file_path,
