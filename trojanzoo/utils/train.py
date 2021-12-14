@@ -32,6 +32,7 @@ def train(module: nn.Module, num_classes: int,
           loader_valid: torch.utils.data.DataLoader = None,
           epoch_fn: Callable[..., None] = None,
           get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
+          forward_fn: Callable[..., torch.Tensor] = None,
           loss_fn: Callable[..., torch.Tensor] = None,
           after_loss_fn: Callable[..., None] = None,
           validate_fn: Callable[..., tuple[float, float]] = None,
@@ -48,8 +49,9 @@ def train(module: nn.Module, num_classes: int,
         return
     get_data_fn = get_data_fn or (lambda x: x)
     loss_fn = loss_fn or nn.CrossEntropyLoss()
-    validate_fn = validate_fn if callable(validate_fn) else validate
-    accuracy_fn = accuracy_fn if callable(accuracy_fn) else accuracy
+    forward_fn = forward_fn or module.__call__
+    validate_fn = validate_fn or validate
+    accuracy_fn = accuracy_fn or accuracy
 
     scaler: torch.cuda.amp.GradScaler = None
     if not env['num_gpus']:
@@ -58,7 +60,7 @@ def train(module: nn.Module, num_classes: int,
         scaler = torch.cuda.amp.GradScaler()
     if validate_interval != 0:
         _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn,
-                                  loss_fn=loss_fn,
+                                  loss_fn=loss_fn, forward_fn=forward_fn,
                                   writer=None, tag=tag, _epoch=start_epoch,
                                   verbose=verbose, indent=indent, **kwargs)
 
@@ -100,7 +102,7 @@ def train(module: nn.Module, num_classes: int,
             _input, _label = get_data_fn(data, mode='train')
             if pre_conditioner is not None and not amp:
                 pre_conditioner.track.enable()
-            _output = module(_input, amp=amp)
+            _output = forward_fn(_input, amp=amp)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
             optimizer.zero_grad()
             if amp:
@@ -200,8 +202,9 @@ def validate(module: nn.Module, num_classes: int,
              loader: torch.utils.data.DataLoader,
              print_prefix: str = 'Validate', indent: int = 0,
              verbose: bool = True,
-             get_data_fn: Callable[...,
-                                   tuple[torch.Tensor, torch.Tensor]] = None,
+             get_data_fn: Callable[
+                 ..., tuple[torch.Tensor, torch.Tensor]] = None,
+             forward_fn: Callable[..., torch.Tensor] = None,
              loss_fn: Callable[..., torch.Tensor] = None,
              writer=None, main_tag: str = 'valid',
              tag: str = '', _epoch: int = None,
@@ -211,6 +214,7 @@ def validate(module: nn.Module, num_classes: int,
     """
     module.eval()
     get_data_fn = get_data_fn or (lambda x: x)
+    forward_fn = forward_fn or module.__call__
     loss_fn = loss_fn or nn.CrossEntropyLoss()
     accuracy_fn = accuracy_fn or accuracy
     logger = MetricLogger()
@@ -230,7 +234,7 @@ def validate(module: nn.Module, num_classes: int,
     for data in loader_epoch:
         _input, _label = get_data_fn(data, mode='valid', **kwargs)
         with torch.no_grad():
-            _output = module(_input)
+            _output = forward_fn(_input)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))

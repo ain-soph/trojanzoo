@@ -487,8 +487,8 @@ class Model:
                loader_train: torch.utils.data.DataLoader = None,
                loader_valid: torch.utils.data.DataLoader = None,
                epoch_fn: Callable[..., None] = None,
-               get_data_fn: Callable[...,
-                                     tuple[torch.Tensor, torch.Tensor]] = None,
+               get_data_fn: Callable[
+                   ..., tuple[torch.Tensor, torch.Tensor]] = None,
                loss_fn: Callable[..., torch.Tensor] = None,
                after_loss_fn: Callable[..., None] = None,
                validate_fn: Callable[..., tuple[float, float]] = None,
@@ -510,7 +510,7 @@ class Model:
             epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
-        return train(module=self, num_classes=self.num_classes,
+        return train(module=self._model, num_classes=self.num_classes,
                      epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
                      lr_warmup_epochs=lr_warmup_epochs,
                      model_ema=model_ema, model_ema_steps=model_ema_steps,
@@ -520,7 +520,8 @@ class Model:
                      save=save, amp=amp,
                      loader_train=loader_train, loader_valid=loader_valid,
                      epoch_fn=epoch_fn, get_data_fn=get_data_fn,
-                     loss_fn=loss_fn, after_loss_fn=after_loss_fn,
+                     loss_fn=loss_fn, forward_fn=self.__call__,
+                     after_loss_fn=after_loss_fn,
                      validate_fn=validate_fn,
                      save_fn=save_fn, file_path=file_path,
                      folder_path=folder_path, suffix=suffix,
@@ -540,7 +541,7 @@ class Model:
                   tag: str = '', _epoch: int = None,
                   accuracy_fn: Callable[..., list[float]] = None,
                   **kwargs) -> tuple[float, float]:
-        module = self if module is None else module
+        module = self._model if module is None else module
         num_classes = self.num_classes if num_classes is None else num_classes
         if loader is None:
             loader = self.dataset.loader['valid'] if full \
@@ -548,10 +549,12 @@ class Model:
         get_data_fn = get_data_fn or self.get_data
         loss_fn = loss_fn or self.loss
         accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
+        kwargs['forward_fn'] = kwargs.get('forward_fn', self.__call__)
         return validate(module=module, num_classes=num_classes, loader=loader,
                         print_prefix=print_prefix,
                         indent=indent, verbose=verbose,
-                        get_data_fn=get_data_fn, loss_fn=loss_fn,
+                        get_data_fn=get_data_fn,
+                        loss_fn=loss_fn,
                         writer=writer, main_tag=main_tag, tag=tag,
                         _epoch=_epoch, accuracy_fn=accuracy_fn, **kwargs)
 
@@ -705,6 +708,9 @@ class Model:
 
     def apply(self, fn: Callable[['nn.Module'], None]):
         return self._model.apply(fn)
+
+    def _requires_grad(self, requires_grad: bool = True):
+        return self._model.requires_grad_(requires_grad=requires_grad)
 
     # ----------------------------------------------------------------- #
 
