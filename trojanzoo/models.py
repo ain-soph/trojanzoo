@@ -504,6 +504,7 @@ class Model:
         validate_fn = validate_fn if callable(validate_fn) else self._validate
         save_fn = save_fn if callable(save_fn) else self.save
         accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
+        kwargs['forward_fn'] = kwargs.get('forward_fn', self.__call__)
         # if not callable(iter_fn) and hasattr(self, 'iter_fn'):
         #     iter_fn = getattr(self, 'iter_fn')
         if not callable(epoch_fn) and hasattr(self, 'epoch_fn'):
