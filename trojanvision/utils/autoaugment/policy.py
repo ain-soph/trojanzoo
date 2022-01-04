@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+from .operations import PRIMITIVES, get_op
+
+import torch
+import torch.nn as nn
+import torch.nn.utils.parametrize as parametrize
+from torchvision import transforms
+
+from typing import TYPE_CHECKING
+from typing import Sequence
+from .operations import Operation
+if TYPE_CHECKING:
+    pass
+
+
+class Normalize(nn.Module):
+    def __init__(self, temperature: float = 1.0):
+        super().__init__()
+        self.temperature = temperature
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        return X.div(self.temperature).softmax(0)
+
+
+class MixedOp(nn.Module):
+    """Mixed operation"""
+
+    def __init__(self, primitives: list[str] = PRIMITIVES,
+                 temperature: float = 0.05, **kwargs):
+        super().__init__()
+        self._ops: Sequence[Operation] = nn.ModuleList()
+        for primitive in primitives:
+            op = get_op(primitive, **kwargs)
+            self._ops.append(op)
+        self.temperature = temperature
+        self.weights = nn.Parameter(torch.randn(len(primitives)))
+        parametrize.register_parametrization(self, 'weights',
+                                             Normalize(temperature))
+
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
+        result = torch.stack([op(_input) for op in self._ops])
+        weights = self.weights.view([-1] + [1] * (result.dim() - 1))
+        return (result * weights).sum(dim=0)
+
+    def create_transform(self):
+        op_list = [op.create_transform() for op in self._ops]
+        op_list.append(nn.Identity())
+        p = torch.tensor([float(op.probability) for op in self._ops])
+        true_p = self.weights.cpu() * p
+        real_p = true_p.tolist()
+        real_p.append(1 - true_p.sum().item())
+        return transforms.RandomChoice(op_list, p=real_p)
+
+
+class SubPolicy(nn.Sequential):
+    def __init__(self, operation_count: int = 4, **kwargs):
+        super().__init__(*[MixedOp(**kwargs) for _ in range(operation_count)])
+
+    def create_transform(self):
+        return nn.Sequential(mixed_op.create_transform() for mixed_op in self)
+
+
+class Policy(nn.Module):
+    def __init__(self, num_sub_policies: int = 100, num_chunks: int = 8, **kwargs):
+        super().__init__()
+        self.num_sub_policies = num_sub_policies
+        self.num_chunks = num_chunks
+        self.sub_policies = nn.ModuleList(
+            [SubPolicy(**kwargs) for _ in range(num_sub_policies)])
+
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
+        input_list = _input.chunk(self.num_chunks)
+        idx_list = torch.randint(self.num_sub_policies, [len(input_list)])
+        result = []
+        for input_chunk, idx in zip(input_list, idx_list):
+            result.append(self.sub_policies[idx](input_chunk))
+        return torch.cat(result)
+
+    def create_transform(self):
+        return transforms.RandomChoice(list(self.sub_policies))
