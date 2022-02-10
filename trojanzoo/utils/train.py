@@ -42,6 +42,7 @@ def train(module: nn.Module, num_classes: int,
           accuracy_fn: Callable[..., list[float]] = None,
           verbose: bool = True, indent: int = 0,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epochs',
+          backward_and_step: bool = True,
           **kwargs) -> None:
     r"""Train function.
     """
@@ -104,38 +105,39 @@ def train(module: nn.Module, num_classes: int,
                 pre_conditioner.track.enable()
             _output = forward_fn(_input, amp=amp)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
-            optimizer.zero_grad()
-            if amp:
-                scaler.scale(loss).backward()
-                if callable(after_loss_fn):
-                    scaler.unscale_(optimizer)
-                    after_loss_fn(_input=_input, _label=_label,
-                                  _output=_output,
-                                  loss=loss, optimizer=optimizer,
-                                  loss_fn=loss_fn,
-                                  amp=amp, scaler=scaler,
-                                  _iter=_iter, total_iter=total_iter)
-                if grad_clip is not None:
-                    scaler.unscale_(optimizer)
-                    nn.utils.clip_grad_norm_(params, grad_clip)
-                scaler.step(optimizer)
-                scaler.update()
-            else:
-                loss.backward()
-                if callable(after_loss_fn):
-                    after_loss_fn(_input=_input, _label=_label,
-                                  _output=_output,
-                                  loss=loss, optimizer=optimizer,
-                                  loss_fn=loss_fn,
-                                  amp=amp, scaler=scaler,
-                                  _iter=_iter, total_iter=total_iter)
-                    # start_epoch=start_epoch, _epoch=_epoch, epochs=epochs)
-                if pre_conditioner is not None:
-                    pre_conditioner.track.disable()
-                    pre_conditioner.step()
-                if grad_clip is not None:
-                    nn.utils.clip_grad_norm_(params, grad_clip)
-                optimizer.step()
+            if backward_and_step:
+                optimizer.zero_grad()
+                if amp:
+                    scaler.scale(loss).backward()
+                    if callable(after_loss_fn) or grad_clip is not None:
+                        scaler.unscale_(optimizer)
+                    if callable(after_loss_fn):
+                        after_loss_fn(_input=_input, _label=_label,
+                                      _output=_output,
+                                      loss=loss, optimizer=optimizer,
+                                      loss_fn=loss_fn,
+                                      amp=amp, scaler=scaler,
+                                      _iter=_iter, total_iter=total_iter)
+                    if grad_clip is not None:
+                        nn.utils.clip_grad_norm_(params, grad_clip)
+                    scaler.step(optimizer)
+                    scaler.update()
+                else:
+                    loss.backward()
+                    if callable(after_loss_fn):
+                        after_loss_fn(_input=_input, _label=_label,
+                                      _output=_output,
+                                      loss=loss, optimizer=optimizer,
+                                      loss_fn=loss_fn,
+                                      amp=amp, scaler=scaler,
+                                      _iter=_iter, total_iter=total_iter)
+                        # start_epoch=start_epoch, _epoch=_epoch, epochs=epochs)
+                    if pre_conditioner is not None:
+                        pre_conditioner.track.disable()
+                        pre_conditioner.step()
+                    if grad_clip is not None:
+                        nn.utils.clip_grad_norm_(params, grad_clip)
+                    optimizer.step()
 
             if model_ema and i % model_ema_steps == 0:
                 model_ema.update_parameters(module)

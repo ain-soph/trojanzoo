@@ -72,8 +72,8 @@ class NATSbench(ImageModel):
         self.param_list['natsbench'] = ['model_index', 'model_seed', 'search_space']
 
     def get_official_weights(self, hp: str = '200', **kwargs) -> OrderedDict[str, torch.Tensor]:
-        _dict: OrderedDict[str, torch.Tensor] = next(iter(self.api.get_net_param(
-            self.model_index, self.dataset_name, self.model_seed, hp=hp).values()))
+        _dict: OrderedDict[str, torch.Tensor] = self.api.get_net_param(
+            self.model_index, self.dataset_name, self.model_seed, hp=hp)
         new_dict: OrderedDict[str, torch.Tensor] = OrderedDict()
         for k, v in _dict.items():
             if k.startswith('stem') or k.startswith('cells') or k.startswith('lastact'):

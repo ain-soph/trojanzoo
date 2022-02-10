@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 from torchvision.datasets.utils import download_file_from_google_drive
 import os
+import itertools
 from collections import OrderedDict
 
 from typing import Union
@@ -71,7 +72,7 @@ class DARTS(ImageModel):
         group.add_argument('--init_channels', type=int, help='total number of layers.')
         group.add_argument('--auxiliary', action='store_true', help='enable auxiliary classifier during training.')
         group.add_argument('--auxiliary_weight', type=float, help='weight for auxiliary loss, defaults to be 0.4')
-        group.add_argument('--arch_search', action='store_true', help='Train supernet for search.')
+        group.add_argument('--arch_search', action='store_true', help='Search supernet architecture parameters.')
         group.add_argument('--full', action='store_true', help='Use full training data.')
         group.add_argument('--arch_lr', type=float, help='learning rate for arch encoding, defaults to be 3e-4')
         group.add_argument('--arch_weight_decay', type=float, help='weight decay for arch encoding.')
@@ -128,6 +129,7 @@ class DARTS(ImageModel):
             self.full = full
             for alpha in self.arch_parameters():
                 alpha.requires_grad_()
+            self.valid_iterator = itertools.cycle(self.dataset.loader['train3'])
             self.arch_optimizer = torch.optim.Adam(self.arch_parameters(),
                                                    lr=arch_lr, betas=(0.5, 0.999),
                                                    weight_decay=arch_weight_decay)
@@ -141,8 +143,7 @@ class DARTS(ImageModel):
                 with torch.cuda.amp.autocast():
                     return self.loss_with_aux(_input, _label)
             return self.loss_with_aux(_input, _label)
-        else:
-            return super().loss(_input, _label, _output, **kwargs)
+        return super().loss(_input, _label, _output, **kwargs)
 
     def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None) -> torch.Tensor:
         feats, feats_aux = self._model.features.forward_with_aux(self._model.preprocess(_input))
@@ -198,7 +199,7 @@ class DARTS(ImageModel):
                  mode: str = 'train', **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = super().get_data(data, adv_train=adv_train, **kwargs)
         if self.arch_search and mode == 'train':
-            data_valid = next(iter(self.dataset.loader['train3']))
+            data_valid = next(self.valid_iterator)
             input_valid, label_valid = super().get_data(data_valid, adv_train=adv_train, **kwargs)
             self.arch_optimizer.zero_grad()
             if self.arch_unrolled:
@@ -264,13 +265,15 @@ class DARTS(ImageModel):
         return super()._validate(loader=loader, adv_train=adv_train, **kwargs)
 
     def _backward_step_unrolled(self, input_train: torch.Tensor, target_train: torch.Tensor,
-                                input_valid: torch.Tensor, target_valid: torch.Tensor):
-        eta = self.optimizer.param_groups[0]['lr']
+                                input_valid: torch.Tensor, target_valid: torch.Tensor,
+                                optimizer: Optimizer = None):
+        optimizer = optimizer or self.optimizer
+        eta = optimizer.param_groups[0]['lr']
         # if self.lr_scheduler is not None:
         #     eta = self.lr_scheduler.get_last_lr()
         w = self.state_dict()
-
-        self._compute_unrolled_model(input_train, target_train, eta)
+        self._compute_unrolled_model(input_train, target_train, eta,
+                                     optimizer=optimizer)
         unrolled_loss = self.loss(input_valid, target_valid)
         unrolled_loss.backward()
         dalpha = [v.grad for v in self.arch_parameters()]
@@ -304,15 +307,16 @@ class DARTS(ImageModel):
     #     return model_new.cuda()
 
     def _compute_unrolled_model(self, input: torch.Tensor, target: torch.Tensor,
-                                eta: float):
-        weight_decay = self.optimizer.param_groups[0]['weight_decay']
+                                eta: float, optimizer: Optimizer = None):
+        optimizer = optimizer or self.optimizer
+        weight_decay = optimizer.param_groups[0]['weight_decay']
         loss = self.loss(input, target)
         gtheta = torch.autograd.grad(loss, self.parameters())
         with torch.no_grad():
             dtheta = [grad + weight_decay * param for grad, param in zip(gtheta, self.parameters())]
             try:
-                momentum = self.optimizer.param_groups[0]['momentum']
-                dtheta = [dtheta_i + momentum * self.optimizer.state[v]['momentum_buffer']
+                momentum = optimizer.param_groups[0]['momentum']
+                dtheta = [dtheta_i + momentum * optimizer.state[v]['momentum_buffer']
                           for dtheta_i, v in zip(dtheta, self.model.parameters())]
             except KeyError:
                 pass
@@ -320,18 +324,18 @@ class DARTS(ImageModel):
                 param.data.sub_(delta, alpha=eta)
 
     def _hessian_vector_product(self, vector: torch.Tensor,
-                                input: torch.Tensor, target: torch.Tensor,
+                                _input: torch.Tensor, target: torch.Tensor,
                                 r: float = 1e-2
                                 ) -> list[torch.Tensor]:
         R = r / _concat(vector).norm()
         for p, v in zip(self.parameters(), vector):
             p.data.add_(v, alpha=R)
-        loss = self.loss(input, target)
+        loss = self.loss(_input, target)
         grads_p = torch.autograd.grad(loss, self.arch_parameters())
 
         for p, v in zip(self.parameters(), vector):
             p.data.sub_(v, alpha=2 * R)
-        loss = self.loss(input, target)
+        loss = self.loss(_input, target)
         grads_n = torch.autograd.grad(loss, self.arch_parameters())
 
         for p, v in zip(self.parameters(), vector):

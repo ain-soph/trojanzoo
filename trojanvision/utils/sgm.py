@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from trojanvision.models import ResNet, DenseNet
 from trojanzoo.models import Model
 import torch
 import torch.nn as nn
@@ -24,10 +25,11 @@ def backward_hook(gamma: float) -> Callable[[nn.Module, torch.Tensor, torch.Tens
 #     return (grad_in[0] / std,)
 
 
-def register_hook_for_resnet(model: Model, gamma: float = 1.0) -> list[RemovableHandle]:
+def register_hook_for_resnet(model: ResNet, gamma: float = 1.0) -> list[RemovableHandle]:
     # There is only 1 ReLU in Conv module of ResNet-18/34
     # and 2 ReLU in Conv module ResNet-50/101/152
-    if model.layer in [50, 101, 152]:
+    layer = int(model.name.split('_')[0][6:])
+    if layer in [50, 101, 152]:
         gamma = np.power(gamma, 0.5)
     backward_hook_sgm = backward_hook(gamma)
 
@@ -41,7 +43,7 @@ def register_hook_for_resnet(model: Model, gamma: float = 1.0) -> list[Removable
     #     module.register_backward_hook(backward_hook_norm)
 
 
-def register_hook_for_densenet(model: Model, gamma: float = 1.0):
+def register_hook_for_densenet(model: DenseNet, gamma: float = 1.0):
     # There are 2 ReLU in Conv module of DenseNet-121/169/201.
     gamma = np.power(gamma, 0.5)
     backward_hook_sgm = backward_hook(gamma)

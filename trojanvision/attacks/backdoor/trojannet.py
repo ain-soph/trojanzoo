@@ -9,9 +9,11 @@ import torch
 import torch.nn as nn
 
 import numpy as np
-import os
-from itertools import combinations
 from scipy.special import comb
+import os
+from collections import OrderedDict
+from itertools import combinations
+
 import argparse
 from typing import Callable
 
@@ -121,31 +123,25 @@ class TrojanNet(BadNet):
         return clean_acc, target_acc
 
 
-class _MLPNet(nn.Module):
+class _MLPNet(_ImageModel):
     def __init__(self, input_dim: int, output_dim: int, **kwargs):
         super().__init__()
-        self.ly1 = nn.Linear(in_features=input_dim, out_features=8)
-        self.relu1 = nn.ReLU()
-        self.ly1_bn = nn.BatchNorm1d(num_features=8)
-        self.ly2 = nn.Linear(in_features=8, out_features=8)
-        self.relu2 = nn.ReLU()
-        self.ly2_bn = nn.BatchNorm1d(num_features=8)
-        self.ly3 = nn.Linear(in_features=8, out_features=8)
-        self.relu3 = nn.ReLU()
-        self.ly3_bn = nn.BatchNorm1d(num_features=8)
-        self.ly4 = nn.Linear(in_features=8, out_features=8)
-        self.relu4 = nn.ReLU()
-        self.ly4_bn = nn.BatchNorm1d(num_features=8)
-        self.output = nn.Linear(in_features=8, out_features=output_dim)
-
-    def forward(self, x, **kwargs):
-        x = self.ly1_bn(self.relu1(self.ly1(x)))
-        x = self.ly2_bn(self.relu2(self.ly2(x)))
-        x = self.ly3_bn(self.relu3(self.ly3(x)))
-        x = self.ly4_bn(self.relu4(self.ly4(x)))
-        x = self.output(x)
-        return x
-
+        self.features = nn.Sequential(OrderedDict([
+            ('ly1', nn.Linear(in_features=input_dim, out_features=8)),
+            ('relu1', nn.ReLU()),
+            ('ly1_bn', nn.BatchNorm1d(num_features=8)),
+            ('ly2', nn.Linear(in_features=8, out_features=8)),
+            ('relu2', nn.ReLU()),
+            ('ly2_bn', nn.BatchNorm1d(num_features=8)),
+            ('ly3', nn.Linear(in_features=8, out_features=8)),
+            ('relu3', nn.ReLU()),
+            ('ly3_bn', nn.BatchNorm1d(num_features=8)),
+            ('ly4', nn.Linear(in_features=8, out_features=8)),
+            ('relu4', nn.ReLU()),
+            ('ly4_bn', nn.BatchNorm1d(num_features=8)),
+        ]))
+        self.pool = nn.Identity()
+        self.classifier = nn.Linear(in_features=8, out_features=output_dim)
 
 class MLPNet(ImageModel):
     def __init__(self, name='mlpnet', model=_MLPNet, **kwargs):

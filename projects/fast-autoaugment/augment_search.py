@@ -52,5 +52,5 @@ if __name__ == '__main__':
             for k, v in loss_dict.items():
                 logger.meters[k].update(v, batch_size)
 
-    # save augment
-    torch.save(policy.state_dict(), args.policy_path)
+        # save augment
+        torch.save(policy.state_dict(), args.policy_path)

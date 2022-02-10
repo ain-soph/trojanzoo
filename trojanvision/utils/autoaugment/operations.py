@@ -12,22 +12,22 @@ import torch
 import torch.nn as nn
 import torch.nn.utils.parametrize as parametrize
 from torch.autograd import Function
-from torch.distributions import RelaxedBernoulli
-
-from abc import ABC, abstractmethod
 
 
-PRIMITIVES = ['ShearX', 'ShearY', 'TranslateX', 'TranslateY',
+PRIMITIVES = ['Zero',
+              'ShearX', 'ShearY',
+              'TranslateX', 'TranslateY',
               'HorizontalFlip', 'Rotate',
-              'Brightness', 'Contrast', 'AutoContrast', 'Color', 'Sharpness',
+              'Brightness', 'Contrast', 'AutoContrast',
+              'Color', 'Sharpness',
               'Posterize', 'Solarize',
               'Equalize', 'Invert',
               'Cutout', 'SamplePairing']
 
 
-def get_op(primitive: str, temperature: float = 0.05, **kwargs) -> 'Operation':
+def get_op(primitive: str, **kwargs) -> 'Operation':
     OpClass: type[Operation] = getattr(operations, primitive)
-    return OpClass(temperature=temperature, **kwargs)
+    return OpClass(**kwargs)
 
 
 class Clamp(nn.Module):
@@ -60,21 +60,25 @@ def ste(tensor: torch.Tensor, *params: torch.Tensor) -> torch.Tensor:
     return ste(_STE.apply(tensor, params[0]), *params[1:])
 
 
-class Operation(ABC, nn.Module):
-    def __init__(self, temperature: float = 0.05,
-                 value_range: tuple[float, float] = (0.0, 1.0),
+class Operation(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
+        return _input
+
+    def create_transform(self):
+        return self
+
+
+class MagnitudeOperation(Operation):
+    def __init__(self, value_range: tuple[float, float] = (0.0, 1.0),
                  **kwargs):
         super().__init__()
-        if value_range is not None:
-            self.value_range = value_range
-            self.magnitude = nn.Parameter(torch.rand(1))
-            parametrize.register_parametrization(self, 'magnitude',
-                                                 Clamp(*value_range))
-        self.probability = nn.Parameter(torch.rand(1) * 0.8 + 0.1)
-        parametrize.register_parametrization(self, 'probability',
-                                             Clamp(_min=0.01, _max=0.99))
-        self.register_buffer('temperature', torch.tensor([temperature]))
-        self.temperature: torch.Tensor
+        self.value_range = value_range
+        self.magnitude = nn.Parameter(torch.rand(1))
+        parametrize.register_parametrization(self, 'magnitude',
+                                             Clamp(*value_range))
 
     def set_magnitude(self, magnitude: float):
         if parametrize.is_parametrized(self, 'magnitude'):
@@ -83,95 +87,73 @@ class Operation(ABC, nn.Module):
         else:
             self.magnitude.data.fill_(magnitude)
 
-    def set_probability(self, probability: float):
-        if parametrize.is_parametrized(self, 'probability'):
-            self.parametrizations.probability.original.data.fill_(probability)
-        else:
-            self.probability.data.fill_(probability)
-
-    def forward(self, _input: torch.Tensor) -> torch.Tensor:
-        mask_sampler = RelaxedBernoulli(self.temperature,
-                                        self.probability)
-        mask_shape = [len(_input)] + [1] * (_input.dim() - 2)
-        mask: torch.Tensor = mask_sampler.rsample(mask_shape)
-        result = mask * self.operation(_input) + (1 - mask) * _input
-        return result
-
-    @abstractmethod
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
-        ...
-
     def create_transform(self):
         parametrize.remove_parametrizations(self, 'magnitude')
+        self.requires_grad_(False)
+        self.cpu()
+        self.eval()
         return self
 
 
 class Zero(Operation):
-    def __init__(self, value_range: tuple[float, float] = None,
-                 **kwargs):
-        super().__init__(value_range=value_range, **kwargs)
-
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
-        return _input
+    def create_transform(self):
+        return nn.Identity()
 
 
-class ShearX(Operation):
+class ShearX(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (-16.7, 16.7),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         shear = torch.cat([self.magnitude, torch.zeros_like(self.magnitude)])
         return F.affine(_input, shear=shear)
 
 
-class ShearY(Operation):
+class ShearY(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (-16.7, 16.7),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         shear = torch.cat([torch.zeros_like(self.magnitude), self.magnitude])
         return F.affine(_input, shear=shear)
 
 
-class TranslateX(Operation):
+class TranslateX(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (-0.45, 0.45),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         translate = torch.cat([self.magnitude * _input.shape[-1],
                                torch.zeros_like(self.magnitude)])
         return F.affine(_input, translate=translate)
 
 
-class TranslateY(Operation):
+class TranslateY(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (-0.45, 0.45),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         translate = torch.cat([torch.zeros_like(self.magnitude),
                                self.magnitude * _input.shape[-2]])
         return F.affine(_input, translate=translate)
 
 
 class HorizontalFlip(Operation):
-    def __init__(self, value_range: tuple[float, float] = None, **kwargs):
-        super().__init__(value_range=value_range, **kwargs)
-
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # return _input.flip(-1)
         return F_t.hflip(_input)
 
 
-class Rotate(Operation):
+class Rotate(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (-30.0, 30.0),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # not differential w.r.t. self.magnitude
         # return F.rotate(_input, angle=self.magnitude)
         return F.affine(_input, angle=self.magnitude)
@@ -201,17 +183,14 @@ class Rotate(Operation):
 
 
 class Invert(Operation):
-    def __init__(self, value_range: tuple[float, float] = None, **kwargs):
-        super().__init__(value_range=value_range, **kwargs)
-
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # return 1.0 - _input
         return F_t.invert(_input)
 
 
-class Color(Operation):
+class Color(MagnitudeOperation):
     # alias of Saturate
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # degenerate = F_t.rgb_to_grayscale(_input)
         # result: torch.Tensor = self.magnitude * _input \
         #     + (1 - self.magnitude) * degenerate
@@ -219,22 +198,22 @@ class Color(Operation):
         return F_t.adjust_saturation(_input, saturation_factor=self.magnitude)
 
 
-class Brightness(Operation):
+class Brightness(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (0.0, 2.0),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # return (self.magnitude * _input).clamp(0.0, 1.0)
         return F_t.adjust_brightness(_input, brightness_factor=self.magnitude)
 
 
-class Contrast(Operation):
+class Contrast(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (0.0, 2.0),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # degenerate = F_t.rgb_to_grayscale(_input).flatten(1).mean()
         # result: torch.Tensor = self.magnitude * _input \
         #     + (1 - self.magnitude) * degenerate
@@ -243,68 +222,61 @@ class Contrast(Operation):
 
 
 class AutoContrast(Operation):
-    def __init__(self, value_range: tuple[float, float] = None, **kwargs):
-        super().__init__(value_range=value_range, **kwargs)
-
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         return F_t.autocontrast(_input)
 
 
-class Sharpness(Operation):
+class Sharpness(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (0.0, 2.0),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         return F_t.adjust_sharpness(_input, sharpness_factor=self.magnitude)
 
 
 class Equalize(Operation):
-    def __init__(self, value_range: tuple[float, float] = None,
-                 **kwargs):
-        super().__init__(value_range=value_range, **kwargs)
-
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         return ste(F_t.equalize((_input * 255).byte()).float().div(255), _input)
 
 
-class Posterize(Operation):
+class Posterize(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (0.0, 8.0),
                  **kwargs):
         super().__init__(value_range=value_range, ste=ste, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # not differential w.r.t. self.magnitude
         return ste(F_t.posterize((_input * 255).byte(), bits=int(self.magnitude)).float().div(255),
                    _input, self.magnitude)
 
 
-class Solarize(Operation):
+class Solarize(MagnitudeOperation):
     """Invert all pixel values above a threshold."""
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         # not differential w.r.t. self.magnitude
         # return torch.where(_input > self.magnitude, 1 - _input, _input)
         return ste(F_t.solarize(_input, threshold=self.magnitude), _input, self.magnitude)
 
 
-class Cutout(Operation):
+class Cutout(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (0.0, 0.2),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         h, w = _input.shape[-2:]
         length = (self.magnitude * torch.tensor([h, w], dtype=torch.float, device=self.magnitude.device)).int()
         return ste(cutout(_input, length), _input, self.magnitude)
 
 
-class SamplePairing(Operation):
+class SamplePairing(MagnitudeOperation):
     def __init__(self, value_range: tuple[float, float] = (0.0, 0.4),
                  **kwargs):
         super().__init__(value_range=value_range, **kwargs)
 
-    def operation(self, _input: torch.Tensor) -> torch.Tensor:
+    def forward(self, _input: torch.Tensor) -> torch.Tensor:
         idx = torch.randperm(_input.shape[0])
         degenerate = _input[idx]
         result: torch.Tensor = (1 - self.magnitude) * _input \

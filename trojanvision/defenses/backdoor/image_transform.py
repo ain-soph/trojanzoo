@@ -15,7 +15,8 @@ class ImageTransform(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--transform_mode', help='Image Transform Mode, defaults to "recompress".')
+        group.add_argument('--transform_mode', choices=['recompress', 'randomized_smooth'],
+                           help='Image Transform Mode, defaults to "recompress".')
         group.add_argument('--resize_ratio', type=float, help='Image Resize Ratio for Recompress, defaults to 0.95.')
         return group
 

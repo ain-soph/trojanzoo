@@ -19,18 +19,25 @@ class PoisonBasic(Attack):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
+        group.add_argument('--target_num', type=int,
+                           help='number of malicious target images, defaults to 5')
         group.add_argument('--poison_percent', type=float,
                            help='malicious training data injection probability for each batch, defaults to 0.1')
         group.add_argument('--target_idx', type=int,
-                           help='Target label order in original classification, defaults to 1 '
+                           help='target label order in original classification, defaults to 1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
+        group.add_argument('--clean_epoch', type=int,
+                           help='number of training epochs using clean data after attack, defaults to 0')
         return group
 
-    def __init__(self, poison_percent: float = 0.5, target_idx=1, **kwargs):
+    def __init__(self, target_num: int = 5, poison_percent: float = 0.1, target_idx: int = 1,
+                 clean_epoch: int = 0, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['poison'] = ['poison_percent', 'poison_num', 'target_idx']
-        self.poison_percent: float = poison_percent
-        self.target_idx: int = target_idx
+        self.param_list['poison'] = ['target_num', 'poison_percent', 'poison_num', 'target_idx']
+        self.target_num = target_num
+        self.poison_percent = poison_percent
+        self.target_idx = target_idx
+        self.clean_epoch = clean_epoch
 
         self.temp_input: torch.Tensor = None
         self.temp_label: torch.Tensor = None
@@ -43,21 +50,28 @@ class PoisonBasic(Attack):
         target_conf_list = []
         target_acc_list = []
         clean_acc_list = []
-        for data in self.dataset.loader['test']:
-            if total >= 100:
+        loader = self.dataset.get_dataloader(
+            mode='test', batch_size=2 * self.target_num,
+            shuffle=True, drop_last=True)
+        for data in loader:
+            if total >= 10:
                 break
             self.model.load()
             _input, _label = self.model.remove_misclassify(data)
-            if len(_label) == 0:
+            if len(_input) < self.target_num:
                 continue
+            _input = _input[:self.target_num]
             _label = self.model.generate_target(_input, idx=self.target_idx)
             self._train(_input=_input, _label=_label, epochs=epochs, **kwargs)
-            target_conf, target_acc, clean_acc = self.validate_fn()
+            if self.clean_epoch > 0:
+                self.model._train(epochs=self.clean_epoch, indent=4, validate_fn=self.validate_fn, **kwargs)
+            target_conf, target_acc = self.validate_target()
+            _, clean_acc = self.model._validate()
             target_conf_list.append(target_conf)
             target_acc_list.append(target_acc)
             clean_acc_list.append(clean_acc)
             total += 1
-            print(f'[{total+1}/100]\n'
+            print(f'[{total}/10]\n'
                   f'target confidence: {np.mean(target_conf_list)}({np.std(target_conf_list)})\n'
                   f'target accuracy: {np.mean(target_acc_list)}({np.std(target_acc_list)})\n'
                   f'clean accuracy: {np.mean(clean_acc_list)}({np.std(clean_acc_list)})\n\n\n')
@@ -70,7 +84,8 @@ class PoisonBasic(Attack):
                           get_data_fn=self.get_data, save_fn=self.save,
                           validate_fn=self.validate_fn, indent=indent + 4, **kwargs)
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True,
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
@@ -78,9 +93,19 @@ class PoisonBasic(Attack):
             integer += 1
         if not keep_org or integer:
             org_input, org_label = _input, _label
-            _input = torch.cat([self.temp_input] * integer)
+            quotient = integer // self.target_num
+            remainder = integer % self.target_num
+            idx = torch.randperm(self.target_num)[:remainder]
+            try:
+                input_list = [self.temp_input] * quotient + [self.temp_input[idx]]
+                label_list = [self.temp_label] * quotient + [self.temp_label[idx]]
+            except Exception:
+                print(self.target_num, integer, self.temp_input.shape, self.temp_label.shape)
+                print(idx)
+                exit()
+            _input = torch.cat(input_list)
             if poison_label:
-                _label = torch.cat([self.temp_label] * integer)
+                _label = torch.cat(label_list)
             if keep_org:
                 _input = torch.cat((_input, org_input))
                 _label = torch.cat((_label, org_label))
@@ -111,13 +136,15 @@ class PoisonBasic(Attack):
         target_conf = float(self.model.get_target_prob(self.temp_input, self.temp_label).mean())
         target_loss = self.model.loss(self.temp_input, self.temp_label)
         if verbose:
-            prints(f'Validate Target:       Loss: {target_loss:10.4f}     Confidence: {target_conf:10.4f}    Accuracy: {target_acc:7.3f}',
+            prints(f'Validate Target:       Loss: {target_loss:10.4f}     '
+                   f'Confidence: {target_conf:10.4f}    Accuracy: {target_acc:7.3f}',
                    indent=indent)
         # todo: Return value
         return target_conf, target_acc
 
     def validate_fn(self, get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
-                    main_tag: str = 'valid', indent: int = 0, verbose=True, **kwargs) -> tuple[float, float]:
+                    main_tag: str = 'valid', indent: int = 0, verbose=True,
+                    loss_fn: Callable = None, **kwargs) -> tuple[float, float]:
         _, target_acc = self.validate_target(indent=indent, verbose=verbose)
         _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                             get_data_fn=None, indent=indent, **kwargs)

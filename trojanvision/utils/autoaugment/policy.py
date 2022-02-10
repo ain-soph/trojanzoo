@@ -44,13 +44,9 @@ class MixedOp(nn.Module):
         return (result * weights).sum(dim=0)
 
     def create_transform(self):
-        op_list = [op.create_transform() for op in self._ops]
-        op_list.append(nn.Identity())
-        p = torch.tensor([float(op.probability) for op in self._ops])
-        true_p = self.weights.cpu() * p
-        real_p = true_p.tolist()
-        real_p.append(1 - true_p.sum().item())
-        return transforms.RandomChoice(op_list, p=real_p)
+        return transforms.RandomChoice([op.create_transform()
+                                        for op in self._ops],
+                                       p=self.weights.tolist())
 
 
 class SubPolicy(nn.Sequential):
@@ -58,7 +54,7 @@ class SubPolicy(nn.Sequential):
         super().__init__(*[MixedOp(**kwargs) for _ in range(operation_count)])
 
     def create_transform(self):
-        return nn.Sequential(mixed_op.create_transform() for mixed_op in self)
+        return transforms.Compose([mixed_op.create_transform() for mixed_op in self])
 
 
 class Policy(nn.Module):
@@ -66,11 +62,11 @@ class Policy(nn.Module):
         super().__init__()
         self.num_sub_policies = num_sub_policies
         self.num_chunks = num_chunks
-        self.sub_policies = nn.ModuleList(
+        self.sub_policies: Sequence[SubPolicy] = nn.ModuleList(
             [SubPolicy(**kwargs) for _ in range(num_sub_policies)])
 
     def forward(self, _input: torch.Tensor) -> torch.Tensor:
-        input_list = _input.chunk(self.num_chunks)
+        input_list = _input.chunk(self.num_chunks if self.num_chunks != 0 else len(_input))
         idx_list = torch.randint(self.num_sub_policies, [len(input_list)])
         result = []
         for input_chunk, idx in zip(input_list, idx_list):
@@ -78,4 +74,4 @@ class Policy(nn.Module):
         return torch.cat(result)
 
     def create_transform(self):
-        return transforms.RandomChoice(list(self.sub_policies))
+        return transforms.RandomChoice([sp.create_transform() for sp in self.sub_policies])

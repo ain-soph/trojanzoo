@@ -2,11 +2,12 @@
 
 import trojanvision
 import torch
+import torch.nn as nn
 import argparse
 
 from trojanvision.utils.autoaugment import Policy
 from collections import OrderedDict
-import torch.nn as nn
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -29,8 +30,12 @@ if __name__ == '__main__':
 
     policy = Policy(num_chunks=0).cuda()
     policy.load_state_dict(torch.load(args.policy_path))
+
     model._model.preprocess = nn.Sequential(OrderedDict([
         ('autoaugment', policy),
         ('normalize', model._model.preprocess)
     ]))
+
+    # dataset.loader['train'].dataset.transform.transforms.append(policy.create_transform())
+    # print(dataset.loader['train'].dataset.transform)
     model._train(**trainer)
