@@ -67,7 +67,7 @@ class Trainer:
         group.add_argument('--lr_warmup_method',
                            choices=['constant', 'linear'],
                            help='the warmup method (default: constant)')
-        group.add_argument('--lr_step_size',
+        group.add_argument('--lr_step_size', type=int,
                            help='decrease lr every step-size epochs '
                            '(default: 30)')
         group.add_argument('--lr_gamma', type=float,
