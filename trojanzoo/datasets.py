@@ -29,8 +29,8 @@ class Dataset(ABC, BasicObject):
         For users, please use :func:`create` instead, which is more user-friendly.
 
     Args:
-        batch_size (int): Batch size of training and validation set.
-            (negative number means batch size for each gpu)'
+        batch_size (int): Batch size of training and validation set
+            (negative number means batch size for each gpu).
         folder_path (str): Folder path to store dataset.
             Defaults to ``'{data_dir}/{data_type}/{name}'``.
         download (bool): Download dataset if not exist. Defaults to ``False``.
@@ -44,11 +44,15 @@ class Dataset(ABC, BasicObject):
             Defaults to ``4``.
         loss_weights (bool | numpy.ndarray):
             | The loss weights w.r.t. each class.
-            | if :any:`numpy.ndarray`, directly save as :attr:`loss_weights`.
+            | if :any:`numpy.ndarray`, directly set as :attr:`loss_weights`.
             | if ``True``, set :attr:`loss_weights` as :meth:`get_loss_weights()`;
             | if ``False``, set :attr:`loss_weights` as ``None``.
+        kwargs (dict[str, Any]): Ignored arguments.
 
     Attributes:
+        loader(dict[str, ~torch.utils.data.DataLoader]):
+            | Preset dataloader for users at dataset initialization.
+            | It contains ``'train'`` and ``'valid'`` loaders.
         name (str): Dataset Name. (need overriding)
         data_type (str): Data type (e.g., ``'image'``). (need overriding)
         num_classes (int): Number of classes. (need overriding)
@@ -58,7 +62,11 @@ class Dataset(ABC, BasicObject):
 
         folder_path (str): Directory path to store dataset.
             Defaults to ``'{data_dir}/{data_type}/{name}'``.
+        split_ratio (float): The ratio to split training set
+            if :attr:`valid_set` is ``False``.
         loss_weights (numpy.ndarray | None): The loss weights w.r.t. each class.
+        collate_fn (~collections.abc.Callable | None):
+            Used in :meth:`get_dataloader()`.
 
         batch_size (int): Batch size of training set (always positive).
         valid_batch_size (int): Batch size of validation set.
