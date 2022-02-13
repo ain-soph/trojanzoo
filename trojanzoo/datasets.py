@@ -49,21 +49,19 @@ class Dataset(ABC, BasicObject):
             | if ``False``, set :attr:`loss_weights` as ``None``.
 
     Attributes:
-        name (string): Dataset Name. (need overriding)
-        data_type (string): Data type (e.g., ``'image'``). (need overriding)
+        name (str): Dataset Name. (need overriding)
+        data_type (str): Data type (e.g., ``'image'``). (need overriding)
         num_classes (int): Number of classes. (need overriding)
         label_names (list[int]): Number of classes. (optional)
         valid_set (bool): Whether having a native validation set.
             Defaults to ``True``.
 
-        folder_path (string): Directory path to store dataset.
+        folder_path (str): Directory path to store dataset.
             Defaults to ``'{data_dir}/{data_type}/{name}'``.
-        loss_weights (Optional[numpy.ndarray]): The loss weights w.r.t. each class.
+        loss_weights (numpy.ndarray | None): The loss weights w.r.t. each class.
 
         batch_size (int): Batch size of training set (always positive).
         valid_batch_size (int): Batch size of validation set.
-
-
     """
     name = 'dataset'
     data_type: str = None

@@ -73,7 +73,7 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
             Defaults to ``True``.
 
     Returns:
-        (Optional[list], list[int]): The tuple of ``(data, targets)``.
+        (list | None, list[int]): The tuple of ``(data, targets)``.
 
     :Example:
         >>> from trojanzoo.utils.data import dataset_to_list
