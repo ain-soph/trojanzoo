@@ -40,7 +40,7 @@ class Dataset(ABC, BasicObject):
             | The ratio stands for
               :math:`\frac{\text{\# training\ subset}}{\text{\# total\ training\ set}}`.
               Defaults to ``0.8``.
-        num_workers (int): `num_workers` passed to :any:`torch.utils.data.DataLoader`.
+        num_workers (int): :attr:`num_workers` passed to :any:`torch.utils.data.DataLoader`.
             Defaults to ``4``.
         loss_weights (bool | numpy.ndarray):
             | The loss weights w.r.t. each class.
