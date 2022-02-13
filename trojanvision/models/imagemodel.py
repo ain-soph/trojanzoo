@@ -68,10 +68,11 @@ class _ImageModel(_Model):
 
     def define_preprocess(self,
                           norm_par: dict[str, list[float]] = None,
-                          **kwargs):
-        self.preprocess = Normalize(mean=norm_par['mean'],
-                                    std=norm_par['std']) \
-            if norm_par is not None else nn.Identity()
+                          **kwargs) -> nn.Module:
+        if norm_par is not None:
+            return Normalize(mean=norm_par['mean'],
+                             std=norm_par['std'])
+        return super().define_preprocess(**kwargs)
 
 
 class ImageModel(Model):

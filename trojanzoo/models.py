@@ -37,24 +37,15 @@ __all__ = ['Model', 'add_argument', 'create',
 
 
 class _Model(nn.Module):
-    r"""An abstract class representing a dataset. It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
+    r"""A specific model class which inherits :any:`torch.nn.Module`.
 
     Args:
-        num_workers (int): :attr:`num_workers` passed to :any:`torch.utils.data.DataLoader`.
-            Defaults to ``4``.
-        loss_weights (bool | numpy.ndarray):
-            | The loss weights w.r.t. each class.
-            | if :any:`numpy.ndarray`, directly save as :attr:`loss_weights`.
-            | if ``True``, set :attr:`loss_weights` as :meth:`get_loss_weights()`;
-            | if ``False``, set :attr:`loss_weights` as ``None``.
+        num_classes (int): Number of classes.
+        kwargs (dict[str, Any]): Passed to :meth:`define_preprocess`,
+            :meth:`define_features` and :meth:`define_classifier`.
 
     Attributes:
-        name (str): Dataset Name. (need overriding)
-        data_type (str): Data type (e.g., ``'image'``). (need overriding)
-        num_classes (int): Number of classes. (need overriding)
-        label_names (list[int]): Number of classes. (optional)
-        valid_set (bool): Whether having a native validation set.
-            Defaults to ``True``.
+        num_classes (int): Number of classes.
 
         folder_path (str): Directory path to store dataset.
             Defaults to ``'{data_dir}/{data_type}/{name}'``.
@@ -65,7 +56,7 @@ class _Model(nn.Module):
     """
     def __init__(self, num_classes: int = None, **kwargs):
         super().__init__()
-        self.define_preprocess(**kwargs)
+        self.preprocess = self.define_preprocess(**kwargs)
         self.features = self.define_features(**kwargs)   # feature extractor
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
         self.flatten = nn.Flatten()
@@ -75,7 +66,7 @@ class _Model(nn.Module):
 
         self.num_classes = num_classes
 
-    def define_preprocess(self, **kwargs):
+    def define_preprocess(self, **kwargs) -> nn.Module:
         return nn.Identity()
 
     @staticmethod
