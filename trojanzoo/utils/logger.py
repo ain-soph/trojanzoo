@@ -20,7 +20,8 @@ class SmoothedValue:
     r"""Track a series of values and provide access to smoothed values over a
     window or the global series average.
 
-    https://github.com/pytorch/vision/blob/main/references/classification/utils.py
+    See Also:
+        https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 
     Args:
         window_size (int): The :attr:`maxlen` of :class:`~collections.deque`.
@@ -32,14 +33,13 @@ class SmoothedValue:
         fmt (str): The string pattern.
         total (float): The sum of all data.
 
-    :Properties:
-        * **median** (*float*): The median of ``deque``.
-        * **avg** (*float*): The avg of ``deque``.
-        * **global_avg** (*float*):
+        median (float): The median of :attr:`deque`.
+        avg (float): The avg of :attr:`deque`.
+        global_avg (float):
           :math:`\frac{\text{\_\_total}}{\text{\_\_count}}`
-        * **max** (*float*): The max of ``deque``.
-        * **min** (*float*): The min of ``deque``.
-        * **value** (*float*): The last value of ``deque``.
+        max (float): The max of :attr:`deque`.
+        min (float): The min of :attr:`deque`.
+        value (float): The last value of :attr:`deque`.
     """
 
     def __init__(self, window_size: int = None, fmt: str = '{global_avg:.3f}'):
@@ -92,7 +92,8 @@ class SmoothedValue:
 
     def synchronize_between_processes(self):
         r"""
-        .. WARNING:: Does NOT synchronize the deque!
+        Warning:
+            Does NOT synchronize the deque!
         """
         if not (dist.is_available() and dist.is_initialized()):
             return
@@ -332,9 +333,10 @@ class MetricLogger:
 
 
 class AverageMeter:
-    r"""Computes and stores the average and current value
+    r"""Computes and stores the average and current value.
 
-    https://github.com/pytorch/examples/blob/master/imagenet/main.py
+    See Also:
+        https://github.com/pytorch/examples/blob/master/imagenet/main.py
     """
 
     def __init__(self, name: str, fmt: str = ':f'):

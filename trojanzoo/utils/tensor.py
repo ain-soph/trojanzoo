@@ -56,12 +56,12 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
         x = byte2float(x)
     try:
         x = torch.as_tensor(x, dtype=dtype).to(device=device, **kwargs)
-    except Exception as e:
+    except Exception:
         print('tensor: ', x)
         if torch.is_tensor(x):
             print('shape: ', x.shape)
             print('device: ', x.device)
-        raise e
+        raise
     return x
 
 

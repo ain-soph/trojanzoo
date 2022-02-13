@@ -132,10 +132,10 @@ class Param(Module, Generic[_KT, _VT]):
     def __getattr__(self, name: str) -> _VT:
         try:
             return super().__getattr__(name)
-        except KeyError as e:
+        except KeyError:
             if 'default' in self.keys():
                 return self['default']
-            raise e
+            raise
 
     def __getitem__(self, key: str) -> _VT:
         if key not in self.keys():

@@ -50,9 +50,12 @@ class PoisonBasic(Attack):
         target_conf_list = []
         target_acc_list = []
         clean_acc_list = []
-        loader = self.dataset.get_dataloader(
-            mode='test', batch_size=2 * self.target_num,
-            shuffle=True, drop_last=True)
+
+        validset = self.dataset.get_dataset('valid')
+        testset, _ = self.dataset.split_dataset(validset, percent=0.3)
+        loader = self.dataset.get_dataloader(mode='valid', dataset=testset,
+                                             batch_size=2 * self.target_num,
+                                             shuffle=True, drop_last=True)
         for data in loader:
             if total >= 10:
                 break

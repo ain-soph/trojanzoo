@@ -67,7 +67,6 @@ class ImageSet(Dataset):
         self.cutout = cutout
         self.cutout_length = cutout_length
 
-        self.collate_fn: Callable[[Iterable[torch.Tensor]], Iterable[torch.Tensor]] = None
         mixup_transforms = []
         if mixup:
             mixup_transforms.append(RandomMixup(self.num_classes, p=1.0, alpha=mixup_alpha))
@@ -113,28 +112,6 @@ class ImageSet(Dataset):
             transform.transforms.append(transforms.Normalize(
                 mean=self.norm_par['mean'], std=self.norm_par['std']))
         return transform
-
-    def get_dataloader(self, mode: str = None, dataset: Dataset = None,
-                       batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True,
-                       drop_last=False, collate_fn=None,
-                       **kwargs) -> torch.utils.data.DataLoader:
-        if batch_size is None:
-            batch_size = self.test_batch_size if mode == 'test' \
-                else self.batch_size
-        if shuffle is None:
-            shuffle = True if mode == 'train' else False
-        if num_workers is None:
-            num_workers = self.num_workers
-        if dataset is None:
-            dataset = self.get_dataset(mode, **kwargs)
-        if env['num_gpus'] == 0:
-            pin_memory = False
-        collate_fn = collate_fn or self.collate_fn
-        return torch.utils.data.DataLoader(
-            dataset, batch_size=batch_size, shuffle=shuffle,
-            num_workers=num_workers, pin_memory=pin_memory,
-            drop_last=drop_last, collate_fn=collate_fn)
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor],

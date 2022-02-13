@@ -49,12 +49,12 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None,
         '{yellow}attack{reset}'.format(**ansi), description=attack_name)
     try:
         AttackType = class_dict[attack_name]
-    except KeyError as e:
+    except KeyError:
         if attack_name is None:
             print(f'{ansi["red"]}you need to first claim the attack name '
                   f'using "--attack".{ansi["reset"]}')
         print(f'{attack_name} not in \n{list(class_dict.keys())}')
-        raise e
+        raise
     return AttackType.add_argument(group)
 
 
@@ -77,9 +77,9 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
     result = general_config.update(specific_config).update(kwargs)
     try:
         AttackType = class_dict[attack_name]
-    except KeyError as e:
+    except KeyError:
         print(f'{attack_name} not in \n{list(class_dict.keys())}')
-        raise e
+        raise
     if folder_path is None:
         folder_path = result['attack_dir']
         if isinstance(dataset, Dataset):

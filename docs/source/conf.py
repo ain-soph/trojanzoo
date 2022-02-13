@@ -102,6 +102,7 @@ exclude_patterns = []
 # autodoc options
 autodoc_docstring_signature = True
 autodoc_inherit_docstrings = False
+autodoc_preserve_defaults = True
 autodoc_typehints = 'none'
 
 autoapi_type = 'python'

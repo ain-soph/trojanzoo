@@ -163,11 +163,11 @@ if __name__ == '__main__':
     transform = [transforms.ToTensor()]
     if dataset.normalize and dataset.norm_par is not None:
         transform.append(transforms.Normalize(mean=dataset.norm_par['mean'], std=dataset.norm_par['std']))
-    train_set = dataset.get_full_dataset(mode='train', transform=transforms.Compose(transform))
-    # class_list = [torch.stack(dataset_to_list(dataset.get_dataset(dataset=train_set, class_list=[c]))[0])
+    train_set = dataset.get_dataset(mode='train', transform=transforms.Compose(transform))
+    # class_list = [torch.stack(dataset_to_list(dataset.get_class_subset(dataset=train_set, class_list=[c]))[0])
     #               for c in range(model.num_classes)]
-    class_loader_list = [dataset.get_dataloader(mode='train', drop_last=True, num_workers=0, pin_memory=False,
-                                                dataset=dataset.get_dataset(dataset=train_set, class_list=[c]))
+    class_loader_list = [dataset.get_dataloader(mode='train', drop_last=True, num_workers=1, pin_memory=False,
+                                                dataset=dataset.get_class_subset(dataset=train_set, class_list=[c]))
                          for c in range(model.num_classes)]
     iter_list = [iter(loader) for loader in class_loader_list]
 
@@ -268,7 +268,7 @@ if __name__ == '__main__':
                 weight_init(eval_model._model)
                 dst_syn_train = TensorDataset(image_syn.detach().clone().flatten(0, 1),
                                               label_syn.detach().clone().flatten(0, 1))
-                loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,
+                loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=1,
                                                       dataset=dst_syn_train)
                 eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn,
                                   **eval_train_args)
@@ -376,12 +376,10 @@ if __name__ == '__main__':
             if ol == outer_loop - 1:
                 break
 
-            # sub_loader = dataset.get_dataloader(mode='train', full=False, seed=random.randint(0, 1000))
-            # model._train(verbose=False, loader_train=sub_loader, **train_args)
             ''' update network '''
             dst_syn_train = TensorDataset(image_syn.detach().clone().flatten(0, 1),
                                           label_syn.detach().clone().flatten(0, 1))
-            loader_train = dataset.get_dataloader(mode='train', num_workers=0, pin_memory=False, dataset=dst_syn_train)
+            loader_train = dataset.get_dataloader(mode='train', num_workers=1, pin_memory=False, dataset=dst_syn_train)
             model._train(loader_train=loader_train, verbose=False, change_train_eval=False, **train_args)
         # loss_avg /= (model.num_classes * outer_loop)
         # if it % 10 == 0:

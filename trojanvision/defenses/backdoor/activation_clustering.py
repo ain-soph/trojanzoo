@@ -89,23 +89,23 @@ class ActivationClustering(BackdoorDefense):
         self.retrain_epoch = retrain_epoch
 
         self.clean_dataset, _ = self.dataset.split_dataset(
-            self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
-        # clean_dataset, _ = self.dataset.split_dataset(self.dataset.get_full_dataset(mode='train'), self.clean_image_num)
-        # clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=self.clean_image_num, num_workers=0)
+            self.dataset.get_dataset(mode='train'), self.clean_image_num)
+        # clean_dataset, _ = self.dataset.split_dataset(self.dataset.get_dataset(mode='train'), self.clean_image_num)
+        # clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=self.clean_image_num, num_workers=1)
         # clean_imgs, _ = self.model.get_data(next(iter(clean_dataloader)))
         # self.clean_dataset = TensorDataset(clean_imgs, _)
 
         poison_dataset, _ = self.dataset.split_dataset(
-            self.dataset.get_full_dataset(mode='train'), self.poison_image_num)
+            self.dataset.get_dataset(mode='train'), self.poison_image_num)
         poison_dataloader = self.dataset.get_dataloader(
-            mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=0)
+            mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=1)
         poison_imgs, _ = self.model.get_data(next(iter(poison_dataloader)))
         poison_imgs = self.attack.add_mark(poison_imgs).cpu()
         poison_label = [self.attack.target_class] * self.poison_image_num
         self.poison_dataset = TensorListDataset(poison_imgs, poison_label)
         self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
         self.mix_dataloader = self.dataset.get_dataloader(
-            mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+            mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=1)
 
     def detect(self, optimizer, lr_scheduler, **kwargs):
         """

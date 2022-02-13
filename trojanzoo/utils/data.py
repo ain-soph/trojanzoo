@@ -168,6 +168,11 @@ def split_dataset(dataset: Union[Dataset, Subset],
             This argument cannot be used together with :attr:`length`.
             ``length = percent * len(dataset)``.
             Defaults to ``None``.
+        shuffle (bool): Whether to shuffle the dataset.
+            Defaults to ``True``.
+        seed (bool): The random seed to split dataset
+            using :any:`numpy.random.shuffle`.
+            Defaults to ``None``.
 
     Returns:
         (torch.utils.data.Subset, torch.utils.data.Subset):
@@ -185,6 +190,11 @@ def split_dataset(dataset: Union[Dataset, Subset],
         >>> set3, set4 = split_dataset(dataset, percent=0.5)
         >>> len(set3), len(set4)
         (5, 6)
+
+    Note:
+        This is the implementation of :meth:`trojanzoo.datasets.Dataset.split_dataset`.
+        The difference is that this method will NOT set :attr:`seed`
+        as ``env['data_seed']`` when it is ``None``.
     """
     assert (length is None) != (percent is None)  # XOR check
     length = length if length is not None else int(len(dataset) * percent)

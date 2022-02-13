@@ -129,7 +129,14 @@ class DARTS(ImageModel):
             self.full = full
             for alpha in self.arch_parameters():
                 alpha.requires_grad_()
-            self.valid_iterator = itertools.cycle(self.dataset.loader['train3'])
+            train2, train3 = self.dataset.split_dataset(
+                self.dataset.get_dataset('train'),
+                percent=0.5)
+            self.train2 = self.dataset.get_dataloader(
+                mode='train', dataset=train2)
+            self.train3 = self.dataset.get_dataloader(
+                mode='train', dataset=train3)
+            self.valid_iterator = itertools.cycle(self.train3)
             self.arch_optimizer = torch.optim.Adam(self.arch_parameters(),
                                                    lr=arch_lr, betas=(0.5, 0.999),
                                                    weight_decay=arch_weight_decay)
@@ -232,7 +239,7 @@ class DARTS(ImageModel):
                accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs) -> None:
         if self.arch_search and not self.full:
-            loader_train = loader_train or self.dataset.loader['train2']
+            loader_train = loader_train or self.train2
         self.optimizer = optimizer
         # self.lr_scheduler = lr_scheduler
         return super()._train(epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
@@ -259,7 +266,7 @@ class DARTS(ImageModel):
         if self.arch_search:
             print(self._model.features.genotype())
             if not self.full:
-                super()._validate(loader=self.dataset.loader['train3'],
+                super()._validate(loader=self.train3,
                                   adv_train=adv_train,
                                   print_prefix='TrainVal', **kwargs)
         return super()._validate(loader=loader, adv_train=adv_train, **kwargs)

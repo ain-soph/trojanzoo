@@ -407,9 +407,9 @@ class Model:
                     # dict[str, torch.Tensor]
                     _dict: OrderedDict[str, torch.Tensor] = torch.load(
                         file_path, map_location=map_location, **kwargs)
-                except Exception as e:
+                except Exception:
                     print(f'{file_path=}')
-                    raise e
+                    raise
             module = self._model
             if component == 'features':
                 module = self._model.features
@@ -425,10 +425,10 @@ class Model:
                 assert component == '', f'{component=}'
             try:
                 module.load_state_dict(_dict, strict=strict)
-            except RuntimeError as e:
+            except RuntimeError:
                 prints(f'Model {self.name} loaded from: {file_path}',
                        indent=indent)
-                raise e
+                raise
             if verbose:
                 prints(f'Model {self.name} loaded from: {file_path}',
                        indent=indent)
@@ -530,7 +530,6 @@ class Model:
                      verbose=verbose, indent=indent, **kwargs)
 
     def _validate(self, module: nn.Module = None, num_classes: int = None,
-                  full: bool = True,
                   loader: torch.utils.data.DataLoader = None,
                   print_prefix: str = 'Validate',
                   indent: int = 0, verbose: bool = True,
@@ -543,9 +542,7 @@ class Model:
                   **kwargs) -> tuple[float, float]:
         module = self._model if module is None else module
         num_classes = self.num_classes if num_classes is None else num_classes
-        if loader is None:
-            loader = self.dataset.loader['valid'] if full \
-                else self.dataset.loader['valid2']
+        loader = loader or self.dataset.loader['valid']
         get_data_fn = get_data_fn or self.get_data
         loss_fn = loss_fn or self.loss
         accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
@@ -559,7 +556,7 @@ class Model:
                         _epoch=_epoch, accuracy_fn=accuracy_fn, **kwargs)
 
     # TODO: this method shall be removed
-    def _compare(self, peer: nn.Module = None, full: bool = True,
+    def _compare(self, peer: nn.Module = None,
                  loader: torch.utils.data.DataLoader = None,
                  print_prefix: str = 'Validate',
                  indent: int = 0, verbose: bool = True,
@@ -569,9 +566,7 @@ class Model:
                  **kwargs) -> tuple[float, float]:
         module1 = self  # TODO: type annotation issues (solve in python 3.10)
         module2 = peer
-        if loader is None:
-            loader = self.dataset.loader['valid'] if full \
-                else self.dataset.loader['valid2']
+        loader = loader or self.dataset.loader['valid']
         get_data_fn = get_data_fn or self.get_data
         criterion = criterion or self.criterion
         return compare(module1, module2, loader,
@@ -746,9 +741,9 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
     model_class_name = get_model_class(model_name, class_dict=class_dict)
     try:
         ModelType = class_dict[model_class_name]
-    except KeyError as e:
+    except KeyError:
         print(f'{model_class_name} not in \n{list(class_dict.keys())}')
-        raise e
+        raise
     return ModelType.add_argument(group)
 
 
@@ -780,9 +775,9 @@ def create(model_name: str = None, model: Union[str, Model] = None,
     model_class_name = get_model_class(model_name, class_dict=class_dict)
     try:
         ModelType = class_dict[model_class_name]
-    except KeyError as e:
+    except KeyError:
         print(f'{model_class_name} not in \n{list(class_dict.keys())}')
-        raise e
+        raise
     if folder_path is None and isinstance(dataset, Dataset):
         folder_path = os.path.join(
             result['model_dir'], dataset.data_type, dataset.name)

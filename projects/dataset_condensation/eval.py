@@ -67,7 +67,7 @@ if __name__ == '__main__':
         weight_init(eval_model._model)
         dst_syn_train = TensorDataset(image_syn.detach().clone(),
                                       label_syn.detach().clone())
-        loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,
+        loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=1,
                                               dataset=dst_syn_train)
         eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn, **eval_train_args)
         _, acc = eval_model._validate(verbose=False)

@@ -44,7 +44,7 @@ class ReflectionBackdoor(BadNet):
         W = torch.zeros(self.candidate_num)
 
         loader = self.dataset.get_dataloader(mode='train', batch_size=self.candidate_num, class_list=[self.target_class],
-                                             shuffle=True, num_workers=0, pin_memory=False)
+                                             shuffle=True, num_workers=1, pin_memory=False)
         candidate_images, _ = next(iter(loader))
         candidate_images = self.conv2d(candidate_images.mean(1, keepdim=True))
 

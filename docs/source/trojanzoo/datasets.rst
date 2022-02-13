@@ -4,5 +4,8 @@
 ==================================
 .. currentmodule:: trojanzoo.datasets
 
+.. autofunction:: create
+.. autofunction:: add_argument
+
 .. autoclass:: trojanzoo.datasets.Dataset
    :members:

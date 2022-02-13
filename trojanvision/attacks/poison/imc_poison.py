@@ -69,7 +69,7 @@ class IMC_Poison(PoisonBasic):
         easy = 0
         difficult = 0
         normal = 0
-        loader = self.dataset.get_dataloader(mode='valid', batch_size=self.dataset.test_batch_size)
+        loader = self.dataset.get_dataloader(mode='valid', batch_size=1)
         if 'curvature' in self.__dict__.keys():
             benign_curvature = self.curvature.benign_measure()
             tgt_curvature_list = []

@@ -46,12 +46,12 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None,
         '{yellow}defense{reset}'.format(**ansi), description=defense_name)
     try:
         DefenseType = class_dict[defense_name]
-    except KeyError as e:
+    except KeyError:
         if defense_name is None:
             print(f'{ansi["red"]}you need to first claim the defense name '
                   f'using "--defense".{ansi["reset"]}')
         print(f'{defense_name} not in \n{list(class_dict.keys())}')
-        raise e
+        raise
     return DefenseType.add_argument(group)
 
 
@@ -76,9 +76,9 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
         kwargs)    # TODO: linting issues
     try:
         DefenseType = class_dict[defense_name]
-    except KeyError as e:
+    except KeyError:
         print(f'{defense_name} not in \n{list(class_dict.keys())}')
-        raise e
+        raise
     if folder_path is None:
         folder_path = result['defense_dir']
         if isinstance(dataset, Dataset):

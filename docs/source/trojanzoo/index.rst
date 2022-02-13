@@ -8,6 +8,7 @@
    :maxdepth: 3
 
    attacks<attacks>
+   configs<configs>
    datasets<datasets>
    defenses<defenses>
    environ<environ>

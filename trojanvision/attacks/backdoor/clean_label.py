@@ -129,7 +129,7 @@ class CleanLabel(BadNet):
             y_list = []
             for source_class in other_classes:
                 print('Process data of Source Class: ', source_class)
-                source_class_dataset = self.dataset.get_dataset(mode='train', full=True, class_list=[source_class])
+                source_class_dataset = self.dataset.get_dataset(mode='train', class_list=[source_class])
                 sample_source_class_dataset, _ = self.dataset.split_dataset(
                     source_class_dataset, self.poison_num)
                 source_imgs = torch.stack(dataset_to_list(sample_source_class_dataset)[0]).to(device=env['device'])
@@ -145,7 +145,7 @@ class CleanLabel(BadNet):
                     self.wgan.reset_parameters()
                     gan_dataset = torch.utils.data.ConcatDataset([source_class_dataset, target_class_set])
                     gan_dataloader = self.dataset.get_dataloader(
-                        mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+                        mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=1)
                     self.wgan.train(gan_dataloader)
                     torch.save(self.wgan.G.state_dict(), g_path)
                     torch.save(self.wgan.D.state_dict(), d_path)
@@ -178,7 +178,7 @@ class CleanLabel(BadNet):
             # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
         final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
         # final_set = poison_set
-        final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
+        final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=1)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_fn=self.validate_fn, **kwargs)
 

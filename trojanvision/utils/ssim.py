@@ -256,7 +256,7 @@ def filter2D(input: torch.Tensor, kernel: torch.Tensor,
           ``'replicate'`` or ``'circular'``. Default: ``'reflect'``.
         normalized (bool): If True, kernel will be L1 normalized.
 
-    Return:
+    Returns:
         torch.Tensor: the convolved tensor of same size and numbers of channels
         as the input.
     """

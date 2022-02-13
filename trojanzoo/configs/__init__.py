@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 from typing import Any, Union    # TODO: python 3.10
 # config_dict['package']['dataset'] dataset.yml
 ConfigFileType = Module[str, Union[Any, Param[str, Any]]]
-# config_dict['package']
-ConfigType = Module[str, ConfigFileType]
+ConfigType = Module[str, ConfigFileType]    # config_dict['package']
 if TYPE_CHECKING:
     pass    # TODO: python 3.10
 
@@ -27,7 +26,6 @@ config_path: dict[str, str] = {
 
 class Config:
     r"""The configuration class.
-
     """
     name = 'config'
     cmd: str = None

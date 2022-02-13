@@ -65,7 +65,12 @@ class AdvMind(Defense):
         counter = 0
         attack_succ_num = 0.
         detect_succ_num = 0.
-        for i, data in enumerate(self.dataset.loader['test']):
+
+        validset = self.dataset.get_dataset('valid')
+        testset, _ = self.dataset.split_dataset(validset, percent=0.3)
+        loader = self.dataset.get_dataloader(mode='valid', dataset=testset,
+                                             shuffle=True)
+        for i, data in enumerate(loader):
             if counter >= 200:
                 break
             print('img idx: ', i)

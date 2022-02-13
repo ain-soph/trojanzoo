@@ -90,14 +90,14 @@ class TermStudy(BadNet):
         other_x, other_y = [], []
         for _class in other_classes:
             loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, class_list=[_class],
-                                                 shuffle=True, num_workers=0, pin_memory=False)
+                                                 shuffle=True, num_workers=1, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)
             other_y.append(_label)
         other_x = torch.cat(other_x)
         other_y = torch.cat(other_y)
         target_loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, class_list=[self.target_class],
-                                                    shuffle=True, num_workers=0, pin_memory=False)
+                                                    shuffle=True, num_workers=1, pin_memory=False)
         target_x, target_y = next(iter(target_loader))
         data = {
             'other': (other_x, other_y),
@@ -106,8 +106,8 @@ class TermStudy(BadNet):
         return data
         # other_dataset = torch.utils.data.TensorDataset(other_x, other_y)
         # target_dataset = torch.utils.data.TensorDataset(target_x, target_x)
-        # other_loader = self.dataset.get_dataloader(mode='train', dataset=other_dataset, num_workers=0)
-        # target_loader = self.dataset.get_dataloader(mode='train', dataset=target_loader, num_workers=0)
+        # other_loader = self.dataset.get_dataloader(mode='train', dataset=other_dataset, num_workers=1)
+        # target_loader = self.dataset.get_dataloader(mode='train', dataset=target_loader, num_workers=1)
         # return other_loader, target_loader
 
     def get_avg_target_feats(self, data_dict: dict[str, tuple[torch.Tensor, torch.Tensor]]):
@@ -116,7 +116,7 @@ class TermStudy(BadNet):
                 target_x, target_y = data_dict['target']
                 dataset = TensorDataset(target_x, target_y)
                 loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),
-                                                     shuffle=True, num_workers=0, pin_memory=False)
+                                                     shuffle=True, num_workers=1, pin_memory=False)
                 feat_list = []
                 for data in loader:
                     target_x, _ = self.model.get_data(data)
@@ -154,7 +154,7 @@ class TermStudy(BadNet):
     def preprocess_mark(self, data: dict[str, tuple[torch.Tensor, torch.Tensor]]):
         other_x, _ = data['other']
         other_set = TensorDataset(other_x)
-        other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
+        other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=1)
 
         atanh_mark = torch.randn_like(self.mark.mark) * self.mark.mask
         atanh_mark.requires_grad_()
