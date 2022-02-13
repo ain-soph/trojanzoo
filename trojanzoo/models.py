@@ -37,6 +37,32 @@ __all__ = ['Model', 'add_argument', 'create',
 
 
 class _Model(nn.Module):
+    r"""An abstract class representing a dataset. It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
+
+    Args:
+        num_workers (int): :attr:`num_workers` passed to :any:`torch.utils.data.DataLoader`.
+            Defaults to ``4``.
+        loss_weights (bool | numpy.ndarray):
+            | The loss weights w.r.t. each class.
+            | if :any:`numpy.ndarray`, directly save as :attr:`loss_weights`.
+            | if ``True``, set :attr:`loss_weights` as :meth:`get_loss_weights()`;
+            | if ``False``, set :attr:`loss_weights` as ``None``.
+
+    Attributes:
+        name (string): Dataset Name. (need overriding)
+        data_type (string): Data type (e.g., ``'image'``). (need overriding)
+        num_classes (int): Number of classes. (need overriding)
+        label_names (list[int]): Number of classes. (optional)
+        valid_set (bool): Whether having a native validation set.
+            Defaults to ``True``.
+
+        folder_path (string): Directory path to store dataset.
+            Defaults to ``'{data_dir}/{data_type}/{name}'``.
+        loss_weights (Optional[numpy.ndarray]): The loss weights w.r.t. each class.
+
+        batch_size (int): Batch size of training set (always positive).
+        valid_batch_size (int): Batch size of validation set.
+    """
     def __init__(self, num_classes: int = None, **kwargs):
         super().__init__()
         self.define_preprocess(**kwargs)
@@ -50,7 +76,7 @@ class _Model(nn.Module):
         self.num_classes = num_classes
 
     def define_preprocess(self, **kwargs):
-        pass
+        return nn.Identity()
 
     @staticmethod
     def define_features(**kwargs) -> nn.Module:
@@ -95,7 +121,7 @@ class _Model(nn.Module):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
     def get_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self.features(x)
+        return self.features(self.preprocess(x))
 
     def get_final_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         x = self.get_fm(x, **kwargs)

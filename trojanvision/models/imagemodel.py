@@ -73,12 +73,6 @@ class _ImageModel(_Model):
                                     std=norm_par['std']) \
             if norm_par is not None else nn.Identity()
 
-    # get feature map
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, [feature_map])
-    def get_fm(self, x: torch.Tensor) -> torch.Tensor:
-        return self.features(self.preprocess(x))
-
 
 class ImageModel(Model):
 
