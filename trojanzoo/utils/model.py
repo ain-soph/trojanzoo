@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 
-from collections import Callable
+from collections.abc import Callable, Iterable
 from typing import Iterator
 
 __all__ = ['get_all_layer', 'get_layer', 'get_layer_name',
@@ -411,16 +411,35 @@ def summary(module: nn.Module, depth: int = 0, verbose: bool = True,
                     verbose=verbose, tree_length=tree_length)
 
 
-def activate_params(module: nn.Module, params: Iterator[nn.Parameter]) -> None:
+def activate_params(module: nn.Module, params: Iterator[nn.Parameter] = []):
+    r"""Set ``requires_grad=True`` for selected :attr:`params` of :attr:`module`.
+    All other params are frozen.
+
+    Args:
+        module (torch.nn.Module): The module to process.
+        params (~collections.abc.Iterator[torch.nn.parameter.Parameter]):
+            The parameters to ``requires_grad``.
+                Defaults to ``[]``.
+    """
     module.requires_grad_(False)
     for param in params:
         param.requires_grad_()
 
 
 def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
-             topk: tuple[int] = (1, 5)) -> list[float]:
+             topk: Iterable[int] = (1, 5)) -> list[float]:
     r"""Computes the accuracy over the k top predictions
-    for the specified values of k
+    for the specified values of k.
+
+    Args:
+        _output (torch.Tensor): The batched logit tensor with shape ``(N, C)``.
+        _label (torch.Tensor): The batched label tensor with shape ``(N)``.
+        num_classes (int): Number of classes.
+        topk (~collections.abc.Iterable[int]): Which top-k accuracies to show.
+            Defaults to ``(1, 5)``.
+
+    Returns:
+        list[float]: Top-k accuracies.
     """
     with torch.no_grad():
         maxk = min(max(topk), num_classes)
@@ -441,6 +460,23 @@ def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
 def generate_target(module: nn.Module, _input: torch.Tensor,
                     idx: int = 1, same: bool = False
                     ) -> torch.Tensor:
+    r"""Generate target labels of a batched input based on
+        the classification confidence ranking index.
+
+    Args:
+        module (torch.nn.Module): The module to process.
+        _input (torch.Tensor): The input tensor.
+        idx (int): The classification confidence
+            rank of target class.
+            Defaults to ``1``.
+        same (bool): Generate the same label
+            for all samples using mod.
+            Defaults to ``False``.
+
+    Returns:
+        torch.Tensor:
+            The generated target label with shape ``(N)``.
+    """
     with torch.no_grad():
         _output: torch.Tensor = module(_input)
     target = _output.argsort(dim=-1, descending=True)[:, idx]
@@ -449,7 +485,6 @@ def generate_target(module: nn.Module, _input: torch.Tensor,
     return target
 
 
-# https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 class ExponentialMovingAverage(torch.optim.swa_utils.AveragedModel):
     r"""Maintains moving averages of model parameters using an exponential decay.
     ``ema_avg = decay * avg_model_param + (1 - decay) * model_param``
