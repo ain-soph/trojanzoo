@@ -14,4 +14,5 @@
    lock<lock>
    memory<memory>
    model<model>
+   module<module>
    train<train>

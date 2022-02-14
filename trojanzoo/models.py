@@ -241,7 +241,8 @@ class Model(BasicObject):
         criterion (~collections.abc.Callable):
             The criterion used to calculate :meth:`loss()`.
         criterion_noreduction (~collections.abc.Callable):
-            The criterion used to calculate :meth:`loss(reduction='none')`.
+            The criterion used to calculate :meth:`loss()`
+            when ``reduction='none'``.
         softmax (torch.nn.Module): :any:`torch.nn.Softmax` ``(dim=1)``.
             Used in :meth:`get_prob()`.
     """
@@ -933,6 +934,22 @@ class Model(BasicObject):
 
     def summary(self, depth: int = None, verbose: bool = True,
                 indent: int = 0, **kwargs):
+        r"""Prints a string summary of the model instance by calling
+        :func:`trojanzoo.utils.module.process.BasicObject.summary()`
+        and :func:`trojanzoo.utils.model.summary()`.
+
+        Args:
+            depth (int): Passed to :func:`trojanzoo.utils.model.summary()`.
+                If ``None``, set as ``env['verbose']``.
+                If still ``None``, set as ``1``.
+                Defaults to ``None``.
+            verbose (bool): Passed to :func:`trojanzoo.utils.model.summary()`.
+                Defaults to ``True``.
+            indent (int): Passed to :func:`trojanzoo.utils.module.process.BasicObject.summary()`
+                and passed to :func:`trojanzoo.utils.model.summary()` with ``10`` more.
+                Defaults to ``0``.
+            **kwargs: Passed to :func:`trojanzoo.utils.model.summary()`.
+        """
         super().summary(indent=indent)
         if depth is None:
             depth = env['verbose']

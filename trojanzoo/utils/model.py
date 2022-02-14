@@ -64,7 +64,7 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
         >>> get_layer_name(model, seq_only=True)
         ['conv1', 'maxpool', 'layer1.0', 'layer1.1', 'layer2.0', 'layer2.1',
         'layer3.0', 'layer3.1', 'layer4.0', 'layer4.1', 'avgpool', 'fc']
-        >>> get_layer_name(model, depth=2, seq_only=True, non_leaf=True)
+        >>> get_layer_name(model, seq_only=True, non_leaf=True)
         ['conv1', 'maxpool',
         'layer1.0', 'layer1.1', 'layer1',
         'layer2.0', 'layer2.1', 'layer2',
@@ -78,7 +78,7 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
         'layer3.0.conv1', 'layer3.0.conv2', 'layer3.0.downsample.0', 'layer3.1.conv1', 'layer3.1.conv2',
         'layer4.0.conv1', 'layer4.0.conv2', 'layer4.0.downsample.0', 'layer4.1.conv1', 'layer4.1.conv2',
         'avgpool', 'fc']
-    """
+    """  # noqa: E501
     layer_name_list: list[str] = []
     is_leaf = True
     if (init or (not seq_only or isinstance(module, nn.Sequential)))\
@@ -161,7 +161,14 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
         'denseblock2', 'transition2.conv', 'transition2.pool',
         'denseblock3', 'transition3.conv', 'transition3.pool',
         'denseblock4'])
-    """
+
+    Note:
+        This method regards :attr:`module` as a :any:`torch.nn.Sequential`.
+        Many modules embed flatten operation in their :attr:`forward` method
+        (e.g., ``view(n, -1)`` or ``flatten(1)``),
+        making ``get_all_layer`` raise error.
+        We suggest to use :any:`torch.nn.Flatten` instead to keep the module sequential.
+    """  # noqa: E501
     layer_name_list = get_layer_name(
         module, depth=depth, prefix=prefix, use_filter=False)
     if layer_input == 'input':
@@ -236,7 +243,7 @@ def get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
             from :attr:`layer_input`.
         layer_output (str): The intermediate output layer name.
             Defaults to ``'classifier'``.
-        layer_input (str): The intermediate layer name of :attr:`x`.
+        layer_input (str): The intermediate layer name that outputs :attr:`x`.
             Defaults to ``'input'``.
         seq_only (bool): Whether to only traverse children
             of :any:`torch.nn.Sequential`.
@@ -245,7 +252,32 @@ def get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
 
     Returns:
         torch.Tensor: The output of layer :attr:`layer_output`.
-    """
+
+    :Example:
+        >>> import torch
+        >>> import torchvision
+        >>> from trojanzoo.utils.model import get_all_layer, get_layer
+        >>>
+        >>> model = torchvision.models.densenet121()
+        >>> x = torch.randn(5, 3, 224, 224)
+        >>> y = get_all_layer(model.features, x, verbose=True)
+        layer name                                        output shape        module information
+        conv0                                             [5, 64, 112, 112]   Conv2d
+        pool0                                             [5, 64, 56, 56]     MaxPool2d
+        denseblock1                                       [5, 256, 56, 56]    _DenseBlock
+        transition1.conv                                  [5, 128, 56, 56]    Conv2d
+        transition1.pool                                  [5, 128, 28, 28]    AvgPool2d
+        denseblock2                                       [5, 512, 28, 28]    _DenseBlock
+        transition2.conv                                  [5, 256, 28, 28]    Conv2d
+        transition2.pool                                  [5, 256, 14, 14]    AvgPool2d
+        denseblock3                                       [5, 1024, 14, 14]   _DenseBlock
+        transition3.conv                                  [5, 512, 14, 14]    Conv2d
+        transition3.pool                                  [5, 512, 7, 7]      AvgPool2d
+        denseblock4                                       [5, 1024, 7, 7]     _DenseBlock
+        >>> x = torch.randn(6, 256, 56, 56)
+        >>> get_layer(model.features, x, layer_input='denseblock1', layer_output='transition3.conv').shape
+        torch.Size([6, 512, 14, 14])
+    """  # noqa: E501
     if layer_input == 'input' and layer_output == 'output':
         return module(x)
     if layer_name_list is None:
@@ -263,7 +295,7 @@ def get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
     if layer_input == 'input':
         layer_input = 'record'
     return _get_layer(module, x, layer_output, layer_input,
-                      seq_only, init=True)
+                      seq_only=seq_only, init=True)
 
 
 def _get_layer(module: nn.Module, x: torch.Tensor,
@@ -276,8 +308,8 @@ def _get_layer(module: nn.Module, x: torch.Tensor,
                 name  # prefix=full_name
             if layer_input == 'record' or \
                     layer_input.startswith(f'{full_name}.'):
-                x = _get_layer(child, x, layer_output,
-                               layer_input, full_name, seq_only)
+                x = _get_layer(child, x, layer_output, layer_input,
+                               full_name, seq_only)
                 layer_input = 'record'
             elif layer_input == full_name:
                 layer_input = 'record'
@@ -297,6 +329,74 @@ def filter_layer(module: nn.Module,
 def summary(module: nn.Module, depth: int = 0, verbose: bool = True,
             indent: int = 0, tree_length: int = None, indent_atom: int = 12
             ) -> None:
+    r"""
+    | Prints a string summary of the module.
+    | This method is similar to `tensorflow.keras.Model.summary() <https://www.tensorflow.org/api_docs/python/tf/keras/Model#summary>`_.
+
+    Args:
+        module (torch.nn.Module): The module to process.
+        depth (int): The traverse depth. Defaults to ``0``.
+        verbose (bool): Whether to output auxiliary information.
+            Defaults to ``True``.
+        indent (int): The space indent for the entire string.
+            Defaults to ``0``.
+        tree_length (int): The tree length.
+            If ``None``, use ``indent_atom * (depth + 1)``.
+            Defaults to ``None``.
+        indent_atom (int): The indent incremental for each sub-structure.
+            Defaults to ``12``.
+
+    :Example:
+        >>> import torchvision
+        >>> from trojanzoo.utils.model import summary
+        >>>
+        >>> model=torchvision.models.resnet18()
+        >>> summary(model)
+        >>> summary(model, depth=1)
+        conv1                   Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        bn1                     BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        relu                    ReLU(inplace=True)
+        maxpool                 MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+        layer1                  Sequential
+        layer2                  Sequential
+        layer3                  Sequential
+        layer4                  Sequential
+        avgpool                 AdaptiveAvgPool2d(output_size=(1, 1))
+        fc                      Linear(in_features=512, out_features=1000, bias=True)
+        >>> summary(model, depth=1, verbose=False)
+        conv1
+        bn1
+        relu
+        maxpool
+        layer1
+        layer2
+        layer3
+        layer4
+        avgpool
+        fc
+        >>> summary(model, depth=2)
+        conv1                               Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        bn1                                 BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        relu                                ReLU(inplace=True)
+        maxpool                             MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
+        layer1                              Sequential
+                    0                       BasicBlock
+                    1                       BasicBlock
+        layer2                              Sequential
+                    0                       BasicBlock
+                    1                       BasicBlock
+        layer3                              Sequential
+                    0                       BasicBlock
+                    1                       BasicBlock
+        layer4                              Sequential
+                    0                       BasicBlock
+                    1                       BasicBlock
+        avgpool                             AdaptiveAvgPool2d(output_size=(1, 1))
+        fc                                  Linear(in_features=512, out_features=1000, bias=True)
+
+    Note:
+        You could use :func:`get_all_layer` with ``verbose=True`` to see the output tensor shape for each layer.
+    """  # noqa: E501
     tree_length = tree_length if tree_length is not None else indent_atom * \
         (depth + 1)
     if depth > 0:
@@ -355,6 +455,8 @@ class ExponentialMovingAverage(torch.optim.swa_utils.AveragedModel):
     ``ema_avg = decay * avg_model_param + (1 - decay) * model_param``
 
     See Also:
+        https://github.com/pytorch/vision/blob/main/references/classification/utils.py
+
         `torch.optim.swa_utils.AveragedModel <https://pytorch.org/docs/stable/optim.html#stochastic-weight-averaging>`_
         is used to compute the EMA.
     """  # noqa: E501

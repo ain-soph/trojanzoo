@@ -15,6 +15,12 @@ __all__ = ['BasicObject', 'Process', 'ModelProcess']
 
 
 class BasicObject:
+    r"""A basic class with a pretty :meth:`summary()` method.
+
+    Attributes:
+        name (str): The name of the instance or class.
+        param_list (dict[str, list[str]]): Map from category strings to variable name list.
+    """
     name: str = 'basic_object'
 
     def __init__(self, **kwargs):
@@ -22,6 +28,16 @@ class BasicObject:
 
     # -----------------------------------Output-------------------------------------#
     def summary(self, indent: int = 0):
+        r"""Summary the variables of the instance
+        according to :attr:`param_list`.
+
+        Args:
+            indent (int): The space indent for the entire string.
+                Defaults to ``0``.
+
+        See Also:
+            :func:`trojanzoo.models.Model.summary()`.
+        """
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
             self.name, **ansi), indent=indent)
         prints(self.__class__.__name__, indent=indent)
