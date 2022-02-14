@@ -100,7 +100,7 @@ class AdvTrain(BackdoorDefense):
                     optimizer.step()
                 optimizer.zero_grad()
                 with torch.no_grad():
-                    _output = self.model.get_logits(_input)
+                    _output = self.model(_input)
                 acc1, acc5 = self.model.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
                 losses.update(loss.item(), batch_size)

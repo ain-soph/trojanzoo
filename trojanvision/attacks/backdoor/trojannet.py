@@ -143,6 +143,7 @@ class _MLPNet(_ImageModel):
         self.pool = nn.Identity()
         self.classifier = nn.Linear(in_features=8, out_features=output_dim)
 
+
 class MLPNet(ImageModel):
     def __init__(self, name='mlpnet', model=_MLPNet, **kwargs):
         super().__init__(name=name, model=model, **kwargs)

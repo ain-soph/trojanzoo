@@ -5,5 +5,8 @@
 
 .. currentmodule:: trojanzoo.models
 
+.. autoclass:: trojanzoo.models.Model
+   :members:
+
 .. autoclass:: trojanzoo.models._Model
    :members:

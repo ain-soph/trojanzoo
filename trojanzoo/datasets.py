@@ -22,7 +22,9 @@ if TYPE_CHECKING:
 
 
 class Dataset(ABC, BasicObject):
-    r"""An abstract class representing a dataset. It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
+    r"""
+    | An abstract class representing a dataset.
+    | It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
 
     Note:
         This is the implementation of dataset.
@@ -32,44 +34,55 @@ class Dataset(ABC, BasicObject):
         batch_size (int): Batch size of training and validation set
             (negative number means batch size for each gpu).
         folder_path (str): Folder path to store dataset.
-            Defaults to ``'{data_dir}/{data_type}/{name}'``.
+            Defaults to ``None``.
+
+            Note:
+                :attr:`folder_path` is usually
+                ``'{data_dir}/{data_type}/{name}'``,
+                which is claimed as the default value of :func:`create()`.
         download (bool): Download dataset if not exist. Defaults to ``False``.
         split_ratio (float):
             | Split training set for training and validation
               if :attr:`valid_set` is ``False``.
             | The ratio stands for
               :math:`\frac{\text{\# training\ subset}}{\text{\# total\ training\ set}}`.
-              Defaults to ``0.8``.
-        num_workers (int): :attr:`num_workers` passed to :any:`torch.utils.data.DataLoader`.
+            | Defaults to ``0.8``.
+        num_workers (int): Used in :meth:`get_dataloader()`.
             Defaults to ``4``.
         loss_weights (bool | numpy.ndarray):
             | The loss weights w.r.t. each class.
             | if :any:`numpy.ndarray`, directly set as :attr:`loss_weights`.
             | if ``True``, set :attr:`loss_weights` as :meth:`get_loss_weights()`;
             | if ``False``, set :attr:`loss_weights` as ``None``.
-        kwargs (dict[str, Any]): Ignored arguments.
+        **kwargs: Any keyword argument (unused).
 
     Attributes:
+        name (str): Dataset Name. (need overriding)
         loader(dict[str, ~torch.utils.data.DataLoader]):
             | Preset dataloader for users at dataset initialization.
             | It contains ``'train'`` and ``'valid'`` loaders.
-        name (str): Dataset Name. (need overriding)
-        data_type (str): Data type (e.g., ``'image'``). (need overriding)
+        batch_size (int): Batch size of training set (always positive).
+        valid_batch_size (int): Batch size of validation set.
         num_classes (int): Number of classes. (need overriding)
+        folder_path (str): Folder path to store dataset.
+            Defaults to ``None``.
+
+        data_type (str): Data type (e.g., ``'image'``). (need overriding)
         label_names (list[int]): Number of classes. (optional)
         valid_set (bool): Whether having a native validation set.
             Defaults to ``True``.
-
-        folder_path (str): Directory path to store dataset.
-            Defaults to ``'{data_dir}/{data_type}/{name}'``.
-        split_ratio (float): The ratio to split training set
-            if :attr:`valid_set` is ``False``.
+        split_ratio (float):
+            | Split training set for training and validation
+              if :attr:`valid_set` is ``False``.
+            | The ratio stands for
+              :math:`\frac{\text{\# training\ subset}}{\text{\# total\ training\ set}}`.
+            | Defaults to ``0.8``.
         loss_weights (numpy.ndarray | None): The loss weights w.r.t. each class.
+        num_workers (int): Used in :meth:`get_dataloader()`.
+            Defaults to ``4``.
         collate_fn (~collections.abc.Callable | None):
             Used in :meth:`get_dataloader()`.
-
-        batch_size (int): Batch size of training set (always positive).
-        valid_batch_size (int): Batch size of validation set.
+            Defaults to ``None``.
     """
     name = 'dataset'
     data_type: str = None
@@ -88,7 +101,6 @@ class Dataset(ABC, BasicObject):
         Note:
             This is the implementation of adding arguments.
             For users, please use :func:`add_argument` instead, which is more user-friendly.
-
         """
         group.add_argument('-d', '--dataset', dest='dataset_name',
                            help='dataset name (lowercase)')
@@ -167,7 +179,7 @@ class Dataset(ABC, BasicObject):
         r"""Check if the dataset files are prepared.
 
         Args:
-            kwargs (dict[str, Any]): Passed to :meth:`get_org_dataset`.
+            **kwargs: Keyword arguments passed to :meth:`get_org_dataset`.
 
         Returns:
             bool: Whether the dataset files are prepared.
@@ -198,7 +210,7 @@ class Dataset(ABC, BasicObject):
 
         Args:
             data (Any): Unprocessed data.
-            kwargs (dict[str, Any]): Keyword arguments to process data.
+            **kwargs: Keyword arguments to process data.
 
         Returns:
             Any: Processed data.
@@ -218,7 +230,7 @@ class Dataset(ABC, BasicObject):
             transform (~collections.abc.Callable):
                 The transform applied on dataset.
                 Defaults to :meth:`get_transform()`.
-            kwargs (dict[str, Any]): Passed to :meth:`_get_org_dataset`.
+            **kwargs: Keyword arguments passed to :meth:`_get_org_dataset`.
 
         Returns:
             torch.utils.data.Dataset: The original dataset.
@@ -248,7 +260,7 @@ class Dataset(ABC, BasicObject):
                 Defaults to ``env['data_seed']``.
             class_list (int | list[int]):
                 The class list to pick. Defaults to ``None``.
-            kwargs (dict[str, Any]): Passed to :meth:`get_org_dataset`.
+            **kwargs: Keyword arguments passed to :meth:`get_org_dataset`.
 
         Returns:
             torch.utils.data.Dataset: The original dataset.
@@ -377,7 +389,7 @@ class Dataset(ABC, BasicObject):
                 Defaults to ``False``.
             collate_fn (~collections.abc.Callable):
                 Passed to :any:`torch.utils.data.DataLoader`.
-            kwargs (dict[str, Any]): Passed to :meth:`get_dataset`
+            **kwargs: Keyword arguments passed to :meth:`get_dataset`
                 if :attr:`dataset` is not provided.
 
         Returns:
@@ -447,8 +459,9 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
                  dataset: Union[str, Dataset] = None,
                  config: Config = config,
                  class_dict: dict[str, type[Dataset]] = {}):
-    r"""Add dataset arguments to argument parser.
-    For specific arguments implementation, see :meth:`Dataset.add_argument`.
+    r"""
+    | Add dataset arguments to argument parser.
+    | For specific arguments implementation, see :meth:`Dataset.add_argument`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.
@@ -475,12 +488,16 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
 
 
 def create(dataset_name: str = None, dataset: str = None,
-           folder_path: str = None,
            config: Config = config,
            class_dict: dict[str, type[Dataset]] = {},
            **kwargs):
-    r"""Create a dataset instance.
-    For dataset implementation, see :class:`Dataset`.
+    r"""
+    | Create a dataset instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | The default value of :attr:`folder_path` is
+      ``'{data_dir}/{data_type}/{name}'``.
+    | For dataset implementation, see :class:`Dataset`.
 
     Args:
         dataset_name (str): The dataset name.
@@ -488,7 +505,7 @@ def create(dataset_name: str = None, dataset: str = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[Dataset]]):
             Map from dataset name to dataset class.
-        kwargs (dict[str, Any]): The keyword arguments
+        **kwargs: The keyword arguments
             passed to dataset init method.
     """
     dataset_name = get_name(
@@ -502,8 +519,8 @@ def create(dataset_name: str = None, dataset: str = None,
     except KeyError:
         print(f'{dataset_name} not in \n{list(class_dict.keys())}')
         raise
-    folder_path = folder_path if folder_path is not None \
-        else os.path.join(result['data_dir'],
-                          DatasetType.data_type,
-                          DatasetType.name)
-    return DatasetType(folder_path=folder_path, **result)
+    if 'folder_path' not in result.keys():
+        result['folder_path'] = os.path.join(result['data_dir'],
+                                             DatasetType.data_type,
+                                             DatasetType.name)
+    return DatasetType(**result)

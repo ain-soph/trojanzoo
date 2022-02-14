@@ -13,4 +13,5 @@
    logger<logger>
    lock<lock>
    memory<memory>
+   model<model>
    train<train>

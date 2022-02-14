@@ -4,10 +4,11 @@ from trojanzoo.configs import config
 from trojanzoo.datasets import Dataset
 from trojanzoo.environ import env
 from trojanzoo.utils.fim import KFAC, EKFAC
-from trojanzoo.utils.module import get_name
 from trojanzoo.utils.model import (get_all_layer, get_layer, get_layer_name,
                                    activate_params, accuracy, generate_target,
                                    summary)
+from trojanzoo.utils.module import get_name
+from trojanzoo.utils.module.process import BasicObject
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.tensor import add_noise, to_tensor
 from trojanzoo.utils.train import train, validate, compare
@@ -41,7 +42,7 @@ class _Model(nn.Module):
 
     Args:
         num_classes (int): Number of classes.
-        kwargs (dict[str, Any]): Passed to :meth:`define_preprocess`,
+        **kwargs: Keyword arguments passed to :meth:`define_preprocess`,
             :meth:`define_features` and :meth:`define_classifier`.
 
     Attributes:
@@ -51,7 +52,6 @@ class _Model(nn.Module):
         features (torch.nn.Module): Defaults to :meth:`define_features()`.
         pool (torch.nn.Module): :any:`torch.nn.AdaptiveAvgPool2d` ``((1, 1))``.
         classifier (torch.nn.Module): Defaults to :meth:`define_classifier()`.
-        softmax (torch.nn.Module): :any:`torch.nn.Softmax` ``(dim=1)``.
     """
 
     def __init__(self, num_classes: int = None, **kwargs):
@@ -62,7 +62,6 @@ class _Model(nn.Module):
         self.flatten = nn.Flatten()
         self.classifier = self.define_classifier(
             num_classes=num_classes, **kwargs)  # classifier
-        self.softmax = nn.Softmax(dim=1)
 
         self.num_classes = num_classes
 
@@ -71,7 +70,7 @@ class _Model(nn.Module):
         r"""Define preprocess before feature extractor.
 
         Returns:
-            torch.nn.Module: :any:`torch.nn.Identity()`.
+            torch.nn.Module: :any:`torch.nn.Identity`.
         """
         return nn.Identity()
 
@@ -80,7 +79,7 @@ class _Model(nn.Module):
         r"""Define feature extractor.
 
         Returns:
-            torch.nn.Module: :any:`torch.nn.Identity()`.
+            torch.nn.Module: :any:`torch.nn.Identity`.
         """
         return nn.Identity()
 
@@ -91,11 +90,12 @@ class _Model(nn.Module):
                           activation_inplace: bool = True,
                           dropout: float = 0.5,
                           **kwargs) -> nn.Sequential:
-        r"""Define classifier as
-        ``(Linear -> Activation -> Dropout ) * (fc_depth - 1) -> Linear``.
-        If there is only 1 linear layer, its name will be ``'fc'``.
-        Else, all layer names will be indexed starting from ``0``
-        (e.g., ``'fc1', 'relu1', 'dropout0'``).
+        r"""
+        | Define classifier as
+            ``(Linear -> Activation -> Dropout ) * (fc_depth - 1) -> Linear``.
+        | If there is only 1 linear layer, its name will be ``'fc'``.
+        | Else, all layer names will be indexed starting from ``0``
+            (e.g., ``'fc1', 'relu1', 'dropout0'``).
 
         Args:
             conv_dim (int): The last convolutional dimension.
@@ -117,7 +117,7 @@ class _Model(nn.Module):
             dropout (float): The drop out probability.
                 Will NOT add dropout layers if it's ``0``.
                 Defaults to ``0.5``.
-            kwargs (dict[str, Any]): Ignored arguments.
+            **kwargs: Any keyword argument (unused).
 
         Returns:
             torch.nn.Sequential: The sequential classifier.
@@ -158,47 +158,118 @@ class _Model(nn.Module):
             seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
         return seq
 
-    # forward method
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, logits)
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         r"""``x -> self.get_final_fm -> self.classifier -> return``"""
         x = self.get_final_fm(x, **kwargs)
         x = self.classifier(x)
         return x
 
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, [feature_map])
     # TODO: combine with get_final_fm ? Consider GNN cases.
     def get_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         r"""``x -> self.preprocess -> self.features -> return``"""
         return self.features(self.preprocess(x))
 
     def get_final_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        r"""``x -> self.get_fm -> self.pool -> self.classifier -> return``"""
+        r"""``x -> self.get_fm -> self.pool -> self.flatten -> return``"""
         x = self.get_fm(x, **kwargs)
         x = self.pool(x)
         x = self.flatten(x)
         return x
 
 
-class Model:
+class Model(BasicObject):
+    r"""
+    | A general model wrapper class, which should be the most common interface for users.
+    | It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
+
+    Args:
+        name (str): Name of model.
+        suffix (str):
+            | Suffix of local model weights file (e.g., ``'_adv_train'``).
+              Defaults to empty string ``''``.
+            | The location of local pretrained weights is
+              ``'{folder_path}/{self.name}{self.suffix}.pth'``
+        model (type[_Model] | _Model): Type of model or a specific model instance.
+        dataset (trojanzoo.datasets.Dataset | None): Corresponding dataset (optional).
+            Defaults to ``None``.
+        num_classes (int | None): Number of classes.
+            If it's ``None``, fetch the value from :attr:`dataset`.
+            Defaults to ``None``.
+        folder_path (str): Folder path to save model weights.
+            Defaults to ``None``.
+
+            Note:
+                :attr:`folder_path` is usually
+                ``'{model_dir}/{dataset.data_type}/{dataset.name}'``,
+                which is claimed as the default value of :func:`create()`.
+        official (bool): Whether to use official pretrained weights.
+            Defaults to ``False``.
+        pretrain (bool): Whether to use local pretrained weights
+            from ``'{folder_path}/{self.name}{self.suffix}.pth'``
+            Defaults to ``False``.
+        randomized_smooth (bool): Whether to use randomized smoothing.
+            Defaults to ``False``.
+        rs_sigma (float): Randomized smoothing sampling std :math:`\sigma`.
+            Defaults to ``0.01``.
+        rs_n (int): Randomized smoothing sampling number. Defaults to ``100``.
+
+    Attributes:
+        available_models (list[str]): The list of available model names.
+        model_urls (dict[str, str]): The links to official pretrained model weights.
+
+        name (str): Name of model.
+        suffix (str):
+            | Suffix of local model weights file (e.g., ``'_adv_train'``).
+              Defaults to empty string ``''``.
+            | The location of local pretrained weights is
+              ``'{folder_path}/{self.name}{self.suffix}.pth'``
+        _model (_Model): :any:`torch.nn.Module` model instance.
+        model (torch.nn.DataParallel | _Model):
+            Parallel version of :attr:`_model` if there is more than 1 GPU available.
+        dataset (trojanzoo.datasets.Dataset | None): Corresponding dataset (optional).
+            Defaults to ``None``.
+        num_classes (int | None): Number of classes.
+            If it's ``None``, fetch the value from :attr:`dataset`.
+            Defaults to ``None``.
+        folder_path (str): Folder path to save model weights.
+            Defaults to ``None``.
+        randomized_smooth (bool): Whether to use randomized smoothing.
+            Defaults to ``False``.
+        rs_sigma (float): Randomized smoothing sampling std :math:`\sigma`.
+        rs_n (int): Randomized smoothing sampling number. Defaults to ``100``.
+
+        criterion (~collections.abc.Callable):
+            The criterion used to calculate :meth:`loss()`.
+        criterion_noreduction (~collections.abc.Callable):
+            The criterion used to calculate :meth:`loss(reduction='none')`.
+        softmax (torch.nn.Module): :any:`torch.nn.Softmax` ``(dim=1)``.
+            Used in :meth:`get_prob()`.
+    """
+
     available_models: list[str] = []
     model_urls: dict[str, str] = []
 
     @staticmethod
     def add_argument(group: argparse._ArgumentGroup):
+        r"""Add model arguments to argument parser group.
+        View source to see specific arguments.
+
+        Args:
+            group (argparse._ArgumentGroup): The argument parser group.
+
+        Note:
+            This is the implementation of adding arguments.
+            For users, please use :func:`add_argument` instead, which is more user-friendly.
+        """
         group.add_argument('-m', '--model', dest='model_name',
                            help='model name '
                            '(default: config[model][default_model])')
         group.add_argument('--suffix',
-                           help='model name suffix (e.g., _adv_train)')
+                           help='model name suffix (e.g., \'_adv_train\')')
         group.add_argument('--pretrain', action='store_true',
-                           help='load pretrained weights (default: False)')
+                           help='load local pretrained weights (default: False)')
         group.add_argument('--official', action='store_true',
-                           help='load official weights (default: False)')
-        group.add_argument('--model_dir',
-                           help='directory to contain pretrained models')
+                           help='load official pretrained weights (default: False)')
         group.add_argument('--randomized_smooth',
                            help='whether to use randomized smoothing '
                            '(default: False)')
@@ -208,17 +279,17 @@ class Model:
         group.add_argument('--rs_n', type=int,
                            help='randomized smoothing sampling number '
                            '(default: 100)')
+        group.add_argument('--model_dir', help='directory to store pretrained models')
         return group
 
-    def __init__(self, name: str = 'model',
+    def __init__(self, name: str = 'model', suffix: str = None,
                  model: Union[type[_Model], _Model] = _Model,
                  dataset: Dataset = None,
                  num_classes: int = None, folder_path: str = None,
                  official: bool = False, pretrain: bool = False,
                  randomized_smooth: bool = False,
-                 rs_sigma: float = 0.01, rs_n: int = 100,
-                 suffix: str = None, **kwargs):
-        self.param_list: dict[str, list[str]] = {}
+                 rs_sigma: float = 0.01, rs_n: int = 100, **kwargs):
+        super().__init__()
         self.param_list['model'] = ['folder_path']
         if suffix is not None:
             self.param_list['model'].append('suffix')
@@ -260,6 +331,7 @@ class Model:
         self.criterion = self.define_criterion(weight=to_tensor(loss_weights, dtype=torch.float))
         self.criterion_noreduction = self.define_criterion(
             weight=to_tensor(loss_weights), reduction='none')
+        self.softmax = nn.Softmax(dim=1)
         if isinstance(model, type):
             if num_classes is not None:
                 kwargs['num_classes'] = num_classes
@@ -282,6 +354,29 @@ class Model:
     def get_logits(self, _input: torch.Tensor, randomized_smooth: bool = None,
                    rs_sigma: float = None, rs_n: int = None,
                    **kwargs) -> torch.Tensor:
+        r"""Get logits of :attr:`_input`.
+
+        Note:
+            Users should used model as Callable function
+            rather than calling this method directly,
+            because ``__call__`` supports :any:`torch.cuda.amp`.
+
+        Args:
+            _input (torch.Tensor): The batched input tensor.
+            randomized_smooth (bool | None): Whether to use randomized smoothing.
+                If it's ``None``, use :attr:`self.randmized_smooth` instead.
+                Defaults to ``None``.
+            rs_sigma (float | None): Randomized smoothing sampling std :math:`\sigma`.
+                If it's ``None``, use :attr:`self.rs_sigma` instead.
+                Defaults to ``None``.
+            rs_n (int): Randomized smoothing sampling number.
+                If it's ``None``, use :attr:`self.rs_n` instead.
+                Defaults to ``None``.
+            **kwargs: Keyword arguments passed to :meth:`forward()`.
+
+        Returns:
+            torch.Tensor: The logit tensor with shape ``(N, C)``.
+        """
         randomized_smooth = randomized_smooth \
             if randomized_smooth is not None \
             else self.randomized_smooth
@@ -303,58 +398,202 @@ class Model:
             return self.model(_input, **kwargs)
 
     def get_final_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""Get the final layer features of :attr:`_input` (after pooling and flatten).
+        Call :func:`_Model.get_final_fm()`.
+
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                passed to :func:`_Model.get_final_fm()`.
+            **kwargs: Keyword arguments passed to :func:`_Model.get_final_fm()`.
+
+        Returns:
+            torch.Tensor: The feature tensor with shape ``(N, dim)``.
+        """
         return self._model.get_final_fm(_input, **kwargs)
 
     def get_prob(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self._model.softmax(self(_input, **kwargs))
+        r"""Get the probability classification vector of :attr:`_input`.
+
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                passed to :func:`_Model.get_logits()`.
+            **kwargs: Keyword arguments passed to :meth:`get_logits()`.
+
+        Returns:
+            torch.Tensor: The probability tensor with shape ``(N, C)``.
+        """
+        return self.softmax(self(_input, **kwargs))
 
     def get_target_prob(self, _input: torch.Tensor,
                         target: Union[torch.Tensor, list[int]],
                         **kwargs) -> torch.Tensor:
+        r"""Get the probability w.r.t. :attr:`target` classes of :attr:`_input`
+        (using :any:`torch.gather`).
+
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                passed to :func:`_Model.get_logits()`.
+            target (torch.Tensor | list[int]): The classes to pick.
+            **kwargs: Keyword arguments passed to :meth:`get_logits()`.
+
+        Returns:
+            torch.Tensor: The probability tensor with shape ``(N, len(target))``.
+        """
         if isinstance(target, list):
             target = torch.tensor(target, device=_input.device)
         return self.get_prob(_input, **kwargs).gather(
             dim=1, index=target.unsqueeze(1)).flatten()
 
     def get_class(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""Get the class classification result of :attr:`_input`
+        (using :any:`torch.argmax`).
+
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                passed to :func:`_Model.get_logits()`.
+            **kwargs: Keyword arguments passed to :meth:`get_logits()`.
+
+        Returns:
+            torch.Tensor: The classes tensor with shape ``(N)``.
+        """
         return self(_input, **kwargs).argmax(dim=-1)
 
     def get_layer_name(self, depth: int = -1, prefix: str = '',
-                       use_filter: bool = True, repeat: bool = False,
+                       use_filter: bool = True, non_leaf: bool = False,
                        seq_only: bool = False) -> list[str]:
-        return get_layer_name(self._model, depth, prefix,
-                              use_filter, repeat, seq_only)
+        r"""Get layer names of model instance.
 
-    def get_all_layer(self, x: torch.Tensor,
+        Args:
+            depth (int): The traverse depth.
+                Defaults to ``-1`` (means :math:`\infty`).
+            prefix (str): The prefix string to all elements.
+                Defaults to empty string ``''``.
+            use_filter (bool): Whether to filter out certain layer types.
+
+                * :any:`torchvision.transforms.Normalize`
+                * :any:`torch.nn.Dropout`
+                * :any:`torch.nn.BatchNorm2d`
+                * :any:`torch.nn.ReLU`
+                * :any:`torch.nn.Sigmoid`
+            non_leaf (bool): Whether to include non-leaf nodes.
+                Defaults to ``False``.
+            seq_only (bool): Whether to only traverse children
+                of :any:`torch.nn.Sequential`.
+                If ``False``, will traverse children of all :any:`torch.nn.Module`.
+                Defaults to ``False``.
+
+        Returns:
+            list[str]: The list of all layer names.
+
+        See Also:
+            The implementation is in
+            :func:`trojanzoo.utils.model.get_layer_name()`.
+        """
+        return get_layer_name(self._model, depth, prefix,
+                              use_filter, non_leaf, seq_only)
+
+    def get_all_layer(self, _input: torch.Tensor,
                       layer_input: str = 'input', depth: int = 0,
-                      prefix='', use_filter: bool = True, repeat: bool = False,
+                      prefix='', use_filter: bool = True, non_leaf: bool = False,
                       seq_only: bool = True, verbose: int = 0
                       ) -> dict[str, torch.Tensor]:
-        return get_all_layer(self._model, x, layer_input, depth,
-                             prefix, use_filter, repeat, seq_only, verbose)
+        r"""Get all intermediate layer outputs of
+        :attr:`_input` from any intermediate layer.
 
-    def get_layer(self, x: torch.Tensor, layer_output: str = 'classifier',
-                  layer_input: str = 'input', prefix: str = '',
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                from :attr:`layer_input`.
+            layer_input (str): The intermediate layer name of :attr:`_input`.
+                Defaults to ``'input'``.
+            depth (int): The traverse depth.
+                Defaults to ``0``.
+            prefix (str): The prefix string to all elements.
+                Defaults to empty string ``''``.
+            use_filter (bool): Whether to filter out certain layer types.
+
+                * :any:`torchvision.transforms.Normalize`
+                * :any:`torch.nn.Dropout`
+                * :any:`torch.nn.BatchNorm2d`
+                * :any:`torch.nn.ReLU`
+                * :any:`torch.nn.Sigmoid`
+            non_leaf (bool): Whether to include non-leaf nodes.
+                Defaults to ``False``.
+            seq_only (bool): Whether to only traverse children
+                of :any:`torch.nn.Sequential`.
+                If ``False``, will traverse children of all :any:`torch.nn.Module`.
+                Defaults to ``False``.
+            verbose (bool): Whether to show verbose information
+                including layer names and output shape.
+                Defaults to ``True``.
+
+        Returns:
+            dict[str, torch.Tensor]: The dict of all layer outputs.
+
+        See Also:
+            The implementation is in
+            :func:`trojanzoo.utils.model.get_all_layer()`.
+        """
+        return get_all_layer(self._model, _input, layer_input, depth,
+                             prefix, use_filter, non_leaf, seq_only, verbose)
+
+    def get_layer(self, _input: torch.Tensor, layer_output: str = 'classifier',
+                  layer_input: str = 'input',
                   seq_only: bool = True) -> torch.Tensor:
+        r"""Get one certain intermediate layer output
+        of :attr:`_input` from any intermediate layer.
+
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                from :attr:`layer_input`.
+            layer_output (str): The intermediate output layer name.
+                Defaults to ``'classifier'``.
+            layer_input (str): The intermediate layer name of :attr:`_input`.
+                Defaults to ``'input'``.
+            seq_only (bool): Whether to only traverse children
+                of :any:`torch.nn.Sequential`.
+                If ``False``, will traverse children of all :any:`torch.nn.Module`.
+                Defaults to ``True``.
+
+        Returns:
+            torch.Tensor: The output of layer :attr:`layer_output`.
+
+        See Also:
+            The implementation is in
+            :func:`trojanzoo.utils.model.get_layer()`.
+        """
         if layer_input == 'input':
             if layer_output == 'classifier':
-                return self(x)
+                return self(_input)
             elif layer_output == 'features':
-                return self._model.get_fm(x)
+                return self._model.get_fm(_input)
             elif layer_output == 'flatten':
-                return self.get_final_fm(x)
+                return self.get_final_fm(_input)
         if self.layer_name_list is None:
             self.layer_name_list: list[str] = self.get_layer_name(
-                use_filter=False, repeat=True)
+                use_filter=False, non_leaf=True)
             self.layer_name_list.insert(0, 'input')
             self.layer_name_list.append('output')
-        return get_layer(self._model, x, layer_output, layer_input, prefix,
+        return get_layer(self._model, _input, layer_output, layer_input,
                          layer_name_list=self.layer_name_list,
                          seq_only=seq_only)
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, reduction: str = 'mean',
              **kwargs) -> torch.Tensor:
+        r"""Calculate the loss using :attr:`self.criterion`
+        (:attr:`self.criterion_noreduction`).
+
+        Args:
+            _input (torch.Tensor | None): The batched input tensor.
+                If :attr:`_output` is provided, this argument will be ignored.
+                Defaults to ``None``.
+            _label (torch.Tensor): The label of the batch with shape ``(N)``.
+            _output (torch.Tensor | None): The logits of :attr:`_input`.
+                If ``None``, use :attr:`_input` to calculate logits.
+                Defaults to ``None``.
+            **kwargs: Keyword arguments passed to :meth:`get_logits()`
+                if :attr:`_output` is not provided.
+        """
         criterion = self.criterion_noreduction if reduction == 'none' \
             else self.criterion
         if _output is None:
@@ -692,20 +931,11 @@ class Model:
 
     def summary(self, depth: int = None, verbose: bool = True,
                 indent: int = 0, **kwargs):
+        super().summary(indent=indent)
         if depth is None:
             depth = env['verbose']
         if depth is None:
             depth = 1
-        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
-            self.name, **ansi), indent=indent)
-        prints(self.__class__.__name__, indent=indent)
-        for key, value in self.param_list.items():
-            if value:
-                prints('{green}{0:<20s}{reset}'.format(
-                    key, **ansi), indent=indent + 10)
-                prints({v: getattr(self, v)
-                       for v in value}, indent=indent + 10)
-                prints('-' * 20, indent=indent + 10)
         summary(self._model, depth=depth, verbose=verbose,
                 indent=indent + 10, **kwargs)
         prints('-' * 20, indent=indent + 10)
@@ -827,7 +1057,6 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
 
 def create(model_name: str = None, model: Union[str, Model] = None,
            dataset_name: str = None, dataset: Union[str, Dataset] = None,
-           folder_path: str = None,
            config: Config = config,
            class_dict: dict[str, type[Model]] = {},
            **kwargs) -> Model:
@@ -856,11 +1085,12 @@ def create(model_name: str = None, model: Union[str, Model] = None,
     except KeyError:
         print(f'{model_class_name} not in \n{list(class_dict.keys())}')
         raise
-    if folder_path is None and isinstance(dataset, Dataset):
-        folder_path = os.path.join(
-            result['model_dir'], dataset.data_type, dataset.name)
-    return ModelType(name=model_name, dataset=dataset,
-                     folder_path=folder_path, **result)
+
+    if 'folder_path' not in result.keys() and isinstance(dataset, Dataset):
+        result['folder_path'] = os.path.join(result['data_dir'],
+                                             dataset.data_type,
+                                             dataset.name)
+    return ModelType(name=model_name, dataset=dataset, **result)
 
 
 def get_available_models(class_dict: dict[str, type[Model]] = {}

@@ -20,8 +20,33 @@ filter_tuple: tuple[nn.Module] = (transforms.Normalize,
 
 
 def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
-                   use_filter: bool = True, repeat: bool = False,
+                   use_filter: bool = True, non_leaf: bool = False,
                    seq_only: bool = False, init: bool = True) -> list[str]:
+    r"""Get layer names of a :any:`torch.nn.Module`.
+
+    Args:
+        module (torch.nn.Module): the module to process.
+        depth (int): The traverse depth.
+            Defaults to ``-1`` (means :math:`\infty`).
+        prefix (str): The prefix string to all elements.
+            Defaults to empty string ``''``.
+        use_filter (bool): Whether to filter out certain layer types.
+
+            * :any:`torchvision.transforms.Normalize`
+            * :any:`torch.nn.Dropout`
+            * :any:`torch.nn.BatchNorm2d`
+            * :any:`torch.nn.ReLU`
+            * :any:`torch.nn.Sigmoid`
+        non_leaf (bool): Whether to include non-leaf nodes.
+            Defaults to ``False``.
+        seq_only (bool): Whether to only traverse children
+            of :any:`torch.nn.Sequential`.
+            If ``False``, will traverse children of all :any:`torch.nn.Module`.
+            Defaults to ``False``.
+
+    Returns:
+        list[str]: The list of all layer names.
+    """
     layer_name_list: list[str] = []
     if init or (not seq_only or isinstance(module, nn.Sequential))\
             and depth != 0:
@@ -29,10 +54,10 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
             full_name = prefix + ('.' if prefix else '') + \
                 name  # prefix=full_name
             layer_name_list.extend(get_layer_name(child, depth - 1, full_name,
-                                                  use_filter, repeat, seq_only,
+                                                  use_filter, non_leaf, seq_only,
                                                   init=False))
     if prefix and (not use_filter or filter_layer(module)) \
-            and (repeat or depth == 0 or
+            and (non_leaf or depth == 0 or
                  not isinstance(module, nn.Sequential)):
         layer_name_list.append(prefix)
     return layer_name_list
@@ -40,9 +65,43 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
 
 def get_all_layer(module: nn.Module, x: torch.Tensor,
                   layer_input: str = 'input', depth: int = 0,
-                  prefix='', use_filter: bool = True, repeat: bool = False,
+                  prefix='', use_filter: bool = True, non_leaf: bool = False,
                   seq_only: bool = True, verbose: int = 0
                   ) -> dict[str, torch.Tensor]:
+    r"""Get all intermediate layer outputs of
+    :attr:`_input` from any intermediate layer
+    in a :any:`torch.nn.Module`.
+
+    Args:
+        module (torch.nn.Module): the module to process.
+        x (torch.Tensor): The batched input tensor
+            from :attr:`layer_input`.
+        layer_input (str): The intermediate layer name of :attr:`x`.
+            Defaults to ``'input'``.
+        depth (int): The traverse depth.
+            Defaults to ``0``.
+        prefix (str): The prefix string to all elements.
+            Defaults to empty string ``''``.
+        use_filter (bool): Whether to filter out certain layer types.
+
+            * :any:`torchvision.transforms.Normalize`
+            * :any:`torch.nn.Dropout`
+            * :any:`torch.nn.BatchNorm2d`
+            * :any:`torch.nn.ReLU`
+            * :any:`torch.nn.Sigmoid`
+        non_leaf (bool): Whether to include non-leaf nodes.
+            Defaults to ``False``.
+        seq_only (bool): Whether to only traverse children
+            of :any:`torch.nn.Sequential`.
+            If ``False``, will traverse children of all :any:`torch.nn.Module`.
+            Defaults to ``False``.
+        verbose (bool): Whether to show verbose information
+            including layer names and output shape.
+            Defaults to ``True``.
+
+    Returns:
+        dict[str, torch.Tensor]: The dict of all layer outputs.
+    """
     layer_name_list = get_layer_name(
         module, depth=depth, prefix=prefix, use_filter=False)
     if layer_input == 'input':
@@ -55,14 +114,14 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
         print(f'{ansi["green"]}{"layer name":<50s}'
               f'{"output shape":<20}{"module information"}{ansi["reset"]}')
     return _get_all_layer(module, x, layer_input, depth,
-                          prefix, use_filter, repeat,
+                          prefix, use_filter, non_leaf,
                           seq_only, verbose=verbose, init=True)[0]
 
 
 def _get_all_layer(module: nn.Module, x: torch.Tensor,
                    layer_input: str = 'record', depth: int = 0,
                    prefix: str = '', use_filter: bool = True,
-                   repeat: bool = False, seq_only: bool = True,
+                   non_leaf: bool = False, seq_only: bool = True,
                    verbose: int = 0, init: bool = False
                    ) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
     _dict: dict[str, torch.Tensor] = {}
@@ -74,7 +133,7 @@ def _get_all_layer(module: nn.Module, x: torch.Tensor,
             if layer_input == 'record' or \
                     layer_input.startswith(f'{full_name}.'):
                 sub_dict, x = _get_all_layer(child, x, layer_input, depth - 1,
-                                             full_name, use_filter, repeat,
+                                             full_name, use_filter, non_leaf,
                                              seq_only, verbose)
                 _dict.update(sub_dict)
                 layer_input = 'record'
@@ -83,7 +142,7 @@ def _get_all_layer(module: nn.Module, x: torch.Tensor,
     else:
         x = module(x)
     if prefix and (not use_filter or filter_layer(module)) \
-            and (repeat or depth == 0 or
+            and (non_leaf or depth == 0 or
                  not isinstance(module, nn.Sequential)):
         _dict[prefix] = x.clone()
         if verbose:
@@ -104,13 +163,33 @@ def _get_all_layer(module: nn.Module, x: torch.Tensor,
 
 
 def get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
-              layer_input: str = 'input', prefix: str = '',
+              layer_input: str = 'input',
               layer_name_list: list[str] = None,
               seq_only: bool = True) -> torch.Tensor:
+    r"""Get one certain intermediate layer output
+    of :attr:`_input` from any intermediate layer
+    in a :any:`torch.nn.Module`.
+
+    Args:
+        module (torch.nn.Module): the module to process.
+        x (torch.Tensor): The batched input tensor
+            from :attr:`layer_input`.
+        layer_output (str): The intermediate output layer name.
+            Defaults to ``'classifier'``.
+        layer_input (str): The intermediate layer name of :attr:`x`.
+            Defaults to ``'input'``.
+        seq_only (bool): Whether to only traverse children
+            of :any:`torch.nn.Sequential`.
+            If ``False``, will traverse children of all :any:`torch.nn.Module`.
+            Defaults to ``True``.
+
+    Returns:
+        torch.Tensor: The output of layer :attr:`layer_output`.
+    """
     if layer_input == 'input' and layer_output == 'output':
         return module(x)
     if layer_name_list is None:
-        layer_name_list = get_layer_name(module, use_filter=False, repeat=True)
+        layer_name_list = get_layer_name(module, use_filter=False, non_leaf=True)
         layer_name_list.insert(0, 'input')
         layer_name_list.append('output')
     if layer_input not in layer_name_list \
@@ -124,7 +203,7 @@ def get_layer(module: nn.Module, x: torch.Tensor, layer_output: str = 'output',
     if layer_input == 'input':
         layer_input = 'record'
     return _get_layer(module, x, layer_output, layer_input,
-                      prefix, seq_only, init=True)
+                      seq_only, init=True)
 
 
 def _get_layer(module: nn.Module, x: torch.Tensor,
@@ -212,10 +291,12 @@ def generate_target(module: nn.Module, _input: torch.Tensor,
 
 # https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 class ExponentialMovingAverage(torch.optim.swa_utils.AveragedModel):
-    """Maintains moving averages of model parameters using an exponential decay.
+    r"""Maintains moving averages of model parameters using an exponential decay.
     ``ema_avg = decay * avg_model_param + (1 - decay) * model_param``
-    `torch.optim.swa_utils.AveragedModel <https://pytorch.org/docs/stable/optim.html#custom-averaging-strategies>`_
-    is used to compute the EMA.
+
+    See Also:
+        `torch.optim.swa_utils.AveragedModel <https://pytorch.org/docs/stable/optim.html#stochastic-weight-averaging>`_
+        is used to compute the EMA.
     """  # noqa: E501
 
     def __init__(self, model: nn.Module, decay: float):
