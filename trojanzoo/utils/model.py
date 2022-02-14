@@ -46,19 +46,51 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
 
     Returns:
         list[str]: The list of all layer names.
+
+    :Example:
+        >>> import torchvision
+        >>> from trojanzoo.utils.model import get_layer_name
+        >>>
+        >>> model = torchvision.models.resnet18()
+        >>> get_layer_name(model, depth=0)
+        []
+        >>> get_layer_name(model, depth=1)
+        ['conv1', 'maxpool', 'layer1', 'layer2',
+        'layer3', 'layer4', 'avgpool', 'fc']
+        >>> get_layer_name(model, depth=2, prefix='model')
+        ['model.conv1', 'model.maxpool', 'model.layer1.0', 'model.layer1.1',
+        'model.layer2.0', 'model.layer2.1', 'model.layer3.0', 'model.layer3.1',
+        'model.layer4.0', 'model.layer4.1', 'model.avgpool', 'model.fc']
+        >>> get_layer_name(model, seq_only=True)
+        ['conv1', 'maxpool', 'layer1.0', 'layer1.1', 'layer2.0', 'layer2.1',
+        'layer3.0', 'layer3.1', 'layer4.0', 'layer4.1', 'avgpool', 'fc']
+        >>> get_layer_name(model, depth=2, seq_only=True, non_leaf=True)
+        ['conv1', 'maxpool',
+        'layer1.0', 'layer1.1', 'layer1',
+        'layer2.0', 'layer2.1', 'layer2',
+        'layer3.0', 'layer3.1', 'layer3',
+        'layer4.0', 'layer4.1', 'layer4',
+        'avgpool', 'fc']
+        >>> get_layer_name(model)
+        ['conv1', 'maxpool',
+        'layer1.0.conv1', 'layer1.0.conv2', 'layer1.1.conv1', 'layer1.1.conv2',
+        'layer2.0.conv1', 'layer2.0.conv2', 'layer2.0.downsample.0', 'layer2.1.conv1', 'layer2.1.conv2',
+        'layer3.0.conv1', 'layer3.0.conv2', 'layer3.0.downsample.0', 'layer3.1.conv1', 'layer3.1.conv2',
+        'layer4.0.conv1', 'layer4.0.conv2', 'layer4.0.downsample.0', 'layer4.1.conv1', 'layer4.1.conv2',
+        'avgpool', 'fc']
     """
     layer_name_list: list[str] = []
-    if init or (not seq_only or isinstance(module, nn.Sequential))\
+    is_leaf = True
+    if (init or (not seq_only or isinstance(module, nn.Sequential)))\
             and depth != 0:
         for name, child in module.named_children():
-            full_name = prefix + ('.' if prefix else '') + \
-                name  # prefix=full_name
+            full_name = prefix + ('.' if prefix else '') + name  # prefix=full_name
             layer_name_list.extend(get_layer_name(child, depth - 1, full_name,
                                                   use_filter, non_leaf, seq_only,
                                                   init=False))
+            is_leaf = False
     if prefix and (not use_filter or filter_layer(module)) \
-            and (non_leaf or depth == 0 or
-                 not isinstance(module, nn.Sequential)):
+            and (non_leaf or depth == 0 or is_leaf):
         layer_name_list.append(prefix)
     return layer_name_list
 
@@ -101,6 +133,34 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
 
     Returns:
         dict[str, torch.Tensor]: The dict of all layer outputs.
+
+    :Example:
+        >>> import torch
+        >>> import torchvision
+        >>> from trojanzoo.utils.model import get_all_layer
+        >>>
+        >>> model = torchvision.models.densenet121()
+        >>> x = torch.randn(5, 3, 224, 224)
+        >>> y = get_all_layer(model.features, x, verbose=True)
+        layer name                                        output shape        module information
+        conv0                                             [5, 64, 112, 112]   Conv2d
+        pool0                                             [5, 64, 56, 56]     MaxPool2d
+        denseblock1                                       [5, 256, 56, 56]    _DenseBlock
+        transition1.conv                                  [5, 128, 56, 56]    Conv2d
+        transition1.pool                                  [5, 128, 28, 28]    AvgPool2d
+        denseblock2                                       [5, 512, 28, 28]    _DenseBlock
+        transition2.conv                                  [5, 256, 28, 28]    Conv2d
+        transition2.pool                                  [5, 256, 14, 14]    AvgPool2d
+        denseblock3                                       [5, 1024, 14, 14]   _DenseBlock
+        transition3.conv                                  [5, 512, 14, 14]    Conv2d
+        transition3.pool                                  [5, 512, 7, 7]      AvgPool2d
+        denseblock4                                       [5, 1024, 7, 7]     _DenseBlock
+        >>> y.keys()
+        dict_keys(['conv0', 'pool0',
+        'denseblock1', 'transition1.conv', 'transition1.pool',
+        'denseblock2', 'transition2.conv', 'transition2.pool',
+        'denseblock3', 'transition3.conv', 'transition3.pool',
+        'denseblock4'])
     """
     layer_name_list = get_layer_name(
         module, depth=depth, prefix=prefix, use_filter=False)

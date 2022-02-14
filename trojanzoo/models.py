@@ -425,20 +425,22 @@ class Model(BasicObject):
         return self.softmax(self(_input, **kwargs))
 
     def get_target_prob(self, _input: torch.Tensor,
-                        target: Union[torch.Tensor, list[int]],
+                        target: Union[torch.Tensor, list[int], int],
                         **kwargs) -> torch.Tensor:
-        r"""Get the probability w.r.t. :attr:`target` classes of :attr:`_input`
+        r"""Get the probability w.r.t. :attr:`target` class of :attr:`_input`
         (using :any:`torch.gather`).
 
         Args:
             _input (torch.Tensor): The batched input tensor
                 passed to :func:`_Model.get_logits()`.
-            target (torch.Tensor | list[int]): The classes to pick.
+            target (torch.Tensor | list[int] | int): Batched target classes.
             **kwargs: Keyword arguments passed to :meth:`get_logits()`.
 
         Returns:
-            torch.Tensor: The probability tensor with shape ``(N, len(target))``.
+            torch.Tensor: The probability tensor with shape ``(N)``.
         """
+        if isinstance(target, int):
+            target = [target] * len(_input)
         if isinstance(target, list):
             target = torch.tensor(target, device=_input.device)
         return self.get_prob(_input, **kwargs).gather(
