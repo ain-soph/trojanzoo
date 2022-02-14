@@ -1106,7 +1106,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
         raise
 
     if 'folder_path' not in result.keys() and isinstance(dataset, Dataset):
-        result['folder_path'] = os.path.join(result['data_dir'],
+        result['folder_path'] = os.path.join(result['model_dir'],
                                              dataset.data_type,
                                              dataset.name)
     return ModelType(name=model_name, dataset=dataset, **result)
