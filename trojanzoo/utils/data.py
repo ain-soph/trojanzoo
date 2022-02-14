@@ -164,7 +164,7 @@ def split_dataset(dataset: Union[Dataset, Subset],
             This argument cannot be used together with :attr:`percent`.
             If ``None``, use :attr:`percent` to calculate length instead.
             Defaults to ``None``.
-        percent (int): The split ratio for the first subset.
+        percent (float): The split ratio for the first subset.
             This argument cannot be used together with :attr:`length`.
             ``length = percent * len(dataset)``.
             Defaults to ``None``.
