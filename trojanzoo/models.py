@@ -32,9 +32,9 @@ from collections.abc import Callable
 if TYPE_CHECKING:
     import torch.utils.data
 
-__all__ = ['Model', 'add_argument', 'create',
-           'get_available_models', 'output_available_models',
-           'get_model_class']
+__all__ = ['_Model', 'Model',
+           'add_argument', 'create',
+           'output_available_models']
 
 
 class _Model(nn.Module):
@@ -605,14 +605,6 @@ class Model(BasicObject):
 
     # -------------------------------------------------------- #
 
-    # Define the optimizer
-    # and transfer to that tuning mode.
-    # train_opt: 'full' or 'partial' (default: 'partial')
-    # lr: (default: [full:2e-3, partial:2e-4])
-    # OptimType: to be implemented
-    #
-    # return: optimizer
-
     def define_optimizer(
             self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
             OptimType: Union[str, type[Optimizer]] = 'SGD',
@@ -673,8 +665,6 @@ class Model(BasicObject):
                 _lr_scheduler = main_lr_scheduler
         return optimizer, _lr_scheduler
 
-    # define loss function
-    # Cross Entropy
     # TODO: linting, or maybe nn.Module for generic?
     def define_criterion(self, **kwargs) -> nn.CrossEntropyLoss:
         if 'weight' not in kwargs.keys():
@@ -1053,6 +1043,20 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
                  model: Union[str, Model] = None,
                  config: Config = config,
                  class_dict: dict[str, type[Model]] = {}):
+    r"""
+    | Add model arguments to argument parser.
+    | For specific arguments implementation, see :meth:`Model.add_argument`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+        model_name (str): The model name.
+        model (str | Model): The model instance or model name
+            (as the alias of `model_name`).
+        config (Config): The default parameter config,
+            which contains the default model name if not provided.
+        class_dict (dict[str, type[Model]]):
+            Map from model name to model class.
+    """
     dataset_name = get_name(arg_list=['-d', '--dataset'])
     if dataset_name is None:
         dataset_name = config.full_config['dataset']['default_dataset']
@@ -1079,6 +1083,30 @@ def create(model_name: str = None, model: Union[str, Model] = None,
            config: Config = config,
            class_dict: dict[str, type[Model]] = {},
            **kwargs) -> Model:
+    r"""
+    | Create a model instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | The default value of :attr:`folder_path` is
+      ``'{data_dir}/{data_type}/{name}'``.
+    | For model implementation, see :class:`Model`.
+
+    Args:
+        model_name (str): The model name.
+        model (str | Model): The model instance or model name
+            (as the alias of `model_name`).
+        dataset_name (str): The dataset name.
+        dataset (str | Dataset): The dataset instance or dataset name
+            (as the alias of `dataset_name`).
+        config (Config): The default parameter config.
+        class_dict (dict[str, type[model]]):
+            Map from model name to model class.
+        **kwargs: The keyword arguments
+            passed to model init method.
+
+    Returns:
+        Model: The model instance.
+    """
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     model_name = get_name(name=model_name, module=model,
@@ -1119,6 +1147,13 @@ def get_available_models(class_dict: dict[str, type[Model]] = {}
 
 def output_available_models(class_dict: dict[str, type[Model]] = {},
                             indent: int = 0) -> None:
+    r"""Output all available model names.
+
+    Args:
+        class_dict (dict[str, type[Model]]): Map from model name to model class.
+        indent (int): The space indent for the entire string.
+            Defaults to ``0``.
+    """
     names_dict = get_available_models(class_dict)
     for k in sorted(names_dict.keys()):
         prints('{yellow}{k}{reset}'.format(k=k, **ansi), indent=indent)

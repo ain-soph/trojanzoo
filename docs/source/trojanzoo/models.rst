@@ -2,11 +2,15 @@
 
 :mod:`trojanzoo.models`
 ==================================
-
 .. currentmodule:: trojanzoo.models
+
+.. autofunction:: add_argument
+.. autofunction:: create
+.. autofunction:: output_available_models
 
 .. autoclass:: trojanzoo.models.Model
    :members:
 
 .. autoclass:: trojanzoo.models._Model
    :members:
+

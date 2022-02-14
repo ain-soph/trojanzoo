@@ -12,6 +12,8 @@ class Lock:
     to avoid auxiliary computation operations.
 
     :Example:
+        >>> from trojanzoo.utils.lock import Lock
+        >>>
         >>> track = Lock()
         >>> print(bool(track))
         False

@@ -90,8 +90,7 @@ def train(module: nn.Module, num_classes: int,
                 print_prefix, output_iter(_epoch, epochs), **ansi)
             header = header.ljust(30 + get_ansi_len(header))
             if env['tqdm']:
-                header = '{upline}{clear_line}'.format(**ansi) + header
-                loader_epoch = tqdm(loader_epoch)
+                loader_epoch = tqdm(loader_epoch, leave=False)
             loader_epoch = logger.log_every(
                 loader_epoch, header=header, indent=indent)
         if change_train_eval:
@@ -229,8 +228,7 @@ def validate(module: nn.Module, num_classes: int,
         header = header.ljust(
             max(len(print_prefix), 30) + get_ansi_len(header))
         if env['tqdm']:
-            header = '{upline}{clear_line}'.format(**ansi) + header
-            loader_epoch = tqdm(loader_epoch)
+            loader_epoch = tqdm(loader_epoch, leave=False)
         loader_epoch = logger.log_every(
             loader_epoch, header=header, indent=indent)
     for data in loader_epoch:
@@ -275,8 +273,7 @@ def compare(module1: nn.Module, module2: nn.Module,
         header = header.ljust(
             max(len(print_prefix), 30) + get_ansi_len(header))
         if env['tqdm']:
-            header = '{upline}{clear_line}'.format(**ansi) + header
-            loader_epoch = tqdm(loader_epoch)
+            loader_epoch = tqdm(loader_epoch, leave=False)
         loader_epoch = logger.log_every(
             loader_epoch, header=header, indent=indent)
     with torch.no_grad():

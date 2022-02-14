@@ -20,8 +20,9 @@ class TensorListDataset(Dataset):
             :any:`torch.utils.data.Dataset`.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset
         >>> import torch
+        >>> from trojanzoo.utils.data import TensorListDataset
+        >>>
         >>> data = torch.ones(10, 3, 32, 32)
         >>> targets = list(range(10))
         >>> dataset = TensorListDataset(data, targets)
@@ -77,9 +78,10 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
         (list | None, list[int]): The tuple of ``(data, targets)``.
 
     :Example:
-        >>> from trojanzoo.utils.data import dataset_to_list
         >>> from torchvision.datasets import MNIST
         >>> from torchvision.transforms import ToTensor
+        >>> from trojanzoo.utils.data import dataset_to_list
+        >>>
         >>> dataset = MNIST('./', train=False, download=True)
         >>> data, targets = dataset_to_list(dataset)
         >>> type(data[0])
@@ -130,8 +132,9 @@ def sample_batch(dataset: Dataset, idx: list[int] = None,
         (list, list[int]): The tuple of sampled batch ``(data, targets)``.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset, sample_batch
         >>> import torch
+        >>> from trojanzoo.utils.data import TensorListDataset, sample_batch
+        >>>
         >>> data = torch.ones(10, 3, 32, 32)
         >>> targets = list(range(10))
         >>> dataset = TensorListDataset(data, targets)
@@ -180,8 +183,9 @@ def split_dataset(dataset: Union[Dataset, Subset],
             The two splitted subsets.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset, split_dataset
         >>> import torch
+        >>> from trojanzoo.utils.data import TensorListDataset, split_dataset
+        >>>
         >>> data = torch.ones(11, 3, 32, 32)
         >>> targets = list(range(11))
         >>> dataset = TensorListDataset(data, targets)
@@ -226,9 +230,9 @@ def get_class_subset(dataset: Dataset,
         torch.utils.data.Subset: The subset with labels in :attr:`class_list`.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset
-        >>> from trojanzoo.utils.data import get_class_subset
         >>> import torch
+        >>> from trojanzoo.utils.data import get_class_subset, TensorListDataset
+        >>>
         >>> data = torch.ones(11, 3, 32, 32)
         >>> targets = list(range(11))
         >>> dataset = TensorListDataset(data, targets)

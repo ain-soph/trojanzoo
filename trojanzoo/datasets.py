@@ -490,7 +490,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
 def create(dataset_name: str = None, dataset: str = None,
            config: Config = config,
            class_dict: dict[str, type[Dataset]] = {},
-           **kwargs):
+           **kwargs) -> Dataset:
     r"""
     | Create a dataset instance.
     | For arguments not included in :attr:`kwargs`,
@@ -507,6 +507,9 @@ def create(dataset_name: str = None, dataset: str = None,
             Map from dataset name to dataset class.
         **kwargs: The keyword arguments
             passed to dataset init method.
+
+    Returns:
+        Dataset: The dataset instance.
     """
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
