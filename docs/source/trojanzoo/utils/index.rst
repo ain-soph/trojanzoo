@@ -20,3 +20,4 @@
    :members:
 
 .. autofunction:: trojanzoo.utils.memory.empty_cache
+.. autofunction:: trojanzoo.utils.memory.output_memory

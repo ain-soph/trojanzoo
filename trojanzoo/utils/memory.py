@@ -27,6 +27,24 @@ def empty_cache(threshold: float = None):
 
 def output_memory(device: Union[str, torch.device] = None,
                   full: bool = False, indent: int = 0, **kwargs):
+    r"""Output memory usage information.
+
+    Args:
+        device (str | torch.device):
+            Passed to :any:`torch.cuda.memory_summary`
+            or :any:`torch.cuda.memory_allocated` |
+            :any:`torch.cuda.memory_reserved`.
+            Defaults to ``None``.
+        full (bool):
+            Whether to call :any:`torch.cuda.memory_summary`.
+            Otherwise, call :any:`torch.cuda.memory_allocated`
+            and :any:`torch.cuda.memory_reserved`.
+            Defaults to ``False``.
+        indent (int): The space indent for the entire string.
+            Defaults to ``0``.
+        **kwargs: Keyword arguments passed to
+            :any:`torch.cuda.memory_summary`.
+    """
     if full:
         prints(torch.cuda.memory_summary(device=device, **kwargs))
     else:

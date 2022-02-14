@@ -121,8 +121,9 @@ class Optimizer(ABC, Process):
         if mode in ['start', 'end']:
             prints(f'{self.name} Optimize {mode}', indent=indent)
         elif mode in ['middle']:
-            self.output_iter(name=self.name, _iter=_iter, iteration=iteration,
-                             indent=indent + 4)
+            prints(self.output_iter(name=self.name, _iter=_iter,
+                                    iteration=iteration),
+                   indent=indent + 4)
         if 'memory' in output:
             output_memory(indent=indent + 4)
 
