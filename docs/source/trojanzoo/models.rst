@@ -10,6 +10,7 @@
 
 .. autoclass:: trojanzoo.models.Model
    :members:
+   :private-members: _train, _validate
 
 .. autoclass:: trojanzoo.models._Model
    :members:
