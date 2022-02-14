@@ -941,6 +941,7 @@ class Model(BasicObject):
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs) -> None:
+        r"""Train the model"""
         loader_train = loader_train if loader_train is not None \
             else self.dataset.loader['train']
         get_data_fn = get_data_fn if callable(get_data_fn) else self.get_data
@@ -984,6 +985,11 @@ class Model(BasicObject):
                   tag: str = '', _epoch: int = None,
                   accuracy_fn: Callable[..., list[float]] = None,
                   **kwargs) -> tuple[float, float]:
+        r"""Evaluate the model.
+
+        Returns:
+            (float, float): Loss and accuracy.
+        """
         module = self._model if module is None else module
         num_classes = self.num_classes if num_classes is None else num_classes
         loader = loader or self.dataset.loader['valid']
@@ -999,7 +1005,6 @@ class Model(BasicObject):
                         writer=writer, main_tag=main_tag, tag=tag,
                         _epoch=_epoch, accuracy_fn=accuracy_fn, **kwargs)
 
-    # TODO: this method shall be removed
     def _compare(self, peer: nn.Module = None,
                  loader: torch.utils.data.DataLoader = None,
                  print_prefix: str = 'Validate',
@@ -1008,12 +1013,10 @@ class Model(BasicObject):
                      ..., tuple[torch.Tensor, torch.Tensor]] = None,
                  criterion: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = None,
                  **kwargs) -> tuple[float, float]:
-        module1 = self  # TODO: type annotation issues (solve in python 3.10)
-        module2 = peer
         loader = loader or self.dataset.loader['valid']
         get_data_fn = get_data_fn or self.get_data
         criterion = criterion or self.criterion
-        return compare(module1, module2, loader,
+        return compare(self, peer, loader,
                        print_prefix, indent, verbose,
                        get_data_fn, criterion=self.criterion, **kwargs)
 

@@ -287,7 +287,7 @@ class ImageModel(Model):
                     noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps,
                                                 random_init=self.adv_train_random_init,
                                                 device=_input.device)
-                    adv_x = add_noise(_input=_input, noise=noise, batch=self.pgd.universal,
+                    adv_x = add_noise(x=_input, noise=noise, batch=self.pgd.universal,
                                       clip_min=self.pgd.clip_min, clip_max=self.pgd.clip_max)
                     noise.data = self.pgd.valid_noise(adv_x, _input)
                     for m in range(self.adv_train_iter):

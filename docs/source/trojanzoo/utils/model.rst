@@ -9,4 +9,7 @@
 .. autofunction:: get_all_layer
 .. autofunction:: get_layer
 .. autofunction:: summary
+.. autofunction:: activate_params
+.. autofunction:: accuracy
+.. autofunction:: generate_target
 .. autoclass:: ExponentialMovingAverage

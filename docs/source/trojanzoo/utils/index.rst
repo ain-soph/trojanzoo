@@ -13,6 +13,7 @@
    logger<logger>
    model<model>
    module<module>
+   tensor<tensor>
    train<train>
 
 .. autoclass:: trojanzoo.utils.lock.Lock

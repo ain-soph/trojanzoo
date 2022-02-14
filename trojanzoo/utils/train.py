@@ -44,8 +44,7 @@ def train(module: nn.Module, num_classes: int,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epochs',
           backward_and_step: bool = True,
           **kwargs) -> None:
-    r"""Train function.
-    """
+    r"""Train the model"""
     if epochs <= 0:
         return
     get_data_fn = get_data_fn or (lambda x: x)
@@ -211,7 +210,10 @@ def validate(module: nn.Module, num_classes: int,
              tag: str = '', _epoch: int = None,
              accuracy_fn: Callable[..., list[float]] = None,
              **kwargs) -> tuple[float, float]:
-    r"""Validate function.
+    r"""Evaluate the model.
+
+    Returns:
+        (float, float): Loss and accuracy.
     """
     module.eval()
     get_data_fn = get_data_fn or (lambda x: x)
