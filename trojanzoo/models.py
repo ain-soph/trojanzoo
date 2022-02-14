@@ -45,15 +45,15 @@ class _Model(nn.Module):
             :meth:`define_features` and :meth:`define_classifier`.
 
     Attributes:
-        num_classes (int): Number of classes.
+        num_classes (int): Number of classes. Defaults to ``None``.
 
-        folder_path (str): Directory path to store dataset.
-            Defaults to ``'{data_dir}/{data_type}/{name}'``.
-        loss_weights (numpy.ndarray | None): The loss weights w.r.t. each class.
-
-        batch_size (int): Batch size of training set (always positive).
-        valid_batch_size (int): Batch size of validation set.
+        preprocess (torch.nn.Module): Defaults to :meth:`define_preprocess()`.
+        features (torch.nn.Module): Defaults to :meth:`define_features()`.
+        pool (torch.nn.Module): :any:`torch.nn.AdaptiveAvgPool2d` ``((1, 1))``.
+        classifier (torch.nn.Module): Defaults to :meth:`define_classifier()`.
+        softmax (torch.nn.Module): :any:`torch.nn.Softmax` ``(dim=1)``.
     """
+
     def __init__(self, num_classes: int = None, **kwargs):
         super().__init__()
         self.preprocess = self.define_preprocess(**kwargs)
@@ -66,19 +66,76 @@ class _Model(nn.Module):
 
         self.num_classes = num_classes
 
+    @staticmethod
     def define_preprocess(self, **kwargs) -> nn.Module:
+        r"""Define preprocess before feature extractor.
+
+        Returns:
+            torch.nn.Module: :any:`torch.nn.Identity()`.
+        """
         return nn.Identity()
 
     @staticmethod
     def define_features(**kwargs) -> nn.Module:
+        r"""Define feature extractor.
+
+        Returns:
+            torch.nn.Module: :any:`torch.nn.Identity()`.
+        """
         return nn.Identity()
 
     @staticmethod
     def define_classifier(conv_dim: int = 0, num_classes: int = None,
                           fc_depth: int = 0, fc_dim: int = 0,
                           activation: type[nn.Module] = nn.ReLU,
+                          activation_inplace: bool = True,
                           dropout: float = 0.5,
                           **kwargs) -> nn.Sequential:
+        r"""Define classifier as
+        ``(Linear -> Activation -> Dropout ) * (fc_depth - 1) -> Linear``.
+        If there is only 1 linear layer, its name will be ``'fc'``.
+        Else, all layer names will be indexed starting from ``0``
+        (e.g., ``'fc1', 'relu1', 'dropout0'``).
+
+        Args:
+            conv_dim (int): The last convolutional dimension.
+                This serves as the :attr:`in_features` of first layer.
+                Defaults to ``0``.
+            num_classes (int): The number of classes.
+                This serves as the :attr:`out_features` of last layer.
+                Defaults to ``None``.
+            fc_depth (int): The number of linear layers.
+                Return an empty sequential if it's ``0``.
+                Defaults to ``0``.
+            fc_dim (int): The intermediate linear feature dimension.
+                Defaults to ``0``.
+            activation (type[torch.nn.Module]):
+                The type of activation layer.
+                Defaults to :any:`torch.nn.ReLU`.
+            activation_inplace (bool): Whether to use inplace activation.
+                Defaults to ``'True'``
+            dropout (float): The drop out probability.
+                Will NOT add dropout layers if it's ``0``.
+                Defaults to ``0.5``.
+            kwargs (dict[str, Any]): Ignored arguments.
+
+        Returns:
+            torch.nn.Sequential: The sequential classifier.
+
+        :Examples:
+            >>> from trojanzoo.models import _Model
+            >>>
+            >>> _Model.define_classifier(conv_dim=5, num_classes=10, fc_depth=3, fc_dim=4)
+            Sequential(
+                (fc1): Linear(in_features=5, out_features=4, bias=True)
+                (relu1): ReLU(inplace=True)
+                (dropout1): Dropout(p=0.5, inplace=False)
+                (fc2): Linear(in_features=4, out_features=4, bias=True)
+                (relu2): ReLU(inplace=True)
+                (dropout2): Dropout(p=0.5, inplace=False)
+                (fc3): Linear(in_features=4, out_features=10, bias=True)
+            )
+        """
         seq = nn.Sequential()
         if fc_depth <= 0:
             return seq
@@ -94,8 +151,8 @@ class _Model(nn.Module):
                 seq.add_module(
                     f'fc{i + 1:d}', nn.Linear(dim_list[i], dim_list[i + 1]))
                 if activation:
-                    seq.add_module(
-                        f'{activation_name}{i + 1:d}', activation(True))
+                    seq.add_module(f'{activation_name}{i + 1:d}',
+                                   activation(inplace=activation_inplace))
                 if dropout > 0:
                     seq.add_module(f'dropout{i + 1:d}', nn.Dropout(p=dropout))
             seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
@@ -105,16 +162,20 @@ class _Model(nn.Module):
     # input: (batch_size, channels, height, width)
     # output: (batch_size, logits)
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""``x -> self.get_final_fm -> self.classifier -> return``"""
         x = self.get_final_fm(x, **kwargs)
         x = self.classifier(x)
         return x
 
     # input: (batch_size, channels, height, width)
     # output: (batch_size, [feature_map])
+    # TODO: combine with get_final_fm ? Consider GNN cases.
     def get_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""``x -> self.preprocess -> self.features -> return``"""
         return self.features(self.preprocess(x))
 
     def get_final_fm(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""``x -> self.get_fm -> self.pool -> self.classifier -> return``"""
         x = self.get_fm(x, **kwargs)
         x = self.pool(x)
         x = self.flatten(x)

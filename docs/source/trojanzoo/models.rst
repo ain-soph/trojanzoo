@@ -4,3 +4,6 @@
 ==================================
 
 .. currentmodule:: trojanzoo.models
+
+.. autoclass:: trojanzoo.models._Model
+   :members:
