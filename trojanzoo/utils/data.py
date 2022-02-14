@@ -64,13 +64,14 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
         label_only (bool): Whether to only return the ``targets``.
             If ``True``, the first return element ``data`` will be ``None``.
             Defaults to ``False``.
-        force (bool): Whether to force traversing the dataset
-            to get data and targets.
-            If ``False``, it will return
-            ``(datasets.data, datasets.targets)`` if possible.
-            It should be ``True`` when there is extra operations
-            for ``__getitem__`` or ``transform``.
-            Defaults to ``True``.
+        force (bool):
+            | Whether to force traversing the dataset
+              to get data and targets.
+            | If ``False``, it will return
+              ``(datasets.data, datasets.targets)`` if possible.
+            | It should be ``True`` when there is extra operations
+              for ``__getitem__`` or ``transform``.
+            | Defaults to ``True``.
 
     Returns:
         (list | None, list[int]): The tuple of ``(data, targets)``.
