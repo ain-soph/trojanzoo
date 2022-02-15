@@ -104,7 +104,7 @@ env = Env(default=None)
 def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     r"""
     | Add environ arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Environ.add_argument`.
+    | For specific arguments implementation, see :meth:`Env.add_argument`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.
