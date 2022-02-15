@@ -98,8 +98,8 @@ class ABS(BackdoorDefense):
         score_list = [0.0] * len(list(neuron_dict.keys()))
         result_dict = {}
         self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
-        self.attack.mark.width_offset = 0
+        self.attack.mark.mark_height_offset = 0
+        self.attack.mark.mark_width_offset = 0
         for label, label_list in neuron_dict.items():
             print('label: ', label)
             best_score = 1e7
@@ -385,6 +385,6 @@ class ABS(BackdoorDefense):
         self.attack.mark.alpha_mask = to_tensor(_dict[self.target_class]['mask'])
         self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
         self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
-        self.attack.mark.width_offset = 0
+        self.attack.mark.mark_height_offset = 0
+        self.attack.mark.mark_width_offset = 0
         print('defense results loaded from: ', path)

@@ -5,7 +5,6 @@
 
 .. currentmodule:: trojanzoo.utils.tensor
 
-.. autofunction:: cos_sim
 .. autofunction:: tanh_func
 .. autofunction:: atan_func
 .. autofunction:: to_tensor

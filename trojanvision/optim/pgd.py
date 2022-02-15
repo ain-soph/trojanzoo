@@ -3,11 +3,12 @@
 import trojanzoo.optim
 
 from trojanzoo.utils.output import prints
-from trojanzoo.utils.tensor import add_noise, cos_sim
+from trojanzoo.utils.tensor import add_noise
 from trojanzoo.environ import env
 
 import torch
 import torch.autograd
+import torch.nn.functional as F
 from collections.abc import Callable
 from typing import Iterable, Union
 
@@ -134,7 +135,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         grad = self.calc_grad(loss_fn, adv_input[current_idx], loss_kwargs=current_loss_kwargs)
         if self.grad_method != 'white' and 'middle' in output:
             real_grad = self.whitebox_grad(loss_fn, adv_input[current_idx], loss_kwargs=current_loss_kwargs)
-            prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
+            prints('cos<real, est> = ',
+                   F.cosine_similarity(grad.sign().flatten(), real_grad.sign().flatten()),
                    indent=self.indent + 2)
         if self.universal:
             grad = grad.mean(dim=0)

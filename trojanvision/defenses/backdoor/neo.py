@@ -100,13 +100,13 @@ class NEO(BackdoorDefense):
             if len(pos_pairs) == 0:
                 continue
             for j, pos in enumerate(pos_pairs):
-                self.attack.mark.height_offset = pos[0]
-                self.attack.mark.width_offset = pos[1]
+                self.attack.mark.mark_height_offset = pos[0]
+                self.attack.mark.mark_width_offset = pos[1]
                 mark_class.org_mark = _input[i, :, pos[0]:pos[0] + self.size[0], pos[1]:pos[1] + self.size[1]]
                 mark_class.org_mask = torch.ones(self.size, dtype=torch.bool)
                 mark_class.org_alpha_mask = torch.ones(self.size, dtype=torch.float)
                 mark_class.mark, mark_class.mask, mark_class.alpha_mask = mark_class.mask_mark(
-                    height_offset=pos[0], width_offset=pos[1])
+                    mark_height_offset=pos[0], mark_width_offset=pos[1])
                 target_acc = self.confirm_backdoor()
                 output_str = f'    {j:3d}  Acc: {target_acc:5.2f}'
                 if not self.attack.mark.random_pos:

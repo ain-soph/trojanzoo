@@ -36,8 +36,8 @@ class TrojanNet(BadNet):
         self.x, self.y = self.synthesize_training_sample()
         self.mark.org_mark = self.x[self.target_class].expand(
             self.dataset.data_shape[0], -1).view(self.mark.org_mark.shape)
-        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
-                                                   width_offset=self.mark.width_offset)
+        self.mark.mark, _, _ = self.mark.mask_mark(mark_height_offset=self.mark.mark_height_offset,
+                                                   mark_width_offset=self.mark.mark_width_offset)
         self.mlp_dim = len(self.y) + 1
         self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=self.mlp_dim,
                                 dataset=self.dataset, loss_weights=None)
@@ -166,8 +166,8 @@ class _Combined_Model(_ImageModel):
 
     def forward(self, x: torch.FloatTensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
-        trigger = x[..., self.mark.height_offset:self.mark.height_offset + self.mark.mark_height,
-                    self.mark.width_offset:self.mark.width_offset + self.mark.mark_width]
+        trigger = x[..., self.mark.mark_height_offset:self.mark.mark_height_offset + self.mark.mark_height,
+                    self.mark.mark_width_offset:self.mark.mark_width_offset + self.mark.mark_width]
         trigger = trigger.mean(1).flatten(start_dim=1)
         mlp_output = self.mlp_model(trigger)
         mlp_output = torch.where(mlp_output == mlp_output.max(),

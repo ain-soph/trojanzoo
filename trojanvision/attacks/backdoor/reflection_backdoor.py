@@ -83,9 +83,9 @@ class ReflectionBackdoor(BadNet):
         self.mark.org_mark = byte2float(org_mark_img)
 
         self.mark.org_mask, self.mark.org_alpha_mask = self.mark.org_mask_mark(self.mark.org_mark,
-                                                                               self.mark.edge_color, self.mark.mark_alpha)
+                                                                               self.mark.mark_background_color, self.mark.mark_alpha)
         self.mark.mark, self.mark.mask, self.mark.alpha_mask = self.mark.mask_mark(
-            height_offset=self.mark.height_offset, width_offset=self.mark.width_offset)
+            mark_height_offset=self.mark.mark_height_offset, mark_width_offset=self.mark.mark_width_offset)
 
     def generate_reflection_img(self, img_input, img_bg, img_rf, ghost_rate=0.39, max_image_size=560, alpha_t=-1., offset=(0, 0), sigma=-1, ghost_alpha=-1.):
         '''
@@ -93,7 +93,7 @@ class ReflectionBackdoor(BadNet):
         return the blended image and precessed reflection image
         :param img_bg: candidate background image
         :param img_rf: candidate reflection image
-        :param ghost_rate: ghost rate. 
+        :param ghost_rate: ghost rate.
         '''
 
         import cv2  # type: ignore

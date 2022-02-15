@@ -10,7 +10,7 @@ import os
 from PIL import Image
 from typing import Any, Union    # TODO: python 3.10
 
-__all__ = ['cos_sim', 'tanh_func', 'atan_func',
+__all__ = ['tanh_func', 'atan_func',
            'to_tensor', 'to_numpy', 'to_list',
            'to_pil_image', 'gray_img', 'gray_tensor',
            'byte2float', 'float2byte',
@@ -20,24 +20,6 @@ __all__ = ['cos_sim', 'tanh_func', 'atan_func',
 _map = {'int': torch.int, 'long': torch.long,
         'byte': torch.uint8, 'uint8': torch.uint8,
         'float': torch.float, 'double': torch.double}
-
-
-def cos_sim(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    r"""Calculate cosine similarity.
-
-    .. code-block:: python
-
-        (a * b).sum() / a.norm(p=2) / b.norm(p=2)
-
-    Args:
-        a (torch.Tensor): The first input tensor.
-        b (torch.Tensor): The other input tensor.
-
-    Returns:
-        torch.Tensor: The scalar tensor of similarity score.
-
-    """
-    return (a * b).sum() / a.norm(p=2) / b.norm(p=2)
 
 
 def tanh_func(x: torch.Tensor) -> torch.Tensor:
@@ -51,7 +33,7 @@ def tanh_func(x: torch.Tensor) -> torch.Tensor:
         x (torch.Tensor): The tensor ranging from
             :math:`[-\infty, +\infty]`.
     Returns:
-        torch.Tensor: The tensor ranging from ``[0, 1]``
+        torch.Tensor: The tensor ranging in ``[0, 1]``
     """
     return x.tanh().add(1).mul(0.5)
 
@@ -67,7 +49,7 @@ def atan_func(x: torch.Tensor) -> torch.Tensor:
         x (torch.Tensor): The tensor ranging from
             :math:`[-\infty], +\infty]`.
     Returns:
-        torch.Tensor: The tensor ranging from ``[0, 1]``
+        torch.Tensor: The tensor ranging in ``[0, 1]``
     """
     return x.atan().div(math.pi).add(0.5)
 # ------------------- Format Transform --------------------------- #
@@ -203,7 +185,7 @@ def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image],
     with shape ``([N], 3, H, W)`` to gray scale ``([N], 1, H, W)``.
 
     Args:
-        img (torch.Tensor): ``torch.FloatTensor`` ranging from ``[0, 1]``
+        img (torch.Tensor): ``torch.FloatTensor`` ranging in ``[0, 1]``
             with shape ``([N], 3, H, W)``.
         num_output_channels (int): Passed to
             :any:`torchvision.transforms.functional.rgb_to_grayscale`.
@@ -218,14 +200,14 @@ def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image],
 
 def byte2float(img: Union[torch.Tensor, np.ndarray, Image.Image]) -> torch.Tensor:
     r"""transform an image ranging from ``[0, 255]``
-    to ``torch.FloatTensor`` ranging from ``[0, 1]``.
+    to ``torch.FloatTensor`` ranging in ``[0, 1]``.
 
     Args:
         img (torch.Tensor | numpy.ndarray | PIL.Image.Image):
             image ranging from ``[0, 255]``.
 
     Returns:
-        torch.Tensor: ``torch.FloatTensor`` ranging from ``[0, 1]``.
+        torch.Tensor: ``torch.FloatTensor`` ranging in ``[0, 1]``.
     """
     if isinstance(img, torch.Tensor):
         img = to_numpy(img)
@@ -242,11 +224,11 @@ def byte2float(img: Union[torch.Tensor, np.ndarray, Image.Image]) -> torch.Tenso
 
 
 def float2byte(img: torch.Tensor) -> torch.Tensor:
-    r"""transform a ``torch.FloatTensor`` ranging from ``[0, 1]``
+    r"""transform a ``torch.FloatTensor`` ranging in ``[0, 1]``
     to ``torch.ByteTensor`` ranging from ``[0, 255]``.
 
     Args:
-        img (torch.Tensor): ``torch.FloatTensor`` ranging from ``[0, 1]``.
+        img (torch.Tensor): ``torch.FloatTensor`` ranging in ``[0, 1]``.
 
     Returns:
         torch.Tensor: ``torch.ByteTensor`` ranging from ``[0, 255]``.
@@ -286,7 +268,7 @@ def tensor_to_img(_tensor: torch.Tensor) -> Image.Image:
 
 
 def save_tensor_as_img(path: str, _tensor: torch.Tensor):
-    r"""Save a :any:`torch.Tensor` ranging from ``[0, 1]`` as image.
+    r"""Save a :any:`torch.Tensor` ranging in ``[0, 1]`` as image.
 
     Args:
         path (str): The path to save.
@@ -300,7 +282,7 @@ def save_tensor_as_img(path: str, _tensor: torch.Tensor):
 
 
 def save_numpy_as_img(path: str, arr: np.ndarray):
-    r"""Save a :any:`numpy.ndarray` ranging from ``[0, 1]`` as image.
+    r"""Save a :any:`numpy.ndarray` ranging in ``[0, 1]`` as image.
 
     Args:
         path (str): The path to save.

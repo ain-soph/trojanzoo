@@ -82,8 +82,8 @@ class _ImageModel(_Model):
                  num_classes: int = 1000, **kwargs):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
 
-    @staticmethod
-    def define_preprocess(norm_par: dict[str, list[float]] = None,
+    @classmethod
+    def define_preprocess(cls, norm_par: dict[str, list[float]] = None,
                           **kwargs) -> nn.Module:
         if norm_par is not None:
             return Normalize(mean=norm_par['mean'],

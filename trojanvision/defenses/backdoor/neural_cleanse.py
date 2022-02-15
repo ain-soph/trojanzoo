@@ -55,7 +55,7 @@ class NeuralCleanse(BackdoorDefense):
     def detect(self, **kwargs):
         super().detect(**kwargs)
         self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
+        self.attack.mark.mark_height_offset = 0
         self.attack.mark.width_offest = 0
         if not self.random_pos:
             self.real_mask = self.attack.mark.mask
@@ -263,6 +263,6 @@ class NeuralCleanse(BackdoorDefense):
         self.attack.mark.alpha_mask = to_tensor(_dict['mask_list'][self.target_class])
         self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
         self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
-        self.attack.mark.width_offset = 0
+        self.attack.mark.mark_height_offset = 0
+        self.attack.mark.mark_width_offset = 0
         print('defense results loaded from: ', path)

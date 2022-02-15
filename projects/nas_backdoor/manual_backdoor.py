@@ -27,10 +27,10 @@ if __name__ == '__main__':
     #######################
     mark = trojanvision.marks.create(dataset=dataset, **args.__dict__)
 
-    start_h = mark.height_offset
-    start_w = mark.width_offset
-    end_h = mark.height_offset + mark.mark_height
-    end_w = mark.width_offset + mark.mark_width
+    start_h = mark.mark_height_offset
+    start_w = mark.mark_width_offset
+    end_h = mark.mark_height_offset + mark.mark_height
+    end_w = mark.mark_width_offset + mark.mark_width
 
     def new_call(self, _input: torch.Tensor, amp: bool = False,
                  **kwargs) -> torch.Tensor:

@@ -65,7 +65,7 @@ class _Model(nn.Module):
 
         self.num_classes = num_classes
 
-    @staticmethod
+    @classmethod
     def define_preprocess(self, **kwargs) -> nn.Module:
         r"""Define preprocess before feature extractor.
 

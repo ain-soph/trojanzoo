@@ -3,10 +3,11 @@
 from trojanvision.attacks import PGD
 from trojanvision.environ import env
 from trojanzoo.defenses import Defense
-from trojanzoo.utils.tensor import repeat_to_batch, to_list, cos_sim
+from trojanzoo.utils.tensor import repeat_to_batch, to_list
 from trojanzoo.utils.output import prints
 
 import torch
+import torch.nn as nn
 import torch.autograd
 import torch.nn.functional as F
 import argparse
@@ -58,6 +59,8 @@ class AdvMind(Defense):
         self.fake_query_num: int = int(self.attack.query_num * self.fake_percent)
         self.true_query_num: int = self.attack.query_num - self.fake_query_num
         self.attack_grad_list: list[torch.Tensor] = []
+
+        self.cos_sim = nn.CosineSimilarity()
 
     def detect(self):
         zeros = torch.zeros(self.attack.iteration - 1)
@@ -271,7 +274,7 @@ class AdvMind(Defense):
                 _label = _class * torch.ones(len(X), dtype=torch.long, device=X.device)
                 X.requires_grad_()
                 loss = self.model.loss(X, _label)
-                grad = torch.autograd.grad(loss, X)[0]
+                grad: torch.Tensor = torch.autograd.grad(loss, X)[0]
                 X.requires_grad = False
                 grad /= grad.abs().max()
                 if self.active:
@@ -286,14 +289,14 @@ class AdvMind(Defense):
                         (1 - self.active_percent) * grad
                 grad.sign_()
                 vec = seq_centers[i + 1] - X
-                dist = cos_sim(-grad, vec)
+                dist = self.cos_sim(-grad.flatten(), vec.flatten())
                 dist_list[_class] = dist
                 if 'middle' in self.output and _class == target:
-                    print('sim <vec, real>: ', cos_sim(vec, -grad))
+                    print('sim <vec, real>: ', self.cos_sim(vec.flatten(), -grad.flatten()))
                     print('sim <est, real>: ',
-                          cos_sim(self.attack_grad_list[i], grad))
+                          self.cos_sim(self.attack_grad_list[i].flatten(), grad.flatten()))
                     print('sim <vec, est>: ',
-                          cos_sim(vec, -self.attack_grad_list[i]))
+                          self.cos_sim(vec.flatten(), -self.attack_grad_list[i].flatten()))
             # todo: Use atanh for normalization after pytorch 1.6
             detect_prob = F.softmax(torch.log((2 / (1 - dist_list)).sub(1)))
             # detect_prob.div_(detect_prob.norm(p=2))
@@ -344,8 +347,9 @@ class AdvMind(Defense):
                 #         if _result[j] < 0 and j > i:
                 #             sub_pair_seq.append((j-i) % self.num_classes)
                 # print(vec.view(-1)[:self.num_classes])
+                point: torch.Tensor
                 x = point.clone()
-                dist_list = torch.zeros(self.model.num_classes)
+                dist_list: torch.Tensor = torch.zeros(self.model.num_classes)
                 # print('bound: ', estimate_error + shift_dist)
                 for _class in range(self.model.num_classes):
                     x.requires_grad_()
@@ -363,7 +367,7 @@ class AdvMind(Defense):
                             (1 - self.active_percent) * grad
                         grad.sign_()
                     vec = seq_centers[i + 1] - point
-                    dist = cos_sim(-grad, vec)
+                    dist = self.cos_sim(-grad.flatten(), vec.flatten())
                     dist_list[_class] = dist
                 sub_pair_seq.append(dist_list.argmax().item())
             pair_seq.append(sub_pair_seq)

@@ -84,8 +84,8 @@ class DeepInspect(BackdoorDefense):
         _dict = np.load(path, allow_pickle=True)
         self.attack.mark.mark = to_tensor(_dict['mark_list'][self.attack.target_class])
         self.attack.mark.random_pos = False
-        self.attack.mark.height_offset = 0
-        self.attack.mark.width_offset = 0
+        self.attack.mark.mark_height_offset = 0
+        self.attack.mark.mark_width_offset = 0
 
         def add_mark_fn(_input, **kwargs):
             return _input + self.attack.mark.mark.to(_input.device)

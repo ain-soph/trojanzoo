@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import torch.utils.data
 
+
 class IMC_Multi(IMC):
     name: str = 'imc_multi'
 
@@ -21,11 +22,11 @@ class IMC_Multi(IMC):
         super().__init__(**kwargs)
         self.mark_list: list[tuple[Watermark, int]] = []
         for i in range(mark_num):
-            height_offset = random.randint(0, self.mark.data_shape[-2] - self.mark.mark_height)
-            width_offset = random.randint(0, self.mark.data_shape[-1] - self.mark.mark_width)
-            mark = Watermark(data_shape=self.mark.data_shape, edge_color=self.mark.edge_color, mark_path=self.mark.mark_path,
+            mark_height_offset = random.randint(0, self.mark.data_shape[-2] - self.mark.mark_height)
+            mark_width_offset = random.randint(0, self.mark.data_shape[-1] - self.mark.mark_width)
+            mark = Watermark(data_shape=self.mark.data_shape, mark_background_color=self.mark.mark_background_color, mark_path=self.mark.mark_path,
                              mark_alpha=self.mark.mark_alpha, mark_height=self.mark.mark_height, mark_width=self.mark.mark_width,
-                             height_offset=height_offset, width_offset=width_offset,
+                             mark_height_offset=mark_height_offset, mark_width_offset=mark_width_offset,
                              random_init=True, random_pos=False, mark_distributed=self.mark.mark_distributed)
             self.mark_list.append((mark, i))
 
