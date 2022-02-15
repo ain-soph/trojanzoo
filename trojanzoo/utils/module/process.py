@@ -155,7 +155,7 @@ class ModelProcess(Process):
 
     Attributes:
         dataset (trojanzoo.datasets.Dataset | None): The dataset.
-        model (trojanzoo.model.Model | None): The model.
+        model (trojanzoo.models.Model | None): The model.
         folder_path (str | None): The folder path to store results.
             Defaults to ``None``.
         clean_acc (float): The clean accuracy of :attr:`model`.
