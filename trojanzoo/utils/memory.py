@@ -30,7 +30,7 @@ def output_memory(device: Union[str, torch.device] = None,
     r"""Output memory usage information.
 
     Args:
-        device (str | torch.device):
+        device (str | ~torch.torch.device):
             Passed to :any:`torch.cuda.memory_summary`
             or :any:`torch.cuda.memory_allocated` |
             :any:`torch.cuda.memory_reserved`.

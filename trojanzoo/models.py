@@ -252,12 +252,15 @@ class Model(BasicObject):
     model_urls: dict[str, str] = []
 
     @staticmethod
-    def add_argument(group: argparse._ArgumentGroup):
+    def add_argument(group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
         r"""Add model arguments to argument parser group.
         View source to see specific arguments.
 
         Args:
             group (argparse._ArgumentGroup): The argument parser group.
+
+        Returns:
+            argparse._ArgumentGroup: The argument group.
 
         Note:
             This is the implementation of adding arguments.
@@ -401,12 +404,12 @@ class Model(BasicObject):
 
     def get_final_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         r"""Get the final layer features of :attr:`_input` (after pooling and flatten).
-        Call :func:`_Model.get_final_fm()`.
+        Call :meth:`_Model.get_final_fm()`.
 
         Args:
             _input (torch.Tensor): The batched input tensor
-                passed to :func:`_Model.get_final_fm()`.
-            **kwargs: Keyword arguments passed to :func:`_Model.get_final_fm()`.
+                passed to :meth:`_Model.get_final_fm()`.
+            **kwargs: Keyword arguments passed to :meth:`_Model.get_final_fm()`.
 
         Returns:
             torch.Tensor: The feature tensor with shape ``(N, dim)``.
@@ -418,7 +421,7 @@ class Model(BasicObject):
 
         Args:
             _input (torch.Tensor): The batched input tensor
-                passed to :func:`_Model.get_logits()`.
+                passed to :meth:`_Model.get_logits()`.
             **kwargs: Keyword arguments passed to :meth:`get_logits()`.
 
         Returns:
@@ -434,7 +437,7 @@ class Model(BasicObject):
 
         Args:
             _input (torch.Tensor): The batched input tensor
-                passed to :func:`_Model.get_logits()`.
+                passed to :meth:`_Model.get_logits()`.
             target (torch.Tensor | list[int] | int): Batched target classes.
             **kwargs: Keyword arguments passed to :meth:`get_logits()`.
 
@@ -454,7 +457,7 @@ class Model(BasicObject):
 
         Args:
             _input (torch.Tensor): The batched input tensor
-                passed to :func:`_Model.get_logits()`.
+                passed to :meth:`_Model.get_logits()`.
             **kwargs: Keyword arguments passed to :meth:`get_logits()`.
 
         Returns:
@@ -774,7 +777,7 @@ class Model(BasicObject):
             inplace (bool): Whether to change model parameters.
                 If ``False``, will only return the dict but not change model parameters.
                 Defaults to ``True``.
-            map_location (str | torch.device | dict):
+            map_location (str | ~torch.torch.device | dict):
                 Passed to :any:`torch.load`.
                 Defaults to ``'cpu'``.
 
@@ -905,7 +908,7 @@ class Model(BasicObject):
         Args:
             url (str | None): The link to model weights.
                 Defaults to :attr:`self.model_urls[self.name]`.
-            map_location (str | torch.device | dict):
+            map_location (str | ~torch.torch.device | dict):
                 Passed to :any:`torch.hub.load_state_dict_from_url`.
                 Defaults to ``'cpu'``.
             **kwargs: Keyword arguments passed to
@@ -1337,7 +1340,8 @@ class Model(BasicObject):
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
                  model: Union[str, Model] = None,
                  config: Config = config,
-                 class_dict: dict[str, type[Model]] = {}):
+                 class_dict: dict[str, type[Model]] = {}
+                 ) -> argparse._ArgumentGroup:
     r"""
     | Add model arguments to argument parser.
     | For specific arguments implementation, see :meth:`Model.add_argument`.
@@ -1351,6 +1355,9 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
             which contains the default model name if not provided.
         class_dict (dict[str, type[Model]]):
             Map from model name to model class.
+
+    Returns:
+        argparse._ArgumentGroup: The argument group.
     """
     dataset_name = get_name(arg_list=['-d', '--dataset'])
     if dataset_name is None:
@@ -1391,7 +1398,8 @@ def create(model_name: str = None, model: Union[str, Model] = None,
         model (str | Model): The model instance or model name
             (as the alias of `model_name`).
         dataset_name (str): The dataset name.
-        dataset (str | Dataset): The dataset instance or dataset name
+        dataset (str | trojanzoo.datasets.Dataset):
+            The dataset instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config.
         class_dict (dict[str, type[model]]):

@@ -3,9 +3,10 @@
 :mod:`trojanzoo.utils.fim`
 ==================================
 
-.. currentmodule:: trojanzoo.utils.fim.kfac
+.. currentmodule:: trojanzoo.utils.fim
 
-.. autoclass:: BaseState
-.. autoclass:: KFACState
-.. autoclass:: BaseKFAC
-.. autoclass:: KFAC
+.. autoclass:: trojanzoo.utils.fim.kfac.BaseKFAC
+.. autoclass:: trojanzoo.utils.fim.kfac.KFAC
+.. autoclass:: trojanzoo.utils.fim.ekfac.EKFAC
+.. autoclass:: trojanzoo.utils.fim.kfac.BaseState
+.. autoclass:: trojanzoo.utils.fim.kfac.KFACState

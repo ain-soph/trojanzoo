@@ -33,6 +33,8 @@ class Dataset(ABC, BasicObject):
     Args:
         batch_size (int): Batch size of training and validation set
             (negative number means batch size for each gpu).
+        valid_batch_size (int): Batch size of validation set.
+            Defaults to ``100``.
         folder_path (str): Folder path to store dataset.
             Defaults to ``None``.
 
@@ -63,6 +65,7 @@ class Dataset(ABC, BasicObject):
             | It contains ``'train'`` and ``'valid'`` loaders.
         batch_size (int): Batch size of training set (always positive).
         valid_batch_size (int): Batch size of validation set.
+            Defaults to ``100``.
         num_classes (int): Number of classes. (need overriding)
         folder_path (str): Folder path to store dataset.
             Defaults to ``None``.
@@ -91,12 +94,15 @@ class Dataset(ABC, BasicObject):
     valid_set = True
 
     @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
+    def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
         r"""Add dataset arguments to argument parser group.
         View source to see specific arguments.
 
         Args:
             group (argparse._ArgumentGroup): The argument parser group.
+
+        Returns:
+            argparse._ArgumentGroup: The argument group.
 
         Note:
             This is the implementation of adding arguments.
@@ -458,7 +464,8 @@ class Dataset(ABC, BasicObject):
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
                  dataset: Union[str, Dataset] = None,
                  config: Config = config,
-                 class_dict: dict[str, type[Dataset]] = {}):
+                 class_dict: dict[str, type[Dataset]] = {}
+                 ) -> argparse._ArgumentGroup:
     r"""
     | Add dataset arguments to argument parser.
     | For specific arguments implementation, see :meth:`Dataset.add_argument`.

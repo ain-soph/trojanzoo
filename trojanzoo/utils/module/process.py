@@ -39,7 +39,7 @@ class BasicObject:
                 Defaults to :attr:`self.indent`.
 
         See Also:
-            :func:`trojanzoo.models.Model.summary()`.
+            :meth:`trojanzoo.models.Model.summary()`.
         """
         indent = indent if indent is not None else self.indent
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(

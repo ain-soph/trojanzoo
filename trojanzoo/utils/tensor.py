@@ -90,7 +90,7 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
                 * ``'byte' | 'uint8'``
                 * ``'float'``
                 * ``'double'``
-        device (str | torch.device):
+        device (str | ~torch.torch.device):
             Passed to :any:`torch.as_tensor`.
             If ``'default'``, use ``env['device']``.
         **kwargs: Keyword arguments passed to

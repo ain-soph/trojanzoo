@@ -9,7 +9,7 @@ _VT = TypeVar("_VT")  # Value type.
 
 # TODO: issue 3 why need Generic
 class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
-    r"""A dict-like class. You can view and set keys by attributes as well.
+    r"""A dict-like class which supports attribute-like view as well.
 
     Args:
         *args: Positional dict-like arguments.

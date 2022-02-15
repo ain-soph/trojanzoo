@@ -24,10 +24,10 @@ class Attack(ABC, ModelProcess):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         group.add_argument('--attack', dest='attack_name')
-        group.add_argument('--attack_dir',
-                           help='directory to contain attack results')
         group.add_argument('--output', type=int,
                            help='output level (default: 0)')
+        group.add_argument('--attack_dir',
+                           help='directory to contain attack results')
         return group
 
     @abstractmethod

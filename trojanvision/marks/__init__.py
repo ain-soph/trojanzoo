@@ -19,7 +19,7 @@ from typing import Union
 dir_path = os.path.dirname(__file__)
 
 
-def add_argument(parser: argparse.ArgumentParser):
+def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group('{yellow}mark{reset}'.format(**ansi))
     return Watermark.add_argument(group)
 

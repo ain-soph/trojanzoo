@@ -53,14 +53,17 @@ class CleanLabel(BadNet):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--poison_generation_method', choices=['pgd', 'gan'],
-                           help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]="pgd"')
+                           help='the chosen method to generate poisoned sample, '
+                           'defaults to config[clean_label][poison_generation_method]="pgd"')
         group.add_argument('--pgd_alpha', type=float)
         group.add_argument('--pgd_eps', type=float)
         group.add_argument('--pgd_iter', type=int)
         group.add_argument('--tau', type=float,
-                           help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
+                           help='the interpolation constant used to balance source imgs and target imgs, '
+                           'defaults to config[clean_label][tau]=0.2')
         group.add_argument('--noise_dim', type=int,
-                           help='the dimension of the input in the generator, defaults to config[clean_label][noise_dim]=100')
+                           help='the dimension of the input in the generator, '
+                           'defaults to config[clean_label][noise_dim]=100')
         group.add_argument('--train_gan', action='store_true',
                            help='whether train the GAN if it already exists, defaults to False')
         group.add_argument('--generator_iters', type=int,

@@ -18,9 +18,56 @@ if TYPE_CHECKING:
 
 
 class Env(Param):
+    r"""The dict-like environment class that inherits :class:`trojanzoo.utils.module.param.Param`.
+    It should be singleton in most cases.
+
+    Warning:
+        There is already an environ instance ``trojanzoo.environ.env``.
+        call :func:`create` to set its value.
+
+        NEVER call the class init method to create a new instance
+        (unless you know what you're doing).
+
+    Args:
+        device (str | ~torch.torch.device): Defaults to ``None``.
+
+            * ``'auto' | None`` (use gpu if available)
+            * ``'cpu'``
+            * ``'gpu' | 'cuda'``
+
+    Attributes:
+        color (bool): Whether to show colorful outputs in console using ASNI escape characters.
+            Defaults to ``False``.
+        num_gpus (int): Number of available GPUs.
+        tqdm (bool): Whether to use :class:`tqdm.tqdm` to show progress bar.
+            Defaults to ``False``.
+        verbose (int): The output level. Defaults to ``0``.
+
+        config_path (str): Command line config file path.
+        benchmark (bool): Whether to use :any:`torch.backends.cudnn.benchmark`
+            to accelerate without deterministic.
+            Defaults to ``False``.
+        cache_threshold (float): the threshold (MB) to call :any:`torch.cuda.empty_cache`.
+            Defaults to ``None`` (never).
+        seed (int): The random seed for numpy, torch and cuda.
+        data_seed (int): Seed to process data
+            (e.g., :meth:`trojanzoo.datasets.Dataset.split_dataset()`)'
+        device (~torch.torch.device): The default device to store tensors.
+        world_size (int): Number of distributed machines. Defaults to ``1``.
+    """
 
     @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
+    def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
+        r"""Add environ arguments to argument parser group.
+        View source to see specific arguments.
+
+        Args:
+            group (argparse._ArgumentGroup): The argument parser group.
+
+        Note:
+            This is the implementation of adding arguments.
+            For users, please use :func:`add_argument` instead, which is more user-friendly.
+        """
         group.add_argument('--config', dest='config_path',
                            help='cmd config file path '
                            '(package < project < cmd_config < cmd_param)')
@@ -29,7 +76,8 @@ class Env(Param):
                            help='the random seed for numpy, torch and cuda '
                            '(default: config[env][seed]=1228)')
         group.add_argument('--data_seed', type=int,
-                           help='seed to process data')
+                           help='seed to process data '
+                           '(e.g., split train and valid set)')
         group.add_argument('--cache_threshold', type=float,
                            help='the threshold (MB) to call '
                            'torch.cuda.empty_cache(). None means never.'
@@ -53,7 +101,17 @@ class Env(Param):
 env = Env(default=None)
 
 
-def add_argument(parser: argparse.ArgumentParser):
+def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
+    r"""
+    | Add environ arguments to argument parser.
+    | For specific arguments implementation, see :meth:`Environ.add_argument`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+
+    Returns:
+        argparse._ArgumentGroup: The argument group.
+    """
     group = parser.add_argument_group('{yellow}env{reset}'.format(**ansi))
     env.add_argument(group)
     return group
@@ -65,6 +123,24 @@ def create(config_path: str = None, dataset_name: str = None,
            config: Config = config,
            cache_threshold: float = None, verbose: int = None,
            color: bool = None, tqdm: bool = None, **kwargs) -> Env:
+    r"""
+    | Load :attr:`env` values from config and command line.
+
+    Args:
+        dataset_name (str): The dataset name.
+        dataset (str | trojanzoo.datasets.Dataset):
+            The dataset instance
+            (required for :attr:`model_ema`)
+            or dataset name
+            (as the alias of `dataset_name`).
+        model (trojanzoo.models.Model): Model instance.
+        config (Config): The default parameter config.
+        **kwargs: The keyword arguments in keys of
+            ``['optim_args', 'train_args', 'writer_args']``.
+
+    Returns:
+        Env: The :attr:`env` instance.
+    """
     other_kwargs = {'data_seed': data_seed, 'cache_threshold': cache_threshold,
                     'verbose': verbose, 'color': color, 'tqdm': tqdm}
     config.update_cmd(config_path)

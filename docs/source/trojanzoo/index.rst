@@ -13,4 +13,6 @@
    defenses<defenses>
    environ<environ>
    models<models>
+   optim<optim>
+   trainer<trainer>
    utils<utils/index>

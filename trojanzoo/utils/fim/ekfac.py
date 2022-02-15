@@ -21,23 +21,26 @@ class EKFACState(BaseState):
 
 
 class EKFAC(BaseKFAC):
+    r"""EKFAC Preconditionner for :any:`torch.nn.Linear`
+    and :any:`torch.nn.Conv2d` layers.
 
-    def __init__(self, net: nn.Module, ra: bool = False, *args, **kwargs):
-        """ EKFAC Preconditionner for Linear and Conv2d layers.
-        Computes the EKFAC of the second moment of the gradients.
-        It works for Linear and Conv2d layers and silently skip other layers.
-        Args:
-            net (torch.nn.Module): Network to precondition.
-            eps (float): Tikhonov regularization parameter for the inverses.
-            sua (bool): Applies SUA approximation.
-            ra (bool): Computes stats using a running average of
-                averaged gradients instead of using a intra minibatch estimate
-            update_freq (int): Perform inverses every update_freq updates.
-            alpha (float): Running average parameter
-            constraint_norm (bool): Scale the gradients by the squared
-                fisher norm.
-        """
-        super().__init__(net=net, state_type=EKFACState, *args, **kwargs)
+    Computes the EKFAC of the second moment of the gradients.
+    It works for Linear and Conv2d layers and silently skip other layers.
+
+    Args:
+        net (torch.nn.Module): Network to precondition.
+        eps (float): Tikhonov regularization parameter for the inverses.
+        sua (bool): Applies SUA approximation.
+        ra (bool): Computes stats using a running average of
+            averaged gradients instead of using a intra minibatch estimate.
+        update_freq (int): Perform inverses every update_freq updates.
+        alpha (float): Running average parameter.
+        constraint_norm (bool): Scale the gradients by the squared
+            fisher norm.
+    """
+
+    def __init__(self, net: nn.Module, *args, ra: bool = False, **kwargs):
+        super().__init__(net, *args, state_type=EKFACState, **kwargs)
         self.ra = ra
         if not self.ra and self.alpha != 1.:
             raise NotImplementedError()
