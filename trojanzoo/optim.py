@@ -48,7 +48,7 @@ class Optimizer(ABC, Process):
                  stop_threshold: float = None,
                  output: Union[int, Iterable[str]] = None,
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        r"""Main optimize function.
+        r"""Main optimize method.
 
         Args:
             _input (torch.Tensor): The batched input tensor to optimize.

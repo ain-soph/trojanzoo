@@ -58,7 +58,7 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
     | For arguments not included in :attr:`kwargs`,
       use the default values in :attr:`config`.
     | The default value of :attr:`folder_path` is
-      ``'{model_dir}/{data_type}/{name}'``.
+      ``'{model_dir}/{dataset.data_type}/{dataset.name}'``.
     | For model implementation, see :class:`ImageModel`.
 
     Args:

@@ -35,11 +35,11 @@ class Trainer:
         optimizer (torch.optim.Optimizer): Optimizer instance.
         lr_scheduler (``torch.optim.lr_scheduler._LRScheduler`` | None):
             LR_Scheduler instance.
-        model_ema (trojanzoo.utils.model.ExponentialMovingAverage | None):
+        model_ema (~trojanzoo.utils.model.ExponentialMovingAverage | None):
             Exponential Moving Average instance.
-        pre_conditioner (~trojanzoo.utils.fim.kfac.KFAC | ~trojanzoo.utils.fim.kfac.EKFAC | None):
+        pre_conditioner (~trojanzoo.utils.fim.KFAC | ~trojanzoo.utils.fim.EKFAC | None):
             Pre-conditioner instance.
-        writer (torch.utils.tensorboard.writer.SummaryWriter | None):
+        writer (~torch.utils.tensorboard.writer.SummaryWriter | None):
             Tensorboard summary writer instance.
     """
     name = 'trainer'
@@ -232,16 +232,14 @@ def create(dataset_name: str = None,
            model: Model = None,
            model_ema: bool = False,
            pre_conditioner: str = None,
-           ClassType: type[Trainer] = Trainer,
            tensorboard: bool = None,
+           ClassType: type[Trainer] = Trainer,
            config: Config = config, **kwargs):
     r"""
     | Create a trainer instance.
     | For arguments not included in :attr:`kwargs`,
       use the default values in :attr:`config`.
-    | The default value of :attr:`folder_path` is
-      ``'{data_dir}/{data_type}/{name}'``.
-    | For dataset implementation, see :class:`Dataset`.
+    | For trainer implementation, see :class:`Trainer`.
 
     Args:
         dataset_name (str): The dataset name.
@@ -251,6 +249,21 @@ def create(dataset_name: str = None,
             or dataset name
             (as the alias of `dataset_name`).
         model (trojanzoo.models.Model): Model instance.
+        model_ema (bool): Whether to use
+            :class:`~trojanzoo.utils.model.ExponentialMovingAverage`.
+            Defaults to ``False``.
+        pre_conditioner (str): Choose from
+
+            * ``None``
+            * ``'kfac'``: :class:`~trojanzoo.utils.fim.KFAC`
+            * ``'ekfac'``: :class:`~trojanzoo.utils.fim.EKFAC`
+
+            Defaults to ``None``.
+        tensorboard (bool): Whether to use
+            :any:`torch.utils.tensorboard.writer.SummaryWriter`.
+            Defaults to ``False``.
+        ClassType (type[Trainer]): The trainer class type.
+            Defaults to :class:`Trainer`.
         config (Config): The default parameter config.
         **kwargs: The keyword arguments in keys of
             ``['optim_args', 'train_args', 'writer_args']``.
