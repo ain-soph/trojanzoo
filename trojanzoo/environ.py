@@ -36,7 +36,8 @@ class Env(Param):
             * ``'gpu' | 'cuda'``
 
     Attributes:
-        color (bool): Whether to show colorful outputs in console using ASNI escape characters.
+        color (bool): Whether to show colorful outputs in console
+            using ASNI escape characters.
             Defaults to ``False``.
         num_gpus (int): Number of available GPUs.
         tqdm (bool): Whether to use :class:`tqdm.tqdm` to show progress bar.
@@ -51,7 +52,7 @@ class Env(Param):
             Defaults to ``None`` (never).
         seed (int): The random seed for numpy, torch and cuda.
         data_seed (int): Seed to process data
-            (e.g., :meth:`trojanzoo.datasets.Dataset.split_dataset()`)'
+            (e.g., :meth:`trojanzoo.datasets.Dataset.split_dataset()`)
         device (~torch.torch.device): The default device to store tensors.
         world_size (int): Number of distributed machines. Defaults to ``1``.
     """
@@ -129,7 +130,7 @@ def create(config_path: str = None, dataset_name: str = None,
     Args:
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
-            The dataset instance
+            Dataset Instance
             (required for :attr:`model_ema`)
             or dataset name
             (as the alias of `dataset_name`).

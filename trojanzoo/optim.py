@@ -137,8 +137,8 @@ class Optimizer(ABC, Process):
 
         Args:
             current_idx (torch.Tensor):
-                The indexes of :attr:`adv_input` need to check
-                (Other indexes have early stopped).
+                The indices of :attr:`adv_input` need to check
+                (Other indices have early stopped).
             adv_input (torch.Tensor):
                 The entire batched adversairl input tensor
                 with shape ``(N, *)``.
@@ -217,8 +217,8 @@ class Optimizer(ABC, Process):
 
         Args:
             current_idx (torch.Tensor):
-                The indexes of :attr:`adv_input` need to optimize
-                (Other indexes have early stopped).
+                The indices of :attr:`adv_input` need to optimize
+                (Other indices have early stopped).
             adv_input (torch.Tensor):
                 The entire batched adversairl input tensor
                 with shape ``(N, *)``.

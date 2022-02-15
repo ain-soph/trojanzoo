@@ -5,6 +5,7 @@ from trojanvision.utils.dataset import ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
 
+import trojanvision
 import torchvision.datasets as datasets
 from torchvision.datasets.utils import (check_integrity,
                                         download_and_extract_archive,
@@ -24,6 +25,30 @@ if TYPE_CHECKING:
 
 
 class ImageFolder(ImageSet):
+    r"""Image folder class which inherits :class:`trojanvision.datasets.ImageSet`.
+
+    See Also:
+        :any:`torchvision.datasets.ImageFolder`
+
+    Attributes:
+        url (dict[str, str]): links to data files.
+        ext (dict[str, str]): Map from mode to downloaded file extension.
+        md5 (dict[str, str]): Map from mode to downloaded file md5.
+        org_folder_name (dict[str, str]):
+            Map from mode to extracted folder name of downloaded file.
+
+        class_to_idx (dict[str, int]): Map from class name to indices.
+            Class names are default to be folder names.
+
+        data_format (str): File format of dataset.
+
+            * ``'folder'`` (default)
+            * ``'tar'``
+            * ``'zip'``
+
+        memory (bool): Whether to put all dataset into memory at initialization.
+            Defaults to ``False``.
+    """
 
     name: str = 'imagefolder'
     url: dict[str, str] = {}
@@ -33,12 +58,29 @@ class ImageFolder(ImageSet):
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
+        r"""Add image dataset arguments to argument parser group.
+        View source to see specific arguments.
+
+        Args:
+            group (argparse._ArgumentGroup): The argument parser group.
+
+        Returns:
+            argparse._ArgumentGroup: The argument group.
+
+        Note:
+            This is the implementation of adding arguments.
+            The concrete dataset class may override this method to add more arguments.
+            For users, please use :func:`add_argument` instead, which is more user-friendly.
+
+        See Also:
+            :meth:`trojanvision.datasets.ImageSet.add_argument()`
+        """
         super().add_argument(group)
         group.add_argument('--data_format', choices=['folder', 'tar', 'zip'],
                            help='file format of dataset.'
                            '(zip is using ZIP_STORED)')
         group.add_argument('--memory', action='store_true',
-                           help='put all dataset into memory initialization.')
+                           help='put all dataset into memory at initialization.')
         return group
 
     def __init__(self, data_format: str = 'folder',
@@ -53,6 +95,7 @@ class ImageFolder(ImageSet):
             self.num_classes = len(self.class_to_idx)
 
     def initialize(self, *args, **kwargs):
+        r"""You could use this method to transform across different :attr:`data_format`."""
         if self.data_format == 'folder' or \
                 not self.check_files(data_format='folder'):
             self.initialize_folder(*args, **kwargs)
@@ -133,23 +176,59 @@ class ImageFolder(ImageSet):
         return DatasetClass(root=root, **kwargs)
 
     def get_class_to_idx(self, file_path: str = None) -> dict[str, int]:
-        if file_path is None:
-            file_path = os.path.join(self.folder_path, 'class_to_idx.json')
-        if os.path.exists(file_path):
-            with open(file_path) as fp:
-                result: dict[str, int] = json.load(fp)
-            return result
-        return self.get_org_dataset('train').class_to_idx
+        r"""Get possible existing ``class_to_idx.json`` (use the first matched file).
+        If not exist, use folder names as class names.
+
+        Possible location:
+
+            * Method argument :attr:`file_path`
+            * Dataset folder ``'{self.folder_path}/class_to_idx.json'``
+            * TrojanVision folder ``'{package}/trojanvision/data/{self.name}/class_to_idx.json'``
+
+        Args:
+            file_path (str): File path to ``class_to_idx.json``.
+
+        """
+        file_path_list: list[str] = []
+        if file_path is not None:
+            file_path_list.append(file_path)
+        file_path_list.append(os.path.join(self.folder_path, 'class_to_idx.json'))
+        file_path_list.append(os.path.join(os.path.dirname(trojanvision.__file__),
+                                           'data', self.name, 'class_to_idx.json'))
+        for file_path in file_path_list:
+            if os.path.isfile(file_path):
+                with open(file_path) as fp:
+                    result: dict[str, int] = json.load(fp)
+                return result
+        dataset: datasets.ImageFolder = self.get_org_dataset('train')
+        return dataset.class_to_idx
 
     def sample(self, child_name: str = None,
                class_dict: dict[str, list[str]] = None,
                sample_num: int = None,
                method='zip'):
+        r"""Sample a subset image folder dataset.
+
+        Args:
+            child_name (str): Name of child subset.
+                Defaults to ``'{self.name}_sample{sample_num}'``
+            class_dict (dict[str, list[str]] | None):
+                Map from new class name to list of old class names.
+                If ``None``, use :attr:`sample_num` to
+                random sample a subset (1 to 1).
+                Defaults to ``None``.
+            sample_num (int | None):
+                The number of subset classes to sample
+                if :attr:`class_dict` is ``None``.
+                Defaults to ``None``.
+            method (str): :attr:`data_format` of new subset to save.
+                Defaults to ``'.zip'``.
+        """
         if sample_num is None:
             assert class_dict
             sample_num = len(class_dict)
-        if child_name is None:
-            child_name = self.name + '_sample%d' % sample_num
+        if child_name is None and sample_num is not None:
+            child_name = f'{self.name}_sample{sample_num:d}'
         src_path = self.folder_path
         dst_path = os.path.normpath(os.path.join(
             os.path.dirname(self.folder_path), child_name))

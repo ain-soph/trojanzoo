@@ -264,6 +264,7 @@ class Model(BasicObject):
 
         Note:
             This is the implementation of adding arguments.
+            The concrete model class may override this method to add more arguments.
             For users, please use :func:`add_argument` instead, which is more user-friendly.
         """
         group.add_argument('-m', '--model', dest='model_name',
@@ -1399,7 +1400,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
             (as the alias of `model_name`).
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
-            The dataset instance or dataset name
+            Dataset Instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config.
         class_dict (dict[str, type[model]]):

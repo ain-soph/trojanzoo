@@ -35,6 +35,16 @@ class DownsampledImageNet(ImageSet):
 
 
 class ImageNet16(DownsampledImageNet):
+    r"""ImageNet16 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+
+    See Also:
+        https://image-net.org/download-images.php
+
+    Attributes:
+        name (str): ``'imagenet16'``
+        num_classes (int): Flexible (passed by command line argument, no larger than 1000).
+        data_shape (list[int]): ``[3, 16, 16]``
+    """
     name = 'imagenet16'
     data_shape = [3, 16, 16]
 
@@ -45,6 +55,16 @@ class ImageNet16(DownsampledImageNet):
 
 
 class ImageNet32(DownsampledImageNet):
+    r"""ImageNet32 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+
+    See Also:
+        https://image-net.org/download-images.php
+
+    Attributes:
+        name (str): ``'imagenet32'``
+        num_classes (int): Flexible (passed by command line argument, no larger than 1000).
+        data_shape (list[int]): ``[3, 32, 32]``
+    """
     name = 'imagenet32'
     data_shape = [3, 32, 32]
 

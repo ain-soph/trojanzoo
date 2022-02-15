@@ -6,7 +6,7 @@ from .cifar import CIFAR10, CIFAR100
 from .downsampled_imagenet import ImageNet16, ImageNet32
 from .mnist import MNIST
 
-__all__ = ['CIFAR10', 'CIFAR100', 'ImageNet16', 'MNIST']
+__all__ = ['MNIST', 'CIFAR10', 'CIFAR100', 'ImageNet16', 'ImageNet32',]
 
 class_dict: dict[str, ImageSet] = {
     'cifar10': CIFAR10,
