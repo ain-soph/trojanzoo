@@ -25,7 +25,6 @@ class Attack(ABC, ModelProcess):
 
     Note:
         This is the implementation of attack.
-        The concrete attack class may override this method to add more arguments.
         For users, please use :func:`create` instead, which is more user-friendly.
     """
     name = 'attack'
