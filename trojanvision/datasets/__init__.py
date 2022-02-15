@@ -38,6 +38,9 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
             which contains the default dataset name if not provided.
         class_dict (dict[str, type[Dataset]]):
             Map from dataset name to dataset class.
+
+    See Also:
+        :func:`trojanzoo.datasets.add_argument()`
     """
     return trojanzoo.datasets.add_argument(parser=parser, dataset_name=dataset_name, dataset=dataset,
                                            config=config, class_dict=class_dict)
@@ -65,6 +68,9 @@ def create(dataset_name: str = None, dataset: str = None,
 
     Returns:
         ImageSet: Image dataset Instance.
+
+    See Also:
+        :func:`trojanzoo.datasets.create()`
     """
     return trojanzoo.datasets.create(dataset_name=dataset_name, dataset=dataset,
                                      config=config, class_dict=class_dict, **kwargs)

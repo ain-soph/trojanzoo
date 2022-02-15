@@ -11,5 +11,5 @@
    datasets<datasets/index>
    defenses<defenses>
    environ<environ>
-   models<models>
+   models<models/index>
    utils<utils>

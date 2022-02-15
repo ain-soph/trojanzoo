@@ -28,6 +28,23 @@ for module in module_list:
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, ImageModel] = None,
                  config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict):
+    r"""
+    | Add image model arguments to argument parser.
+    | For specific arguments implementation, see :meth:`ImageModel.add_argument`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+        model_name (str): The model name.
+        model (str | ImageModel): Model Instance or model name
+            (as the alias of `model_name`).
+        config (Config): The default parameter config,
+            which contains the default dataset and model name if not provided.
+        class_dict (dict[str, type[ImageModel]]):
+            Map from model name to model class.
+
+    See Also:
+        :func:`trojanzoo.models.add_argument()`
+    """
     return trojanzoo.models.add_argument(parser=parser, model_name=model_name, model=model,
                                          config=config, class_dict=class_dict)
 
@@ -36,6 +53,34 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
            folder_path: str = None,
            config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict, **kwargs) -> ImageModel:
+    r"""
+    | Create a model instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | The default value of :attr:`folder_path` is
+      ``'{model_dir}/{data_type}/{name}'``.
+    | For model implementation, see :class:`ImageModel`.
+
+    Args:
+        model_name (str): The model name.
+        model (str | ImageModel): The model instance or model name
+            (as the alias of `model_name`).
+        dataset_name (str): The dataset name.
+        dataset (str | trojanvision.datasets.ImageSet):
+            Dataset Instance or dataset name
+            (as the alias of `dataset_name`).
+        config (Config): The default parameter config.
+        class_dict (dict[str, type[model]]):
+            Map from model name to model class.
+        **kwargs: The keyword arguments
+            passed to model init method.
+
+    Returns:
+        ImageModel: The image model instance.
+
+    See Also:
+        :func:`trojanzoo.models.create()`
+    """
     return trojanzoo.models.create(model_name=model_name, model=model,
                                    dataset_name=dataset_name, dataset=dataset,
                                    folder_path=folder_path,
@@ -47,4 +92,14 @@ def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -
 
 
 def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict, indent: int = 0) -> None:
+    r"""Output all available model names.
+
+    Args:
+        class_dict (dict[str, type[ImageModel]]): Map from model name to model class.
+        indent (int): The space indent for the entire string.
+            Defaults to ``0``.
+
+    See Also:
+        :func:`trojanzoo.models.output_available_models()`
+    """
     return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)

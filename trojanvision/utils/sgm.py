@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
-from trojanvision.models import ResNet, DenseNet
-from trojanzoo.models import Model
 import torch
 import torch.nn as nn
-import numpy as np
 from torch.utils.hooks import RemovableHandle
+
+import numpy as np
 from collections.abc import Callable
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from trojanvision.models import ResNet, DenseNet, ImageModel
+
 
 __all__ = ['register_hook', 'remove_hook']
 
@@ -25,7 +29,7 @@ def backward_hook(gamma: float) -> Callable[[nn.Module, torch.Tensor, torch.Tens
 #     return (grad_in[0] / std,)
 
 
-def register_hook_for_resnet(model: ResNet, gamma: float = 1.0) -> list[RemovableHandle]:
+def register_hook_for_resnet(model: 'ResNet', gamma: float = 1.0) -> list[RemovableHandle]:
     # There is only 1 ReLU in Conv module of ResNet-18/34
     # and 2 ReLU in Conv module ResNet-50/101/152
     layer = int(model.name.split('_')[0][6:])
@@ -43,7 +47,7 @@ def register_hook_for_resnet(model: ResNet, gamma: float = 1.0) -> list[Removabl
     #     module.register_backward_hook(backward_hook_norm)
 
 
-def register_hook_for_densenet(model: DenseNet, gamma: float = 1.0):
+def register_hook_for_densenet(model: 'DenseNet', gamma: float = 1.0):
     # There are 2 ReLU in Conv module of DenseNet-121/169/201.
     gamma = np.power(gamma, 0.5)
     backward_hook_sgm = backward_hook(gamma)
@@ -55,19 +59,19 @@ def register_hook_for_densenet(model: DenseNet, gamma: float = 1.0):
     return _list
 
 
-def register_hook(model: Model, gamma: float = 1.0):
+def register_hook(model: 'ImageModel', gamma: float = 1.0):
     if 'sgm_remove' in model.__dict__.keys():
         print('SGM is already activated when calling register_hook')
         return
     if 'resnet' in model.name:
-        model.sgm_remove = register_hook_for_resnet(model, gamma)
+        register_hook_for_resnet(model, gamma)
     elif 'densenet' in model.name:
-        model.sgm_remove = register_hook_for_densenet(model, gamma)
+        register_hook_for_densenet(model, gamma)
     else:
         raise ValueError(model.name)
 
 
-def remove_hook(model: Model):
+def remove_hook(model: 'ImageModel'):
     if 'sgm_remove' not in model.__dict__.keys():
         print('SGM is not activated when calling remove_hook')
         return

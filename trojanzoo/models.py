@@ -1353,7 +1353,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
         model (str | Model): The model instance or model name
             (as the alias of `model_name`).
         config (Config): The default parameter config,
-            which contains the default model name if not provided.
+            which contains the default dataset and model name if not provided.
         class_dict (dict[str, type[Model]]):
             Map from model name to model class.
 
@@ -1391,7 +1391,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
     | For arguments not included in :attr:`kwargs`,
       use the default values in :attr:`config`.
     | The default value of :attr:`folder_path` is
-      ``'{data_dir}/{data_type}/{name}'``.
+      ``'{model_dir}/{data_type}/{name}'``.
     | For model implementation, see :class:`Model`.
 
     Args:
