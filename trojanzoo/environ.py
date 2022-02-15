@@ -67,7 +67,7 @@ class Env(Param):
 
         Note:
             This is the implementation of adding arguments.
-            For users, please use :func:`add_argument` instead, which is more user-friendly.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
         """
         group.add_argument('--config', dest='config_path',
                            help='cmd config file path '
@@ -105,7 +105,7 @@ env = Env(default=None)
 def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     r"""
     | Add environ arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Env.add_argument`.
+    | For specific arguments implementation, see :meth:`Env.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

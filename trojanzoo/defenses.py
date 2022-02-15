@@ -25,6 +25,7 @@ class Defense(ABC, ModelProcess):
 
     Note:
         This is the implementation of defense.
+        The concrete defense class may override this method to add more arguments.
         For users, please use :func:`create` instead, which is more user-friendly.
 
     Attributes:
@@ -34,6 +35,20 @@ class Defense(ABC, ModelProcess):
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
+        r"""Add defense arguments to argument parser group.
+        View source to see specific arguments.
+
+        Args:
+            group (argparse._ArgumentGroup): The argument parser group.
+
+        Returns:
+            argparse._ArgumentGroup: The argument group.
+
+        Note:
+            This is the implementation of adding arguments.
+            The concrete defense class may override this method to add more arguments.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
+        """
         group.add_argument('--defense', dest='defense_name')
         group.add_argument('--defense_dir',
                            help='directory to contain defense results')
@@ -54,7 +69,7 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None,
                  class_dict: dict[str, type[Defense]] = {}):
     r"""
     | Add defense arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Defense.add_argument`.
+    | For specific arguments implementation, see :meth:`Defense.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

@@ -30,7 +30,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
                  config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict):
     r"""
     | Add image model arguments to argument parser.
-    | For specific arguments implementation, see :meth:`ImageModel.add_argument`.
+    | For specific arguments implementation, see :meth:`ImageModel.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

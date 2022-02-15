@@ -70,7 +70,7 @@ class ImageFolder(ImageSet):
         Note:
             This is the implementation of adding arguments.
             The concrete dataset class may override this method to add more arguments.
-            For users, please use :func:`add_argument` instead, which is more user-friendly.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
 
         See Also:
             :meth:`trojanvision.datasets.ImageSet.add_argument()`

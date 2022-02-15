@@ -148,7 +148,7 @@ class ImageModel(Model):
         Note:
             This is the implementation of adding arguments.
             The concrete model class may override this method to add more arguments.
-            For users, please use :func:`add_argument` instead, which is more user-friendly.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
 
         See Also:
             :meth:`trojanzoo.models.Model.add_argument()`

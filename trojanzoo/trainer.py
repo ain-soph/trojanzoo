@@ -61,7 +61,7 @@ class Trainer:
 
         Note:
             This is the implementation of adding arguments.
-            For users, please use :func:`add_argument` instead, which is more user-friendly.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
         """
         group.add_argument('--epochs', type=int,
                            help='training epochs '
@@ -213,7 +213,7 @@ def add_argument(parser: argparse.ArgumentParser,
                  ) -> argparse._ArgumentGroup:
     r"""
     | Add trainer arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Trainer.add_argument`.
+    | For specific arguments implementation, see :meth:`Trainer.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

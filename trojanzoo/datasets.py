@@ -107,7 +107,7 @@ class Dataset(ABC, BasicObject):
         Note:
             This is the implementation of adding arguments.
             The concrete dataset class may override this method to add more arguments.
-            For users, please use :func:`add_argument` instead, which is more user-friendly.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
         """
         group.add_argument('-d', '--dataset', dest='dataset_name',
                            help='dataset name (lowercase)')
@@ -469,7 +469,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
                  ) -> argparse._ArgumentGroup:
     r"""
     | Add dataset arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Dataset.add_argument`.
+    | For specific arguments implementation, see :meth:`Dataset.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

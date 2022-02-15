@@ -265,7 +265,7 @@ class Model(BasicObject):
         Note:
             This is the implementation of adding arguments.
             The concrete model class may override this method to add more arguments.
-            For users, please use :func:`add_argument` instead, which is more user-friendly.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
         """
         group.add_argument('-m', '--model', dest='model_name',
                            help='model name '
@@ -1345,7 +1345,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
                  ) -> argparse._ArgumentGroup:
     r"""
     | Add model arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Model.add_argument`.
+    | For specific arguments implementation, see :meth:`Model.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

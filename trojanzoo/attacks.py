@@ -25,12 +25,27 @@ class Attack(ABC, ModelProcess):
 
     Note:
         This is the implementation of attack.
+        The concrete attack class may override this method to add more arguments.
         For users, please use :func:`create` instead, which is more user-friendly.
     """
     name = 'attack'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
+        r"""Add attack arguments to argument parser group.
+        View source to see specific arguments.
+
+        Args:
+            group (argparse._ArgumentGroup): The argument parser group.
+
+        Returns:
+            argparse._ArgumentGroup: The argument group.
+
+        Note:
+            This is the implementation of adding arguments.
+            The concrete attack class may override this method to add more arguments.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
+        """
         group.add_argument('--attack', dest='attack_name')
         group.add_argument('--output', type=int,
                            help='output level (default: 0)')
@@ -77,7 +92,7 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None,
                  class_dict: dict[str, type[Attack]] = {}):
     r"""
     | Add attack arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Attack.add_argument`.
+    | For specific arguments implementation, see :meth:`Attack.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

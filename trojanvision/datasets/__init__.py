@@ -27,7 +27,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
                  ) -> argparse._ArgumentGroup:
     r"""
     | Add image dataset arguments to argument parser.
-    | For specific arguments implementation, see :meth:`ImageSet.add_argument`.
+    | For specific arguments implementation, see :meth:`ImageSet.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.
