@@ -10,13 +10,13 @@
 .. autoclass:: trojanvision.datasets.CUB200_2011
    :members:
 
+.. autoclass:: trojanvision.datasets.GTSRB
+   :members:
+
 .. autoclass:: trojanvision.datasets.ImageNet
    :members:
 
 .. autoclass:: trojanvision.datasets.ISIC2018
-   :members:
-
-.. autoclass:: trojanvision.datasets.GTSRB
    :members:
 
 .. autoclass:: trojanvision.datasets.VGGface2
