@@ -54,7 +54,7 @@ class Attack(ABC, ModelProcess):
     def generate_target(self, _input: torch.Tensor, idx: int = 1,
                         same: bool = False, **kwargs):
         r"""Generate target labels of a batched input based on
-            the classification confidence ranking index.
+        the classification confidence ranking index.
 
         Args:
             _input (torch.Tensor): The input tensor.
