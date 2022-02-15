@@ -53,12 +53,6 @@ class Trainer:
         r"""Add trainer arguments to argument parser group.
         View source to see specific arguments.
 
-        Args:
-            group (argparse._ArgumentGroup): The argument parser group.
-
-        Returns:
-            argparse._ArgumentGroup: The argument group.
-
         Note:
             This is the implementation of adding arguments.
             For users, please use :func:`add_argument()` instead, which is more user-friendly.

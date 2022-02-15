@@ -62,9 +62,6 @@ class Env(Param):
         r"""Add environ arguments to argument parser group.
         View source to see specific arguments.
 
-        Args:
-            group (argparse._ArgumentGroup): The argument parser group.
-
         Note:
             This is the implementation of adding arguments.
             For users, please use :func:`add_argument()` instead, which is more user-friendly.

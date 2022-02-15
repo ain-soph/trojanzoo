@@ -35,12 +35,6 @@ class Attack(ABC, ModelProcess):
         r"""Add attack arguments to argument parser group.
         View source to see specific arguments.
 
-        Args:
-            group (argparse._ArgumentGroup): The argument parser group.
-
-        Returns:
-            argparse._ArgumentGroup: The argument group.
-
         Note:
             This is the implementation of adding arguments.
             The concrete attack class may override this method to add more arguments.
