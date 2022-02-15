@@ -26,14 +26,6 @@ class Attack(ABC, ModelProcess):
     Note:
         This is the implementation of attack.
         For users, please use :func:`create` instead, which is more user-friendly.
-
-    Args:
-        batch_size (int): Batch size of training and validation set
-            (negative number means batch size for each gpu).
-        **kwargs: Any keyword argument (unused).
-
-    Attributes:
-        name (str): Dataset Name. (need overriding)
     """
     name = 'attack'
 

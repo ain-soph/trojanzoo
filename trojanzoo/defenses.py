@@ -19,6 +19,17 @@ if TYPE_CHECKING:
 
 
 class Defense(ABC, ModelProcess):
+    r"""
+    | An abstract class representing a defense.
+    | It inherits :class:`trojanzoo.utils.module.process.ModelProcess`.
+
+    Note:
+        This is the implementation of defense.
+        For users, please use :func:`create` instead, which is more user-friendly.
+
+    Attributes:
+        attack (trojanzoo.attacks.Attack | None): The attack instance.
+    """
     name: str = 'defense'
 
     @classmethod
@@ -34,12 +45,28 @@ class Defense(ABC, ModelProcess):
 
     @abstractmethod
     def detect(self, *args, **kwargs):
+        r"""Main detect method (need overriding)."""
         ...
 
 
 def add_argument(parser: argparse.ArgumentParser, defense_name: str = None,
                  defense: Union[str, Defense] = None,
                  class_dict: dict[str, type[Defense]] = {}):
+    r"""
+    | Add defense arguments to argument parser.
+    | For specific arguments implementation, see :meth:`Defense.add_argument`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+        defense_name (str): The defense name.
+        defense (str | Defense): The defense instance or defense name
+            (as the alias of `defense_name`).
+        class_dict (dict[str, type[Defense]]):
+            Map from defense name to defense class.
+
+    Returns:
+        argparse._ArgumentGroup: The argument group.
+    """
     defense_name = get_name(
         name=defense_name, module=defense, arg_list=['--defense'])
     group = parser.add_argument_group(
@@ -61,6 +88,34 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
            model_name: str = None, model: Union[str, Model] = None,
            config: Config = config, class_dict: dict[str, type[Defense]] = {},
            **kwargs):
+    r"""
+    | Create a defense instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | The default value of :attr:`folder_path` is
+      ``'{defense_dir}/{dataset.data_type}/{dataset.name}/{model.name}/{defense.name}'``.
+    | For defense implementation, see :class:`Defense`.
+
+    Args:
+        defense_name (str): The defense name.
+        defense (str | Defense): The defense instance or defense name
+            (as the alias of `defense_name`).
+        dataset_name (str): The dataset name.
+        dataset (str | trojanzoo.datasets.Dataset):
+            Dataset Instance or dataset name
+            (as the alias of `dataset_name`).
+        model_name (str): The model name.
+        model (str | Model): The model instance or model name
+            (as the alias of `model_name`).
+        config (Config): The default parameter config.
+        class_dict (dict[str, type[Defense]]):
+            Map from defense name to defense class.
+        **kwargs: The keyword arguments
+            passed to defense init method.
+
+    Returns:
+        Defense: The defense instance.
+    """
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     model_name = get_name(name=model_name, module=model,
@@ -79,7 +134,7 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
     except KeyError:
         print(f'{defense_name} not in \n{list(class_dict.keys())}')
         raise
-    if folder_path is None:
+    if 'folder_path' not in result.keys():
         folder_path = result['defense_dir']
         if isinstance(dataset, Dataset):
             folder_path = os.path.join(
@@ -87,5 +142,6 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
         if model_name is not None:
             folder_path = os.path.join(folder_path, model_name)
         folder_path = os.path.join(folder_path, DefenseType.name)
+        result['folder_path'] = folder_path
     return DefenseType(name=defense_name, dataset=dataset, model=model,
                        folder_path=folder_path, **result)
