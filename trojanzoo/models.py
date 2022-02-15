@@ -1403,7 +1403,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
             Dataset Instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config.
-        class_dict (dict[str, type[model]]):
+        class_dict (dict[str, type[Model]]):
             Map from model name to model class.
         **kwargs: The keyword arguments
             passed to model init method.

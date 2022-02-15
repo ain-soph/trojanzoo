@@ -123,28 +123,28 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
     | For arguments not included in :attr:`kwargs`,
       use the default values in :attr:`config`.
     | The default value of :attr:`folder_path` is
-      ``'{attack_dir}/{dataset.data_type}/{dataset.name}'``.
+      ``'{attack_dir}/{dataset.data_type}/{dataset.name}/{model.name}/{attack.name}'``.
     | For attack implementation, see :class:`Attack`.
 
     Args:
         attack_name (str): The attack name.
         attack (str | Attack): The attack instance or attack name
             (as the alias of `attack_name`).
-        model_name (str): The model name.
-        model (str | Model): The model instance or model name
-            (as the alias of `model_name`).
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
             Dataset Instance or dataset name
             (as the alias of `dataset_name`).
+        model_name (str): The model name.
+        model (str | Model): The model instance or model name
+            (as the alias of `model_name`).
         config (Config): The default parameter config.
-        class_dict (dict[str, type[model]]):
-            Map from model name to model class.
+        class_dict (dict[str, type[Attack]]):
+            Map from attack name to attack class.
         **kwargs: The keyword arguments
-            passed to model init method.
+            passed to attack init method.
 
     Returns:
-        Model: The model instance.
+        Attack: The attack instance.
     """
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])

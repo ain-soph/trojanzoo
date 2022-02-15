@@ -51,8 +51,8 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
 
 def create(model_name: str = None, model: Union[str, ImageModel] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
-           folder_path: str = None,
-           config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict, **kwargs) -> ImageModel:
+           config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict,
+           **kwargs) -> ImageModel:
     r"""
     | Create a model instance.
     | For arguments not included in :attr:`kwargs`,
@@ -70,7 +70,7 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
             Dataset Instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config.
-        class_dict (dict[str, type[model]]):
+        class_dict (dict[str, type[ImageModel]]):
             Map from model name to model class.
         **kwargs: The keyword arguments
             passed to model init method.
@@ -83,7 +83,6 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
     """
     return trojanzoo.models.create(model_name=model_name, model=model,
                                    dataset_name=dataset_name, dataset=dataset,
-                                   folder_path=folder_path,
                                    config=config, class_dict=class_dict, **kwargs)
 
 
