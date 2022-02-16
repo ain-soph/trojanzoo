@@ -194,7 +194,7 @@ class ImageModel(Model):
             replace_bn_to_gn(self._model)
 
         if data_shape is None:
-            assert isinstance(dataset, ImageSet)
+            assert isinstance(dataset, ImageSet), 'Please specify data_shape or dataset'
             data_shape = dataset.data_shape
         args = {'padding': 3} if 'vgg' in name else {}  # TODO: so ugly
         set_first_layer_channel(self._model.features,

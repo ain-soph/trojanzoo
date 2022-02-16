@@ -24,11 +24,15 @@ class NeuralCleanse(BackdoorDefense):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--nc_epoch', type=int, help='neural cleanse optimizing epochs, defaults to 10.')
+        group.add_argument('--nc_epoch', type=int,
+                           help='neural cleanse optimizing epochs '
+                           '(default: 10)')
         group.add_argument('--penalize', action='store_true',
-                           help='add the regularization terms, nc to tabor, defaults to False.')
+                           help='add the regularization terms, nc to tabor '
+                           '(default: False)')
         group.add_argument('--hyperparams', type=list,
-                           help='the hyperparameters of  all regularization terms, defaults to [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2].')
+                           help='the hyperparameters of  all regularization terms '
+                           '(default: [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2])')
         return group
 
     def __init__(self, epochs: int = 10,
@@ -50,15 +54,15 @@ class NeuralCleanse(BackdoorDefense):
         self.early_stop_threshold: float = early_stop_threshold
         self.early_stop_patience: float = self.patience * 2
 
-        self.random_pos = self.attack.mark.random_pos
+        self.mark_random_pos = self.attack.mark.mark_random_pos
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        self.attack.mark.random_pos = False
+        self.attack.mark.mark_random_pos = False
         self.attack.mark.mark_height_offset = 0
-        self.attack.mark.width_offest = 0
-        if not self.random_pos:
-            self.real_mask = self.attack.mark.mask
+        self.attack.mark.mark_width_offset = 0
+        # if not self.mark_random_pos:
+        #     self.real_mask = self.attack.mark.mask
         mark_list, mask_list, loss_list = self.get_potential_triggers()
         mask_norms = mask_list.flatten(start_dim=1).norm(p=1, dim=1)
         print('mask norms: ', mask_norms)
@@ -66,9 +70,9 @@ class NeuralCleanse(BackdoorDefense):
         print('loss: ', loss_list)
         print('loss MAD: ', normalize_mad(loss_list))
 
-        if not self.random_pos:
+        if not self.mark_random_pos:
             overlap = mask_jaccard(mask_list[self.attack.target_class], self.real_mask,
-                                  select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
+                                   select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
             print(f'Jaccard index: {overlap:.3f}')
 
         if not os.path.exists(self.folder_path):
@@ -88,9 +92,9 @@ class NeuralCleanse(BackdoorDefense):
             mark_list.append(mark)
             mask_list.append(mask)
             loss_list.append(loss)
-            if not self.random_pos:
+            if not self.mark_random_pos:
                 overlap = mask_jaccard(mask, self.real_mask,
-                                      select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
+                                       select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
                 print(f'Jaccard index: {overlap:.3f}')
             np.savez(file_path, mark_list=[to_numpy(mark) for mark in mark_list],
                      mask_list=[to_numpy(mask) for mask in mask_list],
@@ -250,8 +254,6 @@ class NeuralCleanse(BackdoorDefense):
         atanh_mask.requires_grad = False
 
         self.attack.mark.mark = mark_best
-        self.attack.mark.alpha_mark = mask_best
-        self.attack.mark.mask = torch.ones_like(mark_best, dtype=torch.bool)
         self.attack.validate_fn()
         return mark_best, mask_best, entropy_best
 
@@ -260,9 +262,7 @@ class NeuralCleanse(BackdoorDefense):
             path = os.path.join(self.folder_path, self.get_filename() + '.npz')
         _dict = np.load(path)
         self.attack.mark.mark = to_tensor(_dict['mark_list'][self.target_class])
-        self.attack.mark.alpha_mask = to_tensor(_dict['mask_list'][self.target_class])
-        self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
-        self.attack.mark.random_pos = False
+        self.attack.mark.mark_random_pos = False
         self.attack.mark.mark_height_offset = 0
         self.attack.mark.mark_width_offset = 0
         print('defense results loaded from: ', path)

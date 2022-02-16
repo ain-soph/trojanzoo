@@ -95,24 +95,17 @@ def output_iter(_iter: int, iteration: int = None) -> str:
 
 def indent_str(s_: str, indent: int = 0) -> str:
     # modified from torch.nn.modules._addindent
-    if indent == 0:
-        return s_
-    tail = ''
-    s_ = str(s_)
-    if s_[-1] == '\n':
-        s_ = s_[:-1]
-        tail = '\n'
-    s = str(s_).split('\n')
-    s = [(indent * ' ') + line for line in s]
-    s = '\n'.join(s)
-    s += tail
-    return s
+    if indent > 0:
+        s_ = str(s_).replace('\n', '\n' + (indent * ' '))
+        if s_.endswith('\n' + (indent * ' ')):
+            s_ = s_.removesuffix(indent * ' ')
+    return s_
 
 
-class IndentRedirect:
+class IndentRedirect:  # TODO: inherit TextIOWrapper?
     def __init__(self, buffer: bool = True, indent: int = 0):
-        self.__console__: io.TextIOWrapper = sys.stdout
-        self.indent: int = indent
+        self.__console__ = sys.stdout
+        self.indent = indent
         self.__buffer: str = None
         if buffer:
             self.__buffer = ''
@@ -138,6 +131,7 @@ class IndentRedirect:
             yield
         finally:
             sys.stdout = self.__console__
+            self.__buffer = ''
 
     def enable(self):
         sys.stdout = self

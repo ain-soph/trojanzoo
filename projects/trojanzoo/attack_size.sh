@@ -3,7 +3,7 @@
 # CUDA_VISIBLE_DEVICES=2 bash projects/trojanzoo/attack_size.sh 4 > results/attack_4.txt 2>&1
 # CUDA_VISIBLE_DEVICES=3 bash projects/trojanzoo/attack_size.sh 5 > results/attack_5.txt 2>&1
 
-declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
+declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --mark_random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
 
 mark_size=$1
 mark_alpha=0.8

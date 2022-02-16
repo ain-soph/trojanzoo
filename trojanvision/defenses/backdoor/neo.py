@@ -36,7 +36,7 @@ class NEO(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        if not self.attack.mark.random_pos:
+        if not self.attack.mark.mark_random_pos:
             self.real_mask = self.attack.mark.mask
         loader = self.dataset.get_dataloader('valid', drop_last=True, batch_size=100)
         _input, _ = next(iter(loader))
@@ -109,7 +109,7 @@ class NEO(BackdoorDefense):
                     mark_height_offset=pos[0], mark_width_offset=pos[1])
                 target_acc = self.confirm_backdoor()
                 output_str = f'    {j:3d}  Acc: {target_acc:5.2f}'
-                if not self.attack.mark.random_pos:
+                if not self.attack.mark.mark_random_pos:
                     overlap = mask_jaccard(mark_class.mask.detach().cpu(), self.real_mask.detach().cpu(),
                                           select_num=self.size[0] * self.size[1])
                     output_str += f'  Jaccard Idx: {overlap:5.3f}'

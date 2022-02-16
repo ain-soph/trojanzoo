@@ -2,8 +2,7 @@
 
 from trojanzoo.datasets import Dataset
 from trojanzoo.configs import config, Config
-from trojanzoo.utils.module import get_name
-from trojanzoo.utils.module.process import ModelProcess
+from trojanzoo.utils.module import get_name, ModelProcess
 from trojanzoo.utils.output import ansi
 
 import torch
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 class Attack(ABC, ModelProcess):
     r"""
     | An abstract class representing an attack.
-    | It inherits :class:`trojanzoo.utils.module.process.ModelProcess`.
+    | It inherits :class:`trojanzoo.utils.module.ModelProcess`.
 
     Note:
         This is the implementation of attack.
@@ -171,5 +170,4 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
             folder_path = os.path.join(folder_path, model_name)
         folder_path = os.path.join(folder_path, AttackType.name)
         result['folder_path'] = folder_path
-    return AttackType(name=attack_name, dataset=dataset, model=model,
-                      folder_path=folder_path, **result)
+    return AttackType(name=attack_name, dataset=dataset, model=model, **result)

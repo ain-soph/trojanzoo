@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.utils.memory import output_memory
-from trojanzoo.utils.module.process import Process
+from trojanzoo.utils.module import Process
 from trojanzoo.utils.output import prints
 
 import torch
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class Optimizer(ABC, Process):
     r"""An abstract input optimizer class that inherits
-    :class:`trojanzoo.utils.module.process.Process`.
+    :class:`trojanzoo.utils.module.Process`.
 
     Args:
         iteration (int): Optimization iteration.
@@ -26,7 +26,7 @@ class Optimizer(ABC, Process):
         loss_fn (~collections.abc.Callable):
             Loss function (it's usually ``reduction='none'``).
         **kwargs: Keyword Arguments passed to
-            :class:`trojanzoo.utils.module.process.Process`.
+            :class:`trojanzoo.utils.module.Process`.
     """
     name: str = 'optimizer'
 
@@ -172,7 +172,7 @@ class Optimizer(ABC, Process):
                                        for k, v in loss_kwargs.items()}
                 loss_values = loss_fn(
                     adv_input[current_idx], **current_loss_kwargs)
-        assert loss_values.dim == 1
+        assert loss_values.dim() == 1
         if adv_input[current_idx] is not None:
             assert len(loss_values) == len(current_idx)
         return loss_values < stop_threshold

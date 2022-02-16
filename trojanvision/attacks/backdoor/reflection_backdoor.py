@@ -6,11 +6,13 @@ from trojanzoo.utils.tensor import to_pil_image, byte2float
 
 import torch
 import torch.nn as nn
+import torchvision.transforms as transforms
+
 import numpy as np
-import argparse
-from PIL import Image
 import random
 from scipy import stats
+
+import argparse
 
 
 class ReflectionBackdoor(BadNet):
@@ -56,7 +58,7 @@ class ReflectionBackdoor(BadNet):
             print(f'Current Iteration : {current_iter}')
             for i in range(len(adv_images)):
                 print(f'    adv image idx : {i}')
-                self.get_mark(adv_images[i])
+                self.mark.load_mark(adv_images[i], mark_background_color=None)
                 super().attack(self.inner_epoch, indent=8, **kwargs)
                 _, target_acc = super().validate_fn(verbose=False)
                 W[pick_img_ind[i]] = target_acc
@@ -69,23 +71,8 @@ class ReflectionBackdoor(BadNet):
             pick_img_ind = W.argsort(descending=True).tolist()[:self.selection_num]
             adv_images = candidate_images[pick_img_ind]
         # final training, see performance of best reflection trigger
-        self.get_mark(adv_images[0])
+        self.mark.load_mark(adv_images[0], mark_background_color=None)
         super().attack(epochs, save=save, lr_scheduler=lr_scheduler, **kwargs)
-
-    def get_mark(self, conv_ref_img: torch.Tensor):
-        '''
-        input is a convolved reflection images, already in same
-        shape of any input images, this function will legally reshape
-        this ref_img and give to self.mark.mark.
-        '''
-        org_mark_img: Image.Image = to_pil_image(conv_ref_img)
-        org_mark_img = org_mark_img.resize((self.mark.mark_width, self.mark.mark_height), Image.ANTIALIAS)
-        self.mark.org_mark = byte2float(org_mark_img)
-
-        self.mark.org_mask, self.mark.org_alpha_mask = self.mark.org_mask_mark(self.mark.org_mark,
-                                                                               self.mark.mark_background_color, self.mark.mark_alpha)
-        self.mark.mark, self.mark.mask, self.mark.alpha_mask = self.mark.mask_mark(
-            mark_height_offset=self.mark.mark_height_offset, mark_width_offset=self.mark.mark_width_offset)
 
     def generate_reflection_img(self, img_input, img_bg, img_rf, ghost_rate=0.39, max_image_size=560, alpha_t=-1., offset=(0, 0), sigma=-1, ghost_alpha=-1.):
         '''

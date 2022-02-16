@@ -102,10 +102,10 @@ class BadNet(Attack):
         _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({mark_height:d},{mark_width:d})'.format(
             mark=mark_name, target=target_class, mark_alpha=mark_alpha,
             mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
-        if self.mark.random_pos:
+        if self.mark.mark_random_pos:
             _file = 'random_pos_' + _file
-        if self.mark.mark_distributed:
-            _file = 'distributed_' + _file
+        if self.mark.mark_scattered:
+            _file = 'scattered_' + _file
         return _file
 
     # ---------------------- I/O ----------------------------- #
@@ -113,15 +113,15 @@ class BadNet(Attack):
     def save(self, filename: str = None, **kwargs):
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
-        self.mark.save_npz(file_path + '.npz')
-        self.mark.save_img(file_path + '.png')
+        self.mark.save_mark_as_npy(file_path + '.npy')
+        self.mark.save_mark_as_img(file_path + '.png')
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 
     def load(self, filename: str = None, **kwargs):
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
-        self.mark.load_npz(file_path + '.npz')
+        self.mark.load_mark(file_path + '.npy', already_processed=True)
         self.model.load(file_path + '.pth')
         print('attack results loaded from: ', file_path)
 
@@ -130,7 +130,9 @@ class BadNet(Attack):
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, **kwargs)
 
-    def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None, _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+    def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
+                _output: torch.Tensor = None,
+                **kwargs) -> torch.Tensor:
         loss_clean = self.model.loss(_input, _label, **kwargs)
         poison_input = self.mark.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)

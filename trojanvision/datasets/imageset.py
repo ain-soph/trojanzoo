@@ -76,7 +76,7 @@ class ImageSet(Dataset):
     Attributes:
         data_type (str): Defaults to ``'image'``.
         num_classes (int): Defaults to ``1000``.
-        data_shape (list[int]): The shape of image data.
+        data_shape (list[int]): The shape of image data ``[C, H, W]``.
             Defaults to ``[3, 224, 224]``.
     """
 

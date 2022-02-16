@@ -4,7 +4,7 @@ from trojanzoo.models import Model
 from trojanzoo.configs import config
 from trojanzoo.environ import env
 from trojanzoo.utils.model import ExponentialMovingAverage
-from trojanzoo.utils.module import get_name
+from trojanzoo.utils.module import get_name, BasicObject
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.fim import KFAC, EKFAC
 
@@ -19,9 +19,11 @@ if TYPE_CHECKING:
     pass
 
 
-class Trainer:
+class Trainer(BasicObject):
     r"""A dict-like class to contain training arguments
     which supports attribute-like view as well.
+
+    It inherits :class:`trojanzoo.utils.module.BasicObject`.
 
     Note:
         The most common usage is ``train(**trainer)``.
@@ -43,10 +45,6 @@ class Trainer:
             Tensorboard summary writer instance.
     """
     name = 'trainer'
-    param_list = ['optim_args', 'train_args', 'writer_args',
-                  'optimizer', 'lr_scheduler',
-                  'pre_conditioner', 'model_ema',
-                  'writer']
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
@@ -144,7 +142,13 @@ class Trainer:
                  optimizer: Optimizer = None,
                  lr_scheduler: _LRScheduler = None,
                  model_ema: ExponentialMovingAverage = None,
-                 pre_conditioner: Union[KFAC, EKFAC] = None, writer=None):
+                 pre_conditioner: Union[KFAC, EKFAC] = None,
+                 writer=None, **kwargs):
+        super().__init__(**kwargs)
+        self.param_list['trainer'] = ['optim_args', 'train_args', 'writer_args',
+                                      'optimizer', 'lr_scheduler',
+                                      'pre_conditioner', 'model_ema',
+                                      'writer']
         # TODO: issue 6 why? to avoid BadAppend issues
         self.optim_args = optim_args.copy()
         self.train_args = train_args.copy()
@@ -175,25 +179,19 @@ class Trainer:
         Returns:
             list[str]: The list of keys.
         """
-        keys = self.param_list.copy()
+        keys = self.param_list['trainer'].copy()
         keys.remove('optim_args')
         keys.remove('train_args')
         keys.remove('writer_args')
         keys.extend(self.train_args.keys())
         return keys
 
-    def summary(self, indent: int = 0):
-        r"""Output information of :attr:`self`.
-
-        Args:
-            indent (int): The space indent for the entire string.
-                Defaults to ``0``.
-        """
+    def summary(self, indent: int = None):
+        indent = indent if indent is not None else self.indent
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
-            self.name, **ansi),
-            indent=indent)
-        prints(self.__class__.__name__, indent=indent)
-        for key in self.param_list:
+            self.name, **ansi), indent=indent)
+        prints('{yellow}{0}{reset}'.format(self.__class__.__name__, **ansi), indent=indent)
+        for key in self.param_list['trainer']:
             value = getattr(self, key)
             if value:
                 prints('{green}{0:<10s}{reset}'.format(key, **ansi),

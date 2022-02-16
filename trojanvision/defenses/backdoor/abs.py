@@ -63,7 +63,7 @@ class ABS(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        if not self.attack.mark.random_pos:
+        if not self.attack.mark.mark_random_pos:
             self.real_mask = self.attack.mark.mask
         seed_data = self.load_seed_data()
         _input, _label = seed_data['input'], seed_data['label']
@@ -97,7 +97,7 @@ class ABS(BackdoorDefense):
         jaccard = AverageMeter('Jaccard Idx', ':6.2f')
         score_list = [0.0] * len(list(neuron_dict.keys()))
         result_dict = {}
-        self.attack.mark.random_pos = False
+        self.attack.mark.mark_random_pos = False
         self.attack.mark.mark_height_offset = 0
         self.attack.mark.mark_width_offset = 0
         for label, label_list in neuron_dict.items():
@@ -137,7 +137,7 @@ class ABS(BackdoorDefense):
                 _str += f'    ATK Loss: {attack_loss:10.3f}'
                 _str += f'    Norm: {mask.norm(p=1):.3f}'
                 _str += f'    Score: {score:.3f}'
-                if not self.attack.mark.random_pos:
+                if not self.attack.mark.mark_random_pos:
                     overlap = mask_jaccard(mask, self.real_mask)
                     _dict['jaccard'] = overlap
                     _str += f'    Jaccard: {overlap:.3f}'
@@ -384,7 +384,7 @@ class ABS(BackdoorDefense):
         self.attack.mark.mark = to_tensor(_dict[self.target_class]['mark'])
         self.attack.mark.alpha_mask = to_tensor(_dict[self.target_class]['mask'])
         self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
-        self.attack.mark.random_pos = False
+        self.attack.mark.mark_random_pos = False
         self.attack.mark.mark_height_offset = 0
         self.attack.mark.mark_width_offset = 0
         print('defense results loaded from: ', path)

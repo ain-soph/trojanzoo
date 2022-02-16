@@ -4,8 +4,7 @@ from trojanzoo.configs import config, Config
 from trojanzoo.datasets import Dataset
 from trojanzoo.models import Model
 from trojanzoo.attacks import Attack
-from trojanzoo.utils.module import get_name
-from trojanzoo.utils.module.process import ModelProcess
+from trojanzoo.utils.module import get_name, ModelProcess
 from trojanzoo.utils.output import ansi
 
 import os
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 class Defense(ABC, ModelProcess):
     r"""
     | An abstract class representing a defense.
-    | It inherits :class:`trojanzoo.utils.module.process.ModelProcess`.
+    | It inherits :class:`trojanzoo.utils.module.ModelProcess`.
 
     Note:
         This is the implementation of defense.
@@ -151,5 +150,4 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
             folder_path = os.path.join(folder_path, model_name)
         folder_path = os.path.join(folder_path, DefenseType.name)
         result['folder_path'] = folder_path
-    return DefenseType(name=defense_name, dataset=dataset, model=model,
-                       folder_path=folder_path, **result)
+    return DefenseType(name=defense_name, dataset=dataset, model=model, **result)

@@ -53,8 +53,8 @@ class TrojanNN(BadNet):
     def __init__(self, preprocess_layer: str = 'flatten', threshold: float = 5, target_value: float = 10,
                  neuron_lr: float = 0.015, neuron_epoch: int = 20, neuron_num: int = 2, **kwargs):
         super().__init__(**kwargs)
-        if self.mark.random_pos:
-            raise Exception('TrojanNN requires "random pos" to be False to max activate neurons.')
+        if self.mark.mark_random_pos:
+            raise Exception('TrojanNN requires \'random pos\' to be False to max activate neurons.')
 
         self.param_list['trojannn'] = ['preprocess_layer', 'threshold', 'target_value',
                                        'neuron_lr', 'neuron_epoch', 'neuron_num']
@@ -68,11 +68,12 @@ class TrojanNN(BadNet):
         self.neuron_idx = None
 
         self.pgd = PGDoptimizer(pgd_alpha=self.neuron_lr, pgd_eps=1.0,
-                                iteration=self.neuron_epoch, output=0, **kwargs)
+                                iteration=self.neuron_epoch, output=0,
+                                stop_threshold=threshold, **kwargs)
 
     def attack(self, *args, **kwargs):
         self.neuron_idx = self.get_neuron_idx()
-        self.mark.mark = self.preprocess_mark(mark=self.mark.mark * self.mark.mask, neuron_idx=self.neuron_idx)
+        self.preprocess_mark(neuron_idx=self.neuron_idx)
         super().attack(*args, **kwargs)
 
     # get the neuron idx for preprocess.
@@ -99,34 +100,25 @@ class TrojanNN(BadNet):
         return loss.mean()
 
     # train the mark to activate the least-used neurons.
-    def preprocess_mark(self, mark: torch.Tensor, neuron_idx: torch.Tensor, **kwargs) -> torch.Tensor:
+    def preprocess_mark(self, neuron_idx: torch.Tensor, **kwargs):
         with torch.no_grad():
+            mark_input = self.mark.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
             print("Neuron Value Before Preprocessing: ",
-                  float(self.get_neuron_value(mark.unsqueeze(0), neuron_idx)))
+                  float(self.get_neuron_value(mark_input, neuron_idx)))
 
-        def loss_fn(_input: torch.Tensor, reduction: str = 'mean', **kwargs) -> torch.Tensor:
-            fm = self.model.get_layer(_input, layer_output=self.preprocess_layer)
-            loss: torch.Tensor = (fm[:, neuron_idx] - self.target_value).flatten(1).norm(p=2, dim=1)
-            return loss if reduction == 'none' else loss.mean()
-        noise = torch.zeros_like(mark.unsqueeze(0))
-        x = mark.unsqueeze(0)
-        for _iter in range(self.neuron_epoch):
-            cost = loss_fn(x)
-            if cost < self.threshold:
-                break
-            x, _ = self.pgd.optimize(x, noise=noise, iteration=1, loss_fn=loss_fn)
-            noise = noise * self.mark.mask
-            x = x * self.mark.mask
-        x = x.detach()
-        # with torch.no_grad():
-        #     print("Neuron Value After Preprocessing: ",
-        #           float(self.get_neuron_value(x, neuron_idx)))
-        return x[0]
+        def loss_fn(x: torch.Tensor, **kwargs) -> torch.Tensor:
+            self.mark.mark[:-1] = x[0]
+            mark_input = self.mark.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
+            fm = self.model.get_layer(mark_input, layer_output=self.preprocess_layer)
+            return (fm[:, neuron_idx] - self.target_value).flatten(1).norm(p=2, dim=1)
+        x, _ = self.pgd.optimize(self.mark.mark[:-1].unsqueeze(0), iteration=self.neuron_epoch, loss_fn=loss_fn)
+        self.mark.mark[:-1] = x[0]
+        self.mark.mark.detach_()
 
     def validate_fn(self, get_data_fn=None, **kwargs) -> tuple[float, float]:
         if self.neuron_idx is not None:
             with torch.no_grad():
-                mark = (self.mark.mark * self.mark.mask).unsqueeze(0)
+                mark_input = self.mark.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
                 print("Neuron Value After Preprocessing: ",
-                      float(self.get_neuron_value(mark, self.neuron_idx)))
+                      float(self.get_neuron_value(mark_input, self.neuron_idx)))
         return super().validate_fn(get_data_fn=get_data_fn, **kwargs)

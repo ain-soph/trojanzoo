@@ -4,9 +4,8 @@ from trojanzoo.configs import config, Config
 from trojanzoo.environ import env
 from trojanzoo.utils.data import (dataset_to_list,
                                   split_dataset, get_class_subset)
-from trojanzoo.utils.module import get_name
-from trojanzoo.utils.module.process import BasicObject
-from trojanzoo.utils.output import ansi, redirect
+from trojanzoo.utils.module import get_name, BasicObject
+from trojanzoo.utils.output import ansi
 
 import torch
 import numpy as np
@@ -24,7 +23,7 @@ if TYPE_CHECKING:
 class Dataset(ABC, BasicObject):
     r"""
     | An abstract class representing a dataset.
-    | It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
+    | It inherits :class:`trojanzoo.utils.module.BasicObject`.
 
     Note:
         This is the implementation of dataset.
@@ -127,8 +126,9 @@ class Dataset(ABC, BasicObject):
                  **kwargs):
         super().__init__(**kwargs)
         self.param_list['dataset'] = ['num_classes', 'batch_size', 'valid_batch_size',
-                                      'data_type', 'folder_path', 'split_ratio',
-                                      'num_workers', 'label_names']
+                                      'folder_path', 'num_workers', ]
+        if not self.valid_set:
+            self.param_list['dataset'].append('split_ratio')
         self.__batch_size: int = 0
         self.batch_size = batch_size
         self.valid_batch_size = valid_batch_size
@@ -408,7 +408,8 @@ class Dataset(ABC, BasicObject):
             shuffle = mode == 'train'
         if num_workers is None:
             num_workers = self.num_workers
-        dataset = self.get_dataset(mode=mode, dataset=dataset, **kwargs)
+        if dataset is None:
+            dataset = self.get_dataset(mode=mode, **kwargs)
         pin_memory = pin_memory and env['num_gpus']
         collate_fn = collate_fn or self.collate_fn
         return torch.utils.data.DataLoader(
@@ -449,11 +450,6 @@ class Dataset(ABC, BasicObject):
             if verbose:
                 print('Loss Weights Saved at ', file_path)
             return loss_weights
-
-    def __str__(self):
-        with redirect():
-            self.summary()
-            return redirect.buffer
 
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,

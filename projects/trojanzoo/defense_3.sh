@@ -1,6 +1,6 @@
 # CUDA_VISIBLE_DEVICES=3 bash projects/trojanzoo/defense_3.sh > results/defense_3.txt 2>&1
 
-declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
+declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --mark_random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
 declare -a defenses=("image_transform --transform_mode recompress" "image_transform" "magnet" "fine_pruning" "adv_train")
 
 mark_size=3

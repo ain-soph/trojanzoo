@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils.output import ansi, output_iter, prints
+from trojanzoo.utils.output import ansi, output_iter, prints, redirect
 
 import os
 from collections.abc import Iterable
@@ -44,7 +44,7 @@ class BasicObject:
         indent = indent if indent is not None else self.indent
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
             self.name, **ansi), indent=indent)
-        prints(self.__class__.__name__, indent=indent)
+        prints('{yellow}{0}{reset}'.format(self.__class__.__name__, **ansi), indent=indent)
         for key, value in self.param_list.items():
             if value:
                 prints('{green}{0:<20s}{reset}'.format(
@@ -52,6 +52,14 @@ class BasicObject:
                 prints({v: getattr(self, v)
                        for v in value}, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
+
+    def __str__(self) -> str:
+        with redirect():
+            self.summary()
+            return redirect.buffer
+
+    def __repr__(self) -> str:
+        return str(self)
 
 
 class Process(BasicObject):

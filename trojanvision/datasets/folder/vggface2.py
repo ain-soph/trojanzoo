@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets.imagefolder import ImageFolder
-from trojanzoo.utils.module.param import Module
+from trojanzoo.utils.module import Module
 
 
 class VGGface2(ImageFolder):

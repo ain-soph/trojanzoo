@@ -8,7 +8,7 @@ class IMC_Latent(LatentBackdoor):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if self.mark.random_pos:
+        if self.mark.mark_random_pos:
             raise Exception('IMC requires "random pos" to be False to train mark.')
 
     def attack(self, **kwargs):

@@ -248,9 +248,9 @@ class IMC_Adaptive(IMC):
             mark=os.path.split(self.mark.mark_path)[1][:-4],
             target=target_class, mark_alpha=mark_alpha,
             mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
-        if self.mark.random_pos:
+        if self.mark.mark_random_pos:
             _file = 'random_pos_' + _file
-        if self.mark.mark_distributed:
-            _file = 'distributed_' + _file
+        if self.mark.mark_scattered:
+            _file = 'scattered_' + _file
         _file += f'strippercent_{self.strip_percent:f}_absweight_{self.abs_weight:f}'
         return _file

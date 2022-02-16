@@ -1,6 +1,6 @@
 # CUDA_VISIBLE_DEVICES=2 bash projects/trojanzoo/defense_2.sh > results/defense_2.txt 2>&1
 
-declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
+declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --mark_random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
 declare -a defenses=("strip" "neo")
 
 mark_size=3

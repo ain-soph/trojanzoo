@@ -86,10 +86,6 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
                                    config=config, class_dict=class_dict, **kwargs)
 
 
-def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -> dict[str, list[str]]:
-    return trojanzoo.models.get_available_models(class_dict=class_dict)
-
-
 def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict, indent: int = 0) -> None:
     r"""Output all available model names.
 
@@ -102,3 +98,7 @@ def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict
         :func:`trojanzoo.models.output_available_models()`
     """
     return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)
+
+
+def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -> dict[str, list[str]]:
+    return trojanzoo.models.get_available_models(class_dict=class_dict)

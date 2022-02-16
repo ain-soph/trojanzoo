@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.utils.output import prints, ansi
-from trojanzoo.utils.module.param import Module, Param
+from trojanzoo.utils.module import Module, Param
 
 import os
 import json

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
+from .param import Module, Param
+from .process import BasicObject, Process, ModelProcess
 from trojanzoo.utils.output import ansi, prints
+
 import sys
 from typing import Union    # TODO: python 3.10
 

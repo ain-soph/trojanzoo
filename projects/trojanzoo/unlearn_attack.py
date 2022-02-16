@@ -59,5 +59,6 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------------ #
     atk_unlearn.attack(**trainer)
     atk_unlearn.save()
-    attack.mark.load_npz(os.path.join(attack.folder_path, attack.get_filename() + '.npz'))
+    attack.mark.load_mark(os.path.join(attack.folder_path, attack.get_filename() + '.npy'),
+                          already_processed=True)
     attack.validate_fn()

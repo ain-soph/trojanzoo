@@ -27,7 +27,7 @@ class IMC_Multi(IMC):
             mark = Watermark(data_shape=self.mark.data_shape, mark_background_color=self.mark.mark_background_color, mark_path=self.mark.mark_path,
                              mark_alpha=self.mark.mark_alpha, mark_height=self.mark.mark_height, mark_width=self.mark.mark_width,
                              mark_height_offset=mark_height_offset, mark_width_offset=mark_width_offset,
-                             random_init=True, random_pos=False, mark_distributed=self.mark.mark_distributed)
+                             mark_random_init=True, mark_random_pos=False, mark_scattered=self.mark.mark_scattered)
             self.mark_list.append((mark, i))
 
     def attack(self, epochs: int, save=False, **kwargs):

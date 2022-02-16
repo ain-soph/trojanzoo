@@ -7,8 +7,7 @@ from trojanzoo.utils.fim import KFAC, EKFAC
 from trojanzoo.utils.model import (get_all_layer, get_layer, get_layer_name,
                                    activate_params, accuracy, generate_target,
                                    summary)
-from trojanzoo.utils.module import get_name
-from trojanzoo.utils.module.process import BasicObject
+from trojanzoo.utils.module import get_name, BasicObject
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.tensor import add_noise, to_tensor
 from trojanzoo.utils.train import train, validate, compare
@@ -176,11 +175,14 @@ class _Model(nn.Module):
         x = self.flatten(x)
         return x
 
+    def __call__(self, *args, **kwargs) -> torch.Tensor:
+        return super().__call__(*args, **kwargs)
+
 
 class Model(BasicObject):
     r"""
     | A general model wrapper class, which should be the most common interface for users.
-    | It inherits :class:`trojanzoo.utils.module.process.BasicObject`.
+    | It inherits :class:`trojanzoo.utils.module.BasicObject`.
 
     Args:
         name (str): Name of model.
@@ -1059,17 +1061,6 @@ class Model(BasicObject):
         num_classes = num_classes or self.num_classes
         return accuracy(_output, _label, num_classes, topk)
 
-    def get_parameter_from_name(self, name: str = 'full'
-                                ) -> Iterator[nn.Parameter]:
-        params = self._model.parameters()
-        if name == 'features':  # TODO: python 3.10 match
-            params = self._model.features.parameters()
-        elif name in ['classifier', 'partial']:
-            params = self._model.classifier.parameters()
-        elif name != 'full':
-            raise NotImplementedError(f'{name=}')
-        return params
-
     def activate_params(self, params: Iterator[nn.Parameter] = []) -> None:
         r"""Set ``requires_grad=True`` for selected :attr:`params` of :attr:`module`.
         All other params are frozen.
@@ -1106,7 +1097,7 @@ class Model(BasicObject):
     def summary(self, depth: int = None, verbose: bool = True,
                 indent: int = 0, **kwargs):
         r"""Prints a string summary of the model instance by calling
-        :func:`trojanzoo.utils.module.process.BasicObject.summary()`
+        :func:`trojanzoo.utils.module.BasicObject.summary()`
         and :func:`trojanzoo.utils.model.summary()`.
 
         Args:
@@ -1116,7 +1107,7 @@ class Model(BasicObject):
                 Defaults to ``None``.
             verbose (bool): Passed to :func:`trojanzoo.utils.model.summary()`.
                 Defaults to ``True``.
-            indent (int): Passed to :func:`trojanzoo.utils.module.process.BasicObject.summary()`
+            indent (int): Passed to :func:`trojanzoo.utils.module.BasicObject.summary()`
                 and passed to :func:`trojanzoo.utils.model.summary()` with ``10`` more.
                 Defaults to ``0``.
             **kwargs: Passed to :func:`trojanzoo.utils.model.summary()`.
@@ -1131,21 +1122,6 @@ class Model(BasicObject):
         prints('-' * 20, indent=indent + 10)
 
     # -------------------------------Reload---------------------------- #
-
-    def __call__(self, _input: torch.Tensor, amp: bool = False,
-                 **kwargs) -> torch.Tensor:
-        if amp:
-            with torch.cuda.amp.autocast():
-                return self.get_logits(_input, **kwargs)
-        return self.get_logits(_input, **kwargs)
-
-    # def __str__(self) -> str:
-    #     with redirect():
-    #         self.summary()
-    #         return redirect.buffer
-
-    # def __repr__(self):
-    #     return self.name
 
     def train(self, mode: bool = True):
         r"""Sets the module in training mode.
@@ -1331,6 +1307,26 @@ class Model(BasicObject):
         """
         return generate_target(self, _input, idx, same)
 
+    # --------------------- Undocumented Methods ------------------------- #
+
+    def get_parameter_from_name(self, name: str = 'full'
+                                ) -> Iterator[nn.Parameter]:
+        params = self._model.parameters()
+        if name == 'features':  # TODO: python 3.10 match
+            params = self._model.features.parameters()
+        elif name in ['classifier', 'partial']:
+            params = self._model.classifier.parameters()
+        elif name != 'full':
+            raise NotImplementedError(f'{name=}')
+        return params
+
+    def __call__(self, _input: torch.Tensor, amp: bool = False,
+                 **kwargs) -> torch.Tensor:
+        if amp:
+            with torch.cuda.amp.autocast():
+                return self.get_logits(_input, **kwargs)
+        return self.get_logits(_input, **kwargs)
+
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
                  model: Union[str, Model] = None,
@@ -1438,11 +1434,6 @@ def create(model_name: str = None, model: Union[str, Model] = None,
     return ModelType(name=model_name, dataset=dataset, **result)
 
 
-def get_available_models(class_dict: dict[str, type[Model]] = {}
-                         ) -> dict[str, list[str]]:
-    return {k: v.available_models for k, v in class_dict.items()}
-
-
 def output_available_models(class_dict: dict[str, type[Model]] = {},
                             indent: int = 0) -> None:
     r"""Output all available model names.
@@ -1457,6 +1448,11 @@ def output_available_models(class_dict: dict[str, type[Model]] = {},
         prints('{yellow}{k}{reset}'.format(k=k, **ansi), indent=indent)
         prints(names_dict[k], indent=indent + 10)
         print()
+
+
+def get_available_models(class_dict: dict[str, type[Model]] = {}
+                         ) -> dict[str, list[str]]:
+    return {k: v.available_models for k, v in class_dict.items()}
 
 
 def get_model_class(name: str, class_dict: dict[str, type[Model]] = {}) -> str:

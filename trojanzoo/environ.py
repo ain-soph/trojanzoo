@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.configs import config
-from trojanzoo.utils.module.param import Param
-from trojanzoo.utils.module import get_name
+from trojanzoo.utils.module import get_name, Param
 from trojanzoo.utils.output import ansi
 
 import torch
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class Env(Param):
-    r"""The dict-like environment class that inherits :class:`trojanzoo.utils.module.param.Param`.
+    r"""The dict-like environment class that inherits :class:`trojanzoo.utils.module.Param`.
     It should be singleton in most cases.
 
     Warning:

@@ -113,9 +113,8 @@ class LatentBackdoor(BadNet):
         other_set = TensorDataset(other_x)
         other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=1)
 
-        atanh_mark = torch.randn_like(self.mark.mark) * self.mark.mask
-        atanh_mark.requires_grad_()
-        self.mark.mark = tanh_func(atanh_mark)
+        atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
+        self.mark.mark[:-1] = tanh_func(atanh_mark)
         optimizer = optim.Adam([atanh_mark], lr=self.preprocess_lr)
         optimizer.zero_grad()
 
@@ -128,7 +127,7 @@ class LatentBackdoor(BadNet):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                self.mark.mark = tanh_func(atanh_mark)
+                self.mark.mark[:-1] = tanh_func(atanh_mark)
                 losses.update(loss.item(), n=len(batch_x))
         atanh_mark.requires_grad = False
         self.mark.mark.detach_()

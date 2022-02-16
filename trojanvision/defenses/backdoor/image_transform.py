@@ -6,7 +6,6 @@ from trojanzoo.utils.tensor import to_pil_image, to_tensor
 import torch
 import torchvision.transforms.functional as F
 import argparse
-from PIL import Image
 
 
 class ImageTransform(BackdoorDefense):
@@ -35,7 +34,8 @@ class ImageTransform(BackdoorDefense):
             self.attack.validate_fn()
             self.model.randomized_smooth = False
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], org: bool = False, keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], org: bool = False,
+                 keep_org: bool = True, poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if org:
             _input, _label = self.model.get_data(data)
         else:
@@ -44,7 +44,7 @@ class ImageTransform(BackdoorDefense):
         _input_list = []
         for single_input in _input:
             image = to_pil_image(single_input)
-            image = F.resize(image, (int(h * self.resize_ratio), int(w * self.resize_ratio)), Image.ANTIALIAS)
+            image = F.resize(image, (int(h * self.resize_ratio), int(w * self.resize_ratio)))
             image = F.resize(image, (h, w))
             _input_list.append(to_tensor(image))
         return torch.stack(_input_list), _label

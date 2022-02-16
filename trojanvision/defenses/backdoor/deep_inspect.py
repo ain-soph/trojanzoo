@@ -58,7 +58,7 @@ class DeepInspect(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        if not self.attack.mark.random_pos:
+        if not self.attack.mark.mark_random_pos:
             self.real_mask = self.attack.mark.mask
         loss_list, mark_list = self.get_potential_triggers()
         np.savez(os.path.join(self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'),
@@ -83,7 +83,7 @@ class DeepInspect(BackdoorDefense):
             path = os.path.join(self.folder_path, self.get_filename() + '.npz')
         _dict = np.load(path, allow_pickle=True)
         self.attack.mark.mark = to_tensor(_dict['mark_list'][self.attack.target_class])
-        self.attack.mark.random_pos = False
+        self.attack.mark.mark_random_pos = False
         self.attack.mark.mark_height_offset = 0
         self.attack.mark.mark_width_offset = 0
 
@@ -156,7 +156,7 @@ class DeepInspect(BackdoorDefense):
             return poison_input, poison_label
         self.model._validate(print_prefix='Validate Trigger Tgt', get_data_fn=get_data_fn, indent=4)
 
-        if not self.attack.mark.random_pos:
+        if not self.attack.mark.mark_random_pos:
             overlap = mask_jaccard(mark.mean(dim=0), self.real_mask,
                                   select_num=self.attack.mark.mark_height * self.attack.mark.mark_width)
             print(f'    Jaccard index: {overlap:.3f}')
