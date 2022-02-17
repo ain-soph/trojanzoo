@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
+from ..abstract import BackdoorDefense
 from trojanzoo import to_list
 from trojanzoo.utils.output import output_iter
 

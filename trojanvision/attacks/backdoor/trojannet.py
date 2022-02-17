@@ -154,7 +154,7 @@ class _CombinedModel(_ImageModel):
         self.org_model: _ImageModel = org_model
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x: torch.FloatTensor, **kwargs):
+    def forward(self, x: torch.Tensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
         trigger = x[..., self.mark.mark_height_offset:self.mark.mark_height_offset + self.mark.mark_height,
                     self.mark.mark_width_offset:self.mark.mark_width_offset + self.mark.mark_width]

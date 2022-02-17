@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
+from .neural_cleanse import NeuralCleanse
 from trojanvision.environ import env
 from trojanvision.utils.loss import total_variation
 from trojanvision.utils.ssim import SSIM
@@ -18,7 +18,7 @@ import time
 import datetime
 
 
-class ABS(BackdoorDefense):
+class ABS(NeuralCleanse):
     name: str = 'abs'
 
     @classmethod
@@ -27,8 +27,8 @@ class ABS(BackdoorDefense):
         group.add_argument('--seed_num', type=int, help='ABS seed number, defaults to -5.')
         group.add_argument('--max_troj_size', type=int,
                            help='ABS max trojan trigger size (pixel number), defaults to 64.')
-        group.add_argument('--remask_epoch', type=int, help='ABS optimizing epochs, defaults to 1000.')
-        group.add_argument('--remask_lr', type=float, help='ABS optimization learning rate, defaults to 0.1.')
+        group.add_argument('--defense_remask_epoch', type=int, help='ABS optimizing epochs, defaults to 1000.')
+        group.add_argument('--defense_remask_lr', type=float, help='ABS optimization learning rate, defaults to 0.1.')
         group.add_argument('--remask_weight', type=float, help='ABS optimization remask loss weight, defaults to 0.1.')
         return group
 
@@ -37,10 +37,11 @@ class ABS(BackdoorDefense):
     # See filter_load_model
     def __init__(self, seed_num: int = -5, count_mask: bool = True,
                  samp_k: int = 1, same_range: bool = False, n_samples: int = 5,
-                 max_troj_size: int = 16, remask_lr: float = 0.1, remask_epoch: int = 1000, **kwargs):
+                 max_troj_size: int = 16, defense_remask_lr: float = 0.1, defense_remask_epoch: int = 1000, **kwargs):
         super().__init__(**kwargs)
+        del self.param_list['neural_cleanse']
         self.param_list['abs'] = ['seed_num', 'count_mask', 'samp_k', 'same_range', 'n_samples',
-                                  'max_troj_size', 'remask_lr', 'remask_epoch']
+                                  'max_troj_size', 'defense_remask_lr', 'defense_remask_epoch']
 
         self.seed_num: int = seed_num
         if self.seed_num < 0:
@@ -55,8 +56,8 @@ class ABS(BackdoorDefense):
 
         # ----------------Remask----------------- #
         self.max_troj_size: int = max_troj_size
-        self.remask_lr: float = remask_lr
-        self.remask_epoch: int = remask_epoch
+        self.defense_remask_lr: float = defense_remask_lr
+        self.defense_remask_epoch: int = defense_remask_epoch
 
         self.ssim = SSIM()
         # self.nc_mask = self.nc_filter_img()
@@ -175,7 +176,7 @@ class ABS(BackdoorDefense):
             mask = tanh_func(atanh_mask)    # (h, w)
         mark = tanh_func(atanh_mark)    # (c, h, w)
 
-        optimizer = optim.Adam(parameters, lr=self.remask_lr if use_mask else 0.01 * self.remask_lr)
+        optimizer = optim.Adam(parameters, lr=self.defense_remask_lr if use_mask else 0.01 * self.defense_remask_lr)
         optimizer.zero_grad()
 
         # best optimization results
@@ -183,7 +184,7 @@ class ABS(BackdoorDefense):
         loss_best = float('inf')
         mask_best = None
 
-        for _epoch in range(self.remask_epoch):
+        for _epoch in range(self.defense_remask_epoch):
             epoch_start = time.perf_counter()
 
             loss = self.abs_loss(_input, mask, mark, layer=layer, neuron=neuron, use_mask=use_mask)
@@ -205,7 +206,7 @@ class ABS(BackdoorDefense):
                 epoch_time = str(datetime.timedelta(seconds=int(
                     time.perf_counter() - epoch_start)))
                 pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                    output_iter(_epoch + 1, self.remask_epoch), **ansi).ljust(64 if env['color'] else 35)
+                    output_iter(_epoch + 1, self.defense_remask_epoch), **ansi).ljust(64 if env['color'] else 35)
                 _str = ' '.join([
                     f'Loss: {loss:10.3f},'.ljust(20),
                     f'Acc: {acc:.3f}, '.ljust(20),
@@ -219,7 +220,7 @@ class ABS(BackdoorDefense):
                 if use_mask:
                     mask_best = mask
             if validate_interval != 0 and verbose:
-                if (_epoch + 1) % validate_interval == 0 or _epoch == self.remask_epoch - 1:
+                if (_epoch + 1) % validate_interval == 0 or _epoch == self.defense_remask_epoch - 1:
                     self.attack.mark.mark = mark
                     self.attack.mark.alpha_mask = mask
                     self.attack.mark.mask = torch.ones_like(mark, dtype=torch.bool)
@@ -328,10 +329,9 @@ class ABS(BackdoorDefense):
         return neuron_dict
     # -------------------------ReMask--------------------------------- #
 
-    def abs_loss(self, _input: torch.Tensor, mask: torch.Tensor, mark: torch.Tensor,
-                 layer: str, neuron: int, use_mask: bool = True):
-        # X = self.attack.add_mark(_input)
-        X = _input + mask * (mark - _input)
+    def abs_loss(self, _input: torch.Tensor,
+                 layer: str, neuron: int, use_mask: bool = True) -> torch.Tensor:
+        X = self.attack.add_mark(_input)
         # return self.model.loss(X, torch.zeros(X.size(0), device=X.device, dtype=torch.long)) + 1e-3 * mask.norm(p=1)
         feats = self.model.get_layer(X, layer_output=layer)
         # if feats.dim() > 2:
@@ -342,7 +342,7 @@ class ABS(BackdoorDefense):
         vloss2 = feats.sum() - vloss1
         loss = torch.zeros_like(vloss1)
         if use_mask:
-            mask_loss = mask.sum()
+            mask_loss = self.attack.mark.mark[-1].sum()
             if mask_loss > 100:
                 mask_loss *= 100
             if mask_loss > self.max_troj_size:
@@ -351,7 +351,7 @@ class ABS(BackdoorDefense):
                 mask_loss *= 1e-1
             loss = -vloss1 + 1e-4 * vloss2 + mask_loss
         else:
-            tvloss = total_variation(mark)
+            tvloss = total_variation(self.attack.mark.mark[:-1])
             ssim_loss = - self.ssim(X, _input)
             ssim_loss *= 10 if ssim_loss < -2 else 10000
             loss = -vloss1 + 1e-5 * vloss2 + 1e-3 * tvloss
@@ -360,31 +360,19 @@ class ABS(BackdoorDefense):
 
     # ---------------------------------- Utils ------------------------------- #
     # Unused
-    def filter_img(self):
-        h, w = self.dataset.data_shape[1:]
-        mask = torch.zeros(h, w, dtype=torch.float)
-        mask[2:7, 2:7] = 1
-        return to_tensor(mask, non_blocking=False)
+    # def filter_img(self):
+    #     h, w = self.dataset.data_shape[1:]
+    #     mask = torch.zeros(h, w, dtype=torch.float)
+    #     mask[2:7, 2:7] = 1
+    #     return to_tensor(mask, non_blocking=False)
 
-    def nc_filter_img(self) -> torch.Tensor:
-        h, w = self.dataset.data_shape[1:]
-        mask = torch.ones(h, w, dtype=torch.float)
-        return to_tensor(mask, non_blocking=False)
-        # TODO: fix
-        # mask = torch.zeros(h, w, dtype=torch.float)
-        # if self.use_mask:
-        #     mask[math.ceil(0.25 * w): math.floor(0.75 * w), math.ceil(0.25 * h): math.floor(0.75 * h)] = 1
-        # else:
-        #     mask.add_(1)
-
-    def load(self, path: str = None):
-        if path is None:
-            path = os.path.join(self.folder_path, self.get_filename(target_class=self.target_class) + '_best.npy')
-        _dict: dict[str, dict[str, torch.Tensor]] = np.load(path, allow_pickle=True).item()
-        self.attack.mark.mark = to_tensor(_dict[self.target_class]['mark'])
-        self.attack.mark.alpha_mask = to_tensor(_dict[self.target_class]['mask'])
-        self.attack.mark.mask = torch.ones_like(self.attack.mark.mark, dtype=torch.bool)
-        self.attack.mark.mark_random_pos = False
-        self.attack.mark.mark_height_offset = 0
-        self.attack.mark.mark_width_offset = 0
-        print('defense results loaded from: ', path)
+    # def nc_filter_img(self) -> torch.Tensor:
+    #     h, w = self.dataset.data_shape[1:]
+    #     mask = torch.ones(h, w, dtype=torch.float)
+    #     return to_tensor(mask, non_blocking=False)
+    #     # TODO: fix
+    #     # mask = torch.zeros(h, w, dtype=torch.float)
+    #     # if self.use_mask:
+    #     #     mask[math.ceil(0.25 * w): math.floor(0.75 * w), math.ceil(0.25 * h): math.floor(0.75 * h)] = 1
+    #     # else:
+    #     #     mask.add_(1)

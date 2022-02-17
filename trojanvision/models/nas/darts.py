@@ -150,7 +150,7 @@ class DARTS(ImageModel):
                 with torch.cuda.amp.autocast():
                     return self.loss_with_aux(_input, _label)
             return self.loss_with_aux(_input, _label)
-        return super().loss(_input, _label, _output, **kwargs)
+        return super().loss(_input, _label, _output, amp=amp, **kwargs)
 
     def loss_with_aux(self, _input: torch.Tensor = None, _label: torch.Tensor = None) -> torch.Tensor:
         feats, feats_aux = self._model.features.forward_with_aux(self._model.preprocess(_input))

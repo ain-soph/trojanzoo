@@ -102,13 +102,13 @@ class TrojanNN(BadNet):
     # train the mark to activate the least-used neurons.
     def preprocess_mark(self, neuron_idx: torch.Tensor, **kwargs):
         with torch.no_grad():
-            mark_input = self.mark.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
+            mark_input = self.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
             print("Neuron Value Before Preprocessing: ",
                   float(self.get_neuron_value(mark_input, neuron_idx)))
 
         def loss_fn(x: torch.Tensor, **kwargs) -> torch.Tensor:
             self.mark.mark[:-1] = x[0]
-            mark_input = self.mark.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
+            mark_input = self.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
             fm = self.model.get_layer(mark_input, layer_output=self.preprocess_layer)
             return (fm[:, neuron_idx] - self.target_value).flatten(1).norm(p=2, dim=1)
         x, _ = self.pgd.optimize(self.mark.mark[:-1].unsqueeze(0), iteration=self.neuron_epoch, loss_fn=loss_fn)
@@ -118,7 +118,7 @@ class TrojanNN(BadNet):
     def validate_fn(self, get_data_fn=None, **kwargs) -> tuple[float, float]:
         if self.neuron_idx is not None:
             with torch.no_grad():
-                mark_input = self.mark.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
+                mark_input = self.add_mark(torch.zeros(self.dataset.data_shape, device=env['device'])).unsqueeze(0)
                 print("Neuron Value After Preprocessing: ",
                       float(self.get_neuron_value(mark_input, self.neuron_idx)))
         return super().validate_fn(get_data_fn=get_data_fn, **kwargs)

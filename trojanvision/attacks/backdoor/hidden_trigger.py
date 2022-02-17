@@ -107,7 +107,7 @@ class HiddenTrigger(BadNet):
         result: torch.Tensor = (poison_feats - source_feats).flatten(start_dim=1).norm(p=2, dim=1)
         return result if reduction == 'none' else result.mean()
 
-    def generate_poisoned_data(self, source_imgs: torch.FloatTensor) -> torch.Tensor:
+    def generate_poisoned_data(self, source_imgs: torch.Tensor) -> torch.Tensor:
         r"""
         **Algorithm1**
 

@@ -62,7 +62,7 @@ class BypassEmbed(BadNet):
         other_x = torch.cat(other_x)
         other_y = torch.cat(other_y)
 
-        poison_x = self.mark.add_mark(other_x)
+        poison_x = self.add_mark(other_x)
         poison_y = self.target_class * torch.ones_like(other_y)
 
         trainset = self.dataset.get_dataset(mode='train')

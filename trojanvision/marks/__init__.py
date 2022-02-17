@@ -4,7 +4,7 @@ from trojanvision.configs import Config, config
 from trojanvision.datasets import ImageSet
 from trojanzoo.utils.module import BasicObject
 from trojanzoo.utils.output import ansi
-from trojanzoo.utils.tensor import to_tensor, gray_tensor, save_tensor_as_img
+from trojanzoo.utils.tensor import to_tensor, to_numpy, gray_tensor, save_tensor_as_img
 
 import torch
 import torchvision.transforms.functional as F
@@ -311,6 +311,13 @@ class Watermark(BasicObject):
 
         return trigger_input
 
+    def get_mask(self) -> torch.Tensor:
+        mask = torch.zeros(self.data_shape[-2:], device=self.mark.device)
+        h_start, w_start = self.mark_height_offset, self.mark_width_offset
+        h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
+        mask[h_start:h_end, w_start:w_end].copy_(self.mark[-1])
+        return mask
+
     @staticmethod
     def scatter_mark(mark_unscattered: torch.Tensor,
                      mark_scattered_shape: list[int]) -> torch.Tensor:
@@ -365,10 +372,13 @@ class Watermark(BasicObject):
                 with shape ``(channel + 1, height, width)`` with alpha channel.
         """
         if isinstance(mark_img, str):
-            if not os.path.isfile(mark_img) and \
-                    not os.path.isfile(mark_img := os.path.join(dir_path, mark_img)):
-                raise FileNotFoundError(mark_img.removeprefix(dir_path))
-            mark_img = Image.open(mark_img)
+            if mark_img.endswith('.npy'):
+                mark_img = np.load(mark_img)
+            else:
+                if not os.path.isfile(mark_img) and \
+                        not os.path.isfile(mark_img := os.path.join(dir_path, mark_img)):
+                    raise FileNotFoundError(mark_img.removeprefix(dir_path))
+                mark_img = Image.open(mark_img)
         mark = to_tensor(mark_img)
         if not already_processed:
             mark = F.resize(mark, size=(self.mark_width, self.mark_height))
@@ -403,7 +413,7 @@ class Watermark(BasicObject):
 
     def save_mark_as_npy(self, path: str):
         r"""Save watermark as npy file by calling :any:`numpy.save`."""
-        np.save(path, self.mark)
+        np.save(path, to_numpy(self.mark))
 
 
 def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:

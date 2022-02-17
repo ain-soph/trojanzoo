@@ -316,11 +316,11 @@ class WGAN(object):
         """According to the image and Generator, utilize pgd optimization to get the d dimension encoding value.
 
         Args:
-            imgs (torch.FloatTensor): the chosen image to get its encoding value, also considered as the output of Generator.
+            imgs (torch.Tensor): the chosen image to get its encoding value, also considered as the output of Generator.
             noise_dim (int): the dimension of the input in the generator.
 
         Returns:
-            torch.FloatTensor: the synthesized poisoned image.
+            torch.Tensor: the synthesized poisoned image.
         """
 
         def loss_func(X: torch.Tensor):

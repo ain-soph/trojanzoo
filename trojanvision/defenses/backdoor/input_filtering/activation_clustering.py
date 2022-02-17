@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
+from ..abstract import BackdoorDefense
 from trojanvision.environ import env
-from trojanzoo.utils.data import TensorListDataset
+from trojanzoo.utils.data import TensorListDataset, sample_batch
 
 import torch
 from sklearn.decomposition import FastICA, PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-from sklearn.metrics import f1_score
-from sklearn import metrics
 import argparse
 from tqdm import tqdm
 
@@ -19,29 +17,33 @@ if TYPE_CHECKING:
 
 
 class ActivationClustering(BackdoorDefense):
+    r"""The approach assumes the reasons that models rely on to classify backdoor and target samples are different.
+    The network identifies features in the input that it has learned corresponding to the target class.
+    In the case of backdoor samples, it identifies features associated with the source class and the backdoor trigger.
+    This difference in mechanism is evident in the network activations.
 
-    """
-    Activation Clustering Defense is described in the paper 'Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering'_ by Bryant Chen. The main idea is the reason why backdoor and target samples receive the same classification is different, the network identifies features in the input taht it has learned corresponding to the target class, in the case of backdoor samples, it identifies features associated with the source class and the backdoor trigger. This difference in mechanism is evident in the network activations.
-
-    The authors have posted `original source code`_. This defence is intergrated into the adversarial-robustness-toolbox provided by IBM.
+    See Also:
+        * Paper: 'Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering'_
+        * Other implementation: 'IBM adversarial robustness toolbox (ART)'_ ['source code'_]
 
     Args:
         mix_image_num (int): the number of sampled image, including clean image and poison image. Default: 50.
         clean_image_ratio (float): the ratio of clean image, compared to mix_image_num. Default: 0.5.
         retrain_epoch (int): the epochs of retraining the model, only with the detected clean image. Default: 10.
-        nb_clusters (int): the amount of clusters. Default: 2. 
+        nb_clusters (int): the amount of clusters. Default: 2.
         clustering_method (str): the method for clustering the data, only support KMeans. Default: 'KMeans'.
         nb_dims (int): the dimension set in the process of reduceing the dimensionality of data. Default: 10.
         reduce_method (str): the method for reduing the dimensionality of data, only supporting ICA and PCA. Default: FastICA.
-        cluster_analysis (str): the method chosen to analyze whether cluster is the poison cluster, including size, relative-size,exclusionary-reclassification, silhouette-scores. Default: size.
-
-
+        cluster_analysis (str): the method chosen to analyze whether cluster is the poison cluster,
+            including size, relative-size,exclusionary-reclassification, silhouette-scores. Default: size.
 
     .. _Activation Clustering:
         https://arxiv.org/abs/1811.03728
 
-    .. _original source code:
-        https://github.com/IBM/adversarial-robustness-toolbox
+    .. _IBM adversarial robustness toolbox (ART):
+        https://adversarial-robustness-toolbox.readthedocs.io/en/latest/modules/defences/detector_poisoning.html#art.defences.detector.poison.ActivationDefence
+    .. _source code:
+        https://github.com/Trusted-AI/adversarial-robustness-toolbox/blob/main/art/defences/detector/poison/activation_defence.py
 
 
     Raises:
@@ -53,7 +55,7 @@ class ActivationClustering(BackdoorDefense):
 
     Returns:
         model(ImageModel): the clean model trained only with clean samples.
-    """
+    """  # noqa: E501
 
     name: str = 'activation_clustering'
 
@@ -68,11 +70,18 @@ class ActivationClustering(BackdoorDefense):
         group.add_argument('--nb_dims', type=int,
                            help='the dimension set in the process of reduceing the dimensionality of data')
         group.add_argument('--reduce_method', help=' the method for reduing the dimensionality of data')
-        group.add_argument('--cluster_analysis', help='the method chosen to analyze whether cluster is the poison cluster, '
-                           'including size, distance, relative-size, silhouette-scores')
+        group.add_argument('--cluster_analysis',
+                           choices=['size', 'relative-size', 'silhouette-scores', 'exclusionary-reclassification'],
+                           help='the method chosen to analyze whether cluster is the poison cluster '
+                           '(default: \'exclusionary-reclassification\')')
         return group
 
-    def __init__(self, mix_image_num: int = 100, clean_image_ratio: float = 0.95, retrain_epoch: int = 10, nb_clusters: int = 2, clustering_method: str = "KMeans", nb_dims: int = 10, reduce_method: str = "FastICA", cluster_analysis: str = "exclusionary-reclassification", **kwargs):
+    def __init__(self, mix_image_num: int = 100, clean_image_ratio: float = 0.95,
+                 retrain_epoch: int = 10, nb_clusters: int = 2,
+                 clustering_method: str = 'KMeans', nb_dims: int = 10,
+                 reduce_method: str = 'FastICA',
+                 cluster_analysis: str = 'exclusionary-reclassification',
+                 **kwargs):
         super().__init__(**kwargs)
 
         self.mix_image_num = mix_image_num
@@ -88,32 +97,31 @@ class ActivationClustering(BackdoorDefense):
 
         self.retrain_epoch = retrain_epoch
 
-        self.clean_dataset, _ = self.dataset.split_dataset(
-            self.dataset.get_dataset(mode='train'), self.clean_image_num)
-        # clean_dataset, _ = self.dataset.split_dataset(self.dataset.get_dataset(mode='train'), self.clean_image_num)
-        # clean_dataloader = self.dataset.get_dataloader(mode='train', dataset=clean_dataset, batch_size=self.clean_image_num, num_workers=1)
-        # clean_imgs, _ = self.model.get_data(next(iter(clean_dataloader)))
-        # self.clean_dataset = TensorDataset(clean_imgs, _)
+        self.mix_dataloader = self.get_mix_dataloader()
 
-        poison_dataset, _ = self.dataset.split_dataset(
-            self.dataset.get_dataset(mode='train'), self.poison_image_num)
-        poison_dataloader = self.dataset.get_dataloader(
-            mode='train', dataset=poison_dataset, batch_size=self.poison_image_num, num_workers=1)
-        poison_imgs, _ = self.model.get_data(next(iter(poison_dataloader)))
+    def get_mix_dataloader(self):
+        clean_dataset, _ = self.dataset.split_dataset(self.dataset.get_dataset(mode='train'),
+                                                      length=self.clean_image_num)
+
+        poison_imgs, _ = sample_batch(self.dataset.get_dataset(mode='train'),
+                                      batch_size=self.poison_image_num)
+        poison_imgs = torch.stack(poison_imgs)
         poison_imgs = self.attack.add_mark(poison_imgs).cpu()
         poison_label = [self.attack.target_class] * self.poison_image_num
-        self.poison_dataset = TensorListDataset(poison_imgs, poison_label)
-        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
-        self.mix_dataloader = self.dataset.get_dataloader(
-            mode='train', dataset=self.mix_dataset, batch_size=self.dataset.batch_size, num_workers=1)
 
-    def detect(self, optimizer, lr_scheduler, **kwargs):
-        """
-        Record the detected poison samples
-        Remove them and retrain the model from scratch to get a clean model.
-        """
-        super().detect(**kwargs)
-        all_reduced_activations, all_label, all_clusters, all_class = self.preprocess(self.mix_dataloader)
+        poison_dataset = TensorListDataset(poison_imgs, poison_label)
+        mix_dataset = torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
+        mix_dataloader = self.dataset.get_dataloader(mode='train', dataset=mix_dataset,
+                                                     num_workers=1)
+        return mix_dataloader
+
+    def get_true_labels(self) -> torch.Tensor:
+        y_true = torch.zeros(self.mix_image_num, dtype=torch.bool)
+        y_true[self.clean_image_num:] = True
+        return y_true
+
+    def get_pred_labels(self) -> torch.Tensor:
+        all_reduced_activations, all_label, all_clusters, all_class = self.preprocess()
         poison_cluster_index = self.analyze_clusters(
             all_clusters, all_reduced_activations, all_label, all_class, self.cluster_analysis)
         print(all_class)
@@ -122,24 +130,11 @@ class ActivationClustering(BackdoorDefense):
             if all_clusters[i] == poison_cluster_index:
                 poison_input_index.append(i)
 
-        y_pred = torch.zeros(self.mix_image_num)
-        for i in range(len(poison_input_index)):
-            y_pred[poison_input_index[i]] = 1
+        y_pred = torch.zeros(self.mix_image_num, dtype=torch.bool)
+        y_pred[poison_input_index] = True
+        return y_pred
 
-        y_true = torch.zeros(self.mix_image_num)
-        for i in range(self.clean_image_num, self.mix_image_num):
-            y_true[i] = 1
-
-        # print("y_pred: ", y_pred)
-        # print("y_true: ", y_true)
-
-        final_f1_score = f1_score(y_true, y_pred, average='weighted')
-        print("f1_score:", final_f1_score)
-        print("precision_score:", metrics.precision_score(y_true, y_pred, average='weighted'))
-        print("recall_score:", metrics.recall_score(y_true, y_pred, average='weighted'))
-        print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
-
-    def preprocess(self, loader):
+    def preprocess(self):
         """
         Get the feature map of samples, convert to 1D tensor, reduce the dimensionality and cluster them.
 
@@ -147,14 +142,15 @@ class ActivationClustering(BackdoorDefense):
             loader (torch.utils.data.dataloader): the mix dataloader of clean image and poison image
 
         Returns:
-            all_label (torch.Tensor): the prediction label of the model on all_input 
-            all_reduced_activation (torch.FloatTensor): the reduced activation of all input getting from the model
-            all_clusters (torch.Tensor): the clustering result
+            all_label (torch.Tensor): the prediction label of the model on all_input.
+            all_reduced_activation (torch.Tensor): the reduced activation of all input getting from the model.
+            all_clusters (torch.Tensor): the clustering result.
         """
 
         all_feature_map = []
         all_label = []
         all_class = []
+        loader = self.mix_dataloader
         if env['tqdm']:
             loader = tqdm(loader)
         for i, data in enumerate(loader):
@@ -177,7 +173,7 @@ class ActivationClustering(BackdoorDefense):
         Reduce dimensionality of activations.
 
         Args:
-            activations (torch.FloatTensor): [description]
+            activations (torch.Tensor): [description]
             nb_dims (int, optional): the setted dimensionality after reducing dimensionality. Defaults to 10.
             reduce_method (str, optional): the chosen reducing dimensionality method. Defaults to "FastICA".
 
@@ -185,26 +181,26 @@ class ActivationClustering(BackdoorDefense):
             ValueError: dimensionality reduction method not supported.
 
         Returns:
-            reduced_activations(torch.FloatTensor): the result after reduing dimensionality.
+            reduced_activations(torch.Tensor): the result after reduing dimensionality.
         """
-        if reduce_method == "FastICA":
+        if reduce_method == 'FastICA':
             projector = FastICA(n_components=nb_dims)
-        elif reduce_method == "PCA":
+        elif reduce_method == 'PCA':
             projector = PCA(n_components=nb_dims)
         else:
-            raise ValueError(reduce_method + " dimensionality reduction method not supported.")
+            raise ValueError(reduce_method + ' dimensionality reduction method not supported.')
         activations = activations.view(activations.shape[0], -1)
         reduced_activations = projector.fit_transform(activations.detach().cpu())
         return reduced_activations
 
-    def cluster_activations(self, reduced_activations, nb_clusters: int = 2, clustering_method: str = "KMeans"):
+    def cluster_activations(self, reduced_activations, nb_clusters: int = 2, clustering_method: str = 'KMeans'):
         """
         Cluster the activations after reducing dimensionality.
 
         Args:
-            reduced_activations (torch.FloatTensor): the result after reduing dimensionality.
+            reduced_activations (torch.Tensor): the result after reduing dimensionality.
             nb_clusters (int, optional): the amount of clusters. Defaults to 2.
-            clustering_method (str, optional): the chosen clustering method. Defaults to "KMeans".
+            clustering_method (str, optional): the chosen clustering method. Defaults to 'KMeans'.
 
         Raises:
             ValueError: clustering method not supported.
@@ -212,16 +208,45 @@ class ActivationClustering(BackdoorDefense):
         Returns:
             clusters(torch.Tensor): the result of clustering
         """
-        if clustering_method == "KMeans":
+        if clustering_method == 'KMeans':
             clusterer = KMeans(n_clusters=nb_clusters)
             clusters = clusterer.fit_predict(reduced_activations)
             return clusters
         else:
-            raise ValueError(clustering_method + " clustering method not supported.")
+            raise ValueError(clustering_method + ' clustering method not supported.')
+
+    def analyze_clusters(self, cluster_pred: torch.Tensor, reduced_activation, label, all_class,
+                         cluster_analysis: str = 'size', **kwargs):
+        """
+        Chooose the method of analyzing the clusters.
+
+        Args:
+            mix_feature_map (torch.Tensor): the feature map of sample in mix_dataloader.
+            cluster_pred (torch.Tensor): the result of clustering.
+            label (torch.Tensor): the original label of data in mix_dataloader.
+            all_class (torch.Tensor): the true class of sampled data.
+            cluster_analysis (str): the chosen cluster analyzing method.
+
+        Returns:
+            poison_cluster_index: the poisoned cluster number.
+
+        """
+
+        if cluster_analysis == 'size':  # TODO: python 3.10 match
+            poison_cluster_index = self.analyze_by_size(cluster_pred)
+        elif cluster_analysis == 'relative-size':
+            poison_cluster_index = self.analyze_by_relative_size(label, cluster_pred)
+        elif cluster_analysis == 'silhouette-scores':
+            poison_cluster_index = self.analyze_by_silhouette_score(reduced_activation, cluster_pred, label)
+        elif cluster_analysis == 'exclusionary-reclassification':
+            poison_cluster_index = self.analyze_by_exclusionary_reclassification(cluster_pred, label, all_class)
+        else:
+            raise ValueError('Unsupported cluster analysis technique ' + cluster_analysis)
+        return poison_cluster_index
 
     def analyze_by_size(self, cluster_pred):
-        """
-        Analyze the result of clustering to judge which cluster is poison, according the size of clusters, usually the poisoned sample is less compared with normal data, so the smaller cluster will be regareded as poisoned samples.
+        r"""Analyze the result of clustering to judge which cluster is poison, according the size of clusters,
+        usually the poisoned sample is less compared with normal data, so the smaller cluster will be regareded as poisoned samples.
 
         Args:
             cluster_pred (torch.Tensor): the result of clustering
@@ -233,7 +258,7 @@ class ActivationClustering(BackdoorDefense):
             poison_cluster_index : the poisoned cluster number.
         """
         if (len(torch.unique(cluster_pred)) > 2):
-            raise ValueError("Size Analyzer does not support more than two clusters.")
+            raise ValueError('Size Analyzer does not support more than two clusters.')
         num_1 = 0
         num_1 = torch.sum(cluster_pred)
         if num_1 > len(cluster_pred) / 2:
@@ -259,7 +284,7 @@ class ActivationClustering(BackdoorDefense):
             poison_cluster_index : the poisoned cluster number.
         """
         if (len(torch.unique(cluster_pred)) > 2):
-            raise ValueError("Relative_Size Analyzer does not support more than two clusters.")
+            raise ValueError('Relative_Size Analyzer does not support more than two clusters.')
         else:
             all_classes = list(range(self.dataset.num_classes))
             for i in range(len(all_classes)):
@@ -295,7 +320,7 @@ class ActivationClustering(BackdoorDefense):
         # print('true label:',label)
         # print('predicted class:',all_class)
         max_label = torch.argmax(torch.bincount(label))
-        print("max_label:{}".format(max_label))
+        print('max_label:{}'.format(max_label))
         class_0_correct_num = 0
         class_1_correct_num = 0
         class_0_max_num = 0
@@ -324,7 +349,7 @@ class ActivationClustering(BackdoorDefense):
             poison_cluster_index = 0
             return poison_cluster_index
         # except ZeroDivisionError:
-        #     print("Error: you can't divide by 0!")
+        #     print('Error: you can't divide by 0!')
         # else:
         #     poison_cluster_index = self.analyze_by_size(cluster_pred)
         #     return poison_cluster_index
@@ -334,7 +359,7 @@ class ActivationClustering(BackdoorDefense):
         Analyze the result of clustering to judge which cluster is poison, according the silhouette_score, which specifies whether the number of clusters fits well with the data, the higher, the better. Test the situation under nb_clusters set as 2 and different class of data, if the silhouette_score is high, the smaller cluster will be the poison cluster.
 
         Args:
-            reduced_activation (torch.FloatTensor): the reduced activation of sample in mix_dataloader.
+            reduced_activation (torch.Tensor): the reduced activation of sample in mix_dataloader.
             cluster_pred (torch.Tensor): the result of clustering.
             score_threshold (float, optional): experience value. Defaults to 0.1.
 
@@ -347,9 +372,9 @@ class ActivationClustering(BackdoorDefense):
             poison_cluster_index : the poisoned cluster number.
         """
         if (len(torch.unique(cluster_pred)) > 2):
-            raise ValueError("Silhouette_score Analyzer does not support more than two clusters.")
+            raise ValueError('Silhouette_score Analyzer does not support more than two clusters.')
         else:
-            if self.clustering_method == "KMeans":
+            if self.clustering_method == 'KMeans':
                 all_classes = list(range(self.dataset.num_classes))
                 zip_label = list(zip(label, cluster_pred, reduced_activation))
                 for i in range(len(all_classes)):
@@ -376,32 +401,4 @@ class ActivationClustering(BackdoorDefense):
                         continue
 
             else:
-                raise ValueError(self.clustering_method + " clustering method not supported.")
-
-    def analyze_clusters(self, cluster_pred, reduced_activation, label, all_class, cluster_analysis: str = 'size', **kwargs):
-        """
-        Chooose the method of analyzing the clusters.
-
-        Args:
-            mix_feature_map (torch.FloatTensor): the feature map of sample in mix_dataloader.
-            cluster_pred (torch.Tensor): the result of clustering.
-            label (torch.Tensor): the original label of data in mix_dataloader.
-            all_class (torch.Tensor): the true class of sampled data.
-            cluster_analysis (str): the chosen cluster analyzing method.
-
-        Returns:
-            poison_cluster_index: the poisoned cluster number.
-
-        """
-
-        if cluster_analysis == "size":
-            poison_cluster_index = self.analyze_by_size(cluster_pred)
-        elif cluster_analysis == "relative-size":
-            poison_cluster_index = self.analyze_by_relative_size(label, cluster_pred)
-        elif cluster_analysis == "silhouette-scores":
-            poison_cluster_index = self.analyze_by_silhouette_score(reduced_activation, cluster_pred, label)
-        elif cluster_analysis == "exclusionary-reclassification":
-            poison_cluster_index = self.analyze_by_exclusionary_reclassification(cluster_pred, label, all_class)
-        else:
-            raise ValueError("Unsupported cluster analysis technique " + cluster_analysis)
-        return poison_cluster_index
+                raise ValueError(self.clustering_method + ' clustering method not supported.')

@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/poison.py --verbose 1 --color --attack poison_basic --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrain --target_idx -1 --epoch 5 --validate_interval 1 --clean_epoch 0
+# CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/poison.py --verbose 1 --color --attack poison_basic --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrain --validate_interval 1 --target_idx -1 --epoch 5 --clean_epoch 2 --only_paramless_op
 # --arch_unrolled
 
 import trojanvision
 import argparse
 
-from trojanvision.utils.model import weight_init
 
-
-from trojanvision.attacks.poison.poison_basic import PoisonBasic
-from trojanvision.models.nas.darts import DARTS
+from trojanvision.utils.model_archs.darts.operations import PRIMITIVES
 import numpy as np
 import torch
 import itertools
+
+from typing import TYPE_CHECKING
+from trojanvision.attacks.poison.poison_basic import PoisonBasic
+from trojanvision.models.nas.darts import DARTS
+if TYPE_CHECKING:
+    pass
 
 
 if __name__ == '__main__':
@@ -23,7 +26,10 @@ if __name__ == '__main__':
     trojanvision.models.add_argument(parser)
     trojanvision.trainer.add_argument(parser)
     trojanvision.attacks.add_argument(parser)
+    parser.add_argument('--only_paramless_op', action='store_true')
     args = parser.parse_args()
+
+    only_paramless_op: bool = args.only_paramless_op
 
     env = trojanvision.environ.create(**args.__dict__)
     dataset = trojanvision.datasets.create(**args.__dict__)
@@ -31,8 +37,9 @@ if __name__ == '__main__':
     trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
     attack = trojanvision.attacks.create(dataset=dataset, model=model, **args.__dict__)
 
+    optim_tensors = [param.clone().detach().requires_grad_() for param in model.arch_parameters()]
     optim_args = trainer.optim_args
-    optim_args['parameters'] = model.arch_parameters()
+    optim_args['parameters'] = optim_tensors
     model_optimizer = trainer.optimizer
     arch_optimizer, _ = model.define_optimizer(**optim_args)
     trainer.optimizer = arch_optimizer
@@ -41,10 +48,36 @@ if __name__ == '__main__':
         trojanvision.summary(env=env, dataset=dataset, model=model, train=trainer, attack=attack)
 
     model.valid_iterator = itertools.cycle(dataset.loader['train'])
-    model.activate_params(model.arch_parameters())
+
+    if only_paramless_op:
+        paramless_ops = ['max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'none']
+        op_idx = [PRIMITIVES.index(op) for op in paramless_ops]
+        op_idx_mask = torch.zeros(len(PRIMITIVES), dtype=torch.bool, device=env['device'])
+        op_idx_mask[op_idx] = True
+    else:
+        op_idx_mask = torch.ones(len(PRIMITIVES), dtype=torch.bool, device=env['device'])
+
+    def update_weight_tensor(weights: torch.Tensor, leaf_tensor: torch.Tensor):
+        weights.detach_()
+        if op_idx_mask.all():
+            weights.copy_(leaf_tensor)
+        else:
+            optimize_weights = torch.where(op_idx_mask.unsqueeze(0), leaf_tensor, torch.zeros_like(weights))
+            other_weights = torch.where(~op_idx_mask.unsqueeze(0), weights, torch.zeros_like(weights))
+            weights.copy_(optimize_weights + other_weights)
+
+    def loss_fn(_input: torch.Tensor = None, _label: torch.Tensor = None,
+                _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
+        for i, weights in enumerate(model.arch_parameters()):
+            update_weight_tensor(weights, optim_tensors[i])
+        _output.detach_().copy_(model(_input, amp=amp))
+        loss = model.loss(_input, _label, _output, amp=amp, **kwargs)
+        return loss
 
     def unrolled_loss(_input: torch.Tensor = None, _label: torch.Tensor = None,
                       _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
+        for i, weights in enumerate(model.arch_parameters()):
+            update_weight_tensor(weights, optim_tensors[i])
         data_valid = next(model.valid_iterator)
         input_valid, label_valid = dataset.get_data(data_valid)
         model.activate_params(model.parameters())
@@ -83,11 +116,14 @@ if __name__ == '__main__':
                             loss_fn=unrolled_loss, backward_and_step=False,
                             **kwargs)
             else:
-                self._train(_input=_input, _label=_label, epochs=epochs, **kwargs)
+                self._train(_input=_input, _label=_label, epochs=epochs,
+                            loss_fn=loss_fn, **kwargs)
             if self.clean_epoch > 0:
                 new_args = kwargs.copy()
                 new_args['optimizer'] = model_optimizer
                 new_args['indent'] = 4
+                for weights in model.arch_parameters():
+                    weights.detach_()
                 self.model._train(epochs=self.clean_epoch, validate_fn=self.validate_fn, **new_args)
             target_conf, target_acc = self.validate_target()
             _, clean_acc = self.model._validate()

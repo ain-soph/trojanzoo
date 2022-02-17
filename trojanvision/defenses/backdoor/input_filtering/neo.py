@@ -1,30 +1,21 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
-from trojanzoo.utils.logger import AverageMeter
+from ..abstract import BackdoorDefense
+from trojanzoo.utils.logger import AverageMeter, SmoothedValue
 from trojanzoo.utils.metric import mask_jaccard
 from trojanzoo.utils.tensor import to_tensor, to_numpy
 
 import torch
 import numpy as np
-from sklearn import metrics
 from sklearn.cluster import KMeans
-import argparse
 
 
 class NEO(BackdoorDefense):
+    r"""
+    Note:
+        NEO assumes the defender has the knowledge of the trigger size.
+    """
     name: str = 'neo'
-
-    @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
-        super().add_argument(group)
-        group.add_argument('--seed_num', type=int, help='ABS seed number, defaults to -5.')
-        group.add_argument('--max_troj_size', type=int,
-                           help='ABS max trojan trigger size (pixel number), defaults to 64.')
-        group.add_argument('--remask_epoch', type=int, help='ABS optimizing epochs, defaults to 1000.')
-        group.add_argument('--remask_lr', type=float, help='ABS optimization learning rate, defaults to 0.1.')
-        group.add_argument('--remask_weight', type=float, help='ABS optimization remask loss weight, defaults to 0.1.')
-        return group
 
     def __init__(self, threshold_t: float = 80.0, k_means_num: int = 3, sample_num: int = 100, **kwargs):
         super().__init__(**kwargs)
@@ -34,29 +25,13 @@ class NEO(BackdoorDefense):
         self.sample_num = sample_num
         self.k_means_num = k_means_num
 
-    def detect(self, **kwargs):
-        super().detect(**kwargs)
-        if not self.attack.mark.mark_random_pos:
-            self.real_mask = self.attack.mark.mask
-        loader = self.dataset.get_dataloader('valid', drop_last=True, batch_size=100)
-        _input, _ = next(iter(loader))
-        poison_input = self.attack.add_mark(_input)
-        poison_result_list, poison_mask_list = self.trigger_detect(poison_input)
-        clean_result_list, clean_mask_list = self.trigger_detect(_input)
-        y_true = torch.cat((torch.zeros(len(_input)), torch.ones(len(_input))))
-        y_pred = torch.cat((clean_result_list, poison_result_list))
-        print(y_pred)
-        print("f1_score:", metrics.f1_score(y_true, y_pred))
-        print("precision_score:", metrics.precision_score(y_true, y_pred))
-        print("recall_score:", metrics.recall_score(y_true, y_pred))
-        print("accuracy_score:", metrics.accuracy_score(y_true, y_pred))
+        self.jaccard_idx = SmoothedValue(name='jaccard_idx',
+                                         fmt='{name:19s} {global_avg:5.3f} ({min:5.3f}, {max:5.3f})')
+        self.classification_difference = SmoothedValue(
+            name='classification_difference',
+            fmt='{name:19s} {global_avg:5.3f} ({min:5.3f}, {max:5.3f})')
 
-    def trigger_detect(self, _input: torch.Tensor):
-        """
-        Args:
-            _input (torch.Tensor): (N, C, H, W)
-
-        """
+    def check(self, _input: torch.Tensor, poison: bool = False) -> torch.Tensor:
         # get dominant color
         dom_c_list = []
         for img in _input:
@@ -79,8 +54,7 @@ class NEO(BackdoorDefense):
                 y = pos_list[i][j][1]
                 block_input[i, j, :, x:x + self.size[0], y:y + self.size[1]] = dom_c[i]
         # get potential triggers
-        _input = to_tensor(_input)
-        block_input = to_tensor(block_input)
+        _input, block_input = to_tensor(_input), to_tensor(block_input)
         org_class = self.model.get_class(_input).unsqueeze(1).expand(-1, self.sample_num)   # (N, sample_num)
         block_class_list = []
         for i in range(self.sample_num):
@@ -91,9 +65,6 @@ class NEO(BackdoorDefense):
 
         # confirm triggers
         result_list = torch.zeros(len(_input), dtype=torch.bool)
-        mask_shape = [_input.shape[0], _input.shape[-2], _input.shape[-1]]
-        mask_list = torch.zeros(mask_shape, dtype=torch.float)  # (N, C, height, width)
-        mark_class = self.attack.mark
         for i in range(len(_input)):
             print(f'input {i:3d}')
             pos_pairs = pos_list[i][~potential_idx[i]]   # (*, 2)
@@ -102,29 +73,27 @@ class NEO(BackdoorDefense):
             for j, pos in enumerate(pos_pairs):
                 self.attack.mark.mark_height_offset = pos[0]
                 self.attack.mark.mark_width_offset = pos[1]
-                mark_class.org_mark = _input[i, :, pos[0]:pos[0] + self.size[0], pos[1]:pos[1] + self.size[1]]
-                mark_class.org_mask = torch.ones(self.size, dtype=torch.bool)
-                mark_class.org_alpha_mask = torch.ones(self.size, dtype=torch.float)
-                mark_class.mark, mark_class.mask, mark_class.alpha_mask = mark_class.mask_mark(
-                    mark_height_offset=pos[0], mark_width_offset=pos[1])
-                target_acc = self.confirm_backdoor()
-                output_str = f'    {j:3d}  Acc: {target_acc:5.2f}'
-                if not self.attack.mark.mark_random_pos:
-                    overlap = mask_jaccard(mark_class.mask.detach().cpu(), self.real_mask.detach().cpu(),
-                                          select_num=self.size[0] * self.size[1])
-                    output_str += f'  Jaccard Idx: {overlap:5.3f}'
-                print(output_str)
-                if target_acc > self.threshold_t:
+                self.attack.mark.mark.fill_(1.0)
+                self.attack.mark.mark[:-1] = _input[i, :, pos[0]:pos[0] + self.size[0], pos[1]:pos[1] + self.size[1]]
+                classification_difference = self.confirm_backdoor()
+                if classification_difference > self.threshold_t:
+                    if poison:
+                        jaccard_idx = mask_jaccard(self.attack.mark.get_mask(),
+                                                   self.real_mask,
+                                                   select_num=self.size[0] * self.size[1])
+                        self.classification_difference.update(classification_difference)
+                        self.jaccard_idx.update(jaccard_idx)
                     result_list[i] = True
-                    mask_list[i] = mark_class.mask
-        return result_list, mask_list
+        print(self.classification_difference)
+        print(self.jaccard_idx)
+        return result_list
 
-    def get_dominant_colour(self, img: torch.Tensor, k_means_num=None):
-        """[summary]
+    def get_dominant_colour(self, img: torch.Tensor, k_means_num: int = None) -> torch.Tensor:
+        r"""[summary]
 
         Args:
             img (torch.Tensor): # (C, H, W)
-            k_means_num (int, optional): Defaults to 3.
+            k_means_num (int | None): Defaults to :attr:`self.k_means_num`.
 
         """
         if k_means_num is None:
@@ -136,6 +105,8 @@ class NEO(BackdoorDefense):
         return torch.tensor(center)
 
     def confirm_backdoor(self):
+        r"""It describes the classification difference between original inputs and trigger inputs.
+        """
         top1 = AverageMeter('Acc@1', ':6.2f')
         for data in self.dataset.loader['valid']:
             _input, _ = self.model.get_data(data, mode='valid')
@@ -143,7 +114,7 @@ class NEO(BackdoorDefense):
             with torch.no_grad():
                 _class = self.model.get_class(_input)
                 poison_class = self.model.get_class(poison_input)
-            result = ~(_class.eq(poison_class))
+            result = _class.not_equal(poison_class)
             acc1 = result.float().sum() / result.numel() * 100
             top1.update(acc1.item(), len(_input))
         return top1.avg

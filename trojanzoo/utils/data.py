@@ -100,7 +100,7 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
                 data = torch.from_numpy(data)
             if isinstance(data, torch.Tensor):
                 if data.max() > 2:
-                    data = data.to(dtype=torch.float) / 255
+                    data = data.float() / 255
                 data = [img for img in data]
             return data, targets
     data, targets = list(zip(*dataset))[:2]

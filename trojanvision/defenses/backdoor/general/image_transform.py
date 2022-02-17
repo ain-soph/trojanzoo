@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
+from ..abstract import BackdoorDefense
 from trojanzoo.utils.tensor import to_pil_image, to_tensor
 
 import torch

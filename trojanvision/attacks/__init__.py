@@ -32,17 +32,17 @@ class_dict = {
     'clean_label': CleanLabel,
     'hidden_trigger': HiddenTrigger,
 
-    'term_study': TermStudy,
+    # 'term_study': TermStudy,
     'unlearn': Unlearn,
 
-    # imc adaptive settings
-    'imc_latent': IMC_Latent,
-    'imc_advtrain': IMC_AdvTrain,
-    'imc_strip': IMC_STRIP,
-    'imc_multi': IMC_Multi,
-    'imc_magnet': IMC_MagNet,
-    'imc_abs': IMC_ABS,
-    'imc_adaptive': IMC_Adaptive,
+    # # imc adaptive settings
+    # 'imc_latent': IMC_Latent,
+    # 'imc_advtrain': IMC_AdvTrain,
+    # 'imc_strip': IMC_STRIP,
+    # 'imc_multi': IMC_Multi,
+    # 'imc_magnet': IMC_MagNet,
+    # 'imc_abs': IMC_ABS,
+    # 'imc_adaptive': IMC_Adaptive,
 }
 
 

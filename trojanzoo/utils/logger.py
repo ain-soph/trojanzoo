@@ -42,7 +42,8 @@ class SmoothedValue:
         value (float): The last value of :attr:`deque`.
     """
 
-    def __init__(self, window_size: int = None, fmt: str = '{global_avg:.3f}'):
+    def __init__(self, name: str = '', window_size: int = None, fmt: str = '{global_avg:.3f}'):
+        self.name = name
         self.deque = deque(maxlen=window_size)
         self.count: int = 0
         self.total: float = 0.0
@@ -165,6 +166,7 @@ class SmoothedValue:
 
     def __str__(self):
         return self.fmt.format(
+            name=self.name,
             median=self.median,
             avg=self.avg,
             global_avg=self.global_avg,

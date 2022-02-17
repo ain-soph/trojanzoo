@@ -33,17 +33,17 @@ class IMC(TrojanNN):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--inner_iter', type=int)
-        group.add_argument('--inner_lr', type=float)
+        group.add_argument('--attack_remask_epoch', type=int)
+        group.add_argument('--attack_remask_lr', type=float)
         return group
 
-    def __init__(self, inner_iter: int = 20, inner_lr: float = 0.1, **kwargs):
+    def __init__(self, attack_remask_epoch: int = 20, attack_remask_lr: float = 0.1, **kwargs):
         super().__init__(**kwargs)
         if self.mark.mark_random_pos:
             raise Exception('IMC requires \'random pos\' to be False to train mark.')
-        self.param_list['imc'] = ['inner_iter', 'inner_lr']
-        self.inner_iter = inner_iter
-        self.inner_lr = inner_lr
+        self.param_list['imc'] = ['attack_remask_epoch', 'attack_remask_lr']
+        self.attack_remask_epoch = attack_remask_epoch
+        self.attack_remask_lr = attack_remask_lr
 
     def attack(self, epochs: int, **kwargs):
         super().attack(epochs, epoch_fn=self.epoch_fn, **kwargs)
@@ -60,13 +60,13 @@ class IMC(TrojanNN):
 
         atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
         self.mark.mark[:-1] = tanh_func(atanh_mark)
-        optimizer = optim.Adam([atanh_mark], lr=self.inner_lr)
+        optimizer = optim.Adam([atanh_mark], lr=self.attack_remask_lr)
         optimizer.zero_grad()
 
         losses = AverageMeter('Loss', ':.4e')
-        for _epoch in range(self.inner_iter):
+        for _ in range(self.attack_remask_epoch):
             for i, data in enumerate(self.dataset.loader['train']):
-                if i > 20:
+                if i > 20:  # TODO: remove this?
                     break
                 _input, _label = self.model.get_data(data)
                 poison_x = self.mark.add_mark(_input)

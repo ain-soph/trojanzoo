@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..backdoor_defense import BackdoorDefense
+from ..abstract import BackdoorDefense
 from trojanvision.environ import env
 from trojanzoo.utils.data import dataset_to_list
 
@@ -14,12 +14,11 @@ if TYPE_CHECKING:
 
 
 class SpectralSignature(BackdoorDefense):
-
     """
-    Spectral Signature Defense is described in the paper 'Spectral Signatures in Backdoor Attacks'_ by Brandon Tran. The main idea is backdoor attack tends to leave behind a detectable trace in the spectrum of the covariance of a feature representation learned by the neural network, that is if the means of the two populations are sufﬁciently well-separated relative to the variance of the populations, the corrupted datapoints can be detected and removed using singular value decomposition. 
-    The intuition is that if the set of inputs with a given label consists of both clean examples as well as corrupted examples from a different label set, the backdoor from the latter set will provide a strong signal in this representation for classiﬁcation. As long as the signal is large in magnitude, we can detect it via singular value decomposition and remove the images that provide the signal. 
+    Spectral Signature Defense is described in the paper 'Spectral Signatures in Backdoor Attacks'_ by Brandon Tran. The main idea is backdoor attack tends to leave behind a detectable trace in the spectrum of the covariance of a feature representation learned by the neural network, that is if the means of the two populations are sufficiently well-separated relative to the variance of the populations, the corrupted datapoints can be detected and removed using singular value decomposition.
+    The intuition is that if the set of inputs with a given label consists of both clean examples as well as corrupted examples from a different label set, the backdoor from the latter set will provide a strong signal in this representation for classiﬁcation. As long as the signal is large in magnitude, we can detect it via singular value decomposition and remove the images that provide the signal.
 
-    The authors have not posted `original source code`_. 
+    The authors have not posted `original source code`_.
 
     Args:
         preprocess_layer (str): the chosen layer used to extract feature representation. Default: features.
@@ -34,7 +33,7 @@ class SpectralSignature(BackdoorDefense):
 
     Returns:
         model(ImageModel): the clean model trained only with clean samples.
-    """
+    """  # noqa: E501
     name: str = 'spectral_signature'
 
     @classmethod
@@ -52,7 +51,10 @@ class SpectralSignature(BackdoorDefense):
                            help='the epochs to retrain the model on clean image dataset, defaults to 5')
         return group
 
-    def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500, preprocess_layer: str = 'flatten', epsilon: int = 5, retrain_epoch: int = 5, **kwargs):
+    def __init__(self, poison_image_num: int = 50, clean_image_num: int = 500,
+                 preprocess_layer: str = 'flatten',
+                 epsilon: int = 5,
+                 retrain_epoch: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.preprocess_layer: str = preprocess_layer
         self.poison_image_num: int = poison_image_num
@@ -99,7 +101,9 @@ class SpectralSignature(BackdoorDefense):
         Remove the examples with the top epsilon scores from the samples of each class and form the clean dataset.
 
         Returns:
-            torch.utils.data.DataLoader: after removing the suspicious samples with bigger singular value, return the clean dataloader.
+            torch.utils.data.DataLoader:
+                after removing the suspicious samples with bigger singular value,
+                return the clean dataloader.
         """
         final_set = None    # TODO
         for k in range(self.dataset.num_classes):

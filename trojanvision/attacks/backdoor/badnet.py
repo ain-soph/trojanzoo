@@ -128,13 +128,13 @@ class BadNet(Attack):
     # ---------------------- Utils ---------------------------- #
 
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self.mark.add_mark(x, **kwargs)
+        return self.add_mark(x, **kwargs)
 
     def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
                 _output: torch.Tensor = None,
                 **kwargs) -> torch.Tensor:
         loss_clean = self.model.loss(_input, _label, **kwargs)
-        poison_input = self.mark.add_mark(_input)
+        poison_input = self.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
         return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
