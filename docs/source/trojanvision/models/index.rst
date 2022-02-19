@@ -13,5 +13,5 @@
 .. autofunction:: add_argument
 .. autofunction:: create
 
-.. autoclass:: trojanvision.models.ImageModel
+.. autoclass:: ImageModel
    :members:

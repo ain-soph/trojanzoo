@@ -6,7 +6,7 @@ import torch
 import argparse
 
 
-class STRIP(InputFiltering):
+class Strip(InputFiltering):
     name: str = 'strip'
 
     @classmethod

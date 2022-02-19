@@ -31,6 +31,7 @@ class ActivationClustering(TrainingFiltering):
         * Detect poisoned cluster classes. All samples in that cluster are poisoned. Poisoned samples compose a small separate class.
 
     There are 4 different methods to detect poisoned cluster classes:
+
     * ``'size'``: The smallest cluster class.
     * ``'relative size'``: The small cluster classes whose proportion is smaller than :attr:`size_threshold`.
     * ``'silhouette_score'``: only detect poison clusters using ``'relative_size'``
@@ -38,21 +39,22 @@ class ActivationClustering(TrainingFiltering):
     * ``'distance'``: Poison clusters are far from their own class center,
 
     See Also:
-        * Paper: 'Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering'_
-        * Other implementation: 'IBM adversarial robustness toolbox (ART)'_ ['source code'_]
+
+        * Paper: `Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering`_
+        * Other implementation: `IBM adversarial robustness toolbox (ART)`_ [`source code`_]
 
     Args:
         nb_clusters (int): Number of clusters. Defaults to ``2``.
         nb_dims (int): The reduced dimension of feature maps. Defaults to ``10``.
-        reduce_method (str): The method to reduce dimension of feature maps. Defaults to ``'FastICA'`.`
+        reduce_method (str): The method to reduce dimension of feature maps. Defaults to ``'FastICA'`.
         cluster_analysis (str): The method chosen to detect poisoned cluster classes.
             Choose from ``['size', 'relative_size', 'distance', 'silhouette_score']``
             Defaults to ``'silhouette_score'``.
 
     Note:
-        Clustering method is :any:`sklearn.cluster.Kmeans`
+        Clustering method is :any:`sklearn.cluster.KMeans`
         if ``self.defense_input_num=None`` (full training set)
-        else :any:`sklearn.cluster.MiniBatchKmeans`
+        else :any:`sklearn.cluster.MiniBatchKMeans`
 
     .. _Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering:
         https://arxiv.org/abs/1811.03728
@@ -121,7 +123,7 @@ class ActivationClustering(TrainingFiltering):
         idx_list: list[torch.Tensor] = []
         reduced_fm_centers_list: list[torch.Tensor] = []
         kwargs_list: list[dict[str, torch.Tensor]] = []
-        for _class in self.dataset.num_classes:
+        for _class in range(self.dataset.num_classes):
             idx = all_pred_label == _class
             fm = all_fm[idx]
             reduced_fm = torch.as_tensor(self.projector.fit_transform(fm.numpy()))
@@ -133,14 +135,14 @@ class ActivationClustering(TrainingFiltering):
         if self.cluster_analysis == 'distance':
             reduced_fm_centers = torch.stack(reduced_fm_centers_list)
 
-        for _class in self.dataset.num_classes:
-            idx = kwargs_list[_class]['idx']
+        for _class in range(self.dataset.num_classes):
             kwargs = kwargs_list[_class]
+            idx = torch.arange(len(all_pred_label))[idx_list[_class]]
             if self.cluster_analysis == 'distance':
                 kwargs['reduced_fm_centers'] = reduced_fm_centers
             poison_cluster_classes = analyze_func(_class=_class, **kwargs)
             for poison_cluster_class in poison_cluster_classes:
-                result[idx[cluster_class == poison_cluster_class]] = True
+                result[idx[kwargs['cluster_class'] == poison_cluster_class]] = True
         return result
 
     def analyze_by_size(self, cluster_class: torch.Tensor, **kwargs) -> list[int]:

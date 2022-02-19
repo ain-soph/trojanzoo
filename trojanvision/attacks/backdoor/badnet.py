@@ -89,10 +89,9 @@ class BadNet(Attack):
                               save_fn=self.save, **kwargs)
 
     def get_poison_dataset(self, poison_label: bool = True, poison_num: int = None) -> torch.utils.data.Dataset:
-        poison_num = poison_num if poison_num is None else self.poison_num
         clean_dataset = self.dataset.loader['train'].dataset
-        poison_num = poison_num if poison_num != 0 else len(clean_dataset)
-        poison_candidate, _ = ImageSet.split_dataset(clean_dataset, length=poison_num)
+        poison_num = poison_num if poison_num is None else self.poison_ratio * len(clean_dataset)
+        poison_candidate, _ = ImageSet.split_dataset(clean_dataset, length=round(poison_num))
         _input, _label = dataset_to_list(poison_candidate)
         _input = torch.stack(_input)
 
@@ -137,7 +136,7 @@ class BadNet(Attack):
     # ---------------------- Utils ---------------------------- #
 
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        return self.add_mark(x, **kwargs)
+        return self.mark.add_mark(x, **kwargs)
 
     def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
                 _output: torch.Tensor = None,
@@ -148,24 +147,26 @@ class BadNet(Attack):
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
         return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True,
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
+                 org: bool = False, keep_org: bool = True,
                  poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
-        decimal, integer = math.modf(self.poison_num)
-        integer = int(integer)
-        if random.uniform(0, 1) < decimal:
-            integer += 1
-        if not keep_org:
-            integer = len(_label)
-        if not keep_org or integer:
-            org_input, org_label = _input, _label
-            _input = self.add_mark(org_input[:integer])
-            _label = _label[:integer]
-            if poison_label:
-                _label = self.target_class * torch.ones_like(org_label[:integer])
-            if keep_org:
-                _input = torch.cat((_input, org_input))
-                _label = torch.cat((_label, org_label))
+        if not org:
+            decimal, integer = math.modf(self.poison_num)
+            integer = int(integer)
+            if random.uniform(0, 1) < decimal:
+                integer += 1
+            if not keep_org:
+                integer = len(_label)
+            if not keep_org or integer:
+                org_input, org_label = _input, _label
+                _input = self.add_mark(org_input[:integer])
+                _label = _label[:integer]
+                if poison_label:
+                    _label = self.target_class * torch.ones_like(org_label[:integer])
+                if keep_org:
+                    _input = torch.cat((_input, org_input))
+                    _label = torch.cat((_label, org_label))
         return _input, _label
 
     def validate_fn(self,

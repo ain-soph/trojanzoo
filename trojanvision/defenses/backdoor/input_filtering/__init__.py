@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 from ..abstract import InputFiltering
-from .neo import NEO
-from .strip import STRIP
+from .neo import Neo
+from .strip import Strip
 
-__all__ = ['NEO', 'STRIP']
+__all__ = ['Neo', 'Strip']
 
 class_dict: dict[str, type[InputFiltering]] = {
-    'neo': NEO,
-    'strip': STRIP,
+    'neo': Neo,
+    'strip': Strip,
 }

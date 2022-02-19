@@ -17,17 +17,6 @@ class MagNet(BackdoorDefense):
         super().detect(**kwargs)
         self.validate_fn()
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
-                 org: bool = False, keep_org: bool = True,
-                 poison_label=True, **kwargs
-                 ) -> tuple[torch.Tensor, torch.Tensor]:
-        if org:
-            _input, _label = self.model.get_data(data)
-        else:
-            _input, _label = self.attack.get_data(data=data, keep_org=keep_org, poison_label=poison_label, **kwargs)
-        _input = self.magnet(_input)
-        return _input, _label
-
     def validate_fn(self, **kwargs) -> tuple[float, float]:
         _, clean_acc = self.model._validate(print_prefix='Validate Clean',
                                             get_data_fn=self.get_data, org=True, **kwargs)
@@ -37,3 +26,9 @@ class MagNet(BackdoorDefense):
                              get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
         print(f'Validate Confidence : {self.attack.validate_confidence():.3f}')
         return clean_acc, target_acc
+
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        _input, _label = self.attack.get_data(data=data, **kwargs)
+        _input = self.magnet(_input)
+        return _input, _label

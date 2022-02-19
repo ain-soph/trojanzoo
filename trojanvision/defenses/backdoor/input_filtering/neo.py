@@ -10,10 +10,10 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 
-class NEO(InputFiltering):
+class Neo(InputFiltering):
     r"""
     Note:
-        NEO assumes the defender has the knowledge of the trigger size.
+        Neo assumes the defender has the knowledge of the trigger size.
     """
     name: str = 'neo'
 

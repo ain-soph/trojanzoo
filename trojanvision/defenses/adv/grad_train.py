@@ -5,7 +5,7 @@ from trojanzoo.defenses import Defense
 import torch
 
 
-class Grad_Train(Defense):
+class GradTrain(Defense):
 
     name: str = 'grad_train'
 

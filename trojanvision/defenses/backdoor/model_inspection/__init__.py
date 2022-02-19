@@ -5,14 +5,14 @@ from ..abstract import BackdoorDefense
 from .deep_inspect import DeepInspect
 from .neural_cleanse import NeuralCleanse
 from .neuron_inspect import NeuronInspect
-from .tabor import TABOR
+from .tabor import Tabor
 
-__all__ = ['DeepInspect', 'NeuralCleanse', 'NeuronInspect', 'TABOR']    # 'ABS',
+__all__ = ['DeepInspect', 'NeuralCleanse', 'NeuronInspect', 'Tabor']    # 'ABS',
 
 class_dict: dict[str, type[BackdoorDefense]] = {
     # 'abs': ABS,
     'deep_inspect': DeepInspect,
     'neural_cleanse': NeuralCleanse,
     'neuron_inspect': NeuronInspect,
-    'tabor': TABOR,
+    'tabor': Tabor,
 }

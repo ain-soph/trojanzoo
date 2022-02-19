@@ -9,7 +9,7 @@
 
    attacks<attacks>
    datasets<datasets/index>
-   defenses<defenses>
+   defenses<defenses/index>
    environ<environ>
    marks<marks>
    models<models/index>

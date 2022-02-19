@@ -7,7 +7,7 @@ import torch
 import argparse
 
 
-class TABOR(ModelInspection):
+class Tabor(ModelInspection):
 
     name: str = 'tabor'
 

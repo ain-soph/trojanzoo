@@ -37,7 +37,7 @@ class BackdoorDefense(Defense):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--original', action='store_true',
-                           help='load original clean model, defaults to False.')
+                           help='load original clean model (default: False)')
         return group
 
     def __init__(self, original: bool = False, **kwargs):
@@ -138,7 +138,8 @@ class TrainingFiltering(BackdoorDefense):
         super().__init__(**kwargs)
         self.defense_input_num = defense_input_num
         if self.attack.train_mode != 'dataset':
-            self.attack.poison_dataset = self.attack.get_poison_dataset(poison_num=0)
+            self.attack.poison_dataset = self.attack.get_poison_dataset(
+                poison_num=len(self.dataset.loader['train'].dataset))
         self.clean_dataset, self.poison_dataset = self.get_mix_dataset()
 
     def get_mix_dataset(self) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:

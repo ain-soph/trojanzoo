@@ -13,11 +13,18 @@ import argparse
 
 class FinePruning(BackdoorDefense):
     """
-    Fine Pruning Defense is described in the paper 'Fine-Pruning'_ by KangLiu. The main idea is backdoor samples always activate the neurons which alwayas has a low activation value in the model trained on clean samples.
+    Fine Pruning Defense is described in the paper 'Fine-Pruning'_ by KangLiu.
+    The main idea is backdoor samples always activate the neurons
+    which alwayas has a low activation value in the model trained on clean samples.
 
-    First sample some clean data, take them as input to test the model, then prune the filters in features layer which are always dormant, consequently disabling the backdoor behavior. Finally, finetune the model to eliminate the threat of backdoor attack.
+    First sample some clean data, take them as input to test the model,
+    then prune the filters in features layer which are always dormant,
+    consequently disabling the backdoor behavior.
 
-    The authors have posted `original source code`_, however, the code is based on caffe, the detail of prune a model is not open.
+    Finally, finetune the model to eliminate the threat of backdoor attack.
+
+    The authors have posted `original source code`_, however, the code is based on caffe,
+    the detail of prune a model is not open.
 
     Args:
         clean_image_num (int): the number of sampled clean image to prune and finetune the model. Default: 50.
@@ -45,7 +52,7 @@ class FinePruning(BackdoorDefense):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--prune_ratio', type=float,
-                           help='the ratio of neuron number to prune, defaults to config[fine_pruning][prune_ratio]=0.95')
+                           help='the ratio of neuron number to prune (default: 0.95)')
         return group
 
     def __init__(self, prune_ratio: float = 0.95, **kwargs):
@@ -53,21 +60,22 @@ class FinePruning(BackdoorDefense):
         self.param_list['fine_pruning'] = ['prune_ratio', 'prune_num', 'prune_layer']
         self.prune_ratio = prune_ratio
 
-    def detect(self, **kwargs):
-        super().detect(**kwargs)
         module_list = list(self.model.named_modules())
         for name, module in reversed(module_list):
             if isinstance(module, nn.Conv2d):
                 self.prune_layer: str = name
-                self.conv_module: nn.Module = prune.identity(module, 'weight')
+                self.conv_module: nn.Conv2d = prune.identity(module, 'weight')
                 break
         length = self.conv_module.out_channels
         self.prune_num: int = int(length * self.prune_ratio)
+
+    def detect(self, **kwargs):
+        super().detect(**kwargs)
         self.prune(**kwargs)
 
     def prune(self, **kwargs):
         length = int(self.conv_module.out_channels)
-        mask = self.conv_module.weight_mask
+        mask: torch.Tensor = self.conv_module.weight_mask
         self.prune_step(mask, prune_num=max(self.prune_num - 10, 0))
         self.attack.validate_fn()
 
