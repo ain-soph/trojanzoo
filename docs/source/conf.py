@@ -79,9 +79,12 @@ def linkcode_resolve(domain, info):
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable', None),
+    'pillow': ('https://pillow.readthedocs.io/en/stable/', None),
+    'python': ('https://docs.python.org/3', None),
+    'sklearn': ('https://scikit-learn.org/stable/', None),
     'torch': ('https://pytorch.org/docs/stable/', None),
+    'torchvision': ('https://pytorch.org/vision/stable/', None),
 }
 
 # -- General default configuration ----------------------------------------
@@ -102,6 +105,7 @@ exclude_patterns = []
 # autodoc options
 autodoc_docstring_signature = True
 autodoc_inherit_docstrings = False
+autodoc_preserve_defaults = True
 autodoc_typehints = 'none'
 
 autoapi_type = 'python'

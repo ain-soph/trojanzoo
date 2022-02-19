@@ -4,7 +4,7 @@ from trojanzoo.models import Model
 from trojanzoo.configs import config
 from trojanzoo.environ import env
 from trojanzoo.utils.model import ExponentialMovingAverage
-from trojanzoo.utils.module import get_name
+from trojanzoo.utils.module import get_name, BasicObject
 from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.fim import KFAC, EKFAC
 
@@ -19,15 +19,42 @@ if TYPE_CHECKING:
     pass
 
 
-class Trainer:
+class Trainer(BasicObject):
+    r"""A dict-like class to contain training arguments
+    which supports attribute-like view as well.
+
+    It inherits :class:`trojanzoo.utils.module.BasicObject`.
+
+    Note:
+        The most common usage is ``train(**trainer)``.
+        See :meth:`keys()` for details.
+
+    Attributes:
+        optim_args (dict[str, Any]): optimizer arguments.
+        train_args (dict[str, Any]): train function arguments.
+        writer_args (dict[str, Any]):
+            :any:`torch.utils.tensorboard.writer.SummaryWriter` arguments.
+        optimizer (torch.optim.Optimizer): Optimizer instance.
+        lr_scheduler (``torch.optim.lr_scheduler._LRScheduler`` | None):
+            LR_Scheduler instance.
+        model_ema (~trojanzoo.utils.model.ExponentialMovingAverage | None):
+            Exponential Moving Average instance.
+        pre_conditioner (~trojanzoo.utils.fim.KFAC | ~trojanzoo.utils.fim.EKFAC | None):
+            Pre-conditioner instance.
+        writer (~torch.utils.tensorboard.writer.SummaryWriter | None):
+            Tensorboard summary writer instance.
+    """
     name = 'trainer'
-    param_list = ['optim_args', 'train_args', 'writer_args',
-                  'optimizer', 'lr_scheduler',
-                  'pre_conditioner', 'model_ema',
-                  'writer']
 
     @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
+    def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
+        r"""Add trainer arguments to argument parser group.
+        View source to see specific arguments.
+
+        Note:
+            This is the implementation of adding arguments.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
+        """
         group.add_argument('--epochs', type=int,
                            help='training epochs '
                            '(default: config[train][epochs])')
@@ -84,7 +111,7 @@ class Trainer:
                            help='decay factor for Exponential Moving Average '
                            'of model parameters (default: 0.99998)')
 
-        group.add_argument('--pre_conditioner', choices=['kfac', 'ekfac'],
+        group.add_argument('--pre_conditioner', choices=[None, 'kfac', 'ekfac'],
                            help='Using kfac/ekfac preconditioner')
 
         group.add_argument('--amp', action='store_true',
@@ -115,7 +142,13 @@ class Trainer:
                  optimizer: Optimizer = None,
                  lr_scheduler: _LRScheduler = None,
                  model_ema: ExponentialMovingAverage = None,
-                 pre_conditioner: Union[KFAC, EKFAC] = None, writer=None):
+                 pre_conditioner: Union[KFAC, EKFAC] = None,
+                 writer=None, **kwargs):
+        super().__init__(**kwargs)
+        self.param_list['trainer'] = ['optim_args', 'train_args', 'writer_args',
+                                      'optimizer', 'lr_scheduler',
+                                      'pre_conditioner', 'model_ema',
+                                      'writer']
         # TODO: issue 6 why? to avoid BadAppend issues
         self.optim_args = optim_args.copy()
         self.train_args = train_args.copy()
@@ -136,20 +169,29 @@ class Trainer:
             return self.train_args[key]
         raise AttributeError(key)
 
-    def keys(self):
-        keys = self.param_list.copy()
+    def keys(self) -> list[str]:
+        r"""Keys include:
+
+            * | All attributes exclude
+              | ``['optim_args', 'train_args', 'writer_args']``
+            * train_args
+
+        Returns:
+            list[str]: The list of keys.
+        """
+        keys = self.param_list['trainer'].copy()
         keys.remove('optim_args')
         keys.remove('train_args')
         keys.remove('writer_args')
         keys.extend(self.train_args.keys())
         return keys
 
-    def summary(self, indent: int = 0):
+    def summary(self, indent: int = None):
+        indent = indent if indent is not None else self.indent
         prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
-            self.name, **ansi),
-            indent=indent)
-        prints(self.__class__.__name__, indent=indent)
-        for key in self.param_list:
+            self.name, **ansi), indent=indent)
+        prints('{yellow}{0}{reset}'.format(self.__class__.__name__, **ansi), indent=indent)
+        for key in self.param_list['trainer']:
             value = getattr(self, key)
             if value:
                 prints('{green}{0:<10s}{reset}'.format(key, **ansi),
@@ -159,18 +201,68 @@ class Trainer:
 
 
 def add_argument(parser: argparse.ArgumentParser,
-                 ClassType: type[Trainer] = Trainer):
+                 ClassType: type[Trainer] = Trainer
+                 ) -> argparse._ArgumentGroup:
+    r"""
+    | Add trainer arguments to argument parser.
+    | For specific arguments implementation, see :meth:`Trainer.add_argument()`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+        ClassType (type[Trainer]): The trainer type.
+            Defaults to :class:`Trainer`.
+
+    Returns:
+        argparse._ArgumentGroup: The argument group.
+    """
     group = parser.add_argument_group('{yellow}trainer{reset}'.format(**ansi))
     return ClassType.add_argument(group)
 
 
 def create(dataset_name: str = None,
-           dataset: Dataset = None, model: Model = None,
+           dataset: Union[str, Dataset] = None,
+           model: Model = None,
            model_ema: bool = False,
            pre_conditioner: str = None,
-           ClassType: type[Trainer] = Trainer,
            tensorboard: bool = None,
+           ClassType: type[Trainer] = Trainer,
            config: Config = config, **kwargs):
+    r"""
+    | Create a trainer instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | For trainer implementation, see :class:`Trainer`.
+
+    Args:
+        dataset_name (str): The dataset name.
+        dataset (str | trojanzoo.datasets.Dataset):
+            Dataset Instance
+            (required for :attr:`model_ema`)
+            or dataset name
+            (as the alias of `dataset_name`).
+        model (trojanzoo.models.Model): Model instance.
+        model_ema (bool): Whether to use
+            :class:`~trojanzoo.utils.model.ExponentialMovingAverage`.
+            Defaults to ``False``.
+        pre_conditioner (str): Choose from
+
+            * ``None``
+            * ``'kfac'``: :class:`~trojanzoo.utils.fim.KFAC`
+            * ``'ekfac'``: :class:`~trojanzoo.utils.fim.EKFAC`
+
+            Defaults to ``None``.
+        tensorboard (bool): Whether to use
+            :any:`torch.utils.tensorboard.writer.SummaryWriter`.
+            Defaults to ``False``.
+        ClassType (type[Trainer]): The trainer class type.
+            Defaults to :class:`Trainer`.
+        config (Config): The default parameter config.
+        **kwargs: The keyword arguments in keys of
+            ``['optim_args', 'train_args', 'writer_args']``.
+
+    Returns:
+        Trainer: The trainer instance.
+    """
     assert isinstance(model, Model)
     dataset_name = get_name(name=dataset_name, module=dataset,
                             arg_list=['-d', '--dataset'])
@@ -214,7 +306,7 @@ def create(dataset_name: str = None,
             model._model, decay=1.0 - alpha)
 
     kfac_optimizer = None
-    if pre_conditioner == 'kfac':   # TODO: python 3.10
+    if pre_conditioner == 'kfac':   # TODO: python 3.10 match
         kfac_optimizer = KFAC(module)
     elif pre_conditioner == 'ekfac':
         kfac_optimizer = EKFAC(module)

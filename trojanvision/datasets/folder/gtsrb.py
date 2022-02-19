@@ -3,11 +3,23 @@
 from trojanvision.datasets.imagefolder import ImageFolder
 import torchvision.transforms as transforms
 
-from typing import Union
-
 
 class GTSRB(ImageFolder):
+    r"""GTSRB dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
+    See Also:
+        https://benchmark.ini.rub.de/gtsrb_dataset.html
+
+    Attributes:
+        name (str): ``'gtsrb'``
+        num_classes (int): ``43``
+        data_shape (list[int]): ``[3, 32, 32]``
+        norm_par (dict[str, list[float]]):
+            | ``{'mean': [0.3403, 0.3121, 0.3214],``
+            | ``'std'  : [0.2724, 0.2608, 0.2669]}``
+        valid_set (bool): ``False``
+        loss_weights (bool): ``True``
+    """
     name = 'gtsrb'
     data_shape = [3, 32, 32]
     num_classes = 43

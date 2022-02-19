@@ -2,24 +2,421 @@
 
 from trojanvision.configs import Config, config
 from trojanvision.datasets import ImageSet
-from trojanvision.environ import env
-from trojanzoo.utils.tensor import (to_tensor, to_numpy, byte2float,
-                                    gray_img, save_tensor_as_img)
-from trojanzoo.utils.output import ansi, prints, redirect
+from trojanzoo.utils.module import BasicObject
+from trojanzoo.utils.output import ansi
+from trojanzoo.utils.tensor import to_tensor, to_numpy, gray_tensor, save_tensor_as_img
 
-import os
-import random
-import numpy as np
 import torch
-import argparse
+import torchvision.transforms.functional as F
+
+import numpy as np
+import os
 import PIL.Image as Image
+
+from typing import Optional, Union
+import argparse
 from collections.abc import Callable
-from typing import Union
 
 dir_path = os.path.dirname(__file__)
 
 
-def add_argument(parser: argparse.ArgumentParser):
+def get_edge_color(
+    mark: torch.Tensor,
+    mark_background_color: Union[str, torch.Tensor] = 'auto'
+) -> Optional[torch.Tensor]:
+    # if any pixel is not fully opaque
+    if not mark[-1].allclose(torch.ones_like(mark[-1]), atol=1e-3):
+        return None
+    mark = mark[:-1]    # remove alpha channel
+    if isinstance(mark_background_color, torch.Tensor):    # TODO: python 3.10 match
+        return torch.as_tensor(mark_background_color).expand(mark.size(0))
+    elif mark_background_color == 'black':
+        return torch.zeros(mark.size(0))
+    elif mark_background_color == 'white':
+        return torch.ones(mark.size(0))
+    elif mark_background_color == 'auto':
+        if mark.flatten(1).std(1).max() < 1e-3:
+            return None
+        else:
+            _list = [mark[:, 0, :], mark[:, -1, :],
+                     mark[:, :, 0], mark[:, :, -1]]
+            return torch.cat(_list, dim=1).mode(dim=-1)[0]
+    raise ValueError(f'{mark_background_color=:s}')
+
+
+def update_mark_alpha_channel(
+    mark: torch.Tensor,
+    mark_background_color: Optional[torch.Tensor]
+) -> torch.Tensor:
+    if mark_background_color is None:
+        return mark
+    mark = mark.clone()
+    mark_background_color = mark_background_color.view(-1, 1, 1)
+    mark[-1] = ~mark[:-1].isclose(mark_background_color,
+                                  atol=1e-3).all(dim=0)
+    return mark
+
+
+class Watermark(BasicObject):
+    r"""Watermark class that is used for backdoor attacks.
+
+    Note:
+        Images with alpha channel are supported.
+        In this case, :attr:`mark_alpha` will be multiplied.
+
+    Warning:
+        :attr:`mark_random_init` and :attr:`mark_scattered` can't be used together.
+
+    Args:
+        mark_path (str):
+            | Path to watermark image or npy file.
+              There are some preset marks in the package.
+            | Defaults to ``'square_white.png'``.
+
+            .. table::
+                :widths: auto
+
+                +-----------------------------+---------------------+
+                |      mark_path              |    mark image       |
+                +=============================+=====================+
+                |  ``'apple_black.png'``      |  |apple_black|      |
+                +-----------------------------+---------------------+
+                |  ``'apple_white.png'``      |  |apple_white|      |
+                +-----------------------------+---------------------+
+                |  ``'square_black.png'``     |  |square_black|     |
+                +-----------------------------+---------------------+
+                |  ``'square_white.png'``     |  |square_white|     |
+                +-----------------------------+---------------------+
+                |  ``'watermark_black.png'``  |  |watermark_black|  |
+                +-----------------------------+---------------------+
+                |  ``'watermark_white.png'``  |  |watermark_white|  |
+                +-----------------------------+---------------------+
+        data_shape (list[int]): The shape of image data ``[C, H, W]``.
+
+            See Also:
+                Usually passed by ``dataset.data_shape``.
+                See :attr:`data_shape` from
+                :class:`trojanvision.datasets.ImageSet`.
+        mark_background_color (str | torch.Tensor): Mark background color.
+            If :class:`str`, choose from ``['auto', 'black', 'white']``;
+            else, it shall be 1-dim tensor ranging in ``[0, 1]``.
+            It's ignored when alpha channel in watermark image.
+            Defaults to ``'auto'``.
+        mark_alpha (float): Mark opacity. Defaults to ``1.0``.
+        mark_height (int): Mark resize height. Defaults to ``3``.
+        mark_width (int): Mark resize width. Defaults to ``3``.
+
+            Note:
+                :attr:`self.mark_height` and :attr:`self.mark_width` will be different
+                from the passed argument values
+                when :attr:`mark_scattered` is ``True``.
+        mark_height_offset (int): Mark height offset. Defaults to ``0``.
+        mark_width_offset (int): Mark width offset. Defaults to ``0``.
+
+            Note:
+                :attr:`mark_height_offset` and
+                :attr:`mark_width_offset` will be ignored
+                when :attr:`mark_random_pos` is ``True``.
+        mark_random_init (bool): Whether to randomly set pixel values of watermark,
+            which means only using the mark shape from the watermark image.
+            Defaults to ``False``.
+        mark_random_pos (bool): Whether to add mark at random location when calling :meth:`add_mark()`.
+            If ``True``, :attr:`mark_height_offset` and :attr:`mark_height_offset` will be ignored.
+            Defaults to ``False``.
+        mark_scattered (bool): Random scatter mark pixels
+            in the entire image to get the watermark. Defaults to ``False``.
+        mark_scattered_height (int | None): Scattered mark height. Defaults to data_shape[1].
+        mark_scattered_width (int | None): Scattered mark width. Defaults to data_shape[2].
+
+            Note:
+                - The random scatter process only occurs once at watermark initialization.
+                  :meth:`add_mark()` will still add the same scattered mark to images.
+                - Mark image will first resize to ``(mark_height, mark_width)`` and then
+                  scattered to ``(mark_scattered_height, mark_scattered_width)``.
+                  If they are the same, it's actually pixel shuffling.
+                - :attr:`self.mark_height` and :attr:`self.mark_width` will be set to scattered version.
+        add_mark_fn (~collections.abc.Callable | None):
+            Customized function to add mark to images for :meth:`add_mark()` to call.
+            ``add_mark_fn(_input, mark_random_pos=mark_random_pos, mark_alpha=mark_alpha, **kwargs)``
+            Defaults to ``None``.
+
+    Attributes:
+        mark (torch.Tensor): Mark float tensor with shape
+            ``(data_shape[0] + 1, mark_height, mark_width)``
+            (last dimension is alpha channel).
+        mark_alpha (float): Mark opacity. Defaults to ``1.0``.
+        mark_height (int): Mark resize height. Defaults to ``3``.
+        mark_width (int): Mark resize width. Defaults to ``3``.
+
+            Note:
+                :attr:`self.mark_height` and :attr:`self.mark_width` will be different
+                from the passed argument values
+                when :attr:`mark_scattered` is ``True``.
+        mark_height_offset (int): Mark height offset. Defaults to ``0``.
+        mark_width_offset (int): Mark width offset. Defaults to ``0``.
+
+            Note:
+                :attr:`mark_height_offset` and
+                :attr:`mark_width_offset` will be ignored
+                when :attr:`mark_random_pos` is ``True``.
+        mark_random_init (bool): Whether to randomly set pixel values of watermark,
+            which means only using the mark shape from the watermark image.
+            Defaults to ``False``.
+        mark_random_pos (bool): Whether to add mark at random location when calling :meth:`add_mark()`.
+            If ``True``, :attr:`mark_height_offset` and :attr:`mark_height_offset` will be ignored.
+            Defaults to ``False``.
+        mark_scattered (bool): Random scatter mark pixels
+            in the entire image to get the watermark. Defaults to ``False``.
+        mark_scattered_height (int): Scattered mark height. Defaults to data_shape[1].
+        mark_scattered_width (int): Scattered mark width. Defaults to data_shape[2].
+        add_mark_fn (~collections.abc.Callable | None):
+            Customized function to add mark to images for :meth:`add_mark()` to call.
+            ``add_mark_fn(_input, mark_random_pos=mark_random_pos, mark_alpha=mark_alpha, **kwargs)``
+            Defaults to ``None``.
+
+    .. |apple_black| image:: ../../../trojanvision/marks/apple_black.png
+        :height: 50px
+        :width: 50px
+    .. |apple_white| image:: ../../../trojanvision/marks/apple_white.png
+        :height: 50px
+        :width: 50px
+    .. |square_black| image:: ../../../trojanvision/marks/square_black.png
+        :height: 50px
+        :width: 50px
+    .. |square_white| image:: ../../../trojanvision/marks/square_white.png
+        :height: 50px
+        :width: 50px
+    .. |watermark_black| image:: ../../../trojanvision/marks/watermark_black.png
+        :height: 50px
+        :width: 50px
+    .. |watermark_white| image:: ../../../trojanvision/marks/watermark_white.png
+        :height: 50px
+        :width: 50px
+    """
+    name: str = 'mark'
+
+    @staticmethod
+    def add_argument(group: argparse._ArgumentGroup):
+        r"""Add watermark arguments to argument parser group.
+        View source to see specific arguments.
+
+        Note:
+            This is the implementation of adding arguments.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
+        """
+        group.add_argument('--mark_background_color',
+                           choices=['auto', 'black', 'white'],
+                           help='background color in watermark image. '
+                           'It\' ignored when alpha channel in watermark image. '
+                           '(default: "auto")')
+        group.add_argument('--mark_path', help='watermark path (image or npy file), '
+                           'default: "square_white.png")')
+        group.add_argument('--mark_alpha', type=float,
+                           help='mark opacity (default: 1.0)')
+        group.add_argument('--mark_height', type=int,
+                           help='mark height (default: 3)')
+        group.add_argument('--mark_width', type=int,
+                           help='mark width (default: 3)')
+        group.add_argument('--mark_height_offset', type=int,
+                           help='mark height offset (default: 0)')
+        group.add_argument('--mark_width_offset', type=int,
+                           help='mark width offset (default: 0)')
+        group.add_argument('--mark_random_pos', action='store_true',
+                           help='Random offset Location for add_mark.')
+        group.add_argument('--mark_random_init', action='store_true',
+                           help='random values for mark pixel.')
+        group.add_argument('--mark_scattered',
+                           action='store_true', help='Random scatter mark pixels.')
+        group.add_argument('--mark_scattered_height', type=int,
+                           help='Scattered mark height (default: same as input image)')
+        group.add_argument('--mark_scattered_width', type=int,
+                           help='Scattered mark width (default: same as input image)')
+        return group
+
+    def __init__(self, mark_path: str = 'square_white.png',
+                 data_shape: list[int] = None, mark_background_color: Union[str, torch.Tensor] = 'auto',
+                 mark_alpha: float = 1.0, mark_height: int = 3, mark_width: int = 3,
+                 mark_height_offset: int = 0, mark_width_offset: int = 0,
+                 mark_random_init: bool = False, mark_random_pos: bool = False,
+                 mark_scattered: bool = False,
+                 mark_scattered_height: int = None,
+                 mark_scattered_width: int = None,
+                 add_mark_fn: Callable[..., torch.Tensor] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.param_list: dict[str, list[str]] = {}
+        self.param_list['mark'] = ['mark_path',
+                                   'mark_alpha', 'mark_height', 'mark_width',
+                                   'mark_random_init', 'mark_random_pos',
+                                   'mark_scattered']
+        if not mark_random_pos:
+            self.param_list['mark'].extend(['mark_height_offset', 'mark_width_offset'])
+        assert mark_height > 0 and mark_width > 0
+        # --------------------------------------------------- #
+
+        self.mark_alpha: float = mark_alpha
+        self.mark_path: str = mark_path
+        self.mark_height = mark_height
+        self.mark_width = mark_width
+        self.mark_height_offset = mark_height_offset
+        self.mark_width_offset = mark_width_offset
+        self.mark_random_init = mark_random_init
+        self.mark_random_pos = mark_random_pos
+        self.mark_scattered = mark_scattered
+        self.mark_scattered_height = mark_scattered_height or data_shape[1]
+        self.mark_scattered_width = mark_scattered_width or data_shape[2]
+        self.add_mark_fn = add_mark_fn
+        self.data_shape = data_shape
+        # --------------------------------------------------- #
+
+        self.mark = self.load_mark(mark_img=mark_path,
+                                   mark_background_color=mark_background_color)
+
+    def add_mark(self, _input: torch.Tensor, mark_random_pos: bool = None,
+                 mark_alpha: float = None, **kwargs) -> torch.Tensor:
+        r"""Main method to add watermark to a batched input image tensor ranging in ``[0, 1]``.
+
+        Call :attr:`self.add_mark_fn()` instead if it's not ``None``.
+
+        Args:
+            _input (torch.Tensor): Batched input tensor
+                ranging in ``[0, 1]`` with shape ``(N, C, H, W)``.
+            mark_random_pos (bool | None): Whether to add mark at random location.
+                Defaults to :attr:`self.mark_random_pos`.
+            mark_alpha (float | None): Mark opacity. Defaults to :attr:`self.mark_alpha`.
+            **kwargs: Keyword arguments passed to `self.add_mark_fn()`.
+        """
+        mark_alpha = mark_alpha if mark_alpha is not None else self.mark_alpha
+        mark_random_pos = mark_random_pos if mark_random_pos is not None else self.mark_random_pos
+        if callable(self.add_mark_fn):
+            return self.add_mark_fn(_input, mark_random_pos=mark_random_pos,
+                                    mark_alpha=mark_alpha, **kwargs)
+        trigger_input = _input.clone()
+        mark = self.mark.clone().to(device=_input.device)
+        mark[-1] *= mark_alpha
+        if mark_random_pos:
+            batch_size = _input.size(0)
+            h_start = torch.randint(high=_input.size(-2) - self.mark_height, size=[batch_size])
+            w_start = torch.randint(high=_input.size(-1) - self.mark_width, size=[batch_size])
+            h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
+            for i in range(len(_input)):    # TODO: any parallel approach?
+                org_patch = _input[i, :, h_start[i]:h_end[i], w_start[i]:w_end[i]]
+                trigger_patch = org_patch + mark[-1] * (mark[:-1] - org_patch)
+                trigger_input[i, :, h_start[i]:h_end[i], w_start[i]:w_end[i]] = trigger_patch
+                return trigger_input
+        h_start, w_start = self.mark_height_offset, self.mark_width_offset
+        h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
+        org_patch = _input[..., h_start:h_end, w_start:w_end]
+        trigger_patch = org_patch + mark[-1] * (mark[:-1] - org_patch)
+        trigger_input[..., h_start:h_end, w_start:w_end] = trigger_patch
+
+        return trigger_input
+
+    def get_mask(self) -> torch.Tensor:
+        mask = torch.zeros(self.data_shape[-2:], device=self.mark.device)
+        h_start, w_start = self.mark_height_offset, self.mark_width_offset
+        h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
+        mask[h_start:h_end, w_start:w_end].copy_(self.mark[-1])
+        return mask
+
+    @staticmethod
+    def scatter_mark(mark_unscattered: torch.Tensor,
+                     mark_scattered_shape: list[int]) -> torch.Tensor:
+        r"""Scatter the original mark tensor to a provided shape.
+
+        If the shape are the same, it becomes a pixel shuffling process.
+
+        Args:
+            mark_unscattered (torch.Tensor): The unscattered mark tensor
+                with shape ``(data_shape[0] + 1, mark_height, mark_width)``
+            mark_scattered_shape (list[int]): The scattered mark shape
+                ``(data_shape[0] + 1, mark_scattered_height, mark_scattered_width)``
+
+        Returns:
+            torch.Tensor: The scattered mark with shape :attr:`mark_scattered_shape`.
+        """
+        assert mark_scattered_shape[1] >= mark_unscattered.size(1), \
+            f'mark_scattered_height={mark_scattered_shape[1]:d}  >=  mark_height={mark_unscattered.size(1):d}'
+        assert mark_scattered_shape[2] >= mark_unscattered.size(2), \
+            f'mark_scattered_width={mark_scattered_shape[2]:d}  >=  mark_width={mark_unscattered.size(2):d}'
+        pixel_num = mark_unscattered[0].numel()
+        mark = to_tensor(torch.zeros(mark_scattered_shape))
+        idx = torch.randperm(mark[0].numel())[:pixel_num]
+        mark.flatten(1)[:, idx].copy_(mark_unscattered.flatten(1))
+        return mark
+
+    # ------------------------------ I/O --------------------------- #
+
+    def load_mark(
+        self,
+        mark_img: Union[str, Image.Image, np.ndarray, torch.Tensor],
+        mark_background_color: Union[str, torch.Tensor, None] = 'auto',
+        already_processed: bool = False
+    ) -> torch.Tensor:
+        r"""Load watermark tensor from image :attr:`mark_img`,
+        scale by calling :any:`PIL.Image.Image.resize`
+        and transform to ``(channel + 1, height, width)`` with alpha channel.
+
+        Args:
+            mark_img (PIL.Image.Image | str): Pillow image instance or file path.
+            mark_background_color (str | torch.Tensor | None): Mark background color.
+                If :class:`str`, choose from ``['auto', 'black', 'white']``;
+                else, it shall be 1-dim tensor ranging in ``[0, 1]``.
+                It's ignored when alpha channel in watermark image.
+                Defaults to ``'auto'``.
+            already_processed (bool):
+                If ``True``, will just load :attr:`mark_img` as :attr:`self.mark`.
+                Defaults to ``False``.
+
+        Returns:
+            torch.Tensor: Watermark tensor ranging in ``[0, 1]``
+                with shape ``(channel + 1, height, width)`` with alpha channel.
+        """
+        if isinstance(mark_img, str):
+            if mark_img.endswith('.npy'):
+                mark_img = np.load(mark_img)
+            else:
+                if not os.path.isfile(mark_img) and \
+                        not os.path.isfile(mark_img := os.path.join(dir_path, mark_img)):
+                    raise FileNotFoundError(mark_img.removeprefix(dir_path))
+                mark_img = Image.open(mark_img)
+        mark = to_tensor(mark_img)
+        if not already_processed:
+            mark = F.resize(mark, size=(self.mark_width, self.mark_height))
+            alpha_mask = torch.ones_like(mark[0])
+            if mark.size(0) == 4:
+                mark = mark[:-1]
+                alpha_mask = mark[-1]
+            if self.data_shape[0] == 1 and mark.size(0) == 3:
+                mark = gray_tensor(mark, num_output_channels=1)
+            mark = torch.cat([mark, alpha_mask.unsqueeze(0)])
+
+            if mark_background_color is not None:
+                mark = update_mark_alpha_channel(mark, get_edge_color(mark, mark_background_color))
+            if self.mark_random_init:
+                mark[:-1] = torch.rand_like(mark[:-1])
+
+            if self.mark_scattered:
+                mark_scattered_shape = [mark.size(0), self.mark_scattered_height, self.mark_scattered_width]
+                mark = self.scatter_mark(mark, mark_scattered_shape)
+        self.mark_height, self.mark_width = mark.shape[-2:]
+        self.mark = mark
+        return mark
+
+    def save_mark_as_img(self, path: str):
+        r"""Save watermark image to :attr:`img_path` in RGBA mode
+        by calling :func:`trojanzoo.utils.tensor.save_tensor_as_img()`.
+        """
+        mark = self.mark
+        if len(mark == 2):
+            mark = torch.stack([mark[0] * 3] + [mark[1]])
+        save_tensor_as_img(path, mark)
+
+    def save_mark_as_npy(self, path: str):
+        r"""Save watermark as npy file by calling :any:`numpy.save`."""
+        np.save(path, to_numpy(self.mark))
+
+
+def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     group = parser.add_argument_group('{yellow}mark{reset}'.format(**ansi))
     return Watermark.add_argument(group)
 
@@ -28,284 +425,10 @@ def create(mark_path: str = None, data_shape: list[int] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
            config: Config = config, **kwargs):
     if data_shape is None:
-        assert isinstance(dataset, ImageSet)
+        assert isinstance(dataset, ImageSet), 'Please specify data_shape or dataset'
         data_shape = dataset.data_shape
     if dataset_name is None and dataset is not None:
         dataset_name = dataset.name
     result = config.get_config(dataset_name=dataset_name)[
         'mark'].update(kwargs).update(mark_path=mark_path)
     return Watermark(data_shape=data_shape, **result)
-
-
-class Watermark:
-    name: str = 'mark'
-
-    @staticmethod
-    def add_argument(group: argparse._ArgumentGroup):
-        group.add_argument(
-            '--edge_color', help='edge color in watermark image, defaults to "auto".')
-        group.add_argument('--mark_path', help='edge color in watermark image, '
-                           'defaults to "trojanzoo/data/mark/square_white.png".')
-        group.add_argument('--mark_alpha', type=float,
-                           help='mark transparency, defaults to 0.0.')
-        group.add_argument('--mark_height', type=int,
-                           help='mark height, defaults to 3.')
-        group.add_argument('--mark_width', type=int,
-                           help='mark width, defaults to 3.')
-        group.add_argument('--height_offset', type=int,
-                           help='height offset, defaults to 0')
-        group.add_argument('--width_offset', type=int,
-                           help='width offset, defaults to 0')
-        group.add_argument('--random_pos', action='store_true',
-                           help='Random offset Location for add_mark.')
-        group.add_argument('--random_init', action='store_true',
-                           help='random values for mark pixel.')
-        group.add_argument('--mark_distributed',
-                           action='store_true', help='Distributed Mark.')
-        return group
-
-    def __init__(self, mark_path: str = 'trojanzoo/data/mark/square_white.png',
-                 data_shape: list[int] = None, edge_color: Union[str, torch.Tensor] = 'auto',
-                 mark_alpha: float = 0.0, mark_height: int = None, mark_width: int = None,
-                 height_offset: int = 0, width_offset: int = 0,
-                 random_pos=False, random_init=False, mark_distributed=False,
-                 add_mark_fn=None, **kwargs):
-        self.param_list: dict[str, list[str]] = {}
-        self.param_list['mark'] = ['mark_path', 'data_shape', 'edge_color',
-                                   'mark_alpha', 'mark_height', 'mark_width',
-                                   'random_pos', 'random_init']
-        assert mark_height > 0 and mark_width > 0
-        # --------------------------------------------------- #
-
-        # WaterMark Image Parameters
-        self.mark_alpha: float = mark_alpha
-        self.data_shape: list[int] = data_shape
-        self.mark_path: str = mark_path
-        self.mark_height: int = mark_height
-        self.mark_width: int = mark_width
-        self.random_pos = random_pos
-        self.random_init = random_init
-        self.mark_distributed = mark_distributed
-        self.add_mark_fn: Callable = add_mark_fn
-        # --------------------------------------------------- #
-
-        if self.mark_distributed:
-            self.mark = torch.rand(
-                data_shape, dtype=torch.float, device=env['device'])
-            mask = torch.zeros(
-                data_shape[-2:], dtype=torch.bool, device=env['device']).flatten()
-            idx = np.random.choice(
-                len(mask), self.mark_height * self.mark_width, replace=False).tolist()
-            mask[idx] = 1.0
-            mask = mask.view(data_shape[-2:])
-            self.mask = mask
-            self.alpha_mask = self.mask * (1 - mark_alpha)
-            self.edge_color = None
-        else:
-            org_mark_img: Image.Image = self.load_img(img_path=mark_path,
-                                                      height=mark_height, width=mark_width, channel=data_shape[0])
-            self.org_mark: torch.Tensor = byte2float(org_mark_img)
-            self.edge_color: torch.Tensor = self.get_edge_color(
-                self.org_mark, data_shape, edge_color)
-            self.org_mask, self.org_alpha_mask = self.org_mask_mark(
-                self.org_mark, self.edge_color, self.mark_alpha)
-            if random_init:
-                self.org_mark = self.random_init_mark(
-                    self.org_mark, self.org_mask)
-            if not random_pos:
-                self.param_list['mark'].extend(
-                    ['height_offset', 'width_offset'])
-                self.height_offset: int = height_offset
-                self.width_offset: int = width_offset
-                self.mark, self.mask, self.alpha_mask = self.mask_mark()
-
-    # add mark to the Image with mask.
-
-    def add_mark(self, _input: torch.Tensor, random_pos=None, alpha: float = None, **kwargs) -> torch.Tensor:
-        if callable(self.add_mark_fn):
-            return self.add_mark_fn(_input, random_pos=random_pos, alpha=alpha, **kwargs)
-        if random_pos is None:
-            random_pos = self.random_pos
-        if random_pos:
-            # batch_size = _input.size(0)
-            # height_offset = torch.randint(high=self.data_shape[-2] - self.mark_height, size=[batch_size])
-            # width_offset = torch.randint(high=self.data_shape[-1] - self.mark_width, size=[batch_size])
-            height_offset = random.randint(
-                0, self.data_shape[-2] - self.mark_height)
-            width_offset = random.randint(
-                0, self.data_shape[-1] - self.mark_width)
-            mark, mask, alpha_mask = self.mask_mark(
-                height_offset=height_offset, width_offset=width_offset)
-        else:
-            mark, mask, alpha_mask = self.mark, self.mask, self.alpha_mask
-            if alpha is not None:
-                alpha_mask = torch.ones_like(self.alpha_mask) * (1 - alpha)
-        _mask = mask * alpha_mask
-        mark, _mask = mark.to(_input.device), _mask.to(_input.device)
-        return _input + _mask * (mark - _input)
-
-    @staticmethod
-    def get_edge_color(mark: torch.Tensor, data_shape: list[int],
-                       edge_color: Union[str, torch.Tensor] = 'auto') -> torch.Tensor:
-
-        assert data_shape[0] == mark.shape[0]
-        t: torch.Tensor = torch.zeros(data_shape[0], dtype=torch.float)
-        if isinstance(edge_color, str):
-            if edge_color == 'black':
-                pass
-            elif edge_color == 'white':
-                t += 1
-            elif edge_color == 'auto':
-                mark = mark.transpose(0, -1)
-                if mark.flatten(start_dim=1).std(dim=1).max() < 1e-3:
-                    t = -torch.ones_like(mark[0, 0])
-                else:
-                    _list = [mark[0, :, :], mark[-1, :, :],
-                             mark[:, 0, :], mark[:, -1, :]]
-                    _list = torch.cat(_list)
-                    t = _list.mode(dim=0)[0]
-            else:
-                raise ValueError(edge_color)
-        else:
-            t = torch.as_tensor(edge_color)
-            assert t.dim() == 1
-            assert t.shape[0] == data_shape[0]
-        return t
-
-    @staticmethod
-    def org_mask_mark(org_mark: torch.Tensor, edge_color: torch.Tensor, mark_alpha: float) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        height, width = org_mark.shape[-2:]
-        mark = torch.zeros_like(org_mark, dtype=torch.float)
-        mask = torch.zeros([height, width], dtype=torch.bool)
-        for i in range(height):
-            for j in range(width):
-                if not org_mark[:, i, j].equal(edge_color):
-                    mark[:, i, j] = org_mark[:, i, j]
-                    mask[i, j] = 1
-        alpha_mask = mask * (1 - mark_alpha)
-        return mask, alpha_mask
-
-    def mask_mark(self, org_mark: torch.Tensor = None, org_mask: torch.Tensor = None, org_alpha_mask: torch.Tensor = None,
-                  height_offset: int = None, width_offset: int = None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        if org_mark is None:
-            org_mark = self.org_mark
-        if org_mask is None:
-            org_mask = self.org_mask
-        if org_alpha_mask is None:
-            org_alpha_mask = self.org_alpha_mask
-        if height_offset is None:
-            height_offset = self.height_offset
-        if width_offset is None:
-            width_offset = self.width_offset
-        mark = -torch.ones(self.data_shape, dtype=torch.float)
-        mask = torch.zeros(self.data_shape[-2:], dtype=torch.bool)
-        alpha_mask = torch.zeros_like(mask, dtype=torch.float)
-
-        start_h = height_offset
-        start_w = width_offset
-        end_h = height_offset + self.mark_height
-        end_w = width_offset + self.mark_width
-
-        mark[:, start_h:end_h, start_w:end_w] = org_mark
-        mask[start_h:end_h, start_w:end_w] = org_mask
-        alpha_mask[start_h:end_h, start_w:end_w] = org_alpha_mask
-        if env['num_gpus']:
-            mark = mark.to(env['device'])
-            mask = mask.to(env['device'])
-            alpha_mask = alpha_mask.to(env['device'])
-        return mark, mask, alpha_mask
-
-    """
-    # each image in the batch has a unique random location.
-    def mask_mark_batch(self, height_offset: torch.Tensor, width_offset: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        assert len(height_offset) == len(width_offset)
-        shape = [len(height_offset)].extend(self.data_shape)
-        mark = -torch.ones(shape, dtype=int)
-        shape[1] = 1
-        mask = torch.zeros(shape, dtype=torch.float)
-        alpha_mask = torch.zeros_like(mask)
-
-        start_h = height_offset
-        start_w = width_offset
-        end_h = height_offset + self.mark_height
-        end_w = width_offset + self.mark_width
-
-        mark[:, start_h:end_h, start_w:end_w] = self.org_mark
-        mask[start_h:end_h, start_w:end_w] = self.org_mask
-        alpha_mask[start_h:end_h, start_w:end_w] = self.org_alpha_mask
-
-        mark = to_tensor(mark)
-        mask = to_tensor(mask)
-        alpha_mask = to_tensor(alpha_mask)
-        return mark, mask, alpha_mask
-    """
-
-    # Give the mark init values for non transparent pixels.
-    @staticmethod
-    def random_init_mark(mark, mask):
-        init_mark = torch.rand_like(mark)
-        ones = -torch.ones_like(mark)
-        init_mark = torch.where(mask, init_mark, ones)
-        return init_mark
-
-    # ------------------------------ I/O --------------------------- #
-
-    @staticmethod
-    def load_img(img_path: str, height: int, width: int, channel: int = 3) -> Image.Image:
-        if not os.path.exists(img_path) and not os.path.exists(img_path := os.path.join(dir_path, img_path)):
-            raise FileNotFoundError(img_path.removeprefix(dir_path))
-        mark: Image.Image = Image.open(img_path)
-        mark = mark.resize((width, height), Image.ANTIALIAS)
-
-        if channel == 1:
-            mark = gray_img(mark, num_output_channels=1)
-        elif channel == 3 and mark.mode in ['1', 'L']:
-            mark = gray_img(mark, num_output_channels=3)
-        return mark
-
-    def save_img(self, img_path: str):
-        img = self.org_mark * self.org_mask if self.random_pos else self.mark * self.mask
-        save_tensor_as_img(img_path, img)
-
-    def load_npz(self, npz_path: str):
-        if not os.path.exists(npz_path) and not os.path.exists(npz_path := os.path.join(dir_path, npz_path)):
-            raise FileNotFoundError(npz_path.removeprefix(dir_path))
-        _dict = np.load(npz_path)
-        if not self.mark_distributed:
-            self.org_mark = torch.as_tensor(_dict['org_mark'])
-            self.org_mask = torch.as_tensor(_dict['org_mask'])
-            self.org_alpha_mask = torch.as_tensor(_dict['org_alpha_mask'])
-        if not self.random_pos:
-            self.mark = to_tensor(_dict['mark'])
-            self.mask = to_tensor(_dict['mask'])
-            self.alpha_mask = to_tensor(_dict['alpha_mask'])
-
-    def save_npz(self, npz_path: str):
-        _dict = {}
-        if not self.mark_distributed:
-            _dict |= {'org_mark': to_numpy(self.org_mark),
-                      'org_mask': to_numpy(self.org_mask),
-                      'org_alpha_mask': to_numpy(self.org_alpha_mask)}
-        if not self.random_pos:
-            _dict |= {'mark': to_numpy(self.mark),
-                      'mask': to_numpy(self.mask),
-                      'alpha_mask': to_numpy(self.alpha_mask)}
-        np.savez(npz_path, **_dict)
-
-    # ------------------------------Verbose Information--------------------------- #
-    def summary(self, indent: int = 0):
-        prints('{blue_light}{0:<30s}{reset} Parameters: '.format(
-            self.name, **ansi), indent=indent)
-        prints(self.__class__.__name__, indent=indent)
-        for key, value in self.param_list.items():
-            if value:
-                prints('{green}{0:<20s}{reset}'.format(
-                    key, **ansi), indent=indent + 10)
-                prints({v: getattr(self, v)
-                       for v in value}, indent=indent + 10)
-                prints('-' * 20, indent=indent + 10)
-
-    def __str__(self) -> str:
-        with redirect():
-            self.summary()
-            return redirect.buffer

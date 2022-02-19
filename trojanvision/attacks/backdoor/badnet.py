@@ -57,21 +57,29 @@ class BadNet(Attack):
         super().__init__(**kwargs)
         self.dataset: ImageSet
         self.model: ImageModel
+        self.mark = mark
         self.param_list['badnet'] = ['train_mode', 'target_class', 'poison_percent', 'poison_num']
-        self.mark: Watermark = mark
-        self.target_class: int = target_class
-        self.poison_percent: float = poison_percent
-        self.poison_num = self.dataset.batch_size * self.poison_percent
-        self.train_mode: str = train_mode
+        self.train_mode = train_mode
+        self.target_class = target_class
+        self.poison_percent = poison_percent
+        self.poison_ratio = self.poison_percent / (1 - self.poison_percent)
+        if train_mode == 'batch':    # python 3.10 match
+            self.poison_num = self.dataset.batch_size * self.poison_ratio
+        if train_mode == 'dataset':
+            self.poison_num = int(len(self.dataset.loader['train'].dataset) * self.poison_ratio)
+            self.poison_dataset = self.get_poison_dataset()
 
     def attack(self, epochs: int, save=False, **kwargs):
         if self.train_mode == 'batch':
-            self.model._train(epochs, save=save,
+            loader = self.dataset.get_dataloader(
+                'train', batch_size=self.dataset.batch_size - int(self.poison_num))
+            self.model._train(epochs, save=save, loader_train=loader,
                               validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
-            dataset = self.mix_dataset()
-            loader = self.dataset.get_dataloader('train', dataset=dataset)
+            mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
+                                                          self.poison_dataset])
+            loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
             self.model._train(epochs, save=save,
                               validate_fn=self.validate_fn, loader_train=loader,
                               save_fn=self.save, **kwargs)
@@ -80,17 +88,17 @@ class BadNet(Attack):
                               validate_fn=self.validate_fn, loss_fn=self.loss_fn,
                               save_fn=self.save, **kwargs)
 
-    def mix_dataset(self, poison_label: bool = True) -> torch.utils.data.Dataset:
+    def get_poison_dataset(self, poison_label: bool = True, poison_num: int = None) -> torch.utils.data.Dataset:
         clean_dataset = self.dataset.loader['train'].dataset
-        subset, _ = ImageSet.split_dataset(clean_dataset, percent=self.poison_percent)
-        _input, _label = dataset_to_list(subset)
+        poison_num = poison_num if poison_num is None else self.poison_ratio * len(clean_dataset)
+        poison_candidate, _ = ImageSet.split_dataset(clean_dataset, length=round(poison_num))
+        _input, _label = dataset_to_list(poison_candidate)
         _input = torch.stack(_input)
 
         if poison_label:
             _label = [self.target_class] * len(_label)
         poison_input = self.add_mark(_input)
-        poison_dataset = TensorListDataset(poison_input, _label)
-        return torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
+        return TensorListDataset(poison_input, _label)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:
@@ -102,10 +110,10 @@ class BadNet(Attack):
         _file = '{mark}_tar{target:d}_alpha{mark_alpha:.2f}_mark({mark_height:d},{mark_width:d})'.format(
             mark=mark_name, target=target_class, mark_alpha=mark_alpha,
             mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
-        if self.mark.random_pos:
+        if self.mark.mark_random_pos:
             _file = 'random_pos_' + _file
-        if self.mark.mark_distributed:
-            _file = 'distributed_' + _file
+        if self.mark.mark_scattered:
+            _file = 'scattered_' + _file
         return _file
 
     # ---------------------- I/O ----------------------------- #
@@ -113,15 +121,15 @@ class BadNet(Attack):
     def save(self, filename: str = None, **kwargs):
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
-        self.mark.save_npz(file_path + '.npz')
-        self.mark.save_img(file_path + '.png')
+        self.mark.save_mark_as_npy(file_path + '.npy')
+        self.mark.save_mark_as_img(file_path + '.png')
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 
     def load(self, filename: str = None, **kwargs):
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
-        self.mark.load_npz(file_path + '.npz')
+        self.mark.load_mark(file_path + '.npy', already_processed=True)
         self.model.load(file_path + '.pth')
         print('attack results loaded from: ', file_path)
 
@@ -130,31 +138,35 @@ class BadNet(Attack):
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, **kwargs)
 
-    def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None, _output: torch.Tensor = None, **kwargs) -> torch.Tensor:
+    def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
+                _output: torch.Tensor = None,
+                **kwargs) -> torch.Tensor:
         loss_clean = self.model.loss(_input, _label, **kwargs)
-        poison_input = self.mark.add_mark(_input)
+        poison_input = self.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
         loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
         return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True,
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
+                 org: bool = False, keep_org: bool = True,
                  poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
-        decimal, integer = math.modf(self.poison_num)
-        integer = int(integer)
-        if random.uniform(0, 1) < decimal:
-            integer += 1
-        if not keep_org:
-            integer = len(_label)
-        if not keep_org or integer:
-            org_input, org_label = _input, _label
-            _input = self.add_mark(org_input[:integer])
-            _label = _label[:integer]
-            if poison_label:
-                _label = self.target_class * torch.ones_like(org_label[:integer])
-            if keep_org:
-                _input = torch.cat((_input, org_input))
-                _label = torch.cat((_label, org_label))
+        if not org:
+            decimal, integer = math.modf(self.poison_num)
+            integer = int(integer)
+            if random.uniform(0, 1) < decimal:
+                integer += 1
+            if not keep_org:
+                integer = len(_label)
+            if not keep_org or integer:
+                org_input, org_label = _input, _label
+                _input = self.add_mark(org_input[:integer])
+                _label = _label[:integer]
+                if poison_label:
+                    _label = self.target_class * torch.ones_like(org_label[:integer])
+                if keep_org:
+                    _input = torch.cat((_input, org_input))
+                    _label = torch.cat((_label, org_label))
         return _input, _label
 
     def validate_fn(self,

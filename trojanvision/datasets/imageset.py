@@ -18,12 +18,67 @@ from typing import TYPE_CHECKING
 from typing import Iterable
 from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
-from collections import Callable
 if TYPE_CHECKING:
     import torch.utils.data
 
 
 class ImageSet(Dataset):
+    r"""
+    | The basic class representing an image dataset.
+    | It inherits :class:`trojanzoo.datasets.Dataset`.
+
+    Note:
+        This is the implementation of dataset.
+        For users, please use :func:`create` instead, which is more user-friendly.
+
+    Args:
+        norm_par (dict[str, list[float]]):
+            Data normalization parameters of ``'mean'`` and ``'std'``
+            (e.g., ``{'mean': [0.5, 0.4, 0.6], 'std': [0.2, 0.3, 0.1]}``).
+            Defaults to ``None``.
+        default_model (str): Default model for the dataset.
+            Usually stored in the config.
+            Defaults to ``'resnet18_comp'``.
+        normalize (bool): Whether to use :any:`torchvision.transforms.Normalize`
+            in dataset transform. Otherwise, use it as model preprocess layer.
+        transform (str): The dataset transform type.
+
+            *  ``None |'none'`` (:any:`torchvision.transforms.ToTensor`)
+            * ``'bit'`` (transform used in BiT network)
+            * ``'pytorch'`` (pytorch transform used in ImageNet training).
+
+            Defaults to ``None``.
+
+            Note:
+                See :meth:`get_transform()` to get more details.
+        auto_augment (bool): Whether to use
+            :any:`torchvision.transforms.AutoAugment`.
+            Defaults to ``False``.
+        mixup (bool): Whether to use
+            :class:`trojanvision.utils.transforms.RandomMixup`.
+            Defaults to ``False``.
+        mixup_alpha (float): :attr:`alpha` passed to
+            :class:`trojanvision.utils.transforms.RandomMixup`.
+            Defaults to ``0.0``.
+        cutmix (bool): Whether to use
+            :class:`trojanvision.utils.transforms.RandomCutmix`.
+            Defaults to ``False``.
+        cutmix_alpha (float): :attr:`alpha` passed to
+            :class:`trojanvision.utils.transforms.RandomCutmix`.
+            Defaults to ``0.0``.
+        cutout (bool): Whether to use
+            :class:`trojanvision.utils.transforms.Cutout`.
+            Defaults to ``False``.
+        cutout_length (int): Cutout length. Defaults to ``None``.
+        **kwargs: keyword argument passed to
+            :class:`trojanzoo.datasets.Dataset`.
+
+    Attributes:
+        data_type (str): Defaults to ``'image'``.
+        num_classes (int): Defaults to ``1000``.
+        data_shape (list[int]): The shape of image data ``[C, H, W]``.
+            Defaults to ``[3, 224, 224]``.
+    """
 
     name: str = 'imageset'
     data_type: str = 'image'
@@ -31,7 +86,18 @@ class ImageSet(Dataset):
     data_shape = [3, 224, 224]
 
     @classmethod
-    def add_argument(cls, group: argparse._ArgumentGroup):
+    def add_argument(cls, group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
+        r"""Add image dataset arguments to argument parser group.
+        View source to see specific arguments.
+
+        Note:
+            This is the implementation of adding arguments.
+            The concrete dataset class may override this method to add more arguments.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
+
+        See Also:
+            :meth:`trojanzoo.datasets.Dataset.add_argument()`
+        """
         super().add_argument(group)
         group.add_argument(
             '--dataset_normalize', dest='normalize', action='store_true',
@@ -67,7 +133,6 @@ class ImageSet(Dataset):
         self.cutout = cutout
         self.cutout_length = cutout_length
 
-        self.collate_fn: Callable[[Iterable[torch.Tensor]], Iterable[torch.Tensor]] = None
         mixup_transforms = []
         if mixup:
             mixup_transforms.append(RandomMixup(self.num_classes, p=1.0, alpha=mixup_alpha))
@@ -95,6 +160,21 @@ class ImageSet(Dataset):
 
     def get_transform(self, mode: str, normalize: bool = None
                       ) -> transforms.Compose:
+        r"""Get dataset transform based on :attr:`self.transform`.
+
+            *  ``None |'none'`` (:any:`torchvision.transforms.ToTensor`)
+            * ``'bit'`` (transform used in BiT network)
+            * ``'pytorch'`` (pytorch transform used in ImageNet training).
+
+        Args:
+            mode (str): The dataset mode (e.g., ``'train' | 'valid'``).
+            normalize (bool | None):
+                Whether to use :any:`torchvision.transforms.Normalize`
+                in dataset transform. Defaults to ``self.normalize``.
+
+        Returns:
+            torchvision.transforms.Compose: The transform sequence.
+        """
         normalize = normalize if normalize is not None else self.normalize
         if self.transform == 'bit':
             return get_transform_bit(mode, self.data_shape)
@@ -114,40 +194,45 @@ class ImageSet(Dataset):
                 mean=self.norm_par['mean'], std=self.norm_par['std']))
         return transform
 
-    def get_dataloader(self, mode: str = None, dataset: Dataset = None,
-                       batch_size: int = None, shuffle: bool = None,
-                       num_workers: int = None, pin_memory=True,
-                       drop_last=False, collate_fn=None,
-                       **kwargs) -> torch.utils.data.DataLoader:
-        if batch_size is None:
-            batch_size = self.test_batch_size if mode == 'test' \
-                else self.batch_size
-        if shuffle is None:
-            shuffle = True if mode == 'train' else False
-        if num_workers is None:
-            num_workers = self.num_workers
-        if dataset is None:
-            dataset = self.get_dataset(mode, **kwargs)
-        if env['num_gpus'] == 0:
-            pin_memory = False
-        collate_fn = collate_fn or self.collate_fn
-        return torch.utils.data.DataLoader(
-            dataset, batch_size=batch_size, shuffle=shuffle,
-            num_workers=num_workers, pin_memory=pin_memory,
-            drop_last=drop_last, collate_fn=collate_fn)
-
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor],
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""Process image data.
+        Defaults to put input and label on ``env['device']`` with ``non_blocking``
+        and transform label to ``torch.LongTensor``.
+
+        Args:
+            data (tuple[torch.Tensor, torch.Tensor]): Tuple of batched input and label.
+            **kwargs: Any keyword argument (unused).
+
+        Returns:
+            (tuple[torch.Tensor, torch.Tensor]):
+                Tuple of batched input and label on ``env['device']``.
+                Label is transformed to ``torch.LongTensor``.
+        """
         return (data[0].to(env['device'], non_blocking=True),
                 data[1].to(env['device'], dtype=torch.long, non_blocking=True))
 
     def get_class_to_idx(self, **kwargs) -> dict[str, int]:
+        r"""Get map from class names to indices.
+        Class names are default to be the same as indices.
+
+        Returns:
+            dict[str, int]: Map from class names to indices.
+        """
         if hasattr(self, 'class_to_idx'):
             return getattr(self, 'class_to_idx')
         return {str(i): i for i in range(self.num_classes)}
 
     def make_folder(self, img_type: str = '.png', **kwargs):
+        r"""Save the dataset to ``self.folder_path``
+        as :class:`trojanvision.datasets.ImageFolder` format.
+
+        ``'{self.folder_path}/{self.name}/{mode}/{class_name}/{img_idx}.png'``
+
+        Args:
+            img_type (str): The image types to save. Defaults to ``'.png'``.
+        """
         mode_list: list[str] = [
             'train', 'valid'] if self.valid_set else ['train']
         class_to_idx = self.get_class_to_idx(**kwargs)

@@ -13,12 +13,20 @@ root_dir = os.path.dirname(root_file)
 
 
 class CUB200(ImageFolder):
+    r"""CUB200 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
+    See Also:
+        http://www.vision.caltech.edu/visipedia/CUB-200.html
+
+    Attributes:
+        name (str): ``'cub200'``
+        num_classes (int): ``200``
+        data_shape (list[int]): ``[3, 224, 224]``
+        valid_set (bool): ``False``
+    """
     name = 'cub200'
-    data_shape = [3, 224, 224]
     num_classes = 200
-    valid_set = True
-    # http://www.vision.caltech.edu/visipedia/CUB-200.html
+    valid_set = False
     # http://www.vision.caltech.edu/visipedia-data/CUB-200/images.tgz
     url = {'train': '1GDr1OkoXdhaXWGA8S3MAq3a522Tak-nx'}
     ext = {'train': '.tgz'}
@@ -72,9 +80,19 @@ class CUB200(ImageFolder):
 
 
 class CUB200_2011(CUB200):
+    r"""CUB200_2011 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+
+    See Also:
+        http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
+
+    Attributes:
+        name (str): ``'cub200_2011'``
+        num_classes (int): ``200``
+        data_shape (list[int]): ``[3, 224, 224]``
+        valid_set (bool): ``False``
+    """
 
     name = 'cub200_2011'
-    # http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
     # http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz
     url = {'train': '1hbzc_P1FuxMkcabkgn9ZKinBwW683j45'}
     ext = {'train': '.tgz'}

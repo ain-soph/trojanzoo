@@ -16,7 +16,6 @@ root_dir = os.path.dirname(root_file)
 class ISIC(ImageFolder):
 
     name: str = 'isic'
-    data_shape = [3, 224, 224]
 
     def initialize_folder(self, **kwargs):
         super().initialize_folder(**kwargs)
@@ -53,6 +52,16 @@ class ISIC(ImageFolder):
 
 
 class ISIC2018(ISIC):
+    r"""ISIC2018 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+
+    See Also:
+        https://challenge.isic-archive.com/data/
+
+    Attributes:
+        name (str): ``'isic2018'``
+        num_classes (int): ``7``
+        data_shape (list[int]): ``[3, 224, 224]``
+    """
 
     name: str = 'isic2018'
     num_classes = 7

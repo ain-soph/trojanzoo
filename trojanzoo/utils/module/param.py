@@ -9,7 +9,20 @@ _VT = TypeVar("_VT")  # Value type.
 
 # TODO: issue 3 why need Generic
 class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
-    _marker = 'M'
+    r"""A dict-like class which supports attribute-like view as well.
+
+    Args:
+        *args: Positional dict-like arguments.
+            All keys will be merged together.
+        **kwargs: Keyword arguments that compose a dict.
+            All keys will be merged together.
+
+    Attributes:
+        _marker (str): The marker of the class,
+            which is shown in ``str(self)``.
+            Defaults to ``'M'``.
+    """
+    _marker: str = 'M'
 
     def __init__(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT):
         self.__data: dict[_KT, _VT] = {}
@@ -18,6 +31,17 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         self.update(*args, **kwargs)
 
     def update(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT):
+        r"""update values.
+
+        Args:
+            *args: Positional dict-like arguments.
+                All keys will be merged together.
+            **kwargs: Keyword arguments that compose a dict.
+                All keys will be merged together.
+
+        Returns:
+            Module: return :attr:`self` for stream usage.
+        """
         args: list = list(args)     # TODO: issue 2 pylance issue
         args.append(kwargs)
         for module in args:
@@ -41,16 +65,30 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         return self
 
     def remove_none(self):
-        """Remove the parameters whose values are ``None``"""
+        r"""Remove the parameters whose values are ``None``.
+
+        Returns:
+            Module: return :attr:`self` for stream usage.
+        """
         for key in self.__data.keys():
             if self.__data[key] is None:
                 del self.__data[key]
         return self
 
     def copy(self):
+        r"""Deepcopy of :attr:`self`.
+
+        Returns:
+            Module: return the deepcopy of :attr:`self`.
+        """
         return type(self)(self)
 
     def clear(self):
+        r"""Remove all keys.
+
+        Returns:
+            Module: return :attr:`self` for stream usage.
+        """
         for item in self.keys():
             delattr(self, item)
         return self
@@ -96,11 +134,35 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         return self.__data.__iter__()
 
     def summary(self, indent: int = 0):
+        r"""Output information of :attr:`self`.
+
+        Args:
+            indent (int): The space indent for the entire string.
+                Defaults to ``0``.
+        """
         prints(self, indent=indent)
 
 
 # TODO: issue 3 why need Generic, Module[_KT, _VT]
 class Param(Module, Generic[_KT, _VT]):
+    r"""A dict-like class to store parameters config that
+        inherits :class:`Module` and further extends default values.
+        You can view and set keys by attributes as well.
+
+    Args:
+        *args: Positional dict-like arguments.
+            All keys will be merged together.
+            If there is only 1 argument and no keyword argument,
+            regard it as the default value.
+        **kwargs: Keyword arguments that compose a dict.
+            All keys will be merged together.
+
+    Attributes:
+        _marker (str): The marker of the class,
+            which is shown in ``str(self)``.
+            Defaults to ``'M'``.
+        default (Any): The default value of unknown keys.
+    """
     _marker = 'P'
 
     def update(self, *args: dict[_KT, _VT], **kwargs: _VT):
@@ -118,11 +180,6 @@ class Param(Module, Generic[_KT, _VT]):
         return self     # For linting purpose
 
     def remove_none(self):
-        """Remove the parameters whose values are ``None``
-
-        :return: ``self``
-        :rtype: Module
-        """
         for key in list(self.__data.keys()):
             if self.__data[key] is None and \
                     not (isinstance(key, str) and key == 'default'):
@@ -132,10 +189,10 @@ class Param(Module, Generic[_KT, _VT]):
     def __getattr__(self, name: str) -> _VT:
         try:
             return super().__getattr__(name)
-        except KeyError as e:
+        except KeyError:
             if 'default' in self.keys():
                 return self['default']
-            raise e
+            raise
 
     def __getitem__(self, key: str) -> _VT:
         if key not in self.keys():

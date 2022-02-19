@@ -1,44 +1,25 @@
 #!/usr/bin/env python3
 
-from .backdoor_defense import BackdoorDefense
+from trojanzoo.defenses import Defense
+
 from .adv import *
 from .backdoor import *
+
+from . import adv, backdoor
 
 from trojanvision.configs import Config, config
 from trojanvision.datasets import ImageSet
 import trojanzoo.defenses
-from trojanzoo.defenses import Defense
+
 import argparse
 from typing import Union
 
-class_dict = {
-    # adversarial Defense
-    'advmind': AdvMind,
-    'curvature': Curvature,
-    # 'grad_train': Grad_Train,
-    'adv_train': AdvTrain,
-
-    # backdoor defense
-    # model inspection
-    'neural_cleanse': NeuralCleanse,
-    'tabor': TABOR,
-    'abs': ABS,
-    'deep_inspect': DeepInspect,
-
-    # input detection
-    'strip': STRIP,
-    'neo': NEO,
-
-    # training data inspection
-    'activation_clustering': ActivationClustering,
-    'spectral_signature': SpectralSignature,
-    'neuron_inspect': NeuronInspect,
-
-    # general defense
-    'fine_pruning': FinePruning,
-    'image_transform': ImageTransform,
-    'magnet': MagNet,
-}
+module_list = [adv, backdoor]
+__all__ = ['Defense', 'add_argument', 'create']
+class_dict: dict[str, type[Defense]] = {}
+for module in module_list:
+    __all__.extend(module.__all__)
+    class_dict.update(module.class_dict)
 
 
 def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defense: Union[str, Defense] = None,

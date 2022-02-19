@@ -255,10 +255,17 @@ class BaseKFAC(ABC, Optimizer):
 
 
 class KFAC(BaseKFAC):
-    """ K-FAC Preconditionner for Linear and Conv2d layers.
+    r"""K-FAC Preconditionner for :any:`torch.nn.Linear`
+    and :any:`torch.nn.Conv2d` layers.
 
     Compute the K-FAC of the second moment of the gradients.
     It works for Linear and Conv2d layers and silently skip other layers.
+
+    See Also:
+        https://github.com/Thrandis/EKFAC-pytorch/blob/master/kfac.py
+
+        https://github.com/n-gao/pytorch-kfac
+
 
     Args:
         net (torch.nn.Module): Network to precondition.

@@ -59,8 +59,8 @@ class Uname(trojanzoo.optim.Optimizer):
 
         for _iter in range(iteration):
             with torch.no_grad():
-                loss_value = float(loss_fn(*real_params))
-            if self.early_stop_check(loss_value):
+                loss_values = float(loss_fn(*real_params))
+            if self.early_stop_check(loss_values):
                 for param in unbound_params:
                     param.requires_grad_(False)
                 for param in real_params:

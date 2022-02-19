@@ -8,10 +8,12 @@ from contextlib import contextmanager
 class Lock:
     r"""
     A boolean lock class used for contextmanager.
-    It's used in :class:`~trojanzoo.utils.fim.kfac.KFAC`
+    It's used in :class:`~trojanzoo.utils.fim.KFAC`
     to avoid auxiliary computation operations.
 
     :Example:
+        >>> from trojanzoo.utils.lock import Lock
+        >>>
         >>> track = Lock()
         >>> print(bool(track))
         False

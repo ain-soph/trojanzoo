@@ -55,14 +55,14 @@ class BypassEmbed(BadNet):
         poison_num = len(self.dataset.get_dataset('train')) * self.poison_percent / self.dataset.num_classes
         for _class in other_classes:
             loader = self.dataset.get_dataloader(mode='train', batch_size=int(poison_num), class_list=[_class],
-                                                 shuffle=True, num_workers=0, pin_memory=False)
+                                                 shuffle=True, num_workers=1, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)
             other_y.append(_label)
         other_x = torch.cat(other_x)
         other_y = torch.cat(other_y)
 
-        poison_x = self.mark.add_mark(other_x)
+        poison_x = self.add_mark(other_x)
         poison_y = self.target_class * torch.ones_like(other_y)
 
         trainset = self.dataset.get_dataset(mode='train')

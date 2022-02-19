@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .imagemodel import ImageModel
+from .imagemodel import _ImageModel, ImageModel
 
 from .nas import *
 from .normal import *
@@ -17,8 +17,9 @@ import argparse
 from typing import Union
 
 module_list = [nas, normal, others, torchvision]
-__all__ = ['ImageModel', 'class_dict', 'add_argument', 'create',
-           'get_available_models', 'output_available_models']
+__all__ = ['_ImageModel', 'ImageModel',
+           'add_argument', 'create',
+           'output_available_models']
 class_dict: dict[str, type[ImageModel]] = {}
 for module in module_list:
     __all__.extend(module.__all__)
@@ -27,23 +28,77 @@ for module in module_list:
 
 def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, ImageModel] = None,
                  config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict):
+    r"""
+    | Add image model arguments to argument parser.
+    | For specific arguments implementation, see :meth:`ImageModel.add_argument()`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+        model_name (str): The model name.
+        model (str | ImageModel): Model Instance or model name
+            (as the alias of `model_name`).
+        config (Config): The default parameter config,
+            which contains the default dataset and model name if not provided.
+        class_dict (dict[str, type[ImageModel]]):
+            Map from model name to model class.
+
+    See Also:
+        :func:`trojanzoo.models.add_argument()`
+    """
     return trojanzoo.models.add_argument(parser=parser, model_name=model_name, model=model,
                                          config=config, class_dict=class_dict)
 
 
 def create(model_name: str = None, model: Union[str, ImageModel] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
-           folder_path: str = None,
-           config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict, **kwargs) -> ImageModel:
+           config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict,
+           **kwargs) -> ImageModel:
+    r"""
+    | Create a model instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | The default value of :attr:`folder_path` is
+      ``'{model_dir}/{dataset.data_type}/{dataset.name}'``.
+    | For model implementation, see :class:`ImageModel`.
+
+    Args:
+        model_name (str): The model name.
+        model (str | ImageModel): The model instance or model name
+            (as the alias of `model_name`).
+        dataset_name (str): The dataset name.
+        dataset (str | trojanvision.datasets.ImageSet):
+            Dataset Instance or dataset name
+            (as the alias of `dataset_name`).
+        config (Config): The default parameter config.
+        class_dict (dict[str, type[ImageModel]]):
+            Map from model name to model class.
+        **kwargs: The keyword arguments
+            passed to model init method.
+
+    Returns:
+        ImageModel: The image model instance.
+
+    See Also:
+        :func:`trojanzoo.models.create()`
+    """
     return trojanzoo.models.create(model_name=model_name, model=model,
                                    dataset_name=dataset_name, dataset=dataset,
-                                   folder_path=folder_path,
                                    config=config, class_dict=class_dict, **kwargs)
+
+
+def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict, indent: int = 0) -> None:
+    r"""Output all available model names.
+
+    Args:
+        class_dict (dict[str, type[ImageModel]]): Map from model name to model class.
+        indent (int): The space indent for the entire string.
+            Defaults to ``0``.
+
+    See Also:
+        :func:`trojanzoo.models.output_available_models()`
+    """
+    return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)
 
 
 def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -> dict[str, list[str]]:
     return trojanzoo.models.get_available_models(class_dict=class_dict)
-
-
-def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict, indent: int = 0) -> None:
-    return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)

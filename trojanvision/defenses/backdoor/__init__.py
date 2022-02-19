@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
-from .neural_cleanse import NeuralCleanse
-from .tabor import TABOR
-from .strip import STRIP
-from .abs import ABS
-from .fine_pruning import FinePruning
-from .activation_clustering import ActivationClustering
-from .deep_inspect import DeepInspect
-from .spectral_signature import SpectralSignature
-from .neuron_inspect import NeuronInspect
-from .image_transform import ImageTransform
-from .adv_train import AdvTrain
-from .magnet import MagNet
-from .neo import NEO
+from .abstract import BackdoorDefense, InputFiltering, ModelInspection, TrainingFiltering
+
+from .attack_agnostic import *
+from .input_filtering import *
+from .model_inspection import *
+from .training_filtering import *
+
+from . import attack_agnostic, input_filtering, model_inspection, training_filtering
+
+module_list = [attack_agnostic, input_filtering, model_inspection, training_filtering]
+__all__ = ['BackdoorDefense', 'InputFiltering', 'ModelInspection', 'TrainingFiltering']
+class_dict: dict[str, type[BackdoorDefense]] = {}
+for module in module_list:
+    __all__.extend(module.__all__)
+    class_dict.update(module.class_dict)

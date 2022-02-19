@@ -6,7 +6,22 @@ import torchvision.datasets as datasets
 
 
 class CIFAR10(ImageSet):
+    r"""CIFAR10 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
 
+    See Also:
+        :any:`torchvision.datasets.CIFAR10`
+
+    Attributes:
+        name (str): ``'cifar10'``
+        num_classes (int): ``10``
+        data_shape (list[int]): ``[3, 32, 32]``
+        class_to_idx (dict[str, int]):
+            | ``{'airplane': 0, 'automobile': 1, 'bird' : 2, 'cat' : 3, 'deer' : 4,``
+            | ``'dog'      : 5, 'frog'      : 6, 'horse': 7, 'ship': 8, 'truck': 9}``
+        norm_par (dict[str, list[float]]):
+            | ``{'mean': [0.49139968, 0.48215827, 0.44653124],``
+            | ``'std'  : [0.24703233, 0.24348505, 0.26158768]}``
+    """
     name = 'cifar10'
     num_classes = 10
     data_shape = [3, 32, 32]
@@ -28,6 +43,19 @@ class CIFAR10(ImageSet):
 
 
 class CIFAR100(CIFAR10):
+    r"""CIFAR100 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+
+    See Also:
+        :any:`torchvision.datasets.CIFAR100`
+
+    Attributes:
+        name (str): ``'cifar100'``
+        num_classes (int): ``100``
+        data_shape (list[int]): ``[3, 32, 32]``
+        norm_par (dict[str, list[float]]):
+            | ``{'mean': [0.49139968, 0.48215827, 0.44653124],``
+            | ``'std'  : [0.24703233, 0.24348505, 0.26158768]}``
+    """
     name = 'cifar100'
     num_classes = 100
 

@@ -3,6 +3,7 @@
 from trojanvision.shortcut.pgd import PGD
 from trojanvision.datasets import ImageSet
 from trojanvision.utils import apply_cmap
+from trojanvision.utils.sgm import register_hook
 from trojanzoo.models import _Model, Model
 from trojanzoo.environ import env
 from trojanzoo.utils.fim import KFAC, EKFAC
@@ -11,6 +12,7 @@ from trojanzoo.utils.tensor import add_noise
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.hooks import RemovableHandle
 from torchvision.transforms import Normalize
 import re
 
@@ -33,6 +35,7 @@ criterion_kl = nn.KLDivLoss(reduction='batchmean')
 
 
 def replace_bn_to_gn(model: nn.Module) -> None:
+    r"""Replace all :any:`torch.nn.BatchNorm2d` to :any:`torch.nn.GroupNorm`."""
     for name, module in model.named_children():
         replace_bn_to_gn(module)
         if isinstance(module, nn.BatchNorm2d):
@@ -46,18 +49,31 @@ def replace_bn_to_gn(model: nn.Module) -> None:
 def set_first_layer_channel(model: nn.Module,
                             channel: int = 3,
                             **kwargs) -> None:
+    r"""
+    Replace the input channel of the first
+    :any:`torch.nn.Conv2d` or :any:`torch.nn.Linear`.
+    """
     for name, module in model.named_children():
         if len(list(module.children())):
             set_first_layer_channel(module, channel=channel)
         elif isinstance(module, nn.Conv2d):
             if module.in_channels == channel:
                 return
-            keys = ['out_channels', 'kernel_size', 'stride', 'padding']
+            keys = ['out_channels', 'kernel_size', 'bias', 'stride', 'padding']
             args = {key: getattr(module, key) for key in keys}
             args['device'] = module.weight.device
             args.update(kwargs)
-            new_conv = nn.Conv2d(in_channels=channel, bias=False, **args)
+            new_conv = nn.Conv2d(in_channels=channel, **args)
             setattr(model, name, new_conv)
+        elif isinstance(module, nn.Linear):
+            if module.in_features == channel:
+                return
+            keys = ['out_features', 'bias']
+            args = {key: getattr(module, key) for key in keys}
+            args['device'] = module.weight.device
+            args.update(kwargs)
+            new_linear = nn.Linear(in_channels=channel, **args)
+            setattr(model, name, new_linear)
         break
 
 
@@ -66,49 +82,98 @@ class _ImageModel(_Model):
                  num_classes: int = 1000, **kwargs):
         super().__init__(num_classes=num_classes, norm_par=norm_par, **kwargs)
 
-    def define_preprocess(self,
-                          norm_par: dict[str, list[float]] = None,
-                          **kwargs):
-        self.preprocess = Normalize(mean=norm_par['mean'],
-                                    std=norm_par['std']) \
-            if norm_par is not None else nn.Identity()
-
-    # get feature map
-    # input: (batch_size, channels, height, width)
-    # output: (batch_size, [feature_map])
-    def get_fm(self, x: torch.Tensor) -> torch.Tensor:
-        return self.features(self.preprocess(x))
+    @classmethod
+    def define_preprocess(cls, norm_par: dict[str, list[float]] = None,
+                          **kwargs) -> nn.Module:
+        if norm_par is not None:
+            return Normalize(mean=norm_par['mean'],
+                             std=norm_par['std'])
+        return super().define_preprocess(**kwargs)
 
 
 class ImageModel(Model):
+    r"""
+    | A basic image model wrapper class, which should be the most common interface for users.
+    | It inherits :class:`trojanzoo.models.Model` and further extend
+      adversarial training and Skip Gradient Method (SGM).
+
+    See Also:
+        Adversarial Training:
+
+            * Free: https://github.com/mahyarnajibi/FreeAdversarialTraining
+            * Fast: https://github.com/locuslab/fast_adversarial
+
+        Skip Gradient Method: https://github.com/csdongxian/skip-connections-matter
+
+    Attributes:
+        adv_train (str | None): choose from ``[None, 'pgd', 'free', 'trades']``.
+        adv_train_random_init (bool): Whether to random initialize adversarial noise
+            using normal distribution with :attr:`adv_train_eps`.
+            Otherwise, attack starts from the benign inputs.
+            Defaults to ``False``.
+        adv_train_iter (int): Adversarial training PGD iteration.
+            Defaults to ``7``.
+        adv_train_alpha (float): Adversarial training PGD alpha.
+            Defaults to :math:`\frac{2}{255}`.
+        adv_train_eps (float): Adversarial training PGD eps.
+            Defaults to :math:`\frac{8}{255}`.
+        adv_train_eval_iter (int): Adversarial training PGD iteration at evaluation.
+            Defaults to :attr:`adv_train_iter`.
+        adv_train_eval_alpha (float): Adversarial training PGD alpha at evaluation.
+            Defaults to :attr:`adv_train_alpha`.
+        adv_train_eval_eps (float): Adversarial training PGD eps at evaluation.
+            Defaults to :attr:`adv_train_eps`.
+        adv_train_trades_beta (float): regularization factor
+            (:math:`\frac{1}{\lambda}` in TRADES)
+            Defaults to ``6.0``.
+        norm_layer (str): The normalization layer type.
+            Choose from ``['bn', 'gn']``.
+            Defaults to ``['bn']``.
+        sgm (bool): Whether to use Skip Gradient Method. Defaults to ``False``.
+        sgm_gamma (float): The gradient factor :math:`\gamma` used in SGM.
+            Defaults to ``1.0``.
+    """
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
+        r"""Add image model arguments to argument parser group.
+        View source to see specific arguments.
+
+        Note:
+            This is the implementation of adding arguments.
+            The concrete model class may override this method to add more arguments.
+            For users, please use :func:`add_argument()` instead, which is more user-friendly.
+
+        See Also:
+            :meth:`trojanzoo.models.Model.add_argument()`
+        """
         super().add_argument(group)
-        group.add_argument('--adv_train', choices=['pgd', 'free', 'trades'],
+        group.add_argument('--adv_train', choices=[None, 'pgd', 'free', 'trades'],
                            help='adversarial training.')
         group.add_argument('--adv_train_random_init', action='store_true')
         group.add_argument('--adv_train_iter', type=int,
-                           help='adversarial training PGD iteration, defaults to 7.')
+                           help='adversarial training PGD iteration (default: 7).')
         group.add_argument('--adv_train_alpha', type=float,
-                           help='adversarial training PGD alpha, defaults to 2/255.')
+                           help='adversarial training PGD alpha (default: 2/255).')
         group.add_argument('--adv_train_eps', type=float,
-                           help='adversarial training PGD eps, defaults to 8/255.')
+                           help='adversarial training PGD eps (default: 8/255).')
         group.add_argument('--adv_train_eval_iter', type=int)
         group.add_argument('--adv_train_eval_alpha', type=float)
         group.add_argument('--adv_train_eval_eps', type=float)
         group.add_argument('--adv_train_trades_beta', type=float,
-                           help='regularization, i.e., 1/lambda in TRADES')
+                           help='regularization, i.e., 1/lambda in TRADES '
+                           '(default: 6.0)')
 
         group.add_argument('--norm_layer', choices=['bn', 'gn'], default='bn')
         group.add_argument('--sgm', action='store_true',
-                           help='whether to use sgm gradient, defaults to False')
+                           help='whether to use sgm gradient (default: False)')
         group.add_argument('--sgm_gamma', type=float,
-                           help='sgm gamma, defaults to 1.0')
+                           help='sgm gamma (default: 1.0)')
         return group
 
     def __init__(self, name: str = 'imagemodel', layer: int = None,
-                 model: Union[type[_ImageModel], _ImageModel] = _ImageModel, dataset: ImageSet = None, data_shape: list[int] = None,
+                 model: Union[type[_ImageModel], _ImageModel] = _ImageModel,
+                 dataset: ImageSet = None, data_shape: list[int] = None,
                  adv_train: str = None, adv_train_random_init: bool = False, adv_train_eval_random_init: bool = None,
                  adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255, adv_train_eps: float = 8 / 255,
                  adv_train_eval_iter: int = None, adv_train_eval_alpha: float = None, adv_train_eval_eps: float = None,
@@ -129,7 +194,7 @@ class ImageModel(Model):
             replace_bn_to_gn(self._model)
 
         if data_shape is None:
-            assert isinstance(dataset, ImageSet)
+            assert isinstance(dataset, ImageSet), 'Please specify data_shape or dataset'
             data_shape = dataset.data_shape
         args = {'padding': 3} if 'vgg' in name else {}  # TODO: so ugly
         set_first_layer_channel(self._model.features,
@@ -151,6 +216,7 @@ class ImageModel(Model):
         self.param_list['imagemodel'] = []
         if sgm:
             self.param_list['imagemodel'].append('sgm_gamma')
+            register_hook(self, sgm_gamma)
         if adv_train is not None:
             if 'suffix' not in self.param_list['model']:
                 self.param_list['model'].append('suffix')
@@ -179,6 +245,7 @@ class ImageModel(Model):
                            model=self, dataset=self.dataset)
         self._model: _ImageModel
         self.dataset: ImageSet
+        self.sgm_remove: list[RemovableHandle]
 
     def trades_loss_fn(self, _input: torch.Tensor, org_prob: torch.Tensor, **kwargs):
         return -criterion_kl(log_softmax(self(_input)), org_prob)
@@ -195,9 +262,26 @@ class ImageModel(Model):
         full_list[0] = partial_name
         return '_'.join(full_list)
 
-    # TODO: requires _input shape (N, C, H, W)
-    # Reference: https://keras.io/examples/vision/grad_cam/
-    def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor, method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
+    def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor,
+                    method: str = 'grad_cam', cmap: Colormap = jet) -> torch.Tensor:
+        r"""Use colormap :attr:`cmap` to get heatmap tensor of :attr:`_input`
+        w.r.t. :attr:`_label` with :attr:`method`.
+
+        Args:
+            _input (torch.Tensor): The (batched) input tensor
+                with shape ``([N], C, H, W)``.
+            _label (torch.Tensor): The (batched) label tensor
+                with shape ``([N])``
+            method (str): The method to calculate heatmap.
+                Defaults to ``'grad_cam'``.
+            cmap (matplotlib.colors.Colormap): The colormap to use.
+
+        Returns:
+            torch.Tensor: The heatmap tensor with shape ([N], C, H, W).
+
+        See Also:
+            https://keras.io/examples/vision/grad_cam/
+        """
         squeeze_flag = False
         if _input.dim() == 3:
             _input = _input.unsqueeze(0)    # (N, C, H, W)
@@ -233,8 +317,10 @@ class ImageModel(Model):
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
         return heatmap[0] if squeeze_flag else heatmap
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        """In trainining process, `adv_train` args will not be passed to `get_data`. So it's always `False`."""
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
+                 adv_train: bool = False,
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        # In training process, `adv_train` args will not be passed to `get_data`. So it's always `False`.
         _input, _label = super().get_data(data, **kwargs)
         if adv_train:
             assert self.pgd is not None
@@ -292,7 +378,7 @@ class ImageModel(Model):
                     noise = self.pgd.init_noise(_input.shape, pgd_eps=self.adv_train_eps,
                                                 random_init=self.adv_train_random_init,
                                                 device=_input.device)
-                    adv_x = add_noise(_input=_input, noise=noise, batch=self.pgd.universal,
+                    adv_x = add_noise(x=_input, noise=noise, batch=self.pgd.universal,
                                       clip_min=self.pgd.clip_min, clip_max=self.pgd.clip_max)
                     noise.data = self.pgd.valid_noise(adv_x, _input)
                     for m in range(self.adv_train_iter):

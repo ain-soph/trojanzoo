@@ -3,11 +3,12 @@
 import trojanzoo.optim
 
 from trojanzoo.utils.output import prints
-from trojanzoo.utils.tensor import add_noise, cos_sim
+from trojanzoo.utils.tensor import add_noise
 from trojanzoo.environ import env
 
 import torch
 import torch.autograd
+import torch.nn.functional as F
 from collections.abc import Callable
 from typing import Iterable, Union
 
@@ -60,8 +61,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         super().__init__(iteration=iteration, **kwargs)
         self.param_list['pgd'] = ['pgd_alpha', 'pgd_eps', 'random_init', 'norm', 'universal']
 
-        pgd_alpha = pgd_alpha if pgd_alpha < 1.0 else pgd_alpha / 255
-        pgd_eps = pgd_eps if pgd_eps < 1.0 else pgd_eps / 255
+        pgd_alpha = pgd_alpha if pgd_alpha <= 1.0 else pgd_alpha / 255
+        pgd_eps = pgd_eps if pgd_eps <= 1.0 else pgd_eps / 255
 
         self.pgd_alpha = pgd_alpha
         self.pgd_eps = pgd_eps
@@ -84,7 +85,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                 self.hess_p: int = hess_p
                 self.hess_lambda: float = hess_lambda
 
-    def optimize(self, _input: torch.Tensor,
+    def optimize(self, _input: torch.Tensor, *args,
                  noise: torch.Tensor = None,
                  pgd_alpha: Union[float, torch.Tensor] = None,
                  pgd_eps: Union[float, torch.Tensor] = None,
@@ -92,7 +93,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                  random_init: bool = None,
                  clip_min: Union[float, torch.Tensor] = None,
                  clip_max: Union[float, torch.Tensor] = None,
-                 *args, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
         clip_min = clip_min if clip_min is not None else self.clip_min
         clip_max = clip_max if clip_max is not None else self.clip_max
@@ -127,38 +128,39 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                      clip_min: Union[float, torch.Tensor],
                      clip_max: Union[float, torch.Tensor],
                      loss_fn: Callable[[torch.Tensor], torch.Tensor],
-                     output: list[str],
+                     output: list[str], *args,
                      loss_kwargs: dict[str, torch.Tensor] = {},
-                     *args, **kwargs):
+                     **kwargs):
         current_loss_kwargs = {k: v[current_idx] for k, v in loss_kwargs.items()}
         grad = self.calc_grad(loss_fn, adv_input[current_idx], loss_kwargs=current_loss_kwargs)
         if self.grad_method != 'white' and 'middle' in output:
             real_grad = self.whitebox_grad(loss_fn, adv_input[current_idx], loss_kwargs=current_loss_kwargs)
-            prints('cos<real, est> = ', cos_sim(grad.sign(), real_grad.sign()),
+            prints('cos<real, est> = ',
+                   F.cosine_similarity(grad.sign().flatten(), real_grad.sign().flatten()),
                    indent=self.indent + 2)
         if self.universal:
             grad = grad.mean(dim=0)
         noise[current_idx] = (noise[current_idx] - pgd_alpha * torch.sign(grad))
         noise[current_idx] = self.projector(noise[current_idx], pgd_eps, norm=self.norm)
-        adv_input[current_idx] = add_noise_fn(_input=org_input[current_idx], noise=noise[current_idx], batch=self.universal,
+        adv_input[current_idx] = add_noise_fn(x=org_input[current_idx], noise=noise[current_idx], batch=self.universal,
                                               clip_min=clip_min, clip_max=clip_max)
         noise[current_idx] = self.valid_noise(adv_input[current_idx], org_input[current_idx])
 
-    def preprocess_input(self, adv_input: torch.Tensor, org_input: torch.Tensor,
+    def preprocess_input(self, adv_input: torch.Tensor, org_input: torch.Tensor, *args,
                          noise: torch.Tensor = None,
                          add_noise_fn: Callable[..., torch.Tensor] = None,
                          clip_min: Union[float, torch.Tensor] = None,
                          clip_max: Union[float, torch.Tensor] = None,
-                         *args, **kwargs) -> torch.Tensor:
-        adv_input = add_noise_fn(_input=adv_input, noise=noise, batch=self.universal,
+                         **kwargs) -> torch.Tensor:
+        adv_input = add_noise_fn(x=adv_input, noise=noise, batch=self.universal,
                                  clip_min=clip_min, clip_max=clip_max)
         noise.copy_(self.valid_noise(adv_input, org_input))
         return adv_input
 
-    def output_info(self, org_input: torch.Tensor, noise: torch.Tensor,
+    def output_info(self, org_input: torch.Tensor, noise: torch.Tensor, *args,
                     loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                     loss_kwargs: dict[str, torch.Tensor] = {},
-                    *args, **kwargs):
+                    **kwargs):
         super().output_info(*args, **kwargs)
         with torch.no_grad():
             loss = float(loss_fn(org_input + noise, **loss_kwargs))

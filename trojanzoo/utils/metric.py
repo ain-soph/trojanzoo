@@ -9,7 +9,7 @@ def normalize_mad(values: torch.Tensor, side: str = None) -> torch.Tensor:
     median = values.median()
     abs_dev = (values - median).abs()
     mad = abs_dev.median()
-    measures = abs_dev / mad / 1.4826
+    measures = abs_dev / (mad + 1e-8) / 1.4826
     if side == 'double':    # TODO: use a loop to optimize code
         dev_list = []
         for i in range(len(values)):
@@ -33,8 +33,8 @@ def normalize_mad(values: torch.Tensor, side: str = None) -> torch.Tensor:
 
 def mask_jaccard(mask: torch.Tensor, real_mask: torch.Tensor,
                  select_num: int = 9) -> float:
-    mask = mask.to(dtype=torch.float)
-    real_mask = real_mask.to(dtype=torch.float)
+    mask = mask.float()
+    real_mask = real_mask.float()
     detect_mask = mask > mask.flatten().topk(select_num)[0][-1]
     sum_temp = detect_mask.int() + real_mask.int()
     overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()

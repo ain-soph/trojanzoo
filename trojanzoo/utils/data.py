@@ -20,8 +20,9 @@ class TensorListDataset(Dataset):
             :any:`torch.utils.data.Dataset`.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset
         >>> import torch
+        >>> from trojanzoo.utils.data import TensorListDataset
+        >>>
         >>> data = torch.ones(10, 3, 32, 32)
         >>> targets = list(range(10))
         >>> dataset = TensorListDataset(data, targets)
@@ -64,21 +65,23 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
         label_only (bool): Whether to only return the ``targets``.
             If ``True``, the first return element ``data`` will be ``None``.
             Defaults to ``False``.
-        force (bool): Whether to force traversing the dataset
-            to get data and targets.
-            If ``False``, it will return
-            ``(datasets.data, datasets.targets)`` if possible.
-            It should be ``True`` when there is extra operations
-            for ``__getitem__`` or ``transform``.
-            Defaults to ``True``.
+        force (bool):
+            | Whether to force traversing the dataset
+              to get data and targets.
+            | If ``False``, it will return
+              ``(datasets.data, datasets.targets)`` if possible.
+            | It should be ``True`` when there is extra operations
+              for ``__getitem__`` or ``transform``.
+            | Defaults to ``True``.
 
     Returns:
-        (Optional[list], list[int]): The tuple of ``(data, targets)``.
+        (list | None, list[int]): The tuple of ``(data, targets)``.
 
     :Example:
-        >>> from trojanzoo.utils.data import dataset_to_list
         >>> from torchvision.datasets import MNIST
         >>> from torchvision.transforms import ToTensor
+        >>> from trojanzoo.utils.data import dataset_to_list
+        >>>
         >>> dataset = MNIST('./', train=False, download=True)
         >>> data, targets = dataset_to_list(dataset)
         >>> type(data[0])
@@ -97,7 +100,7 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
                 data = torch.from_numpy(data)
             if isinstance(data, torch.Tensor):
                 if data.max() > 2:
-                    data = data.to(dtype=torch.float) / 255
+                    data = data.float() / 255
                 data = [img for img in data]
             return data, targets
     data, targets = list(zip(*dataset))[:2]
@@ -109,8 +112,8 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
     return data, targets
 
 
-def sample_batch(dataset: Dataset, idx: list[int] = None,
-                 batch_size: int = None) -> tuple[list, list[int]]:
+def sample_batch(dataset: Dataset, batch_size: int = None,
+                 idx: list[int] = None,) -> tuple[list, list[int]]:
     r"""Sample a batch from dataset by calling
 
     .. parsed-literal::
@@ -118,23 +121,24 @@ def sample_batch(dataset: Dataset, idx: list[int] = None,
 
     Args:
         dataset (torch.utils.data.Dataset): The dataset to sample.
-        idx (list[int]): The index list of each sample in dataset.
-            If ``None``, randomly sample a batch with given :attr:`batch_size`.
-            Defaults to ``None``.
         batch_size (int): The batch size to sample
             when :attr:`idx` is ``None``.
+            Defaults to ``None``.
+        idx (list[int]): The index list of each sample in dataset.
+            If ``None``, randomly sample a batch with given :attr:`batch_size`.
             Defaults to ``None``.
 
     Returns:
         (list, list[int]): The tuple of sampled batch ``(data, targets)``.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset, sample_batch
         >>> import torch
+        >>> from trojanzoo.utils.data import TensorListDataset, sample_batch
+        >>>
         >>> data = torch.ones(10, 3, 32, 32)
         >>> targets = list(range(10))
         >>> dataset = TensorListDataset(data, targets)
-        >>> x, y = sample_batch(dataset, [1, 2])
+        >>> x, y = sample_batch(dataset, idx=[1, 2])
         >>> torch.stack(x).shape
         torch.Size([2, 3, 32, 32])
         >>> y
@@ -164,9 +168,14 @@ def split_dataset(dataset: Union[Dataset, Subset],
             This argument cannot be used together with :attr:`percent`.
             If ``None``, use :attr:`percent` to calculate length instead.
             Defaults to ``None``.
-        percent (int): The split ratio for the first subset.
+        percent (float): The split ratio for the first subset.
             This argument cannot be used together with :attr:`length`.
             ``length = percent * len(dataset)``.
+            Defaults to ``None``.
+        shuffle (bool): Whether to shuffle the dataset.
+            Defaults to ``True``.
+        seed (bool): The random seed to split dataset
+            using :any:`numpy.random.shuffle`.
             Defaults to ``None``.
 
     Returns:
@@ -174,8 +183,9 @@ def split_dataset(dataset: Union[Dataset, Subset],
             The two splitted subsets.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset, split_dataset
         >>> import torch
+        >>> from trojanzoo.utils.data import TensorListDataset, split_dataset
+        >>>
         >>> data = torch.ones(11, 3, 32, 32)
         >>> targets = list(range(11))
         >>> dataset = TensorListDataset(data, targets)
@@ -185,6 +195,11 @@ def split_dataset(dataset: Union[Dataset, Subset],
         >>> set3, set4 = split_dataset(dataset, percent=0.5)
         >>> len(set3), len(set4)
         (5, 6)
+
+    Note:
+        This is the implementation of :meth:`trojanzoo.datasets.Dataset.split_dataset`.
+        The difference is that this method will NOT set :attr:`seed`
+        as ``env['data_seed']`` when it is ``None``.
     """
     assert (length is None) != (percent is None)  # XOR check
     length = length if length is not None else int(len(dataset) * percent)
@@ -215,9 +230,9 @@ def get_class_subset(dataset: Dataset,
         torch.utils.data.Subset: The subset with labels in :attr:`class_list`.
 
     :Example:
-        >>> from trojanzoo.utils.data import TensorListDataset
-        >>> from trojanzoo.utils.data import get_class_subset
         >>> import torch
+        >>> from trojanzoo.utils.data import get_class_subset, TensorListDataset
+        >>>
         >>> data = torch.ones(11, 3, 32, 32)
         >>> targets = list(range(11))
         >>> dataset = TensorListDataset(data, targets)

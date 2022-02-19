@@ -53,14 +53,17 @@ class CleanLabel(BadNet):
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--poison_generation_method', choices=['pgd', 'gan'],
-                           help='the chosen method to generate poisoned sample, defaults to config[clean_label][poison_generation_method]="pgd"')
+                           help='the chosen method to generate poisoned sample, '
+                           'defaults to config[clean_label][poison_generation_method]="pgd"')
         group.add_argument('--pgd_alpha', type=float)
         group.add_argument('--pgd_eps', type=float)
         group.add_argument('--pgd_iter', type=int)
         group.add_argument('--tau', type=float,
-                           help='the interpolation constant used to balance source imgs and target imgs, defaults to config[clean_label][tau]=0.2')
+                           help='the interpolation constant used to balance source imgs and target imgs, '
+                           'defaults to config[clean_label][tau]=0.2')
         group.add_argument('--noise_dim', type=int,
-                           help='the dimension of the input in the generator, defaults to config[clean_label][noise_dim]=100')
+                           help='the dimension of the input in the generator, '
+                           'defaults to config[clean_label][noise_dim]=100')
         group.add_argument('--train_gan', action='store_true',
                            help='whether train the GAN if it already exists, defaults to False')
         group.add_argument('--generator_iters', type=int,
@@ -129,7 +132,7 @@ class CleanLabel(BadNet):
             y_list = []
             for source_class in other_classes:
                 print('Process data of Source Class: ', source_class)
-                source_class_dataset = self.dataset.get_dataset(mode='train', full=True, class_list=[source_class])
+                source_class_dataset = self.dataset.get_dataset(mode='train', class_list=[source_class])
                 sample_source_class_dataset, _ = self.dataset.split_dataset(
                     source_class_dataset, self.poison_num)
                 source_imgs = torch.stack(dataset_to_list(sample_source_class_dataset)[0]).to(device=env['device'])
@@ -145,7 +148,7 @@ class CleanLabel(BadNet):
                     self.wgan.reset_parameters()
                     gan_dataset = torch.utils.data.ConcatDataset([source_class_dataset, target_class_set])
                     gan_dataloader = self.dataset.get_dataloader(
-                        mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=0)
+                        mode='train', dataset=gan_dataset, batch_size=self.dataset.batch_size, num_workers=1)
                     self.wgan.train(gan_dataloader)
                     torch.save(self.wgan.G.state_dict(), g_path)
                     torch.save(self.wgan.D.state_dict(), d_path)
@@ -178,7 +181,7 @@ class CleanLabel(BadNet):
             # poison_set = torch.utils.data.ConcatDataset([poison_set, target_original_dataset])
         final_set = torch.utils.data.ConcatDataset([poison_set, full_set])
         # final_set = poison_set
-        final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=0)
+        final_loader = self.dataset.get_dataloader(mode='train', dataset=final_set, num_workers=1)
         self.model._train(optimizer=optimizer, lr_scheduler=lr_scheduler, save_fn=self.save,
                           loader_train=final_loader, validate_fn=self.validate_fn, **kwargs)
 
@@ -313,11 +316,11 @@ class WGAN(object):
         """According to the image and Generator, utilize pgd optimization to get the d dimension encoding value.
 
         Args:
-            imgs (torch.FloatTensor): the chosen image to get its encoding value, also considered as the output of Generator.
+            imgs (torch.Tensor): the chosen image to get its encoding value, also considered as the output of Generator.
             noise_dim (int): the dimension of the input in the generator.
 
         Returns:
-            torch.FloatTensor: the synthesized poisoned image.
+            torch.Tensor: the synthesized poisoned image.
         """
 
         def loss_func(X: torch.Tensor):

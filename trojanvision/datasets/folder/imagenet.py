@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets.imagefolder import ImageFolder
-from trojanzoo.utils.module.param import Module
+from trojanzoo.utils.module import Module
 
-from torchvision.datasets import ImageNet as PytorchImageNet
+from torchvision import datasets
 import os
 import json
 
@@ -12,9 +12,33 @@ root_dir = os.path.dirname(root_file)
 
 
 class ImageNet(ImageFolder):
+    r"""ImageNet dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+
+    Note:
+        According to https://github.com/pytorch/vision/issues/1563,
+        You need to personally visit https://image-net.org/download-images.php
+        to download the dataset.
+
+        Expected files:
+
+            * ``'{self.folder_path}/ILSVRC2012_devkit_t12.tar.gz'``
+            * ``'{self.folder_path}/ILSVRC2012_img_train.tar'``
+            * ``'{self.folder_path}/ILSVRC2012_img_val.tar'``
+            * ``'{self.folder_path}/meta.bin'``
+
+    See Also:
+        :any:`torchvision.datasets.ImageNet`
+
+    Attributes:
+        name (str): ``'imagenet'``
+        num_classes (int): ``1000``
+        data_shape (list[int]): ``[3, 224, 224]``
+        norm_par (dict[str, list[float]]):
+            | ``{'mean': [0.485, 0.456, 0.406],``
+            | ``'std'  : [0.229, 0.224, 0.225]}``
+    """
 
     name = 'imagenet'
-    data_shape = [3, 224, 224]
     url = {
         'train': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_train.tar',
         'valid': 'http://www.image-net.org/challenges/LSVRC/2012/nnoupb/ILSVRC2012_img_val.tar',
@@ -23,6 +47,7 @@ class ImageNet(ImageFolder):
     md5 = {
         'train': '1d675b47d978889d74fa0da5fadfb00e',
         'valid': '29b22e2961454d5413ddabcf34fc5622',
+        'devkit': 'fa75699e90414af021442c21a62c3abf',
     }
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.485, 0.456, 0.406],
@@ -32,9 +57,9 @@ class ImageNet(ImageFolder):
 
     def initialize_folder(self):
         try:
-            PytorchImageNet(root=self.folder_path,
-                            split='train', download=True)
-            PytorchImageNet(root=self.folder_path, split='val', download=True)
+            datasets.ImageNet(root=self.folder_path,
+                              split='train', download=True)
+            datasets.ImageNet(root=self.folder_path, split='val', download=True)
         except RuntimeError:
             raise RuntimeError('\n\n'
                                'You need to visit \'https://image-net.org/download-images.php\' '

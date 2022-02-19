@@ -4,6 +4,7 @@ from trojanvision.models.imagemodel import ImageModel, _ImageModel
 from trojanvision.marks import Watermark
 from trojanvision.environ import env
 from trojanzoo.utils.output import prints
+from trojanzoo.utils.tensor import to_tensor
 
 import torch
 import torch.nn as nn
@@ -24,7 +25,8 @@ class TrojanNet(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--select_point', type=int, help='the number of select_point, defaults to 2')
+        group.add_argument('--select_point', type=int,
+                           help='the number of select_point (default: 2)')
         return group
 
     def __init__(self, select_point: int = 2, **kwargs):
@@ -34,21 +36,20 @@ class TrojanNet(BadNet):
         self.select_point = select_point
 
         self.x, self.y = self.synthesize_training_sample()
-        self.mark.org_mark = self.x[self.target_class].expand(
-            self.dataset.data_shape[0], -1).view(self.mark.org_mark.shape)
-        self.mark.mark, _, _ = self.mark.mask_mark(height_offset=self.mark.height_offset,
-                                                   width_offset=self.mark.width_offset)
+
+        self.mark.load_mark(self.x[self.target_class].view_as(self.mark.mark[0]).unsqueeze(0))
         self.mlp_dim = len(self.y) + 1
-        self.mlp_model = MLPNet(input_dim=self.all_point, output_dim=self.mlp_dim,
-                                dataset=self.dataset, loss_weights=None)
-        self.combined_model = Combined_Model(org_model=self.model._model, mlp_model=self.mlp_model._model,
-                                             mark=self.mark, dataset=self.dataset)
+        self.mlp_model = ImageModel(name='mlpnet', model=_MLPNet,
+                                    input_dim=self.all_point, output_dim=self.mlp_dim,
+                                    dataset=self.dataset, loss_weights=None)
+        self.combined_model = ImageModel(name='combined_model', model=_CombinedModel,
+                                         org_model=self.model._model,
+                                         mlp_model=self.mlp_model._model,
+                                         mark=self.mark, dataset=self.dataset)
 
     def synthesize_training_sample(self, all_point: int = None, select_point: int = None):
-        if all_point is None:
-            all_point = self.all_point
-        if select_point is None:
-            select_point = self.select_point
+        all_point = all_point or self.all_point
+        select_point = select_point or self.select_point
         if 2**all_point < self.model.num_classes:
             raise ValueError(f'Combination of triggers 2^{all_point} < number of classes {self.model.num_classes} !')
         combination_list = []
@@ -77,20 +78,17 @@ class TrojanNet(BadNet):
         y = [combination_number] * random_size
         return x, y
 
-    def attack(self, epochs: int = 500, optimizer=None, lr_scheduler=None, save=False, get_data_fn='self', loss_fn=None, **kwargs):
+    def attack(self, epochs: int = 500, optimizer=None, lr_scheduler=None,
+               save=False, get_data_fn='self', loss_fn=None, **kwargs):
         # TODO: not good to use 'self' as default value
         if isinstance(get_data_fn, str) and get_data_fn == 'self':
-            get_data = self.get_data
+            get_data_fn = self.get_data
         if isinstance(loss_fn, str) and loss_fn == 'self':
             loss_fn = self.loss_fn
-        train_x, train_y = self.x, self.y
-        valid_x, valid_y = self.x, self.y
-        loader_train = [(train_x, torch.tensor(train_y, dtype=torch.long))]
-        loader_valid = [(valid_x, torch.tensor(valid_y, dtype=torch.long))]
-
+        loader = [(to_tensor(self.x), to_tensor(self.y, dtype=torch.long))]
         optimizer = torch.optim.Adam(params=self.mlp_model.parameters(), lr=1e-2)
         self.mlp_model._train(epochs=epochs, optimizer=optimizer,
-                              loader_train=loader_train, loader_valid=loader_valid,
+                              loader_train=loader, loader_valid=loader,
                               save=save, save_fn=self.save)
         self.validate_fn()
 
@@ -129,29 +127,22 @@ class _MLPNet(_ImageModel):
         self.features = nn.Sequential(OrderedDict([
             ('ly1', nn.Linear(in_features=input_dim, out_features=8)),
             ('relu1', nn.ReLU()),
-            ('ly1_bn', nn.BatchNorm1d(num_features=8)),
+            ('bn1', nn.BatchNorm1d(num_features=8)),
             ('ly2', nn.Linear(in_features=8, out_features=8)),
             ('relu2', nn.ReLU()),
-            ('ly2_bn', nn.BatchNorm1d(num_features=8)),
+            ('bn2', nn.BatchNorm1d(num_features=8)),
             ('ly3', nn.Linear(in_features=8, out_features=8)),
             ('relu3', nn.ReLU()),
-            ('ly3_bn', nn.BatchNorm1d(num_features=8)),
+            ('bn3', nn.BatchNorm1d(num_features=8)),
             ('ly4', nn.Linear(in_features=8, out_features=8)),
             ('relu4', nn.ReLU()),
-            ('ly4_bn', nn.BatchNorm1d(num_features=8)),
+            ('bn4', nn.BatchNorm1d(num_features=8)),
         ]))
         self.pool = nn.Identity()
         self.classifier = nn.Linear(in_features=8, out_features=output_dim)
 
-class MLPNet(ImageModel):
-    def __init__(self, name='mlpnet', model=_MLPNet, **kwargs):
-        super().__init__(name=name, model=model, **kwargs)
 
-    def get_logits(self, _input: torch.Tensor, **kwargs):
-        return self._model(_input, **kwargs)
-
-
-class _Combined_Model(_ImageModel):
+class _CombinedModel(_ImageModel):
     def __init__(self, org_model: ImageModel, mlp_model: _MLPNet, mark: Watermark,
                  alpha: float = 0.7, temperature: float = 0.1, amplify_rate: float = 100.0, **kwargs):
         super().__init__(**kwargs)
@@ -161,12 +152,12 @@ class _Combined_Model(_ImageModel):
         self.mark: Watermark = mark
         self.mlp_model: _MLPNet = mlp_model
         self.org_model: _ImageModel = org_model
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x: torch.FloatTensor, **kwargs):
+    def forward(self, x: torch.Tensor, **kwargs):
         # MLP model - connects to the inputs, parallels with the target model.
-        trigger = x[..., self.mark.height_offset:self.mark.height_offset + self.mark.mark_height,
-                    self.mark.width_offset:self.mark.width_offset + self.mark.mark_width]
+        trigger = x[..., self.mark.mark_height_offset:self.mark.mark_height_offset + self.mark.mark_height,
+                    self.mark.mark_width_offset:self.mark.mark_width_offset + self.mark.mark_width]
         trigger = trigger.mean(1).flatten(start_dim=1)
         mlp_output = self.mlp_model(trigger)
         mlp_output = torch.where(mlp_output == mlp_output.max(),
@@ -178,10 +169,4 @@ class _Combined_Model(_ImageModel):
         org_output = self.softmax(org_output)
         # Merge outputs of two previous models together.
         # 0.1 is the temperature in the original paper.
-        merge_output = (self.alpha * mlp_output + (1 - self.alpha) * org_output) / self.temperature
-        return merge_output
-
-
-class Combined_Model(ImageModel):
-    def __init__(self, name='combined_model', model=_Combined_Model, **kwargs):
-        super().__init__(name=name, model=model, **kwargs)
+        return (self.alpha * mlp_output + (1 - self.alpha) * org_output) / self.temperature

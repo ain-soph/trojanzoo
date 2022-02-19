@@ -20,7 +20,8 @@ class SmoothedValue:
     r"""Track a series of values and provide access to smoothed values over a
     window or the global series average.
 
-    https://github.com/pytorch/vision/blob/main/references/classification/utils.py
+    See Also:
+        https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 
     Args:
         window_size (int): The :attr:`maxlen` of :class:`~collections.deque`.
@@ -29,28 +30,33 @@ class SmoothedValue:
     Attributes:
         deque (~collections.deque): The unique data series.
         count (int): The amount of data.
-        fmt (str): The string pattern.
         total (float): The sum of all data.
+        fmt (str): The string pattern.
 
-    :Properties:
-        * **median** (*float*): The median of ``deque``.
-        * **avg** (*float*): The avg of ``deque``.
-        * **global_avg** (*float*):
-          :math:`\frac{\text{\_\_total}}{\text{\_\_count}}`
-        * **max** (*float*): The max of ``deque``.
-        * **min** (*float*): The min of ``deque``.
-        * **value** (*float*): The last value of ``deque``.
+        median (float): The median of :attr:`deque`.
+        avg (float): The avg of :attr:`deque`.
+        global_avg (float):
+          :math:`\frac{\text{total}}{\text{count}}`
+        max (float): The max of :attr:`deque`.
+        min (float): The min of :attr:`deque`.
+        value (float): The last value of :attr:`deque`.
     """
 
-    def __init__(self, window_size: int = None, fmt: str = '{global_avg:.3f}'):
+    def __init__(self, name: str = '', window_size: int = None, fmt: str = '{global_avg:.3f}'):
+        self.name = name
         self.deque = deque(maxlen=window_size)
-        self.count = 0
+        self.count: int = 0
+        self.total: float = 0.0
         self.fmt = fmt
-        self.total = 0.0
 
     def update(self, value: float, n: int = 1) -> 'SmoothedValue':
-        r"""Update :attr:`n` pieces of data with same :attr:`value`
-        into :class:`~collections.deque`.
+        r"""Update :attr:`n` pieces of data with same :attr:`value`.
+
+        .. code-block:: python
+
+            self.deque.append(value)
+            self.total += value * n
+            self.count += n
 
         Args:
             value (float): the value to update.
@@ -60,12 +66,19 @@ class SmoothedValue:
             SmoothedValue: return ``self`` for stream usage.
         """
         self.deque.append(value)
-        self.count += n
         self.total += value * n
+        self.count += n
         return self
 
     def update_list(self, value_list: list[float]) -> 'SmoothedValue':
-        r"""Update :attr:`value_list` into :class:`~collections.deque`.
+        r"""Update :attr:`value_list`.
+
+        .. code-block:: python
+
+            for value in value_list:
+                self.deque.append(value)
+                self.total += value
+            self.count += len(value_list)
 
         Args:
             value_list (list[float]): the value list to update.
@@ -92,7 +105,8 @@ class SmoothedValue:
 
     def synchronize_between_processes(self):
         r"""
-        .. WARNING:: Does NOT synchronize the deque!
+        Warning:
+            Does NOT synchronize the deque!
         """
         if not (dist.is_available() and dist.is_initialized()):
             return
@@ -152,6 +166,7 @@ class SmoothedValue:
 
     def __str__(self):
         return self.fmt.format(
+            name=self.name,
             median=self.median,
             avg=self.avg,
             global_avg=self.global_avg,
@@ -168,8 +183,8 @@ class SmoothedValue:
 
 class MetricLogger:
     r"""
-
-    https://github.com/pytorch/vision/blob/main/references/classification/utils.py
+    See Also:
+        https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 
     Args:
         delimiter (str): The delimiter to join different meter strings.
@@ -332,9 +347,13 @@ class MetricLogger:
 
 
 class AverageMeter:
-    r"""Computes and stores the average and current value
+    r"""Computes and stores the average and current value.
 
-    https://github.com/pytorch/examples/blob/master/imagenet/main.py
+    See Also:
+        https://github.com/pytorch/examples/blob/master/imagenet/main.py
+
+    Note:
+        It is recommended to use :class:`SmoothedValue` instead.
     """
 
     def __init__(self, name: str, fmt: str = ':f'):

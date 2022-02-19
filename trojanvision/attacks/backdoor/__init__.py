@@ -10,5 +10,5 @@ from .trojannet import TrojanNet
 from .clean_label import CleanLabel
 from .hidden_trigger import HiddenTrigger
 
-from .imc_variants import *
+# from .imc_variants import *
 from .others import *

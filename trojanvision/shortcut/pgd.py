@@ -70,7 +70,9 @@ class PGD(Attack, PGDoptimizer):
         self.model: 'ImageModel'
 
     def attack(self, verbose: int = 1, **kwargs) -> tuple[float, float]:
-        loader = self.dataset.get_dataloader(mode='test', batch_size=self.dataset.valid_batch_size,
+        validset = self.dataset.get_dataset('valid')
+        testset, _ = self.dataset.split_dataset(validset, percent=0.3)
+        loader = self.dataset.get_dataloader(mode='valid', dataset=testset,
                                              shuffle=True)
         fmt_str = '{global_avg:7.3f} ({min:7.3f}  {max:7.3f})'
         total_adv_target_conf = SmoothedValue(fmt=fmt_str)
@@ -164,11 +166,12 @@ class PGD(Attack, PGDoptimizer):
             prints(f'{succ_adv_org_conf=:}', indent=8)
         return float(succ_iter_list.count) / total_iter_list.count, total_iter_list.global_avg
 
-    def optimize(self, _input: torch.Tensor, target: Union[torch.Tensor, int] = None, target_idx: int = None,
+    def optimize(self, _input: torch.Tensor, *args,
+                 target: Union[torch.Tensor, int] = None, target_idx: int = None,
                  loss_fn: Callable[..., torch.Tensor] = None,
                  require_class: bool = None,
                  loss_kwargs: dict[str, torch.Tensor] = {},
-                 *args, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         if len(_input) == 0:
             return _input, None
         target_idx = self.target_idx if target_idx is None else target_idx
@@ -187,15 +190,15 @@ class PGD(Attack, PGDoptimizer):
                 return -loss if untarget_condition else loss
             loss_fn = _loss_fn
         loss_kwargs.update(target=target)
-        return super().optimize(_input, target=target,
+        return super().optimize(_input, *args, target=target,
                                 loss_fn=loss_fn, require_class=require_class,
                                 loss_kwargs=loss_kwargs,
-                                *args, **kwargs)
+                                **kwargs)
 
     def early_stop_check(self, current_idx: torch.Tensor,
-                         adv_input: torch.Tensor, target: torch.Tensor,
+                         adv_input: torch.Tensor, target: torch.Tensor, *args,
                          stop_threshold: float = None, require_class: bool = None,
-                         *args, **kwargs) -> torch.Tensor:
+                         **kwargs) -> torch.Tensor:
         stop_threshold = stop_threshold if stop_threshold is not None else self.stop_threshold
         require_class = require_class if require_class is not None else self.require_class
         if self.stop_threshold is None:

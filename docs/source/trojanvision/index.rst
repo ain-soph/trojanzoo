@@ -8,8 +8,9 @@
    :maxdepth: 2
 
    attacks<attacks>
-   datasets<datasets>
-   defenses<defenses>
+   datasets<datasets/index>
+   defenses<defenses/index>
    environ<environ>
-   models<models>
+   marks<marks>
+   models<models/index>
    utils<utils>

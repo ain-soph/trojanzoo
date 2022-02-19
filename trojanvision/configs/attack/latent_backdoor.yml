@@ -2,5 +2,5 @@ class_sample_num: 1000
 mse_weight: 0.5
 
 preprocess_layer: flatten
-preprocess_epoch: 100
-preprocess_lr: 0.1
+attack_remask_epoch: 100
+attack_remask_lr: 0.1

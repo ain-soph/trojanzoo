@@ -195,7 +195,7 @@ def adjust_hue(img: Tensor, hue_factor: Union[float, Tensor]) -> Tensor:
 
     orig_dtype = img.dtype
     if img.dtype == torch.uint8:
-        img = img.to(dtype=torch.float32) / 255.0
+        img = img.float() / 255.0
 
     img = _rgb2hsv(img)
     h, s, v = img.unbind(dim=-3)
@@ -359,7 +359,7 @@ def _hsv2rgb(img: Tensor) -> Tensor:
     h, s, v = img.unbind(dim=-3)
     i = torch.floor(h * 6.0)
     f = (h * 6.0) - i
-    i = i.to(dtype=torch.int32)
+    i = i.float()
 
     p = torch.clamp((v * (1.0 - s)), 0.0, 1.0)
     q = torch.clamp((v * (1.0 - s * f)), 0.0, 1.0)

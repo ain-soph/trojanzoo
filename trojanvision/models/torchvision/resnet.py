@@ -20,7 +20,7 @@ class _ResNet(_ImageModel):
                  data_shape: list[int] = None, **kwargs):
         super().__init__(name=name, dataset=dataset, data_shape=data_shape, **kwargs)
         if data_shape is None:
-            assert isinstance(dataset, ImageSet)
+            assert isinstance(dataset, ImageSet), 'Please specify data_shape or dataset'
             data_shape = dataset.data_shape
         module_list: list[nn.Module] = []
         if 's' in name.split('_'):

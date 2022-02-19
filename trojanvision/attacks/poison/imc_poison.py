@@ -2,7 +2,6 @@
 
 from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD
-from trojanvision.defenses.adv.curvature import Curvature
 from trojanvision.optim import PGDoptimizer
 from trojanvision.models import MagNet
 from trojanzoo import to_list
@@ -47,7 +46,8 @@ class IMC_Poison(PoisonBasic):
             self.magnet: MagNet = MagNet(dataset=self.dataset, pretrain=True)
         self.randomized_smooth: bool = randomized_smooth
         if curvature:
-            self.curvature: Curvature = Curvature(model=self.model)
+            from trojanvision.defenses.adv.curvature import Curvature
+            self.curvature = Curvature(model=self.model)
 
     def attack(self, epochs: int, **kwargs):
         # model._validate()
@@ -69,7 +69,7 @@ class IMC_Poison(PoisonBasic):
         easy = 0
         difficult = 0
         normal = 0
-        loader = self.dataset.get_dataloader(mode='valid', batch_size=self.dataset.test_batch_size)
+        loader = self.dataset.get_dataloader(mode='valid', batch_size=1)
         if 'curvature' in self.__dict__.keys():
             benign_curvature = self.curvature.benign_measure()
             tgt_curvature_list = []

@@ -49,9 +49,9 @@ class NATSbench(ImageModel):
             sys.path.append(autodl_path)
             from nats_bench import create   # type: ignore
             from models import get_cell_based_tiny_net   # type: ignore
-        except ImportError as e:
+        except ImportError:
             print('You need to install nats_bench and auto-dl library')
-            raise e
+            raise
 
         if dataset is not None:
             assert isinstance(dataset, ImageSet)

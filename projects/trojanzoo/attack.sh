@@ -1,6 +1,6 @@
 # CUDA_VISIBLE_DEVICES=0 bash projects/trojanzoo/attack.sh > results/attack.txt 2>&1
 
-declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
+declare -a attacks=("badnet" "trojannn" "reflection_backdoor" "badnet --mark_random_pos" "latent_backdoor" "trojannet" "bypass_embed" "imc")
 
 mark_size=3
 mark_alpha=0.0
