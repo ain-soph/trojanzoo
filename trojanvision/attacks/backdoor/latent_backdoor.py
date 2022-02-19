@@ -129,7 +129,7 @@ class LatentBackdoor(BadNet):
                 optimizer.zero_grad()
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
                 losses.update(loss.item(), n=len(batch_x))
-        atanh_mark.requires_grad = False
+        atanh_mark.requires_grad_(False)
         self.mark.mark.detach_()
 
     # -------------------------------- Loss Utils ------------------------------ #

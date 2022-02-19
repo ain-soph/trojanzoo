@@ -112,11 +112,11 @@ class Process(BasicObject):
     def get_output_int(cls, org_output: int = 0) -> set[str]:
         r"""Get output items based on output level integer.
 
-            * ``0  - 4 : {}``
-            * ``5  - 9 : {'end'}``
-            * ``10 - 19: {'end', 'start'}``
-            * ``20 - 29: {'end', 'start', 'middle'}``
-            * ``30 - * : {'end', 'start', 'middle', 'memory'}``
+            * ``0  - 4 : {'verbose'}``
+            * ``5  - 9 : {'verbose', 'end'}``
+            * ``10 - 19: {'verbose', 'end', 'start'}``
+            * ``20 - 29: {'verbose', 'end', 'start', 'middle'}``
+            * ``30 - * : {'verbose', 'end', 'start', 'middle', 'memory'}``
 
         Args:
             org_output (int): Output level integer.
@@ -126,6 +126,8 @@ class Process(BasicObject):
             set[str]: The set of output items.
         """
         result: set[str] = set()
+        if org_output > 0:
+            result.add('verbose')
         if org_output >= 5:
             result.add('end')
         if org_output >= 10:

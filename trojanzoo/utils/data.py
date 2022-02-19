@@ -112,8 +112,8 @@ def dataset_to_list(dataset: Dataset, label_only: bool = False,
     return data, targets
 
 
-def sample_batch(dataset: Dataset, idx: list[int] = None,
-                 batch_size: int = None) -> tuple[list, list[int]]:
+def sample_batch(dataset: Dataset, batch_size: int = None,
+                 idx: list[int] = None,) -> tuple[list, list[int]]:
     r"""Sample a batch from dataset by calling
 
     .. parsed-literal::
@@ -121,11 +121,11 @@ def sample_batch(dataset: Dataset, idx: list[int] = None,
 
     Args:
         dataset (torch.utils.data.Dataset): The dataset to sample.
-        idx (list[int]): The index list of each sample in dataset.
-            If ``None``, randomly sample a batch with given :attr:`batch_size`.
-            Defaults to ``None``.
         batch_size (int): The batch size to sample
             when :attr:`idx` is ``None``.
+            Defaults to ``None``.
+        idx (list[int]): The index list of each sample in dataset.
+            If ``None``, randomly sample a batch with given :attr:`batch_size`.
             Defaults to ``None``.
 
     Returns:
@@ -138,7 +138,7 @@ def sample_batch(dataset: Dataset, idx: list[int] = None,
         >>> data = torch.ones(10, 3, 32, 32)
         >>> targets = list(range(10))
         >>> dataset = TensorListDataset(data, targets)
-        >>> x, y = sample_batch(dataset, [1, 2])
+        >>> x, y = sample_batch(dataset, idx=[1, 2])
         >>> torch.stack(x).shape
         torch.Size([2, 3, 32, 32])
         >>> y

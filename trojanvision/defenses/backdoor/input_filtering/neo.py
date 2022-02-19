@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ..abstract import InputFiltering
 from trojanzoo.utils.logger import AverageMeter, SmoothedValue
 from trojanzoo.utils.metric import mask_jaccard
 from trojanzoo.utils.tensor import to_tensor, to_numpy
@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 
-class NEO(BackdoorDefense):
+class NEO(InputFiltering):
     r"""
     Note:
         NEO assumes the defender has the knowledge of the trigger size.
@@ -35,8 +35,7 @@ class NEO(BackdoorDefense):
         # get dominant color
         dom_c_list = []
         for img in _input:
-            dom_c: torch.Tensor = self.get_dominant_colour(img)  # (C)
-            dom_c_list.append(dom_c)
+            dom_c_list.append(self.get_dominant_colour(img))  # (C)
         dom_c = torch.stack(dom_c_list).unsqueeze(-1).unsqueeze(-1)  # (N, C, 1, 1)
 
         # generate random numbers
@@ -61,7 +60,7 @@ class NEO(BackdoorDefense):
             block_class = self.model.get_class(block_input[:, i])   # (N, sample_num)
             block_class_list.append(block_class)
         block_class = torch.stack(block_class_list, dim=1)
-        potential_idx: torch.Tensor = org_class.eq(block_class).detach().cpu()   # (N, sample_num)
+        potential_idx = org_class.eq(block_class).detach().cpu()   # (N, sample_num)
 
         # confirm triggers
         result_list = torch.zeros(len(_input), dtype=torch.bool)
@@ -110,11 +109,11 @@ class NEO(BackdoorDefense):
         top1 = AverageMeter('Acc@1', ':6.2f')
         for data in self.dataset.loader['valid']:
             _input, _ = self.model.get_data(data, mode='valid')
-            poison_input = self.attack.add_mark(_input)
+            trigger_input = self.attack.add_mark(_input)
             with torch.no_grad():
                 _class = self.model.get_class(_input)
-                poison_class = self.model.get_class(poison_input)
-            result = _class.not_equal(poison_class)
+                trigger_class = self.model.get_class(trigger_input)
+            result = _class.not_equal(trigger_class)
             acc1 = result.float().sum() / result.numel() * 100
             top1.update(acc1.item(), len(_input))
         return top1.avg

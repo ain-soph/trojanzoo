@@ -57,21 +57,29 @@ class BadNet(Attack):
         super().__init__(**kwargs)
         self.dataset: ImageSet
         self.model: ImageModel
+        self.mark = mark
         self.param_list['badnet'] = ['train_mode', 'target_class', 'poison_percent', 'poison_num']
-        self.mark: Watermark = mark
-        self.target_class: int = target_class
-        self.poison_percent: float = poison_percent
-        self.poison_num = self.dataset.batch_size * self.poison_percent
-        self.train_mode: str = train_mode
+        self.train_mode = train_mode
+        self.target_class = target_class
+        self.poison_percent = poison_percent
+        self.poison_ratio = self.poison_percent / (1 - self.poison_percent)
+        if train_mode == 'batch':    # python 3.10 match
+            self.poison_num = self.dataset.batch_size * self.poison_ratio
+        if train_mode == 'dataset':
+            self.poison_num = int(len(self.dataset.loader['train'].dataset) * self.poison_ratio)
+            self.poison_dataset = self.get_poison_dataset()
 
     def attack(self, epochs: int, save=False, **kwargs):
         if self.train_mode == 'batch':
-            self.model._train(epochs, save=save,
+            loader = self.dataset.get_dataloader(
+                'train', batch_size=self.dataset.batch_size - int(self.poison_num))
+            self.model._train(epochs, save=save, loader_train=loader,
                               validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
-            dataset = self.mix_dataset()
-            loader = self.dataset.get_dataloader('train', dataset=dataset)
+            mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
+                                                          self.poison_dataset])
+            loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
             self.model._train(epochs, save=save,
                               validate_fn=self.validate_fn, loader_train=loader,
                               save_fn=self.save, **kwargs)
@@ -80,17 +88,18 @@ class BadNet(Attack):
                               validate_fn=self.validate_fn, loss_fn=self.loss_fn,
                               save_fn=self.save, **kwargs)
 
-    def mix_dataset(self, poison_label: bool = True) -> torch.utils.data.Dataset:
+    def get_poison_dataset(self, poison_label: bool = True, poison_num: int = None) -> torch.utils.data.Dataset:
+        poison_num = poison_num if poison_num is None else self.poison_num
         clean_dataset = self.dataset.loader['train'].dataset
-        subset, _ = ImageSet.split_dataset(clean_dataset, percent=self.poison_percent)
-        _input, _label = dataset_to_list(subset)
+        poison_num = poison_num if poison_num != 0 else len(clean_dataset)
+        poison_candidate, _ = ImageSet.split_dataset(clean_dataset, length=poison_num)
+        _input, _label = dataset_to_list(poison_candidate)
         _input = torch.stack(_input)
 
         if poison_label:
             _label = [self.target_class] * len(_label)
         poison_input = self.add_mark(_input)
-        poison_dataset = TensorListDataset(poison_input, _label)
-        return torch.utils.data.ConcatDataset([clean_dataset, poison_dataset])
+        return TensorListDataset(poison_input, _label)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
         if mark_alpha is None:

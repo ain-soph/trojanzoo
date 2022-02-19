@@ -14,9 +14,6 @@ class TABOR(ModelInspection):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--penalize', action='store_true',
-                           help='add the regularization terms, nc to tabor '
-                           '(default: False)')
         group.add_argument('--hyperparams', type=list,
                            help='the hyperparameters of  all regularization terms '
                            '(default: [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2])')

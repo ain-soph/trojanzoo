@@ -100,7 +100,7 @@ class InfluenceFunction():
     # def calc_Ht(self, t: torch.Tensor, _input: torch.Tensor = None, _label: torch.Tensor = None) -> torch.Tensor:
     #     if _input is None and _label is None:
     #         dataset = self.dataset.loader['train'].dataset
-    #         data = sample_batch(dataset, self.sample_size)
+    #         data = sample_batch(dataset, batch_size=self.sample_size)
     #         _input, _label = self.model.get_data(data)
     #     loss = self.model.loss(_input=_input, _label=_label)
 

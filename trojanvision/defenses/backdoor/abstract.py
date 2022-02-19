@@ -7,6 +7,7 @@ from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.metric import mask_jaccard, normalize_mad
 from trojanzoo.utils.output import prints, ansi, output_iter
 from trojanzoo.utils.tensor import to_tensor, to_numpy, tanh_func
+from trojanzoo.utils.data import TensorListDataset, sample_batch
 
 import torch
 import torch.optim as optim
@@ -25,7 +26,7 @@ from trojanvision.models import ImageModel
 from trojanvision.attacks.backdoor import BadNet
 import argparse
 if TYPE_CHECKING:
-    pass    # TODO: python 3.10
+    import torch.utils.data    # TODO: python 3.10
 
 
 class BackdoorDefense(Defense):
@@ -78,7 +79,6 @@ class InputFiltering(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-
         y_pred = self.get_pred_labels()
         y_true = self.get_true_labels()
         print('f1_score:', metrics.f1_score(y_true, y_pred))
@@ -121,6 +121,56 @@ class InputFiltering(BackdoorDefense):
 
     def score2label(self, clean_scores: torch.Tensor, poison_scores: torch.Tensor) -> torch.Tensor:
         return torch.cat([clean_scores, poison_scores]).bool()
+
+
+class TrainingFiltering(BackdoorDefense):
+
+    name: str = 'training_filtering'
+
+    @classmethod
+    def add_argument(cls, group: argparse._ArgumentGroup):
+        super().add_argument(group)
+        group.add_argument('--defense_input_num', type=int,
+                           help='the number of inputs to test (default: None)')
+        return group
+
+    def __init__(self, defense_input_num: int = None, **kwargs):
+        super().__init__(**kwargs)
+        self.defense_input_num = defense_input_num
+        if self.attack.train_mode != 'dataset':
+            self.attack.poison_dataset = self.attack.get_poison_dataset(poison_num=0)
+        self.clean_dataset, self.poison_dataset = self.get_mix_dataset()
+
+    def get_mix_dataset(self) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
+        if not self.defense_input_num:
+            return self.dataset.loader['train'].dataset, self.attack.poison_dataset
+        if self.attack.train_mode != 'dataset':
+            poison_num = int(self.defense_input_num * self.attack.poison_percent)
+            clean_num = self.defense_input_num - poison_num
+            clean_input, clean_label = sample_batch(self.dataset.loader['train'].dataset,
+                                                    batch_size=clean_num)
+            poison_input, poison_label = sample_batch(self.attack.poison_dataset,
+                                                      batch_size=poison_num)
+            clean_dataset = TensorListDataset(torch.stack(clean_input), clean_label)
+            poison_dataset = TensorListDataset(torch.stack(poison_input), poison_label)
+        return clean_dataset, poison_dataset
+
+    def detect(self, **kwargs):
+        super().detect(**kwargs)
+        y_pred = self.get_pred_labels()
+        y_true = self.get_true_labels()
+        print('f1_score:', metrics.f1_score(y_true, y_pred))
+        print('precision_score:', metrics.precision_score(y_true, y_pred))
+        print('recall_score:', metrics.recall_score(y_true, y_pred))
+        print('accuracy_score:', metrics.accuracy_score(y_true, y_pred))
+
+    def get_true_labels(self) -> torch.Tensor:
+        return torch.cat([torch.zeros(len(self.clean_dataset), dtype=torch.bool),
+                          torch.ones(len(self.poison_dataset), dtype=torch.bool)])
+
+    @abstractmethod
+    def get_pred_labels(self) -> torch.Tensor:
+        ...
 
 
 class ModelInspection(BackdoorDefense):

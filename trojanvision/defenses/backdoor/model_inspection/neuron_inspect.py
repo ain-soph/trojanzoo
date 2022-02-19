@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from ..abstract import BackdoorDefense
+from trojanzoo.utils.data import dataset_to_list
 from trojanzoo.utils.metric import normalize_mad
 from trojanzoo.utils.output import output_iter
 
@@ -30,12 +31,11 @@ class NeuronInspect(BackdoorDefense):
         super().__init__(**kwargs)
         self.param_list['neuron_inspect'] = ['lambd_sp', 'lambd_sm', 'lambd_pe', 'thre', 'sample_ratio']
 
-        self.lambd_sp: float = lambd_sp
-        self.lambd_sm: float = lambd_sm
-        self.lambd_pe: float = lambd_pe
-
-        self.thre: float = thre
-        self.sample_ratio: float = sample_ratio
+        self.lambd_sp = lambd_sp
+        self.lambd_sm = lambd_sm
+        self.lambd_pe = lambd_pe
+        self.thre = thre
+        self.sample_ratio = sample_ratio
 
         kernel = torch.tensor([[0., 1., 0.],
                                [1., -4., 1.],
@@ -55,7 +55,7 @@ class NeuronInspect(BackdoorDefense):
         subset, _ = self.dataset.split_dataset(dataset, percent=self.sample_ratio)
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
-        _input, _label = zip(*subset)
+        _input, _label = dataset_to_list(subset)
         _input = torch.stack(_input)
         _label = torch.tensor(_label)
         poison_input = self.attack.add_mark(_input)
@@ -84,7 +84,6 @@ class NeuronInspect(BackdoorDefense):
         sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1, dim=1)  # (N)
         smooth_feats = self.conv2d(backdoor_saliency_maps.unsqueeze(1)).flatten(start_dim=1).norm(p=1, dim=1)  # (N)
         persist_feats = self.cal_persistence_feature(benign_saliency_maps)  # (1)
-
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats
         return torch.median(exp_feats).item()
 
