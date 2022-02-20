@@ -1,7 +1,7 @@
 .. _trojanvision.marks:
 
-:mod:`trojanvision.marks`
-==================================
+marks
+======
 
 .. currentmodule:: trojanvision.marks
 

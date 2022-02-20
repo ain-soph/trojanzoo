@@ -1,20 +1,20 @@
-.. trojanvision.datasets:
+.. _trojanvision.datasets.normal:
 
-:mod:`trojanvision.datasets.normal`
-===================================
+normal
+=======
 .. currentmodule:: trojanvision.datasets
 
-.. autoclass:: trojanvision.datasets.MNIST
+.. autoclass:: MNIST
    :members:
 
-.. autoclass:: trojanvision.datasets.CIFAR10
+.. autoclass:: CIFAR10
    :members:
 
-.. autoclass:: trojanvision.datasets.CIFAR100
+.. autoclass:: CIFAR100
    :members:
 
-.. autoclass:: trojanvision.datasets.ImageNet16
+.. autoclass:: ImageNet16
    :members:
 
-.. autoclass:: trojanvision.datasets.ImageNet32
+.. autoclass:: ImageNet32
    :members:

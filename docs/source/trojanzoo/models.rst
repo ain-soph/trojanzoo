@@ -1,17 +1,18 @@
 .. _trojanzoo.models:
 
-:mod:`trojanzoo.models`
-==================================
+models
+=======
+
 .. currentmodule:: trojanzoo.models
 
 .. autofunction:: add_argument
 .. autofunction:: create
 .. autofunction:: output_available_models
 
-.. autoclass:: trojanzoo.models.Model
+.. autoclass:: Model
    :members:
    :private-members: _train, _validate
 
-.. autoclass:: trojanzoo.models._Model
+.. autoclass:: _Model
    :members:
 

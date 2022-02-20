@@ -8,10 +8,10 @@ args=$1
 
 for model in "${models[@]}"
 do
-    python projects/automl/membership.py  --dataset $dataset --pretrain --model $model $args
+    python projects/automl/membership.py  --dataset $dataset --pretrained --model $model $args
 done
 
 for arch in "${archs[@]}"
 do
-    python projects/automl/membership.py  --dataset $dataset --pretrain --model darts --model_arch $arch $args
+    python projects/automl/membership.py  --dataset $dataset --pretrained --model darts --model_arch $arch $args
 done

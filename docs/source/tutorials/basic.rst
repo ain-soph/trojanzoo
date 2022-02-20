@@ -1,7 +1,7 @@
 .. _tutorials.basic:
 
-tutorials.basic
-==================================
+basic
+======
 
 You can view `example files at GitHub <https://github.com/ain-soph/trojanzoo/tree/main/examples>`_.
 
@@ -12,7 +12,7 @@ to show the basic workflow.
 
     #!/usr/bin/env python3
 
-    # CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_defense.py --color --verbose 1 --attack badnet --defense neural_cleanse --pretrain --validate_interval 1 --epochs 50 --lr 1e-2
+    # CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_defense.py --color --verbose 1 --attack badnet --defense neural_cleanse --pretrained --validate_interval 1 --epochs 50 --lr 1e-2
 
     import trojanvision
     import argparse

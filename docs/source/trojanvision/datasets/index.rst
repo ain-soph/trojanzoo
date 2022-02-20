@@ -1,7 +1,7 @@
-.. trojanvision.datasets:
+.. _trojanvision.datasets:
 
-:mod:`trojanvision.datasets`
-==================================
+datasets
+=========
 .. currentmodule:: trojanvision.datasets
 
 .. toctree::
@@ -13,8 +13,8 @@
 .. autofunction:: add_argument
 .. autofunction:: create
 
-.. autoclass:: trojanvision.datasets.ImageSet
+.. autoclass:: ImageSet
    :members:
 
-.. autoclass:: trojanvision.datasets.ImageFolder
+.. autoclass:: ImageFolder
    :members:

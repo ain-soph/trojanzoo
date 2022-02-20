@@ -43,7 +43,7 @@ class IMC_Poison(PoisonBasic):
                                 iteration=self.pgd_iter)
         self.stop_conf: float = stop_conf
         if magnet:
-            self.magnet: MagNet = MagNet(dataset=self.dataset, pretrain=True)
+            self.magnet: MagNet = MagNet(dataset=self.dataset, pretrained=True)
         self.randomized_smooth: bool = randomized_smooth
         if curvature:
             from trojanvision.defenses.adv.curvature import Curvature

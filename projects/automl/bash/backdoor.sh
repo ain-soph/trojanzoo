@@ -9,10 +9,10 @@ args=$1
 
 for model in "${models[@]}"; do
     echo $model
-    python examples/backdoor_attack.py --poison_percent 0.02 --pretrain --mark_alpha 0.0 --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model $model $args
+    python examples/backdoor_attack.py --poison_percent 0.02 --pretrained --mark_alpha 0.0 --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model $model $args
 done
 
 for arch in "${archs[@]}"; do
     echo $arch
-    python examples/backdoor_attack.py --poison_percent 0.02 --pretrain --mark_alpha 0.0 --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model darts --model_arch $arch $args
+    python examples/backdoor_attack.py --poison_percent 0.02 --pretrained --mark_alpha 0.0 --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model darts --model_arch $arch $args
 done

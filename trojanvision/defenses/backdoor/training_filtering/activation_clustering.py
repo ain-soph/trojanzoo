@@ -23,7 +23,8 @@ class ActivationClustering(TrainingFiltering):
     poisoned samples compose a separate cluster which is small or far from its own class center.
 
     * Get feature maps for samples
-    * For samples from each class:
+    * For samples from each class
+
         * Get dim-reduced feature maps for samples using
           :any:`sklearn.decomposition.FastICA` or
           :any:`sklearn.decomposition.PCA`.
@@ -46,7 +47,7 @@ class ActivationClustering(TrainingFiltering):
     Args:
         nb_clusters (int): Number of clusters. Defaults to ``2``.
         nb_dims (int): The reduced dimension of feature maps. Defaults to ``10``.
-        reduce_method (str): The method to reduce dimension of feature maps. Defaults to ``'FastICA'`.
+        reduce_method (str): The method to reduce dimension of feature maps. Defaults to ``'FastICA'``.
         cluster_analysis (str): The method chosen to detect poisoned cluster classes.
             Choose from ``['size', 'relative_size', 'distance', 'silhouette_score']``
             Defaults to ``'silhouette_score'``.

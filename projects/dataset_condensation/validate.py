@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/validate.py --color --verbose 1 --dataset cifar10 --pretrain --model resnet18_comp
+# CUDA_VISIBLE_DEVICES=0 python examples/validate.py --color --verbose 1 --dataset cifar10 --pretrained --model resnet18_comp
 
 import trojanvision
 import argparse

@@ -10,5 +10,5 @@ dataset="cifar10"
 
 for arch in "${archs[@]}"; do
     echo $arch
-    python examples/backdoor_attack.py --mark_alpha 0.7 --epochs 20 --batch_size 96 --lr 0.01 --pretrain --save --validate_interval 1 --attack $attack --dataset $dataset --model darts --model_arch $arch $args
+    python examples/backdoor_attack.py --mark_alpha 0.7 --epochs 20 --batch_size 96 --lr 0.01 --pretrained --save --validate_interval 1 --attack $attack --dataset $dataset --model darts --model_arch $arch $args
 done

@@ -11,7 +11,7 @@ class MagNet(BackdoorDefense):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.magnet = MagNet_Model(dataset=self.dataset, pretrain=True, folder_path=self.model.folder_path)
+        self.magnet = MagNet_Model(dataset=self.dataset, pretrained=True, folder_path=self.model.folder_path)
 
     def detect(self, **kwargs):
         super().detect(**kwargs)

@@ -9,12 +9,12 @@ args=$1
 
 for model in "${models[@]}"; do
     echo $model
-    python examples/adv_attack.py --pretrain --attack $attack --dataset $dataset --model $model --pretrain --require_class $args
+    python examples/adv_attack.py --pretrained --attack $attack --dataset $dataset --model $model --pretrained --require_class $args
     echo ""
 done
 
 for arch in "${archs[@]}"; do
     echo $arch
-    python examples/adv_attack.py --pretrain --attack $attack --dataset $dataset --model darts --model_arch $arch --pretrain --require_class $args
+    python examples/adv_attack.py --pretrained --attack $attack --dataset $dataset --model darts --model_arch $arch --pretrained --require_class $args
     echo ""
 done

@@ -1,7 +1,7 @@
 .. _trojanvision:
 
-:mod:`trojanvision`
-===================================
+trojanvision
+=============
 
 .. toctree::
    :glob:

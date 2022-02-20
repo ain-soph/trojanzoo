@@ -1,7 +1,7 @@
 .. _trojanzoo.utils.fim:
 
-:mod:`trojanzoo.utils.fim`
-==================================
+fim
+====
 
 .. currentmodule:: trojanzoo.utils.fim
 

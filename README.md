@@ -69,23 +69,23 @@ You can use the provided [example](https://github.com/ain-soph/trojanzoo/tree/ma
 2. Test backdoor attack (e.g., BadNet):  
     e.g. `BadNet` with `ResNet18` on `CIFAR10`
     ```python3
-    python ./examples/backdoor_attack.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --mark_random_init --epochs 50 --lr 0.01 --save
+    python ./examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --mark_random_init --epochs 50 --lr 0.01 --save
     ```
 
 3. Test backdoor defense (e.g., Neural Cleanse):  
     e.g. `Neural Cleanse` against `BadNet`
     ```python3
-    python ./examples/backdoor_defense.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --defense neural_cleanse --mark_random_init --epochs 50 --lr 0.01
+    python ./examples/backdoor_defense.py --color --verbose 1 --pretrained --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack badnet --defense neural_cleanse --mark_random_init --epochs 50 --lr 0.01
     ```
 ## IMC
 ```python3
-python ./examples/backdoor_attack.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack imc --mark_random_init --epochs 50 --lr 0.01 --save
+python ./examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack imc --mark_random_init --epochs 50 --lr 0.01 --save
 ```
 
 ## AdvMind
 (with `attack adaptive` and `model adaptive`)
 ```python3
-python ./examples/adv_defense.py --color --verbose 1 --pretrain --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack pgd --defense advmind --attack_adapt --defense_adapt
+python ./examples/adv_defense.py --color --verbose 1 --pretrained --validate_interval 1 --dataset cifar10 --model resnet18_comp --attack pgd --defense advmind --attack_adapt --defense_adapt
 ```
 ## Detailed Usage
 ### Configuration file structure

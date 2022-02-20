@@ -12,7 +12,7 @@ for model in "${models[@]}"; do
     echo $model
     for neuron_number in "${neuron_numbers[@]}"; do
         echo $neuron_number
-        python examples/backdoor_attack.py --pretrain --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model $model $args
+        python examples/backdoor_attack.py --pretrained --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model $model $args
     done
 done
 
@@ -20,6 +20,6 @@ for arch in "${archs[@]}"; do
     echo $arch
     for neuron_number in "${neuron_numbers[@]}"; do
         echo $neuron_number
-        python examples/backdoor_attack.py --pretrain --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model darts --model_arch $arch $args
+        python examples/backdoor_attack.py --pretrained --epochs 20 --batch_size 96 --lr 0.01 --validate_interval 1 --attack $attack --dataset $dataset --model darts --model_arch $arch $args
     done
 done

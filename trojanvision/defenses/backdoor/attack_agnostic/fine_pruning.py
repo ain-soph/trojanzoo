@@ -13,7 +13,7 @@ import argparse
 
 class FinePruning(BackdoorDefense):
     """
-    Fine Pruning Defense is described in the paper 'Fine-Pruning'_ by KangLiu.
+    Fine Pruning Defense is described in the paper `Fine Pruning`_ by KangLiu.
     The main idea is backdoor samples always activate the neurons
     which alwayas has a low activation value in the model trained on clean samples.
 
@@ -34,7 +34,6 @@ class FinePruning(BackdoorDefense):
 
     .. _Fine Pruning:
         https://arxiv.org/pdf/1805.12185
-
 
     .. _original source code:
         https://github.com/kangliucn/Fine-pruning-defense

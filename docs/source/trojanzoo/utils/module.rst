@@ -1,29 +1,29 @@
 .. _trojanzoo.utils.module:
 
-:mod:`trojanzoo.utils.module`
-==================================
+module
+=======
 
 .. currentmodule:: trojanzoo.utils.module
 
-.. :mod:`trojanzoo.utils.module.process`
+.. process
 .. --------------------------------------
 
-.. autoclass:: trojanzoo.utils.module.BasicObject
+.. autoclass:: BasicObject
    :members:
 
-.. autoclass:: trojanzoo.utils.module.Process
+.. autoclass:: Process
    :members:
 
-.. autoclass:: trojanzoo.utils.module.ModelProcess
+.. autoclass:: ModelProcess
    :members:
 
-.. :mod:`trojanzoo.utils.module.param`
+.. param
 .. --------------------------------------
 
-.. autoclass:: trojanzoo.utils.module.Module
+.. autoclass:: Module
    :members:
    :undoc-members:
 
-.. autoclass:: trojanzoo.utils.module.Param
+.. autoclass:: Param
    :members:
    :undoc-members:

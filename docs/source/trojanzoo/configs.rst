@@ -1,8 +1,9 @@
 .. _trojanzoo.configs:
 
-:mod:`trojanzoo.configs`
-==================================
+configs
+========
+
 .. currentmodule:: trojanzoo.configs
 
-.. autoclass:: trojanzoo.configs.Config
+.. autoclass:: Config
    :members:

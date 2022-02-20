@@ -1,7 +1,7 @@
 .. _trojanvision.defenses.backdoor:
 
-:mod:`trojanvision.defenses.backdoor`
-======================================
+backdoor
+=========
 
 .. currentmodule:: trojanvision.defenses
 

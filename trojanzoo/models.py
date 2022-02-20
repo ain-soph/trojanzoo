@@ -206,7 +206,7 @@ class Model(BasicObject):
                 which is claimed as the default value of :func:`create()`.
         official (bool): Whether to use official pretrained weights.
             Defaults to ``False``.
-        pretrain (bool): Whether to use local pretrained weights
+        pretrained (bool): Whether to use local pretrained weights
             from ``'{folder_path}/{self.name}{self.suffix}.pth'``
             Defaults to ``False``.
         randomized_smooth (bool): Whether to use randomized smoothing.
@@ -268,7 +268,7 @@ class Model(BasicObject):
                            '(default: config[model][default_model])')
         group.add_argument('--suffix',
                            help='model name suffix (e.g., \'_adv_train\')')
-        group.add_argument('--pretrain', action='store_true',
+        group.add_argument('--pretrained', action='store_true',
                            help='load local pretrained weights (default: False)')
         group.add_argument('--official', action='store_true',
                            help='load official pretrained weights (default: False)')
@@ -288,7 +288,7 @@ class Model(BasicObject):
                  model: Union[type[_Model], _Model] = _Model,
                  dataset: Dataset = None,
                  num_classes: int = None, folder_path: str = None,
-                 official: bool = False, pretrain: bool = False,
+                 official: bool = False, pretrained: bool = False,
                  randomized_smooth: bool = False,
                  rs_sigma: float = 0.01, rs_n: int = 100, **kwargs):
         super().__init__()
@@ -345,7 +345,7 @@ class Model(BasicObject):
         self.activate_params([])
         if official:
             self.load('official')
-        if pretrain:
+        if pretrained:
             self.load(verbose=True)
         self.eval()
         if env['num_gpus']:

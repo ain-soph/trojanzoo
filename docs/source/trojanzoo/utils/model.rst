@@ -1,7 +1,7 @@
 .. _trojanzoo.utils.model:
 
-:mod:`trojanzoo.utils.model`
-==================================
+model
+======
 
 .. currentmodule:: trojanzoo.utils.model
 
