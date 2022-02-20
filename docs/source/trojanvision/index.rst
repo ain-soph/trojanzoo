@@ -7,10 +7,11 @@ trojanvision
    :glob:
    :maxdepth: 2
 
-   attacks<attacks>
-   datasets<datasets/index>
-   defenses<defenses/index>
-   environ<environ>
-   marks<marks>
-   models<models/index>
-   utils<utils>
+   attacks
+   configs
+   datasets/index
+   defenses/index
+   environ
+   marks
+   models/index
+   utils

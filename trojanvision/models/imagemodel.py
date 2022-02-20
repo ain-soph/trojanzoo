@@ -264,7 +264,7 @@ class ImageModel(Model):
 
     def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor,
                     method: str = 'grad_cam', cmap: Colormap = jet,
-                    mode='bicubic') -> torch.Tensor:
+                    mode: str = 'bicubic') -> torch.Tensor:
         r"""Use colormap :attr:`cmap` to get heatmap tensor of :attr:`_input`
         w.r.t. :attr:`_label` with :attr:`method`.
 
@@ -277,6 +277,8 @@ class ImageModel(Model):
                 Choose from ``['grad_cam', 'saliency_map']``.
                 Defaults to ``'grad_cam'``.
             cmap (matplotlib.colors.Colormap): The colormap to use.
+            mode (str): Passed to :any:`torch.nn.functional.interpolate`.
+                Defaults to ``'bicubic'``.
 
         Returns:
             torch.Tensor: The heatmap tensor with shape ([N], C, H, W).
@@ -290,7 +292,7 @@ class ImageModel(Model):
 
         :Example:
             .. code-block:: python
-                :emphasize-lines: 30-31
+                :emphasize-lines: 30-32
 
                 import trojanvision
                 import wget

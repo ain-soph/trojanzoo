@@ -5,5 +5,5 @@ configs
 
 .. currentmodule:: trojanzoo.configs
 
-.. autoclass:: Config
+.. automodule:: trojanzoo.configs
    :members:

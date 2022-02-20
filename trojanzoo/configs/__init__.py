@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
 
+r"""
+    TrojanZoo config path:
+
+    .. code-block:: python3
+
+        config_path: dict[str, str] = {
+            'package': os.path.dirname(__file__),   # trojanzoo/configs/*/*.yml
+            'user': os.path.normpath(os.path.expanduser(
+                '~/.trojanzoo/configs/trojanzoo')),
+            'project': os.path.normpath('./configs/trojanzoo'),
+            }
+"""
+
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.module import Module, Param
 
@@ -17,7 +30,7 @@ if TYPE_CHECKING:
 
 
 config_path: dict[str, str] = {
-    'package': os.path.dirname(__file__),
+    'package': os.path.dirname(__file__),   # trojanzoo/configs/*/*.yml
     'user': os.path.normpath(os.path.expanduser(
         '~/.trojanzoo/configs/trojanzoo')),
     'project': os.path.normpath('./configs/trojanzoo'),
@@ -25,7 +38,46 @@ config_path: dict[str, str] = {
 
 
 class Config:
-    r"""The configuration class.
+    r"""Configuration class.
+
+    Warning:
+        There is already a preset config instance ``trojanzoo.configs.config``.
+
+        NEVER call the class init method to create a new instance
+        (unless you know what you're doing).
+
+    Note:
+        ConfigType is ``Module[str, Module[str, Any]]``
+
+        ``value = config[config_file][key][dataset_name]``
+        where ``dataset_name`` is optional
+
+        (``config[config_file][key]`` is :class:`trojanzoo.utils.module.Param`
+        and has default values).
+
+    Args:
+        _base (Config): The base config instance.
+            :attr:`config_dict` of current config instance
+            will inherit :attr:`_base.config_dict`
+            and update based on `self.config_path`.
+            It's usually the config in father library
+            (e.g., trojanvision config inherits trojanzoo config).
+            Defaults to ``None``.
+        **kwargs (dict[str, str]): Map of config paths.
+
+    Attributes:
+        cmd (str): Path to :attr:`cmd_config`. Defaults to ``None``.
+        cmd_config (ConfigType): Config loaded from path :attr:`cmd`.
+        config_path (dict[str, str]): Map from config name
+            (e.g., ``'package', 'user', 'project'``)
+            to path string.
+        config_dict (dict[str, ConfigType]): Map from config name
+            (e.g., ``'package', 'user', 'project'``)
+            to its config.
+        full_config (ConfigType): Full config with parameters for all datasets
+            by calling :meth:`merge()` to merge different configs
+            in :attr:`self.config_dict`.
+            ``value = full_config[config_file][key][dataset_name]``.
     """
     name = 'config'
     cmd: str = None
@@ -41,7 +93,7 @@ class Config:
                 self.config_dict[key] = value
         if _base is not None:
             self.config_dict = self.combine_base(self.config_dict, _base)
-        self.__full_config = self.combine()
+        self.__full_config = self.merge()
         self.__cmd_updated: bool = False
 
     @property
@@ -53,6 +105,19 @@ class Config:
 
     def get_config(self, dataset_name: str, config: ConfigType = None,
                    **kwargs) -> Param[str, Module[str, Any]]:
+        r"""Get config for specific dataset.
+
+        Args:
+            dataset_name (str): Dataset name.
+            config: (ConfigType): The config for all datasets.
+                ``value = full_config[config_file][key][dataset_name]``.
+                Defaults to :attr:`self.full_config`.
+
+        Returns:
+            Param[str, Module[str, Any]]:
+                Config for :attr:`dataset_name`.
+                ``value = full_config[config_file][key]``.
+        """
         config = config or Param(self.full_config, default=Module())
         # remove dataset_name Param
         for file_name, file_value in config.items():
@@ -72,8 +137,16 @@ class Config:
         config.update(kwargs)
         return config
 
-    def combine(self, keys: list[str] = ['package', 'user', 'project']
-                ) -> ConfigType:
+    def merge(self, keys: list[str] = ['package', 'user', 'project']
+              ) -> ConfigType:
+        r"""Merge different configs of :attr:`keys` in :attr:`self.config_dict`.
+
+        Args:
+            keys (list[str]): Keys of :attr:`self.config_dict` to merge.
+
+        Returns:
+            ConfigType: Merged config.
+        """
         config = Module()
         for key in keys:
             if key in self.config_dict.keys():
@@ -92,6 +165,14 @@ class Config:
 
     @staticmethod
     def load_config(path: str) -> ConfigType:
+        r"""Load yaml or json configs from :attr:`path`.
+
+        Args:
+            path (str): Path to config file.
+
+        Returns:
+            ConfigType: Config loaded from :attr:`path`.
+        """
         if path is None:
             return {}
         elif not isinstance(path, str):     # TODO: unnecessary
@@ -147,19 +228,29 @@ class Config:
         return self.config_dict[k]
 
     def items(self):
+        r""""""
         return self.config_dict.items()
 
     def keys(self):
+        r""""""
         return self.config_dict.keys()
 
-    def summary(self, keys: Union[list[str], str] = None,
+    def summary(self, keys: Union[list[str], str] = ['final'],
                 config: ConfigType = None, indent: int = 0):
-        if keys is None:
-            prints('{yellow}{0:<20s}{reset} '.format(
-                self.name, **ansi), indent=indent)
-            self.summary(
-                keys='final', config=self.full_config, indent=indent + 10)
-        elif isinstance(keys, list):
+        r"""Summary the config information.
+
+        Args:
+            keys (list[str] | str): keys of configs to summary.
+
+                * ``'final'``: :attr:`self.full_config`
+                * ``'cmd'``: :attr:`self.cmd_config`
+                * ``key in self.config_dict.keys()``
+
+                Defaults to ``['final']``.
+            indent (int): The space indent of entire string.
+                Defaults to ``0``.
+        """
+        if isinstance(keys, list):
             prints('{yellow}{0:<20s}{reset} '.format(
                 self.name, **ansi), indent=indent)
             for key in keys:
