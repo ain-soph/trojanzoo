@@ -75,6 +75,13 @@ class ImageNet(ImageFolder):
         os.symlink(os.path.join(self.folder_path, 'imagenet', 'val'),
                    os.path.join(self.folder_path, 'imagenet', 'valid'))
 
+    def _get_org_dataset(self, mode: str, data_format: str = None,
+                         **kwargs) -> datasets.DatasetFolder:
+        data_format = data_format or self.data_format
+        root = os.path.join(self.folder_path, mode)
+        split = 'val' if mode == 'valid' else mode
+        return datasets.ImageNet(root=root, split=split, **kwargs)
+
 
 class Sample_ImageNet(ImageNet):
 

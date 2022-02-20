@@ -79,6 +79,7 @@ def linkcode_resolve(domain, info):
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
+    'matplotlib': ('https://matplotlib.org/stable', None),
     'numpy': ('https://numpy.org/doc/stable', None),
     'pillow': ('https://pillow.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),

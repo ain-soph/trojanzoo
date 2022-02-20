@@ -4,7 +4,7 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.densenet import model_urls as urls
+from torchvision.models.efficientnet import model_urls as urls
 
 from collections import Callable
 

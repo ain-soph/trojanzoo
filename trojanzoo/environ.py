@@ -28,9 +28,9 @@ class Env(Param):
         (unless you know what you're doing).
 
     Args:
-        device (str | ~torch.torch.device): Defaults to ``None``.
+        device (str | ~torch.torch.device): Defaults to ``'auto'``.
 
-            * ``'auto' | None`` (use gpu if available)
+            * ``'auto'`` (use gpu if available)
             * ``'cpu'``
             * ``'gpu' | 'cuda'``
 
@@ -94,6 +94,9 @@ class Env(Param):
                            help='show tqdm progress bar')
         return group
 
+    def __init__(self, *args, device: str = 'auto', **kwargs):
+        super().__init__(*args, device=device, **kwargs)
+
 
 env = Env(default=None)
 
@@ -114,12 +117,12 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     return group
 
 
-def create(config_path: str = None, dataset_name: str = None,
-           dataset: str = None,
+def create(config_path: str = None, dataset_name: str = None, dataset: str = None,
            seed: int = None, data_seed: int = None, benchmark: bool = None,
            config: Config = config,
            cache_threshold: float = None, verbose: int = None,
-           color: bool = None, tqdm: bool = None, **kwargs) -> Env:
+           color: bool = None, device: str = None, tqdm: bool = None,
+           **kwargs) -> Env:
     r"""
     | Load :attr:`env` values from config and command line.
 
@@ -139,7 +142,7 @@ def create(config_path: str = None, dataset_name: str = None,
         Env: The :attr:`env` instance.
     """
     other_kwargs = {'data_seed': data_seed, 'cache_threshold': cache_threshold,
-                    'verbose': verbose, 'color': color, 'tqdm': tqdm}
+                    'verbose': verbose, 'color': color, 'device': device, 'tqdm': tqdm}
     config.update_cmd(config_path)
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
@@ -158,17 +161,16 @@ def create(config_path: str = None, dataset_name: str = None,
 
     num_gpus: int = torch.cuda.device_count()
     device: Union[str, int] = result['device']
-    if device == 'none':
-        device = None
-    else:
-        if device is None or device == 'auto':
-            device = 'cuda' if num_gpus else 'cpu'
-        if isinstance(device, (str, int)):
-            device = torch.device(device)
-        if device.type == 'cpu':
-            num_gpus = 0
-        if device.index is not None and torch.cuda.is_available():
-            num_gpus = 1
+    if device is None or device == 'auto':  # TODO: python 3.10 match
+        device = 'cuda' if num_gpus else 'cpu'
+    if device == 'gpu':
+        device = 'cuda'
+    if isinstance(device, (str, int)):
+        device = torch.device(device)
+    if device.type == 'cpu':
+        num_gpus = 0
+    if device.index is not None and torch.cuda.is_available():
+        num_gpus = 1
     if num_gpus == 0:
         device = torch.device('cpu')
     if benchmark is None and 'benchmark' in env.keys():
