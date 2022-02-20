@@ -7,5 +7,5 @@ mark_alpha=0.0
 
 for attack in "${attacks[@]}"; do
     echo $attack
-    python examples/backdoor_attack.py --attack $attack --pretrain --validate_interval 1 --lr_scheduler --epoch 50 --lr 1e-2 --mark_alpha $mark_alpha --mark_height $mark_size --mark_width $mark_size --lr_scheduler --lr_scheduler_type StepLR --lr_step_size 10 --save
+    python examples/backdoor_attack.py --attack $attack --pretrained --validate_interval 1 --lr_scheduler --epoch 50 --lr 1e-2 --mark_alpha $mark_alpha --mark_height $mark_size --mark_width $mark_size --lr_scheduler --lr_scheduler_type StepLR --lr_step_size 10 --save
 done

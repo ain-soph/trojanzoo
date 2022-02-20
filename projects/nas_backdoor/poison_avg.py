@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/poison_avg.py --verbose 1 --color --attack poison_basic --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrain --target_idx -1 --epoch 5 --validate_interval 1 --clean_epoch 0
+# CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/poison_avg.py --verbose 1 --color --attack poison_basic --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --target_idx -1 --epoch 5 --validate_interval 1 --clean_epoch 0
 # --arch_unrolled
 
 import trojanvision

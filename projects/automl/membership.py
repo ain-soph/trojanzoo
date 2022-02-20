@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# python scripts/membership.py --model densenet121_comp --dataset cifar100 --pretrain   # noqa: E501
+# python scripts/membership.py --model densenet121_comp --dataset cifar100 --pretrained   # noqa: E501
 
 import trojanvision
 from trojanvision import to_numpy

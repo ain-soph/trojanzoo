@@ -46,7 +46,7 @@ class ActivationClustering(TrainingFiltering):
     Args:
         nb_clusters (int): Number of clusters. Defaults to ``2``.
         nb_dims (int): The reduced dimension of feature maps. Defaults to ``10``.
-        reduce_method (str): The method to reduce dimension of feature maps. Defaults to ``'FastICA'`.
+        reduce_method (str): The method to reduce dimension of feature maps. Defaults to ``'FastICA'``.
         cluster_analysis (str): The method chosen to detect poisoned cluster classes.
             Choose from ``['size', 'relative_size', 'distance', 'silhouette_score']``
             Defaults to ``'silhouette_score'``.

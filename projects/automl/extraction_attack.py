@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
         # print(model_name, model_arch)
 
-        args_dict = args.__dict__ | {'pretrain': False, 'official': False,
+        args_dict = args.__dict__ | {'pretrained': False, 'official': False,
                                      'model_name': model_name}
         if args.tmodel_arch is not None:
             args_dict['model_arch'] = args.tmodel_arch

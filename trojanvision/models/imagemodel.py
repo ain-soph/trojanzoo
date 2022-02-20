@@ -273,6 +273,7 @@ class ImageModel(Model):
             _label (torch.Tensor): The (batched) label tensor
                 with shape ``([N])``
             method (str): The method to calculate heatmap.
+                Choose from ``['grad_cam', 'saliency_map']``.
                 Defaults to ``'grad_cam'``.
             cmap (matplotlib.colors.Colormap): The colormap to use.
 
@@ -290,16 +291,16 @@ class ImageModel(Model):
             _label = [_label] * len(_input)
         _label = torch.as_tensor(_label, device=_input.device)
         heatmap = _input    # linting purpose
-        if method == 'grad_cam':
+        if method == 'grad_cam':    # TODO: python 3.10 match
             feats = self._model.get_fm(_input).detach()   # (N, C', H', W')
             feats.requires_grad_()
             _output: torch.Tensor = self._model.pool(feats)   # (N, C', 1, 1)
             _output = self._model.flatten(_output)   # (N, C')
             _output = self._model.classifier(_output)   # (N, num_classes)
             _output = _output.gather(dim=1, index=_label.unsqueeze(1)).sum()
-            grad = torch.autograd.grad(_output, feats)[0]   # (N, C',H', W')
+            grad = torch.autograd.grad(_output, feats)[0]   # (N, C', H', W')
             feats.requires_grad_(False)
-            weights = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N, C',1,1)
+            weights = grad.mean(dim=-2, keepdim=True).mean(dim=-1, keepdim=True)    # (N, C', 1, 1)
             heatmap = (feats * weights).sum(dim=1, keepdim=True).clamp(0)  # (N, 1, H', W')
             # heatmap.sub_(heatmap.amin(dim=-2, keepdim=True).amin(dim=-1, keepdim=True))
             heatmap.div_(heatmap.amax(dim=-2, keepdim=True).amax(dim=-1, keepdim=True))
@@ -308,10 +309,10 @@ class ImageModel(Model):
         elif method == 'saliency_map':
             _input.requires_grad_()
             _output = self(_input).gather(dim=1, index=_label.unsqueeze(1)).sum()
-            grad = torch.autograd.grad(_output, _input)[0]   # (N,C,H,W)
+            grad = torch.autograd.grad(_output, _input)[0]   # (N, C, H, W)
             _input.requires_grad_(False)
 
-            heatmap = grad.abs().amax(dim=1)   # (N,H,W)
+            heatmap = grad.abs().amax(dim=1)   # (N, H, W)
             heatmap.sub_(heatmap.amin(dim=-2, keepdim=True).amin(dim=-1, keepdim=True))
             heatmap.div_(heatmap.amax(dim=-2, keepdim=True).amax(dim=-1, keepdim=True))
         heatmap = apply_cmap(heatmap.detach().cpu(), cmap)
