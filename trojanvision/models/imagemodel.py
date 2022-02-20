@@ -290,7 +290,7 @@ class ImageModel(Model):
 
         :Example:
             .. code-block:: python
-                :emphasize-lines: 29-30
+                :emphasize-lines: 30-31
 
                 import trojanvision
                 import wget
