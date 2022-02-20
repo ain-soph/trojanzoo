@@ -1,7 +1,7 @@
 .. _trojanvision.models:
 
-:mod:`trojanvision.models`
-==================================
+models
+=======
 
 .. currentmodule:: trojanvision.models
 

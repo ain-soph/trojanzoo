@@ -1,7 +1,7 @@
 .. _trojanzoo:
 
-:mod:`trojanzoo`
-===================================
+trojanzoo
+==========
 
 .. toctree::
    :glob:

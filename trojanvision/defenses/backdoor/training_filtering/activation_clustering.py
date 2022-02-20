@@ -23,7 +23,8 @@ class ActivationClustering(TrainingFiltering):
     poisoned samples compose a separate cluster which is small or far from its own class center.
 
     * Get feature maps for samples
-    * For samples from each class:
+    * For samples from each class
+
         * Get dim-reduced feature maps for samples using
           :any:`sklearn.decomposition.FastICA` or
           :any:`sklearn.decomposition.PCA`.

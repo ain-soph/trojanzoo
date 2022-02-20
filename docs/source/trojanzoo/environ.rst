@@ -1,12 +1,12 @@
 .. _trojanzoo.environ:
 
-:mod:`trojanzoo.environ`
-==================================
+environ
+========
 
 .. currentmodule:: trojanzoo.environ
 
 .. autofunction:: add_argument
 .. autofunction:: create
 
-.. autoclass:: trojanzoo.environ.Env
+.. autoclass:: Env
    :members:

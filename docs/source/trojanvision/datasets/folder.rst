@@ -1,23 +1,23 @@
-.. trojanvision.datasets:
+.. _trojanvision.datasets.folder:
 
-:mod:`trojanvision.datasets.folder`
-===================================
+folder
+=======
 .. currentmodule:: trojanvision.datasets
 
-.. autoclass:: trojanvision.datasets.CUB200
+.. autoclass:: CUB200
    :members:
 
-.. autoclass:: trojanvision.datasets.CUB200_2011
+.. autoclass:: CUB200_2011
    :members:
 
-.. autoclass:: trojanvision.datasets.GTSRB
+.. autoclass:: GTSRB
    :members:
 
-.. autoclass:: trojanvision.datasets.ImageNet
+.. autoclass:: ImageNet
    :members:
 
-.. autoclass:: trojanvision.datasets.ISIC2018
+.. autoclass:: ISIC2018
    :members:
 
-.. autoclass:: trojanvision.datasets.VGGface2
+.. autoclass:: VGGface2
    :members:

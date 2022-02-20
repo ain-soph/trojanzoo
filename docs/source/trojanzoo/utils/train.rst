@@ -1,7 +1,7 @@
 .. _trojanzoo.utils.train:
 
-:mod:`trojanzoo.utils.train`
-==================================
+train
+======
 
 .. currentmodule:: trojanzoo.utils.train
 

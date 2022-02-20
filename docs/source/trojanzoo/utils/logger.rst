@@ -1,7 +1,7 @@
 .. _trojanzoo.utils.logger:
 
-:mod:`trojanzoo.utils.logger`
-==================================
+logger
+=======
 
 .. currentmodule:: trojanzoo.utils.logger
 

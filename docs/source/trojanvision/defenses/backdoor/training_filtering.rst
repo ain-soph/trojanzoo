@@ -1,7 +1,7 @@
 .. _trojanvision.defenses.backdoor.training_filtering:
 
-:mod:`trojanvision.defenses.backdoor.training_filtering`
-=========================================================
+training_filtering
+===================
 
 .. currentmodule:: trojanvision.defenses
 

@@ -1,6 +1,6 @@
 .. _trojanvision.attacks:
 
-:mod:`trojanvision.attacks`
-==================================
+attacks
+========
 
 .. currentmodule:: trojanvision.attacks

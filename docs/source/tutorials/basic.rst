@@ -1,7 +1,7 @@
 .. _tutorials.basic:
 
-tutorials.basic
-==================================
+basic
+======
 
 You can view `example files at GitHub <https://github.com/ain-soph/trojanzoo/tree/main/examples>`_.
 

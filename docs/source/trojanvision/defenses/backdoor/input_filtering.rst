@@ -1,7 +1,7 @@
 .. _trojanvision.defenses.backdoor.input_filtering:
 
-:mod:`trojanvision.defenses.backdoor.input_filtering`
-======================================================
+input_filtering
+================
 
 .. currentmodule:: trojanvision.defenses
 

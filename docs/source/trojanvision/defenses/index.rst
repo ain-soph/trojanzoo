@@ -1,7 +1,7 @@
 .. _trojanvision.defenses:
 
-:mod:`trojanvision.defenses`
-==================================
+defenses
+=========
 
 .. currentmodule:: trojanvision.defenses
 

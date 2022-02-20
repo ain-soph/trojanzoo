@@ -1,7 +1,7 @@
 .. _trojanvision.defenses.backdoor.attack_agnostic:
 
-:mod:`trojanvision.defenses.backdoor.attack_agnostic`
-======================================================
+attack_agnostic
+================
 
 .. currentmodule:: trojanvision.defenses
 

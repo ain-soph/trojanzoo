@@ -1,7 +1,7 @@
 .. _trojanzoo.utils.tensor:
 
-:mod:`trojanzoo.utils.tensor`
-==================================
+tensor
+=======
 
 .. currentmodule:: trojanzoo.utils.tensor
 

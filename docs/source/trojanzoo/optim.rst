@@ -1,8 +1,9 @@
 .. _trojanzoo.optim:
 
-:mod:`trojanzoo.optim`
-==================================
+optim
+======
+
 .. currentmodule:: trojanzoo.optim
 
-.. autoclass:: trojanzoo.optim.Optimizer
+.. autoclass:: Optimizer
    :members:

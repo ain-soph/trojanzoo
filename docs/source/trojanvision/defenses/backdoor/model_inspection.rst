@@ -1,7 +1,7 @@
 .. _trojanvision.defenses.backdoor.model_inspection:
 
-:mod:`trojanvision.defenses.backdoor.model_inspection`
-=======================================================
+model_inspection
+=================
 
 .. currentmodule:: trojanvision.defenses
 

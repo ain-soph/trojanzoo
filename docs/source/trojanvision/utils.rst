@@ -1,6 +1,6 @@
 .. _trojanvision.utils:
 
-:mod:`trojanvision.utils`
-==================================
+utils
+======
 
 .. currentmodule:: trojanvision.utils

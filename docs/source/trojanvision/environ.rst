@@ -1,7 +1,7 @@
 .. _trojanvision.environ:
 
-:mod:`trojanvision.environ`
-==================================
+environ
+========
 
 .. currentmodule:: trojanvision.environ
 
