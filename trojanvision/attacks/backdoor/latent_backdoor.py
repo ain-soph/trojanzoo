@@ -10,9 +10,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset
-import argparse
+import functools
 
 from typing import TYPE_CHECKING
+import argparse
+from collections.abc import Callable
 if TYPE_CHECKING:
     import torch.utils.data
 
@@ -67,6 +69,10 @@ class LatentBackdoor(BadNet):
         print('Preprocess Mark')
         self.optimize_mark(data=data)
         print('Retrain')
+        if 'loss_fn' in kwargs.keys():
+            kwargs['loss_fn'] = functools.partial(self.loss, loss_fn=kwargs['loss_fn'])
+        else:
+            kwargs['loss_fn'] = self.loss
         return super().attack(**kwargs)
 
     def sample_data(self) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
@@ -124,7 +130,7 @@ class LatentBackdoor(BadNet):
             for (batch_x, ) in loader:
                 poison_x = self.add_mark(to_tensor(batch_x))
                 loss = self.loss_mse(poison_x)
-                loss.backward()
+                loss.backward(inputs=[atanh_mark])
                 optimizer.step()
                 optimizer.zero_grad()
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
@@ -133,8 +139,11 @@ class LatentBackdoor(BadNet):
         self.mark.mark.detach_()
 
     # -------------------------------- Loss Utils ------------------------------ #
-    def loss_fn(self, _input: torch.Tensor, _label: torch.Tensor, **kwargs) -> torch.Tensor:
-        loss_ce = self.model.loss(_input, _label, **kwargs)
+    def loss(self, _input: torch.Tensor, _label: torch.Tensor,
+             loss_fn: Callable[..., torch.Tensor] = None,
+             **kwargs) -> torch.Tensor:
+        loss_fn = loss_fn if loss_fn is not None else self.model.loss
+        loss_ce = loss_fn(_input, _label, **kwargs)
         poison_input = self.add_mark(_input)
         loss_mse = self.loss_mse(poison_input)
         return loss_ce + self.mse_weight * loss_mse

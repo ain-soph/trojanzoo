@@ -23,9 +23,9 @@ class GradTrain(Defense):
                        target_idx=0, stop_threshold=None, model=self.model, dataset=self.dataset)
 
     def detect(self, **kwargs):
-        self.model._train(loss_fn=self.loss_fn, validate_fn=self.validate_fn, verbose=True, **kwargs)
+        self.model._train(loss_fn=self.loss, validate_fn=self.validate_fn, verbose=True, **kwargs)
 
-    def loss_fn(self, _input: torch.Tensor, _label: torch.Tensor, **kwargs) -> torch.Tensor:
+    def loss(self, _input: torch.Tensor, _label: torch.Tensor, **kwargs) -> torch.Tensor:
         new_input = _input.expand(4, -1, -1, -1)
         new_label = _label.expand(4)
         noise = torch.randn_like(new_input)

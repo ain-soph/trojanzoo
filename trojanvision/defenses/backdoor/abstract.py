@@ -264,8 +264,8 @@ class ModelInspection(BackdoorDefense):
         loss_list = torch.as_tensor(loss_list)
         return mark_list, loss_list
 
-    def loss_fn(self, _input: torch.Tensor, _label: torch.Tensor,
-                target: int, trigger_output: torch.Tensor = None) -> torch.Tensor:
+    def loss(self, _input: torch.Tensor, _label: torch.Tensor,
+             target: int, trigger_output: torch.Tensor = None) -> torch.Tensor:
         if trigger_output is None:
             trigger_output = self.model(self.attack.add_mark(_input))
         return self.model.criterion(trigger_output, target * torch.ones_like(_label))
@@ -313,9 +313,9 @@ class ModelInspection(BackdoorDefense):
                 trigger_output = self.model(trigger_input)
 
                 batch_acc = trigger_label.eq(trigger_output.argmax(1)).float().mean()
-                batch_entropy = self.loss_fn(_input, _label,
-                                             target=label,
-                                             trigger_output=trigger_output)
+                batch_entropy = self.loss(_input, _label,
+                                          target=label,
+                                          trigger_output=trigger_output)
                 batch_norm: torch.Tensor = self.attack.mark.mark[-1].norm(p=1)
                 batch_loss = batch_entropy + self.cost * batch_norm
 

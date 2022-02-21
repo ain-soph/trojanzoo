@@ -114,7 +114,7 @@ class PoisonBasic(Attack):
                 _label = torch.cat((_label, org_label))
         return _input, _label
 
-    # def loss_fn(self, x: torch.Tensor, y: torch.Tensor, **kwargs):
+    # def loss(self, x: torch.Tensor, y: torch.Tensor, **kwargs):
     #     clean = self.model.loss(x, y, **kwargs)
     #     training: bool = self.model._model.training
     #     self.model.eval()

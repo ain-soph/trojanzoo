@@ -8,9 +8,8 @@ import argparse
 
 from trojanvision.utils.model import weight_init
 
-
-from trojanvision.attacks.poison.poison_basic import PoisonBasic
-from trojanvision.models.nas.darts import DARTS
+from trojanvision.attacks import PoisonBasic
+from trojanvision.models import DARTS
 import numpy as np
 import torch
 import itertools

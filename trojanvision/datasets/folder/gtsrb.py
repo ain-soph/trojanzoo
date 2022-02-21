@@ -8,7 +8,8 @@ class GTSRB(ImageFolder):
     r"""GTSRB dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
-        https://benchmark.ini.rub.de/gtsrb_dataset.html
+        * paper: `The German Traffic Sign Recognition Benchmark\: A multi-class classification competition`_
+        * website: https://benchmark.ini.rub.de/gtsrb_dataset.html
 
     Attributes:
         name (str): ``'gtsrb'``
@@ -19,6 +20,9 @@ class GTSRB(ImageFolder):
             | ``'std'  : [0.2724, 0.2608, 0.2669]}``
         valid_set (bool): ``False``
         loss_weights (bool): ``True``
+
+    .. _The German Traffic Sign Recognition Benchmark\: A multi-class classification competition:
+        https://ieeexplore.ieee.org/document/6033395
     """
     name = 'gtsrb'
     data_shape = [3, 32, 32]

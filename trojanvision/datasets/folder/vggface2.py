@@ -8,13 +8,17 @@ class VGGface2(ImageFolder):
     r"""VGGface2 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
-        https://www.robots.ox.ac.uk/~vgg/data/vgg_face2 (expired dead link)
+        * paper: `VGGFace2\: A dataset for recognising faces across pose and age`_
+        * website (expired dead link): https://www.robots.ox.ac.uk/~vgg/data/vgg_face2
 
     Attributes:
         name (str): ``'vggface2'``
         num_classes (int): ``8631`` (Why the papaer claims to have 500 more?)
         data_shape (list[int]): ``[3, 224, 224]``
         valid_set (bool): ``False``
+
+    .. _VGGFace2\: A dataset for recognising faces across pose and age:
+        https://arxiv.org/abs/1710.08092
     """
     name: str = 'vggface2'
     num_classes = 8631

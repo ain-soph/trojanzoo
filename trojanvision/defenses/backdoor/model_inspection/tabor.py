@@ -61,7 +61,7 @@ class Tabor(ModelInspection):
 
         return loss
 
-    def loss_fn(self, _input: torch.Tensor, _label: torch.Tensor,
-                target: int, trigger_output: torch.Tensor = None) -> torch.Tensor:
-        return super().loss_fn(_input, _label, target, trigger_output=trigger_output) \
+    def loss(self, _input: torch.Tensor, _label: torch.Tensor,
+             target: int, trigger_output: torch.Tensor = None) -> torch.Tensor:
+        return super().loss(_input, _label, target, trigger_output=trigger_output) \
             + self.regularization_loss(_input, _label, target)

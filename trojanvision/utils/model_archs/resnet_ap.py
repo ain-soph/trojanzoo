@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 
-# https://github.com/facebookresearch/GradientEpisodicMemory/blob/master/model/common.py
-
-# Copyright 2017-present, Facebook, Inc.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+# https://github.com/VICO-UoE/DatasetCondensation/blob/master/networks.py
 
 import torch
 import torch.nn as nn
@@ -15,7 +9,7 @@ from torchvision.models.resnet import conv1x1, conv3x3, ResNet
 from typing import Any, Callable, Optional, Union
 
 
-class BasicBlock_AP(nn.Module):
+class BasicBlockAP(nn.Module):
     expansion: int = 1
 
     def __init__(
@@ -69,7 +63,7 @@ class BasicBlock_AP(nn.Module):
         return out
 
 
-class Bottleneck_AP(nn.Module):
+class BottleneckAP(nn.Module):
     # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
     # while original implementation places the stride at the first 1x1 convolution(self.conv1)
     # according to "Deep residual learning for image recognition"https://arxiv.org/abs/1512.03385.
@@ -130,13 +124,13 @@ class Bottleneck_AP(nn.Module):
         return out
 
 
-class ResNet_AP(ResNet):
+class ResNetAP(ResNet):
     def __init__(self, *args, pool_size: int = 4, **kwargs):
         super().__init__(*args, **kwargs)
         self.avgpool = nn.Identity()    # modification
         self.fc = nn.Linear(self.fc.in_features * (pool_size * pool_size), self.fc.out_features)    # modification
 
-    def _make_layer(self, block: type[Union[BasicBlock_AP, Bottleneck_AP]], planes: int, blocks: int,
+    def _make_layer(self, block: type[Union[BasicBlockAP, BottleneckAP]], planes: int, blocks: int,
                     stride: int = 1, dilate: bool = False) -> nn.Sequential:
         norm_layer = self._norm_layer
         downsample = None
@@ -164,16 +158,12 @@ class ResNet_AP(ResNet):
 
 
 def _resnet(
-    block: type[Union[BasicBlock_AP, Bottleneck_AP]],
+    block: type[Union[BasicBlockAP, BottleneckAP]],
     layers: list[int],
     **kwargs: Any
-) -> ResNet_AP:
-    return ResNet_AP(block, layers, **kwargs)
+) -> ResNetAP:
+    return ResNetAP(block, layers, **kwargs)
 
 
-def resnet18(**kwargs: Any) -> ResNet_AP:
-    r"""ResNet-18 model from
-    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
-
-    """
-    return _resnet(BasicBlock_AP, [2, 2, 2, 2], **kwargs)
+def resnet18(**kwargs: Any) -> ResNetAP:
+    return _resnet(BasicBlockAP, [2, 2, 2, 2], **kwargs)

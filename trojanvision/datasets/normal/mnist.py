@@ -6,10 +6,13 @@ import torchvision.datasets as datasets
 
 
 class MNIST(ImageSet):
-    r"""MNIST dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+    r"""MNIST dataset.
+    It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:
-        :any:`torchvision.datasets.MNIST`
+        * torchvision: :any:`torchvision.datasets.MNIST`
+        * paper: `Gradient-based learning applied to document recognition`_
+        * website: http://yann.lecun.com/exdb/mnist/
 
     Attributes:
         name (str): ``'mnist'``
@@ -17,6 +20,9 @@ class MNIST(ImageSet):
         data_shape (list[int]): ``[1, 28, 28]``
         norm_par (dict[str, list[float]]):
             ``{'mean': [0.1307], 'std': [0.3081]}``
+
+    .. _Gradient-based learning applied to document recognition:
+        https://ieeexplore.ieee.org/document/726791
     """
 
     name: str = 'mnist'
