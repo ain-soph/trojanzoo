@@ -169,7 +169,7 @@ class ImageModel(Model):
                            help='sgm gamma (default: 1.0)')
         return group
 
-    def __init__(self, name: str = 'imagemodel', layer: int = None,
+    def __init__(self, name: str = 'imagemodel', layer: Union[int, str] = None,
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel,
                  dataset: ImageSet = None, data_shape: list[int] = None,
                  adv_train: str = None, adv_train_random_init: bool = False, adv_train_eval_random_init: bool = None,
@@ -250,12 +250,12 @@ class ImageModel(Model):
         return -criterion_kl(log_softmax(self(_input)), org_prob)
 
     @classmethod
-    def get_name(cls, name: str, layer: int = None) -> str:
+    def get_name(cls, name: str, layer: Union[int, str] = None) -> str:
         full_list = name.split('_')
         partial_name = full_list[0]
         re_list = re.findall(r'\d+|\D+', partial_name)
         if len(re_list) > 1:
-            layer = int(re_list[1])
+            layer = re_list[1]
         elif layer is not None:
             partial_name += str(layer)
         full_list[0] = partial_name

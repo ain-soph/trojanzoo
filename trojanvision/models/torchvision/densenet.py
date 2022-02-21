@@ -33,6 +33,33 @@ class _DenseNet(_ImageModel):
 
 
 class DenseNet(ImageModel):
+    r"""DenseNet proposed by Gao Huang in CVPR 2017.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['densenet', 'densenet_comp',
+             'densenet121', 'densenet169', 'densenet201', 'densenet161',
+             'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
+
+    See Also:
+
+        * torchvision: :any:`torchvision.models.densenet121`
+        * paper: `Densely Connected Convolutional Networks`_
+
+    Note:
+        ``_comp`` reduces the first convolutional layer
+        from ``kernel_size=7, stride=2, padding=3``
+
+        to ``kernel_size=3, stride=1, padding=1``,
+        and removes following ``norm0, relu0, pool0``
+        (``pool0`` is :any:`torch.nn.MaxPool2d`)
+        before block layers.
+
+    .. _Densely Connected Convolutional Networks:
+        https://arxiv.org/abs/1608.06993
+    """
     available_models = ['densenet', 'densenet_comp',
                         'densenet121', 'densenet169', 'densenet201', 'densenet161',
                         'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
