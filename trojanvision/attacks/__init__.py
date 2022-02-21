@@ -1,51 +1,28 @@
 #!/usr/bin/env python3
 
+from trojanzoo.attacks import Attack
+
 from .adv import *
 from .poison import *
 from .backdoor import *
 
+from . import adv, poison, backdoor
+
 from trojanvision.configs import config
 import trojanzoo.attacks
 
-from trojanvision.datasets import ImageSet
-from trojanzoo.attacks import Attack
-from trojanzoo.configs import Config
 import argparse
+from trojanvision.datasets import ImageSet
+from trojanzoo.configs import Config
 from typing import Union
 
-class_dict = {
-    # adversarial attack
-    'pgd': PGD,
-    # 'advmind': AdvMind,
 
-    # poisoning attack
-    'imc_poison': IMC_Poison,
-    'poison_basic': PoisonBasic,
-    'poison_random': PoisonRandom,
-
-    # backdoor attack
-    'badnet': BadNet,
-    'trojannn': TrojanNN,
-    'latent_backdoor': LatentBackdoor,
-    'imc': IMC,
-    'reflection_backdoor': ReflectionBackdoor,
-    'bypass_embed': BypassEmbed,
-    'trojannet': TrojanNet,
-    'clean_label': CleanLabel,
-    'hidden_trigger': HiddenTrigger,
-
-    # 'term_study': TermStudy,
-    'unlearn': Unlearn,
-
-    # # imc adaptive settings
-    # 'imc_latent': IMC_Latent,
-    # 'imc_advtrain': IMC_AdvTrain,
-    # 'imc_strip': IMC_STRIP,
-    # 'imc_multi': IMC_Multi,
-    # 'imc_magnet': IMC_MagNet,
-    # 'imc_abs': IMC_ABS,
-    # 'imc_adaptive': IMC_Adaptive,
-}
+module_list = [adv, backdoor, poison]
+__all__ = ['Attack', 'add_argument', 'create']
+class_dict: dict[str, type[Attack]] = {}
+for module in module_list:
+    __all__.extend(module.__all__)
+    class_dict.update(module.class_dict)
 
 
 def add_argument(parser: argparse.ArgumentParser, attack_name: str = None, attack: Union[str, Attack] = None,

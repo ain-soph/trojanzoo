@@ -8,11 +8,11 @@ from .backdoor import *
 from . import adv, backdoor
 
 from trojanvision.configs import config
-from trojanvision.datasets import ImageSet
 import trojanzoo.defenses
 
 import argparse
 from trojanzoo.configs import Config
+from trojanvision.datasets import ImageSet
 from typing import Union
 
 module_list = [adv, backdoor]
