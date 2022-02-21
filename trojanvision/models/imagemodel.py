@@ -49,8 +49,7 @@ def replace_bn_to_gn(model: nn.Module) -> None:
 def set_first_layer_channel(model: nn.Module,
                             channel: int = 3,
                             **kwargs) -> None:
-    r"""
-    Replace the input channel of the first
+    r"""Replace the input channel of the first
     :any:`torch.nn.Conv2d` or :any:`torch.nn.Linear`.
     """
     for name, module in model.named_children():
@@ -204,7 +203,8 @@ class ImageModel(Model):
         self.sgm_gamma: float = sgm_gamma
         self.adv_train = adv_train
         self.adv_train_random_init = adv_train_random_init
-        self.adv_train_eval_random_init = adv_train_eval_random_init if adv_train_eval_random_init is not None else adv_train_random_init
+        self.adv_train_eval_random_init = adv_train_eval_random_init \
+            if adv_train_eval_random_init is not None else adv_train_random_init
         self.adv_train_iter = adv_train_iter
         self.adv_train_alpha = adv_train_alpha
         self.adv_train_eps = adv_train_eps
