@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanzoo.configs import config, Config
+from trojanzoo.configs import config
 from trojanzoo.environ import env
 from trojanzoo.utils.data import (dataset_to_list,
                                   split_dataset, get_class_subset)
@@ -9,11 +9,13 @@ from trojanzoo.utils.output import ansi
 
 import torch
 import numpy as np
+import functools
 import os
 from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 from typing import Iterable, Union    # TODO: python 3.10
+from trojanzoo.configs import Config
 import argparse    # TODO: python 3.10
 from collections.abc import Callable
 if TYPE_CHECKING:
@@ -129,8 +131,7 @@ class Dataset(ABC, BasicObject):
                                       'folder_path', 'num_workers', ]
         if not self.valid_set:
             self.param_list['dataset'].append('split_ratio')
-        self.__batch_size: int = 0
-        self.batch_size = batch_size
+        self.__batch_size = batch_size
         self.valid_batch_size = valid_batch_size
         self.split_ratio = split_ratio
         self.num_workers = num_workers
@@ -160,14 +161,10 @@ class Dataset(ABC, BasicObject):
             ) if loss_weights else None    # TODO: issue 5 pylance
         self.loss_weights = loss_weights
 
-    @property
+    @functools.cached_property
     def batch_size(self):
-        return self.__batch_size
-
-    @batch_size.setter
-    def batch_size(self, value: int):
-        self.__batch_size = value if value >= 0 else \
-            -value * max(1, env['num_gpus'])
+        return self.__batch_size if self.__batch_size >= 0 else \
+            -self.__batch_size * max(1, env['num_gpus'])
 
     # TODO: should it be abstractmethod?
     def initialize(self, *args, **kwargs):

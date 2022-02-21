@@ -34,5 +34,5 @@ class Unlearn(BadNet):
     def get_filename(self, **kwargs):
         return f'{self.attack_source}_{self.mark_source}_{self.train_mode}_' + super().get_filename(**kwargs)
 
-    def mix_dataset(self, poison_label: bool = False) -> torch.utils.data.Dataset:
-        return super().mix_dataset(poison_label=poison_label)
+    def get_poison_dataset(self, poison_label: bool = False, poison_num: int = None) -> torch.utils.data.Dataset:
+        return super().get_poison_dataset(poison_label, poison_num)

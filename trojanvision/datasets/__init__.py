@@ -8,10 +8,11 @@ from .normal import *
 
 from . import folder, normal
 
-from trojanvision.configs import Config, config
+from trojanvision.configs import config
 import trojanzoo.datasets
 
 import argparse
+from trojanzoo.configs import Config
 from typing import Union
 
 module_list = [folder, normal]

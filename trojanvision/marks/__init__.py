@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanvision.configs import Config, config
+from trojanvision.configs import config
 from trojanvision.datasets import ImageSet
 from trojanzoo.utils.module import BasicObject
 from trojanzoo.utils.output import ansi
@@ -15,6 +15,7 @@ import PIL.Image as Image
 
 from typing import Optional, Union
 import argparse
+from trojanzoo.configs import Config
 from collections.abc import Callable
 
 dir_path = os.path.dirname(__file__)

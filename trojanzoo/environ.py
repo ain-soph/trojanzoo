@@ -43,7 +43,6 @@ class Env(Param):
             Defaults to ``False``.
         verbose (int): The output level. Defaults to ``0``.
 
-        config_path (str): Command line config file path.
         benchmark (bool): Whether to use :any:`torch.backends.cudnn.benchmark`
             to accelerate without deterministic.
             Defaults to ``False``.
@@ -65,7 +64,7 @@ class Env(Param):
             This is the implementation of adding arguments.
             For users, please use :func:`add_argument()` instead, which is more user-friendly.
         """
-        group.add_argument('--config', dest='config_path',
+        group.add_argument('--config', dest='cmd_config_path',
                            help='cmd config file path '
                            '(package < project < cmd_config < cmd_param)')
 
@@ -117,7 +116,7 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
     return group
 
 
-def create(config_path: str = None, dataset_name: str = None, dataset: str = None,
+def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str = None,
            seed: int = None, data_seed: int = None, benchmark: bool = None,
            config: Config = config,
            cache_threshold: float = None, verbose: int = None,
@@ -143,14 +142,14 @@ def create(config_path: str = None, dataset_name: str = None, dataset: str = Non
     """
     other_kwargs = {'data_seed': data_seed, 'cache_threshold': cache_threshold,
                     'verbose': verbose, 'color': color, 'device': device, 'tqdm': tqdm}
-    config.update_cmd(config_path)
+    config.cmd_config_path = cmd_config_path
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
     dataset_name = dataset_name if dataset_name is not None \
         else config.full_config['dataset']['default_dataset']
     result = config.get_config(dataset_name=dataset_name)[
         'env'].update(other_kwargs)
-    env.update(config_path=config_path, **result)
+    env.clear().update(**result)
     ansi.switch(env['color'])
     if seed is None and 'seed' in env.keys():
         seed = env['seed']

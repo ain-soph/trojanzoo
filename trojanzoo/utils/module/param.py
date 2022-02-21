@@ -89,8 +89,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         Returns:
             Module: return :attr:`self` for stream usage.
         """
-        for item in self.keys():
-            delattr(self, item)
+        self.__data = {}
         return self
 
     def keys(self):
@@ -100,7 +99,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         return self.__data.items()
 
     def __getattr__(self, name: _KT) -> _VT:
-        if name == '_Module__data':
+        if '__data' in name:
             return super().__getattr__(name)
         return self.__data[name]
 
@@ -108,7 +107,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         return self.__data[k]
 
     def __setattr__(self, name: _KT, value: _VT):
-        if name == '_Module__data':
+        if '__data' in name:
             return super().__setattr__(name, value)
         self.__data[name] = value
 
@@ -201,3 +200,8 @@ class Param(Module, Generic[_KT, _VT]):
                 print(self)
                 raise KeyError(key)
         return super().__getitem__(key)
+
+    def clear(self):
+        super().clear()
+        self.default = None
+        return self

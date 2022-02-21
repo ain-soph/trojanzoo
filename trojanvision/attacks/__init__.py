@@ -4,10 +4,12 @@ from .adv import *
 from .poison import *
 from .backdoor import *
 
-from trojanvision.configs import Config, config
-from trojanvision.datasets import ImageSet
+from trojanvision.configs import config
 import trojanzoo.attacks
+
+from trojanvision.datasets import ImageSet
 from trojanzoo.attacks import Attack
+from trojanzoo.configs import Config
 import argparse
 from typing import Union
 

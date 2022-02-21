@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanzoo.configs import config, Config
+from trojanzoo.configs import config
 from trojanzoo.datasets import Dataset
 from trojanzoo.models import Model
 from trojanzoo.attacks import Attack
@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 from typing import Union    # TODO: python 3.10
+from trojanzoo.configs import Config
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:
     pass

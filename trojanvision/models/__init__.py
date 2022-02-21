@@ -9,10 +9,11 @@ from .torchvision import *
 
 from . import nas, normal, others, torchvision
 
-from trojanvision.datasets import ImageSet
-from trojanvision.configs import Config, config
+from trojanvision.configs import config
 import trojanzoo.models
 
+from trojanvision.datasets import ImageSet
+from trojanzoo.configs import Config
 import argparse
 from typing import Union
 

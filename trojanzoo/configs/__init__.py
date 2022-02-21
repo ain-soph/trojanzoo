@@ -66,8 +66,8 @@ class Config:
         **kwargs (dict[str, str]): Map of config paths.
 
     Attributes:
-        cmd (str): Path to :attr:`cmd_config`. Defaults to ``None``.
-        cmd_config (ConfigType): Config loaded from path :attr:`cmd`.
+        cmd_config_path (str): Path to :attr:`cmd_config`. Defaults to ``None``.
+        cmd_config (ConfigType): Config loaded from path :attr:`cmd_config_path`.
         config_path (dict[str, str]): Map from config name
             (e.g., ``'package', 'user', 'project'``)
             to path string.
@@ -80,28 +80,36 @@ class Config:
             ``value = full_config[config_file][key][dataset_name]``.
     """
     name = 'config'
-    cmd: str = None
-    cmd_config: ConfigType = None
 
-    def __init__(self, _base: 'Config' = None, **kwargs: str):
+    def __init__(self, cmd_config_path: str = None,
+                 _base: 'Config' = None, **kwargs: str):
         self.config_path = kwargs
         # self._base = _base
         self.config_dict: dict[str, ConfigType] = {}
+        self._cmd_config_path: str = cmd_config_path
+        self.cmd_config: ConfigType
+        self.full_config: ConfigType
         for key in self.config_path.keys():
             value = self.load_config(self.config_path[key])
             if len(value):
                 self.config_dict[key] = value
         if _base is not None:
             self.config_dict = self.combine_base(self.config_dict, _base)
-        self.__full_config = self.merge()
-        self.__cmd_updated: bool = False
 
     @property
-    def full_config(self):
-        if not self.__cmd_updated and self.cmd_config is not None:
-            self.__full_config.update(self.cmd_config)
-            self.__cmd_updated = True
-        return self.__full_config
+    def cmd_config_path(self) -> str:
+        return self._cmd_config_path
+
+    @cmd_config_path.setter
+    def cmd_config_path(self, value: str):
+        if value and os.path.exists(value):
+            self._cmd_config_path = os.path.normpath(value)
+            self.cmd_config = self.load_config(self._cmd_config_path)
+            self.full_config = self.merge().update(self.cmd_config)
+        else:
+            self._cmd_config_path = value
+            self.cmd_config = Module()
+            self.full_config = self.merge()
 
     def get_config(self, dataset_name: str, config: ConfigType = None,
                    **kwargs) -> Param[str, Module[str, Any]]:
@@ -214,15 +222,6 @@ class Config:
                 value = Param(value)
             module[key] = value  # TODO: Shall we Param(value) ?
         return module
-
-    @classmethod
-    def update_cmd(cls, cmd_path: str = None) -> ConfigType:
-        if cmd_path is not None and cmd_path != cls.cmd:
-            if not os.path.exists(cmd_path):
-                raise FileNotFoundError(cmd_path)
-            cls.cmd = os.path.normpath(cmd_path)
-            config = cls.load_config(cls.cmd)
-            cls.cmd_config = config if len(config) else cls.cmd_config
 
     def __getitem__(self, k: str):
         return self.config_dict[k]
