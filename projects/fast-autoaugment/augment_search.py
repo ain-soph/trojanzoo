@@ -18,11 +18,11 @@ if __name__ == '__main__':
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
     parser.add_argument('--policy_path', default='./result/policy.pth')
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model)
@@ -53,4 +53,4 @@ if __name__ == '__main__':
                 logger.meters[k].update(v, batch_size)
 
         # save augment
-        torch.save(policy.state_dict(), args.policy_path)
+        torch.save(policy.state_dict(), kwargs['policy_path'])

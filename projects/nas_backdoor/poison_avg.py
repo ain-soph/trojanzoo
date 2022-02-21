@@ -24,18 +24,18 @@ if __name__ == '__main__':
     trojanvision.trainer.add_argument(parser)
     trojanvision.attacks.add_argument(parser)
     parser.add_argument('--num_models', type=int, default=3)
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model: DARTS = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
-    attack = trojanvision.attacks.create(dataset=dataset, model=model, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model: DARTS = trojanvision.models.create(dataset=dataset, **kwargs)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
+    attack = trojanvision.attacks.create(dataset=dataset, model=model, **kwargs)
 
     state_list = [model.state_dict()]
     train_args = dict(**trainer)
     train_args['epochs'] = 1
-    for _ in range(args.num_models - 1):
+    for _ in range(kwargs['num_models'] - 1):
         model._train(**train_args)
         state_list.append(model.state_dict())
 

@@ -27,15 +27,15 @@ if __name__ == '__main__':
     trojanvision.trainer.add_argument(parser)
     trojanvision.attacks.add_argument(parser)
     parser.add_argument('--only_paramless_op', action='store_true')
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    only_paramless_op: bool = args.only_paramless_op
+    only_paramless_op: bool = kwargs['only_paramless_op']
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model: DARTS = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
-    attack = trojanvision.attacks.create(dataset=dataset, model=model, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model: DARTS = trojanvision.models.create(dataset=dataset, **kwargs)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
+    attack = trojanvision.attacks.create(dataset=dataset, model=model, **kwargs)
 
     optim_tensors = [param.clone().detach().requires_grad_() for param in model.arch_parameters()]
     optim_args = trainer.optim_args

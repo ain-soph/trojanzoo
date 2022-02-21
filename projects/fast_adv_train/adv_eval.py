@@ -14,12 +14,12 @@ if __name__ == '__main__':
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
     trojanvision.trainer.add_argument(parser)
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
     dataset.norm_par = None
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
 
     import torch.nn as nn
     model._model.features = nn.Sequential(
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         nn.ReLU(),
         nn.Linear(100, 10)).cuda()
 
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)
 
