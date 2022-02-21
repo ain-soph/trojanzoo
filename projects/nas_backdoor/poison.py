@@ -6,15 +6,14 @@
 import trojanvision
 import argparse
 
-
 from trojanvision.utils.model_archs.darts.operations import PRIMITIVES
 import numpy as np
 import torch
 import itertools
 
 from typing import TYPE_CHECKING
-from trojanvision.attacks.poison.poison_basic import PoisonBasic
-from trojanvision.models.nas.darts import DARTS
+from trojanvision.attacks import PoisonBasic
+from trojanvision.models import DARTS
 if TYPE_CHECKING:
     pass
 

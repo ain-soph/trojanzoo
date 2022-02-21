@@ -11,11 +11,13 @@ from trojanzoo.utils.logger import SmoothedValue
 
 
 import torch
+import functools
 import math
 import random
 import os
+
 import argparse
-from typing import Callable
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import torch.utils.data
@@ -84,8 +86,12 @@ class BadNet(Attack):
                               validate_fn=self.validate_fn, loader_train=loader,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'loss':
+            if 'loss_fn' in kwargs.keys():
+                kwargs['loss_fn'] = functools.partial(self.loss_weighted, loss_fn=kwargs['loss_fn'])
+            else:
+                kwargs['loss_fn'] = self.loss_weighted
             self.model._train(epochs, save=save,
-                              validate_fn=self.validate_fn, loss_fn=self.loss_fn,
+                              validate_fn=self.validate_fn,
                               save_fn=self.save, **kwargs)
 
     def get_poison_dataset(self, poison_label: bool = True, poison_num: int = None) -> torch.utils.data.Dataset:
@@ -138,13 +144,14 @@ class BadNet(Attack):
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         return self.mark.add_mark(x, **kwargs)
 
-    def loss_fn(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
-                _output: torch.Tensor = None,
-                **kwargs) -> torch.Tensor:
-        loss_clean = self.model.loss(_input, _label, **kwargs)
+    def loss_weighted(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
+                      _output: torch.Tensor = None, loss_fn: Callable[..., torch.Tensor] = None,
+                      **kwargs) -> torch.Tensor:
+        loss_fn = loss_fn if loss_fn is not None else self.model.loss
+        loss_clean = loss_fn(_input, _label, **kwargs)
         poison_input = self.add_mark(_input)
         poison_label = self.target_class * torch.ones_like(_label)
-        loss_poison = self.model.loss(poison_input, poison_label, **kwargs)
+        loss_poison = loss_fn(poison_input, poison_label, **kwargs)
         return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
