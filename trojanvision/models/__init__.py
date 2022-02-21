@@ -42,6 +42,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
             which contains the default dataset and model name if not provided.
         class_dict (dict[str, type[ImageModel]]):
             Map from model name to model class.
+            Defaults to ``trojanvision.models.class_dict``.
 
     See Also:
         :func:`trojanzoo.models.add_argument()`
@@ -73,6 +74,7 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[ImageModel]]):
             Map from model name to model class.
+            Defaults to ``trojanvision.models.class_dict``.
         **kwargs: The keyword arguments
             passed to model init method.
 
@@ -92,6 +94,7 @@ def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict
 
     Args:
         class_dict (dict[str, type[ImageModel]]): Map from model name to model class.
+            Defaults to ``trojanvision.models.class_dict``.
         indent (int): The space indent for the entire string.
             Defaults to ``0``.
 

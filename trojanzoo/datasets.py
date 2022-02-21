@@ -467,6 +467,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
             which contains the default dataset name if not provided.
         class_dict (dict[str, type[Dataset]]):
             Map from dataset name to dataset class.
+            Defaults to ``{}``.
     """
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])
@@ -500,6 +501,7 @@ def create(dataset_name: str = None, dataset: str = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[Dataset]]):
             Map from dataset name to dataset class.
+            Defaults to ``{}``.
         **kwargs: The keyword arguments
             passed to dataset init method.
 

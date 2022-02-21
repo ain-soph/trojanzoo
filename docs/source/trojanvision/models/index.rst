@@ -12,6 +12,7 @@ models
 
 .. autofunction:: add_argument
 .. autofunction:: create
+.. autofunction:: output_available_models
 
 .. autoclass:: ImageModel
    :members:

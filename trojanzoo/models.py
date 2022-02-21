@@ -1346,6 +1346,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
             which contains the default dataset and model name if not provided.
         class_dict (dict[str, type[Model]]):
             Map from model name to model class.
+            Defaults to ``{}``.
 
     Returns:
         argparse._ArgumentGroup: The argument group.
@@ -1395,6 +1396,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[Model]]):
             Map from model name to model class.
+            Defaults to ``{}``.
         **kwargs: The keyword arguments
             passed to model init method.
 
@@ -1440,6 +1442,7 @@ def output_available_models(class_dict: dict[str, type[Model]] = {},
 
     Args:
         class_dict (dict[str, type[Model]]): Map from model name to model class.
+            Defaults to ``{}``.
         indent (int): The space indent for the entire string.
             Defaults to ``0``.
     """

@@ -94,6 +94,7 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None,
             (as the alias of `attack_name`).
         class_dict (dict[str, type[Attack]]):
             Map from attack name to attack class.
+            Defaults to ``{}``.
 
     Returns:
         argparse._ArgumentGroup: The argument group.
@@ -140,6 +141,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[Attack]]):
             Map from attack name to attack class.
+            Defaults to ``{}``.
         **kwargs: The keyword arguments
             passed to attack init method.
 
