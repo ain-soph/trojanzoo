@@ -79,7 +79,7 @@ class SpectralSignature(BackdoorDefense):
 
         self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
         self.mix_dataloader = self.dataset.get_dataloader(
-            mode='train', dataset=self.mix_dataset, num_workers=1, pin_memory=False)
+            mode='train', dataset=self.mix_dataset, num_workers=0, pin_memory=False)
 
     def detect(self, optimizer, lr_scheduler, **kwargs):
         """
@@ -119,7 +119,7 @@ class SpectralSignature(BackdoorDefense):
             class_input = torch.stack(class_input)
             class_label = torch.as_tensor(class_label, dtype=torch.long)
             class_dataset = TensorDataset(class_input, class_label)
-            class_dataloader = self.dataset.get_dataloader(mode='train', dataset=class_dataset, num_workers=1)
+            class_dataloader = self.dataset.get_dataloader(mode='train', dataset=class_dataset, num_workers=0)
 
             layer_output_all = []   # TODO
             for i, data in enumerate(class_dataloader):
@@ -146,5 +146,5 @@ class SpectralSignature(BackdoorDefense):
             else:
                 final_set = torch.utils.data.ConcatDataset([final_set, class_dataset])
 
-        final_dataloader = self.dataset.get_dataloader(mode=None, dataset=final_set, num_workers=1, pin_memory=False)
+        final_dataloader = self.dataset.get_dataloader(mode=None, dataset=final_set, num_workers=0, pin_memory=False)
         return final_dataloader

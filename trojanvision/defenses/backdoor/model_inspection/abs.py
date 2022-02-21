@@ -243,7 +243,7 @@ class ABS(NeuralCleanse):
         x, y = [], []
         for _class in range(self.model.num_classes):
             loader = self.dataset.get_dataloader(mode='train', batch_size=seed_class_num, class_list=[_class],
-                                                 shuffle=True, num_workers=1, pin_memory=False)
+                                                 shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             x.append(_input)
             y.append(_label)
