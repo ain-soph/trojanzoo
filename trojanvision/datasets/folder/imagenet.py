@@ -14,6 +14,11 @@ root_dir = os.path.dirname(root_file)
 class ImageNet(ImageFolder):
     r"""ImageNet dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
+    See Also:
+        * torchvision: :any:`torchvision.datasets.ImageNet`
+        * paper: `ImageNet\: A large-scale hierarchical image database`_
+        * website: https://image-net.org/about.php
+
     Note:
         According to https://github.com/pytorch/vision/issues/1563,
         You need to personally visit https://image-net.org/download-images.php
@@ -26,9 +31,6 @@ class ImageNet(ImageFolder):
             * ``'{self.folder_path}/ILSVRC2012_img_val.tar'``
             * ``'{self.folder_path}/meta.bin'``
 
-    See Also:
-        :any:`torchvision.datasets.ImageNet`
-
     Attributes:
         name (str): ``'imagenet'``
         num_classes (int): ``1000``
@@ -36,6 +38,9 @@ class ImageNet(ImageFolder):
         norm_par (dict[str, list[float]]):
             | ``{'mean': [0.485, 0.456, 0.406],``
             | ``'std'  : [0.229, 0.224, 0.225]}``
+
+    .. _ImageNet\: A large-scale hierarchical image database:
+        https://ieeexplore.ieee.org/document/5206848
     """
 
     name = 'imagenet'

@@ -29,7 +29,8 @@ class ActivationClustering(TrainingFiltering):
           :any:`sklearn.decomposition.FastICA` or
           :any:`sklearn.decomposition.PCA`.
         * Conduct clustering w.r.t. dim-reduced feature maps and get cluster classes for samples.
-        * Detect poisoned cluster classes. All samples in that cluster are poisoned. Poisoned samples compose a small separate class.
+        * Detect poisoned cluster classes. All samples in that cluster are poisoned.
+          Poisoned samples compose a small separate class.
 
     There are 4 different methods to detect poisoned cluster classes:
 
@@ -40,7 +41,6 @@ class ActivationClustering(TrainingFiltering):
     * ``'distance'``: Poison clusters are far from their own class center,
 
     See Also:
-
         * Paper: `Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering`_
         * Other implementation: `IBM adversarial robustness toolbox (ART)`_ [`source code`_]
 

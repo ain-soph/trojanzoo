@@ -16,13 +16,17 @@ class CUB200(ImageFolder):
     r"""CUB200 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
-        http://www.vision.caltech.edu/visipedia/CUB-200.html
+        * paper: `Caltech-UCSD Birds 200`_
+        * website: http://www.vision.caltech.edu/visipedia/CUB-200.html
 
     Attributes:
         name (str): ``'cub200'``
         num_classes (int): ``200``
         data_shape (list[int]): ``[3, 224, 224]``
         valid_set (bool): ``False``
+
+    .. _Caltech-UCSD Birds 200:
+        http://www.vision.caltech.edu/visipedia/papers/WelinderEtal10_CUB-200.pdf
     """
     name = 'cub200'
     num_classes = 200
@@ -83,13 +87,17 @@ class CUB200_2011(CUB200):
     r"""CUB200_2011 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
-        http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
+        * paper: `The Caltech-UCSD Birds-200-2011 Dataset`_
+        * website: http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
 
     Attributes:
         name (str): ``'cub200_2011'``
         num_classes (int): ``200``
         data_shape (list[int]): ``[3, 224, 224]``
         valid_set (bool): ``False``
+
+    .. _The Caltech-UCSD Birds-200-2011 Dataset:
+        http://www.vision.caltech.edu/visipedia/papers/CUB_200_2011.pdf
     """
 
     name = 'cub200_2011'

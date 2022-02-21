@@ -37,7 +37,7 @@ class _ResNet(_ImageModel):
             module = resnet_ap if 'ap' in name else torchvision.models
             ModelClass = getattr(module, model_class)
             kwargs = {'pool_size': data_shape[1] // 8} if 'ap' in name else {}
-            _model: Union[resnet_ap.ResNet_AP, torchvision.models.ResNet] = ModelClass(
+            _model: Union[resnet_ap.ResNetAP, torchvision.models.ResNet] = ModelClass(
                 num_classes=self.num_classes, **kwargs)
             if 'comp' in name:
                 conv1: nn.Conv2d = _model.conv1
@@ -69,16 +69,78 @@ class _ResNet(_ImageModel):
 
 
 class ResNet(ImageModel):
+    r"""ResNet model series including ResNet, ResNext and WideResNet.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['resnet', 'resnet_comp', 'resnet_s',
+             'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
+             'resnet18_comp', 'resnet34_comp', 'resnet50_comp', 'resnet101_comp', 'resnet152_comp',
+             'resnext50_32x4d', 'resnext101_32x8d',
+             'resnext50_32x4d_comp', 'resnext101_32x8d_comp',
+             'wide_resnet50_2', 'wide_resnet101_2',
+             'wide_resnet50_2_comp', 'wide_resnet101_2_comp',
+
+             'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
+             'resnet18_ap_comp']
+
+    See Also:
+        * ResNet:
+
+          - torchvision: :any:`torchvision.models.resnet18`
+          - paper: `Deep Residual Learning for Image Recognition`_
+        * ResNext:
+
+          - torchvision: :any:`torchvision.models.resnext50_32x4d`
+          - paper: `Aggregated Residual Transformations for Deep Neural Networks`_
+        * WideResNet:
+
+          - torchvision: :any:`torchvision.models.wide_resnet50_2`
+          - paper: `Wide Residual Networks`_
+
+    Note:
+        * ``_comp`` reduces the first convolutional layer
+          from ``kernel_size=7, stride=2, padding=3``
+
+          to ``kernel_size=3, stride=1, padding=1``,
+          and removes the ``maxpool`` layer before block layers.
+        * ``_s`` further reduces the conv channels and number of blocks based on ``_comp``.
+
+          ``ResNetS`` is used in NIPS 2017 paper by Facebook Research about continual learning.
+
+          - paper: `Gradient Episodic Memory for Continual Learning`_ (GEM)
+          - code: https://github.com/facebookresearch/GradientEpisodicMemory/blob/master/model/common.py
+        * ``_ap`` conducts average pooling in all blocks
+          rather than a global pooling layer after feature extractor.
+
+          ``ResNetAP`` is used in ICLR 2021 paper about dataset condensation.
+
+          - paper: `Dataset Condensation with Gradient Matching`_
+          - code: https://github.com/VICO-UoE/DatasetCondensation/blob/master/networks.py
+
+    .. _Deep Residual Learning for Image Recognition:
+        https://arxiv.org/abs/1512.03385
+    .. _Aggregated Residual Transformations for Deep Neural Networks:
+        https://arxiv.org/abs/1611.05431
+    .. _Wide Residual Networks:
+        https://arxiv.org/abs/1605.07146
+    .. _Gradient Episodic Memory for Continual Learning:
+        https://arxiv.org/abs/1706.08840
+    .. _Dataset Condensation with Gradient Matching:
+        https://arxiv.org/abs/2006.05929
+    """
     available_models = ['resnet', 'resnet_comp', 'resnet_s',
                         'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
                         'resnet18_comp', 'resnet34_comp', 'resnet50_comp', 'resnet101_comp', 'resnet152_comp',
-                        'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
                         'resnext50_32x4d', 'resnext101_32x8d',
-                        'wide_resnet50_2', 'wide_resnet101_2',
                         'resnext50_32x4d_comp', 'resnext101_32x8d_comp',
+                        'wide_resnet50_2', 'wide_resnet101_2',
                         'wide_resnet50_2_comp', 'wide_resnet101_2_comp',
-                        'resnet18_ap_comp']
 
+                        'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
+                        'resnet18_ap_comp']
     model_urls = urls
 
     def __init__(self, name: str = 'resnet', layer: int = 18,

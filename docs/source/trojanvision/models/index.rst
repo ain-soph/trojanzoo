@@ -8,7 +8,7 @@ models
 .. toctree::
    :maxdepth: 2
 
-..    normal<normal>
+   torchvision
 
 .. autofunction:: add_argument
 .. autofunction:: create

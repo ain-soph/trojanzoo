@@ -35,15 +35,20 @@ class DownsampledImageNet(ImageSet):
 
 
 class ImageNet16(DownsampledImageNet):
-    r"""ImageNet16 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+    r"""ImageNet16 dataset.
+    It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:
-        https://image-net.org/download-images.php
+        * paper: `A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets`_
+        * website: https://patrykchrabaszcz.github.io/Imagenet32/
 
     Attributes:
         name (str): ``'imagenet16'``
         num_classes (int): Flexible (passed by command line argument, no larger than 1000).
         data_shape (list[int]): ``[3, 16, 16]``
+
+    .. _A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets:
+        https://arxiv.org/abs/1707.08819
     """
     name = 'imagenet16'
     data_shape = [3, 16, 16]
@@ -55,15 +60,20 @@ class ImageNet16(DownsampledImageNet):
 
 
 class ImageNet32(DownsampledImageNet):
-    r"""ImageNet32 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+    r"""ImageNet32 dataset.
+    It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:
-        https://image-net.org/download-images.php
+        * paper: `A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets`_
+        * website: https://patrykchrabaszcz.github.io/Imagenet32/
 
     Attributes:
         name (str): ``'imagenet32'``
         num_classes (int): Flexible (passed by command line argument, no larger than 1000).
         data_shape (list[int]): ``[3, 32, 32]``
+
+    .. _A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets:
+        https://arxiv.org/abs/1707.08819
     """
     name = 'imagenet32'
     data_shape = [3, 32, 32]

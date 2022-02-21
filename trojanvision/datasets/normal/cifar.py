@@ -6,10 +6,13 @@ import torchvision.datasets as datasets
 
 
 class CIFAR10(ImageSet):
-    r"""CIFAR10 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
+    r"""CIFAR10 dataset introduced by Alex Krizhevsky in 2009.
+    It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:
-        :any:`torchvision.datasets.CIFAR10`
+        * torchvision: :any:`torchvision.datasets.CIFAR10`
+        * paper: `Learning Multiple Layers of Features from Tiny Images`_
+        * website: https://www.cs.toronto.edu/~kriz/cifar.html
 
     Attributes:
         name (str): ``'cifar10'``
@@ -21,6 +24,9 @@ class CIFAR10(ImageSet):
         norm_par (dict[str, list[float]]):
             | ``{'mean': [0.49139968, 0.48215827, 0.44653124],``
             | ``'std'  : [0.24703233, 0.24348505, 0.26158768]}``
+
+    .. _Learning Multiple Layers of Features from Tiny Images:
+        https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
     """
     name = 'cifar10'
     num_classes = 10
@@ -46,7 +52,9 @@ class CIFAR100(CIFAR10):
     r"""CIFAR100 dataset. It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:
-        :any:`torchvision.datasets.CIFAR100`
+        * torchvision: :any:`torchvision.datasets.CIFAR100`
+        * paper: `Learning Multiple Layers of Features from Tiny Images`_
+        * website: https://www.cs.toronto.edu/~kriz/cifar.html
 
     Attributes:
         name (str): ``'cifar100'``
@@ -55,6 +63,9 @@ class CIFAR100(CIFAR10):
         norm_par (dict[str, list[float]]):
             | ``{'mean': [0.49139968, 0.48215827, 0.44653124],``
             | ``'std'  : [0.24703233, 0.24348505, 0.26158768]}``
+
+    .. _Learning Multiple Layers of Features from Tiny Images:
+        https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
     """
     name = 'cifar100'
     num_classes = 100

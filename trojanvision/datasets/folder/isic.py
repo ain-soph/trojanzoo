@@ -55,13 +55,17 @@ class ISIC2018(ISIC):
     r"""ISIC2018 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
-        https://challenge.isic-archive.com/data/
+        * paper: `Skin Lesion Analysis Toward Melanoma Detection 2018\: A Challenge Hosted by the International Skin Imaging Collaboration (ISIC)`_
+        * website: https://challenge.isic-archive.com/data/
 
     Attributes:
         name (str): ``'isic2018'``
         num_classes (int): ``7``
         data_shape (list[int]): ``[3, 224, 224]``
-    """
+
+    .. _Skin Lesion Analysis Toward Melanoma Detection 2018\: A Challenge Hosted by the International Skin Imaging Collaboration (ISIC):
+        https://arxiv.org/abs/1902.03368
+    """  # noqa: E501
 
     name: str = 'isic2018'
     num_classes = 7

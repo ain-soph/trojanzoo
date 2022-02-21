@@ -227,11 +227,9 @@ class Config:
         return self.config_dict[k]
 
     def items(self):
-        r""""""
         return self.config_dict.items()
 
     def keys(self):
-        r""""""
         return self.config_dict.keys()
 
     def summary(self, keys: Union[list[str], str] = ['final'],

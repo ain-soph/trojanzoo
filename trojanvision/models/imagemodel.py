@@ -97,12 +97,11 @@ class ImageModel(Model):
       adversarial training and Skip Gradient Method (SGM).
 
     See Also:
-        Adversarial Training:
+        * Adversarial Training:
 
-            * Free: https://github.com/mahyarnajibi/FreeAdversarialTraining
-            * Fast: https://github.com/locuslab/fast_adversarial
-
-        Skip Gradient Method: https://github.com/csdongxian/skip-connections-matter
+          - Free: https://github.com/mahyarnajibi/FreeAdversarialTraining
+          - Fast: https://github.com/locuslab/fast_adversarial
+        * Skip Gradient Method: https://github.com/csdongxian/skip-connections-matter
 
     Attributes:
         adv_train (str | None): choose from ``[None, 'pgd', 'free', 'trades']``.
