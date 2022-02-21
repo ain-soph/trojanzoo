@@ -145,8 +145,8 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
 # TODO: issue 3 why need Generic, Module[_KT, _VT]
 class Param(Module, Generic[_KT, _VT]):
     r"""A dict-like class to store parameters config that
-        inherits :class:`Module` and further extends default values.
-        You can view and set keys by attributes as well.
+    inherits :class:`Module` and further extends default values.
+    You can view and set keys by attributes as well.
 
     Args:
         *args: Positional dict-like arguments.
