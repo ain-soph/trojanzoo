@@ -17,12 +17,12 @@ if __name__ == '__main__':
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
     trojanvision.trainer.add_argument(parser)
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
 
     transform = [transforms.ToTensor()]
     if dataset.normalize and dataset.norm_par is not None:

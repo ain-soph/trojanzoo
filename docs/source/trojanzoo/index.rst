@@ -7,12 +7,12 @@ trojanzoo
    :glob:
    :maxdepth: 3
 
-   attacks<attacks>
-   configs<configs>
-   datasets<datasets>
-   defenses<defenses>
-   environ<environ>
-   models<models>
-   optim<optim>
-   trainer<trainer>
-   utils<utils/index>
+   attacks
+   configs
+   datasets
+   defenses
+   environ
+   models
+   optim
+   trainer
+   utils/index

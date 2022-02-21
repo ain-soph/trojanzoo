@@ -20,14 +20,15 @@ if __name__ == '__main__':
     trojanvision.attacks.add_argument(parser)
     trojanvision.defenses.add_argument(parser)
     args, unknown = parser.parse_known_args()
+    kwargs = args.__dict__
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args.__dict__)
-    mark = trojanvision.marks.create(dataset=dataset, **args.__dict__)
-    attack: BadNet = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **args.__dict__)
-    defense: NeuralCleanse = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
+    mark = trojanvision.marks.create(dataset=dataset, **kwargs)
+    attack: BadNet = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **kwargs)
+    defense: NeuralCleanse = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **kwargs)
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
@@ -36,8 +37,8 @@ if __name__ == '__main__':
     simple_parser.add_argument('--mark_source', default='defense')
     simple_parser.add_argument('--unlearn_mode', default='batch')
     args, unknown = simple_parser.parse_known_args()
-    mark_source: str = args.mark_source
-    unlearn_mode: str = args.unlearn_mode
+    mark_source: str = kwargs['mark_source']
+    unlearn_mode: str = kwargs['unlearn_mode']
 
     if mark_source == 'attack':
         mark_source = attack.name

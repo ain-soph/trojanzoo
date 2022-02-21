@@ -8,13 +8,13 @@ utils
 .. toctree::
    :maxdepth: 2
 
-   data<data>
-   fim<fim>
-   logger<logger>
-   model<model>
-   module<module>
-   tensor<tensor>
-   train<train>
+   data
+   fim
+   logger
+   model
+   module
+   tensor
+   train
 
 .. autoclass:: trojanzoo.utils.lock.Lock
    :members:

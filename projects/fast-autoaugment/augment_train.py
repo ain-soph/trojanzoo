@@ -16,20 +16,20 @@ if __name__ == '__main__':
     trojanvision.models.add_argument(parser)
     trojanvision.trainer.add_argument(parser)
     parser.add_argument('--policy_path', default='./result/policy.pth')
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
     trainer = trojanvision.trainer.create(dataset=dataset, model=model,
-                                          **args.__dict__)
+                                          **kwargs)
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset,
                              model=model, trainer=trainer)
 
     policy = Policy(num_chunks=0).cuda()
-    policy.load_state_dict(torch.load(args.policy_path))
+    policy.load_state_dict(torch.load(kwargs['policy_path']))
 
     model._model.preprocess = nn.Sequential(OrderedDict([
         ('autoaugment', policy),

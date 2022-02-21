@@ -99,53 +99,53 @@ if __name__ == '__main__':
     parser.add_argument('--eval_interval', type=int, default=10)
     parser.add_argument('--file_path')
     parser.add_argument('--init', default='noise', choices=['noise', 'real'],
-                        help='noise/real: initialize synthetic images from random noise or randomly sampled real images.')
+                        help='noise/real: initialize synthetic images '
+                        'from random noise or randomly sampled real images.')
     parser.add_argument('--first_term', choices=['fgsm', 'pgd'])
     parser.add_argument('--eval_adv_train', action='store_true')
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    dis_metric: str = args.dis_metric
-    image_per_class: int = args.image_per_class
-    num_eval: int = args.num_eval
-    epoch_eval_train: int = args.epoch_eval_train
-    Iteration: int = args.Iteration
-    lr_img: float = args.lr_img
+    dis_metric: str = kwargs['dis_metric']
+    image_per_class: int = kwargs['image_per_class']
+    num_eval: int = kwargs['num_eval']
+    epoch_eval_train: int = kwargs['epoch_eval_train']
+    Iteration: int = kwargs['Iteration']
+    lr_img: float = kwargs['lr_img']
     outer_loop, inner_loop = get_loops(image_per_class)
-    first_term: str = args.first_term
+    first_term: str = kwargs['first_term']
 
-    args_dict = args.__dict__
-    args_dict.update(default_args)
-    env = trojanvision.environ.create(**args_dict)
-    dataset = trojanvision.datasets.create(**args_dict)
+    kwargs.update(default_args)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
 
     fgsm_dict = fgsm_args[dataset.name]
     pgd_dict = pgd_args[dataset.name]
-    args_dict['adv_train_eval_iter'] = pgd_dict['iteration']
-    args_dict['adv_train_eval_alpha'] = pgd_dict['pgd_alpha']
-    args_dict['adv_train_eval_eps'] = pgd_dict['pgd_eps']
-    model = trojanvision.models.create(dataset=dataset, **args_dict)
-    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **args_dict)
+    kwargs['adv_train_eval_iter'] = pgd_dict['iteration']
+    kwargs['adv_train_eval_alpha'] = pgd_dict['pgd_alpha']
+    kwargs['adv_train_eval_eps'] = pgd_dict['pgd_eps']
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
+    trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)
 
-    if args_dict['eval_model'] is not None:
-        args_dict['model_name'] = args_dict['eval_model']
-    if args_dict['eval_norm_layer'] is not None:
-        args_dict['norm_layer'] = args_dict['eval_norm_layer']
-    if args.adv_train == 'trades':
+    if kwargs['eval_model'] is not None:
+        kwargs['model_name'] = kwargs['eval_model']
+    if kwargs['eval_norm_layer'] is not None:
+        kwargs['norm_layer'] = kwargs['eval_norm_layer']
+    if kwargs['adv_train'] == 'trades':
         eval_args.update(adv_train='trades')
-    args_dict.update(eval_args)
+    kwargs.update(eval_args)
     if first_term == 'fgsm':
-        args_dict['adv_train_iter'] = fgsm_dict['iteration']
-        args_dict['adv_train_alpha'] = fgsm_dict['pgd_alpha']
-        args_dict['adv_train_eps'] = fgsm_dict['pgd_eps']
+        kwargs['adv_train_iter'] = fgsm_dict['iteration']
+        kwargs['adv_train_alpha'] = fgsm_dict['pgd_alpha']
+        kwargs['adv_train_eps'] = fgsm_dict['pgd_eps']
     if first_term == 'pgd':
-        args_dict['adv_train_iter'] = pgd_dict['iteration']
-        args_dict['adv_train_alpha'] = pgd_dict['pgd_alpha']
-        args_dict['adv_train_eps'] = pgd_dict['pgd_eps']
-    eval_model = trojanvision.models.create(dataset=dataset, **args_dict)
-    eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args_dict)
+        kwargs['adv_train_iter'] = pgd_dict['iteration']
+        kwargs['adv_train_alpha'] = pgd_dict['pgd_alpha']
+        kwargs['adv_train_eps'] = pgd_dict['pgd_eps']
+    eval_model = trojanvision.models.create(dataset=dataset, **kwargs)
+    eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **kwargs)
 
     if env['verbose']:
         trojanvision.summary(eval_model=eval_model, eval_trainer=eval_trainer)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     train_args['adv_train'] = first_term is not None
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epochs'] = epoch_eval_train
-    eval_train_args['adv_train'] = args.eval_adv_train
+    eval_train_args['adv_train'] = kwargs['eval_adv_train']
     mean_value = [0.0]
     std_value = [1.0]
     if dataset.norm_par is not None:
@@ -223,7 +223,7 @@ if __name__ == '__main__':
     def get_real_data(c: int, batch_size: int, **kwargs) -> torch.Tensor:
         try:
             data_real = next(iter_list[c])
-        except StopIteration as e:
+        except StopIteration:
             iter_list[c] = iter(class_loader_list[c])   # don't use itertools.cycle because it's not random
             data_real = next(iter_list[c])
         return model.get_data(data_real)[0][:batch_size]
@@ -250,7 +250,7 @@ if __name__ == '__main__':
     # from data import get_images
     # get_real_data = get_images
 
-    if args.init == 'real':
+    if kwargs['init'] == 'real':
         bn_size = image_syn.shape[1]
         for c in range(dataset.num_classes):
             image_syn[c].data = get_real_data(c, bn_size)
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     for it in range(Iteration):
         ''' Evaluate synthetic data '''
         # print(f'    {it+1:4d}')
-        if (it + 1) % args.eval_interval == 0:
+        if (it + 1) % kwargs['eval_interval'] == 0:
             if outer_loop > 1:
                 model._validate()
             accs = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
@@ -293,11 +293,11 @@ if __name__ == '__main__':
             if cur_result > best_result:
                 best_result = cur_result
                 print(' ' * 12, '{purple}best result update!{reset}'.format(**ansi))
-                if args.file_path:
+                if kwargs['file_path']:
                     data = {'image_syn': image_syn, 'label_syn': label_syn}
-                    torch.save(data, args.file_path)
-                    print(' ' * 12, 'file save at: ', args.file_path)
-                if args.save_img:
+                    torch.save(data, kwargs['file_path'])
+                    print(' ' * 12, 'file save at: ', kwargs['file_path'])
+                if kwargs['save_img']:
                     for c in range(len(image_syn)):
                         for i in range(len(image_syn[c])):
                             filename = f'./result/dataset_condensation/{dataset.name}_{c}_{i}.png'

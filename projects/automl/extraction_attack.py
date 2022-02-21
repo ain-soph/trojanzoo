@@ -20,13 +20,13 @@ if __name__ == '__main__':
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
     trojanvision.trainer.add_argument(parser)
-    args = parser.parse_args()
-    nb_stolen = args.nb_stolen
+    kwargs = parser.parse_args().__dict__
+    nb_stolen = kwargs['nb_stolen']
     # print(nb_stolen)
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model)
@@ -49,21 +49,21 @@ if __name__ == '__main__':
     AttackClass = getattr(art.attacks.extraction, 'KnockoffNets')
     for mode in ['random']:
 
-        model_name = args.model_name if not args.tmodel else args.tmodel
+        model_name = kwargs['model_name'] if not kwargs['tmodel'] else kwargs['tmodel']
 
         # print(model_name, model_arch)
 
-        args_dict = args.__dict__ | {'pretrained': False, 'official': False,
+        args_dict = kwargs | {'pretrained': False, 'official': False,
                                      'model_name': model_name}
-        if args.tmodel_arch is not None:
-            args_dict['model_arch'] = args.tmodel_arch
-        elif 'model_arch' in args.__dict__.keys():
-            args_dict['model_arch'] = args.model_arch
+        if kwargs['tmodel_arch'] is not None:
+            args_dict['model_arch'] = kwargs['tmodel_arch']
+        elif 'model_arch' in kwargs.keys():
+            args_dict['model_arch'] = kwargs['model_arch']
 
         thieved_model = trojanvision.models.create(
             dataset=dataset, **args_dict)
         trainer = trojanvision.trainer.create(
-            dataset=dataset, model=thieved_model, **args.__dict__)
+            dataset=dataset, model=thieved_model, **kwargs)
 
         thieved_model.train()
         params: list[nn.Parameter] = []

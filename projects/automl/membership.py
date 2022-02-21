@@ -21,10 +21,10 @@ if __name__ == '__main__':
     trojanvision.environ.add_argument(parser)
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
-    args = parser.parse_args()
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
-    model = trojanvision.models.create(dataset=dataset, **args.__dict__)
+    kwargs = parser.parse_args().__dict__
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
+    model = trojanvision.models.create(dataset=dataset, **kwargs)
 
     from art.estimators.classification import PyTorchClassifier  # type: ignore
     classifier = PyTorchClassifier(

@@ -7,8 +7,8 @@ datasets
 .. toctree::
    :maxdepth: 2
 
-   normal<normal>
-   folder<folder>
+   normal
+   folder
 
 .. autofunction:: add_argument
 .. autofunction:: create

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.datasets import Dataset
-from trojanzoo.configs import config, Config
+from trojanzoo.configs import config
 from trojanzoo.utils.module import get_name, ModelProcess
 from trojanzoo.utils.output import ansi
 
@@ -11,6 +11,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 from typing import Union    # TODO: python 3.10
+from trojanzoo.configs import Config
 from trojanzoo.models import Model
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:

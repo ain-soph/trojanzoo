@@ -8,8 +8,8 @@ defenses
 .. toctree::
    :maxdepth: 2
 
-   adv<adv>
-   backdoor<backdoor/index>
+   adv
+   backdoor/index
 
 
 .. autofunction:: add_argument

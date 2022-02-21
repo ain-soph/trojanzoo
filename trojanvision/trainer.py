@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-from trojanvision.configs import Config, config
+from trojanvision.configs import config
 from trojanzoo.trainer import Trainer
 import trojanzoo.trainer
 
 from typing import TYPE_CHECKING
 from trojanvision.datasets import ImageSet    # TODO: python 3.10
 from trojanvision.models import ImageModel
+from trojanzoo.configs import Config
 import argparse
 if TYPE_CHECKING:
     pass

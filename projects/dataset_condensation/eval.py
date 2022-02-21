@@ -24,18 +24,18 @@ if __name__ == '__main__':
     parser.add_argument('--num_eval', type=int, default=5)
     parser.add_argument('--epoch_eval_train', type=int, default=1000)
     parser.add_argument('--file_path', required=True)
-    args = parser.parse_args()
+    kwargs = parser.parse_args().__dict__
 
-    num_eval: int = args.num_eval
-    epoch_eval_train: int = args.epoch_eval_train
+    num_eval: int = kwargs['num_eval']
+    epoch_eval_train: int = kwargs['epoch_eval_train']
 
     trojanvision.models.class_dict['convnet'] = ConvNet
 
-    env = trojanvision.environ.create(**args.__dict__)
-    dataset = trojanvision.datasets.create(**args.__dict__)
+    env = trojanvision.environ.create(**kwargs)
+    dataset = trojanvision.datasets.create(**kwargs)
 
-    eval_model = trojanvision.models.create(dataset=dataset, **args.__dict__)
-    eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **args.__dict__)
+    eval_model = trojanvision.models.create(dataset=dataset, **kwargs)
+    eval_trainer = trojanvision.trainer.create(dataset=dataset, model=eval_model, **kwargs)
     eval_train_args = dict(**eval_trainer)
     eval_train_args['epochs'] = epoch_eval_train
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # eval_model._model.load_state_dict(b)
     # eval_model._validate()
 
-    result = torch.load(args.file_path)
+    result = torch.load(kwargs['file_path'])
     image_syn, label_syn = result['image_syn'], result['label_syn']
     # image_syn, label_syn = result['data'][0]
 
