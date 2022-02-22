@@ -13,8 +13,6 @@ from collections import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-# Note that MagNet requires "eval" mode to train.
-
 
 class _MagNet(nn.Module):
     """docstring for Model"""
@@ -74,6 +72,32 @@ class _MagNet(nn.Module):
 
 
 class MagNet(Model):
+    r"""MagNet proposed by Dongyu Meng from Shanghai Tech University in CCS 2017.
+    It is an autoencoder for input images to defend against adversarial attacks.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['magnet']
+
+    See Also:
+        * paper: `MagNet\: a Two-Pronged Defense against Adversarial Examples`_
+
+    Args:
+        structure (list[int | str]): The MagNet model structure.
+            Defaults to ``[3, 'average', 3]`` for 1-channel images (e.g, MNIST)
+            and ``[32]`` for 3-channel images.
+        activation (str): The activation layer in MagNet model.
+            Choose from ``['sigmoid', 'relu']``.
+            Defaults to ``'sigmoid'`` for 1-channel images (e.g, MNIST)
+            and ``'relu'`` for 3-channel images.
+        v_noise (float): The std of random Gaussian noise added to training data.
+            Defaults to ``0.1``.
+
+    .. _MagNet\: a Two-Pronged Defense against Adversarial Examples:
+        https://arxiv.org/abs/1705.09064
+    """
     available_models = ['magnet']
 
     def __init__(self, name: str = 'magnet',
@@ -83,7 +107,7 @@ class MagNet(Model):
         self.v_noise: float = v_noise
         if structure is None:
             if dataset.data_shape[0] == 1:
-                structure = [3, "average", 3]
+                structure = [3, 'average', 3]
             else:
                 structure = [32]
         if activation is None:
@@ -97,10 +121,9 @@ class MagNet(Model):
 
     def get_data(self, data: tuple[torch.Tensor], v_noise: float = None,
                  mode='train') -> tuple[torch.Tensor, torch.Tensor]:
-        if v_noise is None:
-            v_noise = self.v_noise
         _input = data[0]
         if mode == 'train':
+            v_noise = v_noise if v_noise is not None else self.v_noise
             noise: torch.Tensor = v_noise * torch.rand_like(_input)
             data[0] = (_input + noise).clamp(0.0, 1.0)
             data[1] = _input.detach()

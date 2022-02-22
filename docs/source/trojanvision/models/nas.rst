@@ -13,3 +13,9 @@ nas
 
 .. autoclass:: NATSbench
    :members:
+
+.. autoclass:: PNASNet
+   :members:
+
+.. autoclass:: ProxylessNAS
+   :members:

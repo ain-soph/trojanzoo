@@ -10,6 +10,7 @@ models
 
    torchvision
    nas
+   others
 
 .. autofunction:: add_argument
 .. autofunction:: create
