@@ -18,15 +18,12 @@ cifar10_inverted_residual_setting = [
 
 
 class _MobileNet(_ImageModel):
-
     def __init__(self, name: str = 'mobilenet_v2', **kwargs):
         try:
             sub_type: str = name[10:]
             assert sub_type in ['v2', 'v2_comp', 'v3_small', 'v3_large', 'v3_small_comp', 'v3_large_comp'], f'{name=}'
         except Exception:
-            raise AssertionError("model name should be in ['mobilenet_v2', 'mobilenet_v2_comp', "
-                                 "'mobilenet_v3_small', 'mobilenet_v3_large', "
-                                 "'mobilenet_v3_small_comp', 'mobilenet_v3_large_comp']")
+            raise AssertionError(f'model name should be in {MobileNet.available_models}')
         super().__init__(**kwargs)
         if 'v2' in sub_type:
             inverted_residual_setting = cifar10_inverted_residual_setting if 'comp' in sub_type else None
@@ -47,6 +44,34 @@ class _MobileNet(_ImageModel):
 
 
 class MobileNet(ImageModel):
+    r"""MobileNets proposed by Andrew Howard and Liang-Chieh Chen from Google in CVPR 2018.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
+             'mobilenet_v2_comp', 'mobilenet_v3_large_comp', 'mobilenet_v3_small_comp']
+
+    See Also:
+        * MobileNet v2:
+
+          - torchvision: :any:`torchvision.models.mobilenet_v2`
+          - paper: `MobileNetV2\: Inverted Residuals and Linear Bottlenecks`_
+        * MobileNet v3:
+
+          - torchvision: :any:`torchvision.models.mobilenet_v3_small`
+          - paper: `Searching for MobileNetV3`_
+
+    Note:
+        ``_comp`` uses a small ``inverted_residual_setting``
+        and set first conv layer ``stride=1``.
+
+    .. _MobileNetV2\: Inverted Residuals and Linear Bottlenecks:
+        https://arxiv.org/abs/1801.04381
+    .. _Searching for MobileNetV3:
+        https://arxiv.org/abs/1905.02244
+    """
     available_models = ['mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
                         'mobilenet_v2_comp', 'mobilenet_v3_large_comp', 'mobilenet_v3_small_comp']
 

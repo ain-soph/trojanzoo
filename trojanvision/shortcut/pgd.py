@@ -25,6 +25,7 @@ def get_func_key(func: Callable[..., torch.Tensor]) -> str:
 
 class PGD(Attack, PGDoptimizer):
     r"""PGD Adversarial Attack.
+
     Args:
         pgd_alpha (float): learning rate :math:`\alpha`. Default: :math:`\frac{3}{255}`.
         pgd_eps (float): the perturbation threshold :math:`\epsilon` in input space. Default: :math:`\frac{8}{255}`.

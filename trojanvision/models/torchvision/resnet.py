@@ -39,7 +39,7 @@ class _ResNet(_ImageModel):
             kwargs = {'pool_size': data_shape[1] // 8} if 'ap' in name else {}
             _model: Union[resnet_ap.ResNetAP, torchvision.models.ResNet] = ModelClass(
                 num_classes=self.num_classes, **kwargs)
-            if 'comp' in name:
+            if '_comp' in name:
                 conv1: nn.Conv2d = _model.conv1
                 _model.conv1 = conv3x3(conv1.in_channels, conv1.out_channels)
                 if 'resnext' in name:
