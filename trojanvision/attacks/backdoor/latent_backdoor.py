@@ -81,14 +81,14 @@ class LatentBackdoor(BadNet):
         other_x, other_y = [], []
         for _class in other_classes:
             loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, class_list=[_class],
-                                                 shuffle=True, num_workers=1, pin_memory=False)
+                                                 shuffle=True, num_workers=0, pin_memory=False)
             _input, _label = next(iter(loader))
             other_x.append(_input)
             other_y.append(_label)
         other_x = torch.cat(other_x)
         other_y = torch.cat(other_y)
         target_loader = self.dataset.get_dataloader(mode='train', batch_size=self.class_sample_num, class_list=[self.target_class],
-                                                    shuffle=True, num_workers=1, pin_memory=False)
+                                                    shuffle=True, num_workers=0, pin_memory=False)
         target_x, target_y = next(iter(target_loader))
         data = {
             'other': (other_x, other_y),
@@ -102,7 +102,7 @@ class LatentBackdoor(BadNet):
                 target_x, target_y = data_dict['target']
                 dataset = TensorDataset(target_x, target_y)
                 loader = torch.utils.data.DataLoader(dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),
-                                                     shuffle=True, num_workers=1, pin_memory=False)
+                                                     shuffle=True, num_workers=0, pin_memory=False)
                 feat_list = []
                 for data in loader:
                     target_x, _ = self.model.get_data(data)
@@ -117,7 +117,7 @@ class LatentBackdoor(BadNet):
     def optimize_mark(self, data: dict[str, tuple[torch.Tensor, torch.Tensor]]):
         other_x, _ = data['other']
         other_set = TensorDataset(other_x)
-        other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=1)
+        other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
 
         atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
         self.mark.mark[:-1] = tanh_func(atanh_mark)

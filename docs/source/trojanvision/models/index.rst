@@ -9,9 +9,11 @@ models
    :maxdepth: 2
 
    torchvision
+   nas
 
 .. autofunction:: add_argument
 .. autofunction:: create
+.. autofunction:: output_available_models
 
 .. autoclass:: ImageModel
    :members:

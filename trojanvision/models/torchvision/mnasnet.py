@@ -21,6 +21,21 @@ class _MNASNet(_ImageModel):
 
 
 class MNASNet(ImageModel):
+    r"""MNASNet proposed by Mingxing Tan from Google in CVPR 2019.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3']
+
+    See Also:
+        * torchvision: :any:`torchvision.models.mnasnet0_5`
+        * paper: `MnasNet\: Platform-Aware Neural Architecture Search for Mobile`_
+
+    .. _MnasNet\: Platform-Aware Neural Architecture Search for Mobile:
+        https://arxiv.org/abs/1807.11626
+    """
     available_models = ['mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3']
     model_urls = urls
 
@@ -36,7 +51,8 @@ class MNASNet(ImageModel):
         if len(name_list) > 1:
             assert len(name_list) == 2
             mnas_alpha = float(name_list[1].replace('_', '.'))
-        return f'{name}{mnas_alpha:.1f}'.replace('.', '_'), mnas_alpha
+        mnas_alpha_str = f'{mnas_alpha:.2f}'.removesuffix('0')
+        return f'{name}{mnas_alpha_str}'.replace('.', '_'), mnas_alpha
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         url = self.model_urls[self.parse_name('mnasnet', self.mnas_alpha)[0]]

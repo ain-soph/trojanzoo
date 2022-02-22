@@ -11,11 +11,11 @@ import os
 class FeatureExtractor(nn.Module):
     def __init__(self, model: nn.Module, **kwargs):
         super().__init__()
-        self.num_layers: int = model.num_layers
-        self.pool_layers_idx: int = model.pool_layers_idx
-        self.stem: nn.Sequential = model.stem
-        self.layers: nn.ModuleList = model.layers
-        self.pool_layers: nn.ModuleList = model.pool_layers
+        self.num_layers: int = getattr(model, 'num_layers')
+        self.pool_layers_idx: int = getattr(model, 'pool_layers_idx')
+        self.stem: nn.Sequential = getattr(model, 'stem')
+        self.layers: nn.ModuleList = getattr(model, 'layers')
+        self.pool_layers: nn.ModuleList = getattr(model, 'pool_layers')
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         cur = self.stem(x)
@@ -35,12 +35,32 @@ class _ENAS(_ImageModel):
         super().__init__(**kwargs)
         self.features = FeatureExtractor(_model)
         self.classifier = nn.Sequential(OrderedDict([
-            ('dropout', _model.dropout),
-            ('dense', _model.dense),
+            ('dropout', getattr(_model, 'dropout')),
+            ('dense', getattr(_model, 'dense')),
         ]))
 
 
 class ENAS(ImageModel):
+    r"""This is yet another ENAS implementation based on Microsoft Neural Network Intelligence (NNI) library.
+    You need to first generate ``'enas_macro.pt'`` using NNI library and put it under ``folder_path``.
+
+    Warning:
+        It is highly recommended to use :class:`trojanvision.models.DARTS` with ``model_arch='enas'`` instead.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['enas']
+
+    See Also:
+        * paper: `Efficient Neural Architecture Search via Parameter Sharing`_
+        * official code (tensorflow): https://github.com/melodyguan/enas
+        * NNI code (pytorch): https://github.com/microsoft/nni
+
+    .. _Efficient Neural Architecture Search via Parameter Sharing:
+        https://arxiv.org/abs/1802.03268
+    """
     available_models = ['enas']
 
     def __init__(self, name: str = 'enas', model: type[_ENAS] = _ENAS, folder_path: str = None, **kwargs):

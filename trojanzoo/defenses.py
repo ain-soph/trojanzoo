@@ -71,6 +71,7 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None,
             (as the alias of `defense_name`).
         class_dict (dict[str, type[Defense]]):
             Map from defense name to defense class.
+            Defaults to ``{}``.
 
     Returns:
         argparse._ArgumentGroup: The argument group.
@@ -118,6 +119,7 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[Defense]]):
             Map from defense name to defense class.
+            Defaults to ``{}``.
         **kwargs: The keyword arguments
             passed to defense init method.
 

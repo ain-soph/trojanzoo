@@ -31,6 +31,26 @@ class _ProxylessNAS(_ImageModel):
 
 
 class ProxylessNAS(ImageModel):
+    r"""ProxylessNAS proposed by Han Cai from MIT in ICLR 2019.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['proxylessnas']
+
+    See Also:
+        * paper: `ProxylessNAS\: Direct Neural Architecture Search on Target Task and Hardware`_
+        * code: https://github.com/MIT-HAN-LAB/ProxylessNAS
+
+    Args:
+        target_platform (str): Target platform to load using :any:`torch.hub.load`.
+            Choose from ``['proxyless_cpu', 'proxyless_gpu', 'proxyless_mobile', 'proxyless_mobile_14', 'proxyless_cifar']``
+            Defaults to ``'proxyless_cifar'``.
+
+    .. _ProxylessNAS\: Direct Neural Architecture Search on Target Task and Hardware:
+        https://arxiv.org/abs/1812.00332
+    """  # noqa: E501
     available_models = ['proxylessnas']
 
     @classmethod

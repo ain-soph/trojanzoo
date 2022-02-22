@@ -30,7 +30,7 @@ class _EfficientNet(_ImageModel):
 
 
 class EfficientNet(ImageModel):
-    r"""EfficientNet proposed by Mingxing Tan in ICML 2019.
+    r"""EfficientNet proposed by Mingxing Tan from Google in ICML 2019.
 
     :Available model names:
 
@@ -45,7 +45,6 @@ class EfficientNet(ImageModel):
              'efficientnet_b6_comp', 'efficientnet_b7_comp']
 
     See Also:
-
         * torchvision: :any:`torchvision.models.efficientnet_b0`
         * paper: `EfficientNet\: Rethinking Model Scaling for Convolutional Neural Networks`_
 

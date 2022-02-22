@@ -9,10 +9,9 @@ from collections import OrderedDict
 
 class _PNASNet(_ImageModel):
 
-    def __init__(self, cell_type: str = 'b', **kwargs):
+    def __init__(self, name: str = None, **kwargs):
         super().__init__(**kwargs)
-        assert cell_type in ['a', 'b'], cell_type
-        ModelClass = PNASNetA if cell_type == 'a' else PNASNetB
+        ModelClass = PNASNetA if '_a' in name else PNASNetB
         _model = ModelClass(num_classes=self.num_classes)
         self.features = nn.Sequential(OrderedDict([
             ('conv1', _model.conv1),
@@ -31,13 +30,33 @@ class _PNASNet(_ImageModel):
 
 
 class PNASNet(ImageModel):
+    r"""PNASNet proposed by Chenxi Liu from Johns Hopkins University in ECCV 2018.
+
+    Note:
+        The implementation is imported from a third-party github repo. The correctness can't be guaranteed.
+        It might be better to reimplement according to tensorflow codes:
+        https://github.com/tensorflow/models/blob/master/research/slim/nets/nasnet/pnasnet.py
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['pnasnet', 'pnasnet_a', 'pnasnet_b']
+
+    See Also:
+        * paper: `Progressive Neural Architecture Search`_
+        * code: https://github.com/kuangliu/pytorch-cifar/blob/master/models/pnasnet.py
+
+    .. _Progressive Neural Architecture Search:
+        https://arxiv.org/abs/1712.00559
+    """
     available_models = ['pnasnet', 'pnasnet_a', 'pnasnet_b']
 
-    def __init__(self, name: str = 'pnasnet', cell_type: str = 'b',
+    def __init__(self, name: str = 'pnasnet', layer: str = '_b',
                  model: type[_PNASNet] = _PNASNet, **kwargs):
-        if name == 'pnasnet':
-            name += f'_{cell_type}'
-        else:
-            assert name in ['pnasnet_a', 'pnasnet_b'], name
-            cell_type = 'a' if name == 'pnasnet_a' else 'b'
-        super().__init__(name=name, cell_type=cell_type, model=model, **kwargs)
+        super().__init__(name=name, layer=layer, model=model, **kwargs)
+
+    @classmethod
+    def get_name(cls, name: str, layer: str = None) -> str:
+        layer = layer if name == 'pnasnet' else None
+        return super().get_name(name, layer=layer)

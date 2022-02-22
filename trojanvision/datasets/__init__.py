@@ -39,6 +39,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
             which contains the default dataset name if not provided.
         class_dict (dict[str, type[Dataset]]):
             Map from dataset name to dataset class.
+            Defaults to ``trojanvision.datasets.class_dict``.
 
     See Also:
         :func:`trojanzoo.datasets.add_argument()`
@@ -64,6 +65,7 @@ def create(dataset_name: str = None, dataset: str = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[ImageSet]]):
             Map from dataset name to dataset class.
+            Defaults to ``trojanvision.datasets.class_dict``.
         **kwargs: The keyword arguments
             passed to dataset init method.
 

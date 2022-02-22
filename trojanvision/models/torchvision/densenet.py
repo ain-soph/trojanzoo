@@ -33,7 +33,7 @@ class _DenseNet(_ImageModel):
 
 
 class DenseNet(ImageModel):
-    r"""DenseNet proposed by Gao Huang in CVPR 2017.
+    r"""DenseNet proposed by Gao Huang from Cornell University in CVPR 2017.
 
     :Available model names:
 
@@ -44,7 +44,6 @@ class DenseNet(ImageModel):
              'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
 
     See Also:
-
         * torchvision: :any:`torchvision.models.densenet121`
         * paper: `Densely Connected Convolutional Networks`_
 

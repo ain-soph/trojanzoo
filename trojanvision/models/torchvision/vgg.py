@@ -12,7 +12,7 @@ from collections import Callable
 class _VGG(_ImageModel):
 
     def __init__(self, name: str = 'vgg', **kwargs):
-        if 'comp' in name:
+        if '_comp' or '_s' in name:
             comp_dict = {'conv_dim': 512, 'fc_depth': 3, 'fc_dim': 512}
             if '_s' in name:
                 comp_dict['fc_depth'] = 1
@@ -25,7 +25,7 @@ class _VGG(_ImageModel):
         ModelClass: Callable[..., torchvision.models.VGG] = getattr(torchvision.models, class_name)
         _model = ModelClass(num_classes=self.num_classes)
         self.features: nn.Sequential = _model.features
-        if 'comp' in name:
+        if '_comp' in name:
             self.pool = nn.AdaptiveAvgPool2d((1, 1))
         else:
             self.pool = _model.avgpool   # nn.AdaptiveAvgPool2d((7, 7))
@@ -42,13 +42,39 @@ class _VGG(_ImageModel):
 
 
 class VGG(ImageModel):
-    available_models = ['vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp',
+    r"""VGG model proposed by Karen Simonyan from University of Oxford in ICLR 2015.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp', 'vgg_s', 'vgg_bn_s',
+             'vgg11', 'vgg13', 'vgg16', 'vgg19',
+             'vgg11_bn', 'vgg13_bn', 'vgg16_bn', 'vgg19_bn',
+             'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
+             'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp'
+             'vgg11_s', 'vgg13_s', 'vgg16_s', 'vgg19_s',
+             'vgg11_bn_s', 'vgg13_bn_s', 'vgg16_bn_s', 'vgg19_bn_s']
+
+    See Also:
+        * torchvision: :any:`torchvision.models.vgg11`
+        * paper: `Very Deep Convolutional Networks for Large-Scale Image Recognition`_
+
+    Note:
+        * ``_comp`` sets :any:`torch.nn.AdaptiveAvgPool2d` from ``(7, 7)`` to ``(1, 1)``,
+          update the intermediate feature dimension from 4096 to 512 in ``self.classifier``.
+        * ``_s`` further makes ``self.classifier`` only one single linear layer based on ``_comp``.
+
+    .. _Very Deep Convolutional Networks for Large-Scale Image Recognition:
+        https://arxiv.org/abs/1409.1556
+    """
+    available_models = ['vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp', 'vgg_s', 'vgg_bn_s',
                         'vgg11', 'vgg13', 'vgg16', 'vgg19',
                         'vgg11_bn', 'vgg13_bn', 'vgg16_bn', 'vgg19_bn',
                         'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
                         'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp'
-                        'vgg11_comp_s', 'vgg13_comp_s', 'vgg16_comp_s', 'vgg19_comp_s',
-                        'vgg11_bn_comp_s', 'vgg13_bn_comp_s', 'vgg16_bn_comp_s', 'vgg19_bn_comp_s']
+                        'vgg11_s', 'vgg13_s', 'vgg16_s', 'vgg19_s',
+                        'vgg11_bn_s', 'vgg13_bn_s', 'vgg16_bn_s', 'vgg19_bn_s']
 
     model_urls = urls
 

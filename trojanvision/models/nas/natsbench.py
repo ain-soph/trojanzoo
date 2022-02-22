@@ -14,18 +14,59 @@ class _NATSbench(_ImageModel):
 
     def __init__(self, network: nn.Module = None, **kwargs):
         super().__init__(**kwargs)
-        _model = network
         self.features = nn.Sequential(OrderedDict([
-            ('stem', _model.stem),
-            ('cells', nn.Sequential(*_model.cells)),
-            ('lastact', _model.lastact),
+            ('stem', getattr(network, 'stem')),
+            ('cells', nn.Sequential(*getattr(network, 'cells'))),
+            ('lastact', getattr(network, 'lastact')),
         ]))
         self.classifier = nn.Sequential(OrderedDict([
-            ('fc', _model.classifier)
+            ('fc', getattr(network, 'classifier'))
         ]))
 
 
 class NATSbench(ImageModel):
+    r"""NATS-Bench proposed by Xuanyi Dong from University of Technology Sydney.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['natsbench']
+
+    See Also:
+
+        * paper: `NATS-Bench\: Benchmarking NAS Algorithms for Architecture Topology and Size`_
+        * code:
+          - AutoDL: https://github.com/D-X-Y/AutoDL-Projects
+          - NATS-Bench: https://github.com/D-X-Y/NATS-Bench
+
+    Args:
+        model_index (int): :attr:`model_index` passed to
+            ``api.get_net_config()``.
+            Raning from ``0 -- 15624``.
+            Defaults to ``0``.
+        model_seed (int): :attr:`model_seed` passed to
+            ``api.get_net_param()``.
+            Choose from ``[777, 888, 999]``.
+            Defaults to ``999``.
+        hp (int): Training epochs.
+            :attr:`hp` passed to ``api.get_net_param()``.
+            Choose from ``[12, 200]``.
+            Defaults to ``200``.
+        nats_path (str): NATS benchmark file path.
+            It should be set as format like
+            ``'**/NATS-tss-v1_0-3ffb9-full'``
+        autodl_path (str): AutoDL library path.
+            It should be set as format like
+            ``'**/XAutoDL/lib'``.
+        search_space (str): Search space of topology or size.
+            Choose from ``['tss', 'sss']``.
+        dataset_name (str): Dataset name.
+            Choose from ``['cifar10', 'cifar10-valid', 'cifar100', 'imagenet16-120']``.
+
+    .. _NATS-Bench\: Benchmarking NAS Algorithms for Architecture Topology and Size:
+        https://arxiv.org/abs/2009.00437
+    """
     available_models = ['natsbench']
 
     @classmethod
@@ -33,16 +74,17 @@ class NATSbench(ImageModel):
         super().add_argument(group)
         group.add_argument('--model_index', type=int, required=True)
         group.add_argument('--model_seed', type=int)
+        group.add_argument('--hp', type=int)
         group.add_argument('--nats_path')
         group.add_argument('--autodl_path')
         group.add_argument('--search_space')
         return group
 
     def __init__(self, name: str = 'natsbench', model: type[_NATSbench] = _NATSbench,
-                 model_index: int = None, model_seed: int = None,
+                 model_index: int = 0, model_seed: int = 999, hp: int = 200,
                  dataset: ImageSet = None, dataset_name: str = None,
-                 nats_path: str = '/data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full',
-                 autodl_path: str = '/home/rbp5354/workspace/XAutoDL/lib',
+                 nats_path: str = None,
+                 autodl_path: str = None,
                  search_space: str = 'tss', **kwargs):
         try:
             import sys
@@ -51,6 +93,8 @@ class NATSbench(ImageModel):
             from models import get_cell_based_tiny_net   # type: ignore
         except ImportError:
             print('You need to install nats_bench and auto-dl library')
+            print(f'{nats_path=}')
+            print(f'{autodl_path=}')
             raise
 
         if dataset is not None:
@@ -58,12 +102,16 @@ class NATSbench(ImageModel):
             kwargs['dataset'] = dataset
             if dataset_name is None:
                 dataset_name = dataset.name
+                if dataset_name == 'imagenet16':
+                    dataset_name = f'imagenet16-{dataset.num_classes:d}'
         assert dataset_name is not None
+        dataset_name = dataset_name.replace('imagenet16', 'ImageNet16')
         self.dataset_name = dataset_name
 
         self.search_space = search_space
         self.model_index = model_index
         self.model_seed = model_seed
+        self.hp = hp
 
         self.api = create(nats_path, search_space, fast_mode=True, verbose=False)
         config: dict[str, Any] = self.api.get_net_config(model_index, dataset_name)
@@ -71,9 +119,9 @@ class NATSbench(ImageModel):
         super().__init__(name=name, model=model, network=network, **kwargs)
         self.param_list['natsbench'] = ['model_index', 'model_seed', 'search_space']
 
-    def get_official_weights(self, hp: str = '200', **kwargs) -> OrderedDict[str, torch.Tensor]:
+    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict: OrderedDict[str, torch.Tensor] = self.api.get_net_param(
-            self.model_index, self.dataset_name, self.model_seed, hp=hp)
+            self.model_index, self.dataset_name, self.model_seed, hp=str(self.hp))
         new_dict: OrderedDict[str, torch.Tensor] = OrderedDict()
         for k, v in _dict.items():
             if k.startswith('stem') or k.startswith('cells') or k.startswith('lastact'):
@@ -81,24 +129,3 @@ class NATSbench(ImageModel):
             elif k.startswith('classifier'):
                 new_dict['classifier.fc' + k[10:]] = v
         return new_dict
-
-# test
-
-# import torch
-# import torch.nn as nn
-# from typing import Any
-
-# nats_path: str = '/data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full'
-# autodl_path: str = '/home/rbp5354/workspace/XAutoDL/lib'
-# search_space: str = 'tss'
-# import sys
-# sys.path.append(autodl_path)
-# from models import get_cell_based_tiny_net   # type: ignore
-# from nats_bench import create   # type: ignore
-
-# api = create(nats_path, search_space, fast_mode=True, verbose=False)
-
-# if __name__ == '__main__':
-
-#     config: dict[str, Any] = api.get_net_config(0, 'cifar10')   # 0-15624
-#     network: nn.Module = get_cell_based_tiny_net(config)

@@ -19,7 +19,7 @@ class _AlexNet(_ImageModel):
 
 
 class AlexNet(ImageModel):
-    r"""AlexNet proposed by Alex Krizhevsky in 2014.
+    r"""AlexNet proposed by Alex Krizhevsky from Google in 2014.
 
     :Available model names:
 
@@ -28,7 +28,6 @@ class AlexNet(ImageModel):
             ['alexnet']
 
     See Also:
-
         * torchvision: :any:`torchvision.models.alexnet`
         * paper: `One weird trick for parallelizing convolutional neural networks`_
 

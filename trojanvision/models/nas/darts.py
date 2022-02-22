@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model darts --supernet --arch_search --arch_unrolled --layers 8 --init_channels 16 --batch_size 64 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epochs 50
-# CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model lanet --supernet --arch_search --arch_unrolled --layers 8 --init_channels 48 --batch_size 80 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epochs 300
+"""
+CUDA_VISIBLE_DEVICES=0 python examples/train.py --color --verbose 1 --dataset cifar10 --model darts --supernet --arch_search --arch_unrolled --layers 8 --init_channels 16 --batch_size 64 --lr 0.025 --lr_scheduler --lr_min 1e-3 --grad_clip 5.0 --epochs 50
+"""  # noqa: E501
 
 import trojanvision.utils.model_archs.darts as darts
 from trojanvision.datasets import ImageSet
@@ -61,23 +62,85 @@ class _DARTS(_ImageModel):
 
 
 class DARTS(ImageModel):
+    r"""DARTS-like models used in Neural Architecture Search.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['darts']
+
+    See Also:
+        * paper: `DARTS\: Differentiable Architecture Search`_
+        * code: https://github.com/quark0/darts
+
+    Args:
+        supernet (bool): Whether to use supernet (mixed operations).
+            Defaults to ``False``.
+        model_arch (str): Genotype name in ``trojanvision.utils.model_archs.genotypes`` to use.
+            Defaults to ``'darts'``.
+
+            * ``'amoebanet', 'amoebanet_adapt'``
+            * ``'darts_v1', 'darts_v2'('darts')``
+            * ``'drnas_cifar10'('drnas'), 'drnas_imagenet'``
+            * ``'enas', 'enas_adapt'``
+            * ``'nasnet', 'nasnet_adapt'``
+            * ``'pc_darts_cifar'('pc_darts'), 'pc_darts_image'``
+            * ``'pdarts'``
+            * ``'robust_darts'``
+            * ``'sgas'``
+            * ``'snas_mild', 'snas_adapt'``
+            * ``'random'``
+            * ``'diy_deep', 'diy_noskip', 'diy_deep_noskip'``
+        layers (int): Total number of layers. Defaults to ``20``.
+        init_channels (int): :attr:`out_channel` of stem conv layer.
+            Defaults to ``36``.
+        dropout_p (float): Dropout probability.
+            Defaults to ``0.2``.
+        auxiliary (bool): Whether to use auxiliary classifier.
+            Defaults to ``False``.
+        auxiliary_weight (float): Loss weight of auxiliary classifier.
+            Defaults to ``0.4``.
+        arch_search (bool): Whether to search supernet architecture weight parameters.
+            Defaults to ``False``.
+        full (bool): Whether to use full training data during architecture search.
+            Defaults to ``False``.
+        arch_lr (float): Learning rate for architecture optimizer.
+            Defaults to ``3e-4``
+        arch_weight_decay (float): Weight decay for architecture optimizer.
+            Defaults to ``1e-3``.
+        arch_unrolled (bool): Whether to use one-step unrolled validation loss (darts-v2).
+            Defaults to ``False``.
+
+    Note:
+        The implementation of DARTS model is in ``trojanvision.utils.model_archs.darts``
+
+    .. _DARTS\: Differentiable Architecture Search:
+        https://arxiv.org/abs/1806.09055
+    """
     available_models = ['darts']
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--supernet', action='store_true', help='Use supernet.')
-        group.add_argument('--model_arch', help='Model Architecture (genotype name), defaults to be "darts"')
-        group.add_argument('--layers', type=int, help='total number of layers.')
-        group.add_argument('--init_channels', type=int, help='total number of layers.')
-        group.add_argument('--auxiliary', action='store_true', help='enable auxiliary classifier during training.')
-        group.add_argument('--auxiliary_weight', type=float, help='weight for auxiliary loss, defaults to be 0.4')
-        group.add_argument('--arch_search', action='store_true', help='Search supernet architecture parameters.')
-        group.add_argument('--full', action='store_true', help='Use full training data.')
-        group.add_argument('--arch_lr', type=float, help='learning rate for arch encoding, defaults to be 3e-4')
-        group.add_argument('--arch_weight_decay', type=float, help='weight decay for arch encoding.')
+        group.add_argument('--supernet', action='store_true', help='whether to use supernet')
+        group.add_argument('--model_arch', help='genotype name (default: "darts")')
+        group.add_argument('--layers', type=int, help='total number of layers (default: 20)')
+        group.add_argument('--init_channels', type=int, help='out_channel of stem conv layer (default: 36)')
+        group.add_argument('--dropout_p', type=float, help='dropout probability (default: 0.2)')
+        group.add_argument('--auxiliary', action='store_true', help='whether to use auxiliary classifier')
+        group.add_argument('--auxiliary_weight', type=float,
+                           help='loss weight of auxiliary classifier (default: 0.4)')
+        group.add_argument('--arch_search', action='store_true',
+                           help='whether to search supernet architecture weight parameters')
+        group.add_argument('--full', action='store_true',
+                           help='whether to use full training data during architecture search')
+        group.add_argument('--arch_lr', type=float,
+                           help='learning rate for architecture optimizer (default: 3e-4)')
+        group.add_argument('--arch_weight_decay', type=float,
+                           help='weight decay for architecture optimizer (default: 1e-3)')
         group.add_argument('--arch_unrolled', action='store_true', default=False,
-                           help='use one-step unrolled validation loss')
+                           help='whether to use one-step unrolled validation loss (darts-v2)')
         return group
 
     def __init__(self, name: str = 'darts', model_arch: str = 'darts',

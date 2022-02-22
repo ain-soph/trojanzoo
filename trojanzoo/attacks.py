@@ -94,6 +94,7 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None,
             (as the alias of `attack_name`).
         class_dict (dict[str, type[Attack]]):
             Map from attack name to attack class.
+            Defaults to ``{}``.
 
     Returns:
         argparse._ArgumentGroup: The argument group.
@@ -117,7 +118,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
            dataset_name: str = None, dataset: Union[str, Dataset] = None,
            model_name: str = None, model: Union[str, Model] = None,
            config: Config = config, class_dict: dict[str, type[Attack]] = {},
-           **kwargs):
+           **kwargs) -> Attack:
     r"""
     | Create an attack instance.
     | For arguments not included in :attr:`kwargs`,
@@ -131,7 +132,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
         attack (str | Attack): The attack instance or attack name
             (as the alias of `attack_name`).
         dataset_name (str): The dataset name.
-        dataset (str | trojanzoo.datasets.Dataset):
+        dataset (str | Dataset):
             Dataset Instance or dataset name
             (as the alias of `dataset_name`).
         model_name (str): The model name.
@@ -140,6 +141,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
         config (Config): The default parameter config.
         class_dict (dict[str, type[Attack]]):
             Map from attack name to attack class.
+            Defaults to ``{}``.
         **kwargs: The keyword arguments
             passed to attack init method.
 

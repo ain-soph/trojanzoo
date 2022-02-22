@@ -11,24 +11,17 @@ from collections.abc import Callable
 
 
 class _ShuffleNetV2(_ImageModel):
-    def __init__(self, name: str = 'shufflenetv2_x1.0', **kwargs):
+    def __init__(self, name: str = 'shufflenetv2_x1_0', **kwargs):
         try:
-            sub_type: str = name[13:]
-            assert sub_type in ['x0.5', 'x1.0', 'x1.5', 'x2.0',
-                                'x0.5_comp', 'x1.0_comp', 'x1.5_comp', 'x2.0_comp'], f'{name=}'
+            assert name in ShuffleNetV2.available_models, f'{name=}'
         except Exception:
-            raise AssertionError("model name should be in ["
-                                 "'shufflenetv2_x0.5', 'shufflenetv2_x1.0', "
-                                 "'shufflenetv2_x1.5', 'shufflenetv2_x2.0', "
-                                 "'shufflenetv2_x0.5_comp', 'shufflenetv2_x1.0_comp', "
-                                 "'shufflenetv2_x1.5_comp', 'shufflenetv2_x2.0_comp']")
+            raise AssertionError(f'model name should be in {ShuffleNetV2.available_models}')
         super().__init__(**kwargs)
-        arch = sub_type[1:4].replace('.', '_')
         ModelClass: Callable[..., torchvision.models.ShuffleNetV2] = getattr(
-            torchvision.models, f'shufflenet_v2_x{arch}')
+            torchvision.models, name[:16])
         _model = ModelClass(num_classes=self.num_classes)
         module_list: list[nn.Module] = []
-        if 'comp' in sub_type:
+        if '_comp' in name:
             conv1: nn.Conv2d = _model.conv1[0]
             _model.conv1[0] = nn.Conv2d(conv1.in_channels, conv1.out_channels, kernel_size=conv1.kernel_size,
                                         stride=1, padding=conv1.padding, dilation=conv1.dilation,
@@ -50,16 +43,48 @@ class _ShuffleNetV2(_ImageModel):
 
 
 class ShuffleNetV2(ImageModel):
-    available_models = ['shufflenetv2',
-                        'shufflenetv2_x0.5', 'shufflenetv2_x1.0',
-                        'shufflenetv2_x1.5', 'shufflenetv2_x2.0',
-                        'shufflenetv2_x0.5_comp', 'shufflenetv2_x1.0_comp',
-                        'shufflenetv2_x1.5_comp', 'shufflenetv2_x2.0_comp', ]
+    r"""ShuffleNet v2 proposed by Ningning Ma from Megvii in ECCV 2018.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['shufflenetv2', 'shufflenetv2_comp',
+             'shufflenetv2_x0_5', 'shufflenetv2_x1_0',
+             'shufflenetv2_x1_5', 'shufflenetv2_x2_0',
+             'shufflenetv2_x0_5_comp', 'shufflenetv2_x1_0_comp',
+             'shufflenetv2_x1_5_comp', 'shufflenetv2_x2_0_comp', ]
+
+    See Also:
+        * torchvision: :any:`torchvision.models.shufflenet_v2_x0_5`
+        * paper: `ShuffleNet V2\: Practical Guidelines for Efficient CNN Architecture Design`_
+
+    Note:
+        ``_comp`` reduces the first convolutional layer
+        from ``kernel_size=7, stride=2, padding=3``
+
+        to ``kernel_size=3, stride=1, padding=1``,
+        and removes the ``maxpool`` layer before block layers.
+
+    .. _ShuffleNet V2\: Practical Guidelines for Efficient CNN Architecture Design:
+        https://arxiv.org/abs/1807.11164
+    """
+    available_models = ['shufflenetv2', 'shufflenetv2_comp',
+                        'shufflenetv2_x0_5', 'shufflenetv2_x1_0',
+                        'shufflenetv2_x1_5', 'shufflenetv2_x2_0',
+                        'shufflenetv2_x0_5_comp', 'shufflenetv2_x1_0_comp',
+                        'shufflenetv2_x1_5_comp', 'shufflenetv2_x2_0_comp', ]
 
     model_urls = urls
 
-    def __init__(self, name: str = 'shufflenetv2', model: type[_ShuffleNetV2] = _ShuffleNetV2, **kwargs):
-        super().__init__(name=name, model=model, **kwargs)
+    def __init__(self, name: str = 'shufflenetv2', layer: str = '_x0_5',
+                 model: type[_ShuffleNetV2] = _ShuffleNetV2, **kwargs):
+        super().__init__(name=name, layer=layer, model=model, **kwargs)
+
+    @classmethod
+    def get_name(cls, name: str, layer: str = None) -> str:
+        layer = layer if '_x' not in name else None
+        return super().get_name(name, layer=layer)
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict = super().get_official_weights(**kwargs)
