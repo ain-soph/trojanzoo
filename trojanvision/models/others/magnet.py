@@ -86,8 +86,10 @@ class MagNet(Model):
 
     Args:
         structure (list[int | str]): The MagNet model structure.
-            Defaults to ``[3, 'average', 3]`` for 1-channel images (e.g, MNIST)
-            and ``[32]`` for 3-channel images.
+            Defaults to
+
+            * 1-channel images: ``[3, 'average', 3]`` (e.g, MNIST)
+            * 3-channel images: ``[32]``
         activation (str): The activation layer in MagNet model.
             Choose from ``['sigmoid', 'relu']``.
             Defaults to ``'sigmoid'`` for 1-channel images (e.g, MNIST)
