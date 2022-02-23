@@ -14,4 +14,5 @@ trojanvision
    environ
    marks
    models/index
+   trainer
    utils
