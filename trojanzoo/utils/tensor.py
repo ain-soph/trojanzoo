@@ -14,7 +14,7 @@ __all__ = ['tanh_func', 'atan_func',
            'to_tensor', 'to_numpy', 'to_list',
            'to_pil_image', 'gray_img', 'gray_tensor',
            'byte2float', 'float2byte',
-           'save_tensor_as_img', 'save_numpy_as_img', 'read_img_as_tensor',
+           'save_as_img', 'read_img_as_tensor',
            'repeat_to_batch', 'add_noise']
 
 _map = {'int': torch.int, 'long': torch.long,
@@ -267,28 +267,18 @@ def tensor_to_img(_tensor: torch.Tensor) -> Image.Image:
     return Image.fromarray(img)
 
 
-def save_tensor_as_img(path: str, _tensor: torch.Tensor):
-    r"""Save a :any:`torch.Tensor` ranging in ``[0, 1]`` as image.
+def save_as_img(path: str, arr: Union[torch.Tensor, np.ndarray]):
+    r"""Save a :any:`torch.Tensor` or :any:`numpy.ndarray` as image.
 
     Args:
         path (str): The path to save.
-        _tensor (torch.Tensor): The tensor of the image.
+        arr (torch.Tensor | numpy.ndarray): The tensor of the image.
     """
     dir, _ = os.path.split(path)
     if not os.path.exists(dir):
         os.makedirs(dir)
-    img = tensor_to_img(_tensor)
+    img = tensor_to_img(to_tensor(arr, device='cpu'))
     img.save(path)
-
-
-def save_numpy_as_img(path: str, arr: np.ndarray):
-    r"""Save a :any:`numpy.ndarray` ranging in ``[0, 1]`` as image.
-
-    Args:
-        path (str): The path to save.
-        arr (numpy.ndarray): The numpy array of the image.
-    """
-    save_tensor_as_img(path, torch.as_tensor(arr))
 
 
 def read_img_as_tensor(path: str) -> torch.Tensor:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .neural_cleanse import NeuralCleanse
+from ..abstract import ModelInspection
 from trojanvision.environ import env
 from trojanvision.utils.loss import total_variation
 from trojanvision.utils.ssim import SSIM
@@ -18,7 +18,7 @@ import time
 import datetime
 
 
-class ABS(NeuralCleanse):
+class ABS(ModelInspection):
     name: str = 'abs'
 
     @classmethod

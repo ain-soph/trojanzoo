@@ -22,7 +22,7 @@ import trojanvision
 import argparse
 
 from trojanvision.utils.model import weight_init
-from trojanzoo.utils.tensor import save_tensor_as_img
+from trojanzoo.utils.tensor import save_as_img
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.fim import fim, fim_diag, KFAC, EKFAC
@@ -305,7 +305,7 @@ if __name__ == '__main__':
                             if dataset.normalize:
                                 image = image.add(mean).mul(std)
                             image = image.clamp(0, 1)
-                            save_tensor_as_img(filename, image)
+                            save_as_img(filename, image)
         # model.load(suffix='')
         weight_init(model._model)
 
