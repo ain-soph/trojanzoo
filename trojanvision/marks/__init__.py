@@ -254,8 +254,8 @@ class Watermark(BasicObject):
         assert mark_height > 0 and mark_width > 0
         # --------------------------------------------------- #
 
-        self.mark_alpha: float = mark_alpha
-        self.mark_path: str = mark_path
+        self.mark_alpha = mark_alpha
+        self.mark_path = mark_path
         self.mark_height = mark_height
         self.mark_width = mark_width
         self.mark_height_offset = mark_height_offset

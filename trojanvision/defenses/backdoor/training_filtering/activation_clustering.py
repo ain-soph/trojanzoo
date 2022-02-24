@@ -87,6 +87,7 @@ class ActivationClustering(TrainingFiltering):
                  cluster_analysis: str = 'silhouette_score',
                  **kwargs):
         super().__init__(**kwargs)
+        self.param_list['activation_clustering'] = ['nb_clusters', 'nb_dims', 'reduce_method', 'cluster_analysis']
 
         self.nb_clusters = nb_clusters
         self.nb_dims = nb_dims
@@ -187,7 +188,7 @@ class ActivationClustering(TrainingFiltering):
                 with shape ``(N)``.
             reduced_fm (torch.Tensor): Dim-reduced feature map tensor
                 with shape ``(N, self.nb_dims)``
-            silhouette_threshold: The threshold to calculate
+            silhouette_threshold (float): The threshold to calculate
                 :any:`sklearn.metrics.silhouette_score`.
                 Defaults to ``0.1``.
 
