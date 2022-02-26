@@ -57,6 +57,6 @@ class PNASNet(ImageModel):
         super().__init__(name=name, layer=layer, model=model, **kwargs)
 
     @classmethod
-    def get_name(cls, name: str, layer: str = None) -> str:
-        layer = layer if name == 'pnasnet' else None
+    def get_name(cls, name: str, layer: str = '') -> str:
+        layer = layer if name == 'pnasnet' else ''
         return super().get_name(name, layer=layer)

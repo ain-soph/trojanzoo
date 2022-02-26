@@ -2,7 +2,7 @@
 
 from trojanzoo.configs import config
 from trojanzoo.environ import env
-from trojanzoo.utils.data import (dataset_to_list,
+from trojanzoo.utils.data import (dataset_to_tensor,
                                   split_dataset, get_class_subset)
 from trojanzoo.utils.module import get_name, BasicObject
 from trojanzoo.utils.output import ansi
@@ -439,9 +439,9 @@ class Dataset(ABC, BasicObject):
             if verbose:
                 print('Calculating Loss Weights')
             dataset = self.get_dataset('train', transform=None)
-            _, targets = dataset_to_list(dataset, label_only=True)
+            _, targets = dataset_to_tensor(dataset)
             loss_weights: np.ndarray = np.reciprocal(np.bincount(
-                targets))     # TODO: linting problem
+                targets.numpy()))     # TODO: linting problem
             assert len(loss_weights) == self.num_classes
             np.save(file_path, loss_weights)
             if verbose:
@@ -502,7 +502,7 @@ def create(dataset_name: str = None, dataset: str = None,
         class_dict (dict[str, type[Dataset]]):
             Map from dataset name to dataset class.
             Defaults to ``{}``.
-        **kwargs: The keyword arguments
+        **kwargs: Keyword arguments
             passed to dataset init method.
 
     Returns:

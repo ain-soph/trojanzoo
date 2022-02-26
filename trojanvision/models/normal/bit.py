@@ -21,7 +21,6 @@ class _BiT(_ImageModel):
         _model = KNOWN_MODELS[model_name](head_size=1)
         self.features = nn.Sequential()
         if 'comp' in name:
-            assert 'official' not in name, name
             conv: StdConv2d = _model.root.conv
             self.features.add_module('conv', conv3x3(conv.in_channels, conv.out_channels))
         else:

@@ -4,7 +4,7 @@ from trojanvision.configs import config
 from trojanvision.datasets import ImageSet
 from trojanzoo.utils.module import BasicObject
 from trojanzoo.utils.output import ansi
-from trojanzoo.utils.tensor import to_tensor, to_numpy, gray_tensor, save_tensor_as_img
+from trojanzoo.utils.tensor import to_tensor, to_numpy, gray_tensor, save_as_img
 
 import torch
 import torchvision.transforms.functional as F
@@ -254,8 +254,8 @@ class Watermark(BasicObject):
         assert mark_height > 0 and mark_width > 0
         # --------------------------------------------------- #
 
-        self.mark_alpha: float = mark_alpha
-        self.mark_path: str = mark_path
+        self.mark_alpha = mark_alpha
+        self.mark_path = mark_path
         self.mark_height = mark_height
         self.mark_width = mark_width
         self.mark_height_offset = mark_height_offset
@@ -405,12 +405,12 @@ class Watermark(BasicObject):
 
     def save_mark_as_img(self, path: str):
         r"""Save watermark image to :attr:`img_path` in RGBA mode
-        by calling :func:`trojanzoo.utils.tensor.save_tensor_as_img()`.
+        by calling :func:`trojanzoo.utils.tensor.save_as_img()`.
         """
         mark = self.mark
         if len(mark == 2):
             mark = torch.stack([mark[0] * 3] + [mark[1]])
-        save_tensor_as_img(path, mark)
+        save_as_img(path, mark)
 
     def save_mark_as_npy(self, path: str):
         r"""Save watermark as npy file by calling :any:`numpy.save`."""

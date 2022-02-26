@@ -71,6 +71,6 @@ class EfficientNet(ImageModel):
         super().__init__(name=name, layer=layer, model=model, **kwargs)
 
     @classmethod
-    def get_name(cls, name: str, layer: str = None) -> str:
-        layer = layer if '_b' not in name else None
+    def get_name(cls, name: str, layer: str = '') -> str:
+        layer = layer if '_b' not in name else ''
         return super().get_name(name, layer=layer)

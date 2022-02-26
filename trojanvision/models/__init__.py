@@ -75,7 +75,7 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
         class_dict (dict[str, type[ImageModel]]):
             Map from model name to model class.
             Defaults to ``trojanvision.models.class_dict``.
-        **kwargs: The keyword arguments
+        **kwargs: Keyword arguments
             passed to model init method.
 
     Returns:

@@ -56,68 +56,41 @@ class TensorListDataset(Dataset):
         return self.__length
 
 
-def dataset_to_list(dataset: Dataset, label_only: bool = False,
-                    force: bool = True) -> tuple[Optional[list], list[int]]:
-    r"""transform a :any:`torch.utils.data.Dataset` to ``(data, targets)`` lists.
+def dataset_to_tensor(dataset: Dataset) -> tuple[torch.Tensor, torch.Tensor]:
+    r"""Transform a :any:`torch.utils.data.Dataset` to ``(data, targets)`` tensor tuple
+    by traversing all elements.
 
     Args:
         dataset (torch.utils.data.Dataset): The dataset.
-        label_only (bool): Whether to only return the ``targets``.
-            If ``True``, the first return element ``data`` will be ``None``.
-            Defaults to ``False``.
-        force (bool):
-            | Whether to force traversing the dataset
-              to get data and targets.
-            | If ``False``, it will return
-              ``(datasets.data, datasets.targets)`` if possible.
-            | It should be ``True`` when there is extra operations
-              for ``__getitem__`` or ``transform``.
-            | Defaults to ``True``.
 
     Returns:
-        (list | None, list[int]): The tuple of ``(data, targets)``.
+        (torch.Tensor, torch.Tensor): The tuple of ``(data, targets)``.
 
     :Example:
         >>> from torchvision.datasets import MNIST
         >>> from torchvision.transforms import ToTensor
-        >>> from trojanzoo.utils.data import dataset_to_list
+        >>> from trojanzoo.utils.data import dataset_to_tensor
         >>>
-        >>> dataset = MNIST('./', train=False, download=True)
-        >>> data, targets = dataset_to_list(dataset)
-        >>> type(data[0])
-        <PIL.Image.Image image mode=L size=28x28 at 0x19FCF226D30>
-        >>> data, targets = dataset_to_list(dataset, force=False)
-        >>> type(data[0])
-        <class 'torch.Tensor'>
-    """  # noqa: E501
-    if not force:
-        targets = list(dataset.targets)
-        if label_only and hasattr(dataset, 'targets'):
-            return None, targets
-        if hasattr(dataset, 'data') and hasattr(dataset, 'targets'):
-            data = dataset.data
-            if isinstance(data, np.ndarray):
-                data = torch.from_numpy(data)
-            if isinstance(data, torch.Tensor):
-                if data.max() > 2:
-                    data = data.float() / 255
-                data = [img for img in data]
-            return data, targets
+        >>> dataset = MNIST('./', train=False, download=True,
+                            transform=ToTensor())
+        >>> data, targets = dataset_to_tensor(dataset)
+        >>> data.shape
+        torch.Size([10000, 1, 28, 28])
+        >>> targets.shape
+        torch.Size([10000])
+        >>> targets.dtype
+        torch.int64
+    """
     data, targets = list(zip(*dataset))[:2]
-    if label_only:
-        data = None
-    else:
-        data = list(data)
-    targets = list(targets)
-    return data, targets
+    return torch.stack(data), torch.as_tensor(targets, dtype=torch.long)
 
 
 def sample_batch(dataset: Dataset, batch_size: int = None,
-                 idx: list[int] = None,) -> tuple[list, list[int]]:
+                 idx: list[int] = None) -> tuple[torch.Tensor, torch.Tensor]:
     r"""Sample a batch from dataset by calling
 
     .. parsed-literal::
-        :any:`dataset_to_list`\(:any:`torch.utils.data.Subset`\(dataset, idx))
+        :func:`dataset_to_tensor`\(:any:`torch.utils.data.Subset`\(dataset, idx))
 
     Args:
         dataset (torch.utils.data.Dataset): The dataset to sample.
@@ -129,7 +102,7 @@ def sample_batch(dataset: Dataset, batch_size: int = None,
             Defaults to ``None``.
 
     Returns:
-        (list, list[int]): The tuple of sampled batch ``(data, targets)``.
+        (torch.Tensor, torch.Tensor): The tuple of sampled batch ``(data, targets)``.
 
     :Example:
         >>> import torch
@@ -139,21 +112,16 @@ def sample_batch(dataset: Dataset, batch_size: int = None,
         >>> targets = list(range(10))
         >>> dataset = TensorListDataset(data, targets)
         >>> x, y = sample_batch(dataset, idx=[1, 2])
-        >>> torch.stack(x).shape
+        >>> x.shape
         torch.Size([2, 3, 32, 32])
         >>> y
-        [1, 2]
+        tensor([1, 2])
         >>> x, y = sample_batch(dataset, batch_size=4)
         >>> y
-        [6, 3, 2, 5]
+        tensor([6, 3, 2, 5])
     """
-    if idx is None:
-        assert len(dataset) >= batch_size
-        idx = torch.randperm(len(dataset))[:batch_size]
-    else:
-        assert len(dataset) > max(idx)
-    subset = Subset(dataset, idx)
-    return dataset_to_list(subset)
+    idx = idx or torch.randperm(len(dataset))[:batch_size]
+    return dataset_to_tensor(Subset(dataset, idx))
 
 
 def split_dataset(dataset: Union[Dataset, Subset],
@@ -246,8 +214,8 @@ def get_class_subset(dataset: Dataset,
         idx = np.array(dataset.indices)
         indices = idx[indices]
         dataset = dataset.dataset
-    _, targets = dataset_to_list(dataset=dataset, label_only=True)
-    idx_bool = np.isin(targets, class_list)
+    _, targets = dataset_to_tensor(dataset=dataset)
+    idx_bool = np.isin(targets.numpy(), class_list)
     idx = np.arange(len(dataset))[idx_bool]
     idx = np.intersect1d(idx, indices)
     return Subset(dataset, idx)

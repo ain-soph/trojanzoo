@@ -30,9 +30,6 @@ if TYPE_CHECKING:
 from matplotlib.cm import get_cmap  # type: ignore  # TODO
 jet = get_cmap('jet')
 
-log_softmax = nn.LogSoftmax(1)
-criterion_kl = nn.KLDivLoss(reduction='batchmean')
-
 
 def replace_bn_to_gn(model: nn.Module) -> None:
     r"""Replace all :any:`torch.nn.BatchNorm2d` to :any:`torch.nn.GroupNorm`."""
@@ -84,6 +81,27 @@ class _ImageModel(_Model):
     @classmethod
     def define_preprocess(cls, norm_par: dict[str, list[float]] = None,
                           **kwargs) -> nn.Module:
+        r"""Define preprocess before feature extractor.
+
+        Args:
+            norm_par (dict[str, list[float]]): Normalize parameters.
+                It should contain keys of ``['mean', 'std']``.
+                Defaults to ``None`` (:any:`torch.nn.Identity`).
+            **kwargs: Any keyword argument (unused).
+
+        Returns:
+            torchvision.transforms.Normalize | torch.nn.Identity:
+
+        :Example:
+            >>> from trojanvision.models import _ImageModel
+            >>>
+            >>> _ImageModel.define_preprocess()
+            Identity()
+            >>> norm_par = {'mean':[0.0, 0.0, 0.0], 'std':[1.0, 1.0, 1.0]}
+            >>> _ImageModel.define_preprocess(norm_par=norm_par)
+            Normalize(mean=[0.0, 0.0, 0.0], std=[1.0, 1.0, 1.0])
+
+        """
         if norm_par is not None:
             return Normalize(mean=norm_par['mean'],
                              std=norm_par['std'])
@@ -103,8 +121,21 @@ class ImageModel(Model):
           - Fast: https://github.com/locuslab/fast_adversarial
         * Skip Gradient Method: https://github.com/csdongxian/skip-connections-matter
 
+    Args:
+        layer (int | str): Default layer when it's not provided in :attr:`name`.
+            Defaults to ``''``.
+
     Attributes:
-        adv_train (str | None): choose from ``[None, 'pgd', 'free', 'trades']``.
+        pgd (trojanvision.attacks.PGD):
+            PGD attacker using eval settings without early stop.
+            It's only constructed when :attr:`adv_train` is not ``None``.
+        adv_train (str | None): Adversarial training strategy.
+            Choose from ``[None, 'pgd', 'free', 'trades']``.
+            Defaults to ``None``.
+
+            Note:
+                If ``adv_train is not None and suffix is None``,
+                set ``suffix = f'_at-{adv_train}'``.
         adv_train_random_init (bool): Whether to random initialize adversarial noise
             using normal distribution with :attr:`adv_train_eps`.
             Otherwise, attack starts from the benign inputs.
@@ -147,7 +178,7 @@ class ImageModel(Model):
         """
         super().add_argument(group)
         group.add_argument('--adv_train', choices=[None, 'pgd', 'free', 'trades'],
-                           help='adversarial training.')
+                           help='adversarial training (default: None)')
         group.add_argument('--adv_train_random_init', action='store_true')
         group.add_argument('--adv_train_iter', type=int,
                            help='adversarial training PGD iteration (default: 7).')
@@ -169,7 +200,7 @@ class ImageModel(Model):
                            help='sgm gamma (default: 1.0)')
         return group
 
-    def __init__(self, name: str = 'imagemodel', layer: Union[int, str] = None,
+    def __init__(self, name: str = 'imagemodel', layer: Union[int, str] = '',
                  model: Union[type[_ImageModel], _ImageModel] = _ImageModel,
                  dataset: ImageSet = None, data_shape: list[int] = None,
                  adv_train: str = None, adv_train_random_init: bool = False, adv_train_eval_random_init: bool = None,
@@ -184,7 +215,7 @@ class ImageModel(Model):
         if 'num_classes' not in kwargs.keys() and dataset is None:
             kwargs['num_classes'] = 1000
         if adv_train is not None and suffix is None:
-            suffix = '_adv_train'
+            suffix = f'_at-{adv_train}'
         super().__init__(name=name, model=model, dataset=dataset, data_shape=data_shape,
                          norm_par=norm_par, suffix=suffix, **kwargs)
         assert norm_layer in ['bn', 'gn']
@@ -246,17 +277,38 @@ class ImageModel(Model):
         self.dataset: ImageSet
         self.sgm_remove: list[RemovableHandle]
 
-    def trades_loss_fn(self, _input: torch.Tensor, org_prob: torch.Tensor, **kwargs):
-        return -criterion_kl(log_softmax(self(_input)), org_prob)
+    def trades_loss_fn(self, _input: torch.Tensor, org_prob: torch.Tensor, **kwargs) -> torch.Tensor:
+        return -F.kl_div(self(_input, **kwargs).log_softmax(1), org_prob,
+                         reduction='batchmean')
 
     @classmethod
-    def get_name(cls, name: str, layer: Union[int, str] = None) -> str:
+    def get_name(cls, name: str, layer: Union[int, str] = '') -> str:
+        r"""A useful function to combine :attr:`name` and :attr:`layer`.
+
+        Note:
+            * If there is already layer claimed in :attr:`name`,
+              :attr:`layer` will be ignored.
+            * You may override this method for concrete model class
+              on demand.
+
+        Args:
+            name (str): Model name string.
+            layer (int | str): Model layer. Defaults to ``''``.
+
+        :Example:
+            >>> from trojanvision.models import ImageModel
+            >>>
+            >>> ImageModel.get_name('vgg_comp', layer=13)
+            'vgg13_comp'
+            >>> ImageModel.get_name('vgg16_comp', layer=13)
+            'vgg16_comp'
+        """
         full_list = name.split('_')
         partial_name = full_list[0]
         re_list = re.findall(r'\d+|\D+', partial_name)
         if len(re_list) > 1:
             layer = re_list[1]
-        elif layer is not None:
+        else:
             partial_name += str(layer)
         full_list[0] = partial_name
         return '_'.join(full_list)
@@ -298,7 +350,7 @@ class ImageModel(Model):
                 import os
                 import torchvision.transforms as transforms
                 import PIL.Image as Image
-                from trojanzoo.utils.tensor import save_tensor_as_img
+                from trojanzoo.utils.tensor import save_as_img
                 from trojanvision.utils import superimpose
 
                 env = trojanvision.environ.create(device='cpu')
@@ -330,11 +382,11 @@ class ImageModel(Model):
                 grad_cam_impose = grad_cam_impose.div(grad_cam_impose.max())
                 saliency_map_impose = saliency_map_impose.div(saliency_map_impose.max())
 
-                save_tensor_as_img('./center_cropped.png', _input)
-                save_tensor_as_img('./grad_cam.png', grad_cam)
-                save_tensor_as_img('./saliency_map.png', saliency_map)
-                save_tensor_as_img('./grad_cam_impose.png', grad_cam_impose)
-                save_tensor_as_img('./saliency_map_impose.png', saliency_map_impose)
+                save_as_img('./center_cropped.png', _input)
+                save_as_img('./grad_cam.png', grad_cam)
+                save_as_img('./saliency_map.png', saliency_map)
+                save_as_img('./grad_cam_impose.png', grad_cam_impose)
+                save_as_img('./saliency_map_impose.png', saliency_map_impose)
 
             ``label=386  conf=77.74%``
 
@@ -396,7 +448,17 @@ class ImageModel(Model):
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  adv_train: bool = False,
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        # In training process, `adv_train` args will not be passed to `get_data`. So it's always `False`.
+        r"""
+        Args:
+            data (tuple[torch.Tensor, torch.Tensor]):
+                Tuple of ``(input, label)``.
+            adv_train (bool): Whether to Defaults to ``False``.
+            **kwargs: Keyword arguments passed to
+                :meth:`trojanzoo.models.Model.get_data()`.
+        """
+        # In training process, `adv_train` args will not be passed to `get_data`.
+        # It's passed to `_validate`.
+        # So it's always `False`.
         _input, _label = super().get_data(data, **kwargs)
         if adv_train:
             assert self.pgd is not None
@@ -404,8 +466,9 @@ class ImageModel(Model):
             return adv_x, _label
         return _input, _label
 
-    def _validate(self, adv_train: bool = None, **kwargs) -> tuple[float, float]:
-        adv_train = adv_train if adv_train is not None else bool(self.adv_train)
+    def _validate(self, adv_train: Union[bool, str] = None, **kwargs) -> tuple[float, float]:
+        r""""""
+        adv_train = bool(adv_train) if adv_train is not None else bool(self.adv_train)
         if not adv_train:
             return super()._validate(**kwargs)
         _, clean_acc = super()._validate(print_prefix='Validate Clean', main_tag='valid clean',
@@ -505,10 +568,11 @@ class ImageModel(Model):
                        verbose=verbose, indent=indent, **kwargs)
 
     def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor,
-                 loss_fn: Callable[..., torch.Tensor] = None, adv_train: str = None) -> torch.Tensor:
+                 loss_fn: Callable[..., torch.Tensor] = None,
+                 adv_train: str = None) -> torch.Tensor:
         adv_train = adv_train if adv_train is not None else self.adv_train
         loss_fn = loss_fn if callable(loss_fn) else self.loss
-        if adv_train == 'trades':
+        if adv_train == 'trades':   # TODO: python 3.10 match
             noise = 1e-3 * torch.randn_like(_input)
             org_prob = self.get_prob(_input)
             adv_x, _ = self.pgd.optimize(_input=_input, noise=noise, target=_label,
@@ -520,7 +584,7 @@ class ImageModel(Model):
             adv_x = _input + (adv_x - _input).detach()
             return loss_fn(_input, _label) - self.adv_train_trades_beta * \
                 self.trades_loss_fn(_input=adv_x, org_prob=org_prob)
-        else:
+        elif adv_train == 'pgd':
             adv_x, _ = self.pgd.optimize(_input=_input, target=_label,
                                          iteration=self.adv_train_iter,
                                          pgd_alpha=self.adv_train_alpha,
@@ -528,3 +592,5 @@ class ImageModel(Model):
                                          random_init=self.adv_train_random_init)
             adv_x = _input + (adv_x - _input).detach()
             return loss_fn(adv_x, _label)
+        else:
+            raise NotImplementedError(adv_train)

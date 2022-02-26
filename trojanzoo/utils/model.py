@@ -14,8 +14,8 @@ from typing import Iterator
 __all__ = ['get_all_layer', 'get_layer', 'get_layer_name',
            'summary', 'activate_params', 'accuracy', 'generate_target']
 
-filter_tuple: tuple[nn.Module] = (transforms.Normalize,
-                                  nn.Dropout, nn.BatchNorm2d,
+filter_tuple: tuple[nn.Module] = (transforms.Normalize, nn.Dropout,
+                                  nn.BatchNorm2d, nn.GroupNorm,
                                   nn.ReLU, nn.Sigmoid)
 
 
@@ -397,8 +397,7 @@ def summary(module: nn.Module, depth: int = 0, verbose: bool = True,
     Note:
         You could use :func:`get_all_layer` with ``verbose=True`` to see the output tensor shape for each layer.
     """  # noqa: E501
-    tree_length = tree_length if tree_length is not None else indent_atom * \
-        (depth + 1)
+    tree_length = tree_length or indent_atom * (depth + 1)
     if depth > 0:
         for name, child in module.named_children():
             _str = f'{ansi["blue_light"]}{name}{ansi["reset"]}'
@@ -407,8 +406,10 @@ def summary(module: nn.Module, depth: int = 0, verbose: bool = True,
                                   len(ansi['blue_light']) + len(ansi['reset']))
                 _str += str(child).split('\n')[0].removesuffix('(')
             prints(_str, indent=indent)
-            summary(child, depth=depth - 1, indent=indent + indent_atom,
-                    verbose=verbose, tree_length=tree_length)
+            summary(child, depth=depth - 1, verbose=verbose,
+                    indent=indent + indent_atom,
+                    tree_length=tree_length,
+                    indent_atom=indent_atom)
 
 
 def activate_params(module: nn.Module, params: Iterator[nn.Parameter] = []):

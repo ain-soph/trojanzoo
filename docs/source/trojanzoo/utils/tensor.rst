@@ -14,8 +14,7 @@ tensor
 .. autofunction:: byte2float
 .. autofunction:: float2byte
 .. autofunction:: tensor_to_img
-.. autofunction:: save_tensor_as_img
-.. autofunction:: save_numpy_as_img
+.. autofunction:: save_as_img
 .. autofunction:: read_img_as_tensor
 .. autofunction:: repeat_to_batch
 .. autofunction:: add_noise

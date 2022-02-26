@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+r"""It is equivalent to :ref:`trojanzoo.trainer`.
+
+Note:
+    The only difference is that it uses ``trojanvision.configs.config``
+    as the default parameter passed to :func:`trojanzoo.trainer.create()`.
+"""
+
 from trojanvision.configs import config
 from trojanzoo.trainer import Trainer
 import trojanzoo.trainer

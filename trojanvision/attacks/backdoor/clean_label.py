@@ -5,7 +5,7 @@ from trojanvision.utils.model import weight_init
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
 from trojanvision.optim import PGDoptimizer
 from trojanvision.environ import env
-from trojanzoo.utils.data import TensorListDataset, dataset_to_list
+from trojanzoo.utils.data import TensorListDataset, dataset_to_tensor, sample_batch
 
 import torch
 import torch.nn as nn
@@ -107,8 +107,8 @@ class CleanLabel(BadNet):
     def attack(self, optimizer: torch.optim.Optimizer, lr_scheduler: torch.optim.lr_scheduler._LRScheduler, **kwargs):
 
         target_class_set = self.dataset.get_dataset('train', class_list=[self.target_class])
-        target_imgs_list, _ = dataset_to_list(target_class_set)
-        target_imgs = torch.stack(target_imgs_list[:self.poison_num]).to(env['device'])
+        target_imgs, _ = sample_batch(target_class_set, batch_size=self.poison_num)
+        target_imgs = target_imgs.to(env['device'])
 
         full_set = self.dataset.get_dataset('train')
         poison_set: TensorListDataset = None    # TODO
@@ -135,7 +135,7 @@ class CleanLabel(BadNet):
                 source_class_dataset = self.dataset.get_dataset(mode='train', class_list=[source_class])
                 sample_source_class_dataset, _ = self.dataset.split_dataset(
                     source_class_dataset, self.poison_num)
-                source_imgs = torch.stack(dataset_to_list(sample_source_class_dataset)[0]).to(device=env['device'])
+                source_imgs = dataset_to_tensor(sample_source_class_dataset)[0].to(device=env['device'])
 
                 g_path = f'{self.folder_path}gan_dim{self.noise_dim}_class{source_class}_g.pth'
                 d_path = f'{self.folder_path}gan_dim{self.noise_dim}_class{source_class}_d.pth'
@@ -160,13 +160,13 @@ class CleanLabel(BadNet):
                     source_encode = self.wgan.get_encode_value(source_chunk).detach()
                     target_encode = self.wgan.get_encode_value(target_chunk).detach()
                     # noise = torch.randn_like(source_encode)
-                    # from trojanzoo.utils.tensor import save_tensor_as_img
+                    # from trojanzoo.utils.tensor import save_as_img
                     # source_img = self.wgan.G(source_encode)
                     # target_img = self.wgan.G(target_encode)
                     # for i in range(len(source_img)):
-                    #     save_tensor_as_img(f'./imgs/source_{i}.png', source_img[i])
+                    #     save_as_img(f'./imgs/source_{i}.png', source_img[i])
                     # for i in range(len(target_img)):
-                    #     save_tensor_as_img(f'./imgs/target_{i}.png', target_img[i])
+                    #     save_as_img(f'./imgs/target_{i}.png', target_img[i])
                     # exit()
                     interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                     poison_imgs = self.wgan.G(interpolation_encode).detach()

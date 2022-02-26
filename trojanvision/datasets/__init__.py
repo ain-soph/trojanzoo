@@ -66,7 +66,7 @@ def create(dataset_name: str = None, dataset: str = None,
         class_dict (dict[str, type[ImageSet]]):
             Map from dataset name to dataset class.
             Defaults to ``trojanvision.datasets.class_dict``.
-        **kwargs: The keyword arguments
+        **kwargs: Keyword arguments
             passed to dataset init method.
 
     Returns:

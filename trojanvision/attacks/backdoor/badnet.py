@@ -5,7 +5,7 @@ from trojanvision.models.imagemodel import ImageModel
 from trojanvision.marks import Watermark
 from trojanzoo import to_list
 from trojanzoo.attacks import Attack
-from trojanzoo.utils.data import TensorListDataset, dataset_to_list
+from trojanzoo.utils.data import TensorListDataset, dataset_to_tensor
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
 
@@ -98,8 +98,8 @@ class BadNet(Attack):
         clean_dataset = self.dataset.loader['train'].dataset
         poison_num = poison_num if poison_num is None else self.poison_ratio * len(clean_dataset)
         poison_candidate, _ = ImageSet.split_dataset(clean_dataset, length=round(poison_num))
-        _input, _label = dataset_to_list(poison_candidate)
-        _input = torch.stack(_input)
+        _input, _label = dataset_to_tensor(poison_candidate)
+        _label = _label.tolist()
 
         if poison_label:
             _label = [self.target_class] * len(_label)
@@ -179,7 +179,9 @@ class BadNet(Attack):
     def validate_fn(self,
                     get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                     loss_fn: Callable[..., torch.Tensor] = None,
-                    main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
+                    main_tag: str = 'valid', indent: int = 0,
+                    threshold: float = 5.0,
+                    **kwargs) -> tuple[float, float]:
         _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                             get_data_fn=None, indent=indent, **kwargs)
         _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
@@ -190,7 +192,7 @@ class BadNet(Attack):
                              indent=indent, **kwargs)
         prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
         prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
-        if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
+        if self.clean_acc - clean_acc > threshold:  # TODO: better not hardcoded
             target_acc = 0.0
         return clean_acc, target_acc
 

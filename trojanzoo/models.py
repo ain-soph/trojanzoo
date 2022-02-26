@@ -69,7 +69,7 @@ class _Model(nn.Module):
         r"""Define preprocess before feature extractor.
 
         Returns:
-            torch.nn.Module: :any:`torch.nn.Identity`.
+            torch.nn.Identity: Identity module.
         """
         return nn.Identity()
 
@@ -78,7 +78,7 @@ class _Model(nn.Module):
         r"""Define feature extractor.
 
         Returns:
-            torch.nn.Module: :any:`torch.nn.Identity`.
+            torch.nn.Identity: Identity module.
         """
         return nn.Identity()
 
