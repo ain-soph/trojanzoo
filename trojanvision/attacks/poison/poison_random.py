@@ -3,7 +3,7 @@
 from trojanvision.datasets.imageset import ImageSet
 from trojanvision.models.imagemodel import ImageModel
 from trojanzoo.attacks import Attack
-from trojanzoo.utils.data import TensorListDataset, dataset_to_list
+from trojanzoo.utils.data import TensorListDataset, dataset_to_tensor
 
 
 import torch
@@ -55,14 +55,11 @@ class PoisonRandom(Attack):
         subset, otherset = ImageSet.split_dataset(clean_dataset, percent=self.poison_percent)
         if not len(subset):
             return clean_dataset
-        _input, _label = dataset_to_list(subset)
-        _input = torch.stack(_input)
+        _input, _label = dataset_to_tensor(subset)
 
-        _label = torch.tensor(_label, dtype=torch.long)
         _label += torch.randint_like(_label, low=1, high=self.model.num_classes)
         _label %= self.model.num_classes
-        _label = _label.tolist()
-        poison_dataset = TensorListDataset(_input, _label)
+        poison_dataset = TensorListDataset(_input, _label.tolist())
         return torch.utils.data.ConcatDataset([poison_dataset, otherset])
 
     # ---------------------- I/O ----------------------------- #

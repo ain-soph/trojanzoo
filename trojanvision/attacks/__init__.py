@@ -79,7 +79,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
         class_dict (dict[str, type[Attack]]):
             Map from attack name to attack class.
             Defaults to ``trojanvision.attacks.class_dict``.
-        **kwargs: The keyword arguments
+        **kwargs: Keyword arguments
             passed to attack init method.
 
     Returns:

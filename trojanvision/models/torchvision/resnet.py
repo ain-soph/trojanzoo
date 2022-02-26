@@ -157,7 +157,7 @@ class ResNet(ImageModel):
         return new_dict
 
     @classmethod
-    def get_name(cls, name: str, layer: int = None) -> str:
+    def get_name(cls, name: str, layer: int = '') -> str:
         prefix = ''
         if name.startswith('wide_'):
             prefix = 'wide_'

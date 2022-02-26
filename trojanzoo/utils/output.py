@@ -75,7 +75,7 @@ def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
     assert indent >= 0
     new_args = []
     for arg in args:
-        new_args.append(indent_str(arg, indent=indent))
+        new_args.append(indent_str(str(arg), indent=indent))
     if len(new_args):
         new_args[0] = prefix + str(new_args[0])
     print(*new_args, **kwargs)
@@ -95,10 +95,8 @@ def output_iter(_iter: int, iteration: int = None) -> str:
 
 def indent_str(s_: str, indent: int = 0) -> str:
     # modified from torch.nn.modules._addindent
-    if indent > 0:
-        s_ = str(s_).replace('\n', '\n' + (indent * ' '))
-        if s_.endswith('\n' + (indent * ' ')):
-            s_ = s_.removesuffix(indent * ' ')
+    if indent > 0 and s_:
+        s_ = indent * ' ' + str(s_[:-1]).replace('\n', '\n' + indent * ' ') + s_[-1]
     return s_
 
 

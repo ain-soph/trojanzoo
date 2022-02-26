@@ -4,7 +4,7 @@
 
 import trojanvision
 from trojanvision import to_numpy
-from trojanzoo.utils.data import dataset_to_list
+from trojanzoo.utils.data import dataset_to_tensor
 
 import torch
 from sklearn import metrics
@@ -40,12 +40,12 @@ if __name__ == '__main__':
     init_size = 50
     init_eval = 25
 
-    x_train, y_train = dataset_to_list(dataset.get_dataset('train'))
-    x_train, y_train = to_numpy(torch.stack(x_train)), to_numpy(y_train)
+    x_train, y_train = dataset_to_tensor(dataset.get_dataset('train'))
+    x_train, y_train = x_train.numpy(), y_train.numpy()
     t_idx = np.arange(len(x_train))
 
-    x_valid, y_valid = dataset_to_list(dataset.get_dataset('valid'))
-    x_valid, y_valid = to_numpy(torch.stack(x_valid)), to_numpy(y_valid)
+    x_valid, y_valid = dataset_to_tensor(dataset.get_dataset('valid'))
+    x_valid, y_valid = x_valid.numpy(), y_valid.numpy()
     preds = np.amax(softmax(classifier.predict(x_valid), axis=1), axis=1)
     v_idx = np.arange(len(x_valid))[(preds <= 0.99999) & (preds >= 0.999)]
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# https://github.com/google-research/big_transfer/blob/master/bit_pytorch/models.py
+
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +17,6 @@
 # limitations under the License.
 
 # Lint as: python3
-
-# https://github.com/google-research/big_transfer/blob/master/bit_pytorch/models.py
 """Bottleneck ResNet v2 with GroupNorm and Weight Standardization."""
 
 from trojanvision.utils.model_archs import StdConv2d

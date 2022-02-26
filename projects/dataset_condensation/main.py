@@ -164,7 +164,7 @@ if __name__ == '__main__':
     if dataset.normalize and dataset.norm_par is not None:
         transform.append(transforms.Normalize(mean=dataset.norm_par['mean'], std=dataset.norm_par['std']))
     train_set = dataset.get_dataset(mode='train', transform=transforms.Compose(transform))
-    # class_list = [torch.stack(dataset_to_list(dataset.get_class_subset(dataset=train_set, class_list=[c]))[0])
+    # class_list = [dataset_to_tensor(dataset.get_class_subset(dataset=train_set, class_list=[c]))[0]
     #               for c in range(model.num_classes)]
     class_loader_list = [dataset.get_dataloader(mode='train', drop_last=True, num_workers=0, pin_memory=False,
                                                 dataset=dataset.get_class_subset(dataset=train_set, class_list=[c]))
@@ -228,9 +228,9 @@ if __name__ == '__main__':
             data_real = next(iter_list[c])
         return model.get_data(data_real)[0][:batch_size]
 
-    # images_all, labels_all = dataset_to_list(train_set)
-    # images_all = torch.stack(images_all).to(env['device'])
-    # labels_all = torch.tensor(labels_all, dtype=torch.long, device=env['device'])
+    # images_all, labels_all = dataset_to_tensor(train_set)
+    # images_all = images_all.to(device=env['device'])
+    # labels_all = labels_all.to(device=env['device'])
     # indices_class = [[] for c in range(dataset.num_classes)]
     # for i, lab in enumerate(labels_all):
     #     indices_class[lab].append(i)

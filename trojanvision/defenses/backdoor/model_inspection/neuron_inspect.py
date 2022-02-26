@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from ..abstract import BackdoorDefense
-from trojanzoo.utils.data import dataset_to_list
+from trojanzoo.utils.data import dataset_to_tensor
 from trojanzoo.utils.metric import normalize_mad
 from trojanzoo.utils.output import output_iter
 
@@ -55,9 +55,7 @@ class NeuronInspect(BackdoorDefense):
         subset, _ = self.dataset.split_dataset(dataset, percent=self.sample_ratio)
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
-        _input, _label = dataset_to_list(subset)
-        _input = torch.stack(_input)
-        _label = torch.tensor(_label)
+        _input, _label = dataset_to_tensor(subset)
         poison_input = self.attack.add_mark(_input)
         newset = TensorDataset(poison_input, _label)
         backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)

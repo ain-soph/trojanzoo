@@ -74,7 +74,6 @@ class IMC(TrojanNN):
                 loss.backward(inputs=[atanh_mark])
                 optimizer.step()
                 optimizer.zero_grad()
-                self.mark.mark.detach_()
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
                 losses.update(loss.item(), n=len(_label))
         atanh_mark.requires_grad_(False)

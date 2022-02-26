@@ -2,7 +2,7 @@
 
 import trojanvision
 from trojanvision import to_numpy
-from trojanzoo.utils.data import dataset_to_list
+from trojanzoo.utils.data import dataset_to_tensor
 
 import torch
 import torch.nn as nn
@@ -41,8 +41,8 @@ if __name__ == '__main__':
         input_shape=dataset.data_shape,
         nb_classes=model.num_classes,
     )
-    x_train, y_train = dataset_to_list(dataset.get_dataset('train'))
-    x_train, y_train = to_numpy(torch.stack(x_train)), to_numpy(y_train)
+    x_train, y_train = dataset_to_tensor(dataset.get_dataset('train'))
+    x_train, y_train = x_train.numpy(), y_train.numpy()
 
     import art.attacks.extraction  # type:ignore
     # for name in ['CopycatCNN', 'KnockoffNets']:

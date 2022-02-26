@@ -38,7 +38,7 @@ class NeuralCleanse(ModelInspection):
         if self.cost == 0 and acc >= self.attack_succ_threshold:
             self.cost_set_counter += 1
             if self.cost_set_counter >= self.patience:
-                self.cost = self.init_cost
+                self.cost = self.cost_init
                 self.cost_up_counter = 0
                 self.cost_down_counter = 0
                 self.cost_up_flag = False

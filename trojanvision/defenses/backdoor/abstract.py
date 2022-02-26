@@ -25,6 +25,7 @@ from trojanvision.datasets import ImageSet
 from trojanvision.models import ImageModel
 from trojanvision.attacks.backdoor import BadNet
 import argparse
+from collections.abc import Iterable
 if TYPE_CHECKING:
     import torch.utils.data    # TODO: python 3.10
 
@@ -46,7 +47,6 @@ class BackdoorDefense(Defense):
         self.model: ImageModel
         self.attack: BadNet  # for linting purpose
         self.original: bool = original
-        self.target_class = self.attack.target_class
 
     @abstractmethod
     def detect(self, **kwargs):
@@ -152,8 +152,8 @@ class TrainingFiltering(BackdoorDefense):
                                                     batch_size=clean_num)
             poison_input, poison_label = sample_batch(self.attack.poison_dataset,
                                                       batch_size=poison_num)
-            clean_dataset = TensorListDataset(torch.stack(clean_input), clean_label)
-            poison_dataset = TensorListDataset(torch.stack(poison_input), poison_label)
+            clean_dataset = TensorListDataset(clean_input, clean_label.tolist())
+            poison_dataset = TensorListDataset(poison_input, poison_label.tolist())
         return clean_dataset, poison_dataset
 
     def detect(self, **kwargs):
@@ -190,17 +190,17 @@ class ModelInspection(BackdoorDefense):
 
     def __init__(self, defense_remask_epoch: int = 10,
                  defense_remask_lr: float = 0.1,
-                 init_cost: float = 1e-3, **kwargs):
+                 cost: float = 1e-3, **kwargs):
         super().__init__(**kwargs)
         self.param_list['model_inspection'] = ['defense_remask_epoch',
                                                'defense_remask_lr',
-                                               'init_cost']
+                                               'cost']
 
         self.defense_remask_epoch = defense_remask_epoch
         self.defense_remask_lr = defense_remask_lr
-        self.init_cost = init_cost
+        self.cost_init = cost
 
-        self.cost = init_cost
+        self.cost = cost
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
@@ -220,7 +220,6 @@ class ModelInspection(BackdoorDefense):
                          'mark_width_offset': 0,
                          'mark_random_pos': False,
                          }
-        self.real_mask = self.attack.mark.get_mask()
 
         for k, v in self.new_dict.items():
             setattr(self.attack.mark, k, v)
@@ -241,14 +240,14 @@ class ModelInspection(BackdoorDefense):
                                    select_num=select_num)
             print(f'Jaccard index: {overlap:.3f}')
 
-    def get_mark_loss_list(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_mark_loss_list(self, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         mark_list, loss_list = [], []
         # todo: parallel to avoid for loop
         file_path = os.path.normpath(os.path.join(
-            self.folder_path, self.get_filename(target_class=self.target_class) + '.npz'))
+            self.folder_path, self.get_filename() + '.npz'))
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, loss = self.optimize_mark(label)
+            mark, loss = self.optimize_mark(label, **kwargs)
             mark_list.append(mark)
             loss_list.append(loss)
             if not self.mark_random_pos:
@@ -265,15 +264,19 @@ class ModelInspection(BackdoorDefense):
         return mark_list, loss_list
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor,
-             target: int, trigger_output: torch.Tensor = None) -> torch.Tensor:
+             target: int, trigger_output: torch.Tensor = None,
+             **kwargs) -> torch.Tensor:
         if trigger_output is None:
-            trigger_output = self.model(self.attack.add_mark(_input))
+            trigger_output = self.model(self.attack.add_mark(_input), **kwargs)
         return self.model.criterion(trigger_output, target * torch.ones_like(_label))
 
-    def optimize_mark(self, label: int) -> tuple[torch.Tensor, float]:
+    def optimize_mark(self, label: int,
+                      loader: Iterable = None,
+                      **kwargs) -> tuple[torch.Tensor, float]:
         r"""
         Args:
             label (int): The class label to optimize.
+            **kwargs: Keyword arguments passed to :meth:`loss()`.
 
         Returns:
             (torch.Tensor, torch.Tensor):
@@ -281,8 +284,9 @@ class ModelInspection(BackdoorDefense):
                 and loss tensor.
         """
         atanh_mark = torch.randn_like(self.attack.mark.mark, requires_grad=True)
-        optimizer = optim.Adam([atanh_mark], lr=self.defense_remask_lr, betas=(0.5, 0.9))
+        optimizer = optim.Adam([atanh_mark], lr=self.defense_remask_lr)  # , betas=(0.5, 0.9)
         optimizer.zero_grad()
+        loader = loader or self.dataset.loader['train']
 
         # best optimization results
         norm_best: float = float('inf')
@@ -303,9 +307,6 @@ class ModelInspection(BackdoorDefense):
             norm.reset()
             acc.reset()
             epoch_start = time.perf_counter()
-            loader = self.dataset.loader['train']
-            if env['tqdm']:
-                loader = tqdm(loader, leave=False)
             for data in loader:
                 _input, _label = self.model.get_data(data)
                 trigger_input = self.attack.add_mark(_input)
@@ -315,7 +316,8 @@ class ModelInspection(BackdoorDefense):
                 batch_acc = trigger_label.eq(trigger_output.argmax(1)).float().mean()
                 batch_entropy = self.loss(_input, _label,
                                           target=label,
-                                          trigger_output=trigger_output)
+                                          trigger_output=trigger_output,
+                                          **kwargs)
                 batch_norm: torch.Tensor = self.attack.mark.mark[-1].norm(p=1)
                 batch_loss = batch_entropy + self.cost * batch_norm
 
@@ -346,11 +348,7 @@ class ModelInspection(BackdoorDefense):
 
             # check to save best mask or not
             if norm.avg < norm_best:
-                mark_best = self.attack.mark.mark.detach()
-                norm_best = norm.avg
-                entropy_best = entropy.avg
-            if mark_best is None:
-                mark_best = self.attack.mark.mark.detach()
+                mark_best = self.attack.mark.mark.detach().clone()
                 norm_best = norm.avg
                 entropy_best = entropy.avg
 
@@ -375,5 +373,5 @@ class ModelInspection(BackdoorDefense):
         _dict = np.load(path)
         for k, v in self.new_dict.items():
             setattr(self.attack.mark, k, v)
-        self.attack.mark.mark = to_tensor(_dict['mark_list'][self.target_class])
+        self.attack.mark.mark = to_tensor(_dict['mark_list'][self.attack.target_class])
         print('defense results loaded from: ', path)
