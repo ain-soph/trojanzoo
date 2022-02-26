@@ -399,8 +399,24 @@ class Model(BasicObject):
         else:
             return self.model(_input, **kwargs)
 
+    def get_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""Get the final layer features of :attr:`_input` (before pooling),
+        which is the output of :attr:`self.features`.
+        Call :meth:`_Model.get_fm()`.
+
+        Args:
+            _input (torch.Tensor): The batched input tensor
+                passed to :meth:`_Model.get_fm()`.
+            **kwargs: Keyword arguments passed to :meth:`_Model.get_fm()`.
+
+        Returns:
+            torch.Tensor: The feature tensor with shape ``(N, C, H, W)``.
+        """
+        return self._model.get_fm(_input, **kwargs)
+
     def get_final_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
-        r"""Get the final layer features of :attr:`_input` (after pooling and flatten).
+        r"""Get the final features maps of :attr:`_input` (after pooling and flatten),
+        which is the input of :attr:`self.classifier`.
         Call :meth:`_Model.get_final_fm()`.
 
         Args:

@@ -12,7 +12,7 @@ import argparse
 
 
 class FinePruning(BackdoorDefense):
-    """
+    r"""
     Fine Pruning Defense is described in the paper `Fine Pruning`_ by KangLiu.
     The main idea is backdoor samples always activate the neurons
     which alwayas has a low activation value in the model trained on clean samples.
@@ -56,25 +56,31 @@ class FinePruning(BackdoorDefense):
 
     def __init__(self, prune_ratio: float = 0.95, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['fine_pruning'] = ['prune_ratio', 'prune_num', 'prune_layer']
+        self.param_list['fine_pruning'] = ['prune_ratio', 'prune_layer', 'prune_num']
         self.prune_ratio = prune_ratio
 
-        module_list = list(self.model.named_modules())
-        for name, module in reversed(module_list):
+        for name, module in reversed(list(self.model.named_modules())):
             if isinstance(module, nn.Conv2d):
+                last_conv = module
                 self.prune_layer: str = name
-                self.conv_module: nn.Conv2d = prune.identity(module, 'weight')
                 break
-        length = self.conv_module.out_channels
-        self.prune_num: int = int(length * self.prune_ratio)
+        else:
+            raise Exception('There is no Conv2d in model.')
+        length = last_conv.out_channels
+        self.prune_num = int(length * self.prune_ratio)
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
         self.prune(**kwargs)
 
     def prune(self, **kwargs):
-        length = int(self.conv_module.out_channels)
-        mask: torch.Tensor = self.conv_module.weight_mask
+        for name, module in reversed(list(self.model.named_modules())):
+            if isinstance(module, nn.Conv2d):
+                self.last_conv: nn.Conv2d = prune.identity(module, 'weight')
+                break
+        length = self.last_conv.out_channels
+
+        mask: torch.Tensor = self.last_conv.weight_mask
         self.prune_step(mask, prune_num=max(self.prune_num - 10, 0))
         self.attack.validate_fn()
 
@@ -93,10 +99,10 @@ class FinePruning(BackdoorDefense):
             feats_list = []
             for data in self.dataset.loader['valid']:
                 _input, _label = self.model.get_data(data)
-                _feats = self.model.get_final_fm(_input)
+                _feats = self.model.get_fm(_input).flatten(2).mean(dim=-1)
                 feats_list.append(_feats)
             feats_list = torch.cat(feats_list).mean(dim=0)
-            idx_rank = to_list(feats_list.argsort())
+            idx_rank = feats_list.argsort()
         counter = 0
         for idx in idx_rank:
             if mask[idx].norm(p=1) > 1e-6:

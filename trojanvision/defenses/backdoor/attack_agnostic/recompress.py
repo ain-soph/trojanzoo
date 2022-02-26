@@ -8,7 +8,7 @@ import argparse
 
 
 class Recompress(BackdoorDefense):
-    name: str = 'image_transform'
+    name: str = 'recompress'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
