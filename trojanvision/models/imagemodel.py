@@ -45,16 +45,17 @@ def replace_bn_to_gn(model: nn.Module) -> None:
 
 def set_first_layer_channel(model: nn.Module,
                             channel: int = 3,
-                            **kwargs) -> None:
+                            **kwargs):
     r"""Replace the input channel of the first
     :any:`torch.nn.Conv2d` or :any:`torch.nn.Linear`.
     """
     for name, module in model.named_children():
         if len(list(module.children())):
             set_first_layer_channel(module, channel=channel)
+            break
         elif isinstance(module, nn.Conv2d):
             if module.in_channels == channel:
-                return
+                break
             keys = ['out_channels', 'kernel_size', 'bias', 'stride', 'padding']
             args = {key: getattr(module, key) for key in keys}
             args['device'] = module.weight.device
@@ -63,7 +64,7 @@ def set_first_layer_channel(model: nn.Module,
             setattr(model, name, new_conv)
         elif isinstance(module, nn.Linear):
             if module.in_features == channel:
-                return
+                break
             keys = ['out_features', 'bias']
             args = {key: getattr(module, key) for key in keys}
             args['device'] = module.weight.device
