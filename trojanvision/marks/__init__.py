@@ -208,7 +208,7 @@ class Watermark(BasicObject):
         group.add_argument('--mark_background_color',
                            choices=['auto', 'black', 'white'],
                            help='background color in watermark image. '
-                           'It\' ignored when alpha channel in watermark image. '
+                           'It\'s ignored when alpha channel is in watermark image. '
                            '(default: "auto")')
         group.add_argument('--mark_path', help='watermark path (image or npy file), '
                            'default: "square_white.png")')

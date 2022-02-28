@@ -142,7 +142,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
             grad = grad.mean(dim=0)
         noise[current_idx] = (noise[current_idx] - pgd_alpha * torch.sign(grad))
         noise[current_idx] = self.projector(noise[current_idx], pgd_eps, norm=self.norm)
-        adv_input[current_idx] = add_noise_fn(x=org_input[current_idx], noise=noise[current_idx], batch=self.universal,
+        adv_input[current_idx] = add_noise_fn(x=org_input[current_idx], noise=noise[current_idx],
+                                              universal=self.universal,
                                               clip_min=clip_min, clip_max=clip_max)
         noise[current_idx] = self.valid_noise(adv_input[current_idx], org_input[current_idx])
 
@@ -152,7 +153,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                          clip_min: Union[float, torch.Tensor] = None,
                          clip_max: Union[float, torch.Tensor] = None,
                          **kwargs) -> torch.Tensor:
-        adv_input = add_noise_fn(x=adv_input, noise=noise, batch=self.universal,
+        adv_input = add_noise_fn(x=adv_input, noise=noise, universal=self.universal,
                                  clip_min=clip_min, clip_max=clip_max)
         noise.copy_(self.valid_noise(adv_input, org_input))
         return adv_input

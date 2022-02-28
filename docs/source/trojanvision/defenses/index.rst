@@ -14,3 +14,15 @@ defenses
 
 .. autofunction:: add_argument
 .. autofunction:: create
+
+.. autoclass:: BackdoorDefense
+    :members:
+
+.. autoclass:: InputFiltering
+    :members:
+
+.. autoclass:: ModelInspection
+    :members:
+
+.. autoclass:: TrainingFiltering
+    :members:

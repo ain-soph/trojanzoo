@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import TrainingFiltering
+from ...abstract import TrainingFiltering
 from trojanvision.environ import env
 
 import torch

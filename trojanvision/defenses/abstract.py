@@ -291,7 +291,7 @@ class ModelInspection(BackdoorDefense):
         # best optimization results
         norm_best: float = float('inf')
         mark_best: torch.Tensor = None
-        entropy_best: float = None
+        loss_best: float = None
 
         self.before_loop_fn()
 
@@ -300,7 +300,6 @@ class ModelInspection(BackdoorDefense):
         norm = AverageMeter('Norm', ':.4e')
         acc = AverageMeter('Acc', ':6.2f')
 
-        self.attack.mark.mark = tanh_func(atanh_mark)    # (c+1, h, w)
         for _epoch in range(self.defense_remask_epoch):
             losses.reset()
             entropy.reset()
@@ -308,6 +307,7 @@ class ModelInspection(BackdoorDefense):
             acc.reset()
             epoch_start = time.perf_counter()
             for data in loader:
+                self.attack.mark.mark = tanh_func(atanh_mark)    # (c+1, h, w)
                 _input, _label = self.model.get_data(data)
                 trigger_input = self.attack.add_mark(_input)
                 trigger_label = label * torch.ones_like(_label)
@@ -330,7 +330,7 @@ class ModelInspection(BackdoorDefense):
                 batch_loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                self.attack.mark.mark = tanh_func(atanh_mark)    # (c+1, h, w)
+            self.attack.mark.mark = tanh_func(atanh_mark)    # (c+1, h, w)
 
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
@@ -350,16 +350,16 @@ class ModelInspection(BackdoorDefense):
             if norm.avg < norm_best:
                 mark_best = self.attack.mark.mark.detach().clone()
                 norm_best = norm.avg
-                entropy_best = entropy.avg
+                loss_best = losses.avg
 
-            if self.check_early_stop(loss=losses.avg, acc=acc.avg, norm=norm.avg,
-                                     entropy=entropy.avg):
+            if self.check_early_stop(loss=losses.avg, acc=acc.avg,
+                                     norm=norm.avg, entropy=entropy.avg):
                 print('early stop')
                 break
         atanh_mark.requires_grad_(False)
         self.attack.mark.mark = mark_best
         self.attack.validate_fn()
-        return mark_best, entropy_best
+        return mark_best, loss_best
 
     def before_loop_fn(self, *args, **kwargs):
         pass

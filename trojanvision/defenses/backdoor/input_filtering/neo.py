@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import InputFiltering
+from ...abstract import InputFiltering
 from trojanzoo.utils.logger import AverageMeter, SmoothedValue
 from trojanzoo.utils.metric import mask_jaccard
 from trojanzoo.utils.tensor import to_tensor, to_numpy

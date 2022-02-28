@@ -310,7 +310,7 @@ def repeat_to_batch(x: torch.Tensor, batch_size: int = 1) -> torch.Tensor:
 
 
 def add_noise(x: torch.Tensor, noise: torch.Tensor = None,
-              mean: float = 0.0, std: float = 1.0, batch: bool = False,
+              mean: float = 0.0, std: float = 1.0, universal: bool = False,
               clip_min: Union[float, torch.Tensor] = 0.0,
               clip_max: Union[float, torch.Tensor] = 1.0) -> torch.Tensor:
     r"""Add noise to a batched input tensor.
@@ -326,7 +326,7 @@ def add_noise(x: torch.Tensor, noise: torch.Tensor = None,
             Defaults to ``0.0``.
         std (float): The std of generated Gaussian noise.
             Defaults to ``1.0``.
-        batch (bool): Whether the noise is universal
+        universal (bool): Whether the noise is universal
             for all samples in the batch.
             Defaults to ``False``.
         clip_min (float | torch.Tensor):
@@ -339,16 +339,16 @@ def add_noise(x: torch.Tensor, noise: torch.Tensor = None,
     Returns:
         torch.Tensor:
             The noisy batched input tensor
-            with shape ``(N, *)`` (``(*)`` when ``batch=True``).
+            with shape ``(N, *)`` (``(*)`` when ``universal=True``).
     """
     if noise is None:
         shape = x.shape
-        if batch:
+        if universal:
             shape = shape[1:]
         noise = torch.normal(mean=mean, std=std,
                              size=shape, device=x.device)
     batch_noise = noise
-    if batch:
+    if universal:
         batch_noise = repeat_to_batch(noise, x.shape[0])
     noisy_input: torch.Tensor = (
         x + batch_noise).clamp(clip_min, clip_max)

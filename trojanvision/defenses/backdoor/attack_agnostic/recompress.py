@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 
 import torch
 import torchvision.transforms.functional as F

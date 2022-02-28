@@ -17,8 +17,8 @@ class Unlearn(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--attack_source', help='attack source, defaults to \'badnet\'')
-        group.add_argument('--mark_source', help='mark source, defaults to \'attack\'')
+        group.add_argument('--attack_source', help='attack source (default: "badnet")')
+        group.add_argument('--mark_source', help='mark source (default: "attack")')
         return group
 
     def __init__(self, mark_source: str = 'attack', attack_source: str = 'badnet', **kwargs):

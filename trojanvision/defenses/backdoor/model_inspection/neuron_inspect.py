@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 from trojanzoo.utils.data import dataset_to_tensor
 from trojanzoo.utils.metric import normalize_mad
 from trojanzoo.utils.output import output_iter

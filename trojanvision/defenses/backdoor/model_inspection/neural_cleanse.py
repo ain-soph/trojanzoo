@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import ModelInspection
+from ...abstract import ModelInspection
 from trojanzoo.utils.output import prints
 
 

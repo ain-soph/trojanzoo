@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from .abstract import BackdoorDefense, InputFiltering, ModelInspection, TrainingFiltering
 from trojanzoo.defenses import Defense
 
 from .adv import *
@@ -16,7 +17,9 @@ from trojanvision.datasets import ImageSet
 from typing import Union
 
 module_list = [adv, backdoor]
-__all__ = ['Defense', 'add_argument', 'create']
+__all__ = ['add_argument', 'create',
+           'Defense', 'BackdoorDefense',
+           'InputFiltering', 'ModelInspection', 'TrainingFiltering']
 class_dict: dict[str, type[Defense]] = {}
 for module in module_list:
     __all__.extend(module.__all__)

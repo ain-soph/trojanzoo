@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import InputFiltering
+from ...abstract import InputFiltering
 from .neo import Neo
 from .strip import Strip
 

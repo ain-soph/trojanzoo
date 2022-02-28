@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 from trojanvision.attacks import PGD
 from trojanvision.environ import env
 from trojanzoo.utils.logger import AverageMeter

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 from trojanvision.environ import env
 from trojanzoo.utils.data import dataset_to_tensor
 
