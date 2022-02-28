@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 from trojanvision.models import MagNet as MagNet_Model
 
 import torch

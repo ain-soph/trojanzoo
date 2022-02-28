@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 from .adv_train import AdvTrain
 from .fine_pruning import FinePruning
 from .magnet import MagNet

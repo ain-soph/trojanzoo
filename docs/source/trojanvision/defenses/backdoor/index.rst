@@ -12,15 +12,3 @@ backdoor
    input_filtering
    model_inspection
    training_filtering
-
-.. autoclass:: BackdoorDefense
-    :members:
-
-.. autoclass:: InputFiltering
-    :members:
-
-.. autoclass:: ModelInspection
-    :members:
-
-.. autoclass:: TrainingFiltering
-    :members:

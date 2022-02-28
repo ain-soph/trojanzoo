@@ -267,7 +267,7 @@ class Model(BasicObject):
                            help='model name '
                            '(default: config[model][default_model])')
         group.add_argument('--suffix',
-                           help='model name suffix (e.g., \'_adv_train\')')
+                           help='model name suffix (e.g., "_adv_train")')
         group.add_argument('--pretrained', action='store_true',
                            help='load local pretrained weights (default: False)')
         group.add_argument('--official', action='store_true',
@@ -379,9 +379,8 @@ class Model(BasicObject):
         Returns:
             torch.Tensor: The logit tensor with shape ``(N, C)``.
         """
-        randomized_smooth = randomized_smooth \
-            if randomized_smooth is not None \
-            else self.randomized_smooth
+        if randomized_smooth is None:
+            randomized_smooth = self.randomized_smooth
         if randomized_smooth:
             rs_sigma = rs_sigma if rs_sigma is not None else self.rs_sigma
             rs_n = rs_n if rs_n is not None else self.rs_n
@@ -400,8 +399,9 @@ class Model(BasicObject):
             return self.model(_input, **kwargs)
 
     def get_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
-        r"""Get the final layer features of :attr:`_input` (before pooling),
-        which is the output of :attr:`self.features`.
+        r"""Get the feature map of :attr:`_input`,
+        which is the output of :attr:`self.features`
+        and input of :attr:`self.pool`.
         Call :meth:`_Model.get_fm()`.
 
         Args:
@@ -410,13 +410,14 @@ class Model(BasicObject):
             **kwargs: Keyword arguments passed to :meth:`_Model.get_fm()`.
 
         Returns:
-            torch.Tensor: The feature tensor with shape ``(N, C, H, W)``.
+            torch.Tensor: The feature tensor with shape ``(N, C', H', W')``.
         """
         return self._model.get_fm(_input, **kwargs)
 
     def get_final_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
-        r"""Get the final features maps of :attr:`_input` (after pooling and flatten),
-        which is the input of :attr:`self.classifier`.
+        r"""Get the final feature map of :attr:`_input`,
+        which is the output of :attr:`self.flatten`
+        and input of :attr:`self.classifier`.
         Call :meth:`_Model.get_final_fm()`.
 
         Args:

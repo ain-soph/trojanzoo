@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import ModelInspection
+from ...abstract import ModelInspection
 from trojanvision.environ import env
 from trojanzoo.utils.data import sample_batch
 from trojanzoo.utils.metric import mask_jaccard
@@ -115,7 +115,8 @@ class ABS(ModelInspection):
         for _dict in reversed(self.neuron_dict[label]):
             mark, loss = super().optimize_mark(label, loader=self.loader, **_dict)
             _dict['mark'] = mark.detach().cpu().clone().numpy()
-            _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data, keep_org=False)
+            _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data,
+                                              keep_org=False, verbose=False)
             norm = float(mark[-1].flatten().norm(p=1))
             str_dict = dict(loss=loss, atk_acc=atk_acc, norm=norm, **_dict)
             if not self.attack.mark.mark_random_pos:

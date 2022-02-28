@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
+from ...abstract import BackdoorDefense
 # from .abs import ABS
 from .deep_inspect import DeepInspect
 from .neural_cleanse import NeuralCleanse

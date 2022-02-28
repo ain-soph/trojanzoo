@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import BackdoorDefense
-from trojanzoo import to_list
+from ...abstract import BackdoorDefense
 from trojanzoo.utils.output import output_iter
 
 import torch
@@ -12,8 +11,7 @@ import argparse
 
 
 class FinePruning(BackdoorDefense):
-    r"""
-    Fine Pruning Defense is described in the paper `Fine Pruning`_ by KangLiu.
+    r"""Fine Pruning Defense is described in the paper `Fine Pruning`_ by KangLiu.
     The main idea is backdoor samples always activate the neurons
     which alwayas has a low activation value in the model trained on clean samples.
 
@@ -99,7 +97,9 @@ class FinePruning(BackdoorDefense):
             feats_list = []
             for data in self.dataset.loader['valid']:
                 _input, _label = self.model.get_data(data)
-                _feats = self.model.get_fm(_input).flatten(2).mean(dim=-1)
+                _feats = self.model.get_fm(_input).abs()
+                if _feats.dim() > 2:
+                    _feats = _feats.flatten(2).mean(2)
                 feats_list.append(_feats)
             feats_list = torch.cat(feats_list).mean(dim=0)
             idx_rank = feats_list.argsort()

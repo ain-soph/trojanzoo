@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from .abstract import BackdoorAttack
 from trojanzoo.attacks import Attack
 
 from .adv import *
@@ -19,7 +20,7 @@ from typing import Union
 
 
 module_list = [adv, backdoor, poison]
-__all__ = ['Attack', 'add_argument', 'create']
+__all__ = ['add_argument', 'create', 'Attack', 'BackdoorAttack']
 class_dict: dict[str, type[Attack]] = {}
 for module in module_list:
     __all__.extend(module.__all__)
@@ -30,7 +31,7 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None, attac
                  class_dict: dict[str, type[Attack]] = class_dict):
     r"""
     | Add attack arguments to argument parser.
-    | For specific arguments implementation, see :meth:`Attack.add_argument()`.
+    | For specific arguments implementation, see :func:`trojanzoo.attacks.Attack.add_argument()`.
 
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.

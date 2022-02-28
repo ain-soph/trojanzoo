@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from ..abstract import ModelInspection
+from ...abstract import ModelInspection
 from trojanvision.environ import env
 from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.output import prints, ansi, output_iter

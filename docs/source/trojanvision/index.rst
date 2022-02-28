@@ -7,7 +7,7 @@ trojanvision
    :glob:
    :maxdepth: 2
 
-   attacks
+   attacks/index
    configs
    datasets/index
    defenses/index
