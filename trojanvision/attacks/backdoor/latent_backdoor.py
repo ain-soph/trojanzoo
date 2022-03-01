@@ -103,6 +103,16 @@ class LatentBackdoor(BackdoorAttack):
         return super().attack(**kwargs)
 
     def sample_data(self) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
+        r"""Sample data from each class. The returned data dict is:
+
+        * ``'other'``: (input, label) from source classes with batch size
+          ``self.class_sample_num * len(source_class)``.
+        * ``'target'``: (input, label) from target class with batch size
+          ``self.class_sample_num``.
+
+        Returns:
+            dict[str, tuple[torch.Tensor, torch.Tensor]]: Data dict.
+        """
         source_class = self.source_class or list(range(self.dataset.num_classes))
         source_class = source_class.copy()
         if self.target_class in source_class:
@@ -122,7 +132,23 @@ class LatentBackdoor(BackdoorAttack):
                 'target': (target_x, target_y)}
         return data
 
-    def get_avg_target_feats(self, target_input: torch.Tensor, target_label: torch.Tensor):
+    def get_avg_target_feats(self, target_input: torch.Tensor,
+                             target_label: torch.Tensor
+                             ) -> torch.Tensor:
+        r"""Get average feature map of :attr:`self.preprocess_layer`
+        using sampled data from :attr:`self.target_class`.
+
+        Args:
+            target_input (torch.Tensor): Input tensor from target class with shape
+                ``(self.class_sample_num, C, H, W)``.
+            target_label (torch.Tensor): Label tensor from target class with shape
+                ``(self.class_sample_num)``.
+
+        Returns:
+            torch.Tensor:
+                Feature map tensor with shape
+                ``(self.class_sample_num, C')``.
+        """
         with torch.no_grad():
             if self.dataset.data_shape[1] > 100:
                 dataset = TensorDataset(target_input, target_label)
@@ -140,9 +166,19 @@ class LatentBackdoor(BackdoorAttack):
                 target_input, _ = self.model.get_data((target_input, target_label))
                 avg_target_feats = self.model.get_layer(
                     target_input, layer_output=self.preprocess_layer).mean(dim=0)
+        if avg_target_feats.dim() > 2:
+            avg_target_feats = avg_target_feats.flatten(2).mean(2)
         return avg_target_feats.detach()
 
     def preprocess_mark(self, other_input: torch.Tensor, other_label: torch.Tensor):
+        r"""Preprocess to optimize watermark using data sampled from source classes.
+
+        Args:
+            other_input (torch.Tensor): Input tensor from source classes with shape
+                ``(self.class_sample_num * len(source_class), C, H, W)``.
+            other_label (torch.Tensor): Label tensor from source classes with shape
+                ``(self.class_sample_num * len(source_class))``.
+        """
         other_set = TensorDataset(other_input, other_label)
         other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
 
@@ -174,4 +210,6 @@ class LatentBackdoor(BackdoorAttack):
 
     def loss_mse(self, poison_input: torch.Tensor) -> torch.Tensor:
         poison_feats = self.model.get_layer(poison_input, layer_output=self.preprocess_layer)
+        if poison_feats.dim() > 2:
+            poison_feats = poison_feats.flatten(2).mean(2)
         return F.mse_loss(poison_feats, self.avg_target_feats)
