@@ -30,6 +30,11 @@ class LatentBackdoor(BackdoorAttack):
       Latent Backdoor preprocesses watermark pixel values to
       minimize feature mse distance (of other classes with trigger attached)
       to average feature map of target class.
+    |
+    | Loss formulas are:
+
+    * ``'preprocess'``: :math:`\mathcal{L}_{MSE}`
+    * ``'retrain'``: :math:`\mathcal{L}_{CE} + \text{self.mse\_weight} * \mathcal{L}_{MSE}`
 
     See Also:
         * paper: `Latent Backdoor Attacks on Deep Neural Networks`_
@@ -105,9 +110,9 @@ class LatentBackdoor(BackdoorAttack):
     def sample_data(self) -> dict[str, tuple[torch.Tensor, torch.Tensor]]:
         r"""Sample data from each class. The returned data dict is:
 
-        * ``'other'``: (input, label) from source classes with batch size
+        * ``'other'``: ``(input, label)`` from source classes with batch size
           ``self.class_sample_num * len(source_class)``.
-        * ``'target'``: (input, label) from target class with batch size
+        * ``'target'``: ``(input, label)`` from target class with batch size
           ``self.class_sample_num``.
 
         Returns:
