@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack imc
+"""  # noqa: E501
+
 from .trojannn import TrojanNN
 from trojanzoo.utils.tensor import tanh_func
 
@@ -11,15 +15,17 @@ from collections.abc import Callable
 
 
 class IMC(TrojanNN):
-    r"""Input Model Co-optimization (IMC) proposed by Ren Pang
-    from Pennsylvania State University in CCS 2020.
-
-    Based on :class:`trojanzoo.attacks.backdoor.TrojanNN`,
-    IMC optimizes the watermark using Adam optimizer during model retraining.
+    r"""
+    | Input Model Co-optimization (IMC) proposed by Ren Pang
+      from Pennsylvania State University in CCS 2020.
+    |
+    | Based on :class:`trojanzoo.attacks.TrojanNN`,
+      IMC optimizes the watermark using Adam optimizer during model retraining.
 
     See Also:
         * paper: `A Tale of Evil Twins\: Adversarial Inputs versus Poisoned Models`_
         * code: TrojanZoo is the official implementation of IMC ^_^
+        * website: https://ain-soph.github.io/trojanzoo/trojanvision/attacks/backdoor.html#trojanvision.attacks.IMC
 
     Args:
         attack_remask_epoch (int): Inner epoch to optimize watermark during each training epoch.
@@ -29,7 +35,7 @@ class IMC(TrojanNN):
 
     .. _A Tale of Evil Twins\: Adversarial Inputs versus Poisoned Models:
         https://arxiv.org/abs/1911.01559
-    """
+    """  # noqa: E501
 
     name: str = 'imc'
 
@@ -57,6 +63,7 @@ class IMC(TrojanNN):
         self.optimize_mark()
 
     def optimize_mark(self, loss_fn: Callable[..., torch.Tensor] = None, **kwargs):
+        r"""Optimize watermark at the beginning of each training epoch."""
         loss_fn = loss_fn or self.model.loss
 
         atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
