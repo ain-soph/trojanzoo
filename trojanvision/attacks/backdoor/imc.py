@@ -19,7 +19,7 @@ class IMC(TrojanNN):
     | Input Model Co-optimization (IMC) proposed by Ren Pang
       from Pennsylvania State University in CCS 2020.
     |
-    | Based on :class:`trojanzoo.attacks.TrojanNN`,
+    | Based on :class:`trojanvision.attacks.TrojanNN`,
       IMC optimizes the watermark using Adam optimizer during model retraining.
 
     See Also:
