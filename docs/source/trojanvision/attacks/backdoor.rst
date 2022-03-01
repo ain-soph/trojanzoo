@@ -13,3 +13,6 @@ backdoor
 
 .. autoclass:: IMC
     :members:
+
+.. autoclass:: LatentBackdoor
+    :members:

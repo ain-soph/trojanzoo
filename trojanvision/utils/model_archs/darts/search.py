@@ -104,13 +104,16 @@ class FeatureExtractor(nn.Module):
         # k = sum(1 for i in range(self._steps) for n in range(2 + i))
         k = 2 * self._steps + ((self._steps - 1) * self._steps) // 2
         num_ops = len(self.primitives)
-        self.register_buffer('alphas_normal', 1e-3 * torch.randn(k, num_ops))
+        if self._layers != 1:
+            self.register_buffer('alphas_normal', 1e-3 * torch.randn(k, num_ops))
         self.register_buffer('alphas_reduce', 1e-3 * torch.randn(k, num_ops))
         self.alphas_normal: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
         self.alphas_reduce: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
         self.softmax = nn.Softmax(dim=-1)
 
     def arch_parameters(self) -> list[torch.Tensor]:
+        if self._layers == 1:
+            return [self.alphas_reduce]
         return [self.alphas_normal, self.alphas_reduce]
 
     def forward(self, input):

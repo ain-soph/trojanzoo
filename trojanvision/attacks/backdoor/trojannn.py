@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --attack trojannn --mark_random_init
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack trojannn
+"""  # noqa: E501
 
 from ..abstract import BackdoorAttack
 
@@ -13,15 +15,18 @@ import argparse
 
 
 class TrojanNN(BackdoorAttack):
-    r"""TrojanNN proposed by Yingqi Liu from Purdue University in NDSS 2018.
-    It inherits :class:`trojanvision.attacks.BackdoorAttack`.
-    Based on :class:`trojanvision.attacks.BadNet`,
-    it further preprocesses watermark pixel values to maximize
-    activations of neurons which are rarely used in normal images.
+    r"""
+    | TrojanNN proposed by Yingqi Liu from Purdue University in NDSS 2018.
+    | It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+    |
+    | Based on :class:`trojanvision.attacks.BadNet`,
+      TrojanNN preprocesses watermark pixel values to maximize
+      activations of well-connected neurons in :attr:`self.preprocess_layer`.
 
     See Also:
         * paper: `Trojaning Attack on Neural Networks`_
         * code: https://github.com/PurduePAML/TrojanNN
+        * website: https://purduepaml.github.io/TrojanNN
 
     Args:
         preprocess_layer (str): The chosen layer to maximize neuron activation.
@@ -32,10 +37,10 @@ class TrojanNN(BackdoorAttack):
             Defaults to ``100.0``.
         neuron_num (int): TrojanNN neuron number to maximize activation.
             Defaults to ``2``.
-        neuron_lr (float): TrojanNN neuron optimization learning rate.
-            Defaults to ``0.1``.
         neuron_epoch (int): TrojanNN neuron optimization epoch.
             Defaults to ``1000``.
+        neuron_lr (float): TrojanNN neuron optimization learning rate.
+            Defaults to ``0.1``.
 
     .. _Trojaning Attack on Neural Networks:
         https://github.com/PurduePAML/TrojanNN/blob/master/trojan_nn.pdf
@@ -53,17 +58,20 @@ class TrojanNN(BackdoorAttack):
                            help='the next layer after preprocess_layer to find neuron index '
                            '(default: "classifier.fc")')
         group.add_argument('--target_value', type=float,
-                           help='trojannn neuron activation target value (default: 100)')
+                           help='trojannn neuron activation target value '
+                           '(default: 100)')
         group.add_argument('--neuron_num', type=int,
                            help='Trojan Net neuron numbers in neuron preprocessing '
                            '(default: 2)')
-        group.add_argument('--neuron_lr', type=float,
-                           help='trojann neuron optimization learning rate (default: 0.1)')
         group.add_argument('--neuron_epoch', type=int,
-                           help='trojann neuron optimization epoch (default: 1000)')
+                           help='trojann neuron optimization epoch '
+                           '(default: 1000)')
+        group.add_argument('--neuron_lr', type=float,
+                           help='trojann neuron optimization learning rate '
+                           '(default: 0.1)')
         return group
 
-    def __init__(self, preprocess_layer: str = 'features', preprocess_next_layer: str = 'classifier.fc',
+    def __init__(self, preprocess_layer: str = 'flatten', preprocess_next_layer: str = 'classifier.fc',
                  target_value: float = 100.0, neuron_num: int = 2,
                  neuron_lr: float = 0.1, neuron_epoch: int = 1000,
                  **kwargs):
@@ -91,8 +99,16 @@ class TrojanNN(BackdoorAttack):
         self.preprocess_mark(neuron_idx=self.neuron_idx)
         super().attack(*args, **kwargs)
 
-    # get the neuron idx for preprocess.
     def get_neuron_idx(self) -> torch.Tensor:
+        r"""Get top :attr:`self.neuron_num` well-connected neurons
+        in :attr:`self.preprocess_layer`.
+
+        It is calculated w.r.t. in_channels of
+        :attr:`self.preprocess_next_layer` weights.
+
+        Returns:
+            torch.Tensor: Neuron index list tensor with shape ``(self.neuron_num)``.
+        """
         weight = self.model.state_dict()[self.preprocess_next_layer + '.weight'].abs()
         if weight.dim() > 2:
             weight = weight.flatten(2).mean(2)
@@ -100,13 +116,31 @@ class TrojanNN(BackdoorAttack):
         return weight.argsort(descending=False)[:self.neuron_num]
 
     def get_neuron_value(self, trigger_input: torch.Tensor, neuron_idx: torch.Tensor) -> float:
-        trigger_feats = self.model.get_layer(trigger_input, layer_output=self.preprocess_layer)[:, neuron_idx].abs()
+        r"""Get average neuron activation value of :attr:`trigger_input` for :attr:`neuron_idx`.
+
+        Args:
+            trigger_input (torch.Tensor): Triggered input tensor with shape ``(N, C, H, W)``.
+            neuron_idx (torch.Tensor): Neuron index list tensor with shape ``(self.neuron_num)``.
+
+        Returns:
+            float: Average neuron activation value.
+        """
+        trigger_feats = self.model.get_layer(
+            trigger_input, layer_output=self.preprocess_layer)[:, neuron_idx].abs()
         if trigger_feats.dim() > 2:
             trigger_feats = trigger_feats.flatten(2).mean(2)
         return trigger_feats.mean().item()
 
     # train the mark to activate the least-used neurons.
-    def preprocess_mark(self, neuron_idx: torch.Tensor, **kwargs):
+    def preprocess_mark(self, neuron_idx: torch.Tensor):
+        r"""Optimize mark to maxmize activation on :attr:`neuron_idx`.
+        It uses :any:`torch.optim.Adam` and
+        :any:`torch.optim.lr_scheduler.CosineAnnealingLR`
+        with tanh objective funcion.
+
+        Args:
+            neuron_idx (torch.Tensor): Neuron index list tensor with shape ``(self.neuron_num)``.
+        """
         zeros = torch.zeros(self.dataset.data_shape, device=env['device']).unsqueeze(0)
         with torch.no_grad():
             trigger_input = self.add_mark(zeros, mark_alpha=1.0)
@@ -116,6 +150,8 @@ class TrojanNN(BackdoorAttack):
         atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
         optimizer = optim.Adam([atanh_mark], lr=self.neuron_lr)
         optimizer.zero_grad()
+        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=self.neuron_epoch, eta_min=0.0)
 
         for _ in range(self.neuron_epoch):
             self.mark.mark[:-1] = tanh_func(atanh_mark)
@@ -126,6 +162,7 @@ class TrojanNN(BackdoorAttack):
             loss = (trigger_feats[0] - self.target_value).square().sum()
             loss.backward(inputs=[atanh_mark])
             optimizer.step()
+            lr_scheduler.step()
             optimizer.zero_grad()
             self.mark.mark.detach_()
         self.mark.mark[:-1] = tanh_func(atanh_mark)

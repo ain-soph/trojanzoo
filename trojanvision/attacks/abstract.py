@@ -5,8 +5,8 @@ from trojanzoo.attacks import Attack
 from trojanvision.datasets.imageset import ImageSet
 from trojanvision.models.imagemodel import ImageModel
 from trojanvision.marks import Watermark
-from trojanzoo import to_list
-from trojanzoo.utils.data import TensorListDataset, dataset_to_tensor
+from trojanzoo.environ import env
+from trojanzoo.utils.data import TensorListDataset, sample_batch
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
 
@@ -51,6 +51,8 @@ class BackdoorAttack(Attack):
             * ``train_mode == 'batch'  : self.poison_ratio * self.dataset.batch_size``
             * ``train_mode == 'dataset': self.poison_ratio * len(train_set)``
             * ``train_mode == 'loss'   :`` no such property
+        poison_dataset (torch.utils.data.Dataset):
+            Poison dataset (no clean data) ``if train_mode == 'dataset'``.
     """
 
     name: str = 'backdoor_attack'
@@ -65,6 +67,7 @@ class BackdoorAttack(Attack):
         return group
 
     def __init__(self, mark: Watermark = None,
+                 source_class: list[int] = None,
                  target_class: int = 0, poison_percent: float = 0.01,
                  train_mode: str = 'batch', **kwargs):
         super().__init__(**kwargs)
@@ -72,10 +75,11 @@ class BackdoorAttack(Attack):
         self.model: ImageModel
         self.mark = mark
         self.param_list['backdoor'] = ['train_mode', 'target_class', 'poison_percent', 'poison_num']
-        self.train_mode = train_mode
+        self.source_class = source_class
         self.target_class = target_class
         self.poison_percent = poison_percent
         self.poison_ratio = self.poison_percent / (1 - self.poison_percent)
+        self.train_mode = train_mode
         if train_mode == 'batch':    # python 3.10 match
             self.poison_num = self.dataset.batch_size * self.poison_ratio
         if train_mode == 'dataset':
@@ -105,11 +109,31 @@ class BackdoorAttack(Attack):
                               validate_fn=self.validate_fn,
                               save_fn=self.save, **kwargs)
 
-    def get_poison_dataset(self, poison_label: bool = True, poison_num: int = None) -> torch.utils.data.Dataset:
-        clean_dataset = self.dataset.loader['train'].dataset
-        poison_num = poison_num if poison_num is None else self.poison_ratio * len(clean_dataset)
-        poison_candidate, _ = ImageSet.split_dataset(clean_dataset, length=round(poison_num))
-        _input, _label = dataset_to_tensor(poison_candidate)
+    def get_poison_dataset(self, poison_label: bool = True,
+                           poison_num: int = None,
+                           seed: int = None
+                           ) -> torch.utils.data.Dataset:
+        r"""Get poison dataset (no clean data).
+
+        Args:
+            poison_label (bool):
+                Whether to use target poison label for poison data.
+                Defaults to ``True``.
+            poison_num (int): Number of poison data.
+                Defaults to ``self.poison_ratio * len(train_set)``
+            seed (int): Random seed to sample poison input indices.
+                Defaults to ``env['data_seed']``.
+
+        Returns:
+            torch.utils.data.Dataset:
+                Poison dataset (no clean data).
+        """
+        if seed is None:
+            seed = env['data_seed']
+        torch.random.manual_seed(seed)
+        train_set = self.dataset.loader['train'].dataset
+        poison_num = poison_num if poison_num is None else self.poison_ratio * len(train_set)
+        _input, _label = sample_batch(train_set, batch_size=round(poison_num))
         _label = _label.tolist()
 
         if poison_label:
@@ -118,6 +142,7 @@ class BackdoorAttack(Attack):
         return TensorListDataset(poison_input, _label)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
+        r"""Get filenames for current attack settings."""
         if mark_alpha is None:
             mark_alpha = self.mark.mark_alpha
         if target_class is None:
@@ -128,7 +153,7 @@ class BackdoorAttack(Attack):
             mark=mark_name, target=target_class, mark_alpha=mark_alpha,
             mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
         if self.mark.mark_random_pos:
-            _file = 'random_pos_' + _file
+            _file = 'random-pos_' + _file
         if self.mark.mark_scattered:
             _file = 'scattered_' + _file
         return _file
@@ -136,6 +161,7 @@ class BackdoorAttack(Attack):
     # ---------------------- I/O ----------------------------- #
 
     def save(self, filename: str = None, **kwargs):
+        r"""Save attack results to files."""
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
         self.mark.save_mark_as_npy(file_path + '.npy')
@@ -144,6 +170,7 @@ class BackdoorAttack(Attack):
         print('attack results saved at: ', file_path)
 
     def load(self, filename: str = None, **kwargs):
+        r"""Load attack results from previously saved files."""
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
         self.mark.load_mark(file_path + '.npy', already_processed=True)
@@ -153,6 +180,9 @@ class BackdoorAttack(Attack):
     # ---------------------- Utils ---------------------------- #
 
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""Add watermark to input tensor.
+        Defaults to :meth:`trojanvision.marks.Watermark.add_mark()`.
+        """
         return self.mark.add_mark(x, **kwargs)
 
     def loss_weighted(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
@@ -202,50 +232,81 @@ class BackdoorAttack(Attack):
                              get_data_fn=self.get_data, keep_org=False, poison_label=False,
                              indent=indent, **kwargs)
         prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
+        prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > threshold:  # TODO: better not hardcoded
             target_acc = 0.0
         return clean_acc, target_acc
 
-    def validate_confidence(self) -> float:
+    def validate_confidence(self, mode: str = 'valid', success_only: bool = True) -> float:
+        r"""Get :attr:`self.target_class` confidence on dataset of :attr:`mode`.
+
+        Args:
+            mode (str): Dataset mode. Defaults to ``'valid'``.
+            success_only (bool): Whether to only measure confidence
+                on attack-successful inputs.
+                Defaults to ``True``.
+
+        Returns:
+            float: Average confidence of :attr:`self.target_class`.
+        """
+        source_class = self.source_class or list(range(self.dataset.num_classes))
+        source_class = source_class.copy()
+        if self.target_class in source_class:
+            source_class.remove(self.target_class)
+        loader = self.dataset.get_dataloader(mode=mode, class_list=source_class)
+
         confidence = SmoothedValue()
         with torch.no_grad():
-            for data in self.dataset.loader['valid']:
+            for data in loader:
                 _input, _label = self.model.get_data(data)
-                idx1 = _label != self.target_class
-                _input = _input[idx1]
-                _label = _label[idx1]
-                if len(_input) == 0:
-                    continue
                 poison_input = self.add_mark(_input)
                 poison_label = self.model.get_class(poison_input)
-                idx2 = poison_label == self.target_class
-                poison_input = poison_input[idx2]
-                if len(poison_input) == 0:
-                    continue
+                if success_only:
+                    poison_input = poison_input[poison_label == self.target_class]
+                    if len(poison_input) == 0:
+                        continue
                 batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
                 confidence.update(batch_conf, len(poison_input))
         return confidence.global_avg
 
-    def check_neuron_jaccard(self, ratio: float = 0.5) -> float:
-        feats_list = []
+    def get_neuron_jaccard(self, k: int = None, ratio: float = 0.5) -> float:
+        r"""Get Jaccard Index of neuron activations for feature maps
+        between normal inputs and poison inputs.
+
+        Find average top-k neuron indices of 2 kinds of feature maps
+        ``clean_idx and poison_idx``, and return
+        :math:`\frac{\text{len(clean\_idx \& poison\_idx)}}{\text{len(clean\_idx | poison\_idx)}}`
+
+        Args:
+            k (int): Top-k neurons to calculate jaccard index.
+                Defaults to ``None``.
+            ratio (float): Percentage of neurons if :attr:`k` is not provided.
+                Defaults to ``0.5``.
+
+        Returns:
+            float: Jaccard Index.
+        """
+        clean_feats_list = []
         poison_feats_list = []
         with torch.no_grad():
             for data in self.dataset.loader['valid']:
                 _input, _label = self.model.get_data(data)
                 poison_input = self.add_mark(_input)
 
-                _feats = self.model.get_fm(_input)
+                clean_feats = self.model.get_fm(_input)
                 poison_feats = self.model.get_fm(poison_input)
-                if _feats.dim() > 2:
-                    _feats = _feats.flatten(2).mean(2)
+                if clean_feats.dim() > 2:
+                    clean_feats = clean_feats.flatten(2).mean(2)
                     poison_feats = poison_feats.flatten(2).mean(2)
-                feats_list.append(_feats)
+                clean_feats_list.append(clean_feats)
                 poison_feats_list.append(poison_feats)
-        feats_list = torch.cat(feats_list).mean(dim=0)
+        clean_feats_list = torch.cat(clean_feats_list).mean(dim=0)
         poison_feats_list = torch.cat(poison_feats_list).mean(dim=0)
-        length = int(len(feats_list) * ratio)
-        _idx = set(to_list(feats_list.argsort(descending=True))[:length])
-        poison_idx = set(to_list(poison_feats_list.argsort(descending=True))[:length])
-        jaccard_idx = len(_idx & poison_idx) / len(_idx | poison_idx)
+
+        k = k or int(len(clean_feats_list) * ratio)
+        clean_idx = set(clean_feats_list.argsort(
+            descending=True)[:k].detach().cpu().tolist())
+        poison_idx = set(poison_feats_list.argsort(
+            descending=True)[:k].detach().cpu().tolist())
+        jaccard_idx = len(clean_idx & poison_idx) / len(clean_idx | poison_idx)
         return jaccard_idx

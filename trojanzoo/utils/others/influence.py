@@ -3,7 +3,6 @@
 from trojanzoo.environ import env
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from typing import TYPE_CHECKING
 from trojanzoo.models import Model    # TODO: python 3.10
@@ -74,11 +73,13 @@ class InfluenceFunction():
         def func(weight: nn.Parameter) -> torch.Tensor:
             del self.module.weight  # (D, class_num)
             self.module.weight = weight
-            log_prob = F.log_softmax(self.module(_feats))  # (N, class_num)
+            logits: torch.Tensor = self.module(_feats)  # (N, class_num)
+            log_prob = logits.log_softmax(1)  # (N, class_num)
             return log_prob.mean(dim=0)  # (class_num)
         jacobian: torch.Tensor = torch.autograd.functional.jacobian(func, self.parameter)
         jacobian = jacobian.flatten(start_dim=2)  # (class_num, D*class_num)
-        prob = F.softmax(self.module(_feats)).unsqueeze(-1).unsqueeze(-1)  # (N, class_num, 1, 1)
+        logits: torch.Tensor = self.module(_feats)  # (N, class_num)
+        prob = logits.softmax(1).unsqueeze(-1).unsqueeze(-1)  # (N, class_num, 1, 1)
         hess = prob * jacobian.unsqueeze(-1) * jacobian.unsqueeze(-2)  # (N, class_num, D*class_num, D*class_num)
         hess = hess.sum(dim=1)  # (N, D*class_num, D*class_num)
         return hess

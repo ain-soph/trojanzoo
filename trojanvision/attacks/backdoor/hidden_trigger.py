@@ -96,7 +96,7 @@ class HiddenTrigger(BadNet):
                              get_data_fn=self.get_data, keep_org=False,
                              poison_label=False, training=False, indent=indent, **kwargs)
         prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.check_neuron_jaccard():.3f}', indent=indent)
+        prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
             target_acc = 0.0
         return clean_acc, target_acc

@@ -2,7 +2,6 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 # from torch.nn.utils import _stateless
 
 from typing import Iterable
@@ -13,10 +12,10 @@ def fim_diag(module: nn.Module, _input: torch.Tensor,
              ) -> list[torch.Tensor]:
     if parameters is None:
         parameters = tuple(module.parameters())
-    _output = module(_input)  # (N, C)
+    _output: torch.Tensor = module(_input)  # (N, C)
     with torch.no_grad():
-        prob = F.softmax(_output, dim=1).unsqueeze(-1)  # (N, C, 1)
-    log_prob = F.log_softmax(_output, dim=1)  # (N, C)
+        prob = _output.softmax(dim=1).unsqueeze(-1)  # (N, C, 1)
+    log_prob = _output.log_softmax(dim=1)  # (N, C)
     fim_dict: dict[int, list[torch.Tensor]] = {
         i: [] for i in range(len(parameters))}
     N, C = log_prob.shape
@@ -41,11 +40,11 @@ def fim(module: nn.Module, _input: torch.Tensor,
         ) -> list[torch.Tensor]:
     if parameters is None:
         parameters = tuple(module.parameters())
-    _output = module(_input)  # (N, C)
+    _output: torch.Tensor = module(_input)  # (N, C)
     with torch.no_grad():
         # (N, C, 1, 1)
-        prob = F.softmax(_output, dim=1).unsqueeze(-1).unsqueeze(-1)
-    log_prob = F.log_softmax(_output, dim=1)  # (N, C)
+        prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)
+    log_prob = _output.log_softmax(dim=1)  # (N, C)
     fim_dict: dict[int, list[torch.Tensor]] = {
         i: [] for i in range(len(parameters))}
     N, C = log_prob.shape
@@ -79,15 +78,15 @@ def fim(module: nn.Module, _input: torch.Tensor,
 #     if parameters is None:
 #         parameters = dict(module.named_parameters())
 #     with torch.no_grad():
-#         _output = module(_input)  # (N, C)
+#         _output: torch.Tensor = module(_input)  # (N, C)
 #         # (N, C, 1, 1)
-#         prob = F.softmax(_output, dim=1).unsqueeze(-1).unsqueeze(-1)
+#         prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)
 #     keys, values = zip(*parameters.items())
 
 #     def func(*params: torch.Tensor):
 #         _output = _stateless.functional_call(
 #             module, {n: p for n, p in zip(keys, params)}, _input)
-#         return F.log_softmax(_output, dim=1)  # (N, C)
+#         return _output.log_softmax(dim=1)  # (N, C)
 #     jacobian_list: tuple[torch.Tensor] = torch.autograd.functional.jacobian(
 #         func, values)
 

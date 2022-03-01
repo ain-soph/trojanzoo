@@ -53,13 +53,11 @@ if __name__ == '__main__':
 
     model.valid_iterator = itertools.cycle(dataset.loader['train'])
 
+    op_idx_mask = torch.zeros(len(PRIMITIVES), dtype=torch.bool, device=env['device'])
     if only_paramless_op:
         paramless_ops = ['max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'none']
-        op_idx = [PRIMITIVES.index(op) for op in paramless_ops]
-        op_idx_mask = torch.zeros(len(PRIMITIVES), dtype=torch.bool, device=env['device'])
+        op_idx = [PRIMITIVES.index(op) for op in paramless_ops if op in PRIMITIVES]
         op_idx_mask[op_idx] = True
-    else:
-        op_idx_mask = torch.ones(len(PRIMITIVES), dtype=torch.bool, device=env['device'])
 
     def update_weight_tensor(weights: torch.Tensor, leaf_tensor: torch.Tensor):
         weights.detach_()

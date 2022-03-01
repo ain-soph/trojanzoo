@@ -298,7 +298,7 @@ class AdvMind(Defense):
                     print('sim <vec, est>: ',
                           self.cos_sim(vec.flatten(), -self.attack_grad_list[i].flatten()))
             # todo: Use atanh for normalization after pytorch 1.6
-            detect_prob = F.softmax(torch.log((2 / (1 - dist_list)).sub(1)))
+            detect_prob = torch.log((2 / (1 - dist_list)) - 1).softmax(0)
             # detect_prob.div_(detect_prob.norm(p=2))
             pair_seq[i] = detect_prob.argmax().item()
         return pair_seq

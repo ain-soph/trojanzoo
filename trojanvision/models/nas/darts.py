@@ -164,7 +164,8 @@ class DARTS(ImageModel):
                 genotype = getattr(genotypes, model_arch)
             except AttributeError:
                 print('Available Model Architectures: ')
-                model_arch_list = [element for element in dir(genotypes) if '__' not in element and
+                model_arch_list = [element for element in dir(genotypes)
+                                   if '__' not in element and
                                    element not in ['Genotype', 'namedtuple']]
                 print(model_arch_list)
                 raise
@@ -276,7 +277,7 @@ class DARTS(ImageModel):
                 self._backward_step_unrolled(_input, _label, input_valid, label_valid)
             else:
                 loss = self.loss(input_valid, label_valid)
-                loss.backward()
+                loss.backward(inputs=self.arch_parameters())
             self.arch_optimizer.step()
         return _input, _label
 
@@ -393,20 +394,21 @@ class DARTS(ImageModel):
             for param, delta in zip(self.parameters(), dtheta):
                 param.data.sub_(delta, alpha=eta)
 
-    def _hessian_vector_product(self, vector: torch.Tensor,
+    def _hessian_vector_product(self, vector: list[torch.Tensor],
                                 _input: torch.Tensor, target: torch.Tensor,
                                 r: float = 1e-2
                                 ) -> list[torch.Tensor]:
+        arch_params = self.arch_parameters()
         R = r / _concat(vector).norm()
         for p, v in zip(self.parameters(), vector):
             p.data.add_(v, alpha=R)
         loss = self.loss(_input, target)
-        grads_p = torch.autograd.grad(loss, self.arch_parameters())
+        grads_p = list(torch.autograd.grad(loss, arch_params, allow_unused=True))
 
         for p, v in zip(self.parameters(), vector):
             p.data.sub_(v, alpha=2 * R)
         loss = self.loss(_input, target)
-        grads_n = torch.autograd.grad(loss, self.arch_parameters())
+        grads_n = list(torch.autograd.grad(loss, arch_params, allow_unused=True))
 
         for p, v in zip(self.parameters(), vector):
             p.data.add_(v, alpha=R)

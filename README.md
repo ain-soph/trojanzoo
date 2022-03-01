@@ -19,11 +19,6 @@ This is the code implementation (pytorch) for our paper:
 
 TrojanZoo provides a universal pytorch platform to conduct security researches (especially backdoor attacks/defenses) of image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
-[Dataset List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/__init__.py)  
-[Model List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/__init__.py)  
-[Attack List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/attacks/__init__.py)  
-[Defense List](https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/__init__.py)
-
 > Note: This repository is also maintained to cover the implementation of  
 > our kdd 2020 paper [AdvMind: Inferring Adversary Intent of Black-Box Attacks](https://arxiv.org/abs/2006.09539)  
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
@@ -53,7 +48,7 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 1. `pip install trojanzoo`  
 2. **(todo)** `conda install trojanzoo`  
 3. `docker pull local0state/trojanzoo`  
-4. **(RECOMMEND)**`python setup.py develop`  
+4. **(RECOMMEND)**`pip install -e .` or `python setup.py develop`  
     > This could install the github repo package but avoid copying files to `site_packages`, so that during developing `TrojanZoo`, you don't need move `example` files to the root directory of repo.  
 
 ## Quick Start
