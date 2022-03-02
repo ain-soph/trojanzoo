@@ -182,12 +182,12 @@ class LatentBackdoor(BackdoorAttack):
                     target_x, _ = self.model.get_data(data)
                     feat_list.append(self.model.get_layer(
                         target_x, layer_output=self.preprocess_layer).detach().cpu())
-                avg_target_feats = torch.cat(feat_list).mean(dim=0)
+                avg_target_feats = torch.cat(feat_list).mean(dim=0, keepdim=True)
                 avg_target_feats = avg_target_feats.to(target_x.device)
             else:
                 target_input, _ = self.model.get_data((target_input, target_label))
                 avg_target_feats = self.model.get_layer(
-                    target_input, layer_output=self.preprocess_layer).mean(dim=0)
+                    target_input, layer_output=self.preprocess_layer).mean(dim=0, keepdim=True)
         if avg_target_feats.dim() > 2:
             avg_target_feats = avg_target_feats.flatten(2).mean(2)
         return avg_target_feats.detach()
@@ -205,18 +205,20 @@ class LatentBackdoor(BackdoorAttack):
         other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
 
         atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
-        self.mark.mark[:-1] = tanh_func(atanh_mark)
         optimizer = optim.Adam([atanh_mark], lr=self.attack_remask_lr)
         optimizer.zero_grad()
 
         for _ in range(self.attack_remask_epoch):
-            for (_input, _label) in other_loader:
+            for data in other_loader:
+                self.mark.mark[:-1] = tanh_func(atanh_mark)
+                _input, _label = self.model.get_data(data)
                 poison_input = self.add_mark(to_tensor(_input))
                 loss = self.loss_mse(poison_input)
                 loss.backward(inputs=[atanh_mark])
                 optimizer.step()
                 optimizer.zero_grad()
-                self.mark.mark[:-1] = tanh_func(atanh_mark)
+                self.mark.mark.detach_()
+        self.mark.mark[:-1] = tanh_func(atanh_mark)
         atanh_mark.requires_grad_(False)
         self.mark.mark.detach_()
 
@@ -234,4 +236,4 @@ class LatentBackdoor(BackdoorAttack):
         poison_feats = self.model.get_layer(poison_input, layer_output=self.preprocess_layer)
         if poison_feats.dim() > 2:
             poison_feats = poison_feats.flatten(2).mean(2)
-        return F.mse_loss(poison_feats, self.avg_target_feats)
+        return F.mse_loss(poison_feats, self.avg_target_feats.expand(poison_feats.size(0), -1))

@@ -89,7 +89,7 @@ class BackdoorAttack(Attack):
     def attack(self, epochs: int, save=False, **kwargs):
         if self.train_mode == 'batch':
             loader = self.dataset.get_dataloader(
-                'train', batch_size=self.dataset.batch_size - int(self.poison_num))
+                'train', batch_size=self.dataset.batch_size + int(self.poison_num))
             self.model._train(epochs, save=save, loader_train=loader,
                               validate_fn=self.validate_fn, get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
