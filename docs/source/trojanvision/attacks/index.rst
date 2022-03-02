@@ -15,6 +15,3 @@ attacks
 
 .. autofunction:: add_argument
 .. autofunction:: create
-
-.. autoclass:: BackdoorAttack
-    :members:

@@ -4,7 +4,7 @@ r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --attack trojannet --epochs 1000
 """  # noqa: E501
 
-from ..abstract import BackdoorAttack
+from .badnet import BadNet
 from trojanvision.models.imagemodel import ImageModel, _ImageModel
 from trojanvision.marks import Watermark
 from trojanzoo.utils.data import TensorListDataset
@@ -23,10 +23,10 @@ import argparse
 from typing import Callable
 
 
-class TrojanNet(BackdoorAttack):
+class TrojanNet(BadNet):
     r"""
     | TrojanNet proposed by Ruixiang Tang from Texas A&M Univeristy in KDD 2020.
-    | It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+    | It inherits :class:`trojanvision.attacks.BadNet`.
     |
     | TrojanNet conduct the attack following these procedures:
 

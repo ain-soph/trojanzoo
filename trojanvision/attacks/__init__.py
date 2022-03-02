@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from .abstract import BackdoorAttack
 from trojanzoo.attacks import Attack
 
 from .adv import *
@@ -20,7 +19,7 @@ from typing import Union
 
 
 module_list = [adv, backdoor, poison]
-__all__ = ['add_argument', 'create', 'Attack', 'BackdoorAttack']
+__all__ = ['add_argument', 'create', 'Attack']
 class_dict: dict[str, type[Attack]] = {}
 for module in module_list:
     __all__.extend(module.__all__)

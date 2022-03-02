@@ -4,7 +4,7 @@ r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack trojannn
 """  # noqa: E501
 
-from ..abstract import BackdoorAttack
+from .badnet import BadNet
 
 from trojanvision.environ import env
 from trojanzoo.utils.tensor import tanh_func
@@ -14,10 +14,10 @@ import torch.optim as optim
 import argparse
 
 
-class TrojanNN(BackdoorAttack):
+class TrojanNN(BadNet):
     r"""
     | TrojanNN proposed by Yingqi Liu from Purdue University in NDSS 2018.
-    | It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+    | It inherits :class:`trojanvision.attacks.BadNet`.
     |
     | Based on :class:`trojanvision.attacks.BadNet`,
       TrojanNN preprocesses watermark pixel values to maximize

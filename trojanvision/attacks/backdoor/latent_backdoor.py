@@ -4,7 +4,7 @@ r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack latent_backdoor
 """  # noqa: E501
 
-from ..abstract import BackdoorAttack
+from .badnet import BadNet
 
 from trojanvision.environ import env
 from trojanzoo.utils.data import sample_batch
@@ -23,14 +23,13 @@ if TYPE_CHECKING:
     import torch.utils.data
 
 
-class LatentBackdoor(BackdoorAttack):
+class LatentBackdoor(BadNet):
     r"""
     | Latent Backdoor proposed by Yuanshun Yao, Huiying Li, Haitao Zheng
       and Ben Y. Zhao from University of Chicago in CCS 2019.
-    | It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+    | It inherits :class:`trojanvision.attacks.BadNet`.
     |
-    | Based on :class:`trojanvision.attacks.BadNet`
-      and similar to :class:`trojanvision.attacks.TrojanNN`,
+    | Similar to :class:`trojanvision.attacks.TrojanNN`,
       Latent Backdoor preprocesses watermark pixel values to
       minimize feature mse distance (of other classes with trigger attached)
       to average feature map of target class.
