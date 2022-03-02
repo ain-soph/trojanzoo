@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 r"""
-CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --attack trojannet
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --attack trojannet --epochs 1000
 """  # noqa: E501
 
 from ..abstract import BackdoorAttack
@@ -56,26 +56,26 @@ class TrojanNet(BackdoorAttack):
             which means the probability is 1.0 for the predicted class and 0 for other classes.
           | Author's code doesn't apply any binarization.
             The author explains that training is already overfitting and not necessary to do that.
-          | **Our code follows author's code.**
+          | Our code follows **author's code**.
         * | Paper claims to combine mlp output and model output with weight :math:`\alpha`.
           | Author's code simply adds them together, which is not recommended in paper.
-          | **Our code follows the paper.**
+          | Our code follows **paper**.
         * | Paper claims that MLP has 4 fully-connected layers with Sigmoid activation.
           | Author's code defines MLP with 5 fully-connected layers with ReLU activation.
-          | **Our code follows author's code.**
+          | Our code follows **author's code**.
         * | Paper claims to use Adam optimizer.
           | Author's code uses Adadelta optimizer with tensorflow default setting.
-          | **Our code follows author's code.**
+          | Our code follows **paper and further uses :any:`torch.optim.lr_scheduler.CosineAnnealingLR`**.
         * | Paper claims MLP outputs all 0 for random noises.
           | Author's code defines random noises as a new class for non-triggers.
-          | **Our code follows author's code.**
+          | Our code follows **author's code**.
         * | Paper claims to generate random binary b/w noises as training data.
           | Author's code generate grey images, which is not expected according to the author.
-          | **Our code follows the paper.**
+          | Our code follows **paper**.
         * | Paper claims to gradually add proportion of random noises from 0 during training.
           | Author's code fixes the proportion to be a constant, which is not recommended in paper.
             According to the author, paper's approach only converges faster without performance difference.
-          | **Our code follows author's code.**
+          | Our code follows **author's code**.
 
     Args:
         select_point (int): Black pixel numbers in triggers.
