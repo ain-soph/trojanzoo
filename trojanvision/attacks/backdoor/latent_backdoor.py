@@ -205,18 +205,20 @@ class LatentBackdoor(BackdoorAttack):
         other_loader = self.dataset.get_dataloader(mode='train', dataset=other_set, num_workers=0)
 
         atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
-        self.mark.mark[:-1] = tanh_func(atanh_mark)
         optimizer = optim.Adam([atanh_mark], lr=self.attack_remask_lr)
         optimizer.zero_grad()
 
         for _ in range(self.attack_remask_epoch):
-            for (_input, _label) in other_loader:
+            for data in other_loader:
+                self.mark.mark[:-1] = tanh_func(atanh_mark)
+                _input, _label = self.model.get_data(data)
                 poison_input = self.add_mark(to_tensor(_input))
                 loss = self.loss_mse(poison_input)
                 loss.backward(inputs=[atanh_mark])
                 optimizer.step()
                 optimizer.zero_grad()
-                self.mark.mark[:-1] = tanh_func(atanh_mark)
+                self.mark.mark.detach_()
+        self.mark.mark[:-1] = tanh_func(atanh_mark)
         atanh_mark.requires_grad_(False)
         self.mark.mark.detach_()
 
