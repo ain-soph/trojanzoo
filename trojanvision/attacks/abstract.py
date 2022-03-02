@@ -233,7 +233,7 @@ class BackdoorAttack(Attack):
                              indent=indent, **kwargs)
         prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
         prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
-        if self.clean_acc - clean_acc > threshold:  # TODO: better not hardcoded
+        if self.clean_acc - clean_acc > threshold:
             target_acc = 0.0
         return clean_acc, target_acc
 

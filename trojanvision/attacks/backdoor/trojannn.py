@@ -151,7 +151,7 @@ class TrojanNN(BackdoorAttack):
         optimizer = optim.Adam([atanh_mark], lr=self.neuron_lr)
         optimizer.zero_grad()
         lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=self.neuron_epoch, eta_min=0.0)
+            optimizer, T_max=self.neuron_epoch)
 
         for _ in range(self.neuron_epoch):
             self.mark.mark[:-1] = tanh_func(atanh_mark)
