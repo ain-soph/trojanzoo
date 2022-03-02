@@ -69,7 +69,7 @@ def set_first_layer_channel(model: nn.Module,
             args = {key: getattr(module, key) for key in keys}
             args['device'] = module.weight.device
             args.update(kwargs)
-            new_linear = nn.Linear(in_channels=channel, **args)
+            new_linear = nn.Linear(in_features=channel, **args)
             setattr(model, name, new_linear)
         break
 

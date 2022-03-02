@@ -16,3 +16,6 @@ backdoor
 
 .. autoclass:: LatentBackdoor
     :members:
+
+.. autoclass:: TrojanNet
+    :members:

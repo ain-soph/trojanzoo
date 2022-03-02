@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack latent_backdoor
+"""  # noqa: E501
+
 from ..abstract import BackdoorAttack
 
 from trojanvision.environ import env
@@ -41,6 +45,15 @@ class LatentBackdoor(BackdoorAttack):
         * code: https://github.com/Huiying-Li/Latent-Backdoor
         * website: https://sandlab.cs.uchicago.edu/latent
 
+    Note:
+        This implementation does **NOT** involve
+        teacher-student transfer learning nor new learning tasks,
+        which are main contribution and application scenario of the original paper.
+        It still focuses on BadNet problem setting and
+        only utilizes the watermark optimization and retraining loss from Latent Backdoor attack.
+
+        For users who have those demands, please inherit this class and use the methods as utilities.
+
     Args:
         class_sample_num (int): Sampled input number of each class.
             Defaults to ``100``.
@@ -81,6 +94,10 @@ class LatentBackdoor(BackdoorAttack):
                  attack_remask_epoch: int = 100, attack_remask_lr: float = 0.1,
                  **kwargs):
         super().__init__(**kwargs)
+        if not self.mark.mark_random_init:
+            raise Exception('Latent Backdoor requires "mark_random_init" to be True to initialize watermark.')
+        if self.mark.mark_random_pos:
+            raise Exception('Latent Backdoor requires "mark_random_pos" to be False.')
 
         self.param_list['latent_backdoor'] = ['class_sample_num', 'mse_weight',
                                               'preprocess_layer', 'attack_remask_epoch', 'attack_remask_lr']
