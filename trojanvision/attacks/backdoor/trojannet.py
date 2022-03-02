@@ -65,7 +65,8 @@ class TrojanNet(BackdoorAttack):
           | Our code follows **author's code**.
         * | Paper claims to use Adam optimizer.
           | Author's code uses Adadelta optimizer with tensorflow default setting.
-          | Our code follows **paper and further uses `CosineAnnealingLR`_**.
+          | Our code follows **paper and further uses**
+            :any:`torch.optim.lr_scheduler.CosineAnnealingLR`.
         * | Paper claims MLP outputs all 0 for random noises.
           | Author's code defines random noises as a new class for non-triggers.
           | Our code follows **author's code**.
@@ -95,9 +96,6 @@ class TrojanNet(BackdoorAttack):
         all_point (int): Number of trigger size (``mark.mark_height * mark.mark_width``)
         combination_number (int): Number of trigger combinations
             (:math:`C^\text{all}_\text{select}`)
-
-    .. _CosineAnnealingLR:
-        https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
 
     .. _An Embarrassingly Simple Approach for Trojan Attack in Deep Neural Networks:
         https://arxiv.org/abs/2006.08131
