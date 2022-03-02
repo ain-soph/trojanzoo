@@ -65,7 +65,7 @@ class TrojanNet(BackdoorAttack):
           | Our code follows **author's code**.
         * | Paper claims to use Adam optimizer.
           | Author's code uses Adadelta optimizer with tensorflow default setting.
-          | Our code follows **paper and further uses :any:`torch.optim.lr_scheduler.CosineAnnealingLR`**.
+          | Our code follows **paper and further uses `CosineAnnealingLR`_**.
         * | Paper claims MLP outputs all 0 for random noises.
           | Author's code defines random noises as a new class for non-triggers.
           | Our code follows **author's code**.
@@ -92,7 +92,12 @@ class TrojanNet(BackdoorAttack):
             Defaults to ``2000``.
 
     Attributes:
-        combination_number (int): :math:`C^\text{all}_\text{select}`.
+        all_point (int): Number of trigger size (``mark.mark_height * mark.mark_width``)
+        combination_number (int): Number of trigger combinations
+            (:math:`C^\text{all}_\text{select}`)
+
+    .. _CosineAnnealingLR:
+        https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
 
     .. _An Embarrassingly Simple Approach for Trojan Attack in Deep Neural Networks:
         https://arxiv.org/abs/2006.08131
@@ -129,13 +134,14 @@ class TrojanNet(BackdoorAttack):
         if self.mark.mark_random_pos:
             raise Exception('TrojanNet requires "mark_random_pos" to be False.')
         self.param_list['trojannet'] = ['select_point', 'combination_number']
-        self.all_point = self.mark.mark_height * self.mark.mark_width
         self.select_point = select_point
         self.mlp_alpha = mlp_alpha
         self.comb_temperature = comb_temperature
         self.amplify_rate = amplify_rate
         self.train_noise_num = train_noise_num
         self.valid_noise_num = valid_noise_num
+
+        self.all_point = self.mark.mark_height * self.mark.mark_width
         self.combination_number = int(comb(self.all_point, select_point, exact=True))
 
     def attack(self, epochs: int, **kwargs):
@@ -213,6 +219,7 @@ class TrojanNet(BackdoorAttack):
                 and ``(length)``.
         """
         x = torch.bernoulli(0.5 * torch.ones(length, self.all_point))
+        # Author's original code to generate random noises:
         # x = torch.rand(length, self.all_point) + 2 * torch.rand(1) - 1
         # x = x.clamp(0, 1)
         y = [self.combination_number] * length
