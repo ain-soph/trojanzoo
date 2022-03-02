@@ -25,7 +25,6 @@ class IMC(TrojanNN):
     See Also:
         * paper: `A Tale of Evil Twins\: Adversarial Inputs versus Poisoned Models`_
         * code: TrojanZoo is the official implementation of IMC ^_^
-        * website: https://ain-soph.github.io/trojanzoo/trojanvision/attacks/backdoor.html#trojanvision.attacks.IMC
 
     Args:
         attack_remask_epoch (int): Inner epoch to optimize watermark during each training epoch.
