@@ -39,7 +39,7 @@ class ISIC(ImageFolder):
         print('Splitting dataset to class folders ...')
         src_folder = os.path.normpath(os.path.join(self.folder_path, self.name, mode))
         if env['tqdm']:
-            labels = tqdm(labels[1:])
+            labels = tqdm(labels[1:], leave=False)
         for label in labels:
             seq = new_dict[label]
             dst_folder = os.path.join(src_folder, label)

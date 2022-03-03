@@ -70,28 +70,29 @@ def train(module: nn.Module, num_classes: int,
     len_loader_train = len(loader_train)
     total_iter = (epochs - resume) * len_loader_train
 
+    logger = MetricLogger()
+    logger.meters['loss'] = SmoothedValue()
+    logger.meters['top1'] = SmoothedValue()
+    logger.meters['top5'] = SmoothedValue()
+
     if resume and lr_scheduler:
         for _ in range(resume):
             lr_scheduler.step()
     for _epoch in range(resume, epochs):
         _epoch += 1
+        logger.reset()
         if callable(epoch_fn):
             activate_params(module, [])
             epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
                      _epoch=_epoch, epochs=epochs, start_epoch=start_epoch)
-        logger = MetricLogger()
-        logger.meters['loss'] = SmoothedValue()
-        logger.meters['top1'] = SmoothedValue()
-        logger.meters['top5'] = SmoothedValue()
         loader_epoch = loader_train
         if verbose:
             header: str = '{blue_light}{0}: {1}{reset}'.format(
                 print_prefix, output_iter(_epoch, epochs), **ansi)
-            header = header.ljust(30 + get_ansi_len(header))
-            if env['tqdm']:
-                loader_epoch = tqdm(loader_epoch, leave=False)
-            loader_epoch = logger.log_every(
-                loader_epoch, header=header, indent=indent)
+            header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
+            loader_epoch = logger.log_every(loader_train, header=header,
+                                            tqdm_header='Batch',
+                                            indent=indent)
         if change_train_eval:
             module.train()
         activate_params(module, params)
@@ -149,9 +150,7 @@ def train(module: nn.Module, num_classes: int,
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
-            logger.meters['loss'].update(float(loss), batch_size)
-            logger.meters['top1'].update(acc1, batch_size)
-            logger.meters['top5'].update(acc5, batch_size)
+            logger.update(loss=float(loss), top1=acc1, top5=acc5, n=batch_size)
             # TODO: should it be outside of the dataloader loop?
             empty_cache()
         optimizer.zero_grad()
@@ -227,12 +226,10 @@ def validate(module: nn.Module, num_classes: int,
     loader_epoch = loader
     if verbose:
         header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
-        header = header.ljust(
-            max(len(print_prefix), 30) + get_ansi_len(header))
-        if env['tqdm']:
-            loader_epoch = tqdm(loader_epoch, leave=False)
-        loader_epoch = logger.log_every(
-            loader_epoch, header=header, indent=indent)
+        header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
+        loader_epoch = logger.log_every(loader, header=header,
+                                        tqdm_header='Batch',
+                                        indent=indent)
     for data in loader_epoch:
         _input, _label = get_data_fn(data, mode='valid', **kwargs)
         with torch.no_grad():
@@ -241,9 +238,7 @@ def validate(module: nn.Module, num_classes: int,
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
-            logger.meters['loss'].update(loss, batch_size)
-            logger.meters['top1'].update(acc1, batch_size)
-            logger.meters['top5'].update(acc5, batch_size)
+            logger.update(loss=float(loss), top1=acc1, top5=acc5, n=batch_size)
     loss, acc = (logger.meters['loss'].global_avg,
                  logger.meters['top1'].global_avg)
     if writer is not None and _epoch is not None and main_tag:

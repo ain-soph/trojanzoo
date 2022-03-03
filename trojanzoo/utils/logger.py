@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 
-from .output import ansi, output_iter, prints, get_ansi_len, remove_ansi
+from .output import ansi, prints, get_ansi_len
 from trojanzoo.environ import env
 
 import torch
 import torch.distributed as dist
-from collections import defaultdict, deque
-import datetime
+
 import time
+from collections import defaultdict, deque
+from tqdm import tqdm as tqdm_class
 
 
 from typing import Generator, Iterable, TypeVar    # TODO: python 3.10
 _T = TypeVar("_T")
 
 __all__ = ['SmoothedValue', 'MetricLogger', 'AverageMeter']
+
+MB = 1 << 20
 
 
 class SmoothedValue:
@@ -33,6 +36,7 @@ class SmoothedValue:
         total (float): The sum of all data.
         fmt (str): The string pattern.
 
+        last (float): The last value of :attr:`deque`.
         median (float): The median of :attr:`deque`.
         avg (float): The avg of :attr:`deque`.
         global_avg (float):
@@ -44,10 +48,17 @@ class SmoothedValue:
 
     def __init__(self, name: str = '', window_size: int = None, fmt: str = '{global_avg:.3f}'):
         self.name = name
-        self.deque = deque(maxlen=window_size)
+        self.deque: deque[float] = deque(maxlen=window_size)
         self.count: int = 0
         self.total: float = 0.0
         self.fmt = fmt
+
+    @property
+    def last(self) -> float:
+        try:
+            return self.deque[-1]
+        except IndexError:
+            raise IndexError(f'{self.name} is empty')
 
     def update(self, value: float, n: int = 1) -> 'SmoothedValue':
         r"""Update :attr:`n` pieces of data with same :attr:`value`.
@@ -191,27 +202,86 @@ class MetricLogger:
             Defaults to ``''``.
         meter_length (int): The minimum length for each meter.
             Defaults to ``20``.
+        tqdm (bool): Whether to use tqdm to show iteration information.
+            Defaults to ``env['tqdm']``.
         indent (int): The space indent for the entire string.
             Defaults to ``0``.
 
     Attributes:
         meters (dict[str, SmoothedValue]): The meter dict.
-        delimiter (str): The delimiter to join different meter strings.
-        meter_length (int): The minimum length for each meter.
-        indent (int): The space indent for the entire string.
+        iter_time (SmoothedValue): Iteration time meter.
+        data_time (SmoothedValue): Data loading time meter.
+        memory (SmoothedValue): Memory usage meter.
     """
 
     def __init__(self, delimiter: str = '',
-                 meter_length: int = 20, indent: int = 0):
-        self.meters: defaultdict[str, SmoothedValue] \
-            = defaultdict(SmoothedValue)
+                 meter_length: int = 20,
+                 tqdm: bool = None,
+                 indent: int = 0):
+        if tqdm is None:
+            tqdm = env['tqdm']
+        self.meters: defaultdict[str, SmoothedValue]
+        self.meters = defaultdict(SmoothedValue)
         self.delimiter = delimiter
         self.meter_length = meter_length
+        self.tqdm = tqdm
         self.indent = indent
 
-    def update(self, **kwargs):
+        self.iter_time = SmoothedValue()
+        self.data_time = SmoothedValue()
+        self.memory = SmoothedValue(fmt='{global_avg:d}')
+
+    def update(self, n: int = 1, **kwargs) -> 'MetricLogger':
+        r"""Update values to :attr:`self.meters` by calling :meth:`SmoothedValue.update()`.
+
+        ``self.meters[meter_name].update(float(value), n=n)``
+
+        Args:
+            n (int): the number of data with same value.
+            **kwargs: ``{meter_name: value}``.
+
+        Returns:
+            MetricLogger: return ``self`` for stream usage.
+        """
         for k, v in kwargs.items():
-            self.meters[k].update(float(v))
+            self.meters[k].update(float(v), n=n)
+        return self
+
+    def reset(self) -> 'MetricLogger':
+        r"""Reset meter in :attr:`self.meters` by calling :meth:`SmoothedValue.reset()`.
+
+        Returns:
+            MetricLogger: return ``self`` for stream usage.
+        """
+        for meter in self.meters.values():
+            meter.reset()
+        return self
+
+    def get_str(self, cut_too_long: bool = True, rstrip: bool = True, **kwargs) -> str:
+        r"""Generate formatted string based on keyword arguments.
+
+        ``key: value`` with max length to be :attr:`self.meter_length`.
+        The key string is green when ``env['color'] == True``.
+
+        Args:
+            cut_too_long (bool): Whether to cut too long values to first 5 characters.
+                Defaults to ``True``.
+            rstrip (bool): Whether to strip trailing whitespaces.
+                Defaults to ``True``.
+            **kwargs: Keyword arguments to generate string.
+        """
+        str_list: list[str] = []
+        for k, v in kwargs.items():
+            v_str = str(v)
+            _str: str = '{green}{k}{reset}: {v}'.format(k=k, v=v_str, **ansi)
+            max_length = self.meter_length + get_ansi_len(_str)
+            if cut_too_long and len(_str) > max_length:
+                _str = '{green}{k}{reset}: {v}'.format(k=k, v=v_str[:5], **ansi)
+            str_list.append(_str.ljust(max_length))
+        _str = self.delimiter.join(str_list)
+        if rstrip:
+            _str = _str.rstrip()
+        return _str
 
     def __getattr__(self, attr: str) -> float:
         if attr in self.meters:
@@ -221,45 +291,31 @@ class MetricLogger:
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
 
-    def __str__(self):
-        loss_str: list[str] = []
-        for name, meter in self.meters.items():
-            _str = '{green}{}{reset}: {}'.format(name, str(meter), **ansi)
-            max_length = self.meter_length + get_ansi_len(_str)
-            if len(_str) > max_length:
-                _str = '{green}{}{reset}: {}'.format(
-                    name, str(meter)[:5], **ansi)
-            _str = _str.ljust(max_length)
-            loss_str.append(_str)
-        return self.delimiter.join(loss_str)
+    def __str__(self) -> str:
+        return self.get_str(**self.meters)
 
     def synchronize_between_processes(self):
         for meter in self.meters.values():
             meter.synchronize_between_processes()
 
     def log_every(self, iterable: Iterable[_T], header: str = '',
-                  total: int = None, print_freq: int = 0,
+                  tqdm: bool = None, tqdm_header: str = 'Iter',
                   indent: int = None) -> Generator[_T, None, None]:
         r"""Wrap an :class:`collections.abc.Iterable` with formatted outputs.
 
         * Middle Output:
-          ``[ current / total ] str(self) {iter_time} {data_time} {memory}``
+          ``{tqdm_header}: [ current / total ] str(self) {memory} {iter_time} {data_time} {time}<{remaining}``
         * Final Output
-          ``{header} str(self) {total_time} {iter_time} {data_time} {memory}``
+          ``{header} str(self) {memory} {iter_time} {data_time} {total_time}``
 
         Args:
             iterable (~collections.abc.Iterable): The raw iterator.
             header (str): The header string for final output.
                 Defaults to ``''``.
-            total (int): The length of iterable,
-                which is used to generate ``[ current / total ]``
-                in middle output.
-                If ``None``, use ``len(iterable)`` if possible.
-                If not possible, the middle header will be hidden.
-                Defaults to ``None``.
-            print_freq (int): Middle output during iteration
-                when ``current % print_freq == 0``.
-                Defaults to ``0`` (never).
+            tqdm (bool): Whether to use tqdm to show iteration information.
+                Defaults to ``self.tqdm``.
+            tqdm_header (str): The header string for middle output.
+                Defaults to ``'Iter'``.
             indent (int): The space indent for the entire string.
                 if ``None``, use ``self.indent``.
                 Defaults to ``None``.
@@ -267,83 +323,58 @@ class MetricLogger:
         :Example:
             .. seealso:: :func:`trojanzoo.utils.train.train()`
         """
+        tqdm = tqdm if tqdm is not None else self.tqdm
         indent = indent if indent is not None else self.indent
-        if total is None:
-            try:
-                total = len(iterable)
-            except Exception:
-                pass
-        i = 0
-        iter_time = SmoothedValue(fmt='{avg:.4f}')
-        data_time = SmoothedValue(fmt='{avg:.4f}')
-        memory = SmoothedValue(fmt='{max:d}')
-        MB = 1 << 20
+        iterator = iterable
+        if tqdm:
+            length = len(str(len(iterable)))
+            pattern: str = ('{tqdm_header}: {blue_light}'
+                            '[ {red}{{n_fmt:>{length}}}{blue_light} '
+                            '/ {red}{{total_fmt}}{blue_light} ]{reset}'
+                            ).format(tqdm_header=tqdm_header, length=length, **ansi)
+            offset = len(f'{{n_fmt:>{length}}}{{total_fmt}}') - 2 * length
+            pattern = pattern.ljust(30 + offset + get_ansi_len(pattern))
+            time_str = self.get_str(time='{elapsed}<{remaining}', cut_too_long=False)
+            bar_format = f'{pattern}{{desc}}{time_str}'
+            iterator = tqdm_class(iterable, leave=False, bar_format=bar_format)
+
+        self.iter_time.reset()
+        self.data_time.reset()
+        self.memory.reset()
 
         end = time.time()
         start_time = time.time()
-        for i, obj in enumerate(iterable):
+        for obj in iterator:
             cur_data_time = time.time() - end
-            data_time.update(cur_data_time)
+            self.data_time.update(cur_data_time)
             yield obj
             cur_iter_time = time.time() - end
-            iter_time.update(cur_iter_time)
+            self.iter_time.update(cur_iter_time)
             if torch.cuda.is_available():
                 cur_memory = torch.cuda.max_memory_allocated() / MB
-                memory.update(cur_memory)
-            if print_freq and i % print_freq == 0:
-                middle_header = '' if total is None else output_iter(i, total)
-                length = max(len(remove_ansi(header)) - 10, 0)
-                middle_header = middle_header.ljust(
-                    length + get_ansi_len(middle_header))
-                log_msg = self.delimiter.join([middle_header, str(self)])
-                if env['verbose'] > 1:
-                    iter_time_pattern = '{green}iter{reset}: {iter_time:.4f} s'
-                    data_time_pattern = '{green}data{reset}: {data_time:.4f} s'
-                    iter_time_str = iter_time_pattern.format(
-                        iter_time=cur_iter_time, **ansi)
-                    data_time_str = data_time_pattern.format(
-                        data_time=cur_data_time, **ansi)
-                    iter_time_str = iter_time_str.ljust(
-                        self.meter_length + get_ansi_len(iter_time_str))
-                    data_time_str = data_time_str.ljust(
-                        self.meter_length + get_ansi_len(data_time_str))
-                    log_msg = self.delimiter.join(
-                        [log_msg, iter_time_str, data_time_str])
+                self.memory.update(cur_memory)
+            if tqdm:
+                _dict = {k: v for k, v in self.meters.items()}
                 if env['verbose'] > 2 and torch.cuda.is_available():
-                    memory_str = '{green}memory{reset}: {memory:d} MB'.format(
-                        memory=cur_memory, **ansi)
-                    memory_str = memory_str.ljust(
-                        self.meter_length + get_ansi_len(memory_str))
-                    log_msg = self.delimiter.join([log_msg, memory_str])
-                prints(log_msg, indent=indent + 10)
+                    _dict.update(memory=f'{cur_memory:d} MB')
+                if env['verbose'] > 1:
+                    _dict.update(iter=f'{cur_iter_time:.3f} s',
+                                 data=f'{cur_data_time:.3f} s')
+                iterator.set_description_str(self.get_str(**_dict, rstrip=False))
             end = time.time()
         self.synchronize_between_processes()
         total_time = time.time() - start_time
-        total_time = str(datetime.timedelta(seconds=int(total_time)))
+        total_time_str = tqdm_class.format_interval(total_time)
 
-        total_time_str: str = '{green}time{reset}: {time}'.format(
-            time=total_time, **ansi)
-        total_time_str = total_time_str.ljust(
-            self.meter_length + get_ansi_len(total_time_str))
-        log_msg = self.delimiter.join([header, str(self), total_time_str])
-        if env['verbose'] > 1:
-            iter_time_str: str = '{green}iter{reset}: {iter_time} s'.format(
-                iter_time=str(iter_time), **ansi)
-            data_time_str: str = '{green}data{reset}: {data_time} s'.format(
-                data_time=str(data_time), **ansi)
-            iter_time_str = iter_time_str.ljust(
-                self.meter_length + get_ansi_len(iter_time_str))
-            data_time_str = data_time_str.ljust(
-                self.meter_length + get_ansi_len(data_time_str))
-            log_msg = self.delimiter.join(
-                [log_msg, iter_time_str, data_time_str])
+        _dict = {k: v for k, v in self.meters.items()}
         if env['verbose'] > 2 and torch.cuda.is_available():
-            memory_str: str = '{green}memory{reset}: {memory} MB'.format(
-                memory=str(memory), **ansi)
-            memory_str = memory_str.ljust(
-                self.meter_length + get_ansi_len(memory_str))
-            log_msg = self.delimiter.join([log_msg, memory_str])
-        prints(log_msg, indent=indent)
+            _dict.update(memory=f'{str(self.memory)} MB')
+        if env['verbose'] > 1:
+            _dict.update(iter=f'{str(self.iter_time):.3f} s',
+                         data=f'{str(self.data_time):.3f} s')
+        _dict.update(time=total_time_str)
+        prints(self.delimiter.join([header, self.get_str(**_dict)]),
+               indent=indent)
 
 
 class AverageMeter:

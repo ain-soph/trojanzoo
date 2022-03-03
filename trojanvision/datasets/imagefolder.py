@@ -293,7 +293,7 @@ class ImageFolder(ImageSet):
                                           compression=zipfile.ZIP_STORED)
                 _list = src_zip.namelist()
                 if env['tqdm']:
-                    _list = tqdm(_list)
+                    _list = tqdm(_list, leave=False)
                 for filename in _list:
                     if filename[-1] == '/':
                         continue
@@ -331,7 +331,7 @@ class ImageFolder(ImageSet):
                                f'image_num: {len(_list):>8d}',
                                indent=10)
                         if env['tqdm']:
-                            _list = tqdm(_list)
+                            _list = tqdm(_list, leave=False)
                         for _file in _list:
                             src_file_path = os.path.join(src_path, mode,
                                                          src_class, _file)

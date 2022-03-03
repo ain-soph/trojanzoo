@@ -81,16 +81,17 @@ def prints(*args: str, indent: int = 0, prefix: str = '', **kwargs):
     print(*new_args, **kwargs)
 
 
-def output_iter(_iter: int, iteration: int = None) -> str:
+def output_iter(_iter: int, iteration: int = None, iter_len: int = 4) -> str:
     if iteration is None:
-        pattern = '{blue_light}[ {red}{0:s}{blue_light} ]{reset}'
-        return pattern.format(str(_iter).rjust(3), **ansi)
+        pattern = '{blue_light}[ {red}{0}{blue_light} ]{reset}'
+        return pattern.format(str(_iter).rjust(iter_len), **ansi)
     else:
-        length = len(str(iteration))
-        pattern = '{blue_light}[ {red}{0:s}{blue_light} ' + \
-            '/ {red}{1:d}{blue_light} ]{reset}'
+        iter_str = str(iteration)
+        length = len(iter_str)
+        pattern = ('{blue_light}[ {red}{0}{blue_light} '
+                   '/ {red}{1}{blue_light} ]{reset}')
         return pattern.format(str(_iter).rjust(length),
-                              iteration, **ansi)
+                              iter_str, **ansi)
 
 
 def indent_str(s_: str, indent: int = 0) -> str:
