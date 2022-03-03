@@ -76,15 +76,15 @@ class ImageNet(ImageFolder):
                                '{folder_path}/ILSVRC2012_img_train.tar\n'
                                '{folder_path}/ILSVRC2012_img_val.tar\n'
                                '{folder_path}/meta.bin')
-        os.symlink(os.path.join(self.folder_path, 'imagenet', 'val'),
-                   os.path.join(self.folder_path, 'imagenet', 'valid'))
+        if not os.path.isdir(os.path.join(self.folder_path, 'valid')):
+            os.symlink(os.path.join(self.folder_path, 'val'),
+                       os.path.join(self.folder_path, 'valid'))
 
     def _get_org_dataset(self, mode: str, data_format: str = None,
                          **kwargs) -> datasets.DatasetFolder:
         data_format = data_format or self.data_format
-        root = os.path.join(self.folder_path, mode)
         split = 'val' if mode == 'valid' else mode
-        return datasets.ImageNet(root=root, split=split, **kwargs)
+        return datasets.ImageNet(root=self.folder_path, split=split, **kwargs)
 
 
 class Sample_ImageNet(ImageNet):

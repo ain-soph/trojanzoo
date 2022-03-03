@@ -82,8 +82,8 @@ class ImageFolder(ImageSet):
         self.data_format: str = data_format
         self.memory: bool = memory
         super().__init__(**kwargs)
-        self.param_list['imagefolder'] = ['data_format', 'url',
-                                          'org_folder_name', 'memory']
+        self.param_list['imagefolder'] = ['data_format', 'memory', 'org_folder_name',
+                                          'url']
         self.class_to_idx = self.get_class_to_idx()
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
