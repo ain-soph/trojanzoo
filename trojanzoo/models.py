@@ -1270,7 +1270,7 @@ class Model(BasicObject):
         """
         return self._model.apply(fn)
 
-    def _requires_grad(self, requires_grad: bool = True):
+    def requires_grad_(self, requires_grad: bool = True):
         r"""Change if autograd should record operations on parameters in this
         module.
 
