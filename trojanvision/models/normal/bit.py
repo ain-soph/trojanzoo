@@ -2,6 +2,10 @@
 
 # https://github.com/google-research/big_transfer
 
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/validate.py --color --verbose 1 --dataset imagenet --model bit-m-r50x1 --official --transform bit
+"""  # noqa: E501
+
 from trojanvision.utils.model_archs.bit import KNOWN_MODELS, tf2th, StdConv2d, conv3x3
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 from trojanvision.datasets import ImageNet
@@ -20,27 +24,62 @@ class _BiT(_ImageModel):
         model_name = name.split('_')[0].upper().replace('BIT', 'BiT').replace('X', 'x')
         _model = KNOWN_MODELS[model_name](head_size=1)
         self.features = nn.Sequential()
+        root, head = _model.root, _model.head
+        root_conv: StdConv2d = getattr(root, 'conv')
         if 'comp' in name:
-            conv: StdConv2d = _model.root.conv
-            self.features.add_module('conv', conv3x3(conv.in_channels, conv.out_channels))
+            self.features.add_module('conv', conv3x3(root_conv.in_channels, root_conv.out_channels))
         else:
-            self.features.add_module('conv', _model.root.conv)
+            self.features.add_module('conv', root_conv)
+            root_pool: nn.MaxPool2d = getattr(root, 'pool')
             if 'official' not in name:
-                pool: nn.MaxPool2d = _model.root.pool
-                _model.root.pool = nn.MaxPool2d(pool.kernel_size, pool.stride, padding=1)
+                root_pool = nn.MaxPool2d(root_pool.kernel_size, root_pool.stride, padding=1)
             else:
-                self.features.add_module('pad', _model.root.pad)
-            self.features.add_module('pool', _model.root.pool)
+                self.features.add_module('pad', getattr(root, 'pad'))
+            self.features.add_module('pool', root_pool)
         for name, child in _model.body.named_children():
             self.features.add_module(name, child)
-        self.features.add_module('gn', _model.head.gn)
-        self.features.add_module('relu', _model.head.relu)
-        fc: nn.Conv2d = _model.head.conv
-        self.classifier = self.define_classifier(conv_dim=fc.in_channels,
+        self.features.add_module('gn', getattr(head, 'gn'))
+        self.features.add_module('relu', getattr(head, 'relu'))
+        head_conv: nn.Conv2d = getattr(head, 'conv')
+        self.classifier = self.define_classifier(conv_dim=head_conv.in_channels,
                                                  num_classes=self.num_classes, fc_depth=1)
 
 
 class BiT(ImageModel):
+    r"""Big Transfer (ResNetv2) proposed by Alexander Kolesnikov from Google in ECCV 2020.
+
+    :Available model names:
+
+        .. code-block:: python3
+
+            ['bit', 'bit_comp', 'bit_official',
+             'bit-m-r50x1', 'bit-m-r50x3', 'bit-m-r101x1', 'bit-m-r101x3', 'bit-m-r152x2', 'bit-m-r152x4',
+             'bit-s-r50x1', 'bit-s-r50x3', 'bit-s-r101x1', 'bit-s-r101x3', 'bit-s-r152x2', 'bit-s-r152x4',
+             'bit-m-r50x1_comp', 'bit-m-r50x3_comp', 'bit-m-r101x1_comp',
+             'bit-m-r101x3_comp', 'bit-m-r152x2_comp', 'bit-m-r152x4_comp',
+             'bit-s-r50x1_comp', 'bit-s-r50x3_comp', 'bit-s-r101x1_comp',
+             'bit-s-r101x3_comp', 'bit-s-r152x2_comp', 'bit-s-r152x4_comp',
+             'bit-m-r50x1_official', 'bit-m-r50x3_official', 'bit-m-r101x1_official',
+             'bit-m-r101x3_official', 'bit-m-r152x2_official', 'bit-m-r152x4_official',
+             'bit-s-r50x1_official', 'bit-s-r50x3_official', 'bit-s-r101x1_official',
+             'bit-s-r101x3_official', 'bit-s-r152x2_official', 'bit-s-r152x4_official']
+
+    See Also:
+        * paper: `Big Transfer (BiT)\: General Visual Representation Learning`_
+        * code: https://github.com/google-research/big_transfer
+
+    Note:
+        ``_comp`` reduces the first convolutional layer
+        from ``kernel_size=7, stride=2, padding=3``
+
+        to ``kernel_size=3, stride=1, padding=1``,
+        and removes following ``norm0, relu0, pool0``
+        (``pool0`` is :any:`torch.nn.MaxPool2d`)
+        before block layers.
+
+    .. _Big Transfer (BiT)\: General Visual Representation Learning:
+        https://arxiv.org/abs/1912.11370
+    """
     available_models = ['bit', 'bit_comp', 'bit_official',
                         'bit-m-r50x1', 'bit-m-r50x3', 'bit-m-r101x1', 'bit-m-r101x3', 'bit-m-r152x2', 'bit-m-r152x4',
                         'bit-s-r50x1', 'bit-s-r50x3', 'bit-s-r101x1', 'bit-s-r101x3', 'bit-s-r152x2', 'bit-s-r152x4',
@@ -85,14 +124,17 @@ class BiT(ImageModel):
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         # TODO: map_location argument
-        assert 'official' in self.name and 'comp' not in self.name, self.name
+        assert 'comp' not in self.name, self.name
         model_name = self.name.split('_')[0].upper().replace('BIT', 'BiT').replace('X', 'x')
         if isinstance(self.dataset, ImageNet):
             model_name += '-ILSVRC2012'
         url = f'https://storage.googleapis.com/bit_models/{model_name}.npz'
         print('get official model weights from: ', url)
-        file_path = os.path.join(torch.hub.get_dir(), 'bit', f'{model_name}.npz')
-        if not os.path.exists(file_path):
+        dir_path = os.path.join(torch.hub.get_dir(), 'bit')
+        file_path = os.path.join(dir_path, f'{model_name}.npz')
+        if not os.path.isfile(file_path):
+            if not os.path.isdir(dir_path):
+                os.makedirs(dir_path)
             torch.hub.download_url_to_file(url, file_path)
         weights: dict[str, np.ndarray] = np.load(file_path)
         _dict = OrderedDict()
@@ -120,3 +162,20 @@ class BiT(ImageModel):
         _dict['classifier.fc.weight'] = tf2th(weights['resnet/head/conv2d/kernel']).flatten(1)
         _dict['classifier.fc.bias'] = tf2th(weights['resnet/head/conv2d/bias'])
         return _dict
+
+    def parametrize_(self, parametrize: bool = True):
+        for mod in self.modules():
+            if isinstance(mod, StdConv2d):
+                mod.parametrize_(parametrize)
+        return self
+
+    def load(self, *args, **kwargs) -> OrderedDict[str, torch.Tensor]:
+        self.parametrize_(False)
+        _dict = super().load(*args, **kwargs)
+        self.parametrize_()
+        return _dict
+
+    def save(self, *args, **kwargs):
+        self.parametrize_(False)
+        super().save(*args, **kwargs)
+        self.parametrize_()
