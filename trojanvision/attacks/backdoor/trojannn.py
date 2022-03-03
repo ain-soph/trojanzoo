@@ -113,10 +113,12 @@ class TrojanNN(BadNet):
         if weight.dim() > 2:
             weight = weight.flatten(2).mean(2)
         weight = weight.mean(0)
-        return weight.argsort(descending=False)[:self.neuron_num]
+        return weight.argsort(descending=True)[:self.neuron_num]
 
     def get_neuron_value(self, trigger_input: torch.Tensor, neuron_idx: torch.Tensor) -> float:
         r"""Get average neuron activation value of :attr:`trigger_input` for :attr:`neuron_idx`.
+
+        The feature map is obtained by calling :meth:`ImageModel.get_layer()`.
 
         Args:
             trigger_input (torch.Tensor): Triggered input tensor with shape ``(N, C, H, W)``.
@@ -137,6 +139,8 @@ class TrojanNN(BadNet):
         It uses :any:`torch.optim.Adam` and
         :any:`torch.optim.lr_scheduler.CosineAnnealingLR`
         with tanh objective funcion.
+
+        The feature map is obtained by calling :meth:`ImageModel.get_layer()`.
 
         Args:
             neuron_idx (torch.Tensor): Neuron index list tensor with shape ``(self.neuron_num)``.
