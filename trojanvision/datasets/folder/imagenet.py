@@ -62,9 +62,8 @@ class ImageNet(ImageFolder):
 
     def initialize_folder(self):
         try:
-            datasets.ImageNet(root=self.folder_path,
-                              split='train', download=True)
-            datasets.ImageNet(root=self.folder_path, split='val', download=True)
+            datasets.ImageNet(root=self.folder_path, split='train')
+            datasets.ImageNet(root=self.folder_path, split='val')
         except RuntimeError:
             raise RuntimeError('\n\n'
                                'You need to visit https://image-net.org/download-images.php '
