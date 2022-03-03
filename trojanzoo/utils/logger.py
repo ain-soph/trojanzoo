@@ -229,7 +229,7 @@ class MetricLogger:
 
         self.iter_time = SmoothedValue()
         self.data_time = SmoothedValue()
-        self.memory = SmoothedValue(fmt='{global_avg:d}')
+        self.memory = SmoothedValue(fmt='{max:.0f}')
 
     def update(self, n: int = 1, **kwargs) -> 'MetricLogger':
         r"""Update values to :attr:`self.meters` by calling :meth:`SmoothedValue.update()`.
@@ -356,7 +356,7 @@ class MetricLogger:
             if tqdm:
                 _dict = {k: v for k, v in self.meters.items()}
                 if env['verbose'] > 2 and torch.cuda.is_available():
-                    _dict.update(memory=f'{cur_memory:d} MB')
+                    _dict.update(memory=f'{cur_memory:.0f} MB')
                 if env['verbose'] > 1:
                     _dict.update(iter=f'{cur_iter_time:.3f} s',
                                  data=f'{cur_data_time:.3f} s')
@@ -370,8 +370,8 @@ class MetricLogger:
         if env['verbose'] > 2 and torch.cuda.is_available():
             _dict.update(memory=f'{str(self.memory)} MB')
         if env['verbose'] > 1:
-            _dict.update(iter=f'{str(self.iter_time):.3f} s',
-                         data=f'{str(self.data_time):.3f} s')
+            _dict.update(iter=f'{str(self.iter_time)} s',
+                         data=f'{str(self.data_time)} s')
         _dict.update(time=total_time_str)
         prints(self.delimiter.join([header, self.get_str(**_dict)]),
                indent=indent)
