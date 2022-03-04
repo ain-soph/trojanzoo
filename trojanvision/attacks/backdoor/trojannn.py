@@ -104,7 +104,7 @@ class TrojanNN(BadNet):
 
     def attack(self, *args, **kwargs):
         self.neuron_idx = self.get_neuron_idx()
-        print('Neuron Idx: ', self.neuron_idx.cpu().tolist())
+        print('Neuron Index: ', self.neuron_idx.cpu().tolist())
         self.preprocess_mark(neuron_idx=self.neuron_idx)
         super().attack(*args, **kwargs)
 
@@ -126,7 +126,7 @@ class TrojanNN(BadNet):
     def get_neuron_value(self, trigger_input: torch.Tensor, neuron_idx: torch.Tensor) -> float:
         r"""Get average neuron activation value of :attr:`trigger_input` for :attr:`neuron_idx`.
 
-        The feature map is obtained by calling :meth:`trojanvision.models.ImageModel.get_layer()`.
+        The feature map is obtained by calling :meth:`trojanzoo.models.Model.get_layer()`.
 
         Args:
             trigger_input (torch.Tensor): Triggered input tensor with shape ``(N, C, H, W)``.
@@ -147,7 +147,8 @@ class TrojanNN(BadNet):
         :any:`torch.optim.lr_scheduler.CosineAnnealingLR`
         with tanh objective funcion.
 
-        The feature map is obtained by calling :meth:`trojanvision.models.ImageModel.get_layer()`.
+        The feature map is obtained by calling
+        :meth:`trojanvision.models.ImageModel.get_layer()`.
 
         Args:
             neuron_idx (torch.Tensor): Neuron index list tensor with shape ``(self.neuron_num)``.
@@ -180,8 +181,10 @@ class TrojanNN(BadNet):
             trigger_feats = self.model.get_layer(trigger_input, layer_output=self.preprocess_layer)
             trigger_feats = trigger_feats[:, neuron_idx].abs()
             if trigger_feats.dim() > 2:
-                trigger_feats = trigger_feats.flatten(2).sum(2)  # .amax(2)
-            loss = (trigger_feats - self.target_value).square().sum()
+                trigger_feats = trigger_feats.flatten(2).sum(2)
+                # Original code
+                # trigger_feats = trigger_feats.flatten(2).amax(2)
+            loss = (trigger_feats - self.target_value).square().sum()   # paper's formula
             # Original code: no difference
             # loss = -self.target_value * trigger_feats.sum()
             loss.backward(inputs=[atanh_mark])
@@ -208,7 +211,8 @@ class TrojanNN(BadNet):
         return super().validate_fn(**kwargs)
 
     # @staticmethod
-    # def denoise(img: torch.Tensor, weight: float = 1.0, max_num_iter: int = 100, eps: float = 1e-3) -> torch.Tensor:
+    # def denoise(img: torch.Tensor, weight: float = 1.0,
+    #             max_num_iter: int = 100, eps: float = 1e-3) -> torch.Tensor:
     #     r"""Denoise image by calling :any:`skimage.restoration.denoise_tv_bregman`.
 
     #     Warning:
