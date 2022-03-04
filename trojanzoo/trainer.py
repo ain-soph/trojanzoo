@@ -196,6 +196,8 @@ class Trainer(BasicObject):
             if value:
                 prints('{green}{0:<10s}{reset}'.format(key, **ansi),
                        indent=indent + 10)
+                if isinstance(value, dict):
+                    value = {k: str(v).split('\n')[0] for k, v in value.items()}
                 prints(value, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
 
