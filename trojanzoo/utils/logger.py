@@ -27,23 +27,23 @@ class SmoothedValue:
         https://github.com/pytorch/vision/blob/main/references/classification/utils.py
 
     Args:
+        name (str): Name string.
         window_size (int): The :attr:`maxlen` of :class:`~collections.deque`.
         fmt (str): The format pattern of ``str(self)``.
 
     Attributes:
+        name (str): Name string.
+        fmt (str): The string pattern.
         deque (~collections.deque): The unique data series.
         count (int): The amount of data.
         total (float): The sum of all data.
-        fmt (str): The string pattern.
 
-        last (float): The last value of :attr:`deque`.
         median (float): The median of :attr:`deque`.
         avg (float): The avg of :attr:`deque`.
-        global_avg (float):
-          :math:`\frac{\text{total}}{\text{count}}`
+        global_avg (float): :math:`\frac{\text{total}}{\text{count}}`
         max (float): The max of :attr:`deque`.
         min (float): The min of :attr:`deque`.
-        value (float): The last value of :attr:`deque`.
+        last_value (float): The last value of :attr:`deque`.
     """
 
     def __init__(self, name: str = '', window_size: int = None, fmt: str = '{global_avg:.3f}'):
@@ -52,13 +52,6 @@ class SmoothedValue:
         self.count: int = 0
         self.total: float = 0.0
         self.fmt = fmt
-
-    @property
-    def last(self) -> float:
-        try:
-            return self.deque[-1]
-        except IndexError:
-            raise IndexError(f'{self.name} is empty')
 
     def update(self, value: float, n: int = 1) -> 'SmoothedValue':
         r"""Update :attr:`n` pieces of data with same :attr:`value`.
@@ -169,7 +162,7 @@ class SmoothedValue:
             return 0.0
 
     @property
-    def value(self) -> float:
+    def last_value(self) -> float:
         try:
             return self.deque[-1]
         except Exception:
@@ -183,7 +176,7 @@ class SmoothedValue:
             global_avg=self.global_avg,
             min=self.min,
             max=self.max,
-            value=self.value)
+            last_value=self.last_value)
 
     def __format__(self, format_spec: str) -> str:
         return self.__str__()

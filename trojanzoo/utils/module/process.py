@@ -49,7 +49,7 @@ class BasicObject:
             if value:
                 prints('{green}{0:<20s}{reset}'.format(
                     key, **ansi), indent=indent + 10)
-                prints({v: getattr(self, v)
+                prints({v: str(getattr(self, v)).split('\n')[0]
                        for v in value}, indent=indent + 10)
                 prints('-' * 20, indent=indent + 10)
 

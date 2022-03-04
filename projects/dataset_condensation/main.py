@@ -290,7 +290,7 @@ if __name__ == '__main__':
                   f'median: {float(image_syn.median()):.2f} '
                   f'({float(image_syn.min()):.2f}, {float(image_syn.max()):.2f})')
             cur_result = robusts.global_avg + accs.global_avg if eval_model.adv_train else accs.global_avg
-            if cur_result > best_result:
+            if cur_result > best_result + 1e-3:
                 best_result = cur_result
                 print(' ' * 12, '{purple}best result update!{reset}'.format(**ansi))
                 if kwargs['file_path']:

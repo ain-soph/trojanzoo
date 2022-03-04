@@ -80,6 +80,6 @@ class IMC(TrojanNN):
                 optimizer.step()
                 optimizer.zero_grad()
                 self.mark.mark.detach_()
-        self.mark.mark[:-1] = tanh_func(atanh_mark)
         atanh_mark.requires_grad_(False)
+        self.mark.mark[:-1] = tanh_func(atanh_mark)
         self.mark.mark.detach_()
