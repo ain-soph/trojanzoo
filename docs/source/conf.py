@@ -83,6 +83,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable', None),
     'pillow': ('https://pillow.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),
+    # 'skimage': ('https://scikit-image.org/docs/dev/', None),
     'sklearn': ('https://scikit-learn.org/stable/', None),
     'torch': ('https://pytorch.org/docs/stable/', None),
     'torchvision': ('https://pytorch.org/vision/stable/', None),
