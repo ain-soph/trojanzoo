@@ -6,7 +6,7 @@ from .badnet import BadNet
 from .trojannn import TrojanNN
 from .latent_backdoor import LatentBackdoor
 from .imc import IMC
-from .reflection_backdoor import ReflectionBackdoor
+from .refool import Refool
 from .bypass_embed import BypassEmbed
 from .trojannet import TrojanNet
 from .clean_label import CleanLabel
@@ -16,7 +16,7 @@ from .hidden_trigger import HiddenTrigger
 from .others import Unlearn
 
 __all__ = ['BadNet', 'TrojanNN', 'LatentBackdoor',
-           'IMC', 'ReflectionBackdoor', 'BypassEmbed',
+           'IMC', 'Refool', 'BypassEmbed',
            'TrojanNet', 'CleanLabel', 'HiddenTrigger']
 
 class_dict: dict[str, type[Attack]] = {
@@ -24,7 +24,7 @@ class_dict: dict[str, type[Attack]] = {
     'trojannn': TrojanNN,
     'latent_backdoor': LatentBackdoor,
     'imc': IMC,
-    'reflection_backdoor': ReflectionBackdoor,
+    'refool': Refool,
     'bypass_embed': BypassEmbed,
     'trojannet': TrojanNet,
     'clean_label': CleanLabel,

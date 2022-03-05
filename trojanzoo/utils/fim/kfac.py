@@ -300,7 +300,7 @@ class KFAC(BaseKFAC):
         g, gb = weight_grad, bias_grad
         s = weight_grad.size()  # (out, in, kh, kw)
         if bias_grad is not None:
-            gb = gb[None, :, None, None].repeat(
+            gb = gb[:, None, None, None].repeat(
                 1, 1, s[2], s[3])  # (out, 1, kh, kw)
             g = torch.cat([g, gb], dim=1)  # (out, in + 1, kh, kw)
 

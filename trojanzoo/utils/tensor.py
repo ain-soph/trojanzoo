@@ -12,7 +12,7 @@ from typing import Any, Union    # TODO: python 3.10
 
 __all__ = ['tanh_func', 'atan_func',
            'to_tensor', 'to_numpy', 'to_list',
-           'to_pil_image', 'gray_img', 'gray_tensor',
+           'gray_img', 'gray_tensor',
            'byte2float', 'float2byte',
            'save_as_img', 'read_img_as_tensor',
            'repeat_to_batch', 'add_noise']
@@ -139,27 +139,6 @@ def to_list(x: Any) -> list:
 
 # ----------------------- Image Utils ------------------------------ #
 
-
-def to_pil_image(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
-                 mode=None) -> Image.Image:
-    r"""transform an image to :any:`PIL.Image.Image`.
-
-    Args:
-        x (torch.Tensor | np.ndarray | Image.Image):
-            The input image.
-        mode (`PIL.Image mode`_): color space and pixel depth of input data (optional).
-
-    .. _PIL.Image mode: https://pillow.readthedocs.io/en/latest/handbook/concepts.html#concept-modes
-
-    Returns:
-        PIL.Image.Image: Pillow image instance.
-    """
-    if isinstance(x, Image.Image):
-        return x
-    x = to_tensor(x, device='cpu')
-    return F.to_pil_image(x, mode=mode)
-
-
 def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image],
              num_output_channels: int = 1) -> Image.Image:
     r"""transform an image to :any:`PIL.Image.Image` with gray scale.
@@ -175,7 +154,7 @@ def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image],
         PIL.Image.Image: Gray scale image instance.
     """
     if not isinstance(x, Image.Image):
-        x = to_pil_image(x)
+        x = F.to_pil_image(x)
     return F.to_grayscale(x, num_output_channels=num_output_channels)
 
 
@@ -263,8 +242,7 @@ def tensor_to_img(_tensor: torch.Tensor) -> Image.Image:
         _tensor = _tensor[0]
     if _tensor.dtype in [torch.float, torch.double]:
         _tensor = float2byte(_tensor)
-    img = to_numpy(_tensor)
-    return Image.fromarray(img)
+    return F.to_pil_image(_tensor)
 
 
 def save_as_img(path: str, arr: Union[torch.Tensor, np.ndarray]):

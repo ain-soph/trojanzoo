@@ -13,7 +13,8 @@ root_dir = os.path.dirname(root_file)
 
 
 class CUB200(ImageFolder):
-    r"""CUB200 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+    r"""CUB200 dataset introduced by Peter Welinder in 2010.
+    It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
         * paper: `Caltech-UCSD Birds 200`_

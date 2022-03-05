@@ -18,9 +18,9 @@ class CIFAR10(ImageSet):
         name (str): ``'cifar10'``
         num_classes (int): ``10``
         data_shape (list[int]): ``[3, 32, 32]``
-        class_to_idx (dict[str, int]):
-            | ``{'airplane': 0, 'automobile': 1, 'bird' : 2, 'cat' : 3, 'deer' : 4,``
-            | ``'dog'      : 5, 'frog'      : 6, 'horse': 7, 'ship': 8, 'truck': 9}``
+        class_names (list[str]):
+            | ``['airplane', 'automobile', 'bird', 'cat', 'deer',``
+            | ``'dog', 'frog', 'horse', 'ship', 'truck']``
         norm_par (dict[str, list[float]]):
             | ``{'mean': [0.49139968, 0.48215827, 0.44653124],``
             | ``'std'  : [0.24703233, 0.24348505, 0.26158768]}``
@@ -31,8 +31,8 @@ class CIFAR10(ImageSet):
     name = 'cifar10'
     num_classes = 10
     data_shape = [3, 32, 32]
-    class_to_idx = {'airplane': 0, 'automobile': 1, 'bird': 2, 'cat': 3,
-                    'deer': 4, 'dog': 5, 'frog': 6, 'horse': 7, 'ship': 8, 'truck': 9}
+    class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+                   'dog', 'frog', 'horse', 'ship', 'truck']
 
     def __init__(self, norm_par: dict[str, list[float]] = {'mean': [0.49139968, 0.48215827, 0.44653124],
                                                            'std': [0.24703233, 0.24348505, 0.26158768], },

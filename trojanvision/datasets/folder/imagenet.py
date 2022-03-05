@@ -12,7 +12,8 @@ root_dir = os.path.dirname(root_file)
 
 
 class ImageNet(ImageFolder):
-    r"""ImageNet dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+    r"""ImageNet (ILSVRC2012) dataset introduced by Jia Deng and Feifei Li in 2012.
+    It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
         * torchvision: :any:`torchvision.datasets.ImageNet`

@@ -5,7 +5,8 @@ from trojanzoo.utils.module import Module
 
 
 class VGGface2(ImageFolder):
-    r"""VGGface2 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+    r"""VGGface2 dataset introduced by Qiong Cao in 2018.
+    It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
         * paper: `VGGFace2\: A dataset for recognising faces across pose and age`_
