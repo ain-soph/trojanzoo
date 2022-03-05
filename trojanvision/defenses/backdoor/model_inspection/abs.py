@@ -5,7 +5,6 @@ from trojanvision.environ import env
 from trojanzoo.utils.data import sample_batch
 from trojanzoo.utils.metric import mask_jaccard
 from trojanzoo.utils.output import output_iter, prints
-from trojanzoo.utils.tensor import to_tensor
 
 import torch
 import numpy as np
@@ -185,8 +184,8 @@ class ABS(ModelInspection):
         seed_data: dict[str, torch.Tensor] = {}
         seed_data_np = dict(np.load(seed_path)) if os.path.exists(seed_path) \
             else self.save_seed_data()
-        seed_data['input'] = to_tensor(seed_data_np['input'])
-        seed_data['label'] = to_tensor(seed_data_np['label'], dtype=torch.long)
+        seed_data['input'] = torch.from_numpy(seed_data_np['input']).to(device=env['device'])
+        seed_data['label'] = torch.from_numpy(seed_data_np['label']).to(device=env['device'], dtype=torch.long)
         return seed_data
 
     # -----------------------Neural Sample---------------------------- #
@@ -265,16 +264,16 @@ class ABS(ModelInspection):
     # ---------------------------------- Unused ------------------------------- #
     # def filter_img(self):
     #     h, w = self.dataset.data_shape[1:]
-    #     mask = torch.zeros(h, w, dtype=torch.float)
+    #     mask = torch.zeros(h, w)
     #     mask[2:7, 2:7] = 1
-    #     return to_tensor(mask, non_blocking=False)
+    #     return mask.to(device=env['device'])
 
     # def nc_filter_img(self) -> torch.Tensor:
     #     h, w = self.dataset.data_shape[1:]
-    #     mask = torch.ones(h, w, dtype=torch.float)
-    #     return to_tensor(mask, non_blocking=False)
+    #     mask = torch.ones(h, w)
+    #     return mask.to(device=env['device'])
     #     # TODO: fix
-    #     # mask = torch.zeros(h, w, dtype=torch.float)
+    #     # mask = torch.zeros(h, w)
     #     # if self.use_mask:
     #     #     mask[math.ceil(0.25 * w): math.floor(0.75 * w), math.ceil(0.25 * h): math.floor(0.75 * h)] = 1
     #     # else:

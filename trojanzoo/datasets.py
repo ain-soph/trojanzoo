@@ -52,9 +52,10 @@ class Dataset(ABC, BasicObject):
             | Defaults to ``0.8``.
         num_workers (int): Used in :meth:`get_dataloader()`.
             Defaults to ``4``.
-        loss_weights (bool | numpy.ndarray):
+        loss_weights (bool | np.ndarray |torch.Tensor):
             | The loss weights w.r.t. each class.
-            | if :any:`numpy.ndarray`, directly set as :attr:`loss_weights`.
+            | if :any:`numpy.ndarray` or :any:`torch.Tensor`,
+              directly set as :attr:`loss_weights` (cpu tensor).
             | if ``True``, set :attr:`loss_weights` as :meth:`get_loss_weights()`;
             | if ``False``, set :attr:`loss_weights` as ``None``.
         **kwargs: Any keyword argument (unused).
@@ -81,7 +82,7 @@ class Dataset(ABC, BasicObject):
             | The ratio stands for
               :math:`\frac{\text{\# training\ subset}}{\text{\# total\ training\ set}}`.
             | Defaults to ``0.8``.
-        loss_weights (numpy.ndarray | None): The loss weights w.r.t. each class.
+        loss_weights (torch.Tensor | None): The loss weights w.r.t. each class.
         num_workers (int): Used in :meth:`get_dataloader()`.
             Defaults to ``4``.
         collate_fn (~collections.abc.Callable | None):
@@ -124,7 +125,7 @@ class Dataset(ABC, BasicObject):
                  valid_batch_size: int = 100,
                  folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, num_workers: int = 4,
-                 loss_weights: Union[bool, np.ndarray] = False,
+                 loss_weights: Union[bool, np.ndarray, torch.Tensor] = False,
                  **kwargs):
         super().__init__(**kwargs)
         self.param_list['dataset'] = ['num_classes', 'batch_size', 'valid_batch_size',
@@ -157,9 +158,13 @@ class Dataset(ABC, BasicObject):
         # ----------------------------------------------- #
         # Loss Weights
         if isinstance(loss_weights, bool):
-            loss_weights: np.ndarray = self.get_loss_weights(
+            loss_weights = self.get_loss_weights(
             ) if loss_weights else None    # TODO: issue 5 pylance
-        self.loss_weights = loss_weights
+        elif isinstance(loss_weights, np.ndarray):
+            loss_weights = torch.from_numpy(loss_weights).to(device=env['device'])
+        else:
+            loss_weights = loss_weights.to(device=env['device'])
+        self.loss_weights: torch.Tensor = loss_weights
 
     @functools.cached_property
     def batch_size(self):
@@ -415,7 +420,7 @@ class Dataset(ABC, BasicObject):
             drop_last=drop_last, collate_fn=collate_fn)
 
     def get_loss_weights(self, file_path: str = None,
-                         verbose: bool = True) -> np.ndarray:
+                         verbose: bool = True) -> torch.Tensor:
         r"""Calculate :attr:`loss_weights` as reciprocal of data size of each class
         (to mitigate data imbalance).
 
@@ -429,24 +434,25 @@ class Dataset(ABC, BasicObject):
                 Defaults to ``True``.
 
         Returns:
-            numpy.ndarray: The array of loss weights w.r.t. each class.
+            torch.Tensor: The tensor of loss weights w.r.t. each class.
         """
         file_path = file_path if file_path is not None \
             else os.path.join(self.folder_path, 'loss_weights.npy')
         if os.path.exists(file_path):
-            return np.load(file_path)
+            loss_weights = np.load(file_path)
+            return torch.from_numpy(loss_weights).to(device=env['device'])
         else:
             if verbose:
                 print('Calculating Loss Weights')
             dataset = self.get_dataset('train', transform=None)
             _, targets = dataset_to_tensor(dataset)
-            loss_weights: np.ndarray = np.reciprocal(np.bincount(
+            loss_weights = np.reciprocal(np.bincount(
                 targets.numpy()))     # TODO: linting problem
             assert len(loss_weights) == self.num_classes
             np.save(file_path, loss_weights)
             if verbose:
                 print('Loss Weights Saved at ', file_path)
-            return loss_weights
+            return torch.from_numpy(loss_weights).to(device=env['device'])
 
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,

@@ -322,8 +322,8 @@ class AdvMind(Defense):
             #     sub_seq.append(point)
 
             # sub_seq: list[torch.Tensor] = []
-            # idx = float(to_tensor([(x-seq_centers[i]).norm(p=2)
-            #                  for x in seq[i]]).argmin())
+            # idx = torch.tensor([(x - seq_centers[i]).norm(p=2).item()
+            #                     for x in seq[i]]).argmin().item()
             # sub_seq.append(seq[i][idx])
             # norms = [(x - seq_centers[i]).norm(p=2) for x in sub_seq]
             norms: torch.Tensor = (seq - seq_centers[i]).flatten(1).norm(p=2, dim=-1)

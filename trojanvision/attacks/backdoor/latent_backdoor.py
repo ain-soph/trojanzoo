@@ -8,7 +8,7 @@ from .badnet import BadNet
 
 from trojanvision.environ import env
 from trojanzoo.utils.data import sample_batch
-from trojanzoo.utils.tensor import to_tensor, tanh_func
+from trojanzoo.utils.tensor import tanh_func
 
 import torch
 import torch.optim as optim
@@ -211,7 +211,7 @@ class LatentBackdoor(BadNet):
             for data in other_loader:
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
                 _input, _label = self.model.get_data(data)
-                poison_input = self.add_mark(to_tensor(_input))
+                poison_input = self.add_mark(_input)
                 loss = self.loss_mse(poison_input)
                 loss.backward(inputs=[atanh_mark])
                 optimizer.step()

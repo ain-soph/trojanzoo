@@ -6,7 +6,7 @@ from trojanzoo.defenses import Defense
 from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.metric import mask_jaccard, normalize_mad
 from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.tensor import to_tensor, tanh_func
+from trojanzoo.utils.tensor import tanh_func
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 
 import torch
@@ -374,5 +374,5 @@ class ModelInspection(BackdoorDefense):
         _dict = np.load(path)
         for k, v in self.new_dict.items():
             setattr(self.attack.mark, k, v)
-        self.attack.mark.mark = to_tensor(_dict['mark_list'][self.attack.target_class])
+        self.attack.mark.mark = torch.from_numpy(_dict['mark_list'][self.attack.target_class]).to(device=env['device'])
         print('defense results loaded from: ', path)

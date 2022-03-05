@@ -121,15 +121,6 @@ def to_list(x: Any) -> list:
 
 # ----------------------- Image Utils ------------------------------ #
 
-# def byte2float(img) -> torch.Tensor:
-#     img = to_tensor(img).float()
-#     if img.dim() == 2:
-#         img.unsqueeze_(dim=0)
-#     else:
-#         img = img.permute(2, 0, 1).contiguous()
-#     img.div_(255.0)
-#     return img
-
 
 def float2byte(img: torch.Tensor) -> torch.Tensor:
     r"""transform a ``torch.FloatTensor`` ranging in ``[0, 1]``
