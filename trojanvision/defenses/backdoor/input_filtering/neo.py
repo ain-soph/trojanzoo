@@ -3,7 +3,7 @@
 from ...abstract import InputFiltering
 from trojanzoo.utils.logger import AverageMeter, SmoothedValue
 from trojanzoo.utils.metric import mask_jaccard
-from trojanzoo.utils.tensor import to_tensor, to_numpy
+from trojanzoo.utils.tensor import to_tensor
 
 import torch
 import numpy as np
@@ -97,7 +97,7 @@ class Neo(InputFiltering):
         """
         if k_means_num is None:
             k_means_num = self.k_means_num
-        img = to_numpy(img.transpose(0, -1).flatten(end_dim=-2))    # (*, C)
+        img = img.transpose(0, -1).flatten(end_dim=-2).detach().cpu().numpy()    # (*, C)
         kmeans_result = KMeans(n_clusters=k_means_num).fit(img)
         unique, counts = np.unique(kmeans_result.labels_, return_counts=True)
         center = kmeans_result.cluster_centers_[unique[np.argmax(counts)]]

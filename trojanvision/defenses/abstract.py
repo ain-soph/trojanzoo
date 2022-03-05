@@ -6,7 +6,7 @@ from trojanzoo.defenses import Defense
 from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.metric import mask_jaccard, normalize_mad
 from trojanzoo.utils.output import prints, ansi, output_iter
-from trojanzoo.utils.tensor import to_tensor, to_numpy, tanh_func
+from trojanzoo.utils.tensor import to_tensor, tanh_func
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 
 import torch
@@ -241,7 +241,8 @@ class ModelInspection(BackdoorDefense):
             print(f'Jaccard index: {overlap:.3f}')
 
     def get_mark_loss_list(self, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        mark_list, loss_list = [], []
+        mark_list: list[torch.Tensor] = []
+        loss_list: list[torch.Tensor] = []
         # todo: parallel to avoid for loop
         file_path = os.path.normpath(os.path.join(
             self.folder_path, self.get_filename() + '.npz'))
@@ -256,12 +257,12 @@ class ModelInspection(BackdoorDefense):
                                        self.real_mask,
                                        select_num=select_num)
                 print(f'Jaccard index: {overlap:.3f}')
-            np.savez(file_path, mark_list=np.stack([to_numpy(mark) for mark in mark_list]),
+            np.savez(file_path, mark_list=np.stack([mark.detach().cpu().numpy() for mark in mark_list]),
                      loss_list=np.array(loss_list))
             print('Defense results saved at: ' + file_path)
-        mark_list = torch.stack(mark_list)
-        loss_list = torch.as_tensor(loss_list)
-        return mark_list, loss_list
+        mark_list_tensor = torch.stack(mark_list)
+        loss_list_tensor = torch.as_tensor(loss_list)
+        return mark_list_tensor, loss_list_tensor
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor,
              target: int, trigger_output: torch.Tensor = None,

@@ -3,10 +3,8 @@
 # python scripts/membership.py --model densenet121_comp --dataset cifar100 --pretrained   # noqa: E501
 
 import trojanvision
-from trojanvision import to_numpy
 from trojanzoo.utils.data import dataset_to_tensor
 
-import torch
 from sklearn import metrics
 from scipy.special import softmax
 import argparse

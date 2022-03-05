@@ -10,7 +10,7 @@ from PIL import Image
 from typing import Any, Union    # TODO: python 3.10
 
 __all__ = ['tanh_func', 'atan_func',
-           'to_tensor', 'to_numpy', 'to_list',
+           'to_tensor', 'to_list',
            'float2byte', 'repeat_to_batch', 'add_noise']
 
 _map = {'int': torch.int, 'long': torch.long,
@@ -101,22 +101,6 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
             print('device: ', x.device)
         raise
     return x
-
-
-def to_numpy(x: Any, **kwargs) -> np.ndarray:
-    r"""transform a (batched) image to :any:`numpy.ndarray`.
-
-    Args:
-        x (torch.Tensor | np.ndarray | Image.Image):
-            The input image.
-        **kwargs: Keyword arguments passed to :any:`numpy.array`.
-
-    Returns:
-        numpy.ndarray:
-    """
-    if isinstance(x, torch.Tensor):
-        x = x.detach().cpu().numpy()
-    return np.array(x, **kwargs)
 
 
 def to_list(x: Any) -> list:

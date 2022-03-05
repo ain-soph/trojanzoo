@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
 import trojanvision
-from trojanvision import to_numpy
 from trojanzoo.utils.data import dataset_to_tensor
 
-import torch
 import torch.nn as nn
 import argparse
 
