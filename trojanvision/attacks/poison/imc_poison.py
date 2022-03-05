@@ -4,7 +4,6 @@ from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD
 from trojanvision.optim import PGDoptimizer
 from trojanvision.models import MagNet
-from trojanzoo import to_list
 
 import torch
 import numpy as np
@@ -116,8 +115,8 @@ class IMC_Poison(PoisonBasic):
             org_conf = self.model.get_target_prob(_input=poison_input, target=_label)
             tgt_conf = self.model.get_target_prob(_input=poison_input, target=target_label)
             if 'curvature' in self.__dict__.keys():
-                org_curvature_list.extend(to_list(self.curvature.measure(poison_input, _label)))    # type: ignore
-                tgt_curvature_list.extend(to_list(self.curvature.measure(poison_input, target_label)))    # type: ignore
+                org_curvature_list.extend(self.curvature.measure(poison_input, _label).detach().cpu().tolist())
+                tgt_curvature_list.extend(self.curvature.measure(poison_input, target_label).detach().cpu().tolist())
                 print('Curvature:')
                 print(f'    org_curvature: {ks_2samp(org_curvature_list, benign_curvature)}')    # type: ignore
                 print(f'    tgt_curvature: {ks_2samp(tgt_curvature_list, benign_curvature)}')    # type: ignore
@@ -127,11 +126,11 @@ class IMC_Poison(PoisonBasic):
                 tgt_new = self.model.get_target_prob(_input=poison_input, target=target_label, randomized_smooth=True)
                 org_increase = (org_new - org_conf).clamp(min=0.0)
                 tgt_decrease = (tgt_new - tgt_conf).clamp(min=0.0)
-                org_conf_list.extend(to_list(org_increase))    # type: ignore
-                tgt_conf_list.extend(to_list(tgt_decrease))    # type: ignore
+                org_conf_list.extend(org_increase.detach().cpu().tolist())
+                tgt_conf_list.extend(tgt_decrease.detach().cpu().tolist())
                 print('Randomized Smooth:')
-                print(f'    org_confidence: {np.mean(org_conf_list)}')    # type: ignore
-                print(f'    tgt_confidence: {np.mean(tgt_conf_list)}')    # type: ignore
+                print(f'    org_confidence: {np.mean(org_conf_list)}')
+                print(f'    tgt_confidence: {np.mean(tgt_conf_list)}')
                 print()
             if 'magnet' in self.__dict__.keys():
                 poison_input = self.magnet(poison_input)
@@ -139,11 +138,11 @@ class IMC_Poison(PoisonBasic):
                 tgt_new = self.model.get_target_prob(_input=poison_input, target=target_label)
                 org_increase = (org_new - org_conf).clamp(min=0.0)
                 tgt_decrease = (tgt_conf - tgt_new).clamp(min=0.0)
-                org_magnet_list.extend(to_list(org_increase))    # type: ignore
-                tgt_magnet_list.extend(to_list(tgt_decrease))    # type: ignore
+                org_magnet_list.extend(org_increase.detach().cpu().tolist())
+                tgt_magnet_list.extend(tgt_decrease.detach().cpu().tolist())
                 print('MagNet:')
-                print(f'    org_confidence: {np.mean(org_magnet_list)}')    # type: ignore
-                print(f'    tgt_confidence: {np.mean(tgt_magnet_list)}')    # type: ignore
+                print(f'    org_confidence: {np.mean(org_magnet_list)}')
+                print(f'    tgt_confidence: {np.mean(tgt_magnet_list)}')
                 print()
             total += 1
 

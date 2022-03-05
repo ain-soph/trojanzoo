@@ -10,8 +10,7 @@ from PIL import Image
 from typing import Any, Union    # TODO: python 3.10
 
 __all__ = ['tanh_func', 'atan_func',
-           'to_tensor', 'to_list',
-           'float2byte', 'repeat_to_batch', 'add_noise']
+           'to_tensor', 'repeat_to_batch', 'add_noise']
 
 _map = {'int': torch.int, 'long': torch.long,
         'byte': torch.uint8, 'uint8': torch.uint8,
@@ -101,52 +100,6 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
             print('device: ', x.device)
         raise
     return x
-
-
-def to_list(x: Any) -> list:
-    r"""transform a (batched) image to :class:`list`.
-
-    Args:
-        x (torch.Tensor | np.ndarray | Image.Image):
-            The input image.
-
-    Returns:
-        list:
-    """
-    if isinstance(x, torch.Tensor):
-        return x.detach().cpu().tolist()
-    elif isinstance(x, np.ndarray):
-        return x.tolist()
-    return list(x)
-
-# ----------------------- Image Utils ------------------------------ #
-
-
-def float2byte(img: torch.Tensor) -> torch.Tensor:
-    r"""transform a ``torch.FloatTensor`` ranging in ``[0, 1]``
-    with shape ``[(1), (C), H, W]``
-    to ``torch.ByteTensor`` ranging from ``[0, 255]``
-    with shape ``[H, W, (C)]``.
-
-    Args:
-        img (torch.Tensor): ``torch.FloatTensor`` ranging in ``[0, 1]``
-            with shape ``[(1), (C), H, W]``.
-
-    Returns:
-        torch.Tensor: ``torch.ByteTensor`` ranging from ``[0, 255]``
-            with shape ``[H, W, (C)]``..
-    """
-    img = torch.as_tensor(img)
-    if img.dim() == 4:
-        assert img.shape[0] == 1
-        img = img[0]
-    if img.shape[0] == 1:
-        img = img[0]
-    elif img.dim() == 3:
-        img = img.permute(1, 2, 0).contiguous()
-    # img = (((img - img.min()) / (img.max() - img.min())) * 255
-    #       ).astype(np.uint8).squeeze()
-    return img.mul(255).byte()
 
 # --------------------------------------------------------------------- #
 

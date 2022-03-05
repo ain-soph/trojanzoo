@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from trojanvision.models import ImageModel
-from trojanzoo import to_list
 import torch
 
 
@@ -18,7 +17,7 @@ class Curvature():
         grad = torch.autograd.grad(loss, x)[0]
         return grad
 
-    def measure(self, x: torch.Tensor, y: torch.Tensor, d=None):
+    def measure(self, x: torch.Tensor, y: torch.Tensor, d: torch.Tensor = None) -> torch.Tensor:
         gx1 = self.compute_gradient(x, y)
         if d is None:
             d = gx1.sign().flatten(start_dim=1)
@@ -38,5 +37,5 @@ class Curvature():
             if i >= batch_num:
                 break
             measure = self.measure(_input, _label)
-            measure_list.extend(to_list(measure))
+            measure_list.extend(measure.detach().cpu().tolist())
         return measure_list
