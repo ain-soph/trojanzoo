@@ -9,7 +9,7 @@ from trojanzoo.utils.model import (get_all_layer, get_layer, get_layer_name,
                                    summary)
 from trojanzoo.utils.module import get_name, BasicObject
 from trojanzoo.utils.output import ansi, prints
-from trojanzoo.utils.tensor import add_noise, to_tensor
+from trojanzoo.utils.tensor import add_noise
 from trojanzoo.utils.train import train, validate, compare
 
 import torch
@@ -314,8 +314,7 @@ class Model(BasicObject):
                 os.makedirs(folder_path)
 
         # ------------Auto-------------- #
-        loss_weights: np.ndarray = None if 'loss_weights' not in kwargs.keys(
-        ) else kwargs['loss_weights']
+        loss_weights: torch.Tensor = None if 'loss_weights' not in kwargs.keys() else kwargs['loss_weights']
         if dataset:
             if not isinstance(dataset, Dataset):
                 raise TypeError(f'{type(dataset)=}    {dataset=}')
@@ -326,13 +325,19 @@ class Model(BasicObject):
         self.num_classes = num_classes  # number of classes
         # TODO: what device shall we save loss_weights?
         # numpy, torch, or torch.cuda.
+
+        if isinstance(loss_weights, np.ndarray):
+            loss_weights = torch.from_numpy(loss_weights)
+        if isinstance(loss_weights, torch.Tensor):
+            loss_weights = loss_weights.to(device=env['device'])
+
         self.loss_weights = loss_weights
         self.layer_name_list: list[str] = None
 
         # ------------------------------ #
-        self.criterion = self.define_criterion(weight=to_tensor(loss_weights, dtype=torch.float))
+        self.criterion = self.define_criterion(weight=loss_weights)
         self.criterion_noreduction = self.define_criterion(
-            weight=to_tensor(loss_weights), reduction='none')
+            weight=loss_weights, reduction='none')
         self.softmax = nn.Softmax(dim=1)
         if isinstance(model, type):
             if num_classes is not None:

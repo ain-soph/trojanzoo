@@ -3,13 +3,12 @@
 from .genotypes import Genotype
 from .operations import get_op, PRIMITIVES
 
-from trojanzoo import to_numpy
-
 import torch
 import torch.nn as nn
 import numpy as np
 
 from typing import Sequence
+from collections.abc import Callable
 
 
 class MixedOp(nn.Module):
@@ -109,7 +108,7 @@ class FeatureExtractor(nn.Module):
         self.register_buffer('alphas_reduce', 1e-3 * torch.randn(k, num_ops))
         self.alphas_normal: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
         self.alphas_reduce: torch.Tensor  # = 1e-3 * torch.randn(k, num_ops)
-        self.softmax = nn.Softmax(dim=-1)
+        self.softmax: Callable[[torch.Tensor], torch.Tensor] = nn.Softmax(dim=-1)
 
     def arch_parameters(self) -> list[torch.Tensor]:
         if self._layers == 1:
@@ -125,8 +124,8 @@ class FeatureExtractor(nn.Module):
         return s1
 
     def genotype(self) -> Genotype:
-        gene_normal = self._parse(to_numpy(self.softmax(self.alphas_normal)))
-        gene_reduce = self._parse(to_numpy(self.softmax(self.alphas_reduce)))
+        gene_normal = self._parse(self.softmax(self.alphas_normal).detach().cpu().numpy())
+        gene_reduce = self._parse(self.softmax(self.alphas_reduce).detach().cpu().numpy())
 
         concat = range(2 + self._steps - self._multiplier, self._steps + 2)
         genotype = Genotype(normal=gene_normal, normal_concat=concat,

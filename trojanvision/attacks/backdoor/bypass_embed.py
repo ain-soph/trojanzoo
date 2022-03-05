@@ -4,7 +4,6 @@ from .badnet import BadNet
 from trojanvision.environ import env
 from trojanzoo.utils.logger import AverageMeter
 from trojanzoo.utils.output import ansi
-from trojanzoo.utils.tensor import to_tensor
 
 import torch
 import torch.nn as nn
@@ -89,9 +88,12 @@ class BypassEmbed(BadNet):
 
     @staticmethod
     def bypass_get_data(data: tuple[torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        return to_tensor(data[0]), to_tensor(data[1], dtype='long'), to_tensor(data[2], dtype='long')
+        return (data[0].to(device=env['device']),
+                data[1].to(device=env['device'], dtype='long'),
+                data[2].to(device=env['device'], dtype='long'))
 
-    def joint_train(self, epochs: int = 0, optimizer: optim.Optimizer = None, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
+    def joint_train(self, epochs: int = 0, optimizer: optim.Optimizer = None,
+                    lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                     poison_loader=None, discrim_loader=None, save=False, **kwargs):
         in_dim = self.model._model.classifier[0].in_features
         D = nn.Sequential(OrderedDict([

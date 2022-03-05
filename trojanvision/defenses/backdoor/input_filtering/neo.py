@@ -3,7 +3,6 @@
 from ...abstract import InputFiltering
 from trojanzoo.utils.logger import AverageMeter, SmoothedValue
 from trojanzoo.utils.metric import mask_jaccard
-from trojanzoo.utils.tensor import to_tensor, to_numpy
 
 import torch
 import numpy as np
@@ -53,7 +52,6 @@ class Neo(InputFiltering):
                 y = pos_list[i][j][1]
                 block_input[i, j, :, x:x + self.size[0], y:y + self.size[1]] = dom_c[i]
         # get potential triggers
-        _input, block_input = to_tensor(_input), to_tensor(block_input)
         org_class = self.model.get_class(_input).unsqueeze(1).expand(-1, self.sample_num)   # (N, sample_num)
         block_class_list = []
         for i in range(self.sample_num):
@@ -97,7 +95,7 @@ class Neo(InputFiltering):
         """
         if k_means_num is None:
             k_means_num = self.k_means_num
-        img = to_numpy(img.transpose(0, -1).flatten(end_dim=-2))    # (*, C)
+        img = img.transpose(0, -1).flatten(end_dim=-2).detach().cpu().numpy()    # (*, C)
         kmeans_result = KMeans(n_clusters=k_means_num).fit(img)
         unique, counts = np.unique(kmeans_result.labels_, return_counts=True)
         center = kmeans_result.cluster_centers_[unique[np.argmax(counts)]]

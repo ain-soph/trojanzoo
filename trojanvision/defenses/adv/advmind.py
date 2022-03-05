@@ -3,7 +3,7 @@
 from trojanvision.attacks import PGD
 from trojanvision.environ import env
 from trojanzoo.defenses import Defense
-from trojanzoo.utils.tensor import repeat_to_batch, to_list
+from trojanzoo.utils.tensor import repeat_to_batch
 from trojanzoo.utils.output import prints
 
 import torch
@@ -63,8 +63,8 @@ class AdvMind(Defense):
         self.cos_sim = nn.CosineSimilarity()
 
     def detect(self):
-        zeros = torch.zeros(self.attack.iteration - 1)
-        result_dict = {'draw': zeros.clone(), 'win': zeros.clone(), 'lose': zeros.clone()}
+        zeros = [0] * (self.attack.iteration - 1)
+        result_dict = {'draw': zeros.copy(), 'win': zeros.copy(), 'lose': zeros.copy()}
         counter = 0
         attack_succ_num = 0.
         detect_succ_num = 0.
@@ -72,7 +72,7 @@ class AdvMind(Defense):
         validset = self.dataset.get_dataset('valid')
         testset, _ = self.dataset.split_dataset(validset, percent=0.3)
         loader = self.dataset.get_dataloader(mode='valid', dataset=testset,
-                                             shuffle=True)
+                                             batch_size=1, shuffle=True)
         for i, data in enumerate(loader):
             if counter >= 200:
                 break
@@ -94,9 +94,9 @@ class AdvMind(Defense):
                 detect_succ_num += 1
             attack_succ_rate = attack_succ_num / counter
             detect_succ_rate = detect_succ_num / counter
-            print('draw: ', to_list(result_dict['draw']))
-            print('win : ', to_list(result_dict['win']))
-            print('lose: ', to_list(result_dict['lose']))
+            print('draw: ', result_dict['draw'])
+            print('win : ', result_dict['win'])
+            print('lose: ', result_dict['lose'])
             print()
             print('total: ', counter)
             print('attack succ rate: ', attack_succ_rate)
@@ -124,7 +124,7 @@ class AdvMind(Defense):
         # candidate_centers = self.get_candidate_centers(seq, seq_centers, seq_bias)  # abandoned
         # candidate_centers = seq_centers
         detect_result = self.get_detect_result(seq_centers, target=target)
-        attack_result = self.model(seq[:, 0].squeeze()).argmax(dim=1)
+        attack_result = self.model(seq[:, 0]).argmax(dim=1).detach().cpu()
 
         attack_succ = self.attack.iteration
         detect_succ = self.attack.iteration
@@ -135,7 +135,8 @@ class AdvMind(Defense):
                     attack_result[min(i + 1, self.attack.iteration - 2)] == target and \
                     attack_succ == self.attack.iteration:
                 attack_succ = i
-            if detect_result[i] == detect_result[min(i + 1, self.attack.iteration - 2)] and detect_succ == self.attack.iteration and detect_true:
+            if (detect_true and detect_result[i] == detect_result[min(i + 1, self.attack.iteration - 2)]
+                    and detect_succ == self.attack.iteration):
                 if detect_result[i] == target:
                     detect_succ = i
                 else:
@@ -143,9 +144,9 @@ class AdvMind(Defense):
         if 'end' in self.output:
             # print('candidate centers: ', [len(i) for i in candidate_centers])
             print('Detect Iter: ', detect_succ)
-            prints(to_list(detect_result), indent=12)
+            prints(detect_result.tolist(), indent=12)
             print('Attack Iter: ', attack_succ)
-            prints(to_list(attack_result), indent=12)
+            prints(attack_result.tolist(), indent=12)
             print()
         result = ['draw'] * (self.attack.iteration - 1)
         if attack_succ < detect_succ:
@@ -163,7 +164,7 @@ class AdvMind(Defense):
     def get_seq(self, _input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         seq = []
         X = _input.clone()
-        noise = torch.zeros_like(_input)
+        noise: torch.Tensor = torch.zeros_like(_input)
         if isinstance(target, int):
             target = target * torch.ones(len(_input), dtype=torch.long, device=_input.device)
 
@@ -179,7 +180,7 @@ class AdvMind(Defense):
                 self.hess = self.calc_hess(loss_fn, X, sigma=self.attack.sigma,
                                            hess_b=self.hess_b, hess_lambda=self.hess_lambda)
                 self.hess /= self.hess.norm(p=2)
-            cluster = self.attack.gen_seq(X, query_num=self.true_query_num)
+            cluster = self.attack.gen_seq(X, query_num=self.true_query_num)[:, 0]  # (query_num+1, C, H, W)
             # Attack Adaptive
             if self.attack_adapt:
                 fake_seq = self.get_fake_seq(X=X)
@@ -218,7 +219,7 @@ class AdvMind(Defense):
             noise = (noise - self.attack.pgd_alpha * grad).clamp(-self.attack.pgd_eps, self.attack.pgd_eps)
             X = (_input + noise).clamp(0, 1)
             noise = X - _input
-        return torch.stack(seq)
+        return torch.stack(seq)  # (iter, query_num+1, C, H, W)
 
     def get_fake_seq(self, X: torch.Tensor) -> torch.Tensor:
         if X.dim() == 4:
@@ -264,7 +265,7 @@ class AdvMind(Defense):
         return torch.stack(seq_centers), torch.stack(seq_bias)
 
     def get_detect_result(self, seq_centers: torch.Tensor, target=None):
-        pair_seq = -torch.ones(self.attack.iteration - 1, dtype=torch.long, device=env['device'])
+        pair_seq = -torch.ones(self.attack.iteration - 1, dtype=torch.long)
         detect_prob = torch.ones(self.model.num_classes) / self.model.num_classes
         for i in range(len(seq_centers) - 1):
             X: torch.Tensor = seq_centers[i].clone()
@@ -322,8 +323,8 @@ class AdvMind(Defense):
             #     sub_seq.append(point)
 
             # sub_seq: list[torch.Tensor] = []
-            # idx = float(to_tensor([(x-seq_centers[i]).norm(p=2)
-            #                  for x in seq[i]]).argmin())
+            # idx = torch.tensor([(x - seq_centers[i]).norm(p=2).item()
+            #                     for x in seq[i]]).argmin().item()
             # sub_seq.append(seq[i][idx])
             # norms = [(x - seq_centers[i]).norm(p=2) for x in sub_seq]
             norms: torch.Tensor = (seq - seq_centers[i]).flatten(1).norm(p=2, dim=-1)

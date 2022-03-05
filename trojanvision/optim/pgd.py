@@ -234,13 +234,12 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
             seq.append(noise)
         elif self.grad_method == 'hess':
             raise NotImplementedError(self.grad_method)
-            noise = (self.hess @ noise.view(-1, 1)).view(X.shape)
+            noise = (self.hess @ noise.view(-1, 1)).view(x.shape)
             seq.append(noise)
         elif self.grad_method == 'zoo':
             raise NotImplementedError(self.grad_method)
         else:
-            print('Current method: ', self.grad_method)
-            raise ValueError("Argument 'method' should be 'nes', 'sgd' or 'hess'!")
+            raise ValueError(f'{self.grad_method=}')
         seq = torch.cat(seq).add(x)  # (query_num+1, N, C, H, W)
         return seq
 

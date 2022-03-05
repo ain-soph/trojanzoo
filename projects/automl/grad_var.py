@@ -3,7 +3,6 @@
 import trojanvision
 
 import torch
-import numpy as np
 import argparse
 
 import time
@@ -56,8 +55,8 @@ if __name__ == '__main__':
     model.eval()
     model.activate_params([])
 
-    grad_tensor = trojanvision.to_numpy(grad_xx - grad_x.square())
-    grad_tensor[grad_tensor < 0] = 0
-    var = float(np.sum(np.sqrt(grad_tensor)))
+    grad_arr = grad_xx - grad_x.square()
+    grad_arr[grad_arr < 0] = 0
+    var: float = grad_arr.sqrt().sum().item()
 
     print(f'{model.name:20}  {var:f}')

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanzoo import to_tensor
+from trojanzoo.environ import env
 from trojanzoo.models import Model
 from trojanvision.datasets import ImageSet
 from trojanvision.utils.model import Conv2d_SAME
@@ -132,7 +132,7 @@ class MagNet(Model):
         else:
             data[0] = _input.detach()
             data[1] = _input.clone().detach()
-        return to_tensor(data[0]), to_tensor(data[1])
+        return data[0].to(device=env['device']), data[1].to(device=env['device'])
 
     def define_optimizer(
             self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',

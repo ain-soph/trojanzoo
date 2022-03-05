@@ -2,7 +2,6 @@
 
 from trojanvision.optim import PGDoptimizer
 from trojanzoo.attacks import Attack
-from trojanzoo import to_list
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.logger import SmoothedValue
 
@@ -41,7 +40,8 @@ class PGD(Attack, PGDoptimizer):
         group.add_argument('--iteration', type=int, help='Attack Iteration, defaults to 7')
         group.add_argument('--stop_threshold', type=float, help='early stop confidence, defaults to 0.99')
         group.add_argument('--target_class', type=int, help='Do not set it if using target_idx')
-        group.add_argument('--target_idx', type=int, help='Target label order in original classification, defaults to -1 '
+        group.add_argument('--target_idx', type=int,
+                           help='Target label order in original classification, defaults to -1 '
                            '(0 for untargeted attack, 1 for most possible class, -1 for most unpossible class)')
         group.add_argument('--test_num', type=int, help='total number of test examples for PGD, defaults to 1000.')
         group.add_argument('--num_restart', type=int,
@@ -121,15 +121,16 @@ class PGD(Attack, PGDoptimizer):
             org_target_conf = self.model.get_target_prob(_input, target)
             org_org_conf = self.model.get_target_prob(_input, _label)
 
-            total_adv_target_conf.update_list(to_list(adv_target_conf))
-            total_adv_org_conf.update_list(to_list(adv_org_conf))
-            succ_adv_target_conf.update_list(to_list(adv_target_conf[iter_list != -1]))
-            succ_adv_org_conf.update_list(to_list(adv_org_conf[iter_list != -1]))
-            total_org_target_conf.update_list(to_list(org_target_conf))
-            total_org_org_conf.update_list(to_list(org_org_conf))
+            total_adv_target_conf.update_list(adv_target_conf.detach().cpu().tolist())
+            total_adv_org_conf.update_list(adv_org_conf.detach().cpu().tolist())
+            succ_adv_target_conf.update_list(adv_target_conf[iter_list != -1].detach().cpu().tolist())
+            succ_adv_org_conf.update_list(adv_org_conf[iter_list != -1].detach().cpu().tolist())
+            total_org_target_conf.update_list(org_target_conf.detach().cpu().tolist())
+            total_org_org_conf.update_list(org_org_conf.detach().cpu().tolist())
 
-            total_iter_list.update_list(to_list(torch.where(iter_list != -1, iter_list, 2 * self.iteration)))
-            succ_iter_list.update_list(to_list(iter_list[iter_list != -1]))
+            total_iter_list.update_list(torch.where(iter_list != -1, iter_list, 2 *
+                                        self.iteration * torch.ones_like(iter_list)).tolist())
+            succ_iter_list.update_list(iter_list[iter_list != -1].tolist())
             if verbose >= 3:
                 prints(f'{ansi["green"]}{succ_iter_list.count} / {total_iter_list.count}{ansi["reset"]}')
             if verbose >= 4:
@@ -222,9 +223,9 @@ class PGD(Attack, PGDoptimizer):
     def output_info(self, org_input: torch.Tensor, noise: torch.Tensor, target: torch.Tensor,
                     loss_fn: Callable[[torch.Tensor], torch.Tensor] = None, **kwargs):
         super().output_info(org_input=org_input, noise=noise, loss_fn=loss_fn, **kwargs)
-        # prints('Original class     : ', to_list(_label), indent=self.indent)
-        # prints('Original confidence: ', to_list(_confidence), indent=self.indent)
+        # prints('Original class     : ', _label, indent=self.indent)
+        # prints('Original confidence: ', _confidence, indent=self.indent)
         with torch.no_grad():
             _confidence = self.model.get_target_prob(org_input + noise, target)
-        prints('Target   class     : ', to_list(target), indent=self.indent)
-        prints('Target   confidence: ', to_list(_confidence), indent=self.indent)
+        prints('Target   class     : ', target.detach().cpu().tolist(), indent=self.indent)
+        prints('Target   confidence: ', _confidence.detach().cpu().tolist(), indent=self.indent)
