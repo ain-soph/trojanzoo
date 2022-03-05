@@ -84,7 +84,7 @@ class Env(Param):
         group.add_argument('--benchmark', action='store_true',
                            help='use torch.backends.cudnn.benchmark '
                            'to accelerate without deterministic')
-        group.add_argument('--verbose', type=int, default=0,
+        group.add_argument('--verbose', type=int,
                            help='show arguments and module information '
                            '(default: 0)')
         group.add_argument('--color', action='store_true',
@@ -119,7 +119,7 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
 def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str = None,
            seed: int = None, data_seed: int = None, benchmark: bool = None,
            config: Config = config,
-           cache_threshold: float = None, verbose: int = None,
+           cache_threshold: float = None, verbose: int = 0,
            color: bool = None, device: str = None, tqdm: bool = None,
            **kwargs) -> Env:
     r"""

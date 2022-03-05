@@ -171,6 +171,8 @@ class SmoothedValue:
     def __str__(self):
         return self.fmt.format(
             name=self.name,
+            count=self.count,
+            total=self.total,
             median=self.median,
             avg=self.avg,
             global_avg=self.global_avg,
@@ -250,7 +252,7 @@ class MetricLogger:
             meter.reset()
         return self
 
-    def get_str(self, cut_too_long: bool = True, rstrip: bool = True, **kwargs) -> str:
+    def get_str(self, cut_too_long: bool = True, strip: bool = True, **kwargs) -> str:
         r"""Generate formatted string based on keyword arguments.
 
         ``key: value`` with max length to be :attr:`self.meter_length`.
@@ -259,7 +261,7 @@ class MetricLogger:
         Args:
             cut_too_long (bool): Whether to cut too long values to first 5 characters.
                 Defaults to ``True``.
-            rstrip (bool): Whether to strip trailing whitespaces.
+            strip (bool): Whether to strip trailing whitespaces.
                 Defaults to ``True``.
             **kwargs: Keyword arguments to generate string.
         """
@@ -272,7 +274,7 @@ class MetricLogger:
                 _str = '{green}{k}{reset}: {v}'.format(k=k, v=v_str[:5], **ansi)
             str_list.append(_str.ljust(max_length))
         _str = self.delimiter.join(str_list)
-        if rstrip:
+        if strip:
             _str = _str.rstrip()
         return _str
 
@@ -353,7 +355,7 @@ class MetricLogger:
                 if env['verbose'] > 1:
                     _dict.update(iter=f'{cur_iter_time:.3f} s',
                                  data=f'{cur_data_time:.3f} s')
-                iterator.set_description_str(self.get_str(**_dict, rstrip=False))
+                iterator.set_description_str(self.get_str(**_dict, strip=False))
             end = time.time()
         self.synchronize_between_processes()
         total_time = time.time() - start_time
