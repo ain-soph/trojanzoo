@@ -139,6 +139,7 @@ def main():
     reflect_imgs = [read_tensor(fp) for fp in reflect_paths]
     background_imgs = [read_tensor(fp) for i, fp in enumerate(background_paths) if i < NUM_ATTACK]
 
+    print('writing tar file: ', tar_path)
     tf = tarfile.open(tar_path, mode='w')
     trojanzoo.environ.create(color=True, tqdm=True)
     logger = MetricLogger(meter_length=35)
