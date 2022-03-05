@@ -6,16 +6,12 @@ import torch
 import torchvision.transforms.functional as F
 import numpy as np
 import math
-import os
 from PIL import Image
 from typing import Any, Union    # TODO: python 3.10
 
 __all__ = ['tanh_func', 'atan_func',
            'to_tensor', 'to_numpy', 'to_list',
-           'gray_img', 'gray_tensor',
-           'byte2float', 'float2byte',
-           'save_as_img', 'read_img_as_tensor',
-           'repeat_to_batch', 'add_noise']
+           'float2byte', 'repeat_to_batch', 'add_noise']
 
 _map = {'int': torch.int, 'long': torch.long,
         'byte': torch.uint8, 'uint8': torch.uint8,
@@ -95,7 +91,7 @@ def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
         except TypeError:
             pass
     elif isinstance(x, Image.Image):
-        x = byte2float(x)
+        x = F.to_tensor(x)
     try:
         x = torch.as_tensor(x, dtype=dtype).to(device=device, **kwargs)
     except Exception:
@@ -133,64 +129,13 @@ def to_list(x: Any) -> list:
     Returns:
         list:
     """
-    if isinstance(x, (torch.Tensor, np.ndarray)):
+    if isinstance(x, torch.Tensor):
+        return x.detach().cpu().tolist()
+    elif isinstance(x, np.ndarray):
         return x.tolist()
     return list(x)
 
 # ----------------------- Image Utils ------------------------------ #
-
-def gray_img(x: Union[torch.Tensor, np.ndarray, Image.Image],
-             num_output_channels: int = 1) -> Image.Image:
-    r"""transform an image to :any:`PIL.Image.Image` with gray scale.
-
-    Args:
-        x (torch.Tensor | np.ndarray | Image.Image):
-            The input image with RGB channels.
-        num_output_channels (int): Passed to
-            :any:`torchvision.transforms.functional.to_grayscale`.
-            Defaults to ``1``.
-
-    Returns:
-        PIL.Image.Image: Gray scale image instance.
-    """
-    if not isinstance(x, Image.Image):
-        x = F.to_pil_image(x)
-    return F.to_grayscale(x, num_output_channels=num_output_channels)
-
-
-def gray_tensor(x: Union[torch.Tensor, np.ndarray, Image.Image],
-                num_output_channels: int = 1, **kwargs) -> torch.Tensor:
-    r"""transform a (batched) :any:`torch.Tensor`
-    with shape ``([N], 3, H, W)`` to gray scale ``([N], 1, H, W)``.
-
-    Args:
-        img (torch.Tensor): ``torch.FloatTensor`` ranging in ``[0, 1]``
-            with shape ``([N], 3, H, W)``.
-        num_output_channels (int): Passed to
-            :any:`torchvision.transforms.functional.rgb_to_grayscale`.
-            Defaults to ``1``.
-
-    Returns:
-        torch.Tensor: Gray scale tensor with shape ``([N], 1, H, W)``.
-    """
-    img = F.rgb_to_grayscale(x, num_output_channels=num_output_channels)
-    return to_tensor(img, **kwargs)
-
-
-def byte2float(img: Union[torch.Tensor, np.ndarray, Image.Image]) -> torch.Tensor:
-    r"""transform an image ranging from ``[0, 255]``
-    to ``torch.FloatTensor`` ranging in ``[0, 1]``.
-
-    Args:
-        img (torch.Tensor | numpy.ndarray | PIL.Image.Image):
-            image ranging from ``[0, 255]``.
-
-    Returns:
-        torch.Tensor: ``torch.FloatTensor`` ranging in ``[0, 1]``.
-    """
-    if isinstance(img, torch.Tensor):
-        img = to_numpy(img)
-    return F.to_tensor(img)
 
 # def byte2float(img) -> torch.Tensor:
 #     img = to_tensor(img).float()
@@ -204,13 +149,17 @@ def byte2float(img: Union[torch.Tensor, np.ndarray, Image.Image]) -> torch.Tenso
 
 def float2byte(img: torch.Tensor) -> torch.Tensor:
     r"""transform a ``torch.FloatTensor`` ranging in ``[0, 1]``
-    to ``torch.ByteTensor`` ranging from ``[0, 255]``.
+    with shape ``[(1), (C), H, W]``
+    to ``torch.ByteTensor`` ranging from ``[0, 255]``
+    with shape ``[H, W, (C)]``.
 
     Args:
-        img (torch.Tensor): ``torch.FloatTensor`` ranging in ``[0, 1]``.
+        img (torch.Tensor): ``torch.FloatTensor`` ranging in ``[0, 1]``
+            with shape ``[(1), (C), H, W]``.
 
     Returns:
-        torch.Tensor: ``torch.ByteTensor`` ranging from ``[0, 255]``.
+        torch.Tensor: ``torch.ByteTensor`` ranging from ``[0, 255]``
+            with shape ``[H, W, (C)]``..
     """
     img = torch.as_tensor(img)
     if img.dim() == 4:
@@ -223,52 +172,6 @@ def float2byte(img: torch.Tensor) -> torch.Tensor:
     # img = (((img - img.min()) / (img.max() - img.min())) * 255
     #       ).astype(np.uint8).squeeze()
     return img.mul(255).byte()
-
-
-def tensor_to_img(_tensor: torch.Tensor) -> Image.Image:
-    r"""transform a :any:`torch.Tensor` to :any:`PIL.Image.Image`.
-
-    Args:
-        path (str): The path to save.
-        _tensor (torch.Tensor): The tensor of the image.
-
-    Returns:
-        PIL.Image.Image: The image instance.
-    """
-    if _tensor.dim() == 4:
-        assert _tensor.shape[0] == 1
-        _tensor = _tensor[0]
-    if _tensor.dim() == 3 and _tensor.shape[0] == 1:
-        _tensor = _tensor[0]
-    if _tensor.dtype in [torch.float, torch.double]:
-        _tensor = float2byte(_tensor)
-    return F.to_pil_image(_tensor)
-
-
-def save_as_img(path: str, arr: Union[torch.Tensor, np.ndarray]):
-    r"""Save a :any:`torch.Tensor` or :any:`numpy.ndarray` as image.
-
-    Args:
-        path (str): The path to save.
-        arr (torch.Tensor | numpy.ndarray): The tensor of the image.
-    """
-    dir, _ = os.path.split(path)
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    img = tensor_to_img(to_tensor(arr, device='cpu'))
-    img.save(path)
-
-
-def read_img_as_tensor(path: str) -> torch.Tensor:
-    r"""Read image from a local file as :any:`torch.Tensor`.
-
-    Args:
-        path (str): The path to an image.
-    Returns:
-        torch.Tensor: The image tensor in ``[0, 1]``.
-    """
-    img: Image.Image = Image.open(path)
-    return byte2float(img)
 
 # --------------------------------------------------------------------- #
 

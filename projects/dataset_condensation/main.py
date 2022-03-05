@@ -20,9 +20,9 @@
 from projects.dataset_condensation.utils import freeze_bn
 import trojanvision
 import argparse
+import os
 
 from trojanvision.utils.model import weight_init
-from trojanzoo.utils.tensor import save_as_img
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.fim import fim, fim_diag, KFAC, EKFAC
@@ -30,6 +30,7 @@ from trojanzoo.utils.fim import fim, fim_diag, KFAC, EKFAC
 import torch
 from torch.utils.data import TensorDataset
 from torchvision import transforms
+import torchvision.transforms.functional as F
 
 from utils import match_loss, augment, get_daparam, get_loops
 from model import ConvNet
@@ -250,6 +251,9 @@ if __name__ == '__main__':
     # from data import get_images
     # get_real_data = get_images
 
+    if not os.path.exists('./result/dataset_condensation'):
+        os.makedirs('./result/dataset_condensation')
+
     if kwargs['init'] == 'real':
         bn_size = image_syn.shape[1]
         for c in range(dataset.num_classes):
@@ -305,7 +309,7 @@ if __name__ == '__main__':
                             if dataset.normalize:
                                 image = image.add(mean).mul(std)
                             image = image.clamp(0, 1)
-                            save_as_img(filename, image)
+                            F.to_pil_image(image).save(filename)
         # model.load(suffix='')
         weight_init(model._model)
 

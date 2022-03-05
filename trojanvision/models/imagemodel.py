@@ -347,12 +347,12 @@ class ImageModel(Model):
                 :emphasize-lines: 30-32
 
                 import trojanvision
-                import wget
-                import os
-                import torchvision.transforms as transforms
-                import PIL.Image as Image
-                from trojanzoo.utils.tensor import save_as_img
                 from trojanvision.utils import superimpose
+                import torchvision.transforms as transforms
+                import torchvision.transforms.functional as F
+                import PIL.Image as Image
+                import os
+                import wget
 
                 env = trojanvision.environ.create(device='cpu')
                 model = trojanvision.models.create(
@@ -383,11 +383,11 @@ class ImageModel(Model):
                 grad_cam_impose = grad_cam_impose.div(grad_cam_impose.max())
                 saliency_map_impose = saliency_map_impose.div(saliency_map_impose.max())
 
-                save_as_img('./center_cropped.png', _input)
-                save_as_img('./grad_cam.png', grad_cam)
-                save_as_img('./saliency_map.png', saliency_map)
-                save_as_img('./grad_cam_impose.png', grad_cam_impose)
-                save_as_img('./saliency_map_impose.png', saliency_map_impose)
+                F.to_pil_image(_input).save('./center_cropped.png')
+                F.to_pil_image(grad_cam).save('./grad_cam.png')
+                F.to_pil_image(saliency_map).save('./saliency_map.png')
+                F.to_pil_image(grad_cam_impose).save('./grad_cam_impose.png')
+                F.to_pil_image(saliency_map_impose).save('./saliency_map_impose.png')
 
             ``label=386  conf=77.74%``
 
