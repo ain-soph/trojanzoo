@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
 
-from trojanzoo.environ import env
-
 import torch
-import torchvision.transforms.functional as F
-import numpy as np
 import math
-from PIL import Image
-from typing import Any, Union    # TODO: python 3.10
+from typing import Union    # TODO: python 3.10
 
 __all__ = ['tanh_func', 'atan_func',
-           'to_tensor', 'repeat_to_batch', 'add_noise']
-
-_map = {'int': torch.int, 'long': torch.long,
-        'byte': torch.uint8, 'uint8': torch.uint8,
-        'float': torch.float, 'double': torch.double}
+           'repeat_to_batch', 'add_noise']
 
 
 def tanh_func(x: torch.Tensor) -> torch.Tensor:
@@ -47,60 +38,6 @@ def atan_func(x: torch.Tensor) -> torch.Tensor:
         torch.Tensor: The tensor ranging in ``[0, 1]``
     """
     return x.atan().div(math.pi).add(0.5)
-# ------------------- Format Transform --------------------------- #
-
-
-def to_tensor(x: Union[torch.Tensor, np.ndarray, list, Image.Image],
-              dtype: Union[str, torch.dtype] = None,
-              device: Union[str, torch.device] = 'default',
-              **kwargs) -> torch.Tensor:
-    r"""transform a (batched) image to :any:`torch.Tensor`.
-
-    Args:
-        x (torch.Tensor | np.ndarray | Image.Image):
-            The input image.
-        dtype (str | torch.dtype): Data type of tensor.
-            If :class:`str`, choose from:
-
-                * ``'int'``
-                * ``'long'``
-                * ``'byte' | 'uint8'``
-                * ``'float'``
-                * ``'double'``
-        device (str | ~torch.torch.device):
-            Passed to :any:`torch.as_tensor`.
-            If ``'default'``, use ``env['device']``.
-        **kwargs: Keyword arguments passed to
-            :any:`torch.as_tensor`.
-
-    Returns:
-        torch.Tensor:
-    """
-    if x is None:
-        return None
-    if isinstance(dtype, str):
-        dtype = _map[dtype]
-
-    if device == 'default':
-        device = env['device']
-
-    if isinstance(x, (list, tuple)):
-        try:
-            x = torch.stack(x)
-        except TypeError:
-            pass
-    elif isinstance(x, Image.Image):
-        x = F.to_tensor(x)
-    try:
-        x = torch.as_tensor(x, dtype=dtype).to(device=device, **kwargs)
-    except Exception:
-        print('tensor: ', x)
-        if torch.is_tensor(x):
-            print('shape: ', x.shape)
-            print('device: ', x.device)
-        raise
-    return x
-
 # --------------------------------------------------------------------- #
 
 

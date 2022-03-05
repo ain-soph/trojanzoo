@@ -7,6 +7,5 @@ tensor
 
 .. autofunction:: tanh_func
 .. autofunction:: atan_func
-.. autofunction:: to_tensor
 .. autofunction:: repeat_to_batch
 .. autofunction:: add_noise
