@@ -11,11 +11,13 @@ from trojanvision.models.imagemodel import ImageModel
 from trojanvision.marks import Watermark
 from trojanzoo.environ import env
 from trojanzoo.utils.data import TensorListDataset, sample_batch
-from trojanzoo.utils.output import prints
 from trojanzoo.utils.logger import SmoothedValue
+from trojanzoo.utils.output import prints
 
 
 import torch
+import torchvision.transforms.functional as F
+import numpy as np
 import functools
 import math
 import random
@@ -24,6 +26,7 @@ import os
 import argparse
 from collections.abc import Callable
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     import torch.utils.data
 
@@ -172,8 +175,8 @@ class BadNet(Attack):
         r"""Save attack results to files."""
         filename = filename or self.get_filename(**kwargs)
         file_path = os.path.join(self.folder_path, filename)
-        self.mark.save_mark_as_npy(file_path + '.npy')
-        self.mark.save_mark_as_img(file_path + '.png')
+        np.save(file_path + '.npy', self.mark.mark.detach().cpu().numpy())
+        F.to_pil_image(self.mark.mark).save(file_path + '.png')
         self.model.save(file_path + '.pth')
         print('attack results saved at: ', file_path)
 

@@ -160,13 +160,14 @@ class CleanLabel(BadNet):
                     source_encode = self.wgan.get_encode_value(source_chunk).detach()
                     target_encode = self.wgan.get_encode_value(target_chunk).detach()
                     # noise = torch.randn_like(source_encode)
-                    # from trojanzoo.utils.tensor import save_as_img
                     # source_img = self.wgan.G(source_encode)
                     # target_img = self.wgan.G(target_encode)
+                    # if not os.path.exists('./imgs'):
+                    #     os.makedirs('./imgs')
                     # for i in range(len(source_img)):
-                    #     save_as_img(f'./imgs/source_{i}.png', source_img[i])
+                    #     F.to_pil_image(source_img[i]).save(f'./imgs/source_{i}.png')
                     # for i in range(len(target_img)):
-                    #     save_as_img(f'./imgs/target_{i}.png', target_img[i])
+                    #     F.to_pil_image(target_img[i]).save(f'./imgs/target_{i}.png')
                     # exit()
                     interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                     poison_imgs = self.wgan.G(interpolation_encode).detach()

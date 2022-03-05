@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from trojanzoo.utils.tensor import read_img_as_tensor
-
 import torch
 import torchvision
 import torchvision.transforms.functional as F
@@ -10,6 +8,7 @@ from torchvision.transforms.functional import InterpolationMode
 import math
 import random
 from skimage.metrics import structural_similarity
+import PIL.Image as Image
 
 import argparse
 import io
@@ -71,8 +70,8 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         reflect_ghost = ghost_alpha * reflect_1 + (1 - ghost_alpha) * reflect_2
         reflect_ghost = reflect_ghost[..., offset[0]: -offset[0], offset[1]: -offset[1]]
         reflect_ghost = F.resize(reflect_ghost, size=[h, w])    # no cubic mode in original code
-        reflect_mask = (1 - alpha_t) * reflect_ghost
 
+        reflect_mask = (1 - alpha_t) * reflect_ghost
         reflection_layer = reflect_mask.pow(1 / 2.2).clamp(0, 1)
     else:
         # generate the blended image with focal blur
@@ -113,7 +112,8 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
     return blended, background_layer, reflection_layer
 
 
-def format_tensor(tensor: torch.Tensor):
+def read_tensor(fp: str) -> torch.Tensor:
+    tensor = F.to_tensor(Image.open(fp))
     return tensor.unsqueeze(0) if tensor.dim() == 2 else tensor
 
 
@@ -125,14 +125,12 @@ def main():
     pascal_root: str = kwargs['pascal_root']
     tar_path: str = kwargs['tar_path']
 
-    def format_tensor(x: torch.Tensor) -> torch.Tensor: return x.unsqueeze(0) if x.dim() == 2 else x
-
     print('get image paths')
     background_paths = get_img_paths(pascal_root, positive_class=background_class, negative_class=reflect_class)
     reflect_paths = get_img_paths(pascal_root, positive_class=reflect_class, negative_class=background_class)
     print('load images')
-    reflect_imgs = [format_tensor(read_img_as_tensor(fp)) for fp in reflect_paths]
-    background_imgs = [format_tensor(read_img_as_tensor(fp)) for i, fp in enumerate(background_paths) if i < NUM_ATTACK]
+    reflect_imgs = [read_tensor(fp) for fp in reflect_paths]
+    background_imgs = [read_tensor(fp) for i, fp in enumerate(background_paths) if i < NUM_ATTACK]
 
     tf = tarfile.open(tar_path, mode='w')
     succ_num = 0

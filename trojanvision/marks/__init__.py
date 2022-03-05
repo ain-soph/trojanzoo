@@ -2,9 +2,9 @@
 
 from trojanvision.configs import config
 from trojanvision.datasets import ImageSet
+from trojanzoo.environ import env
 from trojanzoo.utils.module import BasicObject
 from trojanzoo.utils.output import ansi
-from trojanzoo.utils.tensor import to_tensor, to_numpy, gray_tensor, save_as_img
 
 import torch
 import torchvision.transforms.functional as F
@@ -340,7 +340,7 @@ class Watermark(BasicObject):
         assert mark_scattered_shape[2] >= mark_unscattered.size(2), \
             f'mark_scattered_width={mark_scattered_shape[2]:d}  >=  mark_width={mark_unscattered.size(2):d}'
         pixel_num = mark_unscattered[0].numel()
-        mark = to_tensor(torch.zeros(mark_scattered_shape))
+        mark = torch.zeros(mark_scattered_shape, device=env['device'])
         idx = torch.randperm(mark[0].numel())[:pixel_num]
         mark.flatten(1)[:, idx].copy_(mark_unscattered.flatten(1))
         return mark
@@ -379,8 +379,10 @@ class Watermark(BasicObject):
                 if not os.path.isfile(mark_img) and \
                         not os.path.isfile(mark_img := os.path.join(dir_path, mark_img)):
                     raise FileNotFoundError(mark_img.removeprefix(dir_path))
-                mark_img = Image.open(mark_img)
-        mark = to_tensor(mark_img)
+                mark_img = F.to_tensor(Image.open(mark_img))
+        if isinstance(mark_img, np.ndarray):
+            mark_img = torch.from_numpy(mark_img)
+        mark: torch.Tensor = mark_img.to(device=env['device'])
         if not already_processed:
             mark = F.resize(mark, size=(self.mark_width, self.mark_height))
             alpha_mask = torch.ones_like(mark[0])
@@ -388,7 +390,7 @@ class Watermark(BasicObject):
                 mark = mark[:-1]
                 alpha_mask = mark[-1]
             if self.data_shape[0] == 1 and mark.size(0) == 3:
-                mark = gray_tensor(mark, num_output_channels=1)
+                mark = F.rgb_to_grayscale(mark, num_output_channels=1)
             mark = torch.cat([mark, alpha_mask.unsqueeze(0)])
 
             if mark_background_color is not None:
@@ -402,19 +404,6 @@ class Watermark(BasicObject):
         self.mark_height, self.mark_width = mark.shape[-2:]
         self.mark = mark
         return mark
-
-    def save_mark_as_img(self, path: str):
-        r"""Save watermark image to :attr:`img_path` in RGBA mode
-        by calling :func:`trojanzoo.utils.tensor.save_as_img()`.
-        """
-        mark = self.mark
-        if len(mark == 2):
-            mark = torch.stack([mark[0] * 3] + [mark[1]])
-        save_as_img(path, mark)
-
-    def save_mark_as_npy(self, path: str):
-        r"""Save watermark as npy file by calling :any:`numpy.save`."""
-        np.save(path, to_numpy(self.mark))
 
 
 def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
