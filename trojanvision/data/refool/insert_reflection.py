@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import trojanzoo
+from trojanzoo.utils.logger import MetricLogger, SmoothedValue
+
 import torch
 import torchvision
 import torchvision.transforms.functional as F
@@ -14,7 +17,6 @@ import argparse
 import io
 import os
 import tarfile
-from tqdm import tqdm
 from xml.etree.ElementTree import parse as ET_parse
 
 
@@ -26,11 +28,10 @@ background_class = {'person'}
 norm = torch.distributions.normal.Normal(loc=0.0, scale=1.0)
 
 
-def get_img_paths(pascal_root: str, positive_class: set[str], negative_class: set[str]) -> list[str]:
+def get_img_paths(datasets: list[torchvision.datasets.VOCDetection],
+                  positive_class: set[str], negative_class: set[str]) -> list[str]:
     image_paths: list[str] = []
-    for year, image_set in sets:
-        dataset = torchvision.datasets.VOCDetection(pascal_root, year=year, image_set=image_set,
-                                                    download=True)
+    for dataset in datasets:
         for index in range(len(dataset)):
             target = dataset.parse_voc_xml(ET_parse(dataset.annotations[index]).getroot())
             label_names: set[str] = {obj['name'] for obj in target['annotation']['object']}
@@ -50,11 +51,11 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         alpha_t = 1. - random.uniform(0.05, 0.45)
     h, w = background_img.shape[-2:]
     aspect_ratio = w / h
-    h, w = (max_image_size, max_image_size / aspect_ratio) if h > w \
-        else (int(round(max_image_size * aspect_ratio)), max_image_size)
+    h, w = (max_image_size, int(round(max_image_size * aspect_ratio))) if h > w \
+        else (int(round(max_image_size / aspect_ratio)), max_image_size)
     # Original code uses cv2 INTER_CUBIC, which is slightly different from BICUBIC
-    background_img = F.resize(background_img, size=(h, w), interpolation=InterpolationMode.BICUBIC)
-    reflect_img = F.resize(reflect_img, size=(h, w), interpolation=InterpolationMode.BICUBIC)
+    background_img = F.resize(background_img, size=(h, w), interpolation=InterpolationMode.BICUBIC).clamp(0, 1)
+    reflect_img = F.resize(reflect_img, size=(h, w), interpolation=InterpolationMode.BICUBIC).clamp(0, 1)
     background_img.pow_(2.2)
     reflect_img.pow_(2.2)
 
@@ -69,7 +70,7 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         reflect_2 = F.pad(background_img, [offset[0], offset[1], 0, 0])  # pad on left/top
         reflect_ghost = ghost_alpha * reflect_1 + (1 - ghost_alpha) * reflect_2
         reflect_ghost = reflect_ghost[..., offset[0]: -offset[0], offset[1]: -offset[1]]
-        reflect_ghost = F.resize(reflect_ghost, size=[h, w])    # no cubic mode in original code
+        reflect_ghost = F.resize(reflect_ghost, size=[h, w]).clamp(0, 1)    # no cubic mode in original code
 
         reflect_mask = (1 - alpha_t) * reflect_ghost
         reflection_layer = reflect_mask.pow(1 / 2.2).clamp(0, 1)
@@ -85,7 +86,7 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         att = 1.08 + random.random() / 10.0
         mask = blend > 1
         mean = torch.tensor([blend[i, mask[i]].mean().nan_to_num(1.0).item()
-                             for i in range(blend.size(0))])
+                             for i in range(blend.size(0))]).view(-1, 1, 1)    # (C, 1, 1)
         reflect_blur = (reflect_blur - att * (mean - 1)).clamp(0, 1)
 
         def gen_kernel(kern_len: int = 100, nsig: int = 1) -> torch.Tensor:
@@ -126,31 +127,47 @@ def main():
     tar_path: str = kwargs['tar_path']
 
     print('get image paths')
-    background_paths = get_img_paths(pascal_root, positive_class=background_class, negative_class=reflect_class)
-    reflect_paths = get_img_paths(pascal_root, positive_class=reflect_class, negative_class=background_class)
+    datasets = [torchvision.datasets.VOCDetection(pascal_root, year=year, image_set=image_set,
+                                                  download=True) for year, image_set in sets]
+    background_paths = get_img_paths(datasets, positive_class=background_class, negative_class=reflect_class)
+    reflect_paths = get_img_paths(datasets, positive_class=reflect_class, negative_class=background_class)
+    print()
+    print('background: ', len(background_paths))
+    print('reflect: ', len(reflect_paths))
+    print()
     print('load images')
     reflect_imgs = [read_tensor(fp) for fp in reflect_paths]
     background_imgs = [read_tensor(fp) for i, fp in enumerate(background_paths) if i < NUM_ATTACK]
 
     tf = tarfile.open(tar_path, mode='w')
-    succ_num = 0
-    tqdm_loader = tqdm(background_imgs)
-    for background_img in tqdm_loader:
+    trojanzoo.environ.create(color=True, tqdm=True)
+    logger = MetricLogger(meter_length=35)
+    logger.meters['succ_num'] = SmoothedValue(fmt='{count:3d}')
+    logger.meters['reflect_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    logger.meters['diff_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    logger.meters['blended_max'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    logger.meters['ssim'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    for background_img in logger.log_every(background_imgs):
         for i, reflect_img in enumerate(reflect_imgs):
             blended, background_layer, reflection_layer = blend_images(background_img, reflect_img, ghost_rate=0.39)
-            if reflection_layer.mean() < 0.8 * (blended - reflection_layer).mean() and blended.max() > 0.1 \
-                    and 0.7 < structural_similarity(blended.permute(1, 2, 0).contiguous().numpy(),
-                                                    background_layer.permute(1, 2, 0).contiguous().numpy(),
-                                                    multichannel=True) < 0.85:
-                succ_num += 1
-                tqdm_loader.set_postfix({'succ_num': succ_num})
-                filename = os.path.basename(reflect_paths[i])
-                bytes_io = io.BytesIO()
-                F.to_pil_image(reflection_layer).save(bytes_io, format=os.path.splitext(filename)[1][1:])
-                bytes_data = bytes_io.getvalue()
-                tarinfo = tarfile.TarInfo(name=filename)
-                tarinfo.size = len(bytes_data)
-                tf.addfile(tarinfo, io.BytesIO(bytes_data))
+            reflect_mean: float = reflection_layer.mean().item()
+            diff_mean: float = (blended - reflection_layer).mean().item()
+            blended_max: float = blended.max().item()
+            logger.update(reflect_mean=reflect_mean, diff_mean=diff_mean, blended_max=blended_max)
+            if reflect_mean < 0.8 * diff_mean and blended_max > 0.1:
+                ssim: float = structural_similarity(blended.numpy(), background_layer.numpy(), channel_axis=0)
+                logger.update(ssim=ssim)
+                if 0.7 < ssim < 0.85:
+                    logger.update(succ_num=1)
+                    filename = os.path.basename(reflect_paths[i])
+                    bytes_io = io.BytesIO()
+                    format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
+                    F.to_pil_image(reflection_layer).save(bytes_io, format=format)
+                    bytes_data = bytes_io.getvalue()
+                    tarinfo = tarfile.TarInfo(name=filename)
+                    tarinfo.size = len(bytes_data)
+                    tf.addfile(tarinfo, io.BytesIO(bytes_data))
+                    break
     tf.close()
 
 
