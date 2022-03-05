@@ -35,7 +35,7 @@ class DownsampledImageNet(ImageSet):
 
 
 class ImageNet16(DownsampledImageNet):
-    r"""ImageNet16 dataset.
+    r"""ImageNet16 dataset introduced by Patryk Chrabaszcz in 2017.
     It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:
@@ -60,7 +60,7 @@ class ImageNet16(DownsampledImageNet):
 
 
 class ImageNet32(DownsampledImageNet):
-    r"""ImageNet32 dataset.
+    r"""ImageNet32 dataset introduced by Patryk Chrabaszcz in 2017.
     It inherits :class:`trojanvision.datasets.ImageSet`.
 
     See Also:

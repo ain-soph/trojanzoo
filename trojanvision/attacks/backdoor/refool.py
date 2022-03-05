@@ -2,11 +2,9 @@
 
 from .badnet import BadNet
 from trojanvision.environ import env
-from trojanzoo.utils.tensor import to_pil_image, byte2float
 
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 
 import numpy as np
 import random
@@ -15,8 +13,8 @@ from scipy import stats
 import argparse
 
 
-class ReflectionBackdoor(BadNet):
-    name: str = 'reflection_backdoor'
+class Refool(BadNet):
+    name: str = 'refool'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
@@ -45,7 +43,8 @@ class ReflectionBackdoor(BadNet):
     def attack(self, epochs: int, save=False, validate_interval: int = 10, lr_scheduler=None, **kwargs):
         W = torch.zeros(self.candidate_num)
 
-        loader = self.dataset.get_dataloader(mode='train', batch_size=self.candidate_num, class_list=[self.target_class],
+        loader = self.dataset.get_dataloader(mode='train', batch_size=self.candidate_num,
+                                             class_list=[self.target_class],
                                              shuffle=True, num_workers=0, pin_memory=False)
         candidate_images, _ = next(iter(loader))
         candidate_images = self.conv2d(candidate_images.mean(1, keepdim=True))
@@ -74,7 +73,9 @@ class ReflectionBackdoor(BadNet):
         self.mark.load_mark(adv_images[0], mark_background_color=None)
         super().attack(epochs, save=save, lr_scheduler=lr_scheduler, **kwargs)
 
-    def generate_reflection_img(self, img_input, img_bg, img_rf, ghost_rate=0.39, max_image_size=560, alpha_t=-1., offset=(0, 0), sigma=-1, ghost_alpha=-1.):
+    @staticmethod
+    def generate_reflection_img(img_input, img_bg, img_rf, max_image_size=560, ghost_rate=0.39,
+                                alpha_t=-1., offset=(0, 0), sigma=-1, ghost_alpha=-1.):
         '''
         Blend transmit layer and reflection layer together (include blurred & ghosted reflection layer) and
         return the blended image and precessed reflection image
@@ -132,7 +133,6 @@ class ReflectionBackdoor(BadNet):
             ghost_r[blended > 1.] = 1.
             ghost_r[blended < 0.] = 0.
 
-            reflection_layer = np.uint8(ghost_r * 255)
             blended = np.uint8(blended * 255)
             transmission_layer = np.uint8(transmission_layer * 255)
         else:

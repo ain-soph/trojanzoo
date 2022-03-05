@@ -37,9 +37,6 @@ class ImageFolder(ImageSet):
         org_folder_name (dict[str, str]):
             Map from mode to extracted folder name of downloaded file.
 
-        class_to_idx (dict[str, int]): Map from class name to indices.
-            Class names are default to be folder names.
-
         data_format (str): File format of dataset.
 
             * ``'folder'`` (default)
@@ -84,7 +81,7 @@ class ImageFolder(ImageSet):
         super().__init__(**kwargs)
         self.param_list['imagefolder'] = ['data_format', 'memory', 'org_folder_name',
                                           'url']
-        self.class_to_idx = self.get_class_to_idx()
+        self.class_names = self.get_class_names()
         if self.num_classes is None:
             self.num_classes = len(self.class_to_idx)
 
@@ -169,33 +166,12 @@ class ImageFolder(ImageSet):
                 kwargs['memory'] = self.memory
         return DatasetClass(root=root, **kwargs)
 
-    def get_class_to_idx(self, file_path: str = None) -> dict[str, int]:
-        r"""Get possible existing ``class_to_idx.json`` (use the first matched file).
-        If not exist, use folder names as class names.
-
-        Possible location:
-
-            * Method argument :attr:`file_path`
-            * Dataset folder ``'{self.folder_path}/class_to_idx.json'``
-            * TrojanVision folder ``'{package}/trojanvision/data/{self.name}/class_to_idx.json'``
-
-        Args:
-            file_path (str): File path to ``class_to_idx.json``.
-
-        """
-        file_path_list: list[str] = []
-        if file_path is not None:
-            file_path_list.append(file_path)
-        file_path_list.append(os.path.join(self.folder_path, 'class_to_idx.json'))
-        file_path_list.append(os.path.join(os.path.dirname(trojanvision.__file__),
-                                           'data', self.name, 'class_to_idx.json'))
-        for file_path in file_path_list:
-            if os.path.isfile(file_path):
-                with open(file_path) as fp:
-                    result: dict[str, int] = json.load(fp)
-                return result
+    def get_class_names(self) -> list[str]:
+        if hasattr(self, 'class_names'):
+            return getattr(self, 'class_names')
         dataset: datasets.ImageFolder = self.get_org_dataset('train')
-        return dataset.class_to_idx
+        idx_to_class = {i: name for name, i in dataset.class_to_idx.items()}
+        return [idx_to_class[i] for i in range(len(idx_to_class.keys()))]
 
     def sample(self, child_name: str = None,
                class_dict: dict[str, list[str]] = None,

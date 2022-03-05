@@ -54,8 +54,7 @@ def fim(module: nn.Module, _input: torch.Tensor,
                 log_prob[n][c], parameters, retain_graph=True)
             for i, grad in enumerate(grad_list):    # different layers
                 flatten_grad = grad.flatten()    # (D)
-                fim = flatten_grad.unsqueeze(
-                    1) * flatten_grad.unsqueeze(0)   # (D, D)
+                fim = flatten_grad.outer(flatten_grad)   # (D, D)
                 fim_dict[i].append(fim.detach().clone())
     fim_list: list[torch.Tensor] = []
     for i, value in fim_dict.items():    # different layers

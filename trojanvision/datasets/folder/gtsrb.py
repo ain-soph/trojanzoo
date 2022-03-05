@@ -5,7 +5,8 @@ import torchvision.transforms as transforms
 
 
 class GTSRB(ImageFolder):
-    r"""GTSRB dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+    r"""GTSRB dataset introduced by Johannes Stallkamp in 2011.
+    It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
         * paper: `The German Traffic Sign Recognition Benchmark\: A multi-class classification competition`_

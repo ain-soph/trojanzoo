@@ -213,17 +213,6 @@ class ImageSet(Dataset):
         return (data[0].to(env['device'], non_blocking=True),
                 data[1].to(env['device'], dtype=torch.long, non_blocking=True))
 
-    def get_class_to_idx(self, **kwargs) -> dict[str, int]:
-        r"""Get map from class names to indices.
-        Class names are default to be the same as indices.
-
-        Returns:
-            dict[str, int]: Map from class names to indices.
-        """
-        if hasattr(self, 'class_to_idx'):
-            return getattr(self, 'class_to_idx')
-        return {str(i): i for i in range(self.num_classes)}
-
     def make_folder(self, img_type: str = '.png', **kwargs):
         r"""Save the dataset to ``self.folder_path``
         as :class:`trojanvision.datasets.ImageFolder` format.
@@ -235,15 +224,15 @@ class ImageSet(Dataset):
         """
         mode_list: list[str] = [
             'train', 'valid'] if self.valid_set else ['train']
-        class_to_idx = self.get_class_to_idx(**kwargs)
-        idx_to_class = {v: k for k, v in class_to_idx.items()}
+        class_names = getattr(self, 'class_names',
+                              [str(i) for i in range(self.num_classes)])
         for mode in mode_list:
             dataset: VisionDataset = self.get_org_dataset(mode, transform=None)
             class_counters = [0] * self.num_classes
             for image, target_class in list(dataset):
                 image: Image.Image
                 target_class: int
-                class_name = idx_to_class[target_class]
+                class_name = class_names[target_class]
                 _dir = os.path.join(
                     self.folder_path, self.name, mode, class_name)
                 if not os.path.exists(_dir):

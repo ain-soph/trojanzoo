@@ -8,7 +8,6 @@ tensor
 .. autofunction:: tanh_func
 .. autofunction:: atan_func
 .. autofunction:: to_tensor
-.. autofunction:: to_pil_image
 .. autofunction:: gray_img
 .. autofunction:: gray_tensor
 .. autofunction:: byte2float

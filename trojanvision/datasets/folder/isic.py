@@ -52,7 +52,8 @@ class ISIC(ImageFolder):
 
 
 class ISIC2018(ISIC):
-    r"""ISIC2018 dataset. It inherits :class:`trojanvision.datasets.ImageFolder`.
+    r"""ISIC2018 dataset introduced by Noel Codella in 2018.
+    It inherits :class:`trojanvision.datasets.ImageFolder`.
 
     See Also:
         * paper: `Skin Lesion Analysis Toward Melanoma Detection 2018\: A Challenge Hosted by the International Skin Imaging Collaboration (ISIC)`_
