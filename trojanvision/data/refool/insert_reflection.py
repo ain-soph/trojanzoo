@@ -10,7 +10,7 @@ from torchvision.transforms.functional import InterpolationMode
 
 import math
 import random
-from skimage.metrics import structural_similarity
+import skimage.metrics
 import PIL.Image as Image
 
 import argparse
@@ -73,7 +73,7 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         reflect_ghost = F.resize(reflect_ghost, size=[h, w]).clamp(0, 1)    # no cubic mode in original code
 
         reflect_mask = (1 - alpha_t) * reflect_ghost
-        reflection_layer = reflect_mask.pow(1 / 2.2).clamp(0, 1)
+        reflection_layer = reflect_mask.pow(1 / 2.2)
     else:
         # generate the blended image with focal blur
         if sigma is None:
@@ -106,10 +106,10 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         alpha_r = (1 - alpha_t / 2) * g_mask[..., new_h: new_h + h, new_w: new_w + w]
 
         reflect_mask = alpha_r * reflect_blur
-        reflection_layer = (min(1., 4 * (1 - alpha_t)) * reflect_mask).pow(1 / 2.2).clamp(0, 1)
+        reflection_layer = (min(1., 4 * (1 - alpha_t)) * reflect_mask).pow(1 / 2.2)
 
-    blended = (reflect_mask + background_mask).pow(1 / 2.2).clamp(0, 1)
-    background_layer = background_mask.pow(1 / 2.2).clamp(0, 1)
+    blended = (reflect_mask + background_mask).pow(1 / 2.2)
+    background_layer = background_mask.pow(1 / 2.2)
     return blended, background_layer, reflection_layer
 
 
@@ -156,7 +156,8 @@ def main():
             blended_max: float = blended.max().item()
             logger.update(reflect_mean=reflect_mean, diff_mean=diff_mean, blended_max=blended_max)
             if reflect_mean < 0.8 * diff_mean and blended_max > 0.1:
-                ssim: float = structural_similarity(blended.numpy(), background_layer.numpy(), channel_axis=0)
+                ssim: float = skimage.metrics.structural_similarity(
+                    blended.numpy(), background_layer.numpy(), channel_axis=0)
                 logger.update(ssim=ssim)
                 if 0.7 < ssim < 0.85:
                     logger.update(succ_num=1)
