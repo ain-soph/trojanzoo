@@ -81,7 +81,7 @@ class ABS(ModelInspection):
         self.max_troj_size = max_troj_size
         self.remask_weight = remask_weight
 
-        self.seed_data = self.load_seed_data()
+        self.seed_data = self.get_seed_data()
         self.loader = [(self.seed_data['input'], self.seed_data['label'])]
 
     def get_mark_loss_list(self) -> tuple[torch.Tensor, torch.Tensor]:
@@ -159,7 +159,7 @@ class ABS(ModelInspection):
         return -vloss1 + 1e-4 * vloss2 + norm_loss
 
     # ---------------------------- Seed Data --------------------------- #
-    def save_seed_data(self) -> dict[str, np.ndarray]:
+    def gen_seed_data(self) -> dict[str, np.ndarray]:
         torch.manual_seed(env['seed'])
         if self.seed_data_num % self.model.num_classes:
             raise ValueError(
@@ -179,11 +179,11 @@ class ABS(ModelInspection):
         print('seed data saved at: ', seed_path)
         return seed_data
 
-    def load_seed_data(self) -> dict[str, torch.Tensor]:
+    def get_seed_data(self) -> dict[str, torch.Tensor]:
         seed_path = os.path.join(self.folder_path, f'seed_{self.seed_data_num}.npy')
         seed_data: dict[str, torch.Tensor] = {}
         seed_data_np = dict(np.load(seed_path)) if os.path.exists(seed_path) \
-            else self.save_seed_data()
+            else self.gen_seed_data()
         seed_data['input'] = torch.from_numpy(seed_data_np['input']).to(device=env['device'])
         seed_data['label'] = torch.from_numpy(seed_data_np['label']).to(device=env['device'], dtype=torch.long)
         return seed_data
