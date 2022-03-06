@@ -70,7 +70,9 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         reflect_2 = F.pad(background_img, [offset[0], offset[1], 0, 0])  # pad on left/top
         reflect_ghost = ghost_alpha * reflect_1 + (1 - ghost_alpha) * reflect_2
         reflect_ghost = reflect_ghost[..., offset[0]: -offset[0], offset[1]: -offset[1]]
-        reflect_ghost = F.resize(reflect_ghost, size=[h, w]).clamp(0, 1)    # no cubic mode in original code
+        reflect_ghost = F.resize(reflect_ghost, size=[h, w],
+                                 interpolation=InterpolationMode.BICUBIC
+                                 ).clamp(0, 1)  # no cubic mode in original code
 
         reflect_mask = (1 - alpha_t) * reflect_ghost
         reflection_layer = reflect_mask.pow(1 / 2.2)
@@ -148,6 +150,7 @@ def main():
     logger.meters['diff_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     logger.meters['blended_max'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     logger.meters['ssim'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    candidates: set[int] = set()
     for background_img in logger.log_every(background_imgs):
         for i, reflect_img in enumerate(reflect_imgs):
             blended, background_layer, reflection_layer = blend_images(background_img, reflect_img, ghost_rate=0.39)
@@ -161,14 +164,16 @@ def main():
                 logger.update(ssim=ssim)
                 if 0.7 < ssim < 0.85:
                     logger.update(succ_num=1)
-                    filename = os.path.basename(reflect_paths[i])
-                    bytes_io = io.BytesIO()
-                    format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
-                    F.to_pil_image(reflection_layer).save(bytes_io, format=format)
-                    bytes_data = bytes_io.getvalue()
-                    tarinfo = tarfile.TarInfo(name=filename)
-                    tarinfo.size = len(bytes_data)
-                    tf.addfile(tarinfo, io.BytesIO(bytes_data))
+                    if i not in candidates:
+                        candidates.add(i)
+                        filename = os.path.basename(reflect_paths[i])
+                        bytes_io = io.BytesIO()
+                        format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
+                        F.to_pil_image(reflection_layer).save(bytes_io, format=format)
+                        bytes_data = bytes_io.getvalue()
+                        tarinfo = tarfile.TarInfo(name=filename)
+                        tarinfo.size = len(bytes_data)
+                        tf.addfile(tarinfo, io.BytesIO(bytes_data))
                     break
     tf.close()
 
