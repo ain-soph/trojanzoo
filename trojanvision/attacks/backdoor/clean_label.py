@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from .badnet import BadNet
-from trojanvision.utils.model import weight_init
+from trojanzoo.utils.model import init_weights
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
 from trojanvision.optim import PGDoptimizer
 from trojanvision.environ import env
@@ -266,8 +266,8 @@ class WGAN(object):
         self.gan_pgd = PGDoptimizer(pgd_eps=1.0, iteration=500, output=0)
 
     def reset_parameters(self):
-        self.G.apply(weight_init)
-        self.D.apply(weight_init)
+        init_weights(self.G)
+        init_weights(self.D)
 
     def train(self, train_dataloader):
         self.g_optimizer.zero_grad()

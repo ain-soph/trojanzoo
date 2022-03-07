@@ -6,7 +6,7 @@
 import trojanvision
 import argparse
 
-from trojanvision.utils.model import weight_init
+from trojanzoo.utils.model import init_weights
 
 from trojanvision.attacks import PoisonBasic
 from trojanvision.models import DARTS
@@ -95,7 +95,7 @@ if __name__ == '__main__':
             if counter >= counter_lim:
                 break
             self.model.load()
-            # weight_init(self.model._model)
+            # init_weights(self.model._model)
             _input, _label = self.model.remove_misclassify(data)
             # _input, _label = self.dataset.get_data(data)
 

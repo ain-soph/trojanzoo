@@ -22,7 +22,7 @@ import trojanvision
 import argparse
 import os
 
-from trojanvision.utils.model import weight_init
+from trojanzoo.utils.model import init_weights
 from trojanzoo.utils.logger import SmoothedValue
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.fim import fim, fim_diag, KFAC, EKFAC
@@ -269,7 +269,7 @@ if __name__ == '__main__':
             robusts = SmoothedValue(fmt='{global_avg:7.3f} ({min:7.3f}  {max:7.3f})')
             for _ in range(num_eval):
                 # eval_model.load(suffix='')
-                weight_init(eval_model._model)
+                init_weights(eval_model._model)
                 dst_syn_train = TensorDataset(image_syn.detach().clone().flatten(0, 1),
                                               label_syn.detach().clone().flatten(0, 1))
                 loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,
@@ -311,7 +311,7 @@ if __name__ == '__main__':
                             image = image.clamp(0, 1)
                             F.to_pil_image(image).save(filename)
         # model.load(suffix='')
-        weight_init(model._model)
+        init_weights(model._model)
 
         # warmup_args = dict(**train_args)
         # warmup_args['epochs'] = 3
