@@ -116,7 +116,7 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
 
 
 def read_tensor(fp: str) -> torch.Tensor:
-    tensor = F.to_tensor(Image.open(fp))
+    tensor = F.convert_image_dtype(F.pil_to_tensor(Image.open(fp)))
     return tensor.unsqueeze(0) if tensor.dim() == 2 else tensor
 
 
@@ -145,6 +145,7 @@ def main():
     tf = tarfile.open(tar_path, mode='w')
     trojanzoo.environ.create(color=True, tqdm=True)
     logger = MetricLogger(meter_length=35)
+    logger.meters['reflect_num'] = SmoothedValue(fmt='{count:3d}')
     logger.meters['succ_num'] = SmoothedValue(fmt='{count:3d}')
     logger.meters['reflect_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     logger.meters['diff_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
@@ -165,6 +166,7 @@ def main():
                 if 0.7 < ssim < 0.85:
                     logger.update(succ_num=1)
                     if i not in candidates:
+                        logger.update(reflect_num=1)
                         candidates.add(i)
                         filename = os.path.basename(reflect_paths[i])
                         bytes_io = io.BytesIO()
