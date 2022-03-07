@@ -23,6 +23,8 @@ def init_weights(m: nn.Module, filter_list: list[type] = []) -> None:
     r"""Traverse module :attr:`m` to intialize weights of all submodules
     except for those in :attr:`filter_list`.
 
+    Module parameters are reset by calling ``module.reset_parameters()``.
+
     Note:
         An alternative implementation is to call ``m.apply(init_weights)``
         so that this method could be non-recursive and avoid traverse.
