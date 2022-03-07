@@ -23,6 +23,10 @@ def init_weights(m: nn.Module, filter_list: list[type] = []) -> None:
     r"""Traverse module :attr:`m` to intialize weights of all submodules
     except for those in :attr:`filter_list`.
 
+    Note:
+        An alternative implementation is to call ``m.apply(init_weights)``
+        so that this method could be non-recursive and avoid traverse.
+
     Args:
         m (torch.nn.Module): Module to initialize.
         filter_list (tuple[type]): List of submodule types as exceptions.
@@ -39,12 +43,6 @@ def init_weights(m: nn.Module, filter_list: list[type] = []) -> None:
             init_weights(filter_list=[nn.Linear])   # no change
             init_weights(net)                       # init nn.Linear layers
     """
-    # Function for Initialization
-    '''
-    Usage:
-        model = Model()
-        model.apply(init_weights)
-    '''
     if isinstance(m, filter_list):
         return
     if hasattr(m, 'reset_parameters'):
