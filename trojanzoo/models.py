@@ -59,8 +59,7 @@ class _Model(nn.Module):
         self.features = self.define_features(**kwargs)   # feature extractor
         self.pool = nn.AdaptiveAvgPool2d((1, 1))  # average pooling
         self.flatten = nn.Flatten()
-        self.classifier = self.define_classifier(
-            num_classes=num_classes, **kwargs)  # classifier
+        self.classifier = self.define_classifier(num_classes=num_classes, **kwargs)  # classifier
 
         self.num_classes = num_classes
 
@@ -83,38 +82,34 @@ class _Model(nn.Module):
         return nn.Identity()
 
     @staticmethod
-    def define_classifier(conv_dim: int = 0, num_classes: int = None,
-                          fc_depth: int = 0, fc_dim: int = 0,
+    def define_classifier(num_features: list[int] = [],
+                          num_classes: int = 1000,
                           activation: type[nn.Module] = nn.ReLU,
                           activation_inplace: bool = True,
                           dropout: float = 0.5,
                           **kwargs) -> nn.Sequential:
         r"""
         | Define classifier as
-            ``(Linear -> Activation -> Dropout ) * (fc_depth - 1) -> Linear``.
+            ``(Linear -> Activation -> Dropout ) * (len(num_features) - 1) -> Linear``.
         | If there is only 1 linear layer, its name will be ``'fc'``.
         | Else, all layer names will be indexed starting from ``0``
             (e.g., ``'fc1', 'relu1', 'dropout0'``).
 
         Args:
-            conv_dim (int): The last convolutional dimension.
-                This serves as the :attr:`in_features` of first layer.
-                Defaults to ``0``.
+            num_features (list[int]): List of feature numbers.
+                Each element serves as the :attr:`in_features` of current layer
+                and :attr:`out_features` of preceding layer.
+                Defaults to ``[]``.
             num_classes (int): The number of classes.
                 This serves as the :attr:`out_features` of last layer.
                 Defaults to ``None``.
-            fc_depth (int): The number of linear layers.
-                Return an empty sequential if it's ``0``.
-                Defaults to ``0``.
-            fc_dim (int): The intermediate linear feature dimension.
-                Defaults to ``0``.
             activation (type[torch.nn.Module]):
                 The type of activation layer.
                 Defaults to :any:`torch.nn.ReLU`.
             activation_inplace (bool): Whether to use inplace activation.
                 Defaults to ``'True'``
             dropout (float): The drop out probability.
-                Will NOT add dropout layers if it's ``0``.
+                Will **NOT** add dropout layers if it's ``0``.
                 Defaults to ``0.5``.
             **kwargs: Any keyword argument (unused).
 
@@ -124,7 +119,7 @@ class _Model(nn.Module):
         :Examples:
             >>> from trojanzoo.models import _Model
             >>>
-            >>> _Model.define_classifier(conv_dim=5, num_classes=10, fc_depth=3, fc_dim=4)
+            >>> _Model.define_classifier(num_features=[5,4,4], num_classes=10)
             Sequential(
                 (fc1): Linear(in_features=5, out_features=4, bias=True)
                 (relu1): ReLU(inplace=True)
@@ -136,25 +131,22 @@ class _Model(nn.Module):
             )
         """
         seq = nn.Sequential()
-        if fc_depth <= 0:
+        if len(num_features) == 0:
             return seq
-        dim_list: list[int] = [fc_dim] * (fc_depth - 1)
-        dim_list.insert(0, conv_dim)
-        activation_name: str = 'none'
         if activation:
             activation_name = activation.__name__.split('.')[-1].lower()
-        if fc_depth == 1:
-            seq.add_module('fc', nn.Linear(conv_dim, num_classes))
+        if len(num_features) == 1:
+            seq.add_module('fc', nn.Linear(num_features[0], num_classes))
         else:
-            for i in range(fc_depth - 1):
+            for i in range(len(num_features) - 1):
                 seq.add_module(
-                    f'fc{i + 1:d}', nn.Linear(dim_list[i], dim_list[i + 1]))
+                    f'fc{i + 1:d}', nn.Linear(num_features[i], num_features[i + 1]))
                 if activation:
                     seq.add_module(f'{activation_name}{i + 1:d}',
                                    activation(inplace=activation_inplace))
                 if dropout > 0:
                     seq.add_module(f'dropout{i + 1:d}', nn.Dropout(p=dropout))
-            seq.add_module(f'fc{fc_depth:d}', nn.Linear(fc_dim, num_classes))
+            seq.add_module(f'fc{len(num_features):d}', nn.Linear(num_features[-1], num_classes))
         return seq
 
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
@@ -862,11 +854,11 @@ class Model(BasicObject):
                 module.load_state_dict(_dict, strict=strict)
             except RuntimeError:
                 prints(f'Model {self.name} loaded from: {file_path}',
-                        indent=indent)
+                       indent=indent)
                 raise
         if verbose:
             prints(f'Model {self.name} loaded from: {file_path}',
-                    indent=indent)
+                   indent=indent)
         if env['num_gpus']:
             self.cuda()
         return _dict

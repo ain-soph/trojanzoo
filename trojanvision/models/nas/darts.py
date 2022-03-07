@@ -42,10 +42,10 @@ def _concat(xs: torch.Tensor) -> torch.Tensor:
 
 class _DARTS(_ImageModel):
     def __init__(self, auxiliary: bool = False, **kwargs):
+        if 'num_features' not in kwargs.keys():
+            kwargs['num_features'] = [self.features.feats_dim]
         super().__init__(**kwargs)
         self.features: Union[FeatureExtractor, darts.search.FeatureExtractor]
-        self.classifier = self.define_classifier(conv_dim=self.features.feats_dim,
-                                                 num_classes=self.num_classes, fc_depth=1)
         self.auxiliary_head: nn.Sequential = None
         if auxiliary:
             self.auxiliary_head = AuxiliaryHead(C=self.features.aux_dim, num_classes=self.num_classes)
