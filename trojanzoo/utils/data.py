@@ -68,11 +68,14 @@ def dataset_to_tensor(dataset: Dataset) -> tuple[torch.Tensor, torch.Tensor]:
 
     :Example:
         >>> from torchvision.datasets import MNIST
-        >>> from torchvision.transforms import ToTensor
+        >>> import torchvision.transforms as transforms
         >>> from trojanzoo.utils.data import dataset_to_tensor
         >>>
+        >>> transform = transforms.Compose([
+            transforms.PILToTensor(),
+            transforms.ConvertImageDtype(torch.float)])
         >>> dataset = MNIST('./', train=False, download=True,
-                            transform=ToTensor())
+                            transform=transform)
         >>> data, targets = dataset_to_tensor(dataset)
         >>> data.shape
         torch.Size([10000, 1, 28, 28])

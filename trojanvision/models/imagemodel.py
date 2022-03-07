@@ -362,7 +362,8 @@ class ImageModel(Model):
                 transform = transforms.Compose([
                     transforms.Resize(256),
                     transforms.CenterCrop(224),
-                    transforms.ToTensor()])
+                    transforms.PILToTensor(),
+                    transforms.ConvertImageDtype(torch.float)])
                 url = 'https://i.imgur.com/Bvro0YD.png'
                 if not os.path.isfile('african_elephant.png'):
                     wget.download(url, 'african_elephant.png')

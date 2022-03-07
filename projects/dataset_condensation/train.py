@@ -4,9 +4,10 @@
 # CUDA_VISIBLE_DEVICES=0 python train.py --verbose 1 --color --epochs 300 --batch_size 256 --lr 0.01 --dataset cifar10 --model convnet --adv_train --adv_train_random_init
 
 import trojanvision
+import torch
+from torchvision import transforms
 import argparse
 
-from torchvision import transforms
 from model import ConvNet
 
 trojanvision.models.class_dict['convnet'] = ConvNet
@@ -24,10 +25,10 @@ if __name__ == '__main__':
     model = trojanvision.models.create(dataset=dataset, **kwargs)
     trainer = trojanvision.trainer.create(dataset=dataset, model=model, **kwargs)
 
-    transform = [transforms.ToTensor()]
+    transform_list = [transforms.PILToTensor(), transforms.ConvertImageDtype(torch.float)]
     if dataset.normalize and dataset.norm_par is not None:
-        transform.append(transforms.Normalize(mean=dataset.norm_par['mean'], std=dataset.norm_par['std']))
-    loader_train = dataset.get_dataloader(mode='train', transform=transforms.Compose(transform))
+        transform_list.append(transforms.Normalize(mean=dataset.norm_par['mean'], std=dataset.norm_par['std']))
+    loader_train = dataset.get_dataloader(mode='train', transform=transforms.Compose(transform_list))
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)

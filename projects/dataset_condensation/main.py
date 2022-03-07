@@ -161,7 +161,7 @@ if __name__ == '__main__':
     optimizer_img.zero_grad()
     # lr_scheduler_img = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_img, T_max=Iteration * outer_loop)
 
-    transform = [transforms.ToTensor()]
+    transform = [transforms.PILToTensor(), transforms.ConvertImageDtype(torch.float)]
     if dataset.normalize and dataset.norm_par is not None:
         transform.append(transforms.Normalize(mean=dataset.norm_par['mean'], std=dataset.norm_par['std']))
     train_set = dataset.get_dataset(mode='train', transform=transforms.Compose(transform))
