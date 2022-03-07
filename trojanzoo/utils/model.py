@@ -62,7 +62,7 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
     Args:
         module (torch.nn.Module): the module to process.
         depth (int): The traverse depth.
-            Defaults to ``-1`` (means :math:`\infty`).
+            Defaults to ``-1`` (:math:`\infty`).
         prefix (str): The prefix string to all elements.
             Defaults to empty string ``''``.
         use_filter (bool): Whether to filter out certain layer types.
@@ -131,7 +131,7 @@ def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
 
 
 def get_all_layer(module: nn.Module, x: torch.Tensor,
-                  layer_input: str = 'input', depth: int = 0,
+                  layer_input: str = 'input', depth: int = -1,
                   prefix='', use_filter: bool = True, non_leaf: bool = False,
                   seq_only: bool = True, verbose: int = 0
                   ) -> dict[str, torch.Tensor]:
@@ -146,7 +146,7 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
         layer_input (str): The intermediate layer name of :attr:`x`.
             Defaults to ``'input'``.
         depth (int): The traverse depth.
-            Defaults to ``0``.
+            Defaults to ``-1`` (:math:`\infty`).
         prefix (str): The prefix string to all elements.
             Defaults to empty string ``''``.
         use_filter (bool): Whether to filter out certain layer types.
@@ -227,7 +227,7 @@ def _get_all_layer(module: nn.Module, x: torch.Tensor,
                    verbose: int = 0, init: bool = False
                    ) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
     _dict: dict[str, torch.Tensor] = {}
-    if init or (not seq_only or isinstance(module, nn.Sequential)) \
+    if (init or (not seq_only or isinstance(module, nn.Sequential))) \
             and depth != 0:
         for name, child in module.named_children():
             full_name = prefix + ('.' if prefix else '') + \

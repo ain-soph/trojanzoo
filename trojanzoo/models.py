@@ -511,7 +511,7 @@ class Model(BasicObject):
                               use_filter, non_leaf, seq_only)
 
     def get_all_layer(self, _input: torch.Tensor,
-                      layer_input: str = 'input', depth: int = 0,
+                      layer_input: str = 'input', depth: int = -1,
                       prefix='', use_filter: bool = True, non_leaf: bool = False,
                       seq_only: bool = True, verbose: int = 0
                       ) -> dict[str, torch.Tensor]:
@@ -524,7 +524,7 @@ class Model(BasicObject):
             layer_input (str): The intermediate layer name of :attr:`_input`.
                 Defaults to ``'input'``.
             depth (int): The traverse depth.
-                Defaults to ``0``.
+                Defaults to ``-1`` (:math:`\infty`).
             prefix (str): The prefix string to all elements.
                 Defaults to empty string ``''``.
             use_filter (bool): Whether to filter out certain layer types.
