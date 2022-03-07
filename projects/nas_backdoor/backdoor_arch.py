@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/backdoor.py --verbose 1 --color --attack badnet --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --validate_interval 1 --epoch 20 --clean_epoch 2 --only_paramless_op
+r"""
+CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/backdoor.py --verbose 1 --color --attack badnet --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --validate_interval 1 --epoch 20 --clean_epoch 2 --only_paramless_op
 # --arch_unrolled
+"""  # noqa: E501
 
 import trojanvision
 import argparse

@@ -42,8 +42,7 @@ def fim(module: nn.Module, _input: torch.Tensor,
         parameters = tuple(module.parameters())
     _output: torch.Tensor = module(_input)  # (N, C)
     with torch.no_grad():
-        # (N, C, 1, 1)
-        prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)
+        prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)  # (N, C, 1, 1)
     log_prob = _output.log_softmax(dim=1)  # (N, C)
     fim_dict: dict[int, list[torch.Tensor]] = {
         i: [] for i in range(len(parameters))}
@@ -78,8 +77,7 @@ def fim(module: nn.Module, _input: torch.Tensor,
 #         parameters = dict(module.named_parameters())
 #     with torch.no_grad():
 #         _output: torch.Tensor = module(_input)  # (N, C)
-#         # (N, C, 1, 1)
-#         prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)
+#         prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)  # (N, C, 1, 1)
 #     keys, values = zip(*parameters.items())
 
 #     def func(*params: torch.Tensor):
