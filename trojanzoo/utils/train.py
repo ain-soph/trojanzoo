@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanzoo.utils.fim import KFAC, EKFAC
-from trojanzoo.utils.logger import MetricLogger, SmoothedValue
+from trojanzoo.utils.logger import MetricLogger
 from trojanzoo.utils.memory import empty_cache
 from trojanzoo.utils.model import accuracy, activate_params
 from trojanzoo.utils.output import ansi, get_ansi_len, output_iter, prints
@@ -71,9 +71,7 @@ def train(module: nn.Module, num_classes: int,
     total_iter = (epochs - resume) * len_loader_train
 
     logger = MetricLogger()
-    logger.meters['loss'] = SmoothedValue()
-    logger.meters['top1'] = SmoothedValue()
-    logger.meters['top5'] = SmoothedValue()
+    logger.create_meters(loss=None, top1=None, top5=None)
 
     if resume and lr_scheduler:
         for _ in range(resume):
@@ -150,7 +148,7 @@ def train(module: nn.Module, num_classes: int,
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
-            logger.update(loss=float(loss), top1=acc1, top5=acc5, n=batch_size)
+            logger.update(n=batch_size, loss=float(loss), top1=acc1, top5=acc5)
             # TODO: should it be outside of the dataloader loop?
             empty_cache()
         optimizer.zero_grad()
@@ -220,9 +218,7 @@ def validate(module: nn.Module, num_classes: int,
     loss_fn = loss_fn or nn.CrossEntropyLoss()
     accuracy_fn = accuracy_fn or accuracy
     logger = MetricLogger()
-    logger.meters['loss'] = SmoothedValue()
-    logger.meters['top1'] = SmoothedValue()
-    logger.meters['top5'] = SmoothedValue()
+    logger.create_meters(loss=None, top1=None, top5=None)
     loader_epoch = loader
     if verbose:
         header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
@@ -238,7 +234,7 @@ def validate(module: nn.Module, num_classes: int,
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
-            logger.update(loss=float(loss), top1=acc1, top5=acc5, n=batch_size)
+            logger.update(n=batch_size, loss=float(loss), top1=acc1, top5=acc5)
     loss, acc = (logger.meters['loss'].global_avg,
                  logger.meters['top1'].global_avg)
     if writer is not None and _epoch is not None and main_tag:
@@ -264,7 +260,7 @@ def compare(module1: nn.Module, module2: nn.Module,
     get_data_fn = get_data_fn if get_data_fn is not None else lambda x: x
 
     logger = MetricLogger()
-    logger.meters['loss'] = SmoothedValue()
+    logger.create_meters(loss=None)
     loader_epoch = loader
     if verbose:
         header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
@@ -280,5 +276,5 @@ def compare(module1: nn.Module, module2: nn.Module,
         _output2: torch.Tensor = module2(_input)
         loss = criterion(_output1, _output2.softmax(1)).item()
         batch_size = int(_label.size(0))
-        logger.meters['loss'].update(loss, batch_size)
+        logger.update(n=batch_size, loss=loss)
     return logger.meters['loss'].global_avg

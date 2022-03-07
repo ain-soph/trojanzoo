@@ -3,7 +3,7 @@
 from .badnet import BadNet
 from trojanvision.environ import env
 from trojanzoo.utils.data import TensorListDataset, sample_batch
-from trojanzoo.utils.logger import SmoothedValue, MetricLogger
+from trojanzoo.utils.logger import MetricLogger
 
 import torch
 import torchvision
@@ -114,7 +114,7 @@ class Refool(BadNet):
                                            lr=self.refool_lr, momentum=0.9,
                                            weight_decay=5e-4)
         logger = MetricLogger(meter_length=35)
-        logger.meters['attack_succ_rate'] = SmoothedValue(fmt='{median:.3f} ({min:.3f}  {max:.3f})')
+        logger.create_meters(attack_succ_rate='{median:.3f} ({min:.3f}  {max:.3f})')
         for _ in logger.log_every(range(self.select_iter)):
             # prepare data
             idx = random.choices(range(len(W)), weights=W.tolist(), k=self.poison_num)
@@ -134,7 +134,7 @@ class Refool(BadNet):
             other_idx = list(set(range(len(W))) - set(idx))
             W[other_idx] = asr_result.median()
 
-            logger.meters['attack_succ_rate'].reset().update_list(asr_result)
+            logger.reset().update_list(attack_succ_rate=asr_result)
             self.model.load_state_dict(model_dict)
         self.mark.mark[:-1] = self.reflect_imgs[W.argmax().item()]
         super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
@@ -173,12 +173,12 @@ class Refool(BadNet):
         print('writing tar file: ', tar_path)
         tf = tarfile.open(tar_path, mode='w')
         logger = MetricLogger(meter_length=35)
-        logger.meters['reflect_num'] = SmoothedValue(fmt=f'[ {{count:3d}} / {num_attack:3d} ]')
-        logger.meters['succ_num'] = SmoothedValue(fmt='{count:3d}')
-        logger.meters['reflect_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
-        logger.meters['diff_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
-        logger.meters['blended_max'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
-        logger.meters['ssim'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+        logger.create_meters(reflect_num=f'[ {{count:3d}} / {num_attack:3d} ]',
+                             succ_num='{count:3d}',
+                             reflect_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
+                             diff_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
+                             blended_max='{global_avg:.3f} ({min:.3f}  {max:.3f})',
+                             ssim='{global_avg:.3f} ({min:.3f}  {max:.3f})')
         candidates: set[int] = set()
         for fp in logger.log_every(background_paths):
             background_img = read_tensor(fp)

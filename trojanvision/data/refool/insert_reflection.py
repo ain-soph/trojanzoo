@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import trojanzoo
-from trojanzoo.utils.logger import MetricLogger, SmoothedValue
+from trojanzoo.utils.logger import MetricLogger
 
 import torch
 import torchvision
@@ -145,12 +145,12 @@ def main():
     tf = tarfile.open(tar_path, mode='w')
     trojanzoo.environ.create(color=True, tqdm=True)
     logger = MetricLogger(meter_length=35)
-    logger.meters['reflect_num'] = SmoothedValue(fmt='{count:3d}')
-    logger.meters['succ_num'] = SmoothedValue(fmt='{count:3d}')
-    logger.meters['reflect_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
-    logger.meters['diff_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
-    logger.meters['blended_max'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
-    logger.meters['ssim'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    logger.create_meters(reflect_num='{count:3d}',
+                         succ_num='{count:3d}',
+                         reflect_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
+                         diff_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
+                         blended_max='{global_avg:.3f} ({min:.3f}  {max:.3f})',
+                         ssim='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     candidates: set[int] = set()
     for background_img in logger.log_every(background_imgs):
         for i, reflect_img in enumerate(reflect_imgs):

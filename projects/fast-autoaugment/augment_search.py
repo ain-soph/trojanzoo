@@ -8,7 +8,7 @@ import argparse
 from tqdm import tqdm
 
 from trojanvision.utils.autoaugment import Policy, WGAN
-from trojanzoo.utils.logger import SmoothedValue, MetricLogger
+from trojanzoo.utils.logger import MetricLogger
 from trojanzoo.utils.model import activate_params
 from trojanzoo.utils.output import ansi, output_iter, get_ansi_len
 
@@ -39,10 +39,8 @@ if __name__ == '__main__':
         header = header.ljust(30 + get_ansi_len(header))
         indent = 0
         logger = MetricLogger(meter_length=40)
-        logger.meters['discriminator'] = SmoothedValue()
-        logger.meters['generator'] = SmoothedValue()
-        logger.meters['classification'] = SmoothedValue()
-        logger.meters['gradient penalty'] = SmoothedValue()
+        logger.create_meters(discriminator=None, generator=None,
+                             classification=None, gradient_penalty=None)
         loader_epoch = logger.log_every(tqdm(dataset.loader['train'], leave=False),
                                         header=header, indent=indent)
         for data in loader_epoch:

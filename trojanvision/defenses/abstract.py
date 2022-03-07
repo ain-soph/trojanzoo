@@ -3,9 +3,9 @@
 from trojanvision.attacks import TrojanNet
 from trojanvision.environ import env
 from trojanzoo.defenses import Defense
-from trojanzoo.utils.logger import AverageMeter
+from trojanzoo.utils.logger import MetricLogger
 from trojanzoo.utils.metric import mask_jaccard, normalize_mad
-from trojanzoo.utils.output import prints, ansi, output_iter
+from trojanzoo.utils.output import output_iter
 from trojanzoo.utils.tensor import tanh_func
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 
@@ -15,8 +15,6 @@ import numpy as np
 from sklearn import metrics
 
 import os
-import time
-import datetime
 from abc import abstractmethod
 from tqdm import tqdm
 
@@ -240,7 +238,7 @@ class ModelInspection(BackdoorDefense):
                                    select_num=select_num)
             print(f'Jaccard index: {overlap:.3f}')
 
-    def get_mark_loss_list(self, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_mark_loss_list(self, verbose: bool = True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         mark_list: list[torch.Tensor] = []
         loss_list: list[torch.Tensor] = []
         # todo: parallel to avoid for loop
@@ -248,7 +246,9 @@ class ModelInspection(BackdoorDefense):
             self.folder_path, self.get_filename() + '.npz'))
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
-            mark, loss = self.optimize_mark(label, **kwargs)
+            mark, loss = self.optimize_mark(label, verbose=verbose, **kwargs)
+            if verbose:
+                self.attack.validate_fn()
             mark_list.append(mark)
             loss_list.append(loss)
             if not self.mark_random_pos:
@@ -273,6 +273,8 @@ class ModelInspection(BackdoorDefense):
 
     def optimize_mark(self, label: int,
                       loader: Iterable = None,
+                      logger_header: str = '',
+                      verbose: bool = True,
                       **kwargs) -> tuple[torch.Tensor, float]:
         r"""
         Args:
@@ -286,6 +288,8 @@ class ModelInspection(BackdoorDefense):
         """
         atanh_mark = torch.randn_like(self.attack.mark.mark, requires_grad=True)
         optimizer = optim.Adam([atanh_mark], lr=self.defense_remask_lr)  # , betas=(0.5, 0.9)
+        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                            T_max=self.defense_remask_epoch)
         optimizer.zero_grad()
         loader = loader or self.dataset.loader['train']
 
@@ -296,17 +300,19 @@ class ModelInspection(BackdoorDefense):
 
         self.before_loop_fn()
 
-        losses = AverageMeter('Loss', ':.4e')
-        entropy = AverageMeter('Entropy', ':.4e')
-        norm = AverageMeter('Norm', ':.4e')
-        acc = AverageMeter('Acc', ':6.2f')
+        logger = MetricLogger(indent=4)
+        logger.create_meters(loss='{last_value:.3f}',
+                             acc='{last_value:.3f}',
+                             norm='{last_value:.3f}',
+                             entropy='{last_value:.3f}',)
+        batch_logger = MetricLogger()
+        logger.create_meters(loss=None, acc=None, entropy=None)
 
-        for _epoch in range(self.defense_remask_epoch):
-            losses.reset()
-            entropy.reset()
-            norm.reset()
-            acc.reset()
-            epoch_start = time.perf_counter()
+        iterator = range(self.defense_remask_epoch)
+        if verbose:
+            iterator = logger.log_every(iterator, header=logger_header)
+        for _ in iterator:
+            batch_logger.reset()
             for data in loader:
                 self.attack.mark.mark = tanh_func(atanh_mark)    # (c+1, h, w)
                 _input, _label = self.model.get_data(data)
@@ -322,44 +328,33 @@ class ModelInspection(BackdoorDefense):
                 batch_norm: torch.Tensor = self.attack.mark.mark[-1].norm(p=1)
                 batch_loss = batch_entropy + self.cost * batch_norm
 
-                batch_size = _label.size(0)
-                acc.update(batch_acc.item(), batch_size)
-                entropy.update(batch_entropy.item(), batch_size)
-                norm.update(batch_norm.item(), batch_size)
-                losses.update(batch_loss.item(), batch_size)
-
                 batch_loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+
+                batch_size = _label.size(0)
+                batch_logger.update(n=batch_size,
+                                    loss=batch_loss.item(),
+                                    acc=batch_acc.item(),
+                                    entropy=batch_entropy.item())
+            lr_scheduler.step()
             self.attack.mark.mark = tanh_func(atanh_mark)    # (c+1, h, w)
 
-            epoch_time = str(datetime.timedelta(seconds=int(
-                time.perf_counter() - epoch_start)))
-            pre_str: str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, self.defense_remask_epoch), **ansi)
-            pre_str = pre_str.ljust(64 if env['color'] else 35)
-            _str = ' '.join([
-                f'Loss: {losses.avg:.4f},'.ljust(20),
-                f'Acc: {acc.avg:.2f}, '.ljust(20),
-                f'Norm: {norm.avg:.4f},'.ljust(20),
-                f'Entropy: {entropy.avg:.4f},'.ljust(20),
-                f'Time: {epoch_time},'.ljust(20),
-            ])
-            prints(pre_str, _str, indent=4)
-
             # check to save best mask or not
-            if norm.avg < norm_best:
+            loss = batch_logger.meters['loss'].global_avg
+            acc = batch_logger.meters['acc'].global_avg
+            norm = float(self.attack.mark.mark[-1].norm(p=1))
+            entropy = batch_logger.meters['entropy'].global_avg
+            if norm < norm_best:
                 mark_best = self.attack.mark.mark.detach().clone()
-                norm_best = norm.avg
-                loss_best = losses.avg
+                loss_best = loss
+                logger.update(loss=loss, acc=acc, norm=norm, entropy=entropy)
 
-            if self.check_early_stop(loss=losses.avg, acc=acc.avg,
-                                     norm=norm.avg, entropy=entropy.avg):
+            if self.check_early_stop(loss=loss, acc=acc, norm=norm, entropy=entropy):
                 print('early stop')
                 break
         atanh_mark.requires_grad_(False)
         self.attack.mark.mark = mark_best
-        self.attack.validate_fn()
         return mark_best, loss_best
 
     def before_loop_fn(self, *args, **kwargs):

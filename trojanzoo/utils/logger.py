@@ -226,7 +226,22 @@ class MetricLogger:
         self.data_time = SmoothedValue()
         self.memory = SmoothedValue(fmt='{max:.0f}')
 
-    def update(self, n: int = 1, **kwargs) -> 'MetricLogger':
+    def create_meters(self, **kwargs: str) -> 'MetricLogger':
+        r"""Create meters with specific ``fmt`` in :attr:`self.meters`.
+
+        ``self.meters[meter_name] = SmoothedValue(fmt=fmt)``
+
+        Args:
+            **kwargs: ``(meter_name: fmt)``
+
+        Returns:
+            MetricLogger: return ``self`` for stream usage.
+        """
+        for k, v in kwargs.items():
+            self.meters[k] = SmoothedValue(fmt='{global_avg:.3f}' if v is None else v)
+        return self
+
+    def update(self, n: int = 1, **kwargs: float) -> 'MetricLogger':
         r"""Update values to :attr:`self.meters` by calling :meth:`SmoothedValue.update()`.
 
         ``self.meters[meter_name].update(float(value), n=n)``
@@ -240,6 +255,21 @@ class MetricLogger:
         """
         for k, v in kwargs.items():
             self.meters[k].update(float(v), n=n)
+        return self
+
+    def update_list(self, **kwargs: list) -> 'MetricLogger':
+        r"""Update values to :attr:`self.meters` by calling :meth:`SmoothedValue.update_list()`.
+
+        ``self.meters[meter_name].update_list(value_list)``
+
+        Args:
+            **kwargs: ``{meter_name: value_list}``.
+
+        Returns:
+            MetricLogger: return ``self`` for stream usage.
+        """
+        for k, v in kwargs.items():
+            self.meters[k].update_list(v)
         return self
 
     def reset(self) -> 'MetricLogger':
