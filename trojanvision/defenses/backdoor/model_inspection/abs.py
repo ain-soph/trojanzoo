@@ -4,7 +4,7 @@ from ...abstract import ModelInspection
 from trojanvision.environ import env
 from trojanzoo.utils.data import sample_batch
 from trojanzoo.utils.metric import mask_jaccard
-from trojanzoo.utils.output import output_iter, prints
+from trojanzoo.utils.output import ansi, output_iter, prints
 
 import torch
 import numpy as np
@@ -112,7 +112,8 @@ class ABS(ModelInspection):
         acc_best: float = 0.0
         dict_best = {}
         for _dict in reversed(self.neuron_dict[label]):
-            mark, loss = super().optimize_mark(label, loader=self.loader, **_dict)
+            mark, loss = super().optimize_mark(label, loader=self.loader,
+                                               verbose=False, **_dict)
             _dict['mark'] = mark.detach().cpu().clone().numpy()
             _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data,
                                               keep_org=False, verbose=False)
@@ -123,7 +124,7 @@ class ABS(ModelInspection):
                                        self.real_mask,
                                        select_num=select_num)
                 str_dict['jaccard'] = overlap
-            print(format_str.format(**str_dict), indent=8)
+            prints(format_str.format(**str_dict), indent=8)
             if atk_acc > acc_best:
                 acc_best = atk_acc
                 mark_best = mark
@@ -132,12 +133,12 @@ class ABS(ModelInspection):
         prints(format_str.format(**dict_best), indent=4)
         return mark_best, loss_best
 
-    def loss(self, _input: torch.Tensor,
+    def loss(self, _input: torch.Tensor, _label: torch.Tensor,
              layer: str, neuron: int,
              **kwargs) -> torch.Tensor:
         trigger_input = self.attack.add_mark(_input)
         feats = self.model.get_layer(trigger_input, layer_output=layer)
-        feats += (feats > 0) * feats    # sum up with relu
+        feats = feats + (feats > 0) * feats    # sum up with relu
         vloss1 = feats[:, neuron].sum()
         vloss2 = feats.sum() - vloss1
 
@@ -196,11 +197,12 @@ class ABS(ModelInspection):
         for layer in layer_output.keys():
             if not layer.startswith('features.') and not layer.startswith('classifier.'):
                 continue
-            cur_layer_output: torch.Tensor = layer_output[layer].detach().cpu()  # (batch_size, C, H, W)
+            cur_layer_output: torch.Tensor = layer_output[layer].detach().cpu()  # (batch_size, C', H', W')
             channel_num: int = cur_layer_output.shape[1]  # channels
 
-            h_t: torch.Tensor = cur_layer_output.expand([channel_num, self.n_samples] + [-1] * cur_layer_output.dim())
-            # (C, n_samples, batch_size, C, H, W)
+            h_t: torch.Tensor = cur_layer_output.expand([channel_num, self.n_samples] + [-1] * cur_layer_output.dim()
+                                                        ).clone()
+            # (C, n_samples, batch_size, C', H', W')
 
             vs = self.samp_k * torch.arange(self.n_samples, device=h_t.device, dtype=torch.float)
             if not self.same_range:
@@ -211,14 +213,15 @@ class ABS(ModelInspection):
             vs = vs.view(vs_shape)  # (n_samples, 1, 1, 1)
             # todo: might use parallel to avoid for loop (torch.Tensor.scatter?)
             for neuron in range(channel_num):
-                h_t[neuron, ..., neuron] = vs
+                h_t[neuron, :, :, neuron] = vs
             # todo: the shape is too large
             # result = self.model.get_layer(h_t.flatten(end_dim=2), layer_input=layer).detach().cpu()
             result = []
             for h in h_t:
                 h: torch.Tensor
                 h = h.to(device=env['device'])
-                result.append(self.model.get_layer(h.flatten(end_dim=1), layer_input=layer).detach().cpu())
+                result.append(self.model.get_layer(h.flatten(end_dim=1), layer_input=layer
+                                                   ).detach().cpu())
             result = torch.cat(result)
 
             result_shape = list(h_t.shape)[:3]
@@ -258,7 +261,7 @@ class ABS(ModelInspection):
     def serialize_format(**kwargs: str) -> str:
         _str = ''
         for k, v in kwargs.items():
-            _str += f'{k}: {{{k}:{v}}}    '
+            _str += '{green}{k}{reset}: {{{k}:{v}}}    '.format(k=k, v=v, **ansi)
         return _str.removesuffix('    ')
 
     # ---------------------------------- Unused ------------------------------- #
