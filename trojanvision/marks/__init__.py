@@ -273,7 +273,8 @@ class Watermark(BasicObject):
                                    mark_background_color=mark_background_color)
 
     def add_mark(self, _input: torch.Tensor, mark_random_pos: bool = None,
-                 mark_alpha: float = None, **kwargs) -> torch.Tensor:
+                 mark_alpha: float = None, mark: torch.Tensor = None,
+                 **kwargs) -> torch.Tensor:
         r"""Main method to add watermark to a batched input image tensor ranging in ``[0, 1]``.
 
         Call :attr:`self.add_mark_fn()` instead if it's not ``None``.
@@ -284,16 +285,21 @@ class Watermark(BasicObject):
             mark_random_pos (bool | None): Whether to add mark at random location.
                 Defaults to :attr:`self.mark_random_pos`.
             mark_alpha (float | None): Mark opacity. Defaults to :attr:`self.mark_alpha`.
+            mark (torch.Tensor | None): Mark tensor. Defaults to :attr:`self.mark`.
             **kwargs: Keyword arguments passed to `self.add_mark_fn()`.
         """
         mark_alpha = mark_alpha if mark_alpha is not None else self.mark_alpha
+        mark = mark if mark is not None else self.mark_alpha
         mark_random_pos = mark_random_pos if mark_random_pos is not None else self.mark_random_pos
         if callable(self.add_mark_fn):
             return self.add_mark_fn(_input, mark_random_pos=mark_random_pos,
                                     mark_alpha=mark_alpha, **kwargs)
         trigger_input = _input.clone()
-        mark = self.mark.clone().to(device=_input.device)
-        mark[-1] *= mark_alpha
+        mark = mark.clone().to(device=_input.device)
+
+        mark_rgb_channel = mark[..., :-1, :, :]
+        mark_alpha_channel = mark[..., -1, :, :]
+        mark_alpha_channel *= mark_alpha
         if mark_random_pos:
             batch_size = _input.size(0)
             h_start = torch.randint(high=_input.size(-2) - self.mark_height, size=[batch_size])
@@ -301,13 +307,13 @@ class Watermark(BasicObject):
             h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
             for i in range(len(_input)):    # TODO: any parallel approach?
                 org_patch = _input[i, :, h_start[i]:h_end[i], w_start[i]:w_end[i]]
-                trigger_patch = org_patch + mark[-1] * (mark[:-1] - org_patch)
+                trigger_patch = org_patch + mark_alpha_channel * (mark_rgb_channel - org_patch)
                 trigger_input[i, :, h_start[i]:h_end[i], w_start[i]:w_end[i]] = trigger_patch
                 return trigger_input
         h_start, w_start = self.mark_height_offset, self.mark_width_offset
         h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
         org_patch = _input[..., h_start:h_end, w_start:w_end]
-        trigger_patch = org_patch + mark[-1] * (mark[:-1] - org_patch)
+        trigger_patch = org_patch + mark_alpha_channel * (mark_rgb_channel - org_patch)
         trigger_input[..., h_start:h_end, w_start:w_end] = trigger_patch
 
         return trigger_input
@@ -379,7 +385,7 @@ class Watermark(BasicObject):
                 if not os.path.isfile(mark_img) and \
                         not os.path.isfile(mark_img := os.path.join(dir_path, mark_img)):
                     raise FileNotFoundError(mark_img.removeprefix(dir_path))
-                mark_img = F.to_tensor(Image.open(mark_img))
+                mark_img = F.convert_image_dtype(F.pil_to_tensor(Image.open(mark_img)))
         if isinstance(mark_img, np.ndarray):
             mark_img = torch.from_numpy(mark_img)
         mark: torch.Tensor = mark_img.to(device=env['device'])
