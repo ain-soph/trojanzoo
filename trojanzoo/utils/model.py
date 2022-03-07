@@ -19,17 +19,24 @@ filter_tuple: tuple[nn.Module] = (transforms.Normalize, nn.Dropout,
                                   nn.ReLU, nn.Sigmoid)
 
 
-def init_weights(m: nn.Module, filter_list: tuple[type] = ()) -> None:
-    r"""
+def init_weights(m: nn.Module, filter_list: list[type] = []) -> None:
+    r"""Traverse module :attr:`m` to intialize weights of all submodules
+    except for those in :attr:`filter_list`.
+
+    Args:
+        m (torch.nn.Module): Module to initialize.
+        filter_list (tuple[type]): List of submodule types as exceptions.
+            Defaults to ``[]`` (empty).
+
     :Example:
         .. code-block:: python
-            :emphasize-lines: 6-7
+            :emphasize-lines: 5-6
 
             from trojanzoo.utils.model import init_weights
             import torch.nn as nn
 
             net = nn.Sequential(nn.Linear(2, 2), nn.Linear(2, 2))
-            init_weights(filter_list=(nn.Linear))   # no change
+            init_weights(filter_list=[nn.Linear])   # no change
             init_weights(net)                       # init nn.Linear layers
     """
     # Function for Initialization
