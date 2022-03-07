@@ -92,17 +92,17 @@ class FinePruning(BackdoorDefense):
         self.model._train(validate_fn=self.attack.validate_fn, file_path=file_path, **kwargs)
         self.attack.validate_fn()
 
+    @torch.no_grad()
     def prune_step(self, mask: torch.Tensor, prune_num: int = 1):
-        with torch.no_grad():
-            feats_list = []
-            for data in self.dataset.loader['valid']:
-                _input, _label = self.model.get_data(data)
-                _feats = self.model.get_fm(_input).abs()
-                if _feats.dim() > 2:
-                    _feats = _feats.flatten(2).mean(2)
-                feats_list.append(_feats)
-            feats_list = torch.cat(feats_list).mean(dim=0)
-            idx_rank = feats_list.argsort()
+        feats_list = []
+        for data in self.dataset.loader['valid']:
+            _input, _label = self.model.get_data(data)
+            _feats = self.model.get_fm(_input).abs()
+            if _feats.dim() > 2:
+                _feats = _feats.flatten(2).mean(2)
+            feats_list.append(_feats)
+        feats_list = torch.cat(feats_list).mean(dim=0)
+        idx_rank = feats_list.argsort()
         counter = 0
         for idx in idx_rank:
             if mask[idx].norm(p=1) > 1e-6:

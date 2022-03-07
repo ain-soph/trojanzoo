@@ -158,15 +158,15 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         noise.copy_(self.valid_noise(adv_input, org_input))
         return adv_input
 
+    @torch.no_grad()
     def output_info(self, org_input: torch.Tensor, noise: torch.Tensor, *args,
                     loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                     loss_kwargs: dict[str, torch.Tensor] = {},
                     **kwargs):
         super().output_info(*args, **kwargs)
-        with torch.no_grad():
-            loss = float(loss_fn(org_input + noise, **loss_kwargs))
-            norm = noise.norm(p=self.norm)
-            prints(f'L-{self.norm} norm: {norm}    loss: {loss:.5f}', indent=self.indent)
+        loss = float(loss_fn(org_input + noise, **loss_kwargs))
+        norm = noise.norm(p=self.norm)
+        prints(f'L-{self.norm} norm: {norm}    loss: {loss:.5f}', indent=self.indent)
 
     def valid_noise(self, adv_input: torch.Tensor, org_input: torch.Tensor, universal: bool = None) -> torch.Tensor:
         universal = universal if universal is not None else self.universal
@@ -243,34 +243,34 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         seq = torch.cat(seq).add(x)  # (query_num+1, N, C, H, W)
         return seq
 
+    @torch.no_grad()
     def calc_seq(self, f: Callable[[torch.Tensor], torch.Tensor], seq: torch.Tensor,
                  loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
         X = seq[0]  # (N, C, H, W)
         seq = seq[1:]  # (query_num, N, C, H, W)
         noise = seq.sub(X)
-        with torch.no_grad():
-            temp_list: list[torch.Tensor] = []
-            for sub_seq in seq:
-                temp_list.append(f(sub_seq, reduction='none', **loss_kwargs))   # (query_num, N)
-            g = torch.stack(temp_list)[..., None, None, None].mul(noise).sum(dim=0)  # (N, C, H, W)
-            if self.grad_method in ['sgd', 'hess']:
-                g -= f(X) * noise.sum(dim=0)
-            g /= len(seq) * self.sigma * self.sigma
+        temp_list: list[torch.Tensor] = []
+        for sub_seq in seq:
+            temp_list.append(f(sub_seq, reduction='none', **loss_kwargs))   # (query_num, N)
+        g = torch.stack(temp_list)[..., None, None, None].mul(noise).sum(dim=0)  # (N, C, H, W)
+        if self.grad_method in ['sgd', 'hess']:
+            g -= f(X) * noise.sum(dim=0)
+        g /= len(seq) * self.sigma * self.sigma
         return g
 
     @staticmethod
+    @torch.no_grad()
     def calc_hess(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor,
                   sigma: float, hess_b: int, hess_lambda: float = 1) -> torch.Tensor:
         length = X.numel()
         hess: torch.Tensor = torch.zeros(length, length, device=X.device)
-        with torch.no_grad():
-            for i in range(hess_b):
-                noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
-                X1 = X + sigma * noise
-                X2 = X - sigma * noise
-                hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
-                    (noise.view(-1, 1) @ noise.view(1, -1))
-            hess /= (2 * hess_b * sigma * sigma)
-            hess += hess_lambda * torch.eye(length, device=X.device)
-            result = hess.cholesky_inverse()
+        for i in range(hess_b):
+            noise = torch.normal(mean=0.0, std=1.0, size=X.shape, device=X.device)
+            X1 = X + sigma * noise
+            X2 = X - sigma * noise
+            hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
+                (noise.view(-1, 1) @ noise.view(1, -1))
+        hess /= (2 * hess_b * sigma * sigma)
+        hess += hess_lambda * torch.eye(length, device=X.device)
+        result = hess.cholesky_inverse()
         return result

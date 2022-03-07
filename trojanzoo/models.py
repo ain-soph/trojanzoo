@@ -776,6 +776,7 @@ class Model(BasicObject):
 
     # ---------------------Load & Save Model------------------------- #
 
+    @torch.no_grad()
     def load(self, file_path: str = None, folder_path: str = None,
              suffix: str = None, inplace: bool = True,
              map_location: Union[str, Callable, torch.device, dict] = 'cpu',
@@ -817,60 +818,60 @@ class Model(BasicObject):
         Returns:
             OrderedDict[str, torch.Tensor]: The model weights OrderedDict.
         """
-        with torch.no_grad():
-            map_location = map_location if map_location != 'default' \
-                else env['device']
-            if file_path is None:
-                folder_path = folder_path if folder_path is not None \
-                    else self.folder_path
-                suffix = suffix if suffix is not None else self.suffix
-                file_path = os.path.normpath(os.path.join(
-                    folder_path, f'{self.name}{suffix}.pth'))
-            if file_path == 'official':   # TODO
-                _dict = self.get_official_weights(map_location=map_location)
-                last_bias_value = next(
-                    reversed(_dict.values()))   # TODO: make sure
-                if self.num_classes != len(last_bias_value) \
-                        and component != 'features':
-                    strict = False
-                    _dict.popitem()
-                    _dict.popitem()
-            else:
-                try:
-                    # TODO: type annotation might change?
-                    # dict[str, torch.Tensor]
-                    _dict: OrderedDict[str, torch.Tensor] = torch.load(
-                        file_path, map_location=map_location, **kwargs)
-                except Exception:
-                    print(f'{file_path=}')
-                    raise
-            module = self._model
-            if component == 'features':  # TODO: python 3.10 match
-                module = self._model.features
-                _dict = OrderedDict(
-                    [(key.removeprefix('features.'), value)
-                     for key, value in _dict.items()])
-            elif component == 'classifier':
-                module = self._model.classifier
-                _dict = OrderedDict(
-                    [(key.removeprefix('classifier.'), value)
-                     for key, value in _dict.items()])
-            else:
-                assert component == 'full', f'{component=}'
-            if inplace:
-                try:
-                    module.load_state_dict(_dict, strict=strict)
-                except RuntimeError:
-                    prints(f'Model {self.name} loaded from: {file_path}',
-                           indent=indent)
-                    raise
-            if verbose:
+        map_location = map_location if map_location != 'default' \
+            else env['device']
+        if file_path is None:
+            folder_path = folder_path if folder_path is not None \
+                else self.folder_path
+            suffix = suffix if suffix is not None else self.suffix
+            file_path = os.path.normpath(os.path.join(
+                folder_path, f'{self.name}{suffix}.pth'))
+        if file_path == 'official':   # TODO
+            _dict = self.get_official_weights(map_location=map_location)
+            last_bias_value = next(
+                reversed(_dict.values()))   # TODO: make sure
+            if self.num_classes != len(last_bias_value) \
+                    and component != 'features':
+                strict = False
+                _dict.popitem()
+                _dict.popitem()
+        else:
+            try:
+                # TODO: type annotation might change?
+                # dict[str, torch.Tensor]
+                _dict: OrderedDict[str, torch.Tensor] = torch.load(
+                    file_path, map_location=map_location, **kwargs)
+            except Exception:
+                print(f'{file_path=}')
+                raise
+        module = self._model
+        if component == 'features':  # TODO: python 3.10 match
+            module = self._model.features
+            _dict = OrderedDict(
+                [(key.removeprefix('features.'), value)
+                    for key, value in _dict.items()])
+        elif component == 'classifier':
+            module = self._model.classifier
+            _dict = OrderedDict(
+                [(key.removeprefix('classifier.'), value)
+                    for key, value in _dict.items()])
+        else:
+            assert component == 'full', f'{component=}'
+        if inplace:
+            try:
+                module.load_state_dict(_dict, strict=strict)
+            except RuntimeError:
                 prints(f'Model {self.name} loaded from: {file_path}',
-                       indent=indent)
-            if env['num_gpus']:
-                self.cuda()
-            return _dict
+                        indent=indent)
+                raise
+        if verbose:
+            prints(f'Model {self.name} loaded from: {file_path}',
+                    indent=indent)
+        if env['num_gpus']:
+            self.cuda()
+        return _dict
 
+    @torch.no_grad()
     def save(self, file_path: str = None, folder_path: str = None,
              suffix: str = None, component: str = '',
              verbose: bool = False, indent: int = 0, **kwargs):
@@ -892,31 +893,30 @@ class Model(BasicObject):
             indent (int): The indent of output auxialiary information.
             **kwargs: Keyword arguments passed to :any:`torch.save`.
         """
-        with torch.no_grad():
-            if file_path is None:
-                folder_path = folder_path if folder_path is not None \
-                    else self.folder_path
-                suffix = suffix if suffix is not None else self.suffix
-                file_path = os.path.normpath(os.path.join(
-                    folder_path, f'{self.name}{suffix}.pth'))
-            else:
-                folder_path = os.path.dirname(file_path)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            # TODO: type annotation might change? dict[str, torch.Tensor]
-            module = self._model
-            if component == 'features':
-                module = self._model.features
-            elif component == 'classifier':
-                module = self._model.classifier
-            else:
-                assert component == '', f'{component=}'
-            _dict: OrderedDict[str, torch.Tensor] = module.state_dict(
-                prefix=component)
-            torch.save(_dict, file_path, **kwargs)
-            if verbose:
-                prints(
-                    f'Model {self.name} saved at: {file_path}', indent=indent)
+        if file_path is None:
+            folder_path = folder_path if folder_path is not None \
+                else self.folder_path
+            suffix = suffix if suffix is not None else self.suffix
+            file_path = os.path.normpath(os.path.join(
+                folder_path, f'{self.name}{suffix}.pth'))
+        else:
+            folder_path = os.path.dirname(file_path)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        # TODO: type annotation might change? dict[str, torch.Tensor]
+        module = self._model
+        if component == 'features':
+            module = self._model.features
+        elif component == 'classifier':
+            module = self._model.classifier
+        else:
+            assert component == '', f'{component=}'
+        _dict: OrderedDict[str, torch.Tensor] = module.state_dict(
+            prefix=component)
+        torch.save(_dict, file_path, **kwargs)
+        if verbose:
+            prints(
+                f'Model {self.name} saved at: {file_path}', indent=indent)
 
     def get_official_weights(self, url: str = None,
                              map_location: Union[str, Callable,
@@ -1286,6 +1286,7 @@ class Model(BasicObject):
 
     # ----------------------------------------------------------------- #
 
+    @torch.no_grad()
     def remove_misclassify(self, data: tuple[torch.Tensor, torch.Tensor],
                            **kwargs):
         r"""Remove misclassified samples in a data batch.
@@ -1299,10 +1300,9 @@ class Model(BasicObject):
             (torch.Tensor, torch.Tensor): The processed data
                 with shape ``(N - k, *)``.
         """
-        with torch.no_grad():
-            _input, _label = self.get_data(data, **kwargs)
-            _classification = self.get_class(_input)
-            repeat_idx = _classification.eq(_label)
+        _input, _label = self.get_data(data, **kwargs)
+        _classification = self.get_class(_input)
+        repeat_idx = _classification.eq(_label)
         return _input[repeat_idx], _label[repeat_idx]
 
     def generate_target(self, _input: torch.Tensor, idx: int = 1,

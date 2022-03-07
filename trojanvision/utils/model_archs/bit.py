@@ -81,21 +81,21 @@ class PreActBottleneck(nn.Module):
 
         return out + residual
 
+    @torch.no_grad()
     def load_from(self, weights: dict[str, np.ndarray], prefix: str = ''):
         convname = 'standardized_conv2d'
-        with torch.no_grad():
-            self.conv1.weight.copy_(tf2th(weights[f'{prefix}a/{convname}/kernel']))
-            self.conv2.weight.copy_(tf2th(weights[f'{prefix}b/{convname}/kernel']))
-            self.conv3.weight.copy_(tf2th(weights[f'{prefix}c/{convname}/kernel']))
-            self.gn1.weight.copy_(tf2th(weights[f'{prefix}a/group_norm/gamma']))
-            self.gn2.weight.copy_(tf2th(weights[f'{prefix}b/group_norm/gamma']))
-            self.gn3.weight.copy_(tf2th(weights[f'{prefix}c/group_norm/gamma']))
-            self.gn1.bias.copy_(tf2th(weights[f'{prefix}a/group_norm/beta']))
-            self.gn2.bias.copy_(tf2th(weights[f'{prefix}b/group_norm/beta']))
-            self.gn3.bias.copy_(tf2th(weights[f'{prefix}c/group_norm/beta']))
-            if hasattr(self, 'downsample'):
-                w = weights[f'{prefix}a/proj/{convname}/kernel']
-                self.downsample.weight.copy_(tf2th(w))
+        self.conv1.weight.copy_(tf2th(weights[f'{prefix}a/{convname}/kernel']))
+        self.conv2.weight.copy_(tf2th(weights[f'{prefix}b/{convname}/kernel']))
+        self.conv3.weight.copy_(tf2th(weights[f'{prefix}c/{convname}/kernel']))
+        self.gn1.weight.copy_(tf2th(weights[f'{prefix}a/group_norm/gamma']))
+        self.gn2.weight.copy_(tf2th(weights[f'{prefix}b/group_norm/gamma']))
+        self.gn3.weight.copy_(tf2th(weights[f'{prefix}c/group_norm/gamma']))
+        self.gn1.bias.copy_(tf2th(weights[f'{prefix}a/group_norm/beta']))
+        self.gn2.bias.copy_(tf2th(weights[f'{prefix}b/group_norm/beta']))
+        self.gn3.bias.copy_(tf2th(weights[f'{prefix}c/group_norm/beta']))
+        if hasattr(self, 'downsample'):
+            w = weights[f'{prefix}a/proj/{convname}/kernel']
+            self.downsample.weight.copy_(tf2th(w))
 
 
 class ResNetV2(nn.Module):
@@ -152,23 +152,23 @@ class ResNetV2(nn.Module):
         assert x.shape[-2:] == (1, 1)  # We should have no spatial shape left.
         return x[..., 0, 0]
 
+    @torch.no_grad()
     def load_from(self, weights: dict[str, np.ndarray], prefix: str = 'resnet/'):
-        with torch.no_grad():
-            self.root.conv.weight.copy_(
-                tf2th(weights[f'{prefix}root_block/standardized_conv2d/kernel']))  # pylint: disable=line-too-long
-            self.head.gn.weight.copy_(tf2th(weights[f'{prefix}group_norm/gamma']))
-            self.head.gn.bias.copy_(tf2th(weights[f'{prefix}group_norm/beta']))
-            if self.zero_head:
-                nn.init.zeros_(self.head.conv.weight)
-                nn.init.zeros_(self.head.conv.bias)
-            else:
-                self.head.conv.weight.copy_(
-                    tf2th(weights[f'{prefix}head/conv2d/kernel']))  # pylint: disable=line-too-long
-                self.head.conv.bias.copy_(tf2th(weights[f'{prefix}head/conv2d/bias']))
+        self.root.conv.weight.copy_(
+            tf2th(weights[f'{prefix}root_block/standardized_conv2d/kernel']))  # pylint: disable=line-too-long
+        self.head.gn.weight.copy_(tf2th(weights[f'{prefix}group_norm/gamma']))
+        self.head.gn.bias.copy_(tf2th(weights[f'{prefix}group_norm/beta']))
+        if self.zero_head:
+            nn.init.zeros_(self.head.conv.weight)
+            nn.init.zeros_(self.head.conv.bias)
+        else:
+            self.head.conv.weight.copy_(
+                tf2th(weights[f'{prefix}head/conv2d/kernel']))  # pylint: disable=line-too-long
+            self.head.conv.bias.copy_(tf2th(weights[f'{prefix}head/conv2d/bias']))
 
-            for bname, block in self.body.named_children():
-                for uname, unit in block.named_children():
-                    unit.load_from(weights, prefix=f'{prefix}{bname}/{uname}/')
+        for bname, block in self.body.named_children():
+            for uname, unit in block.named_children():
+                unit.load_from(weights, prefix=f'{prefix}{bname}/{uname}/')
 
 
 KNOWN_MODELS = OrderedDict([

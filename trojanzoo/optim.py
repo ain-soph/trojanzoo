@@ -125,6 +125,7 @@ class Optimizer(ABC, Process):
                 torch.where(iter_list <= iteration, iter_list,
                             -torch.ones_like(iter_list)))
 
+    @torch.no_grad()
     def early_stop_check(self, *args, current_idx: torch.Tensor = None,
                          adv_input: torch.Tensor = None,
                          loss_values: torch.Tensor = None,
@@ -167,11 +168,10 @@ class Optimizer(ABC, Process):
         if stop_threshold is None:
             return torch.zeros(len(current_idx), dtype=torch.bool)
         if loss_values is None:
-            with torch.no_grad():
-                current_loss_kwargs = {k: v[current_idx]
-                                       for k, v in loss_kwargs.items()}
-                loss_values = loss_fn(
-                    adv_input[current_idx], **current_loss_kwargs)
+            current_loss_kwargs = {k: v[current_idx]
+                                    for k, v in loss_kwargs.items()}
+            loss_values = loss_fn(
+                adv_input[current_idx], **current_loss_kwargs)
         assert loss_values.dim() == 1
         if adv_input[current_idx] is not None:
             assert len(loss_values) == len(current_idx)
