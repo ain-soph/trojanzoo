@@ -289,7 +289,7 @@ class Watermark(BasicObject):
             **kwargs: Keyword arguments passed to `self.add_mark_fn()`.
         """
         mark_alpha = mark_alpha if mark_alpha is not None else self.mark_alpha
-        mark = mark if mark is not None else self.mark_alpha
+        mark = mark if mark is not None else self.mark
         mark_random_pos = mark_random_pos if mark_random_pos is not None else self.mark_random_pos
         if callable(self.add_mark_fn):
             return self.add_mark_fn(_input, mark_random_pos=mark_random_pos,
