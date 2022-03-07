@@ -1,29 +1,12 @@
 #!/usr/bin/env python3
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.conv import _ConvNd
 from torch.nn.modules.utils import _pair
 
 from torch.types import _int, _size
 from typing import Optional, Union
-
-
-def weight_init(m: nn.Module, filter_list: tuple[type] = ()) -> None:
-    # Function for Initialization
-    '''
-    Usage:
-        model = Model()
-        model.apply(weight_init)
-    '''
-    if isinstance(m, filter_list):
-        return
-    if hasattr(m, 'reset_parameters'):
-        return m.reset_parameters()
-    else:
-        for layer in m.children():
-            weight_init(layer, filter_list=filter_list)
 
 
 def conv2d_same_padding(input: torch.Tensor, weight: torch.Tensor,

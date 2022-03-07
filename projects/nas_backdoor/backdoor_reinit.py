@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 r"""
-CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/backdoor.py --verbose 1 --color --attack badnet --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --validate_interval 1 --epoch 20 --clean_epoch 2 --only_paramless_op
-# --arch_unrolled
+CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/backdoor_reinit.py --verbose 1 --color --attack badnet --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --validate_interval 1 --epoch 20 --lr 0.01
+# --only_paramless_op --arch_unrolled
 """  # noqa: E501
 
 import trojanvision
-import argparse
-
 from trojanvision.utils.model_archs.darts.operations import PRIMITIVES
+from trojanzoo.utils.model import init_weights
+
 import torch
+import argparse
 import itertools
 
 from typing import TYPE_CHECKING
@@ -28,11 +29,9 @@ if __name__ == '__main__':
     trojanvision.marks.add_argument(parser)
     trojanvision.attacks.add_argument(parser)
     parser.add_argument('--only_paramless_op', action='store_true')
-    parser.add_argument('--clean_epoch', type=int, default=2)
     kwargs = parser.parse_args().__dict__
 
     only_paramless_op: bool = kwargs['only_paramless_op']
-    clean_epoch: int = kwargs['clean_epoch']
 
     env = trojanvision.environ.create(**kwargs)
     dataset = trojanvision.datasets.create(**kwargs)
@@ -52,6 +51,16 @@ if __name__ == '__main__':
         trojanvision.summary(env=env, dataset=dataset, model=model, train=trainer, mark=mark, attack=attack)
 
     model.valid_iterator = itertools.cycle(dataset.loader['train'])
+
+    epoch_args = dict(**trainer)
+    epoch_args['optimizer'] = model_optimizer
+    epoch_args['indent'] = 4
+    epoch_args['epochs'] = 2
+    epoch_args['validate_interval'] = 2
+
+    def epoch_fn(**kwargs):
+        init_weights(model._model)
+        model._train(validate_fn=attack.validate_fn, **epoch_args)
 
     if only_paramless_op:
         paramless_ops = ['max_pool_3x3', 'avg_pool_3x3', 'skip_connect', 'none']
@@ -78,10 +87,4 @@ if __name__ == '__main__':
         loss = model.loss(_input, _label, _output, amp=amp, **kwargs)
         return loss
 
-    attack.attack(loss_fn=loss_fn, **trainer)
-
-    new_args = dict(**trainer)
-    new_args['optimizer'] = model_optimizer
-    new_args['indent'] = 4
-    new_args['epochs'] = clean_epoch
-    model._train(validate_fn=attack.validate_fn, **new_args)
+    attack.attack(loss_fn=loss_fn, epoch_fn=epoch_fn, **trainer)

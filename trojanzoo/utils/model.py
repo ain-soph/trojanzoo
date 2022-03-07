@@ -19,6 +19,41 @@ filter_tuple: tuple[nn.Module] = (transforms.Normalize, nn.Dropout,
                                   nn.ReLU, nn.Sigmoid)
 
 
+def init_weights(m: nn.Module, filter_list: list[type] = []) -> None:
+    r"""Traverse module :attr:`m` to intialize weights of all submodules
+    except for those in :attr:`filter_list`.
+
+    Args:
+        m (torch.nn.Module): Module to initialize.
+        filter_list (tuple[type]): List of submodule types as exceptions.
+            Defaults to ``[]`` (empty).
+
+    :Example:
+        .. code-block:: python
+            :emphasize-lines: 5-6
+
+            from trojanzoo.utils.model import init_weights
+            import torch.nn as nn
+
+            net = nn.Sequential(nn.Linear(2, 2), nn.Linear(2, 2))
+            init_weights(filter_list=[nn.Linear])   # no change
+            init_weights(net)                       # init nn.Linear layers
+    """
+    # Function for Initialization
+    '''
+    Usage:
+        model = Model()
+        model.apply(init_weights)
+    '''
+    if isinstance(m, filter_list):
+        return
+    if hasattr(m, 'reset_parameters'):
+        return m.reset_parameters()
+    else:
+        for layer in m.children():
+            init_weights(layer, filter_list=filter_list)
+
+
 def get_layer_name(module: nn.Module, depth: int = -1, prefix: str = '',
                    use_filter: bool = True, non_leaf: bool = False,
                    seq_only: bool = False, init: bool = True) -> list[str]:
@@ -427,6 +462,7 @@ def activate_params(module: nn.Module, params: Iterator[nn.Parameter] = []):
         param.requires_grad_()
 
 
+@torch.no_grad()
 def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
              topk: Iterable[int] = (1, 5)) -> list[float]:
     r"""Computes the accuracy over the k top predictions
@@ -442,22 +478,22 @@ def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
     Returns:
         list[float]: Top-k accuracies.
     """
-    with torch.no_grad():
-        maxk = min(max(topk), num_classes)
-        batch_size = _label.size(0)
-        _, pred = _output.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(_label[None])
-        res: list[float] = []
-        for k in topk:
-            if k > num_classes:
-                res.append(100.0)
-            else:
-                correct_k = float(correct[:k].sum(dtype=torch.float32))
-                res.append(correct_k * (100.0 / batch_size))
-        return res
+    maxk = min(max(topk), num_classes)
+    batch_size = _label.size(0)
+    _, pred = _output.topk(maxk, 1, True, True)
+    pred = pred.t()
+    correct = pred.eq(_label[None])
+    res: list[float] = []
+    for k in topk:
+        if k > num_classes:
+            res.append(100.0)
+        else:
+            correct_k = float(correct[:k].sum(dtype=torch.float32))
+            res.append(correct_k * (100.0 / batch_size))
+    return res
 
 
+@torch.no_grad()
 def generate_target(module: nn.Module, _input: torch.Tensor,
                     idx: int = 1, same: bool = False
                     ) -> torch.Tensor:
@@ -478,8 +514,7 @@ def generate_target(module: nn.Module, _input: torch.Tensor,
         torch.Tensor:
             The generated target label with shape ``(N)``.
     """
-    with torch.no_grad():
-        _output: torch.Tensor = module(_input)
+    _output: torch.Tensor = module(_input)
     target = _output.argsort(dim=-1, descending=True)[:, idx]
     if same:
         target = repeat_to_batch(target.mode(dim=0)[0], len(_input))

@@ -251,6 +251,7 @@ def validate(module: nn.Module, num_classes: int,
     return loss, acc
 
 
+@torch.no_grad()
 def compare(module1: nn.Module, module2: nn.Module,
             loader: torch.utils.data.DataLoader,
             print_prefix='Validate', indent=0, verbose=True,
@@ -273,12 +274,11 @@ def compare(module1: nn.Module, module2: nn.Module,
             loader_epoch = tqdm(loader_epoch, leave=False)
         loader_epoch = logger.log_every(
             loader_epoch, header=header, indent=indent)
-    with torch.no_grad():
-        for data in loader_epoch:
-            _input, _label = get_data_fn(data, **kwargs)
-            _output1: torch.Tensor = module1(_input)
-            _output2: torch.Tensor = module2(_input)
-            loss = criterion(_output1, _output2.softmax()).item()
-            batch_size = int(_label.size(0))
-            logger.meters['loss'].update(loss, batch_size)
+    for data in loader_epoch:
+        _input, _label = get_data_fn(data, **kwargs)
+        _output1: torch.Tensor = module1(_input)
+        _output2: torch.Tensor = module2(_input)
+        loss = criterion(_output1, _output2.softmax(1)).item()
+        batch_size = int(_label.size(0))
+        logger.meters['loss'].update(loss, batch_size)
     return logger.meters['loss'].global_avg

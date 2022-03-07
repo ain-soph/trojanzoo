@@ -10,7 +10,7 @@ import argparse
 import torch
 from torch.utils.data import TensorDataset
 from trojanzoo.utils.logger import SmoothedValue
-from trojanvision.utils.model import weight_init
+from trojanzoo.utils.model import init_weights
 from utils import augment, get_daparam
 
 from model import ConvNet
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         return _input, _label
     accs = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     for _ in range(num_eval):
-        weight_init(eval_model._model)
+        init_weights(eval_model._model)
         dst_syn_train = TensorDataset(image_syn.detach().clone(),
                                       label_syn.detach().clone())
         loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,

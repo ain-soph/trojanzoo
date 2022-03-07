@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets.imagefolder import ImageFolder
+import torch
 import torchvision.transforms as transforms
 
 
@@ -42,7 +43,8 @@ class GTSRB(ImageFolder):
         if mode != 'train':
             transform = transforms.Compose([
                 transforms.Resize((32, 32)),
-                transforms.ToTensor()])
+                transforms.PILToTensor(),
+                transforms.ConvertImageDtype(torch.float)])
         else:
             transform = super().get_transform(mode=mode)
         return transform

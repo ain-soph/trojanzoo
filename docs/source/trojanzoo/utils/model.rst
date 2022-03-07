@@ -5,6 +5,7 @@ model
 
 .. currentmodule:: trojanzoo.utils.model
 
+.. autofunction:: init_weights
 .. autofunction:: get_layer_name
 .. autofunction:: get_all_layer
 .. autofunction:: get_layer

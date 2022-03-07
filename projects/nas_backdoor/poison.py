@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/poison.py --verbose 1 --color --attack poison_basic --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --validate_interval 1 --target_idx -1 --epoch 5 --clean_epoch 2 --only_paramless_op
-# --arch_unrolled
+r"""
+CUDA_VISIBLE_DEVICES=0 python projects/nas_backdoor/poison.py --verbose 1 --color --attack poison_basic --dataset cifar10 --model darts --supernet --layers 8 --init_channels 16 --pretrained --validate_interval 1 --target_idx -1 --epoch 5 --clean_epoch 2
+#  --only_paramless_op --arch_unrolled
+"""  # noqa: E501
 
 import trojanvision
 import argparse
@@ -102,7 +104,7 @@ if __name__ == '__main__':
             if counter >= counter_lim:
                 break
             self.model.load()
-            # weight_init(self.model._model)
+            # init_weights(self.model._model)
             _input, _label = self.model.remove_misclassify(data)
             # _input, _label = self.dataset.get_data(data)
 

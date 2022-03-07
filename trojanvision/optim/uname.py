@@ -101,8 +101,8 @@ class Uname(trojanzoo.optim.Optimizer):
         # assert callable(self.input_transform)
         return self.input_transform(x)
 
+    @torch.no_grad()
     def output_info(self, real_params: torch.Tensor, loss_fn: Callable[..., torch.Tensor] = None, **kwargs):
         super().output_info(**kwargs)
-        with torch.no_grad():
-            loss = float(loss_fn(*real_params))
+        loss = float(loss_fn(*real_params))
         prints(f'loss: {loss:.5f}', indent=self.indent)

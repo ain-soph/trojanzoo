@@ -13,6 +13,7 @@ from trojanzoo.models import Model
 from typing import Union
 
 
+@torch.no_grad()
 def freeze_bn(model: Model, get_real_data: Callable[[int, int], torch.Tensor]) -> None:
     # freeze the running mu and sigma for BatchNorm layers
     BN_flag = False
@@ -22,9 +23,8 @@ def freeze_bn(model: Model, get_real_data: Callable[[int, int], torch.Tensor]) -
             BN_flag = True
     if BN_flag:
         # img_real_list: list[torch.Tensor] = []
-        with torch.no_grad():
-            img_real = torch.cat([get_real_data(c, BNSizePC) for c in range(model.num_classes)], dim=0)
-            output_real = model(img_real)  # get running mu, sigma
+        img_real = torch.cat([get_real_data(c, BNSizePC) for c in range(model.num_classes)], dim=0)
+        model(img_real)  # get running mu, sigma
         for module in model.modules():
             if isinstance(module, nn.BatchNorm2d):
                 module.eval()

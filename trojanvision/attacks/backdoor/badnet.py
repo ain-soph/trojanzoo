@@ -248,6 +248,7 @@ class BadNet(Attack):
             target_acc = 0.0
         return clean_acc, target_acc
 
+    @torch.no_grad()
     def validate_confidence(self, mode: str = 'valid', success_only: bool = True) -> float:
         r"""Get :attr:`self.target_class` confidence on dataset of :attr:`mode`.
 
@@ -267,19 +268,19 @@ class BadNet(Attack):
         loader = self.dataset.get_dataloader(mode=mode, class_list=source_class)
 
         confidence = SmoothedValue()
-        with torch.no_grad():
-            for data in loader:
-                _input, _label = self.model.get_data(data)
-                poison_input = self.add_mark(_input)
-                poison_label = self.model.get_class(poison_input)
-                if success_only:
-                    poison_input = poison_input[poison_label == self.target_class]
-                    if len(poison_input) == 0:
-                        continue
-                batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
-                confidence.update(batch_conf, len(poison_input))
+        for data in loader:
+            _input, _label = self.model.get_data(data)
+            poison_input = self.add_mark(_input)
+            poison_label = self.model.get_class(poison_input)
+            if success_only:
+                poison_input = poison_input[poison_label == self.target_class]
+                if len(poison_input) == 0:
+                    continue
+            batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
+            confidence.update(batch_conf, len(poison_input))
         return confidence.global_avg
 
+    @torch.no_grad()
     def get_neuron_jaccard(self, k: int = None, ratio: float = 0.5) -> float:
         r"""Get Jaccard Index of neuron activations for feature maps
         between normal inputs and poison inputs.
@@ -299,18 +300,17 @@ class BadNet(Attack):
         """
         clean_feats_list = []
         poison_feats_list = []
-        with torch.no_grad():
-            for data in self.dataset.loader['valid']:
-                _input, _label = self.model.get_data(data)
-                poison_input = self.add_mark(_input)
+        for data in self.dataset.loader['valid']:
+            _input, _label = self.model.get_data(data)
+            poison_input = self.add_mark(_input)
 
-                clean_feats = self.model.get_fm(_input)
-                poison_feats = self.model.get_fm(poison_input)
-                if clean_feats.dim() > 2:
-                    clean_feats = clean_feats.flatten(2).mean(2)
-                    poison_feats = poison_feats.flatten(2).mean(2)
-                clean_feats_list.append(clean_feats)
-                poison_feats_list.append(poison_feats)
+            clean_feats = self.model.get_fm(_input)
+            poison_feats = self.model.get_fm(poison_input)
+            if clean_feats.dim() > 2:
+                clean_feats = clean_feats.flatten(2).mean(2)
+                poison_feats = poison_feats.flatten(2).mean(2)
+            clean_feats_list.append(clean_feats)
+            poison_feats_list.append(poison_feats)
         clean_feats_list = torch.cat(clean_feats_list).mean(dim=0)
         poison_feats_list = torch.cat(poison_feats_list).mean(dim=0)
 

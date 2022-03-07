@@ -10,7 +10,7 @@ from torchvision.transforms.functional import InterpolationMode
 
 import math
 import random
-from skimage.metrics import structural_similarity
+import skimage.metrics
 import PIL.Image as Image
 
 import argparse
@@ -70,10 +70,12 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         reflect_2 = F.pad(background_img, [offset[0], offset[1], 0, 0])  # pad on left/top
         reflect_ghost = ghost_alpha * reflect_1 + (1 - ghost_alpha) * reflect_2
         reflect_ghost = reflect_ghost[..., offset[0]: -offset[0], offset[1]: -offset[1]]
-        reflect_ghost = F.resize(reflect_ghost, size=[h, w]).clamp(0, 1)    # no cubic mode in original code
+        reflect_ghost = F.resize(reflect_ghost, size=[h, w],
+                                 interpolation=InterpolationMode.BICUBIC
+                                 ).clamp(0, 1)  # no cubic mode in original code
 
         reflect_mask = (1 - alpha_t) * reflect_ghost
-        reflection_layer = reflect_mask.pow(1 / 2.2).clamp(0, 1)
+        reflection_layer = reflect_mask.pow(1 / 2.2)
     else:
         # generate the blended image with focal blur
         if sigma is None:
@@ -106,15 +108,15 @@ def blend_images(background_img: torch.Tensor, reflect_img: torch.Tensor,
         alpha_r = (1 - alpha_t / 2) * g_mask[..., new_h: new_h + h, new_w: new_w + w]
 
         reflect_mask = alpha_r * reflect_blur
-        reflection_layer = (min(1., 4 * (1 - alpha_t)) * reflect_mask).pow(1 / 2.2).clamp(0, 1)
+        reflection_layer = (min(1., 4 * (1 - alpha_t)) * reflect_mask).pow(1 / 2.2)
 
-    blended = (reflect_mask + background_mask).pow(1 / 2.2).clamp(0, 1)
-    background_layer = background_mask.pow(1 / 2.2).clamp(0, 1)
+    blended = (reflect_mask + background_mask).pow(1 / 2.2)
+    background_layer = background_mask.pow(1 / 2.2)
     return blended, background_layer, reflection_layer
 
 
 def read_tensor(fp: str) -> torch.Tensor:
-    tensor = F.to_tensor(Image.open(fp))
+    tensor = F.convert_image_dtype(F.pil_to_tensor(Image.open(fp)))
     return tensor.unsqueeze(0) if tensor.dim() == 2 else tensor
 
 
@@ -139,14 +141,17 @@ def main():
     reflect_imgs = [read_tensor(fp) for fp in reflect_paths]
     background_imgs = [read_tensor(fp) for i, fp in enumerate(background_paths) if i < NUM_ATTACK]
 
+    print('writing tar file: ', tar_path)
     tf = tarfile.open(tar_path, mode='w')
     trojanzoo.environ.create(color=True, tqdm=True)
     logger = MetricLogger(meter_length=35)
+    logger.meters['reflect_num'] = SmoothedValue(fmt='{count:3d}')
     logger.meters['succ_num'] = SmoothedValue(fmt='{count:3d}')
     logger.meters['reflect_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     logger.meters['diff_mean'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     logger.meters['blended_max'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     logger.meters['ssim'] = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
+    candidates: set[int] = set()
     for background_img in logger.log_every(background_imgs):
         for i, reflect_img in enumerate(reflect_imgs):
             blended, background_layer, reflection_layer = blend_images(background_img, reflect_img, ghost_rate=0.39)
@@ -155,18 +160,22 @@ def main():
             blended_max: float = blended.max().item()
             logger.update(reflect_mean=reflect_mean, diff_mean=diff_mean, blended_max=blended_max)
             if reflect_mean < 0.8 * diff_mean and blended_max > 0.1:
-                ssim: float = structural_similarity(blended.numpy(), background_layer.numpy(), channel_axis=0)
+                ssim: float = skimage.metrics.structural_similarity(
+                    blended.numpy(), background_layer.numpy(), channel_axis=0)
                 logger.update(ssim=ssim)
                 if 0.7 < ssim < 0.85:
                     logger.update(succ_num=1)
-                    filename = os.path.basename(reflect_paths[i])
-                    bytes_io = io.BytesIO()
-                    format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
-                    F.to_pil_image(reflection_layer).save(bytes_io, format=format)
-                    bytes_data = bytes_io.getvalue()
-                    tarinfo = tarfile.TarInfo(name=filename)
-                    tarinfo.size = len(bytes_data)
-                    tf.addfile(tarinfo, io.BytesIO(bytes_data))
+                    if i not in candidates:
+                        logger.update(reflect_num=1)
+                        candidates.add(i)
+                        filename = os.path.basename(reflect_paths[i])
+                        bytes_io = io.BytesIO()
+                        format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
+                        F.to_pil_image(reflection_layer).save(bytes_io, format=format)
+                        bytes_data = bytes_io.getvalue()
+                        tarinfo = tarfile.TarInfo(name=filename)
+                        tarinfo.size = len(bytes_data)
+                        tf.addfile(tarinfo, io.BytesIO(bytes_data))
                     break
     tf.close()
 

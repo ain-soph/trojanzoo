@@ -153,6 +153,7 @@ class LatentBackdoor(BadNet):
                 'target': (target_x, target_y)}
         return data
 
+    @torch.no_grad()
     def get_avg_target_feats(self, target_input: torch.Tensor,
                              target_label: torch.Tensor
                              ) -> torch.Tensor:
@@ -170,23 +171,22 @@ class LatentBackdoor(BadNet):
                 Feature map tensor with shape
                 ``(self.class_sample_num, C')``.
         """
-        with torch.no_grad():
-            if self.dataset.data_shape[1] > 100:
-                dataset = TensorDataset(target_input, target_label)
-                loader = torch.utils.data.DataLoader(
-                    dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),
-                    num_workers=0, pin_memory=True)
-                feat_list = []
-                for data in loader:
-                    target_x, _ = self.model.get_data(data)
-                    feat_list.append(self.model.get_layer(
-                        target_x, layer_output=self.preprocess_layer).detach().cpu())
-                avg_target_feats = torch.cat(feat_list).mean(dim=0, keepdim=True)
-                avg_target_feats = avg_target_feats.to(target_x.device)
-            else:
-                target_input, _ = self.model.get_data((target_input, target_label))
-                avg_target_feats = self.model.get_layer(
-                    target_input, layer_output=self.preprocess_layer).mean(dim=0, keepdim=True)
+        if self.dataset.data_shape[1] > 100:
+            dataset = TensorDataset(target_input, target_label)
+            loader = torch.utils.data.DataLoader(
+                dataset=dataset, batch_size=self.dataset.batch_size // max(env['num_gpus'], 1),
+                num_workers=0, pin_memory=True)
+            feat_list = []
+            for data in loader:
+                target_x, _ = self.model.get_data(data)
+                feat_list.append(self.model.get_layer(
+                    target_x, layer_output=self.preprocess_layer).detach().cpu())
+            avg_target_feats = torch.cat(feat_list).mean(dim=0, keepdim=True)
+            avg_target_feats = avg_target_feats.to(target_x.device)
+        else:
+            target_input, _ = self.model.get_data((target_input, target_label))
+            avg_target_feats = self.model.get_layer(
+                target_input, layer_output=self.preprocess_layer).mean(dim=0, keepdim=True)
         if avg_target_feats.dim() > 2:
             avg_target_feats = avg_target_feats.flatten(2).mean(2)
         return avg_target_feats.detach()

@@ -43,7 +43,8 @@ class ImageSet(Dataset):
             in dataset transform. Otherwise, use it as model preprocess layer.
         transform (str): The dataset transform type.
 
-            *  ``None |'none'`` (:any:`torchvision.transforms.ToTensor`)
+            * ``None |'none'`` (:any:`torchvision.transforms.PILToTensor`
+              and :any:`torchvision.transforms.ConvertImageDtype`)
             * ``'bit'`` (transform used in BiT network)
             * ``'pytorch'`` (pytorch transform used in ImageNet training).
 
@@ -162,7 +163,8 @@ class ImageSet(Dataset):
                       ) -> transforms.Compose:
         r"""Get dataset transform based on :attr:`self.transform`.
 
-            *  ``None |'none'`` (:any:`torchvision.transforms.ToTensor`)
+            * ``None |'none'`` (:any:`torchvision.transforms.PILToTensor`
+              and :any:`torchvision.transforms.ConvertImageDtype`)
             * ``'bit'`` (transform used in BiT network)
             * ``'pytorch'`` (pytorch transform used in ImageNet training).
 
@@ -188,7 +190,8 @@ class ImageSet(Dataset):
                 cutout=self.cutout, cutout_length=self.cutout_length,
                 data_shape=self.data_shape)
         else:
-            transform = transforms.Compose([transforms.ToTensor()])
+            transform = transforms.Compose([transforms.PILToTensor(),
+                                            transforms.ConvertImageDtype(torch.float)])
         if normalize and self.norm_par is not None:
             transform.transforms.append(transforms.Normalize(
                 mean=self.norm_par['mean'], std=self.norm_par['std']))

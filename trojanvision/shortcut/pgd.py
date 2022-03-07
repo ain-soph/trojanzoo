@@ -197,6 +197,7 @@ class PGD(Attack, PGDoptimizer):
                                 loss_kwargs=loss_kwargs,
                                 **kwargs)
 
+    @torch.no_grad()
     def early_stop_check(self, current_idx: torch.Tensor,
                          adv_input: torch.Tensor, target: torch.Tensor, *args,
                          stop_threshold: float = None, require_class: bool = None,
@@ -205,27 +206,25 @@ class PGD(Attack, PGDoptimizer):
         require_class = require_class if require_class is not None else self.require_class
         if self.stop_threshold is None:
             return torch.zeros(len(current_idx), dtype=torch.bool)
-        with torch.no_grad():
-            _confidence = self.model.get_target_prob(adv_input[current_idx], target[current_idx])
+        _confidence = self.model.get_target_prob(adv_input[current_idx], target[current_idx])
         untarget_condition = self.target_class is None and self.target_idx == 0
         result = _confidence > stop_threshold
         if untarget_condition:
             result = ~result
         if require_class:
-            with torch.no_grad():
-                _class = self.model.get_class(adv_input[current_idx])
+            _class = self.model.get_class(adv_input[current_idx])
             class_result = _class == target[current_idx]
             if untarget_condition:
                 class_result = ~class_result
             result = result.bitwise_and(class_result)
         return result
 
+    @torch.no_grad()
     def output_info(self, org_input: torch.Tensor, noise: torch.Tensor, target: torch.Tensor,
                     loss_fn: Callable[[torch.Tensor], torch.Tensor] = None, **kwargs):
         super().output_info(org_input=org_input, noise=noise, loss_fn=loss_fn, **kwargs)
         # prints('Original class     : ', _label, indent=self.indent)
         # prints('Original confidence: ', _confidence, indent=self.indent)
-        with torch.no_grad():
-            _confidence = self.model.get_target_prob(org_input + noise, target)
+        _confidence = self.model.get_target_prob(org_input + noise, target)
         prints('Target   class     : ', target.detach().cpu().tolist(), indent=self.indent)
         prints('Target   confidence: ', _confidence.detach().cpu().tolist(), indent=self.indent)
