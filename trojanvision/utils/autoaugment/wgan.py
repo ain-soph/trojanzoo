@@ -78,7 +78,7 @@ class WGAN(nn.Module):
             'discriminator': d_loss.item(),
             'generator': g_loss.item(),
             'classification': (cls_n_loss + cls_a2_loss).item(),
-            'gradient penalty': gp_loss.item()
+            'gradient_penalty': gp_loss.item()
         }
         return loss_dict
 
