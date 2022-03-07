@@ -12,14 +12,8 @@ from collections import Callable
 class _VGG(_ImageModel):
 
     def __init__(self, name: str = 'vgg', **kwargs):
-        if '_comp' or '_s' in name:
-            comp_dict = {'conv_dim': 512, 'fc_depth': 3, 'fc_dim': 512}
-            if '_s' in name:
-                comp_dict['fc_depth'] = 1
-                comp_dict['fc_dim'] = 0
-            for key, value in comp_dict.items():
-                if key not in kwargs.keys():
-                    kwargs[key] = value
+        if 'num_features' not in kwargs.keys() and ('_comp' or '_s' in name):
+            kwargs['num_features'] = [512] if '_s' in name else [512] * 3
         super().__init__(**kwargs)
         class_name = name.replace('_comp', '').replace('_s', '')
         ModelClass: Callable[..., torchvision.models.VGG] = getattr(torchvision.models, class_name)

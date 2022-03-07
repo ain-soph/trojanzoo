@@ -12,8 +12,12 @@ from collections import OrderedDict
 class _ProxylessNAS(_ImageModel):
 
     def __init__(self, target_platform: str = 'proxyless_cifar', **kwargs):
-        super().__init__(**kwargs)
         _model = torch.hub.load('ain-soph/ProxylessNAS', target_platform, pretrained=False)
+        if 'num_features' not in kwargs.keys():
+            classifier: nn.Module = getattr(_model, 'classifier')
+            fc: nn.Linear = list(classifier.children())[0]
+            kwargs['num_features'] = [fc.in_features]
+        super().__init__(**kwargs)
         self.features = nn.Sequential()
         if _model.__class__.__name__ == 'ProxylessNASNets':
             self.features.add_module('first_conv', _model.first_conv)
@@ -23,11 +27,6 @@ class _ProxylessNAS(_ImageModel):
         else:
             assert _model.__class__.__name__ == 'PyramidTreeNet', _model.__class__.__name__
             self.features.add_module('blocks', nn.Sequential(*_model.blocks[:-1]))
-        classifier: nn.Module = _model.classifier
-        fc: nn.Linear = list(classifier.children())[0]
-        self.classifier = self.define_classifier(conv_dim=fc.in_features,
-                                                 num_classes=self.num_classes,
-                                                 fc_depth=1)
 
 
 class ProxylessNAS(ImageModel):

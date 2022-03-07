@@ -20,11 +20,15 @@ from collections import OrderedDict
 
 class _BiT(_ImageModel):
     def __init__(self, name: str = 'bit-m-r50x1', **kwargs):
-        super().__init__(**kwargs)
         model_name = name.split('_')[0].upper().replace('BIT', 'BiT').replace('X', 'x')
         _model = KNOWN_MODELS[model_name](head_size=1)
-        self.features = nn.Sequential()
         root, head = _model.root, _model.head
+        if 'num_features' not in kwargs.keys():
+            head_conv: nn.Conv2d = getattr(head, 'conv')
+            kwargs['num_features'] = [head_conv.in_channels]
+        super().__init__(**kwargs)
+
+        self.features = nn.Sequential()
         root_conv: StdConv2d = getattr(root, 'conv')
         if 'comp' in name:
             self.features.add_module('conv', conv3x3(root_conv.in_channels, root_conv.out_channels))
@@ -40,9 +44,6 @@ class _BiT(_ImageModel):
             self.features.add_module(name, child)
         self.features.add_module('gn', getattr(head, 'gn'))
         self.features.add_module('relu', getattr(head, 'relu'))
-        head_conv: nn.Conv2d = getattr(head, 'conv')
-        self.classifier = self.define_classifier(conv_dim=head_conv.in_channels,
-                                                 num_classes=self.num_classes, fc_depth=1)
 
 
 class BiT(ImageModel):

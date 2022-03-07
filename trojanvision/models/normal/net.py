@@ -29,5 +29,4 @@ class Net(ImageModel):
     available_models = ['net']
 
     def __init__(self, name: str = 'net', model: type[_Net] = _Net, **kwargs):
-        super().__init__(name=name, model=model,
-                         conv_dim=9216, fc_depth=2, fc_dim=128, **kwargs)
+        super().__init__(name=name, model=model, num_features=[9216, 128], **kwargs)
