@@ -12,7 +12,7 @@ from trojanvision.environ import env
 from trojanzoo.utils.tensor import tanh_func
 
 import torch
-import torch.optim as optim
+import torch.nn.functional as F
 # import numpy as np
 # import skimage.restoration
 
@@ -163,11 +163,11 @@ class TrojanNN(BadNet):
         self.mark.mark[:-1] = tanh_func(atanh_mark.detach())
         self.mark.mark.detach_()
 
-        optimizer = optim.Adam([atanh_mark], lr=self.neuron_lr)
+        optimizer = torch.optim.Adam([atanh_mark], lr=self.neuron_lr)
         # No difference for SGD
         # optimizer = optim.SGD([atanh_mark], lr=self.neuron_lr)
         optimizer.zero_grad()
-        lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=self.neuron_epoch)
 
         with torch.no_grad():
@@ -184,7 +184,8 @@ class TrojanNN(BadNet):
                 trigger_feats = trigger_feats.flatten(2).sum(2)
                 # Original code
                 # trigger_feats = trigger_feats.flatten(2).amax(2)
-            loss = (trigger_feats - self.target_value).square().sum()   # paper's formula
+            loss = F.mse_loss(trigger_feats, self.target_value * torch.ones_like(trigger_feats),
+                              reduction='sum')   # paper's formula
             # Original code: no difference
             # loss = -self.target_value * trigger_feats.sum()
             loss.backward(inputs=[atanh_mark])

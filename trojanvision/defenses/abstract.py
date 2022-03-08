@@ -287,7 +287,7 @@ class ModelInspection(BackdoorDefense):
                 and loss tensor.
         """
         atanh_mark = torch.randn_like(self.attack.mark.mark, requires_grad=True)
-        optimizer = optim.Adam([atanh_mark], lr=self.defense_remask_lr)  # , betas=(0.5, 0.9)
+        optimizer = optim.Adam([atanh_mark], lr=self.defense_remask_lr, betas=(0.5, 0.9))
         lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,
                                                             T_max=self.defense_remask_epoch)
         optimizer.zero_grad()
