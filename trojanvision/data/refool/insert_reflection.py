@@ -122,14 +122,14 @@ def read_tensor(fp: str) -> torch.Tensor:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pascal_root', default='~/')
-    parser.add_argument('--tar_path', default='./reflection.tar')
+    parser.add_argument('--voc_root', default='~/voc')
+    parser.add_argument('--tar_path', default='~/reflection.tar')
     kwargs = parser.parse_args().__dict__
-    pascal_root: str = kwargs['pascal_root']
+    voc_root: str = kwargs['voc_root']
     tar_path: str = kwargs['tar_path']
 
     print('get image paths')
-    datasets = [torchvision.datasets.VOCDetection(pascal_root, year=year, image_set=image_set,
+    datasets = [torchvision.datasets.VOCDetection(voc_root, year=year, image_set=image_set,
                                                   download=True) for year, image_set in sets]
     background_paths = get_img_paths(datasets, positive_class=background_class, negative_class=reflect_class)
     reflect_paths = get_img_paths(datasets, positive_class=reflect_class, negative_class=background_class)
@@ -146,7 +146,6 @@ def main():
     trojanzoo.environ.create(color=True, tqdm=True)
     logger = MetricLogger(meter_length=35)
     logger.create_meters(reflect_num='{count:3d}',
-                         succ_num='{count:3d}',
                          reflect_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
                          diff_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
                          blended_max='{global_avg:.3f} ({min:.3f}  {max:.3f})',
@@ -154,6 +153,8 @@ def main():
     candidates: set[int] = set()
     for background_img in logger.log_every(background_imgs):
         for i, reflect_img in enumerate(reflect_imgs):
+            if i in candidates:
+                continue
             blended, background_layer, reflection_layer = blend_images(background_img, reflect_img, ghost_rate=0.39)
             reflect_mean: float = reflection_layer.mean().item()
             diff_mean: float = (blended - reflection_layer).mean().item()
@@ -164,18 +165,16 @@ def main():
                     blended.numpy(), background_layer.numpy(), channel_axis=0)
                 logger.update(ssim=ssim)
                 if 0.7 < ssim < 0.85:
-                    logger.update(succ_num=1)
-                    if i not in candidates:
-                        logger.update(reflect_num=1)
-                        candidates.add(i)
-                        filename = os.path.basename(reflect_paths[i])
-                        bytes_io = io.BytesIO()
-                        format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
-                        F.to_pil_image(reflection_layer).save(bytes_io, format=format)
-                        bytes_data = bytes_io.getvalue()
-                        tarinfo = tarfile.TarInfo(name=filename)
-                        tarinfo.size = len(bytes_data)
-                        tf.addfile(tarinfo, io.BytesIO(bytes_data))
+                    logger.update(reflect_num=1)
+                    candidates.add(i)
+                    filename = os.path.basename(reflect_paths[i])
+                    bytes_io = io.BytesIO()
+                    format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
+                    F.to_pil_image(reflection_layer).save(bytes_io, format=format)
+                    bytes_data = bytes_io.getvalue()
+                    tarinfo = tarfile.TarInfo(name=filename)
+                    tarinfo.size = len(bytes_data)
+                    tf.addfile(tarinfo, io.BytesIO(bytes_data))
                     break
     tf.close()
 

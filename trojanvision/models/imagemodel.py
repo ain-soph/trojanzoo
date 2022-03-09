@@ -485,7 +485,7 @@ class ImageModel(Model):
                model_ema: ExponentialMovingAverage = None,
                model_ema_steps: int = 32,
                grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
-               print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
+               print_prefix: str = 'Train', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None,
                loader_valid: torch.utils.data.DataLoader = None,

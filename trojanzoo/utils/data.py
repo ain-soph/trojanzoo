@@ -89,7 +89,7 @@ def dataset_to_tensor(dataset: Dataset) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def sample_batch(dataset: Dataset, batch_size: int = None,
-                 idx: Sequence[int] = None) -> tuple[torch.Tensor, torch.Tensor]:
+                 idx: Sequence[int] = []) -> tuple[torch.Tensor, torch.Tensor]:
     r"""Sample a batch from dataset by calling
 
     .. parsed-literal::
@@ -101,8 +101,8 @@ def sample_batch(dataset: Dataset, batch_size: int = None,
             when :attr:`idx` is ``None``.
             Defaults to ``None``.
         idx (Sequence[int]): The index list of each sample in dataset.
-            If ``None``, randomly sample a batch with given :attr:`batch_size`.
-            Defaults to ``None``.
+            If empty, randomly sample a batch with given :attr:`batch_size`.
+            Defaults to ``[]``.
 
     Returns:
         (torch.Tensor, torch.Tensor): The tuple of sampled batch ``(data, targets)``.
@@ -123,7 +123,10 @@ def sample_batch(dataset: Dataset, batch_size: int = None,
         >>> y
         tensor([6, 3, 2, 5])
     """
-    idx = idx or torch.randperm(len(dataset))[:batch_size]
+    if len(idx) == 0:
+        idx = torch.randperm(len(dataset))[:batch_size]
+    else:
+        idx = torch.as_tensor(idx, dtype=torch.int, device='cpu')
     return dataset_to_tensor(Subset(dataset, idx))
 
 

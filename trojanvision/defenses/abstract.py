@@ -135,12 +135,12 @@ class TrainingFiltering(BackdoorDefense):
     def __init__(self, defense_input_num: int = None, **kwargs):
         super().__init__(**kwargs)
         self.defense_input_num = defense_input_num
-        if self.attack.train_mode != 'dataset':
-            self.attack.poison_dataset = self.attack.get_poison_dataset(
-                poison_num=len(self.dataset.loader['train'].dataset))
         self.clean_dataset, self.poison_dataset = self.get_mix_dataset()
 
     def get_mix_dataset(self) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
+        if self.attack.poison_dataset is None:
+            self.attack.poison_dataset = self.attack.get_poison_dataset(
+                poison_num=len(self.dataset.loader['train'].dataset))
         if not self.defense_input_num:
             return self.dataset.loader['train'].dataset, self.attack.poison_dataset
         if self.attack.train_mode != 'dataset':

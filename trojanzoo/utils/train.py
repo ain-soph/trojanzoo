@@ -26,7 +26,7 @@ def train(module: nn.Module, num_classes: int,
           model_ema: ExponentialMovingAverage = None,
           model_ema_steps: int = 32,
           grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
-          print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
+          print_prefix: str = 'Train', start_epoch: int = 0, resume: int = 0,
           validate_interval: int = 10, save: bool = False, amp: bool = False,
           loader_train: torch.utils.data.DataLoader = None,
           loader_valid: torch.utils.data.DataLoader = None,
@@ -40,8 +40,8 @@ def train(module: nn.Module, num_classes: int,
           folder_path: str = None, suffix: str = None,
           writer=None, main_tag: str = 'train', tag: str = '',
           accuracy_fn: Callable[..., list[float]] = None,
-          verbose: bool = True, indent: int = 0,
-          change_train_eval: bool = True, lr_scheduler_freq: str = 'epochs',
+          verbose: bool = True, output_freq: str = 'iter', indent: int = 0,
+          change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch',
           backward_and_step: bool = True,
           **kwargs) -> None:
     r"""Train the model"""
@@ -76,7 +76,15 @@ def train(module: nn.Module, num_classes: int,
     if resume and lr_scheduler:
         for _ in range(resume):
             lr_scheduler.step()
-    for _epoch in range(resume, epochs):
+    iterator = range(resume, epochs)
+    if verbose and output_freq == 'epoch':
+        header: str = '{blue_light}{0}: {reset}'.format(print_prefix, **ansi)
+        header = header.ljust(max(len(header), 30) + get_ansi_len(header))
+        iterator = logger.log_every(range(resume, epochs),
+                                    header=print_prefix,
+                                    tqdm_header='Epoch',
+                                    indent=indent)
+    for _epoch in iterator:
         _epoch += 1
         logger.reset()
         if callable(epoch_fn):
@@ -84,10 +92,10 @@ def train(module: nn.Module, num_classes: int,
             epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
                      _epoch=_epoch, epochs=epochs, start_epoch=start_epoch)
         loader_epoch = loader_train
-        if verbose:
+        if verbose and output_freq == 'iter':
             header: str = '{blue_light}{0}: {1}{reset}'.format(
-                print_prefix, output_iter(_epoch, epochs), **ansi)
-            header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
+                'Epoch', output_iter(_epoch, epochs), **ansi)
+            header = header.ljust(max(len('Epoch'), 30) + get_ansi_len(header))
             loader_epoch = logger.log_every(loader_train, header=header,
                                             tqdm_header='Batch',
                                             indent=indent)
@@ -143,16 +151,15 @@ def train(module: nn.Module, num_classes: int,
                     # during warmup period
                     model_ema.n_averaged.fill_(0)
 
-            if lr_scheduler and lr_scheduler_freq == 'step':
+            if lr_scheduler and lr_scheduler_freq == 'iter':
                 lr_scheduler.step()
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
             logger.update(n=batch_size, loss=float(loss), top1=acc1, top5=acc5)
-            # TODO: should it be outside of the dataloader loop?
             empty_cache()
         optimizer.zero_grad()
-        if lr_scheduler and lr_scheduler_freq == 'epochs':
+        if lr_scheduler and lr_scheduler_freq == 'epoch':
             lr_scheduler.step()
         if change_train_eval:
             module.eval()
@@ -168,30 +175,29 @@ def train(module: nn.Module, num_classes: int,
             writer.add_scalars(main_tag='Acc/' + main_tag,
                                tag_scalar_dict={tag: acc},
                                global_step=_epoch + start_epoch)
-        if validate_interval != 0:
-            if _epoch % validate_interval == 0 or _epoch == epochs:
-                _, cur_acc = validate_fn(module=module,
-                                         num_classes=num_classes,
-                                         loader=loader_valid,
-                                         get_data_fn=get_data_fn,
-                                         loss_fn=loss_fn,
-                                         writer=writer, tag=tag,
-                                         _epoch=_epoch + start_epoch,
-                                         verbose=verbose, indent=indent,
-                                         **kwargs)
-                if cur_acc >= best_acc:
-                    if verbose:
-                        prints('{purple}best result update!{reset}'.format(
-                            **ansi), indent=indent)
-                        prints(f'Current Acc: {cur_acc:.3f}    '
-                               f'Previous Best Acc: {best_acc:.3f}',
-                               indent=indent)
-                    best_acc = cur_acc
-                    if save:
-                        save_fn(file_path=file_path, folder_path=folder_path,
-                                suffix=suffix, verbose=verbose)
+        if validate_interval != 0 and (_epoch % validate_interval == 0 or _epoch == epochs):
+            _, cur_acc = validate_fn(module=module,
+                                     num_classes=num_classes,
+                                     loader=loader_valid,
+                                     get_data_fn=get_data_fn,
+                                     loss_fn=loss_fn,
+                                     writer=writer, tag=tag,
+                                     _epoch=_epoch + start_epoch,
+                                     verbose=verbose, indent=indent,
+                                     **kwargs)
+            if cur_acc >= best_acc:
                 if verbose:
-                    prints('-' * 50, indent=indent)
+                    prints('{purple}best result update!{reset}'.format(
+                        **ansi), indent=indent)
+                    prints(f'Current Acc: {cur_acc:.3f}    '
+                           f'Previous Best Acc: {best_acc:.3f}',
+                           indent=indent)
+                best_acc = cur_acc
+                if save:
+                    save_fn(file_path=file_path, folder_path=folder_path,
+                            suffix=suffix, verbose=verbose)
+            if verbose:
+                prints('-' * 50, indent=indent)
     module.zero_grad()
 
 

@@ -9,15 +9,13 @@ from typing import Union    # TODO: python 3.10
 
 
 def empty_cache(threshold: float = None):
-    r"""Call :any:`torch.cuda.empty_cache() <torch.cuda.empty_cache>`
-    to empty GPU cache when
+    r"""Call :any:`torch.cuda.empty_cache` to empty GPU cache when
     :any:`torch.cuda.memory_cached() <torch.cuda.memory_cached>`
     ``>`` :attr:`threshold`\ ``MB``.
 
     Args:
         threshold (float): The cached memory threshold (MB).
-            If ``None``, use ``env['cache_threshold']``.
-            Defaults to ``None``.
+            Defaults to ``env['cache_threshold']``.
     """
     threshold = threshold if threshold is not None else env['cache_threshold']
     if threshold is not None and env['num_gpus']:

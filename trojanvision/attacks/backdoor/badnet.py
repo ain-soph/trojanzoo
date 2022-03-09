@@ -71,10 +71,15 @@ class BadNet(Attack):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--target_class', type=int, help='target class of backdoor, defaults to 0')
+        group.add_argument('--target_class', type=int,
+                           help='target class of backdoor '
+                           '(default: 0)')
         group.add_argument('--poison_percent', type=float,
-                           help='malicious training data injection probability for each batch, defaults to 0.01')
-        group.add_argument('--train_mode', help='target class of backdoor, defaults to "batch"')
+                           help='malicious training data proportion '
+                           '(default: 0.01)')
+        group.add_argument('--train_mode', choices=['batch', 'dataset', 'loss'],
+                           help='training mode to inject backdoor '
+                           '(default: "batch")')
         return group
 
     def __init__(self, mark: Watermark = None,
@@ -93,30 +98,34 @@ class BadNet(Attack):
         self.train_mode = train_mode
         if train_mode == 'batch':    # python 3.10 match
             self.poison_num = self.dataset.batch_size * self.poison_ratio
-        if train_mode == 'dataset':
+            self.poison_dataset = None
+        elif train_mode == 'dataset':
             self.poison_num = int(len(self.dataset.loader['train'].dataset) * self.poison_ratio)
             self.poison_dataset = self.get_poison_dataset()
+        else:
+            self.poison_dataset = None
 
-    def attack(self, epochs: int, save=False, **kwargs):
+    def attack(self, epochs: int, **kwargs):
         if self.train_mode == 'batch':
             loader = self.dataset.get_dataloader(
                 'train', batch_size=self.dataset.batch_size + int(self.poison_num))
-            self.model._train(epochs, save=save, loader_train=loader,
-                              validate_fn=self.validate_fn, get_data_fn=self.get_data,
+            self.model._train(epochs, loader_train=loader,
+                              validate_fn=self.validate_fn,
+                              get_data_fn=self.get_data,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
             mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
                                                           self.poison_dataset])
             loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
-            self.model._train(epochs, save=save,
-                              validate_fn=self.validate_fn, loader_train=loader,
+            self.model._train(epochs, loader_train=loader,
+                              validate_fn=self.validate_fn,
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'loss':
             if 'loss_fn' in kwargs.keys():
                 kwargs['loss_fn'] = functools.partial(self.loss_weighted, loss_fn=kwargs['loss_fn'])
             else:
                 kwargs['loss_fn'] = self.loss_weighted
-            self.model._train(epochs, save=save,
+            self.model._train(epochs,
                               validate_fn=self.validate_fn,
                               save_fn=self.save, **kwargs)
 
@@ -143,8 +152,8 @@ class BadNet(Attack):
             seed = env['data_seed']
         torch.random.manual_seed(seed)
         train_set = self.dataset.loader['train'].dataset
-        poison_num = poison_num if poison_num is None else self.poison_ratio * len(train_set)
-        _input, _label = sample_batch(train_set, batch_size=round(poison_num))
+        poison_num = poison_num or round(self.poison_ratio * len(train_set))
+        _input, _label = sample_batch(train_set, batch_size=poison_num)
         _label = _label.tolist()
 
         if poison_label:
@@ -208,14 +217,16 @@ class BadNet(Attack):
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  org: bool = False, keep_org: bool = True,
-                 poison_label=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                 poison_label: bool = True, **kwargs
+                 ) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data)
         if not org:
-            decimal, integer = math.modf(self.poison_num)
-            integer = int(integer)
-            if random.uniform(0, 1) < decimal:
-                integer += 1
-            if not keep_org:
+            if keep_org:
+                decimal, integer = math.modf(len(_label) * self.poison_ratio)
+                integer = int(integer)
+                if random.uniform(0, 1) < decimal:
+                    integer += 1
+            else:
                 integer = len(_label)
             if not keep_org or integer:
                 org_input, org_label = _input, _label
