@@ -3,8 +3,7 @@
 r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 20 --lr 0.01 --attack refool
 
-# --tqdm --refool_epochs 2 --select_iter 1 --candidate_num 10 --poison_percent 0.01
-# --tqdm --refool_epochs 5 --candidate_num 100 --poison_percent 0.05 --efficient
+# --tqdm --candidate_num 100 --refool_epochs 5 --refool_sample_percent 0.1 --poison_percent 0.01 --efficient
 """  # noqa: E501
 
 from .badnet import BadNet
@@ -60,6 +59,9 @@ class Refool(BadNet):
         group.add_argument('--refool_lr', type=float,
                            help='retraining learning rate during trigger selection '
                            '(default: 1e-3)')
+        group.add_argument('--refool_sample_percent', type=int,
+                           help='retraining samples during trigger selection '
+                           '(default: 0.4)')
         group.add_argument('--voc_root', help='path to Pascal VOC dataset '
                            '(default: "{data_dir}/image/voc")')
         group.add_argument('--efficient', action='store_true')
@@ -67,17 +69,18 @@ class Refool(BadNet):
 
     def __init__(self, candidate_num: int = 200, select_iter: int = 16,
                  refool_epochs: int = 600, refool_lr: float = 1e-3,
+                 refool_sample_percent: float = 0.4,
                  voc_root: str = None, efficient: bool = False,
-                 poison_percent: float = 0.4,
                  train_mode: str = 'dataset', **kwargs):
         # monkey patch: to avoid calling get_poison_dataset() in super().__init__
         train_mode = 'batch'
-        super().__init__(poison_percent=poison_percent, train_mode=train_mode, **kwargs)
+        super().__init__(train_mode=train_mode, **kwargs)
         self.param_list['reflection'] = ['candidate_num', 'select_iter', 'refool_epochs']
         self.candidate_num = candidate_num
         self.select_iter = select_iter
         self.refool_epochs = refool_epochs
         self.refool_lr = refool_lr
+        self.refool_sample_percent = refool_sample_percent
 
         if voc_root is None:
             data_dir = os.path.dirname(os.path.dirname(self.dataset.folder_path))
@@ -95,12 +98,14 @@ class Refool(BadNet):
         self.mark.mark_alpha = -1.0     # TODO: any manual alpha setting?
 
         self.target_set = self.dataset.get_dataset('train', class_list=[self.target_class])
-        self.poison_num = int(self.poison_percent * len(self.target_set))
+        self.refool_sample_num = int(self.refool_sample_percent * len(self.target_set))
+        self.poison_num = int(self.poison_ratio * len(self.target_set))
         self.train_mode = 'dataset'
 
         if efficient:
             valid_set = self.dataset.loader['valid'].dataset
-            subset = torch.utils.data.Subset(valid_set, torch.randperm(len(valid_set))[:1000])
+            length = int(0.2 * len(valid_set))
+            subset = torch.utils.data.Subset(valid_set, torch.randperm(len(valid_set))[:length])
             self.loader_valid = self.dataset.get_dataloader(mode='train', dataset=subset)
         else:
             self.loader_valid = self.dataset.loader['valid']
@@ -117,10 +122,10 @@ class Refool(BadNet):
         for _iter in range(self.select_iter):
             print('Select iteration: ', output_iter(_iter + 1, self.select_iter))
             # prepare data
-            idx = random.choices(range(len(W)), weights=W.tolist(), k=self.poison_num)
-            mark = torch.ones_like(self.mark.mark).expand(self.poison_num, -1, -1, -1).clone()
+            idx = random.choices(range(len(W)), weights=W.tolist(), k=self.refool_sample_num)
+            mark = torch.ones_like(self.mark.mark).expand(self.refool_sample_num, -1, -1, -1).clone()
             mark[:, :-1] = self.reflect_imgs[idx]
-            clean_input, _ = sample_batch(self.target_set, self.poison_num)
+            clean_input, _ = sample_batch(self.target_set, self.refool_sample_num)
             poison_input = self.add_mark(clean_input, mark=mark)
             dataset = TensorListDataset(poison_input, [self.target_class] * len(poison_input))
             loader = self.dataset.get_dataloader(mode='train', dataset=dataset)
@@ -142,7 +147,6 @@ class Refool(BadNet):
             self.model.load_state_dict(model_dict)
         self.mark.mark[:-1] = self.reflect_imgs[W.argmax().item()]
         self.poison_dataset = self.get_poison_dataset(load_mark=False)
-        assert self.train_mode == 'dataset'
         super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
 
     def get_poison_dataset(self, poison_num: int = None, load_mark: bool = True,
