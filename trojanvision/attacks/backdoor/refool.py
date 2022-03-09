@@ -3,7 +3,8 @@
 r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 20 --lr 0.01 --attack refool
 
-# --refool_epochs 2 --select_iter 1 --candidate_num 10 --poison_percent 0.01
+# --tqdm --refool_epochs 2 --select_iter 1 --candidate_num 10 --poison_percent 0.01
+# --tqdm --refool_epochs 5 --candidate_num 100 --poison_percent 0.05 --efficient
 """  # noqa: E501
 
 from .badnet import BadNet
@@ -23,6 +24,7 @@ import random
 import skimage.metrics
 import PIL.Image as Image
 
+import copy
 import io
 import os
 import tarfile
@@ -60,11 +62,12 @@ class Refool(BadNet):
                            '(default: 1e-3)')
         group.add_argument('--voc_root', help='path to Pascal VOC dataset '
                            '(default: "{data_dir}/image/voc")')
+        group.add_argument('--efficient', action='store_true')
         return group
 
     def __init__(self, candidate_num: int = 200, select_iter: int = 16,
                  refool_epochs: int = 600, refool_lr: float = 1e-3,
-                 voc_root: str = None,
+                 voc_root: str = None, efficient: bool = False,
                  poison_percent: float = 0.4,
                  train_mode: str = 'dataset', **kwargs):
         # monkey patch: to avoid calling get_poison_dataset() in super().__init__
@@ -93,11 +96,17 @@ class Refool(BadNet):
 
         self.target_set = self.dataset.get_dataset('train', class_list=[self.target_class])
         self.poison_num = int(self.poison_percent * len(self.target_set))
-        self.poison_ratio = self.poison_ratio
         self.train_mode = 'dataset'
 
+        if efficient:
+            valid_set = self.dataset.loader['valid'].dataset
+            subset = torch.utils.data.Subset(valid_set, torch.randperm(len(valid_set))[:1000])
+            self.loader_valid = self.dataset.get_dataloader(mode='train', dataset=subset)
+        else:
+            self.loader_valid = self.dataset.loader['valid']
+
     def attack(self, epochs: int, optimizer: torch.optim.Optimizer, **kwargs):
-        model_dict = self.model.state_dict()
+        model_dict = copy.deepcopy(self.model.state_dict())
         W = torch.ones(len(self.reflect_imgs))
         refool_optimizer = torch.optim.SGD(optimizer.param_groups[0]['params'],
                                            lr=self.refool_lr, momentum=0.9,
@@ -190,7 +199,8 @@ class Refool(BadNet):
         for mark in logger.log_every(marks, header='mark', tqdm_header='mark'):
             self.mark.mark[:-1] = mark
             _, target_acc = self.model._validate(get_data_fn=self.get_data, keep_org=False,
-                                                 poison_label=True, verbose=False)
+                                                 poison_label=True, verbose=False,
+                                                 loader=self.loader_valid)
             # Original code considers an untargeted-like attack scenario.
             # _, org_acc = self.model._validate(get_data_fn=self.get_data, keep_org=False,
             #                                   poison_label=False, verbose=False)
