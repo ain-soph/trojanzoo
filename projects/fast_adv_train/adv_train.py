@@ -64,7 +64,7 @@ if __name__ == '__main__':
                                                                  step_size_down=lr_steps // 2)
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model, trainer=trainer)
-    # model._train(lr_scheduler_freq='step', **trainer)
+    # model._train(lr_scheduler_freq='iter', **trainer)
 
     # kwargs['epochs = kwargs['epochs
     kwargs['lr_max'] = kwargs['lr']

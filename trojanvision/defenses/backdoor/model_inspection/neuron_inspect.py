@@ -80,7 +80,8 @@ class NeuronInspect(BackdoorDefense):
     def cal_explanation_feature(self, backdoor_saliency_maps: torch.Tensor,
                                 benign_saliency_maps: torch.Tensor) -> float:
         sparse_feats = backdoor_saliency_maps.flatten(start_dim=1).norm(p=1, dim=1)  # (N)
-        smooth_feats = self.conv2d(backdoor_saliency_maps.unsqueeze(1)).flatten(start_dim=1).norm(p=1, dim=1)  # (N)
+        smooth: torch.Tensor = self.conv2d(backdoor_saliency_maps.unsqueeze(1))
+        smooth_feats = smooth.flatten(start_dim=1).norm(p=1, dim=1)  # (N)
         persist_feats = self.cal_persistence_feature(benign_saliency_maps)  # (1)
         exp_feats = self.lambd_sp * sparse_feats + self.lambd_sm * smooth_feats + self.lambd_pe * persist_feats
         return torch.median(exp_feats).item()

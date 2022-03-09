@@ -27,7 +27,7 @@ class IMC(TrojanNN):
         * code: TrojanZoo is the official implementation of IMC ^_^
 
     Args:
-        attack_remask_epoch (int): Inner epoch to optimize watermark during each training epoch.
+        attack_remask_epochs (int): Inner epoch to optimize watermark during each training epoch.
             Defaults to ``20``.
         attack_remask_lr (float): Learning rate of Adam optimizer to optimize watermark.
             Defaults to ``0.1``.
@@ -41,7 +41,7 @@ class IMC(TrojanNN):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--attack_remask_epoch', type=int,
+        group.add_argument('--attack_remask_epochs', type=int,
                            help='inner epoch to optimize watermark during each training epoch '
                            '(default: 1)')
         group.add_argument('--attack_remask_lr', type=float,
@@ -49,10 +49,10 @@ class IMC(TrojanNN):
                            '(default: 0.1)')
         return group
 
-    def __init__(self, attack_remask_epoch: int = 1, attack_remask_lr: float = 0.1, **kwargs):
+    def __init__(self, attack_remask_epochs: int = 1, attack_remask_lr: float = 0.1, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['imc'] = ['attack_remask_epoch', 'attack_remask_lr']
-        self.attack_remask_epoch = attack_remask_epoch
+        self.param_list['imc'] = ['attack_remask_epochs', 'attack_remask_lr']
+        self.attack_remask_epochs = attack_remask_epochs
         self.attack_remask_lr = attack_remask_lr
 
     def attack(self, epochs: int, **kwargs):
@@ -69,7 +69,7 @@ class IMC(TrojanNN):
         optimizer = optim.Adam([atanh_mark], lr=self.attack_remask_lr)
         optimizer.zero_grad()
 
-        for _ in range(self.attack_remask_epoch):
+        for _ in range(self.attack_remask_epochs):
             for data in self.dataset.loader['train']:
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
                 _input, _label = self.model.get_data(data)

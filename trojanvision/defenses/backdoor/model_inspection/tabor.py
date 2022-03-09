@@ -3,6 +3,7 @@
 from ...abstract import ModelInspection
 from trojanzoo.utils.tensor import repeat_to_batch
 import torch
+import torch.nn.functional as F
 
 import argparse
 
@@ -37,12 +38,12 @@ class Tabor(ModelInspection):
         pattern_r1 = pattern_l1_norm + pattern_l2_norm
 
         # R2 - Scattered triggers
-        pixel_dif_mask_col = (mark[-1, :-1, :] - mark[-1, 1:, :]).square().sum()
-        pixel_dif_mask_row = (mark[-1, :, :-1] - mark[-1, :, 1:]).square().sum()
+        pixel_dif_mask_col = F.mse_loss(mark[-1, :-1, :], mark[-1, 1:, :], reduction='sum')
+        pixel_dif_mask_row = F.mse_loss(mark[-1, :, :-1], mark[-1, :, 1:], reduction='sum')
         mask_r2 = pixel_dif_mask_col + pixel_dif_mask_row
 
-        pixel_dif_pat_col = (pattern_tensor[:, :-1, :] - pattern_tensor[:, 1:, :]).square().sum()
-        pixel_dif_pat_row = (pattern_tensor[:, :, :-1] - pattern_tensor[:, :, 1:]).square().sum()
+        pixel_dif_pat_col = F.mse_loss(pattern_tensor[:, :-1, :], pattern_tensor[:, 1:, :], reduction='sum')
+        pixel_dif_pat_row = F.mse_loss(pattern_tensor[:, :, :-1], pattern_tensor[:, :, 1:], reduction='sum')
         pattern_r2 = pixel_dif_pat_col + pixel_dif_pat_row
 
         # R3 - Blocking triggers

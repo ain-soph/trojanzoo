@@ -298,7 +298,7 @@ class Watermark(BasicObject):
         mark = mark.clone().to(device=_input.device)
 
         mark_rgb_channel = mark[..., :-1, :, :]
-        mark_alpha_channel = mark[..., -1, :, :]
+        mark_alpha_channel = mark[..., -1, :, :].unsqueeze(-3)
         mark_alpha_channel *= mark_alpha
         if mark_random_pos:
             batch_size = _input.size(0)

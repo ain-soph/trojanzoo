@@ -300,8 +300,8 @@ class MetricLogger:
             v_str = str(v)
             _str: str = '{green}{k}{reset}: {v}'.format(k=k, v=v_str, **ansi)
             max_length = self.meter_length + get_ansi_len(_str)
-            if cut_too_long and len(_str) > max_length:
-                _str = '{green}{k}{reset}: {v}'.format(k=k, v=v_str[:5], **ansi)
+            if cut_too_long:
+                _str = _str[:max_length]
             str_list.append(_str.ljust(max_length))
         _str = self.delimiter.join(str_list)
         if strip:
@@ -351,6 +351,8 @@ class MetricLogger:
         tqdm = tqdm if tqdm is not None else self.tqdm
         indent = indent if indent is not None else self.indent
         iterator = iterable
+        if len(header) != 0:
+            header = header.ljust(30 + get_ansi_len(header))
         if tqdm:
             length = len(str(len(iterable)))
             pattern: str = ('{tqdm_header}: {blue_light}'

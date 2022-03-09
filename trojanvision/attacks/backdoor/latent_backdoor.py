@@ -60,7 +60,7 @@ class LatentBackdoor(BadNet):
             Defaults to ``0.5``.
         preprocess_layer (str): The chosen layer to calculate feature map.
             Defaults to ``'flatten'``.
-        attack_remask_epoch (int): Watermark preprocess optimization epoch.
+        attack_remask_epochs (int): Watermark preprocess optimization epoch.
             Defaults to ``100``.
         attack_remask_lr (float): Watermark preprocess optimization learning rate.
             Defaults to ``0.1``.
@@ -82,7 +82,7 @@ class LatentBackdoor(BadNet):
         group.add_argument('--preprocess_layer',
                            help='the chosen layer to calculate feature map '
                            '(default: "flatten")')
-        group.add_argument('--attack_remask_epoch', type=int,
+        group.add_argument('--attack_remask_epochs', type=int,
                            help='preprocess optimization epochs')
         group.add_argument('--attack_remask_lr', type=float,
                            help='preprocess learning rate')
@@ -90,7 +90,7 @@ class LatentBackdoor(BadNet):
 
     def __init__(self, class_sample_num: int = 100, mse_weight: float = 0.5,
                  preprocess_layer: str = 'flatten',
-                 attack_remask_epoch: int = 100, attack_remask_lr: float = 0.1,
+                 attack_remask_epochs: int = 100, attack_remask_lr: float = 0.1,
                  **kwargs):
         super().__init__(**kwargs)
         if not self.mark.mark_random_init:
@@ -99,12 +99,12 @@ class LatentBackdoor(BadNet):
             raise Exception('Latent Backdoor requires "mark_random_pos" to be False.')
 
         self.param_list['latent_backdoor'] = ['class_sample_num', 'mse_weight',
-                                              'preprocess_layer', 'attack_remask_epoch', 'attack_remask_lr']
+                                              'preprocess_layer', 'attack_remask_epochs', 'attack_remask_lr']
         self.class_sample_num = class_sample_num
         self.mse_weight = mse_weight
 
         self.preprocess_layer = preprocess_layer
-        self.attack_remask_epoch = attack_remask_epoch
+        self.attack_remask_epochs = attack_remask_epochs
         self.attack_remask_lr = attack_remask_lr
 
         self.avg_target_feats: torch.Tensor = None
@@ -207,7 +207,7 @@ class LatentBackdoor(BadNet):
         optimizer = optim.Adam([atanh_mark], lr=self.attack_remask_lr)
         optimizer.zero_grad()
 
-        for _ in range(self.attack_remask_epoch):
+        for _ in range(self.attack_remask_epochs):
             for data in other_loader:
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
                 _input, _label = self.model.get_data(data)

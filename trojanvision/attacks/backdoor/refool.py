@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 20 --lr 0.01 --attack refool
+
+# --refool_epochs 2 --select_iter 1 --candidate_num 10 --poison_percent 0.01
+"""  # noqa: E501
+
 from .badnet import BadNet
 from trojanvision.environ import env
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 from trojanzoo.utils.logger import MetricLogger
+from trojanzoo.utils.output import output_iter
 
 import torch
 import torchvision
@@ -22,6 +29,7 @@ import tarfile
 from xml.etree.ElementTree import parse as ET_parse
 
 import argparse
+import torch.utils.data
 
 sets: list[tuple[str, str]] = [('2012', 'train'), ('2012', 'val'), ('2007', 'train'), ('2007', 'val'), ('2007', 'test')]
 norm = torch.distributions.normal.Normal(loc=0.0, scale=1.0)    # TODO: avoid construction when unused
@@ -50,24 +58,28 @@ class Refool(BadNet):
         group.add_argument('--refool_lr', type=float,
                            help='retraining learning rate during trigger selection '
                            '(default: 1e-3)')
-        group.add_argument('--pascal_root', help='path to Pascal VOC dataset '
-                           '(default: "{data_dir}/image/pascal_voc")')
+        group.add_argument('--voc_root', help='path to Pascal VOC dataset '
+                           '(default: "{data_dir}/image/voc")')
         return group
 
     def __init__(self, candidate_num: int = 200, select_iter: int = 16,
                  refool_epochs: int = 600, refool_lr: float = 1e-3,
-                 pascal_root: str = None,
-                 poison_percent: float = 0.4, **kwargs):
-        super().__init__(poison_percent=poison_percent, **kwargs)
+                 voc_root: str = None,
+                 poison_percent: float = 0.4,
+                 train_mode: str = 'dataset', **kwargs):
+        # monkey patch: to avoid calling get_poison_dataset() in super().__init__
+        train_mode = 'batch'
+        super().__init__(poison_percent=poison_percent, train_mode=train_mode, **kwargs)
         self.param_list['reflection'] = ['candidate_num', 'select_iter', 'refool_epochs']
         self.candidate_num = candidate_num
         self.select_iter = select_iter
         self.refool_epochs = refool_epochs
         self.refool_lr = refool_lr
 
-        if pascal_root is None:
-            pascal_root = os.path.join(env['data_dir'], 'image', 'pascal_voc')
-        self.pascal_root = pascal_root
+        if voc_root is None:
+            data_dir = os.path.dirname(os.path.dirname(self.dataset.folder_path))
+            voc_root = os.path.join(data_dir, 'image', 'voc')
+        self.voc_root = voc_root
         self.reflect_imgs = self.get_reflect_imgs()
 
         mark_shape = self.dataset.data_shape.copy()
@@ -77,35 +89,12 @@ class Refool(BadNet):
         self.mark.mark_height_offset, self.mark.mark_width_offset = 0, 0
         self.mark.mark_random_init = False
         self.mark.mark_random_pos = False
-        self.mark.mark_alpha = None     # TODO: any manual alpha setting?
+        self.mark.mark_alpha = -1.0     # TODO: any manual alpha setting?
 
         self.target_set = self.dataset.get_dataset('train', class_list=[self.target_class])
-        self.poison_num = round(len(self.target_set) * self.poison_percent)
+        self.poison_num = int(self.poison_percent * len(self.target_set))
         self.poison_ratio = self.poison_ratio
         self.train_mode = 'dataset'
-
-    def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
-        if 'mark_alpha' not in kwargs.keys() and self.mark.mark_alpha is None:
-            x_weight = x.mean()
-            mark_weight = self.mark.mark.mean()
-            alpha = x_weight / (x_weight + mark_weight)
-            kwargs['mark_alpha'] = alpha
-        return super().add_mark(x, **kwargs)
-
-    def get_reflect_imgs(self) -> torch.Tensor:
-        tar_path = os.path.join(self.pascal_root, 'reflect.tar')
-        if not os.path.isfile(tar_path):
-            self.gen_reflect_imgs(tar_path, self.pascal_root, num_attack=self.candidate_num)
-        tf = tarfile.open(tar_path, mode='r')
-        transform = transforms.Compose([
-            transforms.Resize([self.dataset.data_shape[-2:]]),
-            transforms.PILToTensor(),
-            transforms.ConvertImageDtype(torch.float)
-        ])
-        images = torch.stack([transform(Image.open(tf.extractfile(member), mode='r'))
-                              for member in tf.getmembers()])
-        tf.close()
-        return images.to(device=env['device'])
 
     def attack(self, epochs: int, optimizer: torch.optim.Optimizer, **kwargs):
         model_dict = self.model.state_dict()
@@ -113,18 +102,24 @@ class Refool(BadNet):
         refool_optimizer = torch.optim.SGD(optimizer.param_groups[0]['params'],
                                            lr=self.refool_lr, momentum=0.9,
                                            weight_decay=5e-4)
-        logger = MetricLogger(meter_length=35)
-        logger.create_meters(attack_succ_rate='{median:.3f} ({min:.3f}  {max:.3f})')
-        for _ in logger.log_every(range(self.select_iter)):
+        # logger = MetricLogger(meter_length=35)
+        # logger.create_meters(asr='{median:.3f} ({min:.3f}  {max:.3f})')
+        # iterator = logger.log_every(range(self.select_iter))
+        for _iter in range(self.select_iter):
+            print('Select iteration: ', output_iter(_iter + 1, self.select_iter))
             # prepare data
             idx = random.choices(range(len(W)), weights=W.tolist(), k=self.poison_num)
-            clean_data = sample_batch(self.target_set, self.poison_num)
-            poison_data = [self.add_mark(clean_data[i], mark=self.reflect_imgs[idx[i]]) for i in range(len(idx))]
-            dataset = TensorListDataset(torch.stack(poison_data), [self.target_class] * len(poison_data))
+            mark = torch.ones_like(self.mark.mark).expand(self.poison_num, -1, -1, -1).clone()
+            mark[:, :-1] = self.reflect_imgs[idx]
+            clean_input, _ = sample_batch(self.target_set, self.poison_num)
+            poison_input = self.add_mark(clean_input, mark=mark)
+            dataset = TensorListDataset(poison_input, [self.target_class] * len(poison_input))
             loader = self.dataset.get_dataloader(mode='train', dataset=dataset)
             # train
             self.model._train(self.refool_epochs, optimizer=refool_optimizer,
-                              loader_train=loader, validate_interval=0, verbose=False)
+                              loader_train=loader, validate_interval=0,
+                              output_freq='epoch', indent=4)
+            self.model._validate(indent=4)
             # test
             select_idx = list(set(idx))
             marks = self.reflect_imgs[select_idx]
@@ -134,14 +129,65 @@ class Refool(BadNet):
             other_idx = list(set(range(len(W))) - set(idx))
             W[other_idx] = asr_result.median()
 
-            logger.reset().update_list(attack_succ_rate=asr_result)
+            # logger.reset().update_list(asr=asr_result)
             self.model.load_state_dict(model_dict)
         self.mark.mark[:-1] = self.reflect_imgs[W.argmax().item()]
+        self.poison_dataset = self.get_poison_dataset(load_mark=False)
+        assert self.train_mode == 'dataset'
         super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
+
+    def get_poison_dataset(self, poison_num: int = None, load_mark: bool = True,
+                           seed: int = None) -> torch.utils.data.Dataset:
+        file_path = os.path.join(self.folder_path, self.get_filename() + '.npy')
+        if load_mark:
+            if os.path.isfile(file_path):
+                self.load_mark = False
+                self.mark.load_mark(file_path, already_processed=True)
+            else:
+                raise FileNotFoundError(file_path)
+        if seed is None:
+            seed = env['data_seed']
+        torch.random.manual_seed(seed)
+        poison_num = min(poison_num or self.poison_num, len(self.target_set))
+        _input, _label = sample_batch(self.target_set, batch_size=poison_num)
+        _label = _label.tolist()
+        poison_input = self.add_mark(_input)
+        return TensorListDataset(poison_input, _label)
+
+    def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        if 'mark_alpha' not in kwargs.keys() and self.mark.mark_alpha < 0:
+            x_weight: float = x.mean().item()
+            mark_weight: float = self.mark.mark.mean().item()
+            alpha = x_weight / (x_weight + mark_weight)
+            kwargs['mark_alpha'] = alpha
+        return super().add_mark(x, **kwargs)
+
+    def get_reflect_imgs(self, force_regenerate: bool = False) -> torch.Tensor:
+        tar_path = os.path.join(self.voc_root, 'reflect.tar')
+        if force_regenerate or not os.path.isfile(tar_path):
+            self.gen_reflect_imgs(tar_path, self.voc_root, num_attack=self.candidate_num)
+        tf = tarfile.open(tar_path, mode='r')
+        transform = transforms.Compose([
+            transforms.Resize([self.dataset.data_shape[-2:]]),
+            transforms.PILToTensor(),
+            transforms.ConvertImageDtype(torch.float)
+        ])
+        images = torch.stack([transform(Image.open(tf.extractfile(member), mode='r'))
+                              for member in tf.getmembers()])
+        if len(images) >= self.candidate_num:
+            images = images[:self.candidate_num]
+        elif not force_regenerate:
+            return self.get_reflect_imgs(force_regenerate=True)
+        else:
+            raise RuntimeError('Can not generate enough images')
+        tf.close()
+        return images.to(device=env['device'])
 
     def get_asr_result(self, marks: torch.Tensor) -> torch.Tensor:
         asr_result_list = []
-        for mark in marks:
+        logger = MetricLogger(meter_length=35, indent=4)
+        logger.create_meters(asr='{median:.3f} ({min:.3f}  {max:.3f})')
+        for mark in logger.log_every(marks, header='mark', tqdm_header='mark'):
             self.mark.mark[:-1] = mark
             _, target_acc = self.model._validate(get_data_fn=self.get_data, keep_org=False,
                                                  poison_label=True, verbose=False)
@@ -149,17 +195,18 @@ class Refool(BadNet):
             # _, org_acc = self.model._validate(get_data_fn=self.get_data, keep_org=False,
             #                                   poison_label=False, verbose=False)
             # target_acc = 100 - org_acc
+            logger.update(asr=target_acc)
             asr_result_list.append(target_acc)
-        return torch.stack(asr_result_list)
+        return torch.tensor(asr_result_list)
 
     @classmethod
-    def gen_reflect_imgs(cls, tar_path: str, pascal_root: str, num_attack: int = 160,
+    def gen_reflect_imgs(cls, tar_path: str, voc_root: str, num_attack: int = 160,
                          reflect_class: set[str] = {'cat'},
                          background_class: set[str] = {'person'}):
         print('get image paths')
-        if not os.path.isdir(pascal_root):
-            os.makedirs(pascal_root)
-        datasets = [torchvision.datasets.VOCDetection(pascal_root, year=year, image_set=image_set,
+        if not os.path.isdir(voc_root):
+            os.makedirs(voc_root)
+        datasets = [torchvision.datasets.VOCDetection(voc_root, year=year, image_set=image_set,
                                                       download=True) for year, image_set in sets]
         background_paths = cls.get_img_paths(datasets, positive_class=background_class, negative_class=reflect_class)
         reflect_paths = cls.get_img_paths(datasets, positive_class=reflect_class, negative_class=background_class)
@@ -174,7 +221,6 @@ class Refool(BadNet):
         tf = tarfile.open(tar_path, mode='w')
         logger = MetricLogger(meter_length=35)
         logger.create_meters(reflect_num=f'[ {{count:3d}} / {num_attack:3d} ]',
-                             succ_num='{count:3d}',
                              reflect_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
                              diff_mean='{global_avg:.3f} ({min:.3f}  {max:.3f})',
                              blended_max='{global_avg:.3f} ({min:.3f}  {max:.3f})',
@@ -183,6 +229,8 @@ class Refool(BadNet):
         for fp in logger.log_every(background_paths):
             background_img = read_tensor(fp)
             for i, reflect_img in enumerate(reflect_imgs):
+                if i in candidates:
+                    continue
                 blended, background_layer, reflection_layer = cls.blend_images(
                     background_img, reflect_img, ghost_rate=0.39)
                 reflect_mean: float = reflection_layer.mean().item()
@@ -194,21 +242,21 @@ class Refool(BadNet):
                         blended.numpy(), background_layer.numpy(), channel_axis=0)
                     logger.update(ssim=ssim)
                     if 0.7 < ssim < 0.85:
-                        logger.update(succ_num=1)
-                        if i not in candidates:
-                            logger.update(reflect_num=1)
-                            candidates.add(i)
-                            filename = os.path.basename(reflect_paths[i])
-                            bytes_io = io.BytesIO()
-                            format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
-                            F.to_pil_image(reflection_layer).save(bytes_io, format=format)
-                            bytes_data = bytes_io.getvalue()
-                            tarinfo = tarfile.TarInfo(name=filename)
-                            tarinfo.size = len(bytes_data)
-                            tf.addfile(tarinfo, io.BytesIO(bytes_data))
+                        logger.update(reflect_num=1)
+                        candidates.add(i)
+                        filename = os.path.basename(reflect_paths[i])
+                        bytes_io = io.BytesIO()
+                        format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
+                        F.to_pil_image(reflection_layer).save(bytes_io, format=format)
+                        bytes_data = bytes_io.getvalue()
+                        tarinfo = tarfile.TarInfo(name=filename)
+                        tarinfo.size = len(bytes_data)
+                        tf.addfile(tarinfo, io.BytesIO(bytes_data))
                         break
             if len(candidates) == num_attack:
                 break
+        else:
+            raise RuntimeError('Can not generate enough images')
         tf.close()
 
     @staticmethod
