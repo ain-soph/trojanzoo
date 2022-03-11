@@ -14,14 +14,14 @@
 
 > **NOTE:** TrojanZoo requires `python>=3.9.2`, `pytorch>=1.8.1` and `torchvision>=0.9.1`, which must be installed manually. Recommend to use `conda` to install.
 
-This is the code implementation (pytorch) for our paper:  
-[TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)](https://arxiv.org/abs/2012.09302)
+This is the code implementation (pytorch) for our paper in EuroS&P 2022:  
+[TrojanZoo: Towards Unified, Holistic, and Practical Evaluation of Neural Backdoors)](https://arxiv.org/abs/2012.09302)
 
 TrojanZoo provides a universal pytorch platform to conduct security researches (especially backdoor attacks/defenses) of image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
 > Note: This repository is also maintained to cover the implementation of  
 > our kdd 2020 paper [AdvMind: Inferring Adversary Intent of Black-Box Attacks](https://arxiv.org/abs/2006.09539)  
-> and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559).
+> and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559)
 
 ## Screenshot
 ![screenshot](https://github.com/ain-soph/trojanzoo/raw/main/docs/source/images/screenshot.png)
@@ -49,7 +49,8 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 2. **(todo)** `conda install trojanzoo`  
 3. `docker pull local0state/trojanzoo`  
 4. **(RECOMMEND)**`pip install -e .` or `python setup.py develop`  
-    > This could install the github repo package but avoid copying files to `site_packages`, so that during developing `TrojanZoo`, you don't need move `example` files to the root directory of repo.  
+    > This could install the github repo as a package but avoid copying files to `site_packages`,
+      so that you can easily keep it updated by doing `github pull`.  
 
 ## Quick Start
 
@@ -109,7 +110,7 @@ Modify them in corresponding config files and command-line arguments.
 ### Output Verbose Information:
 1. CMD modules: `--verbose 1`
 2. **Colorful output**: `--color`
-3. **tqdm progress bar**: `--tqdm`
+3. **tqdm**: `--tqdm`
 4. Check command-line argument usage: `--help`
 5. AdvMind verbose information: `--output [number]`
 
