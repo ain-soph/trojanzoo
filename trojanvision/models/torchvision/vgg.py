@@ -11,10 +11,10 @@ from collections import Callable
 
 class _VGG(_ImageModel):
 
-    def __init__(self, name: str = 'vgg', **kwargs):
+    def __init__(self, name: str = 'vgg', dropout: float = 0.5, **kwargs):
         if 'num_features' not in kwargs.keys() and ('_comp' or '_s' in name):
             kwargs['num_features'] = [512] if '_s' in name else [512] * 3
-        super().__init__(**kwargs)
+        super().__init__(dropout=dropout, **kwargs)
         class_name = name.replace('_comp', '').replace('_s', '')
         ModelClass: Callable[..., torchvision.models.VGG] = getattr(torchvision.models, class_name)
         _model = ModelClass(num_classes=self.num_classes)

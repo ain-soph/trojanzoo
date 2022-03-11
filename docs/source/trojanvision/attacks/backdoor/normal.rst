@@ -1,6 +1,6 @@
-.. _trojanvision.attacks.backdoor:
+.. _trojanvision.attacks.backdoor.normal:
 
-backdoor
+normal
 ================
 
 .. currentmodule:: trojanvision.attacks

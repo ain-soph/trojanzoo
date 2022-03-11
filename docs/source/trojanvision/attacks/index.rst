@@ -10,7 +10,7 @@ attacks
    :maxdepth: 2
 
    adv
-   backdoor
+   backdoor/index
 
 
 .. autofunction:: add_argument

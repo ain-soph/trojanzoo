@@ -48,17 +48,24 @@ class BadNet(Attack):
             Defaults to ``0``.
         poison_percent (float): Percentage of poisoning inputs in the whole training set.
             Defaults to ``0.01``.
-        train_mode (float): Choose from ``['batch', 'dataset', 'loss']``.
+        train_mode (float): Training mode to inject backdoor.
+            Choose from ``['batch', 'dataset', 'loss']``.
             Defaults to ``'batch'``.
+            * ``'batch'``: For a clean batch, randomly picked :attr:`poison_num` inputs,
+              attach trigger on them, modify their labels and append to original batch.
+            * ``'dataset'``: Create a poisoned dataset and use the mixed dataset.
+            * ``'loss'``: For a clean batch, calculate the loss on clean data
+              and the loss on poisoned data (all batch)
+              and mix them using :attr:`poison_percent` as weight.
 
     Attributes:
         poison_ratio (float): The ratio of poison data divided by clean data.
-            ``self.poison_ratio = self.poison_percent / (1 - self.poison_percent)``
-        train_num (int): Poison input number in training data calculated using :attr:`self.poison_ratio`.
+            ``poison_percent / (1 - poison_percent)``
+        poison_num (float | int): The number of poison data in each batch / dataset.
 
-            * ``train_mode == 'batch'  : self.poison_ratio * self.dataset.batch_size``
-            * ``train_mode == 'dataset': self.poison_ratio * len(train_set)``
-            * ``train_mode == 'loss'   :`` no such property
+            * ``train_mode == 'batch'  : poison_ratio * batch_size``
+            * ``train_mode == 'dataset': int(poison_ratio * len(train_set))``
+            * ``train_mode == 'loss'   : N/A``
         poison_dataset (torch.utils.data.Dataset):
             Poison dataset (no clean data) ``if train_mode == 'dataset'``.
 
@@ -140,7 +147,7 @@ class BadNet(Attack):
                 Whether to use target poison label for poison data.
                 Defaults to ``True``.
             poison_num (int): Number of poison data.
-                Defaults to ``self.poison_ratio * len(train_set)``
+                Defaults to ``round(self.poison_ratio * len(train_set))``
             seed (int): Random seed to sample poison input indices.
                 Defaults to ``env['data_seed']``.
 
@@ -219,6 +226,22 @@ class BadNet(Attack):
                  org: bool = False, keep_org: bool = True,
                  poison_label: bool = True, **kwargs
                  ) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""Get data.
+
+        Args:
+            data (tuple[torch.Tensor, torch.Tensor]): Tuple of input and label tensors.
+            org (bool): Whether to return original clean data directly.
+                Defaults to ``False``.
+            keep_org (bool): Whether to keep original clean data in final results.
+                If ``False``, the results are all infected.
+                Defaults to ``True``.
+            poison_label (bool): Whether to use target class label for poison data.
+                Defaults to ``True``.
+            **kwargs: Any keyword argument (unused).
+
+        Returns:
+            (torch.Tensor, torch.Tensor): Result tuple of input and label tensors.
+        """
         _input, _label = self.model.get_data(data)
         if not org:
             if keep_org:

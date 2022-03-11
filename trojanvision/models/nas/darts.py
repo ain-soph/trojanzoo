@@ -42,13 +42,13 @@ def _concat(xs: torch.Tensor) -> torch.Tensor:
 
 class _DARTS(_ImageModel):
     def __init__(self, auxiliary: bool = False, **kwargs):
-        if 'num_features' not in kwargs.keys():
-            kwargs['num_features'] = [self.features.feats_dim]
         super().__init__(**kwargs)
         self.features: Union[FeatureExtractor, darts.search.FeatureExtractor]
         self.auxiliary_head: nn.Sequential = None
         if auxiliary:
             self.auxiliary_head = AuxiliaryHead(C=self.features.aux_dim, num_classes=self.num_classes)
+        num_features = kwargs.get('num_features', [self.features.feats_dim])
+        self.classifier = self.define_classifier(num_features=num_features, num_classes=self.num_classes)
 
     @staticmethod
     def define_features(supernet: bool = False,
@@ -265,6 +265,9 @@ class DARTS(ImageModel):
 
     def arch_parameters(self) -> list[torch.Tensor]:
         return self._model.features.arch_parameters()
+
+    def named_arch_parameters(self) -> list[tuple[str, torch.Tensor]]:
+        return self._model.features.named_arch_parameters()
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False,
                  mode: str = 'train', **kwargs) -> tuple[torch.Tensor, torch.Tensor]:

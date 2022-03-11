@@ -45,7 +45,7 @@ def init_weights(m: nn.Module, filter_list: list[type] = []) -> None:
             init_weights(filter_list=[nn.Linear])   # no change
             init_weights(net)                       # init nn.Linear layers
     """
-    if isinstance(m, filter_list):
+    if isinstance(m, tuple(filter_list)):
         return
     if hasattr(m, 'reset_parameters'):
         return m.reset_parameters()
