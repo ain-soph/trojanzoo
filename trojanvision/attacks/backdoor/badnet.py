@@ -51,6 +51,7 @@ class BadNet(Attack):
         train_mode (float): Training mode to inject backdoor.
             Choose from ``['batch', 'dataset', 'loss']``.
             Defaults to ``'batch'``.
+
             * ``'batch'``: For a clean batch, randomly picked :attr:`poison_num` inputs,
               attach trigger on them, modify their labels and append to original batch.
             * ``'dataset'``: Create a poisoned dataset and use the mixed dataset.
