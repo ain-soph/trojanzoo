@@ -23,23 +23,85 @@ from collections.abc import Callable
 
 
 class InputAwareDynamic(BadNet):
-    r"""
-    | Input-Aware Dynamic Backdoor Attack proposed by Anh Nguyen and Anh Tran
-      from VinAI Research in NIPS 2020.
-    |
-    | Based on :class:`trojanvision.attacks.BadNet`,
-      InputAwareDynamic trains mark generator and mask generator
-      to synthesize unique watermark for each input.
+    r"""Input-Aware Dynamic Backdoor Attack proposed by Anh Nguyen and Anh Tran
+    from VinAI Research in NIPS 2020.
+
+    Based on :class:`trojanvision.attacks.BadNet`,
+    InputAwareDynamic trains mark generator and mask generator
+    to synthesize unique watermark for each input.
+
+    In classification loss, besides attacking poison inputs and classifying clean inputs,
+    InputAwareDynamic also requires inputs attached
+    with triggers generated from other inputs
+    are still classified correctly (cross-trigger mode).
 
     See Also:
         * paper: `Input-Aware Dynamic Backdoor Attack`_
         * code: https://github.com/VinAIResearch/input-aware-backdoor-attack-release
 
+    .. math::
+       \begin{aligned}
+            &\textbf{\# train mask generator}                                                                                                      \\
+            &{opt}_{mask} = \text{Adam}(G_{mask}.parameters(), \text{lr}=0.01, \text{betas}=(0.5, 0.9))                                            \\
+            &\textbf{for} \: e=1 \: \textbf{to} \: \text{train\_mask\_epochs}                                                                      \\
+            &\hspace{5mm}\textbf{for} \: x_1 \: \textbf{in} \: \text{train\_set}                                                                   \\
+            &\hspace{10mm}x_2 = \text{sample\_another\_batch}(\text{train\_set})                                                                   \\
+            &\hspace{10mm}\mathcal{L}_{div}  = \frac{\lVert x_1 - x_2 \rVert}{\lVert G_{mask}(x_1) - G_{mask}(x_2) \rVert}                         \\
+            &\hspace{10mm}\mathcal{L}_{norm} = ReLU(G_{mask}(x_1) - \text{mask\_density}).mean()                                                   \\
+            &\hspace{10mm}\mathcal{L}_{mask} = \lambda_{div} \mathcal{L}_{div} + \lambda_{norm} \mathcal{L}_{norm}                                 \\
+            &\hspace{10mm}{opt}_{mask}.step()                                                                                                      \\
+            &\rule{110mm}{0.4pt}                                                                                                                   \\
+            &\textbf{\# train mark generator and model}                                                                                            \\
+            &{opt}_{mark} = \text{Adam}(G_{mark}.parameters(), \text{lr}=0.01, \text{betas}=(0.5, 0.9))                                            \\
+            &\textbf{for} \: e=1 \: \textbf{to} \: \text{epochs}                                                                                   \\
+            &\hspace{5mm}\textbf{for} \: (x_1, y_1) \: \textbf{in} \: \text{train\_set}                                                            \\
+            &\hspace{10mm}x_2 = \text{sample\_another\_batch}(\text{train\_set})                                                                   \\
+            &\hspace{10mm}{mark}_{poison}, {mask}_{poison} = G_{mark}, G_{mask} (x_1[:n_{poison}])                                                 \\
+            &\hspace{10mm}{mark}_{cross}, {mask}_{cross}   = G_{mark}, G_{mask} (x_2[n_{poison}: n_{poison} + n_{cross}])                          \\
+            &\hspace{10mm}x_{poison} = {mask}_{poison} \cdot {mark}_{poison} + (1 - {mask}_{poison}) \cdot x_1[:n_{poison}]                        \\
+            &\hspace{10mm}x_{cross}  = {mask}_{cross}  \cdot {mark}_{cross}  + (1 - {mask}_{cross})  \cdot x_1[n_{poison}: n_{poison} + n_{cross}] \\
+            &\hspace{10mm}x = cat([x_{poison}, x_{cross}, x_1[n_{poison}+n_{cross}:]])                                                             \\
+            &\hspace{10mm}y = cat([y_{poison}, y_1[n_{poison}:]])                                                                                  \\
+            &\hspace{10mm}\mathcal{L}_{div} = \frac{\lVert x_{poison} - x_{cross} \rVert}{\lVert {mark}_{poison} - {mark}_{cross} \rVert}          \\
+            &\hspace{10mm}\mathcal{L}_{ce}  = cross\_entropy(x, y)                                                                                 \\
+            &\hspace{10mm}\mathcal{L}       = \mathcal{L}_{ce} + \lambda_{div}\mathcal{L}_{div}                                                    \\
+            &\hspace{10mm}{opt}_{mark}.step()                                                                                                      \\
+            &\hspace{10mm}{opt}_{model}.step()                                                                                                     \\
+       \end{aligned}
+
     Args:
-        attack_remask_epochs (int): Inner epoch to optimize watermark during each training epoch.
-            Defaults to ``20``.
-        attack_remask_lr (float): Learning rate of Adam optimizer to optimize watermark.
+        train_mask_epochs (int): Epoch to optimize mask generator.
+            Defaults to ``25``.
+        lambda_div (float): Weight of diversity loss
+            during both optimization processes.
+            Defaults to ``1.0``.
+        lambda_norm (float): Weight of norm loss
+            when optimizing mask generator.
+            Defaults to ``100.0``.
+        mask_density (float): Threshold of mask values
+            when optimizing norm loss.
+            Defaults to ``0.032``.
+        cross_percent (float): Percentage of cross inputs
+            in the whole training set.
             Defaults to ``0.1``.
+        poison_percent (float): Percentage of poison inputs
+            in the whole training set.
+            Defaults to ``0.1``.
+
+    Attributes:
+        mark_generator (torch.nn.Sequential): Mark generator instance
+            constructed by :meth:`define_generator()`.
+            Output shape ``(N, C, H, W)``.
+        mask_generator (torch.nn.Sequential): Mark generator instance
+            constructed by :meth:`define_generator()`.
+            Output shape ``(N, 1, H, W)``.
+
+    Note:
+        Do **NOT** directly call :attr:`self.mark_generator`
+        or :attr:`self.mask_generator`.
+        Their raw outputs are not normalized into range ``[0, 1]``.
+        Please call :meth:`get_mark()` and :meth:`get_mask()` instead.
+
 
     .. _Input-Aware Dynamic Backdoor Attack:
         https://arxiv.org/abs/2010.08138
@@ -50,7 +112,26 @@ class InputAwareDynamic(BadNet):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--train_mask_epochs', type=int)
+        group.add_argument('--train_mask_epochs', type=int,
+                           help='Epoch to optimize mask generator '
+                           'before optimizing mark generator and model '
+                           '(default: 25)')
+        group.add_argument('--lambda_div', type=float,
+                           help='weight of diversity loss '
+                           'during both optimization processes '
+                           '(default: 1.0)')
+        group.add_argument('--lambda_norm', type=float,
+                           help='weight of norm loss '
+                           'when optimizing mask generator '
+                           '(default: 100.0)')
+        group.add_argument('--mask_density', type=float,
+                           help='threshold of mask values '
+                           'when optimizing norm loss '
+                           '(default: 0.032)')
+        group.add_argument('--cross_percent', type=float,
+                           help='percentage of cross inputs '
+                           'in the whole training set '
+                           '(default: 0.032)')
         return group
 
     def __init__(self, train_mask_epochs: int = 25,
@@ -75,26 +156,44 @@ class InputAwareDynamic(BadNet):
         data_channel = self.dataset.data_shape[0]
         num_channels = [16, 32] if data_channel == 1 else [32, 64, 128]
         self.mark_generator = self.define_generator(
-            num_channels, in_channel=data_channel
+            num_channels, in_channels=data_channel
         ).to(device=env['device']).eval()
         self.mask_generator = self.define_generator(
-            num_channels, in_channel=data_channel,
-            out_channel=1).to(device=env['device']).eval()
+            num_channels, in_channels=data_channel,
+            out_channels=1).to(device=env['device']).eval()
 
         self.train_set = self.dataset.loader['train'].dataset
         self.idx = torch.randperm(len(self.train_set))
         self.pos = 0
 
     def add_mark(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
+        r"""Add watermark to input tensor by calling
+        :meth:`get_mark()` and :meth:`get_mask()`."""
         mark = self.get_mark(x)
         mask = self.get_mask(x)
         return x + mask * (mark - x)
 
     def get_mark(self, _input: torch.Tensor) -> torch.Tensor:
+        r"""Get mark with shape ``(N, C, H, W)``.
+
+        .. math::
+            \begin{aligned}
+                &raw = \text{self.mark\_generator(input)} \\
+                &\textbf{return} \frac{\tanh{(raw)} + 1}{2}
+            \end{aligned}
+        """
         raw_output: torch.Tensor = self.mark_generator(_input)
         return raw_output.tanh() / 2 + 0.5
 
     def get_mask(self, _input: torch.Tensor) -> torch.Tensor:
+        r"""Get mask with shape ``(N, 1, H, W)``.
+
+        .. math::
+            \begin{aligned}
+                &raw = \text{self.mask\_generator(input)} \\
+                &\textbf{return} \frac{\tanh{[10 \cdot \tanh{(raw)}]} + 1}{2}
+            \end{aligned}
+        """
         raw_output: torch.Tensor = self.mask_generator(_input)
         return raw_output.tanh().mul(10).tanh() / 2 + 0.5
 
@@ -102,6 +201,15 @@ class InputAwareDynamic(BadNet):
                  org: bool = False, keep_org: bool = True,
                  poison_label: bool = True, **kwargs
                  ) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""Get data.
+
+        Note:
+            The difference between this and
+            :meth:`trojanvision.attacks.BadNet.get_data()` is:
+
+            This method replaces some clean data with poison version,
+            while BadNet's keeps the clean data and append poison version.
+        """
         _input, _label = self.model.get_data(data)
         if not org:
             if keep_org:
@@ -119,8 +227,12 @@ class InputAwareDynamic(BadNet):
                     _label = torch.cat([trigger_label, _label[integer:]])
         return _input, _label
 
-    def get_cross_data(self, data: tuple[torch.Tensor, torch.Tensor],
-                       **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def _get_cross_data(self, data: tuple[torch.Tensor, torch.Tensor],
+                        **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""Get cross-trigger mode data.
+        Sample another batch from train set
+        and apply their marks and masks to current batch.
+        """
         _input, _label = self.model.get_data(data)
         batch_size = len(_input)
         data2 = sample_batch(self.train_set, idx=self.idx[self.pos:self.pos + batch_size])
@@ -145,7 +257,7 @@ class InputAwareDynamic(BadNet):
                                              get_data_fn=self.get_data, keep_org=False, poison_label=True,
                                              indent=indent, **kwargs)
         self.model._validate(print_prefix='Validate Cross', main_tag='valid cross',
-                             get_data_fn=self.get_cross_data, indent=indent, **kwargs)
+                             get_data_fn=self._get_cross_data, indent=indent, **kwargs)
         prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
         prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > threshold:
@@ -160,7 +272,7 @@ class InputAwareDynamic(BadNet):
         self.mark_generator.requires_grad_(False)
         self.mask_generator.requires_grad_()
         self.model.requires_grad_(False)
-        self.train_mask()
+        self.train_mask_generator()
         print()
         print('train mark generator and model')
 
@@ -258,7 +370,8 @@ class InputAwareDynamic(BadNet):
         self.mask_generator.requires_grad_(False)
         self.model.requires_grad_(False)
 
-    def train_mask(self):
+    def train_mask_generator(self):
+        r"""Train :attr:`self.mask_generator`."""
         optimizer = torch.optim.Adam(self.mask_generator.parameters(), lr=1e-2, betas=(0.5, 0.9))
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=self.train_mask_epochs)
@@ -300,11 +413,11 @@ class InputAwareDynamic(BadNet):
             lr_scheduler.step()
             self.mask_generator.eval()
             if _epoch % (max(self.train_mask_epochs // 5, 1)) == 0 or _epoch == self.train_mask_epochs:
-                self.validate_mask()
+                self.validate_mask_generator()
         optimizer.zero_grad()
 
     @torch.no_grad()
-    def validate_mask(self):
+    def validate_mask_generator(self):
         loader = self.dataset.loader['valid']
         dataset = loader.dataset
         logger = MetricLogger()
@@ -336,13 +449,40 @@ class InputAwareDynamic(BadNet):
 
     @staticmethod
     def define_generator(num_channels: list[int] = [32, 64, 128],
-                         in_channel: int = 3, out_channel: int = None
+                         in_channels: int = 3, out_channels: int = None
                          ) -> nn.Sequential:
-        out_channel = out_channel or in_channel
+        r"""Define a generator used in :attr:`self.mark_generator` and :attr:`self.mask_generator`.
+
+        Similar to auto-encoders, the generator is composed of ``['down', 'middle', 'up']``.
+
+        * **down**: :math:`[\text{conv-bn-relu}(c_{i}, c_{i+1}), \text{conv-bn-relu}(c_{i+1}, c_{i+1}), \text{maxpool}(2)]`
+        * **middle**: :math:`[\text{conv-bn-relu}(c_{-1}, c_{-1})]`
+        * **up**: :math:`[\text{upsample}(2), \text{conv-bn-relu}(c_{i+1}, c_{i+1}), \text{conv-bn-relu}(c_{i+1}, c_{i})]`
+
+        Args:
+            num_channels (list[int]): List of intermediate feature numbers.
+                Each element serves as the :attr:`in_channels` of current layer
+                and :attr:`out_features` of preceding layer.
+                Defaults to ``[32, 64, 128]``.
+
+                * MNIST: ``[16, 32]``
+                * CIFAR: ``[32, 64, 128]``
+
+            in_channels (int): :attr:`in_channels` of first conv layer in ``down``.
+                It should be image channels.
+                Defaults to ``3``.
+            out_channels (int): :attr:`out_channels` of last conv layer in ``up``.
+                Defaults to ``None`` (:attr:`in_channels`).
+
+        Returns:
+            torch.nn.Sequential: Generator instance with input shape ``(N, in_channels, H, W)``
+                and output shape ``(N, out_channels, H, W)``.
+        """  # noqa: E501
+        out_channels = out_channels or in_channels
         down_channel_list = num_channels.copy()
-        down_channel_list.insert(0, in_channel)
+        down_channel_list.insert(0, in_channels)
         up_channel_list = num_channels[::-1].copy()
-        up_channel_list.append(out_channel)
+        up_channel_list.append(out_channels)
 
         seq = nn.Sequential()
         down_seq = nn.Sequential()
@@ -360,7 +500,7 @@ class InputAwareDynamic(BadNet):
         middle_seq.add_module('bn', nn.BatchNorm2d(num_channels[-1], momentum=0.05))
         middle_seq.add_module('relu', nn.ReLU(inplace=True))
         for i in range(len(num_channels)):
-            up_seq.add_module(f'maxpool{3*i+1}', nn.Upsample(scale_factor=2.0))
+            up_seq.add_module(f'upsample{3*i+1}', nn.Upsample(scale_factor=2.0))
             up_seq.add_module(f'conv{3*i+2}', conv3x3(up_channel_list[i], up_channel_list[i]))
             up_seq.add_module(f'bn{3*i+2}', nn.BatchNorm2d(up_channel_list[i], momentum=0.05))
             up_seq.add_module(f'relu{3*i+2}', nn.ReLU(inplace=True))

@@ -262,6 +262,7 @@ def get_transform_imagenet(mode: str, use_tuple: bool = False,
         transform_list.append(transforms.ConvertImageDtype(torch.float))
         transform = transforms.Compose(transform_list)
     else:
+        # TODO: torchvision.prototypes.transforms._presets.ImageClassificationEval
         transform = transforms.Compose([
             transforms.Resize((256, 256) if use_tuple else 256),
             transforms.CenterCrop((224, 224) if use_tuple else 224),

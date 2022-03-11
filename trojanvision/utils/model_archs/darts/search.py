@@ -115,6 +115,11 @@ class FeatureExtractor(nn.Module):
             return [self.alphas_reduce]
         return [self.alphas_normal, self.alphas_reduce]
 
+    def named_arch_parameters(self) -> list[tuple[str, torch.Tensor]]:
+        if self._layers == 1:
+            return [('alphas_reduce', self.alphas_reduce)]
+        return [('alphas_normal', self.alphas_normal), ('alphas_reduce', self.alphas_reduce)]
+
     def forward(self, input):
         s0 = s1 = self.stem(input)
         for i, cell in enumerate(self.cells):

@@ -86,7 +86,7 @@ class _Model(nn.Module):
                           num_classes: int = 1000,
                           activation: type[nn.Module] = nn.ReLU,
                           activation_inplace: bool = True,
-                          dropout: float = 0.5,
+                          dropout: float = 0.0,
                           **kwargs) -> nn.Sequential:
         r"""
         | Define classifier as
@@ -110,7 +110,7 @@ class _Model(nn.Module):
                 Defaults to ``'True'``
             dropout (float): The drop out probability.
                 Will **NOT** add dropout layers if it's ``0``.
-                Defaults to ``0.5``.
+                Defaults to ``0.0``.
             **kwargs: Any keyword argument (unused).
 
         Returns:
@@ -306,7 +306,7 @@ class Model(BasicObject):
                 os.makedirs(folder_path)
 
         # ------------Auto-------------- #
-        loss_weights: torch.Tensor = None if 'loss_weights' not in kwargs.keys() else kwargs['loss_weights']
+        loss_weights: torch.Tensor = kwargs.get('loss_weights', None)
         if dataset:
             if not isinstance(dataset, Dataset):
                 raise TypeError(f'{type(dataset)=}    {dataset=}')
