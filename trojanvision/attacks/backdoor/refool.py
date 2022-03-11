@@ -63,7 +63,8 @@ class Refool(BadNet):
           - For image pairs from 2 classes, process and blend them using ``'ghost effect'``
             or ``'focal blur'``.
           - Calculate difference between blended image and reflect image.
-          - Calculate structure similarity (SSIM) between blended image and background image.
+          - Calculate structure similarity (SSIM) between blended image and background image
+            by calling :any:`skimage.metrics.structural_similarity`.
           - If the difference is relatively large enough, blended image is not very dark
             and SSIM is around ``(0.7, 0.85)``, current reflect image is added to candidates.
         * **Rank candidate triggers by conducting tentative attack with multiple triggers injected together.**

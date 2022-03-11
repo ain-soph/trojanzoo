@@ -52,7 +52,7 @@ class Dataset(ABC, BasicObject):
             | Defaults to ``0.8``.
         num_workers (int): Used in :meth:`get_dataloader()`.
             Defaults to ``4``.
-        loss_weights (bool | np.ndarray |torch.Tensor):
+        loss_weights (bool | np.ndarray | torch.Tensor):
             | The loss weights w.r.t. each class.
             | if :any:`numpy.ndarray` or :any:`torch.Tensor`,
               directly set as :attr:`loss_weights` (cpu tensor).
