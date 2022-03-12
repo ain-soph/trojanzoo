@@ -10,7 +10,7 @@ jobs:
   pypi:
     runs-on: ubuntu-latest
     container:
-      image: local0state/base:cpu
+      image: ghcr.io/ain-soph/base:cpu
     steps:
       - name: Checkout
         uses: actions/checkout@v3

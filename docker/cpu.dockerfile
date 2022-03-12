@@ -1,5 +1,6 @@
-FROM local0state/base:cpu-conda
+FROM ghcr.io/ain-soph/base:cpu-conda
 LABEL maintainer="Ren Pang <rbp5354@psu.edu>"
+LABEL org.opencontainers.image.source=https://github.com/ain-soph/trojanzoo
 
 RUN cd / && \
     git clone https://github.com/ain-soph/trojanzoo.git && \
