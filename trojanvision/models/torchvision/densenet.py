@@ -9,7 +9,7 @@ from torchvision.models.densenet import model_urls as urls
 import re
 from collections import OrderedDict
 
-from collections import Callable
+from collections.abc import Callable
 
 
 class _DenseNet(_ImageModel):

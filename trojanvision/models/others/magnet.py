@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 
 from typing import Iterator, Tuple, Union
-from collections import Callable
+from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 

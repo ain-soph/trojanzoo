@@ -6,7 +6,7 @@ import torch.nn as nn
 import torchvision.models
 from torchvision.models.vgg import model_urls as urls
 
-from collections import Callable
+from collections.abc import Callable
 
 
 class _VGG(_ImageModel):
