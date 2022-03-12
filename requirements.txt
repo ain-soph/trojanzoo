@@ -2,8 +2,8 @@ pyyaml
 pandas
 tqdm
 
-torch
-torchvision
+torch>=1.11
+torchvision>=0.12
 numpy
 scikit-image
 scikit-learn
