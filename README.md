@@ -4,7 +4,7 @@
 [![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
 
 [![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
-![python>=3.9](https://img.shields.io/badge/python->=3.9.2-informational.svg)
+![python>=3.10](https://img.shields.io/badge/python->=3.10-informational.svg)
 [![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://opensource.org/licenses/GPL-3.0)
 
 [![release](https://img.shields.io/github/v/release/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/releases)
@@ -12,10 +12,10 @@
 [![docker](https://img.shields.io/pypi/v/trojanzoo?label=docker)](https://hub.docker.com/r/local0state/trojanzoo)
 <!-- [![conda](https://img.shields.io/pypi/v/trojanzoo?label=conda)](https://anaconda.org/anaconda/trojanzoo) -->
 
-> **NOTE:** TrojanZoo requires `python>=3.9.2`, `pytorch>=1.8.1` and `torchvision>=0.9.1`, which must be installed manually. Recommend to use `conda` to install.
+> **NOTE:** TrojanZoo requires `python>=3.10`, `pytorch>=1.11` and `torchvision>=0.12`, which must be installed manually. Recommend to use `conda` to install.
 
 This is the code implementation (pytorch) for our paper in EuroS&P 2022:  
-[TrojanZoo: Towards Unified, Holistic, and Practical Evaluation of Neural Backdoors)](https://arxiv.org/abs/2012.09302)
+[TrojanZoo: Towards Unified, Holistic, and Practical Evaluation of Neural Backdoors](https://arxiv.org/abs/2012.09302)
 
 TrojanZoo provides a universal pytorch platform to conduct security researches (especially backdoor attacks/defenses) of image classification in deep learning. It is composed of two packages: `trojanzoo` and `trojanvision`. `trojanzoo` contains abstract classes and utilities, while `trojanvision` contains abstract and concrete ones for image classification task. 
 
@@ -32,7 +32,7 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
    > Note: enable with `--color` for color and `--verbose` for verbose.  
    To open an interactive window with color, use `python - --color`
 2. Modular design (plug and play)
-3. Good code linting support (this package requires `python>=3.9`)
+3. Good code linting support (this package requires `python>=3.10`)
 4. Register **your own module** to the library.
 5. Native Pytorch Output  
    `trojanzoo` and `trojanvision` provides API to generate raw pytorch instances, which makes it flexible to work with native `pytorch` and other 3rd party libraries.
@@ -132,10 +132,24 @@ Modify them in corresponding config files and command-line arguments.
 TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/main/LICENSE) file.
 ## Cite our paper
 ```
-@InProceedings{pang2020trojanzoo,
-      title={TROJANZOO: Everything you ever wanted to know about neural backdoors (but were afraid to ask)}, 
+@InProceedings{pang:2020:eurosp,
+      title={TrojanZoo: Towards Unified, Holistic, and Practical Evaluation of Neural Backdoors}, 
       author={Ren Pang and Zheng Zhang and Xiangshan Gao and Zhaohan Xi and Shouling Ji and Peng Cheng and Ting Wang},
-      year={2020},
-      booktitle={arXiv Preprint},
+      year={2022},
+      booktitle={Proceedings of IEEE European Symposium on Security and Privacy (Euro S\&P)},
+}
+
+@inproceedings{pang:2020:ccs, 
+    title = "{A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models}", 
+    author = {Ren Pang and Hua Shen and Xinyang Zhang and Shouling Ji and Yevgeniy Vorobeychik and Xiapu Luo and Alex Liu and Ting Wang}, 
+    year = {2020}, 
+    booktitle = {Proceedings of ACM SAC Conference on Computer and Communications (CCS)},
+}
+
+@inproceedings{pang:2020:kdd, 
+    title = "{A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models}", 
+    author = {Ren Pang and Xinyang Zhang and Shouling Ji and Xiapu Luo and Ting Wang}, 
+    year = {2020}, 
+    booktitle = {Proceedings of ACM International Conference on Knowledge Discovery and Data Mining (KDD)},
 }
 ```
