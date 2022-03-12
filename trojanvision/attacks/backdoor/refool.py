@@ -56,7 +56,7 @@ class Refool(BadNet):
 
         * **Generate** :attr:`candidate_num` **reflect images from another public dataset (e.g., Pascal VOC) as trigger candidates.**
 
-          - Select a :attr:`reflect class` (e.g., 'cat')
+          - Select a :attr:`reflect class` (e.g., ``'cat'``)
             and a :attr:`background class` (e.g., ``'person'``)
           - Find all images of those 2 classes that
             don't have the object of the other class in them.
@@ -75,7 +75,7 @@ class Refool(BadNet):
           - Use the infected data as poison dataset to retrain a pretrained model
             with :attr:`refool_epochs` and :attr:`refool_lr`.
           - Evaluate attack succ rate of each used trigger as their new sampling weights.
-          - Assign sampling weights of unused triggers as the median of used ones.
+          - Set sampling weights of all unused triggers to the median of used ones.
           - Reset the model as pretrained state.
           - Repeat the ranking process for :attr:`rank_iter` times.
         * **Use the trigger with largest sampling weight for final attack**

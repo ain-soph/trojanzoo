@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-r"""It is equivalent to :ref:`trojanzoo.environ`.
+r"""It is equivalent to :ref:`trojanzoo.environ <trojanzoo.environ>`.
 
 Note:
     The only difference is that it uses ``trojanvision.configs.config``

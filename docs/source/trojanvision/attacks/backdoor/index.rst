@@ -6,7 +6,7 @@ backdoor
 .. currentmodule:: trojanvision.attacks
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    normal
    clean_label
