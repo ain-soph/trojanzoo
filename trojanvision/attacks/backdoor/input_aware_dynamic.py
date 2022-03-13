@@ -18,6 +18,8 @@ from torchvision.models.resnet import conv3x3
 import math
 import random
 
+import os
+
 import argparse
 from collections.abc import Callable
 
@@ -266,7 +268,7 @@ class InputAwareDynamic(BadNet):
 
     def attack(self, epochs: int, optimizer: torch.optim.Optimizer,
                lr_scheduler: torch.optim.lr_scheduler._LRScheduler = None,
-               validate_interval: int = 1,
+               validate_interval: int = 1, save: bool = False,
                **kwargs):
         print('train mask generator')
         self.mark_generator.requires_grad_(False)
@@ -292,7 +294,7 @@ class InputAwareDynamic(BadNet):
         logger.create_meters(loss=None, div=None, ce=None)
 
         if validate_interval != 0:
-            self.validate_fn()
+            _, best_acc = self.validate_fn()
         for _epoch in range(epochs):
             _epoch += 1
             idx = torch.randperm(len(dataset))
@@ -363,12 +365,34 @@ class InputAwareDynamic(BadNet):
             self.model.eval()
             self.mark_generator.eval()
             if validate_interval != 0 and (_epoch % validate_interval == 0 or _epoch == epochs):
-                self.validate_fn()
+                _, cur_acc = self.validate_fn()
+                if cur_acc >= best_acc:
+                    best_acc = cur_acc
+                    if save:
+                        self.save()
         optimizer.zero_grad()
         mark_optimizer.zero_grad()
         self.mark_generator.requires_grad_(False)
         self.mask_generator.requires_grad_(False)
         self.model.requires_grad_(False)
+
+    def save(self, filename: str = None, **kwargs):
+        r"""Save attack results to files."""
+        filename = filename or self.get_filename(**kwargs)
+        file_path = os.path.join(self.folder_path, filename)
+        torch.save(self.mask_generator.state_dict(), file_path + '_mask.pth')
+        torch.save(self.mark_generator.state_dict(), file_path + '_mark.pth')
+        self.model.save(file_path + '.pth')
+        print('attack results saved at: ', file_path)
+
+    def load(self, filename: str = None, **kwargs):
+        r"""Load attack results from previously saved files."""
+        filename = filename or self.get_filename(**kwargs)
+        file_path = os.path.join(self.folder_path, filename)
+        self.mask_generator.load_state_dict(torch.load(file_path + '_mask.pth'))
+        self.mark_generator.load_state_dict(torch.load(file_path + '_mark.pth'))
+        self.model.load(file_path + '.pth')
+        print('attack results loaded from: ', file_path)
 
     def train_mask_generator(self):
         r"""Train :attr:`self.mask_generator`."""
