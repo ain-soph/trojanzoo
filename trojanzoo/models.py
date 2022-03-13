@@ -356,8 +356,8 @@ class Model(BasicObject):
         r"""Get logits of :attr:`_input`.
 
         Note:
-            Users should used model as Callable function
-            rather than calling this method directly,
+            Users should use model as Callable function
+            rather than call this method directly,
             because ``__call__`` supports :any:`torch.cuda.amp`.
 
         Args:
@@ -609,6 +609,9 @@ class Model(BasicObject):
             _output (torch.Tensor | None): The logits of :attr:`_input`.
                 If ``None``, use :attr:`_input` to calculate logits.
                 Defaults to ``None``.
+            reduction (str): Specifies the reduction to apply to the output.
+                Choose from ``['none', 'mean']``.
+                Defaults to ``'mean'``.
             **kwargs: Keyword arguments passed to :meth:`get_logits()`
                 if :attr:`_output` is not provided.
 

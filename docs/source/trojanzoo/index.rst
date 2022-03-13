@@ -4,8 +4,7 @@ trojanzoo
 ==========
 
 .. toctree::
-   :glob:
-   :maxdepth: 3
+   :titlesonly:
 
    attacks
    configs
