@@ -112,6 +112,9 @@ class DARTS(ImageModel):
         arch_unrolled (bool): Whether to use one-step unrolled validation loss (darts-v2).
             Defaults to ``False``.
 
+    Attributes:
+        genotype (Genotype): Genotype of cell architecture.
+
     Note:
         The implementation of DARTS model is in ``trojanvision.utils.model_archs.darts``
 
@@ -172,7 +175,6 @@ class DARTS(ImageModel):
         self.layers = layers
         self.init_channels = init_channels
         self.dropout_p = dropout_p
-        self.genotype = genotype
         self.auxiliary = auxiliary
         self.auxiliary_weight = auxiliary_weight
         self.arch_lr = arch_lr
@@ -205,6 +207,10 @@ class DARTS(ImageModel):
                                                    lr=arch_lr, betas=(0.5, 0.999),
                                                    weight_decay=arch_weight_decay)
             self.param_list['arch_search'] = ['full', 'arch_optimizer']
+
+    @property
+    def genotype(self) -> Genotype:
+        return self._model.features.genotype() if self.supernet else self._model.features.genotype
 
     def loss(self, _input: torch.Tensor = None, _label: torch.Tensor = None,
              _output: torch.Tensor = None, amp: bool = False, **kwargs) -> torch.Tensor:
@@ -331,7 +337,7 @@ class DARTS(ImageModel):
                   loader: torch.utils.data.DataLoader = None,
                   **kwargs) -> tuple[float, float]:
         if self.arch_search:
-            print(self._model.features.genotype())
+            print(self._model.features.genotype)
             if not self.full:
                 super()._validate(loader=self.train3,
                                   adv_train=adv_train,
