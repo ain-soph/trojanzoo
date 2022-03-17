@@ -413,13 +413,41 @@ class Watermark(BasicObject):
 
 
 def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
+    r"""
+    | Add watermark arguments to argument parser.
+    | For specific arguments implementation, see :meth:`Watermark.add_argument()`.
+
+    Args:
+        parser (argparse.ArgumentParser): The parser to add arguments.
+    """
     group = parser.add_argument_group('{yellow}mark{reset}'.format(**ansi))
     return Watermark.add_argument(group)
 
 
 def create(mark_path: str = None, data_shape: list[int] = None,
            dataset_name: str = None, dataset: Union[str, ImageSet] = None,
-           config: Config = config, **kwargs):
+           config: Config = config, **kwargs)->Watermark:
+    r"""
+    | Create a watermark instance.
+    | For arguments not included in :attr:`kwargs`,
+      use the default values in :attr:`config`.
+    | For watermark implementation, see :class:`Watermark`.
+
+    Args:
+        mark_path (str):
+            | Path to watermark image or npy file.
+              There are some preset marks in the package.
+            | Defaults to ``'square_white.png'``.
+        data_shape (list[int]): The shape of image data ``[C, H, W]``.
+        dataset_name (str): The dataset name.
+        dataset (str): The alias of `dataset_name`.
+        config (Config): The default parameter config.
+        **kwargs: Keyword arguments
+            passed to dataset init method.
+
+    Returns:
+        Watermark: Watermark instance.
+    """
     if data_shape is None:
         assert isinstance(dataset, ImageSet), 'Please specify data_shape or dataset'
         data_shape = dataset.data_shape
