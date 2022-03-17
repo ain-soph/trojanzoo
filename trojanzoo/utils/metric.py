@@ -3,9 +3,9 @@
 import torch
 
 
-def normalize_mad(values: torch.Tensor, side: str = None) -> torch.Tensor:
+def normalize_mad(values: torch.Tensor | list[float], side: str = None) -> torch.Tensor:
     if not isinstance(values, torch.Tensor):
-        values = torch.tensor(values, dtype=torch.float)
+        values = torch.as_tensor(values, dtype=torch.float)
     median = values.median()
     abs_dev = (values - median).abs()
     mad = abs_dev.median()

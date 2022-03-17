@@ -84,7 +84,7 @@ class ABS(ModelInspection):
         self.seed_data = self.get_seed_data()
         self.loader = [(self.seed_data['input'], self.seed_data['label'])]
 
-    def get_mark_loss_list(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_mark_loss_list(self) -> tuple[torch.Tensor, list[float], list[float]]:
         print('sample neurons')
         all_ps = self.sample_neuron(self.seed_data['input'])
         print('find min max')
@@ -98,11 +98,11 @@ class ABS(ModelInspection):
                 prints(format_str.format(**_dict), indent=4)
         print()
         print('optimize marks')
-        return super().get_mark_loss_list()
+        return super().get_mark_loss_list(verbose=False)
 
     def optimize_mark(self, label: int, **kwargs) -> tuple[torch.Tensor, float]:
         format_dict = dict(layer='20s', neuron='5d', value='10.3f',
-                           loss='10.3f', atk_acc='6.3f', norm='.3f')
+                           loss='10.3f', atk_acc='8.3f', norm='8.3f')
         if not self.attack.mark.mark_random_pos:
             format_dict['jaccard'] = '5.3f'
             select_num = self.attack.mark.mark_height * self.attack.mark.mark_width
@@ -124,12 +124,14 @@ class ABS(ModelInspection):
                                        self.real_mask,
                                        select_num=select_num)
                 str_dict['jaccard'] = overlap
-            prints(format_str.format(**str_dict), indent=8)
+            prints(format_str.format(**str_dict), indent=4)
             if atk_acc > acc_best:
                 acc_best = atk_acc
                 mark_best = mark
                 loss_best = loss
                 dict_best = str_dict
+        format_str = self.serialize_format(color='yellow', **format_dict)
+        print()
         prints(format_str.format(**dict_best), indent=4)
         return mark_best, loss_best
 
@@ -175,13 +177,13 @@ class ABS(ModelInspection):
         x = torch.cat(x).numpy()
         y = torch.cat(y).numpy()
         seed_data = {'input': x, 'label': y}
-        seed_path = os.path.join(self.folder_path, f'seed_{self.seed_data_num}.npy')
+        seed_path = os.path.join(self.folder_path, f'seed_{self.seed_data_num}.npz')
         np.savez(seed_path, **seed_data)
         print('seed data saved at: ', seed_path)
         return seed_data
 
     def get_seed_data(self) -> dict[str, torch.Tensor]:
-        seed_path = os.path.join(self.folder_path, f'seed_{self.seed_data_num}.npy')
+        seed_path = os.path.join(self.folder_path, f'seed_{self.seed_data_num}.npz')
         seed_data: dict[str, torch.Tensor] = {}
         seed_data_np = dict(np.load(seed_path)) if os.path.exists(seed_path) \
             else self.gen_seed_data()
@@ -258,10 +260,10 @@ class ABS(ModelInspection):
         return neuron_dict
 
     @staticmethod
-    def serialize_format(**kwargs: str) -> str:
+    def serialize_format(color: str = 'green', **kwargs: str) -> str:
         _str = ''
         for k, v in kwargs.items():
-            _str += '{green}{k}{reset}: {{{k}:{v}}}    '.format(k=k, v=v, **ansi)
+            _str += '{color}{k}{reset}: {{{k}:{v}}}    '.format(k=k, v=v, color=ansi[color], reset=ansi['reset'])
         return _str.removesuffix('    ')
 
     # ---------------------------------- Unused ------------------------------- #

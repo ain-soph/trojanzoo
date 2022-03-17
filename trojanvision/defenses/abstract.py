@@ -223,12 +223,15 @@ class ModelInspection(BackdoorDefense):
             setattr(self.attack.mark, k, v)
         self.attack.mark.mark.zero_()
 
-        mark_list, loss_list = self.get_mark_loss_list()
-        mask_norms = mark_list[:, -1].flatten(start_dim=1).norm(p=1, dim=1)
-        print('mask norms: ', mask_norms)
-        print('mask MAD: ', normalize_mad(mask_norms))
-        print('loss: ', loss_list)
-        print('loss MAD: ', normalize_mad(loss_list))
+        mark_list, loss_list, atk_acc_list = self.get_mark_loss_list()
+        mask_norms: torch.Tensor = mark_list[:, -1].flatten(start_dim=1).norm(p=1, dim=1)
+        mask_norm_list: list[float] = mask_norms.tolist()
+        print('atk acc       : ', atk_acc_list)
+        print('mask norms    : ', mask_norm_list)
+        print('loss          : ', loss_list)
+        print('atk acc MAD   : ', normalize_mad(atk_acc_list).tolist())
+        print('mask norm MAD : ', normalize_mad(mask_norms).tolist())
+        print('loss MAD      : ', normalize_mad(loss_list).tolist())
 
         if not self.mark_random_pos:
             self.attack.mark.mark = mark_list[self.attack.target_class]
@@ -238,9 +241,10 @@ class ModelInspection(BackdoorDefense):
                                    select_num=select_num)
             print(f'Jaccard index: {overlap:.3f}')
 
-    def get_mark_loss_list(self, verbose: bool = True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_mark_loss_list(self, verbose: bool = True, **kwargs) -> tuple[torch.Tensor, list[float], list[float]]:
         mark_list: list[torch.Tensor] = []
-        loss_list: list[torch.Tensor] = []
+        loss_list: list[float] = []
+        atk_acc_list: list[float] = []
         # todo: parallel to avoid for loop
         file_path = os.path.normpath(os.path.join(
             self.folder_path, self.get_filename() + '.npz'))
@@ -248,9 +252,14 @@ class ModelInspection(BackdoorDefense):
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, loss = self.optimize_mark(label, verbose=verbose, **kwargs)
             if verbose:
-                self.attack.validate_fn()
+                _, atk_acc = self.attack.validate_fn()
+            else:
+                _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data,
+                                                  keep_org=False, poison_label=True,
+                                                  verbose=False)
             mark_list.append(mark)
             loss_list.append(loss)
+            atk_acc_list.append(atk_acc)
             if not self.mark_random_pos:
                 select_num = self.attack.mark.mark_height * self.attack.mark.mark_width
                 overlap = mask_jaccard(self.attack.mark.get_mask(),
@@ -261,8 +270,7 @@ class ModelInspection(BackdoorDefense):
                      loss_list=np.array(loss_list))
             print('Defense results saved at: ' + file_path)
         mark_list_tensor = torch.stack(mark_list)
-        loss_list_tensor = torch.as_tensor(loss_list)
-        return mark_list_tensor, loss_list_tensor
+        return mark_list_tensor, loss_list, atk_acc_list
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor,
              target: int, trigger_output: torch.Tensor = None,
