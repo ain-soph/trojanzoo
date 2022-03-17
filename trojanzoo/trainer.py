@@ -238,7 +238,7 @@ def create(dataset_name: str = None,
     Args:
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
-            Dataset Instance
+            Dataset instance
             (required for :attr:`model_ema`)
             or dataset name
             (as the alias of `dataset_name`).

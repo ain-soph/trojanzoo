@@ -133,7 +133,7 @@ def create(attack_name: str = None, attack: Union[str, Attack] = None,
             (as the alias of `attack_name`).
         dataset_name (str): The dataset name.
         dataset (str | Dataset):
-            Dataset Instance or dataset name
+            Dataset instance or dataset name
             (as the alias of `dataset_name`).
         model_name (str): The model name.
         model (str | Model): The model instance or model name

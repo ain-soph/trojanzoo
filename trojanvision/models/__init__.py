@@ -36,7 +36,7 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.
         model_name (str): The model name.
-        model (str | ImageModel): Model Instance or model name
+        model (str | ImageModel): Model instance or model name
             (as the alias of `model_name`).
         config (Config): The default parameter config,
             which contains the default dataset and model name if not provided.
@@ -69,7 +69,7 @@ def create(model_name: str = None, model: Union[str, ImageModel] = None,
             (as the alias of `model_name`).
         dataset_name (str): The dataset name.
         dataset (str | trojanvision.datasets.ImageSet):
-            Dataset Instance or dataset name
+            Dataset instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config.
         class_dict (dict[str, type[ImageModel]]):

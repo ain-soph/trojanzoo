@@ -128,7 +128,7 @@ def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str =
     Args:
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
-            Dataset Instance
+            Dataset instance
             (required for :attr:`model_ema`)
             or dataset name
             (as the alias of `dataset_name`).

@@ -1408,7 +1408,7 @@ def create(model_name: str = None, model: Union[str, Model] = None,
             (as the alias of `model_name`).
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
-            Dataset Instance or dataset name
+            Dataset instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config.
         class_dict (dict[str, type[Model]]):

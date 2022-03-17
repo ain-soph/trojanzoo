@@ -33,7 +33,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, data
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.
         dataset_name (str): The dataset name.
-        dataset (str | Dataset): Dataset Instance or dataset name
+        dataset (str | Dataset): Dataset instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config,
             which contains the default dataset name if not provided.
@@ -70,7 +70,7 @@ def create(dataset_name: str = None, dataset: str = None,
             passed to dataset init method.
 
     Returns:
-        ImageSet: Image dataset Instance.
+        ImageSet: Image dataset instance.
 
     See Also:
         :func:`trojanzoo.datasets.create()`

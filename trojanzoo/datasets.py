@@ -467,7 +467,7 @@ def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
     Args:
         parser (argparse.ArgumentParser): The parser to add arguments.
         dataset_name (str): The dataset name.
-        dataset (str | Dataset): Dataset Instance or dataset name
+        dataset (str | Dataset): Dataset instance or dataset name
             (as the alias of `dataset_name`).
         config (Config): The default parameter config,
             which contains the default dataset name if not provided.
@@ -512,7 +512,7 @@ def create(dataset_name: str = None, dataset: str = None,
             passed to dataset init method.
 
     Returns:
-        Dataset: Dataset Instance.
+        Dataset: Dataset instance.
     """
     dataset_name = get_name(
         name=dataset_name, module=dataset, arg_list=['-d', '--dataset'])

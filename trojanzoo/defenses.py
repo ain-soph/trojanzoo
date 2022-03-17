@@ -111,7 +111,7 @@ def create(defense_name: str = None, defense: Union[str, Defense] = None,
             (as the alias of `defense_name`).
         dataset_name (str): The dataset name.
         dataset (str | trojanzoo.datasets.Dataset):
-            Dataset Instance or dataset name
+            Dataset instance or dataset name
             (as the alias of `dataset_name`).
         model_name (str): The model name.
         model (str | Model): The model instance or model name
