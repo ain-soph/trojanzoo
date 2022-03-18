@@ -133,6 +133,7 @@ class ABS(ModelInspection):
         format_str = self.serialize_format(color='yellow', **format_dict)
         print()
         prints(format_str.format(**dict_best), indent=4)
+        self.attack.mark.mark = mark_best
         return mark_best, loss_best
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor,

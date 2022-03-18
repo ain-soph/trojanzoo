@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from ...abstract import ModelInspection
-from trojanzoo.utils.output import prints
 
 
 class NeuralCleanse(ModelInspection):
@@ -43,7 +42,7 @@ class NeuralCleanse(ModelInspection):
                 self.cost_down_counter = 0
                 self.cost_up_flag = False
                 self.cost_down_flag = False
-                print(f'initialize cost to {self.cost:.2f}%.2f')
+                # print(f'initialize cost to {self.cost:.2f}%.2f')
         else:
             self.cost_set_counter = 0
 
@@ -56,14 +55,14 @@ class NeuralCleanse(ModelInspection):
 
         if self.cost_up_counter >= self.patience:
             self.cost_up_counter = 0
-            prints(f'up cost from {self.cost:.4f} to {self.cost * self.cost_multiplier_up:.4f}',
-                   indent=4)
+            # prints(f'up cost from {self.cost:.4f} to {self.cost * self.cost_multiplier_up:.4f}',
+            #        indent=4)
             self.cost *= self.cost_multiplier_up
             self.cost_up_flag = True
         elif self.cost_down_counter >= self.patience:
             self.cost_down_counter = 0
-            prints(f'down cost from {self.cost:.4f} to {self.cost / self.cost_multiplier_down:.4f}',
-                   indent=4)
+            # prints(f'down cost from {self.cost:.4f} to {self.cost / self.cost_multiplier_down:.4f}',
+            #        indent=4)
             self.cost /= self.cost_multiplier_down
             self.cost_down_flag = True
 

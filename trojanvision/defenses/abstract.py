@@ -5,7 +5,7 @@ from trojanvision.environ import env
 from trojanzoo.defenses import Defense
 from trojanzoo.utils.logger import MetricLogger
 from trojanzoo.utils.metric import mask_jaccard, normalize_mad
-from trojanzoo.utils.output import output_iter
+from trojanzoo.utils.output import output_iter, prints
 from trojanzoo.utils.tensor import tanh_func
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 
@@ -26,6 +26,10 @@ import argparse
 from collections.abc import Iterable
 if TYPE_CHECKING:
     import torch.utils.data    # TODO: python 3.10
+
+
+def format_list(_list: list, _format: str = ':8.3f') -> str:
+    return '[' + ', '.join(['{{{}}}'.format(_format).format(a) for a in _list]) + ']'
 
 
 class BackdoorDefense(Defense):
@@ -79,10 +83,10 @@ class InputFiltering(BackdoorDefense):
         super().detect(**kwargs)
         y_pred = self.get_pred_labels()
         y_true = self.get_true_labels()
-        print('f1_score:', metrics.f1_score(y_true, y_pred))
-        print('precision_score:', metrics.precision_score(y_true, y_pred))
-        print('recall_score:', metrics.recall_score(y_true, y_pred))
-        print('accuracy_score:', metrics.accuracy_score(y_true, y_pred))
+        print(f'f1_score        : {metrics.f1_score(y_true, y_pred):8.3f}')
+        print(f'precision_score : {metrics.precision_score(y_true, y_pred):8.3f}')
+        print(f'recall_score    : {metrics.recall_score(y_true, y_pred):8.3f}')
+        print(f'accuracy_score  : {metrics.accuracy_score(y_true, y_pred):8.3f}')
 
     def get_true_labels(self) -> torch.Tensor:
         y_true = torch.zeros(self.defense_input_num, dtype=torch.bool)
@@ -158,10 +162,10 @@ class TrainingFiltering(BackdoorDefense):
         super().detect(**kwargs)
         y_pred = self.get_pred_labels()
         y_true = self.get_true_labels()
-        print('f1_score:', metrics.f1_score(y_true, y_pred))
-        print('precision_score:', metrics.precision_score(y_true, y_pred))
-        print('recall_score:', metrics.recall_score(y_true, y_pred))
-        print('accuracy_score:', metrics.accuracy_score(y_true, y_pred))
+        print(f'f1_score        : {metrics.f1_score(y_true, y_pred):8.3f}')
+        print(f'precision_score : {metrics.precision_score(y_true, y_pred):8.3f}')
+        print(f'recall_score    : {metrics.recall_score(y_true, y_pred):8.3f}')
+        print(f'accuracy_score  : {metrics.accuracy_score(y_true, y_pred):8.3f}')
 
     def get_true_labels(self) -> torch.Tensor:
         return torch.cat([torch.zeros(len(self.clean_dataset), dtype=torch.bool),
@@ -226,12 +230,14 @@ class ModelInspection(BackdoorDefense):
         mark_list, loss_list, atk_acc_list = self.get_mark_loss_list()
         mask_norms: torch.Tensor = mark_list[:, -1].flatten(start_dim=1).norm(p=1, dim=1)
         mask_norm_list: list[float] = mask_norms.tolist()
-        print('atk acc       : ', atk_acc_list)
-        print('mask norms    : ', mask_norm_list)
-        print('loss          : ', loss_list)
-        print('atk acc MAD   : ', normalize_mad(atk_acc_list).tolist())
-        print('mask norm MAD : ', normalize_mad(mask_norms).tolist())
-        print('loss MAD      : ', normalize_mad(loss_list).tolist())
+        print()
+        print('atk acc       : ' + format_list(atk_acc_list))
+        print('mask norms    : ' + format_list(mask_norm_list))
+        print('loss          : ' + format_list(loss_list))
+        print()
+        print('atk acc MAD   : ' + format_list(normalize_mad(atk_acc_list).tolist()))
+        print('mask norm MAD : ' + format_list(normalize_mad(mask_norms).tolist()))
+        print('loss MAD      : ' + format_list(normalize_mad(loss_list).tolist()))
 
         if not self.mark_random_pos:
             self.attack.mark.mark = mark_list[self.attack.target_class]
@@ -252,7 +258,13 @@ class ModelInspection(BackdoorDefense):
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, loss = self.optimize_mark(label, verbose=verbose, **kwargs)
             if verbose:
-                _, atk_acc = self.attack.validate_fn()
+                _, atk_acc = self.attack.validate_fn(indent=4)
+                if not self.mark_random_pos:
+                    select_num = self.attack.mark.mark_height * self.attack.mark.mark_width
+                    overlap = mask_jaccard(self.attack.mark.get_mask(),
+                                           self.real_mask,
+                                           select_num=select_num)
+                    prints(f'Jaccard index: {overlap:.3f}', indent=4)
             else:
                 _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data,
                                                   keep_org=False, poison_label=True,
@@ -260,15 +272,10 @@ class ModelInspection(BackdoorDefense):
             mark_list.append(mark)
             loss_list.append(loss)
             atk_acc_list.append(atk_acc)
-            if not self.mark_random_pos:
-                select_num = self.attack.mark.mark_height * self.attack.mark.mark_width
-                overlap = mask_jaccard(self.attack.mark.get_mask(),
-                                       self.real_mask,
-                                       select_num=select_num)
-                print(f'Jaccard index: {overlap:.3f}')
             np.savez(file_path, mark_list=np.stack([mark.detach().cpu().numpy() for mark in mark_list]),
                      loss_list=np.array(loss_list))
-            print('Defense results saved at: ' + file_path)
+        print()
+        print('Defense results saved at: ' + file_path)
         mark_list_tensor = torch.stack(mark_list)
         return mark_list_tensor, loss_list, atk_acc_list
 
