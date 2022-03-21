@@ -13,8 +13,8 @@ from trojanzoo.utils.tensor import tanh_func
 
 import torch
 import torch.nn.functional as F
-# import numpy as np
-# import skimage.restoration
+import numpy as np
+import skimage.restoration
 
 import argparse
 
@@ -34,9 +34,11 @@ class TrojanNN(BadNet):
         * website: https://purduepaml.github.io/TrojanNN
 
     Args:
-        preprocess_layer (str): The chosen layer to maximize neuron activation.
+        preprocess_layer (str): The chosen layer
+            to maximize neuron activation.
             Defaults to ``'flatten'``.
-        preprocess_next_layer (str): The next layer after preprocess_layer to find neuron index.
+        preprocess_next_layer (str): The next layer
+            after preprocess_layer to find neuron index.
             Defaults to ``'classifier.fc'``.
         target_value (float): TrojanNN neuron activation target value.
             Defaults to ``100.0``.
@@ -211,32 +213,32 @@ class TrojanNN(BadNet):
                 print(f'Neuron Value: {self.get_neuron_value(trigger_input, self.neuron_idx):.5f}')
         return super().validate_fn(**kwargs)
 
-    # @staticmethod
-    # def denoise(img: torch.Tensor, weight: float = 1.0,
-    #             max_num_iter: int = 100, eps: float = 1e-3) -> torch.Tensor:
-    #     r"""Denoise image by calling :any:`skimage.restoration.denoise_tv_bregman`.
+    @staticmethod
+    def denoise(img: torch.Tensor, weight: float = 1.0,
+                max_num_iter: int = 100, eps: float = 1e-3) -> torch.Tensor:
+        r"""Denoise image by calling :any:`skimage.restoration.denoise_tv_bregman`.
 
-    #     Warning:
-    #         This method is currently unused in :meth:`preprocess_mark()`
-    #         because no performance difference is observed.
+        Warning:
+            This method is currently unused in :meth:`preprocess_mark()`
+            because no performance difference is observed.
 
-    #     Args:
-    #         img (torch.Tensor): Noisy image tensor with shape ``(C, H, W)``.
+        Args:
+            img (torch.Tensor): Noisy image tensor with shape ``(C, H, W)``.
 
-    #     Returns:
-    #         torch.Tensor: Denoised image tensor with shape ``(C, H, W)``.
-    #     """
-    #     if img.size(0) == 1:
-    #         img_np: np.ndarray = img[0].detach().cpu().numpy()
-    #     else:
-    #         img_np = img.detach().cpu().permute(1, 2, 0).contiguous().numpy()
+        Returns:
+            torch.Tensor: Denoised image tensor with shape ``(C, H, W)``.
+        """
+        if img.size(0) == 1:
+            img_np: np.ndarray = img[0].detach().cpu().numpy()
+        else:
+            img_np = img.detach().cpu().permute(1, 2, 0).contiguous().numpy()
 
-    #     denoised_img_np = skimage.restoration.denoise_tv_bregman(
-    #         img_np, weight=weight, max_num_iter=max_num_iter, eps=eps)
-    #     denoised_img = torch.from_numpy(denoised_img_np)
+        denoised_img_np = skimage.restoration.denoise_tv_bregman(
+            img_np, weight=weight, max_num_iter=max_num_iter, eps=eps)
+        denoised_img = torch.from_numpy(denoised_img_np)
 
-    #     if denoised_img.dim() == 2:
-    #         denoised_img.unsqueeze_(0)
-    #     else:
-    #         denoised_img = denoised_img.permute(2, 0, 1).contiguous()
-    #     return img.to(device=img.device)
+        if denoised_img.dim() == 2:
+            denoised_img.unsqueeze_(0)
+        else:
+            denoised_img = denoised_img.permute(2, 0, 1).contiguous()
+        return img.to(device=img.device)

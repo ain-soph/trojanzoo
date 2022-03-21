@@ -114,21 +114,23 @@ class ZipFolder(DatasetFolder):
         return Image.open(f).convert('RGB')
 
     def _find_classes(self, *args, **kwargs) -> tuple[list[str], dict[str, int]]:
-        """
-        Finds the class folders in a dataset.
+        r"""Finds the class folders in a dataset.
+
         Args:
             dir (str): Root directory path.
+
         Returns:
             tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+
         Ensures:
             No class is a subdirectory of another.
         """
-        classes: set[str] = set()
+        class_set = set()
         for filepath in self.root_data.namelist():
             root, target_class = os.path.split(os.path.dirname(filepath))
             if root:
-                classes.add(target_class)
-        classes = list(classes)
+                class_set.add(target_class)
+        classes = list(class_set)
         classes.sort()  # TODO: Pylance issue
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
