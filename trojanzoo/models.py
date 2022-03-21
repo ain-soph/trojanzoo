@@ -350,7 +350,8 @@ class Model(BasicObject):
 
     # ----------------- Forward Operations ----------------------#
 
-    def get_logits(self, _input: torch.Tensor, randomized_smooth: bool = None,
+    def get_logits(self, _input: torch.Tensor, parallel: bool = False,
+                   randomized_smooth: bool = None,
                    rs_sigma: float = None, rs_n: int = None,
                    **kwargs) -> torch.Tensor:
         r"""Get logits of :attr:`_input`.
@@ -362,6 +363,9 @@ class Model(BasicObject):
 
         Args:
             _input (torch.Tensor): The batched input tensor.
+            parallel (bool): Whether to use parallel model
+                `self.model` rather than `self._model`.
+                Defautls to ``False``.
             randomized_smooth (bool | None): Whether to use randomized smoothing.
                 If it's ``None``, use :attr:`self.randmized_smooth` instead.
                 Defaults to ``None``.
@@ -376,6 +380,7 @@ class Model(BasicObject):
         Returns:
             torch.Tensor: The logit tensor with shape ``(N, C)``.
         """
+        model = self.model if parallel else self._model
         if randomized_smooth is None:
             randomized_smooth = self.randomized_smooth
         if randomized_smooth:
@@ -385,15 +390,15 @@ class Model(BasicObject):
             for _ in range(rs_n):
                 # TODO: valid input clip issue
                 _input_noise = add_noise(_input, std=rs_sigma)
-                _list.append(self.model(_input_noise, **kwargs))
+                _list.append(model(_input_noise, **kwargs))
             return torch.stack(_list).mean(dim=0)
             # TODO: memory issues and parallel possibilities
             # _input_noise = add_noise(repeat_to_batch(
             #     _input, batch_size=n), std=sigma).flatten(end_dim=1)
-            # return self.model(_input_noise, **kwargs).view(
+            # return model(_input_noise, **kwargs).view(
             #     n, len(_input), self.num_classes).mean(dim=0)
         else:
-            return self.model(_input, **kwargs)
+            return model(_input, **kwargs)
 
     def get_fm(self, _input: torch.Tensor, **kwargs) -> torch.Tensor:
         r"""Get the feature map of :attr:`_input`,

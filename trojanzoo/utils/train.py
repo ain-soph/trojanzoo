@@ -108,7 +108,7 @@ def train(module: nn.Module, num_classes: int,
             _input, _label = get_data_fn(data, mode='train')
             if pre_conditioner is not None and not amp:
                 pre_conditioner.track.enable()
-            _output = forward_fn(_input, amp=amp)
+            _output = forward_fn(_input, amp=amp, parallel=True)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
             if backward_and_step:
                 optimizer.zero_grad()
