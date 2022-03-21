@@ -3,6 +3,7 @@
 from trojanzoo.utils.output import ansi, output_iter, prints, redirect
 
 import os
+import functools
 from collections.abc import Iterable
 
 from typing import TYPE_CHECKING
@@ -180,7 +181,7 @@ class ModelProcess(Process):
     def __init__(self, dataset: 'Dataset' = None, model: 'Model' = None,
                  folder_path: str = None, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['process'] = ['clean_acc', 'folder_path']
+        self.param_list['process'] = ['folder_path']
         self.dataset = dataset
         self.model = model
 
@@ -189,10 +190,8 @@ class ModelProcess(Process):
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
         self.folder_path = folder_path
-        self.__clean_acc: float = None
 
-    @property
+    @functools.cached_property
     def clean_acc(self) -> float:
-        if self.__clean_acc is None:
-            _, self.__clean_acc = self.model._validate(verbose=False)
-        return self.__clean_acc
+        _, clean_acc = self.model._validate(verbose=False)
+        return clean_acc

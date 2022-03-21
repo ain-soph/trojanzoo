@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from trojanvision.attacks import TrojanNet
 from trojanvision.environ import env
 from trojanzoo.defenses import Defense
 from trojanzoo.utils.logger import MetricLogger
@@ -16,7 +15,6 @@ from sklearn import metrics
 
 import os
 from abc import abstractmethod
-from tqdm import tqdm
 
 from typing import TYPE_CHECKING
 from trojanvision.datasets import ImageSet
@@ -33,96 +31,150 @@ def format_list(_list: list, _format: str = ':8.3f') -> str:
 
 
 class BackdoorDefense(Defense):
+    r"""Backdoor defense abstract class.
+    It inherits :class:`trojanzoo.defenses.Defense`.
 
+    Args:
+        original (bool): Whether to load original clean model.
+            If ``False``, load attack poisoned model
+            by calling ``self.attack.load()``.
+
+    Attributes:
+        real_mark (torch.Tensor): Watermark that the attacker uses
+            with shape ``(C+1, H, W)``.
+        real_mask (torch.Tensor): Mask of the watermark
+            by calling :meth:`trojanvision.marks.Watermark.get_mask()`.
+    """
     name: str = 'backdoor_defense'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--original', action='store_true',
-                           help='load original clean model (default: False)')
+                           help='whether to load original clean model '
+                           '(default: False)')
         return group
 
-    def __init__(self, original: bool = False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, attack: BadNet, original: bool = False, **kwargs):
+        self.original: bool = original
+        if not self.original:
+            attack.load(**kwargs)
+        super().__init__(attack=attack, **kwargs)
         self.dataset: ImageSet
         self.model: ImageModel
-        self.attack: BadNet  # for linting purpose
-        self.original: bool = original
-
-    @abstractmethod
-    def detect(self, **kwargs):
-        if not self.original:
-            self.attack.load(**kwargs)
-        if isinstance(self.attack, TrojanNet):
-            self.model = self.attack.combined_model
-        self.attack.validate_fn()
+        self.attack: BadNet
         self.real_mark = self.attack.mark.mark.clone()
         self.real_mask = self.attack.mark.get_mask()
 
+    @abstractmethod
+    def detect(self, **kwargs):
+        self.attack.validate_fn()
+
     def get_filename(self, **kwargs):
+        r"""Get filenames for current defense settings."""
         return self.attack.name + '_' + self.attack.get_filename(**kwargs)
 
 
 class InputFiltering(BackdoorDefense):
+    r"""Backdoor defense abstract class of input filtering
+    (e.g., :class:`trojanvision.defenses.Neo`
+    and :class:`trojanvision.defenses.Strip`).
 
+    It could detect whether a test input is poisoned.
+
+    The defense tests :attr:`defense_input_num` clean test inputs
+    and their corresponding poison version (``2 * defense_input_num`` in total).
+
+    Args:
+        defense_input_num (int): Number of test inputs.
+            Defaults to ``100``.
+
+    Attributes:
+        test_set (torch.utils.data.Dataset): Test dataset
+            with length :attr:`defense_input_num`.
+    """
     name: str = 'input_filtering'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--defense_input_num', type=int,
-                           help='the number of inputs to test (default: 100)')
+                           help='number of test inputs (default: 100)')
         return group
 
     def __init__(self, defense_input_num: int = 100, **kwargs):
         super().__init__(**kwargs)
+        self.param_list['input_filtering'] = ['defense_input_num']
         self.defense_input_num = defense_input_num
+        self.test_input, self.test_label = self.get_test_data()
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        y_pred = self.get_pred_labels()
         y_true = self.get_true_labels()
+        y_pred = self.get_pred_labels()
+        tn, fp, fn, tp = metrics.confusion_matrix(y_true, y_pred).ravel()
+        print()
+        print(f'{tn=:d} {fp=:d} {fn=:d} {tp=:d}')
         print(f'f1_score        : {metrics.f1_score(y_true, y_pred):8.3f}')
         print(f'precision_score : {metrics.precision_score(y_true, y_pred):8.3f}')
         print(f'recall_score    : {metrics.recall_score(y_true, y_pred):8.3f}')
         print(f'accuracy_score  : {metrics.accuracy_score(y_true, y_pred):8.3f}')
 
-    def get_true_labels(self) -> torch.Tensor:
-        y_true = torch.zeros(self.defense_input_num, dtype=torch.bool)
-        y_true[len(y_true) // 2:] = True
-        return y_true
+    def get_test_data(self) -> tuple[torch.Tensor, torch.Tensor]:
+        r"""Get test data.
 
-    def get_pred_labels(self) -> torch.Tensor:
-        clean_scores = []
-        poison_scores = []
-        loader = self.dataset.loader['valid']
-        if env['tqdm']:
-            loader = tqdm(loader, leave=False)
+        Returns:
+            (torch.Tensor, torch.Tensor):
+                Input and label tensors
+                with length ``defense_input_num``.
+        """
+        input_list = []
+        label_list = []
         remain_counter = self.defense_input_num
-        for data in loader:
-            if remain_counter == 0:
-                break
+        for data in self.dataset.loader['valid']:
             _input, _label = self.model.remove_misclassify(data)
+            if len(_label) == 0:
+                continue
+            poison_input = self.attack.add_mark(_input)
+            poison_label = self.attack.target_class * torch.ones_like(_label)
+            _classification = self.model.get_class(poison_input)
+            repeat_idx = _classification.eq(poison_label)
+            _input, _label = _input[repeat_idx], _label[repeat_idx]
             if len(_label) == 0:
                 continue
             if len(_input) < remain_counter:
                 remain_counter -= len(_input)
             else:
                 _input = _input[:remain_counter]
-            poison_input = self.attack.add_mark(_input)
-            clean_scores.append(self.check(_input, poison=False))
-            poison_scores.append(self.check(poison_input, poison=True))
-        clean_scores = torch.cat(clean_scores).flatten().sort()[0]
-        poison_scores = torch.cat(poison_scores).flatten().sort()[0]
-        return self.score2label(clean_scores, poison_scores)
+                _label = _label[:remain_counter]
+                remain_counter = 0
+            input_list.append(_input.cpu())
+            label_list.extend(_label.cpu().tolist())
+            if remain_counter == 0:
+                break
+        else:
+            raise Exception('No enough test data')
+        return torch.cat(input_list), label_list
 
-    @abstractmethod
-    def check(self, _input: torch.Tensor, poison: bool = False):
+    def get_true_labels(self) -> torch.Tensor:
+        r"""Get ground-truth labels for test inputs.
+
+        Defaults to return ``[False] * defense_input_num + [True] * defense_input_num``.
+
+        Returns:
+            torch.Tensor: ``torch.BoolTensor`` with shape ``(2 * defense_input_num)``.
+        """
+        zeros = torch.zeros(self.defense_input_num, dtype=torch.bool)
+        ones = torch.ones_like(zeros)
+        return torch.cat([zeros, ones])
+
+    def get_pred_labels(self) -> torch.Tensor:
+        r"""Get predicted labels for test inputs (need overriding).
+
+        Returns:
+            torch.Tensor: ``torch.BoolTensor`` with shape ``(2 * defense_input_num)``.
+        """
         ...
-
-    def score2label(self, clean_scores: torch.Tensor, poison_scores: torch.Tensor) -> torch.Tensor:
-        return torch.cat([clean_scores, poison_scores]).bool()
 
 
 class TrainingFiltering(BackdoorDefense):
@@ -385,4 +437,4 @@ class ModelInspection(BackdoorDefense):
         for k, v in self.new_dict.items():
             setattr(self.attack.mark, k, v)
         self.attack.mark.mark = torch.from_numpy(_dict['mark_list'][self.attack.target_class]).to(device=env['device'])
-        print('defense results loaded from: ', path)
+        print('defense results loaded from:', path)
