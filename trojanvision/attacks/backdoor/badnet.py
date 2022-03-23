@@ -166,8 +166,8 @@ class BadNet(Attack):
 
         if poison_label:
             _label = [self.target_class] * len(_label)
-        poison_input = self.add_mark(_input)
-        return TensorListDataset(poison_input, _label)
+        trigger_input = self.add_mark(_input)
+        return TensorListDataset(trigger_input, _label)
 
     def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
         r"""Get filenames for current attack settings."""
@@ -218,9 +218,9 @@ class BadNet(Attack):
                       **kwargs) -> torch.Tensor:
         loss_fn = loss_fn if loss_fn is not None else self.model.loss
         loss_clean = loss_fn(_input, _label, **kwargs)
-        poison_input = self.add_mark(_input)
-        poison_label = self.target_class * torch.ones_like(_label)
-        loss_poison = loss_fn(poison_input, poison_label, **kwargs)
+        trigger_input = self.add_mark(_input)
+        trigger_label = self.target_class * torch.ones_like(_label)
+        loss_poison = loss_fn(trigger_input, trigger_label, **kwargs)
         return (1 - self.poison_percent) * loss_clean + self.poison_percent * loss_poison
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
@@ -305,14 +305,14 @@ class BadNet(Attack):
         confidence = SmoothedValue()
         for data in loader:
             _input, _label = self.model.get_data(data)
-            poison_input = self.add_mark(_input)
-            poison_label = self.model.get_class(poison_input)
+            trigger_input = self.add_mark(_input)
+            trigger_label = self.model.get_class(trigger_input)
             if success_only:
-                poison_input = poison_input[poison_label == self.target_class]
-                if len(poison_input) == 0:
+                trigger_input = trigger_input[trigger_label == self.target_class]
+                if len(trigger_input) == 0:
                     continue
-            batch_conf = self.model.get_prob(poison_input)[:, self.target_class].mean()
-            confidence.update(batch_conf, len(poison_input))
+            batch_conf = self.model.get_prob(trigger_input)[:, self.target_class].mean()
+            confidence.update(batch_conf, len(trigger_input))
         return confidence.global_avg
 
     @torch.no_grad()
@@ -337,10 +337,10 @@ class BadNet(Attack):
         poison_feats_list = []
         for data in self.dataset.loader['valid']:
             _input, _label = self.model.get_data(data)
-            poison_input = self.add_mark(_input)
+            trigger_input = self.add_mark(_input)
 
             clean_feats = self.model.get_fm(_input)
-            poison_feats = self.model.get_fm(poison_input)
+            poison_feats = self.model.get_fm(trigger_input)
             if clean_feats.dim() > 2:
                 clean_feats = clean_feats.flatten(2).mean(2)
                 poison_feats = poison_feats.flatten(2).mean(2)

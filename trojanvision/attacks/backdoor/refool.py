@@ -244,8 +244,8 @@ class Refool(BadNet):
             mark = torch.ones_like(self.mark.mark).expand(self.refool_sample_num, -1, -1, -1).clone()
             mark[:, :-1] = self.reflect_imgs[idx]
             clean_input, _ = sample_batch(self.target_set, self.refool_sample_num)
-            poison_input = self.add_mark(clean_input, mark=mark)
-            dataset = TensorListDataset(poison_input, [self.target_class] * len(poison_input))
+            trigger_input = self.add_mark(clean_input, mark=mark)
+            dataset = TensorListDataset(trigger_input, [self.target_class] * len(trigger_input))
             loader = self.dataset.get_dataloader(mode='train', dataset=dataset)
             # train
             self.model._train(self.refool_epochs, optimizer=refool_optimizer,
@@ -301,8 +301,8 @@ class Refool(BadNet):
         poison_num = min(poison_num or self.poison_num, len(self.target_set))
         _input, _label = sample_batch(self.target_set, batch_size=poison_num)
         _label = _label.tolist()
-        poison_input = self.add_mark(_input)
-        return TensorListDataset(poison_input, _label)
+        trigger_input = self.add_mark(_input)
+        return TensorListDataset(trigger_input, _label)
 
     def _get_asr_result(self, marks: torch.Tensor) -> torch.Tensor:
         r"""Get attack succ rate result for each mark in :attr:`marks`.

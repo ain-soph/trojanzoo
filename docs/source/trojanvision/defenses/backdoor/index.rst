@@ -10,5 +10,5 @@ backdoor
 
    attack_agnostic
    input_filtering
-   model_inspection
    training_filtering
+   model_inspection

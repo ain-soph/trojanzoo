@@ -21,8 +21,8 @@ defenses
 .. autoclass:: InputFiltering
     :members:
 
-.. autoclass:: ModelInspection
+.. autoclass:: TrainingFiltering
     :members:
 
-.. autoclass:: TrainingFiltering
+.. autoclass:: ModelInspection
     :members:

@@ -76,14 +76,14 @@ class BackdoorDefense(Defense):
 
 
 class InputFiltering(BackdoorDefense):
-    r"""Backdoor defense abstract class of input filtering
-    (e.g., :class:`trojanvision.defenses.Neo`
-    and :class:`trojanvision.defenses.Strip`).
+    r"""Backdoor defense abstract class of input filtering.
+    It inherits :class:`trojanvision.defenses.BackdoorDefense`.
 
-    It could detect whether a test input is poisoned.
+    It detects whether a test input is poisoned.
 
     The defense tests :attr:`defense_input_num` clean test inputs
-    and their corresponding poison version (``2 * defense_input_num`` in total).
+    and their corresponding poison version
+    (``2 * defense_input_num`` in total).
 
     Args:
         defense_input_num (int): Number of test inputs.
@@ -135,10 +135,10 @@ class InputFiltering(BackdoorDefense):
             _input, _label = self.model.remove_misclassify(data)
             if len(_label) == 0:
                 continue
-            poison_input = self.attack.add_mark(_input)
-            poison_label = self.attack.target_class * torch.ones_like(_label)
-            _classification = self.model.get_class(poison_input)
-            repeat_idx = _classification.eq(poison_label)
+            trigger_input = self.attack.add_mark(_input)
+            trigger_label = self.attack.target_class * torch.ones_like(_label)
+            _classification = self.model.get_class(trigger_input)
+            repeat_idx = _classification.eq(trigger_label)
             _input, _label = _input[repeat_idx], _label[repeat_idx]
             if len(_label) == 0:
                 continue
@@ -178,22 +178,53 @@ class InputFiltering(BackdoorDefense):
 
 
 class TrainingFiltering(BackdoorDefense):
+    r"""Backdoor defense abstract class of training data filtering.
+    It inherits :class:`trojanvision.defenses.BackdoorDefense`.
 
+    Provided :attr:`defense_input_num` training data,
+    it detects which training data is poisoned.
+
+    The defense evaluates clean and poison training inputs.
+
+    - If :attr:defense_input_num` is ``None``, use full training data.
+    - Else, sample ``defense_input_num * poison_percent`` poison training data
+      and ``defense_input_num * (1 - poison_percent)`` clean training data.
+
+    If dataset is not using ``train_mode == 'dataset'``,
+    construct poison dataset using all clean data with watermark attached.
+    (If :attr:`defense_input_num` is ``None`` as well,
+    the defense will evaluate the whole clean training set and its poisoned version.)
+
+    Args:
+        defense_input_num (int): Number of training inputs to evaluate.
+            Defaults to ``None`` (all training set).
+
+    Attributes:
+        clean_set (torch.utils.data.Dataset): Clean training data to evaluate.
+        poison_set (torch.utils.data.Dataset): Poison training data to evaluate.
+    """
     name: str = 'training_filtering'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--defense_input_num', type=int,
-                           help='the number of inputs to test (default: None)')
+                           help='the number of training inputs to evaluate '
+                           '(default: None)')
         return group
 
     def __init__(self, defense_input_num: int = None, **kwargs):
         super().__init__(**kwargs)
         self.defense_input_num = defense_input_num
-        self.clean_set, self.poison_set = self.get_mix_dataset()
+        self.clean_set, self.poison_set = self.get_datasets()
 
-    def get_mix_dataset(self) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
+    def get_datasets(self) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
+        r"""Get clean and poison datasets.
+
+        Returns:
+            (torch.utils.data.Dataset, torch.utils.data.Dataset):
+                Clean training dataset and poison training dataset.
+        """
         if self.attack.poison_set is None:
             self.attack.poison_set = self.attack.get_poison_dataset(
                 poison_num=len(self.dataset.loader['train'].dataset))
@@ -204,10 +235,10 @@ class TrainingFiltering(BackdoorDefense):
             clean_num = self.defense_input_num - poison_num
             clean_input, clean_label = sample_batch(self.dataset.loader['train'].dataset,
                                                     batch_size=clean_num)
-            poison_input, poison_label = sample_batch(self.attack.poison_set,
+            trigger_input, trigger_label = sample_batch(self.attack.poison_set,
                                                       batch_size=poison_num)
             clean_set = TensorListDataset(clean_input, clean_label.tolist())
-            poison_set = TensorListDataset(poison_input, poison_label.tolist())
+            poison_set = TensorListDataset(trigger_input, trigger_label.tolist())
         return clean_set, poison_set
 
     def detect(self, **kwargs):
@@ -220,15 +251,46 @@ class TrainingFiltering(BackdoorDefense):
         print(f'accuracy_score  : {metrics.accuracy_score(y_true, y_pred):8.3f}')
 
     def get_true_labels(self) -> torch.Tensor:
+        r"""Get ground-truth labels for training inputs.
+
+        Defaults to return ``[False] * len(self.clean_set) + [True] * len(self.poison_set)``.
+
+        Returns:
+            torch.Tensor: ``torch.BoolTensor`` with shape ``(defense_input_num)``.
+        """
         return torch.cat([torch.zeros(len(self.clean_set), dtype=torch.bool),
                           torch.ones(len(self.poison_set), dtype=torch.bool)])
 
     @abstractmethod
     def get_pred_labels(self) -> torch.Tensor:
+        r"""Get predicted labels for training inputs (need overriding).
+
+        Returns:
+            torch.Tensor: ``torch.BoolTensor`` with shape ``(defense_input_num)``.
+        """
         ...
 
 
 class ModelInspection(BackdoorDefense):
+    r"""Backdoor defense abstract class of model inspection.
+    It inherits :class:`trojanvision.defenses.BackdoorDefense`.
+
+    Provided a model, it tries to search for a trigger.
+    If trigger exists, that means the model is poisoned.
+
+    Args:
+        defense_remask_epoch (int): Defense watermark optimizing epochs.
+            Defaults to ``10``.
+        defense_remask_lr (int): Defense watermark optimizing learning rate.
+            Defaults to ``0.1``.
+        cost (float): Cost of mask norm loss.
+            Defaults to ``1e-3``.
+
+    Attributes:
+        cost (float): Cost of mask norm loss.
+        clean_set (torch.utils.data.Dataset): Clean training data to evaluate.
+        poison_set (torch.utils.data.Dataset): Poison training data to evaluate.
+    """
     name: str = 'model_inspection'
 
     @classmethod
@@ -240,6 +302,9 @@ class ModelInspection(BackdoorDefense):
         group.add_argument('--defense_remask_lr', type=int,
                            help='defense watermark optimizing learning rate '
                            '(default: 0.1)')
+        group.add_argument('--cost', type=float,
+                           help='cost of mask norm loss '
+                           '(default: 1e-3)')
         return group
 
     def __init__(self, defense_remask_epoch: int = 10,
@@ -252,8 +317,6 @@ class ModelInspection(BackdoorDefense):
 
         self.defense_remask_epoch = defense_remask_epoch
         self.defense_remask_lr = defense_remask_lr
-        self.cost_init = cost
-
         self.cost = cost
 
     def detect(self, **kwargs):
@@ -331,12 +394,14 @@ class ModelInspection(BackdoorDefense):
         mark_list_tensor = torch.stack(mark_list)
         return mark_list_tensor, loss_list, atk_acc_list
 
-    def loss(self, _input: torch.Tensor, _label: torch.Tensor,
-             target: int, trigger_output: torch.Tensor = None,
+    def loss(self, _input: torch.Tensor, _label: torch.Tensor, target: int,
+             trigger_output: torch.Tensor = None,
              **kwargs) -> torch.Tensor:
+        trigger_input = self.attack.add_mark(_input)
+        trigger_label = target * torch.ones_like(_label)
         if trigger_output is None:
-            trigger_output = self.model(self.attack.add_mark(_input), **kwargs)
-        return self.model.criterion(trigger_output, target * torch.ones_like(_label))
+            trigger_output = self.model(trigger_input, **kwargs)
+        return self.model.loss(trigger_input, trigger_label, _output=trigger_output)
 
     def optimize_mark(self, label: int,
                       loader: Iterable = None,
@@ -364,8 +429,6 @@ class ModelInspection(BackdoorDefense):
         norm_best: float = float('inf')
         mark_best: torch.Tensor = None
         loss_best: float = None
-
-        self.before_loop_fn()
 
         logger = MetricLogger(indent=4)
         logger.create_meters(loss='{last_value:.3f}',
@@ -423,9 +486,6 @@ class ModelInspection(BackdoorDefense):
         atanh_mark.requires_grad_(False)
         self.attack.mark.mark = mark_best
         return mark_best, loss_best
-
-    def before_loop_fn(self, *args, **kwargs):
-        pass
 
     def check_early_stop(self, *args, **kwargs) -> bool:
         return False

@@ -17,10 +17,17 @@ if TYPE_CHECKING:
 
 
 class ActivationClustering(TrainingFiltering):
-    r"""Activation Clustering is a training filtering method against backdoor attacks,
-    which aims to detect all poison samples from the training dataset using the well-trained model.
+    r"""Activation Clustering proposed by Bryant Chen
+    from IBM Research in SafeAI@AAAI 2019.
+
+    It is a training filtering backdoor defense
+    that inherits :class:`trojanvision.defenses.TrainingFiltering`.
+
     Activation Clustering assumes in the target class,
-    poisoned samples compose a separate cluster which is small or far from its own class center.
+    poisoned samples compose a separate cluster
+    which is small or far from its own class center.
+
+    The defense procedure is:
 
     * Get feature maps for samples
     * For samples from each class

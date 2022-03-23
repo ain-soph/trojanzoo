@@ -2,14 +2,23 @@
 
 from ...abstract import ModelInspection
 
+import torch
+
 
 class NeuralCleanse(ModelInspection):
+    r"""
+
+    Attributes:
+        init_cost (float): Initial cost of mask norm loss.
+        cost (float): Current cost of mask norm loss.
+    """
     name: str = 'neural_cleanse'
 
     def __init__(self, cost_multiplier: float = 1.5, patience: float = 10,
                  attack_succ_threshold: float = 0.99,
                  early_stop_threshold: float = 0.99, **kwargs):
         super().__init__(**kwargs)
+        self.init_cost = self.cost
         self.param_list['neural_cleanse'] = ['cost_multiplier_up', 'cost_multiplier_down',
                                              'patience', 'attack_succ_threshold',
                                              'early_stop_threshold']
@@ -20,7 +29,7 @@ class NeuralCleanse(ModelInspection):
         self.patience = patience
         self.early_stop_patience = self.patience * 2
 
-    def before_loop_fn(self):
+    def optimize_mark(self, *args, **kwargs) -> tuple[torch.Tensor, float]:
         # parameters to update cost
         self.cost_set_counter = 0
         self.cost_up_counter = 0
@@ -31,13 +40,14 @@ class NeuralCleanse(ModelInspection):
         # counter for early stop
         self.early_stop_counter = 0
         self.early_stop_norm_best = float('inf')
+        return super().optimize_mark(*args, **kwargs)
 
     def check_early_stop(self, acc: float, norm: float, **kwargs) -> bool:
         # update cost
         if self.cost == 0 and acc >= self.attack_succ_threshold:
             self.cost_set_counter += 1
             if self.cost_set_counter >= self.patience:
-                self.cost = self.cost_init
+                self.cost = self.init_cost
                 self.cost_up_counter = 0
                 self.cost_down_counter = 0
                 self.cost_up_flag = False

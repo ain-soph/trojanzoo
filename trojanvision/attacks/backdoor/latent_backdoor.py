@@ -211,8 +211,8 @@ class LatentBackdoor(BadNet):
             for data in other_loader:
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
                 _input, _label = self.model.get_data(data)
-                poison_input = self.add_mark(_input)
-                loss = self._loss_mse(poison_input)
+                trigger_input = self.add_mark(_input)
+                loss = self._loss_mse(trigger_input)
                 loss.backward(inputs=[atanh_mark])
                 optimizer.step()
                 optimizer.zero_grad()
@@ -227,12 +227,12 @@ class LatentBackdoor(BadNet):
              **kwargs) -> torch.Tensor:
         loss_fn = loss_fn if loss_fn is not None else self.model.loss
         loss_ce = loss_fn(_input, _label, **kwargs)
-        poison_input = self.add_mark(_input)
-        loss_mse = self._loss_mse(poison_input)
+        trigger_input = self.add_mark(_input)
+        loss_mse = self._loss_mse(trigger_input)
         return loss_ce + self.mse_weight * loss_mse
 
-    def _loss_mse(self, poison_input: torch.Tensor) -> torch.Tensor:
-        poison_feats = self.model.get_layer(poison_input, layer_output=self.preprocess_layer)
+    def _loss_mse(self, trigger_input: torch.Tensor) -> torch.Tensor:
+        poison_feats = self.model.get_layer(trigger_input, layer_output=self.preprocess_layer)
         if poison_feats.dim() > 2:
             poison_feats = poison_feats.flatten(2).mean(2)
         return F.mse_loss(poison_feats, self.avg_target_feats.expand(poison_feats.size(0), -1))

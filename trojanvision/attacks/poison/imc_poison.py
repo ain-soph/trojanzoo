@@ -100,7 +100,7 @@ class IMC_Poison(PoisonBasic):
             normal += 1
             target_conf, target_acc, clean_acc = self.validate_fn()
             noise = torch.zeros_like(_input)
-            poison_input = self.optimize(_input=_input, _label=target_label, epochs=epochs, noise=noise, **kwargs)
+            trigger_input = self.optimize(_input=_input, _label=target_label, epochs=epochs, noise=noise, **kwargs)
             pgd_norm = float(noise.norm(p=float('inf')))
             target_conf, target_acc, clean_acc = self.validate_fn()
             target_conf_list.append(target_conf)
@@ -112,18 +112,18 @@ class IMC_Poison(PoisonBasic):
                   f'target accuracy: {np.mean(target_acc_list)}({np.std(target_acc_list)})\n'
                   f'clean accuracy Drop: {np.mean(clean_acc_list)}({np.std(clean_acc_list)})\n'
                   f'PGD Norm: {np.mean(pgd_norm_list)}({np.std(pgd_norm_list)})\n\n\n')
-            org_conf = self.model.get_target_prob(_input=poison_input, target=_label)
-            tgt_conf = self.model.get_target_prob(_input=poison_input, target=target_label)
+            org_conf = self.model.get_target_prob(_input=trigger_input, target=_label)
+            tgt_conf = self.model.get_target_prob(_input=trigger_input, target=target_label)
             if 'curvature' in self.__dict__.keys():
-                org_curvature_list.extend(self.curvature.measure(poison_input, _label).detach().cpu().tolist())
-                tgt_curvature_list.extend(self.curvature.measure(poison_input, target_label).detach().cpu().tolist())
+                org_curvature_list.extend(self.curvature.measure(trigger_input, _label).detach().cpu().tolist())
+                tgt_curvature_list.extend(self.curvature.measure(trigger_input, target_label).detach().cpu().tolist())
                 print('Curvature:')
                 print(f'    org_curvature: {ks_2samp(org_curvature_list, benign_curvature)}')    # type: ignore
                 print(f'    tgt_curvature: {ks_2samp(tgt_curvature_list, benign_curvature)}')    # type: ignore
                 print()
             if self.randomized_smooth:
-                org_new = self.model.get_target_prob(_input=poison_input, target=_label, randomized_smooth=True)
-                tgt_new = self.model.get_target_prob(_input=poison_input, target=target_label, randomized_smooth=True)
+                org_new = self.model.get_target_prob(_input=trigger_input, target=_label, randomized_smooth=True)
+                tgt_new = self.model.get_target_prob(_input=trigger_input, target=target_label, randomized_smooth=True)
                 org_increase = (org_new - org_conf).clamp(min=0.0)
                 tgt_decrease = (tgt_new - tgt_conf).clamp(min=0.0)
                 org_conf_list.extend(org_increase.detach().cpu().tolist())
@@ -133,9 +133,9 @@ class IMC_Poison(PoisonBasic):
                 print(f'    tgt_confidence: {np.mean(tgt_conf_list)}')
                 print()
             if 'magnet' in self.__dict__.keys():
-                poison_input = self.magnet(poison_input)
-                org_new = self.model.get_target_prob(_input=poison_input, target=_label)
-                tgt_new = self.model.get_target_prob(_input=poison_input, target=target_label)
+                trigger_input = self.magnet(trigger_input)
+                org_new = self.model.get_target_prob(_input=trigger_input, target=_label)
+                tgt_new = self.model.get_target_prob(_input=trigger_input, target=target_label)
                 org_increase = (org_new - org_conf).clamp(min=0.0)
                 tgt_decrease = (tgt_conf - tgt_new).clamp(min=0.0)
                 org_magnet_list.extend(org_increase.detach().cpu().tolist())
@@ -149,19 +149,19 @@ class IMC_Poison(PoisonBasic):
     def optimize(self, _input: torch.Tensor, _label: torch.Tensor, noise: torch.Tensor = None, save=False, **kwargs):
         if noise is None:
             noise = torch.zeros_like(_input)
-        poison_input = None
+        trigger_input = None
         for _iter in range(self.pgd_iter):
             target_conf, target_acc = self.validate_target(indent=4, verbose=False)
             if target_conf > self.stop_conf:
                 break
-            poison_input, _ = self.pgd.optimize(_input, noise=noise, loss_fn=self.loss_pgd, iteration=1)
-            self.temp_input = poison_input
+            trigger_input, _ = self.pgd.optimize(_input, noise=noise, loss_fn=self.loss_pgd, iteration=1)
+            self.temp_input = trigger_input
             target_conf, target_acc = self.validate_target(indent=4, verbose=False)
             if target_conf > self.stop_conf:
                 break
-            self._train(_input=poison_input, _label=_label, **kwargs)
+            self._train(_input=trigger_input, _label=_label, **kwargs)
         target_conf, target_acc = self.validate_target(indent=4, verbose=False)
-        return poison_input
+        return trigger_input
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)

@@ -56,8 +56,8 @@ class NeuronInspect(BackdoorDefense):
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
         _input, _label = dataset_to_tensor(subset)
-        poison_input = self.attack.add_mark(_input)
-        newset = TensorDataset(poison_input, _label)
+        trigger_input = self.attack.add_mark(_input)
+        newset = TensorDataset(trigger_input, _label)
         backdoor_loader = self.dataset.get_dataloader(mode='train', dataset=newset)
 
         exp_features = []

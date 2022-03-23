@@ -138,8 +138,8 @@ class Generator(nn.Module):
         if env['num_gpus']:
             self.cuda()
 
-    def forward(self, noise: torch.Tensor, poison_label: torch.Tensor) -> torch.Tensor:
-        _label: torch.Tensor = F.one_hot(poison_label, self.num_classes)
+    def forward(self, noise: torch.Tensor, trigger_label: torch.Tensor) -> torch.Tensor:
+        _label: torch.Tensor = F.one_hot(trigger_label, self.num_classes)
         _label = _label.float()
         y_ = self.fc2(_label)
         y_ = self.relu(y_)

@@ -113,9 +113,9 @@ class CleanLabel(BadNet):
         full_set = self.dataset.get_dataset('train')
         poison_set: TensorListDataset = None    # TODO
         if self.poison_generation_method == 'pgd':
-            poison_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
+            trigger_label = self.target_class * torch.ones(len(target_imgs), dtype=torch.long, device=target_imgs.device)
             result = []
-            for data in zip(target_imgs.chunk(self.dataset.batch_size), poison_label.chunk(self.dataset.batch_size)):
+            for data in zip(target_imgs.chunk(self.dataset.batch_size), trigger_label.chunk(self.dataset.batch_size)):
                 poison_img, _ = self.model.remove_misclassify(data)
                 poison_img, _ = self.pgd.optimize(poison_img)
                 poison_img = self.add_mark(poison_img).cpu()

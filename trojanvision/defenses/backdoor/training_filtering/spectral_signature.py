@@ -70,8 +70,8 @@ class SpectralSignature(BackdoorDefense):
         self.clean_set = TensorDataset(clean_input, clean_label)
 
         poison_set, _ = self.dataset.split_dataset(dataset=remain_dataset, length=self.poison_image_num)
-        poison_input, poison_label = dataset_to_tensor(poison_set)
-        self.poison_set = TensorDataset(poison_input, poison_label)
+        trigger_input, trigger_label = dataset_to_tensor(poison_set)
+        self.poison_set = TensorDataset(trigger_input, trigger_label)
 
         self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_set, self.poison_set])
         self.mix_dataloader = self.dataset.get_dataloader(
