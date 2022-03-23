@@ -11,7 +11,6 @@ import os
 from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
 from trojanzoo.configs import Config
 import argparse    # TODO: python 3.10
 if TYPE_CHECKING:
@@ -57,8 +56,9 @@ class Defense(ABC, ModelProcess):
         ...
 
 
-def add_argument(parser: argparse.ArgumentParser, defense_name: str = None,
-                 defense: Union[str, Defense] = None,
+def add_argument(parser: argparse.ArgumentParser,
+                 defense_name: None | str = None,
+                 defense: None | str | Defense = None,
                  class_dict: dict[str, type[Defense]] = {}):
     r"""
     | Add defense arguments to argument parser.
@@ -91,10 +91,10 @@ def add_argument(parser: argparse.ArgumentParser, defense_name: str = None,
     return DefenseType.add_argument(group)
 
 
-def create(defense_name: str = None, defense: Union[str, Defense] = None,
-           folder_path: str = None,
-           dataset_name: str = None, dataset: Union[str, Dataset] = None,
-           model_name: str = None, model: Union[str, Model] = None,
+def create(defense_name: None | str = None, defense: None | str | Defense = None,
+           folder_path: None | str = None,
+           dataset_name: str = None, dataset: None | str | Dataset = None,
+           model_name: str = None, model: None | str | Model = None,
            config: Config = config, class_dict: dict[str, type[Defense]] = {},
            **kwargs):
     r"""

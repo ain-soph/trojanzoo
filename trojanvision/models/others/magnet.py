@@ -8,7 +8,7 @@ from trojanvision.utils.model import Conv2d_SAME
 import torch
 import torch.nn as nn
 
-from typing import Iterator, Tuple, Union
+from typing import Iterator
 from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -17,7 +17,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 class _MagNet(nn.Module):
     """docstring for Model"""
 
-    def __init__(self, structure: list[Tuple[int, str]] = [3, 'average', 3],
+    def __init__(self, structure: list[tuple[int, str]] = [3, 'average', 3],
                  activation: str = 'sigmoid', channel: int = 3, **kwargs):
         super().__init__()
 
@@ -135,8 +135,8 @@ class MagNet(Model):
         return data[0].to(device=env['device']), data[1].to(device=env['device'])
 
     def define_optimizer(
-            self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
-            OptimType: Union[str, type[Optimizer]] = 'Adam',
+            self, parameters: str | Iterator[nn.Parameter] = 'full',
+            OptimType: str | type[Optimizer] = 'Adam',
             lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 1e-9,
             lr_scheduler: bool = True,
             lr_scheduler_type: str = 'CosineAnnealingLR',

@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 from collections.abc import Callable, Iterable    # TODO: python 3.10
-from typing import Optional, Union
 if TYPE_CHECKING:
     pass
 
@@ -31,7 +30,7 @@ class Optimizer(ABC, Process):
     name: str = 'optimizer'
 
     def __init__(self, iteration: int = 20,
-                 stop_threshold: Optional[float] = None,
+                 stop_threshold: None | float = None,
                  loss_fn: Callable[..., torch.Tensor] = None, **kwargs):
         super().__init__(**kwargs)
         self.param_list['optimize'] = ['iteration', 'stop_threshold']
@@ -46,7 +45,7 @@ class Optimizer(ABC, Process):
                  iteration: int = None,
                  loss_fn: Callable[..., torch.Tensor] = None,
                  stop_threshold: float = None,
-                 output: Union[int, Iterable[str]] = None,
+                 output: int | Iterable[str] = None,
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         r"""Main optimize method.
 
@@ -169,7 +168,7 @@ class Optimizer(ABC, Process):
             return torch.zeros(len(current_idx), dtype=torch.bool)
         if loss_values is None:
             current_loss_kwargs = {k: v[current_idx]
-                                    for k, v in loss_kwargs.items()}
+                                   for k, v in loss_kwargs.items()}
             loss_values = loss_fn(
                 adv_input[current_idx], **current_loss_kwargs)
         assert loss_values.dim() == 1

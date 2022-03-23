@@ -5,7 +5,6 @@ from torch.utils.data import Dataset, Subset
 import numpy as np
 
 from typing import Sequence, overload
-from typing import Union    # TODO: python 3.10
 
 
 class TensorListDataset(Dataset):
@@ -130,7 +129,7 @@ def sample_batch(dataset: Dataset, batch_size: int = None,
     return dataset_to_tensor(Subset(dataset, idx))
 
 
-def split_dataset(dataset: Union[Dataset, Subset],
+def split_dataset(dataset: Dataset | Subset,
                   length: int = None, percent: float = None,
                   shuffle: bool = True, seed: int = None
                   ) -> tuple[Subset, Subset]:
@@ -192,7 +191,7 @@ def split_dataset(dataset: Union[Dataset, Subset],
 
 
 def get_class_subset(dataset: Dataset,
-                     class_list: Union[int, list[int]]
+                     class_list: int | list[int]
                      ) -> Subset:
     r"""Get a subset from dataset with certain classes.
 

@@ -13,7 +13,6 @@ import trojanzoo.datasets
 
 import argparse
 from trojanzoo.configs import Config
-from typing import Union
 
 module_list = [folder, normal]
 __all__ = ['ImageSet', 'ImageFolder', 'class_dict', 'add_argument', 'create']
@@ -23,7 +22,8 @@ for module in module_list:
     class_dict.update(module.class_dict)
 
 
-def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None, dataset: Union[str, ImageSet] = None,
+def add_argument(parser: argparse.ArgumentParser,
+                 dataset_name: str = None, dataset: str | ImageSet = None,
                  config: Config = config, class_dict: dict[str, type[ImageSet]] = class_dict
                  ) -> argparse._ArgumentGroup:
     r"""

@@ -21,9 +21,9 @@ import json
 import yaml
 
 from typing import TYPE_CHECKING
-from typing import Any, Union    # TODO: python 3.10
+from typing import Any
 # config_dict['package']['dataset'] dataset.yml
-ConfigFileType = Module[str, Union[Any, Param[str, Any]]]
+ConfigFileType = Module[str, Any | Param[str, Any]]
 ConfigType = Module[str, ConfigFileType]    # config_dict['package']
 if TYPE_CHECKING:
     pass    # TODO: python 3.10
@@ -202,7 +202,7 @@ class Config:
             name, ext = os.path.splitext(os.path.split(path)[1])
             if ext in ['.yml', 'yaml', 'json']:
                 with open(path, 'r', encoding='utf-8') as f:
-                    _dict: dict[str, Union[Any, dict[str, Any]]] = {}
+                    _dict: dict[str, Any | dict[str, Any]] = {}
                     if ext == 'json':
                         _dict = json.load(f.read())
                     else:
@@ -214,7 +214,7 @@ class Config:
             raise Exception(f'unknown: {path}')
 
     @staticmethod
-    def organize_config_file(_dict: dict[str, Union[Any, dict[str, Any]]]
+    def organize_config_file(_dict: dict[str, Any | dict[str, Any]]
                              ) -> ConfigFileType:
         module = Module()
         for key, value in _dict.items():
@@ -232,7 +232,7 @@ class Config:
     def keys(self):
         return self.config_dict.keys()
 
-    def summary(self, keys: Union[list[str], str] = ['final'],
+    def summary(self, keys: str | list[str] = ['final'],
                 config: ConfigType = None, indent: int = 0):
         r"""Summary the config information.
 

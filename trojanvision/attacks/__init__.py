@@ -15,7 +15,6 @@ import argparse
 from trojanvision.datasets import ImageSet
 from trojanvision.models import ImageModel
 from trojanzoo.configs import Config
-from typing import Union
 
 
 module_list = [adv, backdoor, poison]
@@ -26,7 +25,8 @@ for module in module_list:
     class_dict.update(module.class_dict)
 
 
-def add_argument(parser: argparse.ArgumentParser, attack_name: str = None, attack: Union[str, Attack] = None,
+def add_argument(parser: argparse.ArgumentParser,
+                 attack_name: str = None, attack: str | Attack = None,
                  class_dict: dict[str, type[Attack]] = class_dict):
     r"""
     | Add attack arguments to argument parser.
@@ -51,9 +51,9 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None, attac
                                           class_dict=class_dict)
 
 
-def create(attack_name: str = None, attack: Union[str, Attack] = None,
-           dataset_name: str = None, dataset: Union[str, ImageSet] = None,
-           model_name: str = None, model: Union[str, ImageModel] = None,
+def create(attack_name: str = None, attack: str | Attack = None,
+           dataset_name: str = None, dataset: str | ImageSet = None,
+           model_name: str = None, model: str | ImageModel = None,
            config: Config = config, class_dict: dict[str, type[Attack]] = class_dict,
            **kwargs) -> Attack:
     r"""

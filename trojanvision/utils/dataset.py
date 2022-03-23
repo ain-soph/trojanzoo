@@ -10,8 +10,7 @@ import os
 import tarfile
 import zipfile
 from typing import Any, cast
-from collections.abc import Callable    # TODO: python 3.10
-from typing import Optional, Union  # TODO: python 3.10
+from collections.abc import Callable
 
 
 __all__ = ['MemoryDataset', 'ZipFolder']
@@ -30,7 +29,7 @@ class MemoryDataset(VisionDataset):
             self.targets = list(_dict['targets'])
         assert len(self.data) == len(self.targets)
 
-    def __getitem__(self, index: Union[int, slice]) -> tuple[Any, Any]:
+    def __getitem__(self, index: int | slice) -> tuple[Any, Any]:
         """
         Args:
             index (int): Index
@@ -53,8 +52,8 @@ class MemoryDataset(VisionDataset):
 
 # https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/zippedfolder.py
 class ZipFolder(DatasetFolder):
-    def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
-                 is_valid_file: Optional[Callable[[str], bool]] = None, memory: bool = True) -> None:
+    def __init__(self, root: str, transform: None | Callable = None, target_transform: None | Callable = None,
+                 is_valid_file: None | Callable[[str], bool] = None, memory: bool = True) -> None:
         if not root.lower().endswith('.zip'):
             raise TypeError("Need zip file for data source: ", root)
         if memory:
@@ -85,8 +84,8 @@ class ZipFolder(DatasetFolder):
         self,
         directory: str,
         class_to_idx: dict[str, int],
-        extensions: Optional[tuple[str, ...]] = None,
-        is_valid_file: Optional[Callable[[str], bool]] = None,
+        extensions: None | tuple[str, ...] = None,
+        is_valid_file: None | Callable[[str], bool] = None,
     ) -> list[tuple[str, int]]:
         instances = []
         both_none = extensions is None and is_valid_file is None
@@ -137,8 +136,8 @@ class ZipFolder(DatasetFolder):
 
 
 class TarFolder(DatasetFolder):
-    def __init__(self, root: str, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None,
-                 is_valid_file: Optional[Callable[[str], bool]] = None, memory: bool = True) -> None:
+    def __init__(self, root: str, transform: None | Callable = None, target_transform: None | Callable = None,
+                 is_valid_file: None | Callable[[str], bool] = None, memory: bool = True) -> None:
         if not root.lower().endswith('.tar'):
             raise TypeError("Need tar file for data source: ", root)
         if memory:
@@ -169,8 +168,8 @@ class TarFolder(DatasetFolder):
         self,
         directory: str,
         class_to_idx: dict[str, int],
-        extensions: Optional[tuple[str, ...]] = None,
-        is_valid_file: Optional[Callable[[str], bool]] = None,
+        extensions: None | tuple[str, ...] = None,
+        is_valid_file: None | Callable[[str], bool] = None,
     ) -> list[tuple[str, int]]:
         instances: list[tuple[str, int]] = []
         both_none = extensions is None and is_valid_file is None

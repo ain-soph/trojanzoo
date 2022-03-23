@@ -21,7 +21,7 @@ from collections.abc import Iterable
 
 from typing import TYPE_CHECKING
 # TODO: python 3.10
-from typing import Generator, Iterator, Mapping, Optional, Set, Union
+from typing import Generator, Iterator, Mapping
 from trojanzoo.configs import Config    # TODO: python 3.10
 from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim.optimizer import Optimizer
@@ -277,7 +277,7 @@ class Model(BasicObject):
         return group
 
     def __init__(self, name: str = 'model', suffix: str = None,
-                 model: Union[type[_Model], _Model] = _Model,
+                 model: type[_Model] | _Model = _Model,
                  dataset: Dataset = None,
                  num_classes: int = None, folder_path: str = None,
                  official: bool = False, pretrained: bool = False,
@@ -446,7 +446,7 @@ class Model(BasicObject):
         return self.softmax(self(_input, **kwargs))
 
     def get_target_prob(self, _input: torch.Tensor,
-                        target: Union[torch.Tensor, list[int], int],
+                        target: int | list[int] | torch.Tensor,
                         **kwargs) -> torch.Tensor:
         r"""Get the probability w.r.t. :attr:`target` class of :attr:`_input`
         (using :any:`torch.gather`).
@@ -454,7 +454,7 @@ class Model(BasicObject):
         Args:
             _input (torch.Tensor): The batched input tensor
                 passed to :meth:`_Model.get_logits()`.
-            target (torch.Tensor | list[int] | int): Batched target classes.
+            target (int | list[int] | torch.Tensor): Batched target classes.
             **kwargs: Keyword arguments passed to :meth:`get_logits()`.
 
         Returns:
@@ -633,8 +633,8 @@ class Model(BasicObject):
     # -------------------------------------------------------- #
 
     def define_optimizer(
-            self, parameters: Union[str, Iterator[nn.Parameter]] = 'full',
-            OptimType: Union[str, type[Optimizer]] = 'SGD',
+            self, parameters: str | Iterator[nn.Parameter] = 'full',
+            OptimType: str | type[Optimizer] = 'SGD',
             lr: float = 0.1, momentum: float = 0.0, weight_decay: float = 0.0,
             lr_scheduler: bool = False,
             lr_scheduler_type: str = 'CosineAnnealingLR',
@@ -781,7 +781,7 @@ class Model(BasicObject):
     @torch.no_grad()
     def load(self, file_path: str = None, folder_path: str = None,
              suffix: str = None, inplace: bool = True,
-             map_location: Union[str, Callable, torch.device, dict] = 'cpu',
+             map_location: str | Callable | torch.device | dict = 'cpu',
              component: str = 'full', strict: bool = True,
              verbose: bool = False, indent: int = 0,
              **kwargs) -> OrderedDict[str, torch.Tensor]:
@@ -922,8 +922,7 @@ class Model(BasicObject):
                 f'Model {self.name} saved at: {file_path}', indent=indent)
 
     def get_official_weights(self, url: str = None,
-                             map_location: Union[str, Callable,
-                                                 torch.device, dict] = 'cpu',
+                             map_location: str | Callable | torch.device | dict = 'cpu',
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
         r"""Get official model weights from :attr:`url`.
 
@@ -950,7 +949,7 @@ class Model(BasicObject):
                lr_warmup_epochs: int = 0,
                model_ema: ExponentialMovingAverage = None,
                model_ema_steps: int = 32,
-               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
+               grad_clip: float = None, pre_conditioner: None | KFAC | EKFAC = None,
                print_prefix: str = 'Train', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None,
@@ -1101,7 +1100,7 @@ class Model(BasicObject):
     # since they are calling their own nn.DataParallel.
     # TODO: nn.parallel.DistributedDataParallel
     @staticmethod
-    def get_parallel_model(_model: _Model) -> Union[_Model, nn.DataParallel]:
+    def get_parallel_model(_model: _Model) -> _Model | nn.DataParallel:
         r"""Get the parallel model if there are more than 1 GPU avaiable.
 
         Warning:
@@ -1178,7 +1177,7 @@ class Model(BasicObject):
         self.model.cpu()
         return self
 
-    def cuda(self, device: Optional[Union[int, torch.device]] = None):
+    def cuda(self, device: None | int | torch.device = None):
         r"""Moves all model parameters and buffers to the GPU.
 
         See Also:
@@ -1258,7 +1257,7 @@ class Model(BasicObject):
         """
         return self._model.modules()
 
-    def named_modules(self, memo: Optional[Set[nn.Module]] = None,
+    def named_modules(self, memo: None | set[nn.Module] = None,
                       prefix: str = ''
                       ) -> Generator[tuple[str, nn.Module], None, None]:
         r"""Returns an iterator over all modules in the network, yielding
@@ -1355,8 +1354,9 @@ class Model(BasicObject):
         return self.get_logits(_input, **kwargs)
 
 
-def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
-                 model: Union[str, Model] = None,
+def add_argument(parser: argparse.ArgumentParser,
+                 model_name: None | str = None,
+                 model: None | str | Model = None,
                  config: Config = config,
                  class_dict: dict[str, type[Model]] = {}
                  ) -> argparse._ArgumentGroup:
@@ -1399,8 +1399,8 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None,
     return ModelType.add_argument(group)
 
 
-def create(model_name: str = None, model: Union[str, Model] = None,
-           dataset_name: str = None, dataset: Union[str, Dataset] = None,
+def create(model_name: None | str = None, model: None | str | Model = None,
+           dataset_name: None | str = None, dataset: None | str | Dataset = None,
            config: Config = config,
            class_dict: dict[str, type[Model]] = {},
            **kwargs) -> Model:

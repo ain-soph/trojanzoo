@@ -14,7 +14,6 @@ import trojanzoo.defenses
 import argparse
 from trojanzoo.configs import Config
 from trojanvision.datasets import ImageSet
-from typing import Union
 
 module_list = [adv, backdoor]
 __all__ = ['add_argument', 'create',
@@ -26,14 +25,15 @@ for module in module_list:
     class_dict.update(module.class_dict)
 
 
-def add_argument(parser: argparse.ArgumentParser, defense_name: str = None, defense: Union[str, Defense] = None,
+def add_argument(parser: argparse.ArgumentParser,
+                 defense_name: str = None, defense: str | Defense = None,
                  class_dict: dict[str, type[Defense]] = class_dict):
     return trojanzoo.defenses.add_argument(parser=parser, defense_name=defense_name, defense=defense,
                                            class_dict=class_dict)
 
 
-def create(defense_name: str = None, defense: Union[str, Defense] = None,
-           dataset_name: str = None, dataset: Union[str, ImageSet] = None,
+def create(defense_name: str = None, defense: str | Defense = None,
+           dataset_name: str = None, dataset: str | ImageSet = None,
            config: Config = config, class_dict: dict[str, type[Defense]] = class_dict, **kwargs):
     return trojanzoo.defenses.create(defense_name=defense_name, defense=defense,
                                      dataset_name=dataset_name, dataset=dataset,

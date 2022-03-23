@@ -10,11 +10,11 @@ import torch
 import torch.autograd
 import torch.nn.functional as F
 from collections.abc import Callable
-from typing import Iterable, Union
+from typing import Iterable
 
 
-def init_noise(noise_shape: Iterable[int], pgd_eps: Union[float, torch.Tensor],
-               random_init: bool = False, device: Union[str, torch.device] = None) -> torch.Tensor:
+def init_noise(noise_shape: Iterable[int], pgd_eps: float | torch.Tensor,
+               random_init: bool = False, device: None | str | torch.device = None) -> torch.Tensor:
     device = device or env['device']
     noise: torch.Tensor = torch.zeros(noise_shape, dtype=torch.float, device=device)
     if random_init:
@@ -50,12 +50,12 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
 
     name: str = 'pgd'
 
-    def __init__(self, pgd_alpha: Union[float, torch.Tensor] = 2.0 / 255,
-                 pgd_eps: Union[float, torch.Tensor] = 8.0 / 255,
+    def __init__(self, pgd_alpha: float | torch.Tensor = 2.0 / 255,
+                 pgd_eps: float | torch.Tensor = 8.0 / 255,
                  iteration: int = 7, random_init: bool = False,
-                 norm: Union[int, float] = float('inf'), universal: bool = False,
-                 clip_min: Union[float, torch.Tensor] = 0.0,
-                 clip_max: Union[float, torch.Tensor] = 1.0,
+                 norm: int | float = float('inf'), universal: bool = False,
+                 clip_min: float | torch.Tensor = 0.0,
+                 clip_max: float | torch.Tensor = 1.0,
                  grad_method: str = 'white', query_num: int = 100, sigma: float = 1e-3,
                  hess_b: int = 100, hess_p: int = 1, hess_lambda: float = 1, **kwargs):
         super().__init__(iteration=iteration, **kwargs)
@@ -87,12 +87,12 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
 
     def optimize(self, _input: torch.Tensor, *args,
                  noise: torch.Tensor = None,
-                 pgd_alpha: Union[float, torch.Tensor] = None,
-                 pgd_eps: Union[float, torch.Tensor] = None,
+                 pgd_alpha: None | float | torch.Tensor = None,
+                 pgd_eps: None | float | torch.Tensor = None,
                  add_noise_fn: Callable[..., torch.Tensor] = None,
                  random_init: bool = None,
-                 clip_min: Union[float, torch.Tensor] = None,
-                 clip_max: Union[float, torch.Tensor] = None,
+                 clip_min: None | float | torch.Tensor = None,
+                 clip_max: None | float | torch.Tensor = None,
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
         clip_min = clip_min if clip_min is not None else self.clip_min
@@ -122,11 +122,11 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                      adv_input: torch.Tensor,
                      org_input: torch.Tensor,
                      noise: torch.Tensor,
-                     pgd_alpha: Union[float, torch.Tensor],
-                     pgd_eps: Union[float, torch.Tensor],
+                     pgd_alpha: float | torch.Tensor,
+                     pgd_eps: float | torch.Tensor,
                      add_noise_fn: Callable[..., torch.Tensor],
-                     clip_min: Union[float, torch.Tensor],
-                     clip_max: Union[float, torch.Tensor],
+                     clip_min: float | torch.Tensor,
+                     clip_max: float | torch.Tensor,
                      loss_fn: Callable[[torch.Tensor], torch.Tensor],
                      output: list[str], *args,
                      loss_kwargs: dict[str, torch.Tensor] = {},
@@ -148,10 +148,10 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         noise[current_idx] = self.valid_noise(adv_input[current_idx], org_input[current_idx])
 
     def preprocess_input(self, adv_input: torch.Tensor, org_input: torch.Tensor, *args,
-                         noise: torch.Tensor = None,
-                         add_noise_fn: Callable[..., torch.Tensor] = None,
-                         clip_min: Union[float, torch.Tensor] = None,
-                         clip_max: Union[float, torch.Tensor] = None,
+                         noise: None | torch.Tensor = None,
+                         add_noise_fn: None | Callable[..., torch.Tensor] = None,
+                         clip_min: None | float | torch.Tensor = None,
+                         clip_max: None | float | torch.Tensor = None,
                          **kwargs) -> torch.Tensor:
         adv_input = add_noise_fn(x=adv_input, noise=noise, universal=self.universal,
                                  clip_min=clip_min, clip_max=clip_max)
@@ -172,15 +172,15 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         universal = universal if universal is not None else self.universal
         return valid_noise(adv_input, org_input, universal=universal)
 
-    def init_noise(self, noise_shape: Iterable[int], pgd_eps: Union[float, torch.Tensor] = None,
-                   random_init: bool = None, device: Union[str, torch.device] = None) -> torch.Tensor:
+    def init_noise(self, noise_shape: Iterable[int], pgd_eps: float | torch.Tensor = None,
+                   random_init: bool = None, device: str | torch.device = None) -> torch.Tensor:
         pgd_eps = pgd_eps if pgd_eps is not None else self.pgd_eps
         random_init = random_init if random_init is not None else self.random_init
         return init_noise(noise_shape, pgd_eps, random_init=random_init, device=device)
 
     @staticmethod
-    def projector(noise: torch.Tensor, pgd_eps: Union[float, torch.Tensor],
-                  norm: Union[float, int, str] = float('inf')) -> torch.Tensor:
+    def projector(noise: torch.Tensor, pgd_eps: float | torch.Tensor,
+                  norm: float | int | str = float('inf')) -> torch.Tensor:
         if norm == float('inf'):
             noise = noise.clamp(min=-pgd_eps, max=pgd_eps)
         elif isinstance(pgd_eps, float):
@@ -194,7 +194,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         return noise.detach()
 
     # -------------------------- Calculate Gradient ------------------------ #
-    def calc_grad(self, f, x: torch.Tensor, grad_method: str = None, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
+    def calc_grad(self, f, x: torch.Tensor, grad_method: str = None,
+                  loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
         grad_method = grad_method or self.grad_method
         grad_func = self.whitebox_grad if grad_method == 'white' else self.blackbox_grad
         return grad_func(f, x, loss_kwargs=loss_kwargs)
@@ -208,7 +209,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         return grad
 
     def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], x: torch.Tensor,
-                      query_num: int = None, sigma: float = None, loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
+                      query_num: int = None, sigma: float = None,
+                      loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
         seq = self.gen_seq(x, query_num=query_num, sigma=sigma)
         grad = self.calc_seq(f, seq, loss_kwargs=loss_kwargs)
         return grad

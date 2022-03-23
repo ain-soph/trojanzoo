@@ -6,8 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from typing import Union
-
 
 class SepConv(nn.Module):
     '''Separable Convolution.'''
@@ -74,7 +72,7 @@ class CellB(nn.Module):
 
 
 class PNASNet(nn.Module):
-    def __init__(self, cell_type: Union[type[CellA], type[CellB]],
+    def __init__(self, cell_type: type[CellA | CellB],
                  num_planes: int, num_cells: int = 6, num_classes: int = 10):
         super().__init__()
         self.in_planes = num_planes

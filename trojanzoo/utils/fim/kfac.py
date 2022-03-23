@@ -13,10 +13,10 @@ from torch.optim.optimizer import Optimizer
 import math
 from abc import ABC, abstractmethod
 
-from typing import Iterable, Union, Optional
+from typing import Iterable
 from torch.utils.hooks import RemovableHandle
 
-LayerType = Union[nn.Conv2d, nn.Linear]
+LayerType = nn.Conv2d | nn.Linear
 _LayerType = (nn.Conv2d, nn.Linear)
 
 
@@ -100,8 +100,7 @@ class BaseKFAC(ABC, Optimizer):
                 if mod.bias is not None:
                     name_dict[name + 'bias'] = mod
         super().__init__(params, {})
-        self.param_groups: list[dict[str,
-                                     Union[LayerType, Iterable[torch.Tensor]]]]
+        self.param_groups: list[dict[str, LayerType | Iterable[torch.Tensor]]]
         self.module_list: list[LayerType] = [group['mod']
                                              for group in self.param_groups]
         self.pack_idx: dict[LayerType, list[int]] = {
@@ -188,8 +187,8 @@ class BaseKFAC(ABC, Optimizer):
         return self.unpack_list(grad_list, grad_dict, self.pack_idx)
 
     def precond(self, mod: LayerType, weight_grad: torch.Tensor = None,
-                bias_grad: Optional[torch.Tensor] = None
-                ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                bias_grad: None | torch.Tensor = None
+                ) -> tuple[torch.Tensor, None | torch.Tensor]:
         """Applies preconditioning."""
         if weight_grad is None and bias_grad is None:
             weight_grad = mod.weight.grad
@@ -201,14 +200,14 @@ class BaseKFAC(ABC, Optimizer):
 
     @abstractmethod
     def precond_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                    bias_grad: Optional[torch.Tensor]
-                    ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                    bias_grad: None | torch.Tensor
+                    ) -> tuple[torch.Tensor, None | torch.Tensor]:
         ...
 
     @abstractmethod
     def precond_nosua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                      bias_grad: Optional[torch.Tensor]
-                      ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                      bias_grad: None | torch.Tensor
+                      ) -> tuple[torch.Tensor, None | torch.Tensor]:
         ...
 
     @torch.no_grad()
@@ -293,8 +292,8 @@ class KFAC(BaseKFAC):
                                                    **kwds)
 
     def precond_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                    bias_grad: Optional[torch.Tensor]
-                    ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                    bias_grad: None | torch.Tensor
+                    ) -> tuple[torch.Tensor, None | torch.Tensor]:
         """Preconditioning for KFAC SUA."""
         state = self.state_storage[mod]
         g, gb = weight_grad, bias_grad
@@ -317,8 +316,8 @@ class KFAC(BaseKFAC):
         return g, gb
 
     def precond_nosua(self, mod: LayerType, weight_grad: torch.Tensor,
-                      bias_grad: Optional[torch.Tensor]
-                      ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                      bias_grad: None | torch.Tensor
+                      ) -> tuple[torch.Tensor, None | torch.Tensor]:
         state = self.state_storage[mod]
         g, gb = weight_grad, bias_grad
         g = g.flatten(1)  # (out, in * kh * kw)

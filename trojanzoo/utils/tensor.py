@@ -2,7 +2,6 @@
 
 import torch
 import math
-from typing import Union    # TODO: python 3.10
 
 __all__ = ['tanh_func', 'atan_func',
            'repeat_to_batch', 'add_noise']
@@ -57,8 +56,8 @@ def repeat_to_batch(x: torch.Tensor, batch_size: int = 1) -> torch.Tensor:
 
 def add_noise(x: torch.Tensor, noise: torch.Tensor = None,
               mean: float = 0.0, std: float = 1.0, universal: bool = False,
-              clip_min: Union[float, torch.Tensor] = 0.0,
-              clip_max: Union[float, torch.Tensor] = 1.0) -> torch.Tensor:
+              clip_min: float | torch.Tensor = 0.0,
+              clip_max: float | torch.Tensor = 1.0) -> torch.Tensor:
     r"""Add noise to a batched input tensor.
 
     Args:

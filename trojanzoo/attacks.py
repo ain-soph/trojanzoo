@@ -10,7 +10,6 @@ import os
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
 from trojanzoo.configs import Config
 from trojanzoo.models import Model
 import argparse    # TODO: python 3.10
@@ -81,7 +80,7 @@ class Attack(ABC, ModelProcess):
 
 
 def add_argument(parser: argparse.ArgumentParser, attack_name: str = None,
-                 attack: Union[str, Attack] = None,
+                 attack: str | Attack = None,
                  class_dict: dict[str, type[Attack]] = {}):
     r"""
     | Add attack arguments to argument parser.
@@ -114,9 +113,9 @@ def add_argument(parser: argparse.ArgumentParser, attack_name: str = None,
     return AttackType.add_argument(group)
 
 
-def create(attack_name: str = None, attack: Union[str, Attack] = None,
-           dataset_name: str = None, dataset: Union[str, Dataset] = None,
-           model_name: str = None, model: Union[str, Model] = None,
+def create(attack_name: str = None, attack: str | Attack = None,
+           dataset_name: str = None, dataset: str | Dataset = None,
+           model_name: str = None, model: str | Model = None,
            config: Config = config, class_dict: dict[str, type[Attack]] = {},
            **kwargs) -> Attack:
     r"""

@@ -13,7 +13,6 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 
-from typing import Union
 from trojanzoo.utils.model import ExponentialMovingAverage
 from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
@@ -26,7 +25,7 @@ def train(module: nn.Module, num_classes: int,
           lr_warmup_epochs: int = 0,
           model_ema: ExponentialMovingAverage = None,
           model_ema_steps: int = 32,
-          grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
+          grad_clip: float = None, pre_conditioner: None | KFAC | EKFAC = None,
           print_prefix: str = 'Train', start_epoch: int = 0, resume: int = 0,
           validate_interval: int = 10, save: bool = False, amp: bool = False,
           loader_train: torch.utils.data.DataLoader = None,

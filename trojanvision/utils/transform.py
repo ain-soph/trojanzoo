@@ -8,8 +8,6 @@ from torch.nn.functional import one_hot
 
 import math
 
-from typing import Union  # TODO: python 3.10
-
 
 __all__ = ['RandomMixup', 'RandomCutmix', 'Cutout',
            'get_transform_bit',
@@ -197,8 +195,8 @@ class RandomCutmix(nn.Module):
         return s.format(**self.__dict__)
 
 
-def cutout(img: torch.Tensor, length: Union[int, tuple[int, int], torch.Tensor],
-           fill_values: Union[float, torch.Tensor] = 0.0) -> torch.Tensor:
+def cutout(img: torch.Tensor, length: int | tuple[int, int] | torch.Tensor,
+           fill_values: float | torch.Tensor = 0.0) -> torch.Tensor:
     if isinstance(length, int):
         length = (length, length)
     h, w = img.size(-2), img.size(-1)
@@ -219,7 +217,7 @@ def cutout(img: torch.Tensor, length: Union[int, tuple[int, int], torch.Tensor],
 
 class Cutout(nn.Module):
     def __init__(self, length: int,
-                 fill_values: Union[float, torch.Tensor] = 0.0):
+                 fill_values: float | torch.Tensor = 0.0):
         super().__init__()
         self.length = length
         self.fill_values = fill_values

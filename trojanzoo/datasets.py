@@ -14,7 +14,7 @@ import os
 from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
-from typing import Iterable, Union    # TODO: python 3.10
+from typing import Iterable
 from trojanzoo.configs import Config
 import argparse    # TODO: python 3.10
 from collections.abc import Callable
@@ -125,7 +125,7 @@ class Dataset(ABC, BasicObject):
                  valid_batch_size: int = 100,
                  folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, num_workers: int = 4,
-                 loss_weights: Union[bool, np.ndarray, torch.Tensor] = False,
+                 loss_weights: bool | np.ndarray | torch.Tensor = False,
                  **kwargs):
         super().__init__(**kwargs)
         self.param_list['dataset'] = ['num_classes', 'batch_size', 'valid_batch_size',
@@ -251,7 +251,7 @@ class Dataset(ABC, BasicObject):
         ...
 
     def get_dataset(self, mode: str = None, seed: int = None,
-                    class_list: Union[int, list[int]] = None,
+                    class_list: None | int | list[int] = None,
                     **kwargs):
         r"""Get dataset. Call :meth:`split_dataset` to split the training set
         if :attr:`valid_set` is ``False``.
@@ -285,8 +285,7 @@ class Dataset(ABC, BasicObject):
         return dataset
 
     @staticmethod
-    def split_dataset(dataset: Union[torch.utils.data.Dataset,
-                                     torch.utils.data.Subset],
+    def split_dataset(dataset: torch.utils.data.Dataset | torch.utils.data.Subset,
                       length: int = None, percent: float = None,
                       shuffle: bool = True, seed: int = None):
         r"""Split a dataset into two subsets.
@@ -338,7 +337,7 @@ class Dataset(ABC, BasicObject):
 
     @staticmethod
     def get_class_subset(dataset: torch.utils.data.Dataset,
-                         class_list: Union[int, list[int]]) -> torch.utils.data.Subset:
+                         class_list: int | list[int]) -> torch.utils.data.Subset:
         r"""Get a subset from dataset with certain classes.
 
         Args:
@@ -456,7 +455,7 @@ class Dataset(ABC, BasicObject):
 
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,
-                 dataset: Union[str, Dataset] = None,
+                 dataset: str | Dataset = None,
                  config: Config = config,
                  class_dict: dict[str, type[Dataset]] = {}
                  ) -> argparse._ArgumentGroup:

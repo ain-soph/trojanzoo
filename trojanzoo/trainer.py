@@ -9,7 +9,7 @@ from trojanzoo.utils.output import ansi, prints
 from trojanzoo.utils.fim import KFAC, EKFAC
 
 from typing import TYPE_CHECKING
-from typing import Any, Union
+from typing import Any
 from trojanzoo.configs import Config    # TODO: python 3.10
 from trojanzoo.datasets import Dataset
 from torch.optim.optimizer import Optimizer
@@ -142,7 +142,7 @@ class Trainer(BasicObject):
                  optimizer: Optimizer = None,
                  lr_scheduler: _LRScheduler = None,
                  model_ema: ExponentialMovingAverage = None,
-                 pre_conditioner: Union[KFAC, EKFAC] = None,
+                 pre_conditioner: None | KFAC | EKFAC = None,
                  writer=None, **kwargs):
         super().__init__(**kwargs)
         self.param_list['trainer'] = ['optim_args', 'train_args', 'writer_args',
@@ -221,12 +221,12 @@ def add_argument(parser: argparse.ArgumentParser,
     return ClassType.add_argument(group)
 
 
-def create(dataset_name: str = None,
-           dataset: Union[str, Dataset] = None,
-           model: Model = None,
-           model_ema: bool = False,
-           pre_conditioner: str = None,
-           tensorboard: bool = None,
+def create(dataset_name: None | str = None,
+           dataset: None | str | Dataset = None,
+           model: None | Model = None,
+           model_ema: None | bool = False,
+           pre_conditioner: None | str = None,
+           tensorboard: None | bool = None,
            ClassType: type[Trainer] = Trainer,
            config: Config = config, **kwargs):
     r"""

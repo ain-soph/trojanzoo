@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torchvision.models.resnet import conv1x1, conv3x3, ResNet
 
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 
 class BasicBlockAP(nn.Module):
@@ -17,11 +17,11 @@ class BasicBlockAP(nn.Module):
         inplanes: int,
         planes: int,
         stride: int = 1,
-        downsample: Optional[nn.Module] = None,
+        downsample: None | nn.Module = None,
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: None | Callable[..., nn.Module] = None
     ) -> None:
         super().__init__()
         if norm_layer is None:
@@ -77,11 +77,11 @@ class BottleneckAP(nn.Module):
         inplanes: int,
         planes: int,
         stride: int = 1,
-        downsample: Optional[nn.Module] = None,
+        downsample: None | nn.Module = None,
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: None | Callable[..., nn.Module] = None
     ) -> None:
         super().__init__()
         if norm_layer is None:
@@ -130,7 +130,7 @@ class ResNetAP(ResNet):
         self.avgpool = nn.Identity()    # modification
         self.fc = nn.Linear(self.fc.in_features * (pool_size * pool_size), self.fc.out_features)    # modification
 
-    def _make_layer(self, block: type[Union[BasicBlockAP, BottleneckAP]], planes: int, blocks: int,
+    def _make_layer(self, block: type[BasicBlockAP | BottleneckAP], planes: int, blocks: int,
                     stride: int = 1, dilate: bool = False) -> nn.Sequential:
         norm_layer = self._norm_layer
         downsample = None
@@ -158,7 +158,7 @@ class ResNetAP(ResNet):
 
 
 def _resnet(
-    block: type[Union[BasicBlockAP, BottleneckAP]],
+    block: type[BasicBlockAP | BottleneckAP],
     layers: list[int],
     **kwargs: Any
 ) -> ResNetAP:

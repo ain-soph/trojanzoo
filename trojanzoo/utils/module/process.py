@@ -7,7 +7,6 @@ import functools
 from collections.abc import Iterable
 
 from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
 if TYPE_CHECKING:
     from trojanzoo.datasets import Dataset    # TODO: python 3.10
     from trojanzoo.models import Model
@@ -77,7 +76,7 @@ class Process(BasicObject):
     """
     name: str = 'process'
 
-    def __init__(self, output: Union[int, Iterable[str]] = 0,
+    def __init__(self, output: int | Iterable[str] = 0,
                  **kwargs):
         super().__init__(**kwargs)
         self.param_list['verbose'] = ['output', 'indent']
@@ -87,7 +86,7 @@ class Process(BasicObject):
 
     # -----------------------------------Output-------------------------------------#
 
-    def get_output(self, org_output: Union[int, Iterable[str]] = None
+    def get_output(self, org_output: int | Iterable[str] = None
                    ) -> set[str]:
         r"""Get output items based on output level.
 

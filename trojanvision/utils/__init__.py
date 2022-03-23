@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import torch
-from typing import Union
 
 from matplotlib.colors import Colormap  # type: ignore  # TODO
 from matplotlib.cm import get_cmap  # type: ignore  # TODO
@@ -9,7 +8,7 @@ jet = get_cmap('jet')
 # jet = torch.tensor(jet(np.arange(256))[:, :3])
 
 
-def apply_cmap(heatmap: torch.Tensor, cmap: Union[Colormap, torch.Tensor] = jet) -> torch.Tensor:
+def apply_cmap(heatmap: torch.Tensor, cmap: Colormap | torch.Tensor = jet) -> torch.Tensor:
     if cmap is None:
         return heatmap
     heatmap = heatmap.detach().cpu()

@@ -64,8 +64,7 @@ def fim(module: nn.Module, _input: torch.Tensor,
 
 
 # def new_fim(module: nn.Module, _input: torch.Tensor,
-#             parameters: Union[dict[str, nn.Parameter],
-#                               Iterable[nn.Parameter]] = None
+#             parameters: dict[str, nn.Parameter] | Iterable[nn.Parameter]] = None
 #             ) -> list[torch.Tensor]:
 #     if not isinstance(parameters, dict):
 #         id_map: dict[torch.Tensor, str] = {

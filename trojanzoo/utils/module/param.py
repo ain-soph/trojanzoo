@@ -48,7 +48,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
             self._update(module)
         return self
 
-    # TODO: issue 4 Union[dict, Module]
+    # TODO: issue 4 dict | Module
     def _update(self, module: MutableMapping[_KT, _VT]):
         for key, value in module.items():
             if value is None:

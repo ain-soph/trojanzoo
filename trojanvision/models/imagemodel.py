@@ -17,7 +17,6 @@ from torchvision.transforms import Normalize
 import re
 
 from typing import TYPE_CHECKING
-from typing import Union
 from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -201,8 +200,8 @@ class ImageModel(Model):
                            help='sgm gamma (default: 1.0)')
         return group
 
-    def __init__(self, name: str = 'imagemodel', layer: Union[int, str] = '',
-                 model: Union[type[_ImageModel], _ImageModel] = _ImageModel,
+    def __init__(self, name: str = 'imagemodel', layer: int | str = '',
+                 model: type[_ImageModel] | _ImageModel = _ImageModel,
                  dataset: ImageSet = None, data_shape: list[int] = None,
                  adv_train: str = None, adv_train_random_init: bool = False, adv_train_eval_random_init: bool = None,
                  adv_train_iter: int = 7, adv_train_alpha: float = 2 / 255, adv_train_eps: float = 8 / 255,
@@ -283,7 +282,7 @@ class ImageModel(Model):
                          reduction='batchmean')
 
     @classmethod
-    def get_name(cls, name: str, layer: Union[int, str] = '') -> str:
+    def get_name(cls, name: str, layer: int | str = '') -> str:
         r"""A useful function to combine :attr:`name` and :attr:`layer`.
 
         Note:
@@ -471,7 +470,7 @@ class ImageModel(Model):
             return adv_x, _label
         return _input, _label
 
-    def _validate(self, adv_train: Union[bool, str] = None, **kwargs) -> tuple[float, float]:
+    def _validate(self, adv_train: None | bool | str = None, **kwargs) -> tuple[float, float]:
         r""""""
         adv_train = bool(adv_train) if adv_train is not None else bool(self.adv_train)
         if not adv_train:
@@ -487,7 +486,7 @@ class ImageModel(Model):
                lr_warmup_epochs: int = 0,
                model_ema: ExponentialMovingAverage = None,
                model_ema_steps: int = 32,
-               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
+               grad_clip: float = None, pre_conditioner: None | KFAC | EKFAC = None,
                print_prefix: str = 'Train', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None,

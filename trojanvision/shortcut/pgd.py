@@ -8,7 +8,6 @@ from trojanzoo.utils.logger import SmoothedValue
 import torch
 import argparse
 from collections.abc import Callable
-from typing import Union
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from trojanvision.datasets import ImageSet
@@ -169,7 +168,7 @@ class PGD(Attack, PGDoptimizer):
         return float(succ_iter_list.count) / total_iter_list.count, total_iter_list.global_avg
 
     def optimize(self, _input: torch.Tensor, *args,
-                 target: Union[torch.Tensor, int] = None, target_idx: int = None,
+                 target: int | torch.Tensor = None, target_idx: int = None,
                  loss_fn: Callable[..., torch.Tensor] = None,
                  require_class: bool = None,
                  loss_kwargs: dict[str, torch.Tensor] = {},

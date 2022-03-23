@@ -6,14 +6,13 @@ from torch.nn.modules.conv import _ConvNd
 from torch.nn.modules.utils import _pair
 
 from torch.types import _int, _size
-from typing import Optional, Union
 
 
 def conv2d_same_padding(input: torch.Tensor, weight: torch.Tensor,
-                        bias: Optional[torch.Tensor] = None,
-                        stride: Union[_int, _size] = 1,
-                        padding: Union[_int, _size] = 1,    # useless
-                        dilation: Union[_int, _size] = 1,
+                        bias: None | torch.Tensor = None,
+                        stride: _int | _size = 1,
+                        padding: _int | _size = 1,    # useless
+                        dilation: _int | _size = 1,
                         groups: _int = 1):
     input_rows = input.size(2)
     filter_rows = weight.size(2)

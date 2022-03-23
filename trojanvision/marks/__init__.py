@@ -13,7 +13,6 @@ import numpy as np
 import os
 import PIL.Image as Image
 
-from typing import Optional, Union
 import argparse
 from trojanzoo.configs import Config
 from collections.abc import Callable
@@ -23,7 +22,7 @@ dir_path = os.path.dirname(__file__)
 
 def get_edge_color(
     mark: torch.Tensor,
-    mark_background_color: Union[str, torch.Tensor] = 'auto'
+    mark_background_color: str | torch.Tensor = 'auto'
 ) -> torch.Tensor | None:
     # if any pixel is not fully opaque
     if not mark[-1].allclose(torch.ones_like(mark[-1]), atol=1e-3):
@@ -49,7 +48,7 @@ def get_edge_color(
 
 def update_mark_alpha_channel(
     mark: torch.Tensor,
-    mark_background_color: Optional[torch.Tensor]
+    mark_background_color: torch.Tensor | None = None
 ) -> torch.Tensor:
     if mark_background_color is None:
         return mark
@@ -237,7 +236,7 @@ class Watermark(BasicObject):
         return group
 
     def __init__(self, mark_path: str = 'square_white.png',
-                 data_shape: list[int] = None, mark_background_color: Union[str, torch.Tensor] = 'auto',
+                 data_shape: list[int] = None, mark_background_color: str | torch.Tensor = 'auto',
                  mark_alpha: float = 1.0, mark_height: int = 3, mark_width: int = 3,
                  mark_height_offset: int = 0, mark_width_offset: int = 0,
                  mark_random_init: bool = False, mark_random_pos: bool = False,
@@ -357,8 +356,8 @@ class Watermark(BasicObject):
 
     def load_mark(
         self,
-        mark_img: Union[str, Image.Image, np.ndarray, torch.Tensor],
-        mark_background_color: Union[str, torch.Tensor, None] = 'auto',
+        mark_img: str | Image.Image | np.ndarray | torch.Tensor,
+        mark_background_color: None | str | torch.Tensor = 'auto',
         already_processed: bool = False
     ) -> torch.Tensor:
         r"""Load watermark tensor from image :attr:`mark_img`,
@@ -427,8 +426,8 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
 
 
 def create(mark_path: str = None, data_shape: list[int] = None,
-           dataset_name: str = None, dataset: Union[str, ImageSet] = None,
-           config: Config = config, **kwargs)->Watermark:
+           dataset_name: str = None, dataset: str | ImageSet = None,
+           config: Config = config, **kwargs) -> Watermark:
     r"""
     | Create a watermark instance.
     | For arguments not included in :attr:`kwargs`,

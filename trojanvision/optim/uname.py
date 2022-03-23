@@ -12,7 +12,7 @@ import torch.optim
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from collections.abc import Callable
-from typing import Any, Union
+from typing import Any
 
 
 class Uname(trojanzoo.optim.Optimizer):
@@ -21,8 +21,9 @@ class Uname(trojanzoo.optim.Optimizer):
 
     name: str = 'uname'
 
-    def __init__(self, OptimType: Union[str, type[Optimizer]], optim_kwargs: dict[str, Any] = {}, lr_scheduler: bool = False,
-                 input_transform: Union[str, Callable[[torch.Tensor], torch.Tensor]] = lambda x: x, **kwargs):
+    def __init__(self, OptimType: str | type[Optimizer], optim_kwargs: dict[str, Any] = {},
+                 lr_scheduler: bool = False,
+                 input_transform: str | Callable[[torch.Tensor], torch.Tensor] = lambda x: x, **kwargs):
         super().__init__(**kwargs)
         self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'input_transform']
         if isinstance(OptimType, str):
@@ -34,7 +35,7 @@ class Uname(trojanzoo.optim.Optimizer):
 
     def optimize(self, unbound_params: list[torch.Tensor],
                  iteration: int = None, loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
-                 output: Union[int, list[str]] = None, **kwargs) -> tuple[list[torch.Tensor], int]:
+                 output: int | list[str] = None, **kwargs) -> tuple[list[torch.Tensor], int]:
         # ------------------------------ Parameter Initialization ---------------------------------- #
         iteration = iteration if iteration is not None else self.iteration
         loss_fn = loss_fn or self.loss_fn

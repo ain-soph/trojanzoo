@@ -5,7 +5,6 @@ from trojanzoo.environ import env
 
 import torch
 import torch.cuda
-from typing import Union    # TODO: python 3.10
 
 
 def empty_cache(threshold: float = None):
@@ -23,12 +22,12 @@ def empty_cache(threshold: float = None):
             torch.cuda.empty_cache()
 
 
-def output_memory(device: Union[str, torch.device] = None,
+def output_memory(device: None | str | int | torch.device = None,
                   full: bool = False, indent: int = 0, **kwargs):
     r"""Output memory usage information.
 
     Args:
-        device (str | ~torch.torch.device):
+        device (None | str | int | ~torch.torch.device):
             Passed to :any:`torch.cuda.memory_summary`
             or :any:`torch.cuda.memory_allocated` |
             :any:`torch.cuda.memory_reserved`.

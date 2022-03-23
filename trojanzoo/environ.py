@@ -9,7 +9,6 @@ import numpy as np
 import random
 
 from typing import TYPE_CHECKING
-from typing import Union    # TODO: python 3.10
 from trojanzoo.configs import Config
 import argparse
 if TYPE_CHECKING:

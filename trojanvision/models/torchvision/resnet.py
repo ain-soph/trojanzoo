@@ -11,8 +11,6 @@ from torchvision.models.resnet import model_urls as urls
 from torchvision.models.resnet import conv3x3
 from collections import OrderedDict
 
-from typing import Union
-
 
 class _ResNet(_ImageModel):
 
@@ -37,7 +35,7 @@ class _ResNet(_ImageModel):
             module = resnet_ap if 'ap' in name else torchvision.models
             ModelClass = getattr(module, model_class)
             kwargs = {'pool_size': data_shape[1] // 8} if 'ap' in name else {}
-            _model: Union[resnet_ap.ResNetAP, torchvision.models.ResNet] = ModelClass(
+            _model: resnet_ap.ResNetAP | torchvision.models.ResNet = ModelClass(
                 num_classes=self.num_classes, **kwargs)
             if '_comp' in name:
                 conv1: nn.Conv2d = _model.conv1

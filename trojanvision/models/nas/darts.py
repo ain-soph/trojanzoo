@@ -17,7 +17,6 @@ import os
 import itertools
 from collections import OrderedDict
 
-from typing import Union
 from typing import TYPE_CHECKING
 from trojanzoo.utils.fim import KFAC, EKFAC
 from trojanzoo.utils.model import ExponentialMovingAverage
@@ -43,7 +42,7 @@ def _concat(xs: torch.Tensor) -> torch.Tensor:
 class _DARTS(_ImageModel):
     def __init__(self, auxiliary: bool = False, **kwargs):
         super().__init__(**kwargs)
-        self.features: Union[FeatureExtractor, darts.search.FeatureExtractor]
+        self.features: FeatureExtractor | darts.search.FeatureExtractor
         self.auxiliary_head: nn.Sequential = None
         if auxiliary:
             self.auxiliary_head = AuxiliaryHead(C=self.features.aux_dim, num_classes=self.num_classes)
@@ -55,7 +54,7 @@ class _DARTS(_ImageModel):
                         genotype: Genotype = genotypes.darts,
                         init_channels: int = 36, layers: int = 20,
                         dropout_p: float = 0.2, **kwargs
-                        ) -> Union[FeatureExtractor, darts.search.FeatureExtractor]:
+                        ) -> FeatureExtractor | darts.search.FeatureExtractor:
         if supernet:
             return darts.search.FeatureExtractor(init_channels, layers, **kwargs)
         return FeatureExtractor(genotype, init_channels, layers, dropout_p, **kwargs)
@@ -280,7 +279,7 @@ class DARTS(ImageModel):
                lr_warmup_epochs: int = 0,
                model_ema: ExponentialMovingAverage = None,
                model_ema_steps: int = 32,
-               grad_clip: float = None, pre_conditioner: Union[KFAC, EKFAC] = None,
+               grad_clip: float = None, pre_conditioner: None | KFAC | EKFAC = None,
                print_prefix: str = 'Epoch', start_epoch: int = 0, resume: int = 0,
                validate_interval: int = 10, save: bool = False, amp: bool = False,
                loader_train: torch.utils.data.DataLoader = None,

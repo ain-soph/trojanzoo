@@ -15,7 +15,6 @@ import trojanzoo.models
 from trojanvision.datasets import ImageSet
 from trojanzoo.configs import Config
 import argparse
-from typing import Union
 
 module_list = [nas, normal, others, torchvision]
 __all__ = ['_ImageModel', 'ImageModel',
@@ -27,7 +26,7 @@ for module in module_list:
     class_dict.update(module.class_dict)
 
 
-def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: Union[str, ImageModel] = None,
+def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model: str | ImageModel = None,
                  config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict):
     r"""
     | Add image model arguments to argument parser.
@@ -51,8 +50,8 @@ def add_argument(parser: argparse.ArgumentParser, model_name: str = None, model:
                                          config=config, class_dict=class_dict)
 
 
-def create(model_name: str = None, model: Union[str, ImageModel] = None,
-           dataset_name: str = None, dataset: Union[str, ImageSet] = None,
+def create(model_name: str = None, model: str | ImageModel = None,
+           dataset_name: str = None, dataset: str | ImageSet = None,
            config: Config = config, class_dict: dict[str, type[ImageModel]] = class_dict,
            **kwargs) -> ImageModel:
     r"""

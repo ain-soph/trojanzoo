@@ -11,7 +11,6 @@ import numpy as np
 import argparse
 import os
 
-from typing import Union
 import torch.utils.data
 
 
@@ -234,8 +233,8 @@ class ABS(ModelInspection):
         return all_ps
 
     def find_min_max(self, all_ps: dict[str, torch.Tensor], _label: torch.Tensor
-                     ) -> dict[int, list[dict[str, Union[str, int, float]]]]:
-        neuron_dict: dict[int, list[dict[str, Union[str, int, float]]]]
+                     ) -> dict[int, list[dict[str, str | int | float]]]:
+        neuron_dict: dict[int, list[dict[str, str | int | float]]]
         neuron_dict = {i: [] for i in range(self.model.num_classes)}
         _label = _label.cpu()
         for layer in all_ps.keys():

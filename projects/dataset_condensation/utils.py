@@ -10,7 +10,6 @@ from scipy.ndimage.interpolation import rotate as scipyrotate
 from collections.abc import Callable
 
 from trojanzoo.models import Model
-from typing import Union
 
 
 @torch.no_grad()
@@ -51,7 +50,7 @@ def get_loops(image_per_class: int) -> tuple[int, int]:
 
 def match_loss(gw_syn: tuple[torch.Tensor], gw_real: tuple[torch.Tensor], dis_metric: str,
                fim_inv_list: list[torch.Tensor] = None,
-               kfac: Union[KFAC, EKFAC] = None) -> torch.Tensor:
+               kfac: None | KFAC | EKFAC = None) -> torch.Tensor:
     dis = torch.tensor(0.0).to(gw_syn[0].device)
 
     if dis_metric in ['ours', 'kfac', 'ekfac']:
@@ -188,7 +187,7 @@ def distance_wb(gwr: torch.Tensor, gws: torch.Tensor,
     return dis
 
 
-def augment(images: torch.Tensor, param_augment: dict[str, Union[str, float]], device: str):
+def augment(images: torch.Tensor, param_augment: dict[str, str | float], device: str):
     # This can be sped up in the future.
 
     if param_augment is not None and param_augment['strategy'] != 'none':
