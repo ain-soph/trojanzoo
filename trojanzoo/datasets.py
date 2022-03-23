@@ -399,15 +399,15 @@ class Dataset(ABC, BasicObject):
             torch.utils.data.DataLoader: The pytorch dataloader.
         """
         if batch_size is None:
-            # TODO: python 3.10 match
-            if mode == 'train':
-                batch_size = self.batch_size
-            elif mode == 'valid':
-                batch_size = self.valid_batch_size
-            else:
-                raise ValueError(f'{mode=}')
+            match mode:
+                case 'train':
+                    batch_size = self.batch_size
+                case 'valid':
+                    batch_size = self.valid_batch_size
+                case _:
+                    raise ValueError(f'{mode=}')
         if shuffle is None:
-            shuffle = mode == 'train'
+            shuffle = (mode == 'train')
         if num_workers is None:
             num_workers = self.num_workers
         if dataset is None:

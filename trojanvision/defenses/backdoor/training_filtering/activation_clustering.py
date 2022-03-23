@@ -101,12 +101,13 @@ class ActivationClustering(TrainingFiltering):
         self.reduce_method = reduce_method
         self.cluster_analysis = cluster_analysis
 
-        if self.reduce_method == 'FastICA':  # TODO: python 3.10 match
-            self.projector = FastICA(n_components=self.nb_dims)
-        elif self.reduce_method == 'PCA':
-            self.projector = PCA(n_components=self.nb_dims)
-        else:
-            raise ValueError(self.reduce_method + ' dimensionality reduction method not supported.')
+        match self.reduce_method:
+            case 'FastICA':
+                self.projector = FastICA(n_components=self.nb_dims)
+            case 'PCA':
+                self.projector = PCA(n_components=self.nb_dims)
+            case _:
+                raise ValueError(self.reduce_method + ' dimensionality reduction method not supported.')
         clusterer_class = MiniBatchKMeans if self.defense_input_num else KMeans
         self.clusterer = clusterer_class(n_clusters=self.nb_clusters)
 

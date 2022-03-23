@@ -712,34 +712,36 @@ class Model(BasicObject):
         optimizer = OptimType(parameters, lr, **kwargs)
         _lr_scheduler: _LRScheduler = None
         if lr_scheduler:
-            main_lr_scheduler: _LRScheduler = None
-            if lr_scheduler_type == 'StepLR':    # TODO: python 3.10 match
-                main_lr_scheduler = torch.optim.lr_scheduler.StepLR(
-                    optimizer, step_size=lr_step_size, gamma=lr_gamma)
-            elif lr_scheduler_type == 'CosineAnnealingLR':
-                main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                    optimizer, T_max=epochs - lr_warmup_epochs, eta_min=lr_min)
-            elif lr_scheduler_type == 'ExponentialLR':
-                main_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
-                    optimizer, gamma=lr_gamma)
-            else:
-                raise RuntimeError(
-                    f'Invalid lr scheduler "{lr_scheduler_type}".'
-                    'Only StepLR, CosineAnnealingLR and ExponentialLR '
-                    'are supported.')
+            main_lr_scheduler: _LRScheduler
+            match lr_scheduler_type:
+                case 'StepLR':
+                    main_lr_scheduler = torch.optim.lr_scheduler.StepLR(
+                        optimizer, step_size=lr_step_size, gamma=lr_gamma)
+                case 'CosineAnnealingLR':
+                    main_lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                        optimizer, T_max=epochs - lr_warmup_epochs, eta_min=lr_min)
+                case 'ExponentialLR':
+                    main_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                        optimizer, gamma=lr_gamma)
+                case _:
+                    raise NotImplementedError(
+                        f'Invalid {lr_scheduler_type=}.'
+                        'Only "StepLR", "CosineAnnealingLR" and "ExponentialLR" '
+                        'are supported.')
             if lr_warmup_epochs > 0:
-                if lr_warmup_method == "linear":
-                    warmup_lr_scheduler = torch.optim.lr_scheduler.LinearLR(
-                        optimizer, start_factor=lr_warmup_decay,
-                        total_iters=lr_warmup_epochs)
-                elif lr_warmup_method == "constant":
-                    warmup_lr_scheduler = torch.optim.lr_scheduler.ConstantLR(
-                        optimizer, factor=lr_warmup_decay,
-                        total_iters=lr_warmup_epochs)
-                else:
-                    raise RuntimeError(
-                        f'Invalid warmup lr method "{lr_warmup_method}".'
-                        'Only linear and constant are supported.')
+                match lr_warmup_method:
+                    case 'linear':
+                        warmup_lr_scheduler = torch.optim.lr_scheduler.LinearLR(
+                            optimizer, start_factor=lr_warmup_decay,
+                            total_iters=lr_warmup_epochs)
+                    case 'constant':
+                        warmup_lr_scheduler = torch.optim.lr_scheduler.ConstantLR(
+                            optimizer, factor=lr_warmup_decay,
+                            total_iters=lr_warmup_epochs)
+                    case _:
+                        raise NotImplementedError(
+                            f'Invalid {lr_warmup_method=}.'
+                            'Only "linear" and "constant" are supported.')
                 _lr_scheduler = torch.optim.lr_scheduler.SequentialLR(
                     optimizer,
                     schedulers=[warmup_lr_scheduler, main_lr_scheduler],
@@ -845,18 +847,19 @@ class Model(BasicObject):
                 print(f'{file_path=}')
                 raise
         module = self._model
-        if component == 'features':  # TODO: python 3.10 match
-            module = self._model.features
-            _dict = OrderedDict(
-                [(key.removeprefix('features.'), value)
-                    for key, value in _dict.items()])
-        elif component == 'classifier':
-            module = self._model.classifier
-            _dict = OrderedDict(
-                [(key.removeprefix('classifier.'), value)
-                    for key, value in _dict.items()])
-        else:
-            assert component == 'full', f'{component=}'
+        match component:
+            case 'features':
+                module = self._model.features
+                _dict = OrderedDict(
+                    [(key.removeprefix('features.'), value)
+                        for key, value in _dict.items()])
+            case 'classifier':
+                module = self._model.classifier
+                _dict = OrderedDict(
+                    [(key.removeprefix('classifier.'), value)
+                        for key, value in _dict.items()])
+            case _:
+                assert component == 'full', f'{component=}'
         if inplace:
             try:
                 module.load_state_dict(_dict, strict=strict)
@@ -1333,13 +1336,15 @@ class Model(BasicObject):
 
     def get_parameter_from_name(self, name: str = 'full'
                                 ) -> Iterator[nn.Parameter]:
-        params = self._model.parameters()
-        if name == 'features':  # TODO: python 3.10 match
-            params = self._model.features.parameters()
-        elif name in ['classifier', 'partial']:
-            params = self._model.classifier.parameters()
-        elif name != 'full':
-            raise NotImplementedError(f'{name=}')
+        match name:
+            case 'features':
+                params = self._model.features.parameters()
+            case 'classifier' | 'partial':
+                params = self._model.classifier.parameters()
+            case 'full':
+                params = self._model.parameters()
+            case _:
+                raise NotImplementedError(f'{name=}')
         return params
 
     def __call__(self, _input: torch.Tensor, amp: bool = False,

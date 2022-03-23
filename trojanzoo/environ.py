@@ -120,7 +120,7 @@ def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str =
            seed: int = None, data_seed: int = None, benchmark: bool = None,
            config: Config = config,
            cache_threshold: float = None, verbose: int = 0,
-           color: bool = None, device: str = None, tqdm: bool = None,
+           color: bool = None, device: str | int | torch.device = None, tqdm: bool = None,
            **kwargs) -> Env:
     r"""
     | Load :attr:`env` values from config and command line.
@@ -159,19 +159,20 @@ def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str =
     torch.cuda.manual_seed_all(seed)
 
     num_gpus: int = torch.cuda.device_count()
-    device: Union[str, int] = result['device']
-    if device is None or device == 'auto':  # TODO: python 3.10 match
-        device = 'cuda' if num_gpus else 'cpu'
-    if device == 'gpu':
-        device = 'cuda'
-    if isinstance(device, (str, int)):
+    device: str | int | torch.device = result['device']
+    if device is None:
+        device = 'auto'
+    if isinstance(device, str | int):
+        match device:
+            case 'auto':
+                device = 'cuda' if num_gpus else 'cpu'
+            case 'gpu':
+                device = 'cuda'
         device = torch.device(device)
     if device.type == 'cpu':
         num_gpus = 0
     if device.index is not None and torch.cuda.is_available():
         num_gpus = 1
-    if num_gpus == 0:
-        device = torch.device('cpu')
     if benchmark is None and 'benchmark' in env.keys():
         benchmark = env['benchmark']
     if benchmark:

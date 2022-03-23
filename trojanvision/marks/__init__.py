@@ -24,25 +24,27 @@ dir_path = os.path.dirname(__file__)
 def get_edge_color(
     mark: torch.Tensor,
     mark_background_color: Union[str, torch.Tensor] = 'auto'
-) -> Optional[torch.Tensor]:
+) -> torch.Tensor | None:
     # if any pixel is not fully opaque
     if not mark[-1].allclose(torch.ones_like(mark[-1]), atol=1e-3):
         return None
     mark = mark[:-1]    # remove alpha channel
-    if isinstance(mark_background_color, torch.Tensor):    # TODO: python 3.10 match
-        return torch.as_tensor(mark_background_color).expand(mark.size(0))
-    elif mark_background_color == 'black':
-        return torch.zeros(mark.size(0))
-    elif mark_background_color == 'white':
-        return torch.ones(mark.size(0))
-    elif mark_background_color == 'auto':
-        if mark.flatten(1).std(1).max() < 1e-3:
-            return None
-        else:
-            _list = [mark[:, 0, :], mark[:, -1, :],
-                     mark[:, :, 0], mark[:, :, -1]]
-            return torch.cat(_list, dim=1).mode(dim=-1)[0]
-    raise ValueError(f'{mark_background_color=:s}')
+    match mark_background_color:
+        case torch.Tensor():
+            return torch.as_tensor(mark_background_color).expand(mark.size(0))
+        case 'black':
+            return torch.zeros(mark.size(0))
+        case 'white':
+            return torch.ones(mark.size(0))
+        case 'auto':
+            if mark.flatten(1).std(1).max() < 1e-3:
+                return None
+            else:
+                _list = [mark[:, 0, :], mark[:, -1, :],
+                         mark[:, :, 0], mark[:, :, -1]]
+                return torch.cat(_list, dim=1).mode(dim=-1)[0]
+        case _:
+            raise ValueError(f'{mark_background_color=:s}')
 
 
 def update_mark_alpha_channel(

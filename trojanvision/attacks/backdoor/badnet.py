@@ -104,14 +104,15 @@ class BadNet(Attack):
         self.poison_percent = poison_percent
         self.poison_ratio = self.poison_percent / (1 - self.poison_percent)
         self.train_mode = train_mode
-        if train_mode == 'batch':    # python 3.10 match
-            self.poison_num = self.dataset.batch_size * self.poison_ratio
-            self.poison_set = None
-        elif train_mode == 'dataset':
-            self.poison_num = int(len(self.dataset.loader['train'].dataset) * self.poison_ratio)
-            self.poison_set = self.get_poison_dataset()
-        else:
-            self.poison_set = None
+        match train_mode:
+            case 'batch':
+                self.poison_num = self.dataset.batch_size * self.poison_ratio
+                self.poison_set = None
+            case 'dataset':
+                self.poison_num = int(len(self.dataset.loader['train'].dataset) * self.poison_ratio)
+                self.poison_set = self.get_poison_dataset()
+            case _:
+                self.poison_set = None
 
     def attack(self, epochs: int, **kwargs):
         if self.train_mode == 'batch':

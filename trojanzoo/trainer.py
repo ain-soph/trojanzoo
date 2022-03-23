@@ -307,11 +307,13 @@ def create(dataset_name: str = None,
         model_ema_module = ExponentialMovingAverage(
             model._model, decay=1.0 - alpha)
 
-    kfac_optimizer = None
-    if pre_conditioner == 'kfac':   # TODO: python 3.10 match
-        kfac_optimizer = KFAC(module)
-    elif pre_conditioner == 'ekfac':
-        kfac_optimizer = EKFAC(module)
+    match pre_conditioner:
+        case 'kfac':
+            kfac_optimizer = KFAC(module)
+        case 'ekfac':
+            kfac_optimizer = EKFAC(module)
+        case _:
+            kfac_optimizer = None
 
     writer = None
     writer_args: dict[str, Any] = {}
