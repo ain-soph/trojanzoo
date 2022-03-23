@@ -183,9 +183,6 @@ class SmoothedValue:
     def __format__(self, format_spec: str) -> str:
         return self.__str__()
 
-    def __repr__(self) -> str:
-        return self.__str__()
-
 
 class MetricLogger:
     r"""

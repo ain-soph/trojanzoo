@@ -9,6 +9,7 @@ from trojanzoo.environ import env
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from tqdm import tqdm
 
@@ -48,8 +49,8 @@ def train(module: nn.Module, num_classes: int,
     if epochs <= 0:
         return
     get_data_fn = get_data_fn or (lambda x: x)
-    loss_fn = loss_fn or nn.CrossEntropyLoss()
     forward_fn = forward_fn or module.__call__
+    loss_fn = loss_fn or (lambda _input, _label, _output=None: F.cross_entropy(_output or forward_fn(_input), _label))
     validate_fn = validate_fn or validate
     accuracy_fn = accuracy_fn or accuracy
 
@@ -60,7 +61,7 @@ def train(module: nn.Module, num_classes: int,
         scaler = torch.cuda.amp.GradScaler()
     if validate_interval != 0:
         _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn,
-                                  loss_fn=loss_fn, forward_fn=forward_fn,
+                                  forward_fn=forward_fn, loss_fn=loss_fn,
                                   writer=None, tag=tag, _epoch=start_epoch,
                                   verbose=verbose, indent=indent, **kwargs)
 
@@ -180,6 +181,7 @@ def train(module: nn.Module, num_classes: int,
                                      num_classes=num_classes,
                                      loader=loader_valid,
                                      get_data_fn=get_data_fn,
+                                     forward_fn=forward_fn,
                                      loss_fn=loss_fn,
                                      writer=writer, tag=tag,
                                      _epoch=_epoch + start_epoch,

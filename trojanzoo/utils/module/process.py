@@ -59,9 +59,6 @@ class BasicObject:
             self.summary()
             return redirect.buffer
 
-    def __repr__(self) -> str:
-        return str(self)
-
 
 class Process(BasicObject):
     r"""It inherits :class:`BasicObject` and further specify output levels.

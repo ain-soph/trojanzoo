@@ -103,7 +103,7 @@ class DARTS(ImageModel):
             Defaults to ``0.4``.
         arch_search (bool): Whether to search supernet architecture weight parameters.
             Defaults to ``False``.
-        full (bool): Whether to use full training data during architecture search.
+        use_full_train_set (bool): Whether to use full training data during architecture search.
             Defaults to ``False``.
         arch_lr (float): Learning rate for architecture optimizer.
             Defaults to ``3e-4``
@@ -136,7 +136,7 @@ class DARTS(ImageModel):
                            help='loss weight of auxiliary classifier (default: 0.4)')
         group.add_argument('--arch_search', action='store_true',
                            help='whether to search supernet architecture weight parameters')
-        group.add_argument('--full', action='store_true',
+        group.add_argument('--use_full_train_set', action='store_true',
                            help='whether to use full training data during architecture search')
         group.add_argument('--arch_lr', type=float,
                            help='learning rate for architecture optimizer (default: 3e-4)')
@@ -151,7 +151,7 @@ class DARTS(ImageModel):
                  auxiliary: bool = False, auxiliary_weight: float = 0.4,
                  genotype: Genotype = None, model: type[_DARTS] = _DARTS,
                  supernet: bool = False, arch_search: bool = False,
-                 full: bool = False,
+                 use_full_train_set: bool = False,
                  arch_lr: float = 3e-4, arch_weight_decay=1e-3,
                  arch_unrolled: bool = False,
                  primitives=PRIMITIVES, **kwargs):
@@ -192,7 +192,7 @@ class DARTS(ImageModel):
             self.param_list['darts'].insert(1, 'auxiliary_weight')
 
         if supernet and arch_search:
-            self.full = full
+            self.use_full_train_set = use_full_train_set
             for alpha in self.arch_parameters():
                 alpha.requires_grad_()
             train2, train3 = self.dataset.split_dataset(
@@ -206,7 +206,7 @@ class DARTS(ImageModel):
             self.arch_optimizer = torch.optim.Adam(self.arch_parameters(),
                                                    lr=arch_lr, betas=(0.5, 0.999),
                                                    weight_decay=arch_weight_decay)
-            self.param_list['arch_search'] = ['full', 'arch_optimizer']
+            self.param_list['arch_search'] = ['use_full_train_set', 'arch_optimizer']
 
     @property
     def genotype(self) -> Genotype:
@@ -275,21 +275,6 @@ class DARTS(ImageModel):
     def named_arch_parameters(self) -> list[tuple[str, torch.Tensor]]:
         return self._model.features.named_arch_parameters()
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False,
-                 mode: str = 'train', **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = super().get_data(data, adv_train=adv_train, **kwargs)
-        if self.arch_search and mode == 'train':
-            data_valid = next(self.valid_iterator)
-            input_valid, label_valid = super().get_data(data_valid, adv_train=adv_train, **kwargs)
-            self.arch_optimizer.zero_grad()
-            if self.arch_unrolled:
-                self._backward_step_unrolled(_input, _label, input_valid, label_valid)
-            else:
-                loss = self.loss(input_valid, label_valid)
-                loss.backward(inputs=self.arch_parameters())
-            self.arch_optimizer.step()
-        return _input, _label
-
     def _train(self, epochs: int, optimizer: Optimizer, lr_scheduler: _LRScheduler = None,
                adv_train: bool = None,
                lr_warmup_epochs: int = 0,
@@ -311,10 +296,46 @@ class DARTS(ImageModel):
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs) -> None:
-        if self.arch_search and not self.full:
-            loader_train = loader_train or self.train2
-        self.optimizer = optimizer
-        # self.lr_scheduler = lr_scheduler
+        get_data_fn = get_data_fn or self.get_data
+        validate_fn = validate_fn or self._validate
+        if self.arch_search:
+            if not self.use_full_train_set:
+                loader_train = loader_train or self.train2
+            if self.arch_unrolled:
+                self.optimizer = optimizer
+                # self.lr_scheduler = lr_scheduler
+
+            get_data_old = get_data_fn
+            validate_old = validate_fn
+
+            def get_data(data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False,
+                         mode: str = 'train', **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                _input, _label = get_data_old(data, adv_train=adv_train, **kwargs)
+                if mode == 'train':
+                    data_valid = next(self.valid_iterator)
+                    input_valid, label_valid = get_data_old(data_valid, adv_train=adv_train, **kwargs)
+                    self.arch_optimizer.zero_grad()
+                    if self.arch_unrolled:
+                        self._backward_step_unrolled(_input, _label, input_valid, label_valid)
+                    else:
+                        loss = self.loss(input_valid, label_valid)
+                        loss.backward(inputs=self.arch_parameters())
+                    self.arch_optimizer.step()
+                return _input, _label
+
+            def _validate(adv_train: bool = None,
+                          loader: torch.utils.data.DataLoader = None,
+                          **kwargs) -> tuple[float, float]:
+                print(self.genotype)
+                # if not self.use_full_train_set:
+                #     super()._validate(loader=self.train3,
+                #                       adv_train=adv_train,
+                #                       print_prefix='TrainVal', **kwargs)
+                return validate_old(loader=loader, adv_train=adv_train, **kwargs)
+
+            get_data_fn = get_data
+            validate_fn = _validate
+
         return super()._train(epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
                               adv_train=adv_train,
                               lr_warmup_epochs=lr_warmup_epochs,
@@ -332,17 +353,6 @@ class DARTS(ImageModel):
                               writer=writer, main_tag=main_tag, tag=tag,
                               accuracy_fn=accuracy_fn,
                               verbose=verbose, indent=indent, **kwargs)
-
-    def _validate(self, adv_train: bool = None,
-                  loader: torch.utils.data.DataLoader = None,
-                  **kwargs) -> tuple[float, float]:
-        if self.arch_search:
-            print(self._model.features.genotype)
-            if not self.full:
-                super()._validate(loader=self.train3,
-                                  adv_train=adv_train,
-                                  print_prefix='TrainVal', **kwargs)
-        return super()._validate(loader=loader, adv_train=adv_train, **kwargs)
 
     def _backward_step_unrolled(self, input_train: torch.Tensor, target_train: torch.Tensor,
                                 input_valid: torch.Tensor, target_valid: torch.Tensor,
