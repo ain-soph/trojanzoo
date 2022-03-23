@@ -64,16 +64,16 @@ class SpectralSignature(BackdoorDefense):
         self.param_list['spectral_signature'] = ['preprocess_layer', 'poison_image_num', 'clean_image_num',
                                                  ' epsilon', 'retrain_epoch']
 
-        clean_dataset, remain_dataset = self.dataset.split_dataset(
+        clean_set, remain_dataset = self.dataset.split_dataset(
             dataset=self.dataset.get_dataset(mode='train'), length=self.clean_image_num)
-        clean_input, clean_label = dataset_to_tensor(clean_dataset)
-        self.clean_dataset = TensorDataset(clean_input, clean_label)
+        clean_input, clean_label = dataset_to_tensor(clean_set)
+        self.clean_set = TensorDataset(clean_input, clean_label)
 
-        poison_dataset, _ = self.dataset.split_dataset(dataset=remain_dataset, length=self.poison_image_num)
-        poison_input, poison_label = dataset_to_tensor(poison_dataset)
-        self.poison_dataset = TensorDataset(poison_input, poison_label)
+        poison_set, _ = self.dataset.split_dataset(dataset=remain_dataset, length=self.poison_image_num)
+        poison_input, poison_label = dataset_to_tensor(poison_set)
+        self.poison_set = TensorDataset(poison_input, poison_label)
 
-        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
+        self.mix_dataset = torch.utils.data.ConcatDataset([self.clean_set, self.poison_set])
         self.mix_dataloader = self.dataset.get_dataloader(
             mode='train', dataset=self.mix_dataset, num_workers=0, pin_memory=False)
 

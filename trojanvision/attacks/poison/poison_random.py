@@ -51,16 +51,16 @@ class PoisonRandom(Attack):
                               save_fn=self.save, **kwargs)
 
     def mix_dataset(self) -> torch.utils.data.Dataset:
-        clean_dataset = self.dataset.loader['train'].dataset
-        subset, otherset = ImageSet.split_dataset(clean_dataset, percent=self.poison_percent)
+        clean_set = self.dataset.loader['train'].dataset
+        subset, other_set = ImageSet.split_dataset(clean_set, percent=self.poison_percent)
         if not len(subset):
-            return clean_dataset
+            return clean_set
         _input, _label = dataset_to_tensor(subset)
 
         _label += torch.randint_like(_label, low=1, high=self.model.num_classes)
         _label %= self.model.num_classes
-        poison_dataset = TensorListDataset(_input, _label.tolist())
-        return torch.utils.data.ConcatDataset([poison_dataset, otherset])
+        poison_set = TensorListDataset(_input, _label.tolist())
+        return torch.utils.data.ConcatDataset([poison_set, other_set])
 
     # ---------------------- I/O ----------------------------- #
 

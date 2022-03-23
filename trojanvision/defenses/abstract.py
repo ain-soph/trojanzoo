@@ -191,24 +191,24 @@ class TrainingFiltering(BackdoorDefense):
     def __init__(self, defense_input_num: int = None, **kwargs):
         super().__init__(**kwargs)
         self.defense_input_num = defense_input_num
-        self.clean_dataset, self.poison_dataset = self.get_mix_dataset()
+        self.clean_set, self.poison_set = self.get_mix_dataset()
 
     def get_mix_dataset(self) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
-        if self.attack.poison_dataset is None:
-            self.attack.poison_dataset = self.attack.get_poison_dataset(
+        if self.attack.poison_set is None:
+            self.attack.poison_set = self.attack.get_poison_dataset(
                 poison_num=len(self.dataset.loader['train'].dataset))
         if not self.defense_input_num:
-            return self.dataset.loader['train'].dataset, self.attack.poison_dataset
+            return self.dataset.loader['train'].dataset, self.attack.poison_set
         if self.attack.train_mode != 'dataset':
             poison_num = int(self.defense_input_num * self.attack.poison_percent)
             clean_num = self.defense_input_num - poison_num
             clean_input, clean_label = sample_batch(self.dataset.loader['train'].dataset,
                                                     batch_size=clean_num)
-            poison_input, poison_label = sample_batch(self.attack.poison_dataset,
+            poison_input, poison_label = sample_batch(self.attack.poison_set,
                                                       batch_size=poison_num)
-            clean_dataset = TensorListDataset(clean_input, clean_label.tolist())
-            poison_dataset = TensorListDataset(poison_input, poison_label.tolist())
-        return clean_dataset, poison_dataset
+            clean_set = TensorListDataset(clean_input, clean_label.tolist())
+            poison_set = TensorListDataset(poison_input, poison_label.tolist())
+        return clean_set, poison_set
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
@@ -220,8 +220,8 @@ class TrainingFiltering(BackdoorDefense):
         print(f'accuracy_score  : {metrics.accuracy_score(y_true, y_pred):8.3f}')
 
     def get_true_labels(self) -> torch.Tensor:
-        return torch.cat([torch.zeros(len(self.clean_dataset), dtype=torch.bool),
-                          torch.ones(len(self.poison_dataset), dtype=torch.bool)])
+        return torch.cat([torch.zeros(len(self.clean_set), dtype=torch.bool),
+                          torch.ones(len(self.poison_set), dtype=torch.bool)])
 
     @abstractmethod
     def get_pred_labels(self) -> torch.Tensor:

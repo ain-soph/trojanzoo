@@ -132,7 +132,7 @@ class Refool(BadNet):
         reflect_imgs (torch.Tensor): Candidate reflect images with shape ``(candidate_num, C, H, W)``.
         train_mode (str): Training mode to inject backdoor. Forced to be 'dataset'.
             See detailed description in :class:`trojanvision.attacks.BadNet`.
-        poison_dataset (torch.utils.data.Dataset): Poison dataset (no clean data).
+        poison_set (torch.utils.data.Dataset): Poison dataset (no clean data).
             It is ``None`` at initialization because the best trigger keeps unknown.
         refool_sample_num (int): Number of retraining samples from training set
             in target class during trigger ranking.
@@ -264,7 +264,7 @@ class Refool(BadNet):
             # logger.reset().update_list(asr=asr_result)
             self.model.load_state_dict(model_dict)
         self.mark.mark[:-1] = self.reflect_imgs[W.argmax().item()]
-        self.poison_dataset = self.get_poison_dataset(load_mark=False)
+        self.poison_set = self.get_poison_dataset(load_mark=False)
         super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
 
     def get_poison_dataset(self, poison_num: int = None, load_mark: bool = True,

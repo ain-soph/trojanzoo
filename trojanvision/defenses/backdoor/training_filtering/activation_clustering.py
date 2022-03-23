@@ -106,7 +106,7 @@ class ActivationClustering(TrainingFiltering):
     def get_pred_labels(self) -> torch.Tensor:
         all_fm = []
         all_pred_label = []
-        mix_dataset = torch.utils.data.ConcatDataset([self.clean_dataset, self.poison_dataset])
+        mix_dataset = torch.utils.data.ConcatDataset([self.clean_set, self.poison_set])
         loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
         if env['tqdm']:
             loader = tqdm(loader, leave=False)

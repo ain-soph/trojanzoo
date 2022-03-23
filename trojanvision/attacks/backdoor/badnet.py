@@ -67,7 +67,7 @@ class BadNet(Attack):
             * ``train_mode == 'batch'  : poison_ratio * batch_size``
             * ``train_mode == 'dataset': int(poison_ratio * len(train_set))``
             * ``train_mode == 'loss'   : N/A``
-        poison_dataset (torch.utils.data.Dataset):
+        poison_set (torch.utils.data.Dataset):
             Poison dataset (no clean data) ``if train_mode == 'dataset'``.
 
     .. _BadNets\: Identifying Vulnerabilities in the Machine Learning Model Supply Chain:
@@ -106,12 +106,12 @@ class BadNet(Attack):
         self.train_mode = train_mode
         if train_mode == 'batch':    # python 3.10 match
             self.poison_num = self.dataset.batch_size * self.poison_ratio
-            self.poison_dataset = None
+            self.poison_set = None
         elif train_mode == 'dataset':
             self.poison_num = int(len(self.dataset.loader['train'].dataset) * self.poison_ratio)
-            self.poison_dataset = self.get_poison_dataset()
+            self.poison_set = self.get_poison_dataset()
         else:
-            self.poison_dataset = None
+            self.poison_set = None
 
     def attack(self, epochs: int, **kwargs):
         if self.train_mode == 'batch':
@@ -123,7 +123,7 @@ class BadNet(Attack):
                               save_fn=self.save, **kwargs)
         elif self.train_mode == 'dataset':
             mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
-                                                          self.poison_dataset])
+                                                          self.poison_set])
             loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
             self.model._train(epochs, loader_train=loader,
                               validate_fn=self.validate_fn,
