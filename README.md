@@ -132,7 +132,7 @@ Modify them in corresponding config files and command-line arguments.
 TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/ain-soph/trojanzoo/blob/main/LICENSE) file.
 ## Cite our paper
 ```
-@InProceedings{pang:2020:eurosp,
+@InProceedings{pang:2022:eurosp,
       title={TrojanZoo: Towards Unified, Holistic, and Practical Evaluation of Neural Backdoors}, 
       author={Ren Pang and Zheng Zhang and Xiangshan Gao and Zhaohan Xi and Shouling Ji and Peng Cheng and Ting Wang},
       year={2022},
