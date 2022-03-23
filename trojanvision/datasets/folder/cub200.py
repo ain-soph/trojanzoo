@@ -42,7 +42,7 @@ class CUB200(ImageFolder):
     def download_and_extract_archive(self, mode: str):
         file_name = f'{self.name}_{mode}{self.ext[mode]}'
         file_path = os.path.normpath(os.path.join(self.folder_path, file_name))
-        md5 = None if mode not in self.md5.keys() else self.md5[mode]
+        md5 = self.md5.get(mode)
         if not check_integrity(file_path, md5=md5):
             prints('{yellow}Downloading Dataset{reset} '.format(**ansi),
                    f'{self.name} {mode:5s}: {file_path}', indent=10)

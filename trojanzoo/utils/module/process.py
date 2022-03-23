@@ -99,11 +99,13 @@ class Process(BasicObject):
         Returns:
             set[str]: The set of output items.
         """
-        if org_output is None:
-            return self.output
-        elif isinstance(org_output, int):
-            return self.get_output_int(org_output)
-        return set(org_output)
+        match org_output:
+            case None:
+                return self.output
+            case int():
+                return self.get_output_int(org_output)
+            case _:
+                return set(org_output)
 
     @classmethod
     def get_output_int(cls, org_output: int = 0) -> set[str]:

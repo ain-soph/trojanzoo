@@ -30,35 +30,39 @@ class _MagNet(nn.Module):
 
         in_channels = channel
         for i, layer in enumerate(structure):
-            if isinstance(layer, int):
-                conv = Conv2d_SAME(in_channels=in_channels,
-                                   out_channels=structure[i],
-                                   kernel_size=(3, 3))
-                in_channels = structure[i]
-                bn = nn.BatchNorm2d(structure[i])
-                self.encoder.add_module(f'conv{i+1:d}', conv)
-                self.encoder.add_module(f'bn{i+1:d}', bn)
-                self.encoder.add_module(f'{activation}{i+1:d}', activation_fn)
-            else:
-                assert isinstance(layer, str)
-                module = nn.MaxPool2d(kernel_size=(2, 2)) if layer == 'max' \
-                    else nn.AvgPool2d(kernel_size=(2, 2))
-                self.encoder.add_module('pool', module)
+            match layer:
+                case int():
+                    conv = Conv2d_SAME(in_channels=in_channels,
+                                       out_channels=structure[i],
+                                       kernel_size=(3, 3))
+                    in_channels = structure[i]
+                    bn = nn.BatchNorm2d(structure[i])
+                    self.encoder.add_module(f'conv{i+1:d}', conv)
+                    self.encoder.add_module(f'bn{i+1:d}', bn)
+                    self.encoder.add_module(f'{activation}{i+1:d}', activation_fn)
+                case str():
+                    module = nn.MaxPool2d(kernel_size=(2, 2)) if layer == 'max' \
+                        else nn.AvgPool2d(kernel_size=(2, 2))
+                    self.encoder.add_module('pool', module)
+                case _:
+                    raise TypeError(type(layer))
 
         for i, layer in enumerate(reversed(structure)):
-            if isinstance(layer, int):
-                conv = Conv2d_SAME(in_channels=in_channels,
-                                   out_channels=structure[i],
-                                   kernel_size=(3, 3))
-                in_channels = structure[i]
-                bn = nn.BatchNorm2d(structure[i])
-                self.decoder.add_module(f'conv{i+1:d}', conv)
-                self.decoder.add_module(f'bn{i+1:d}', bn)
-                self.decoder.add_module(f'{activation}{i+1:d}', activation_fn)
-            else:
-                assert isinstance(layer, str)
-                self.decoder.add_module('pool',
-                                        nn.Upsample(scale_factor=(2, 2)))
+            match layer:
+                case int():
+                    conv = Conv2d_SAME(in_channels=in_channels,
+                                       out_channels=structure[i],
+                                       kernel_size=(3, 3))
+                    in_channels = structure[i]
+                    bn = nn.BatchNorm2d(structure[i])
+                    self.decoder.add_module(f'conv{i+1:d}', conv)
+                    self.decoder.add_module(f'bn{i+1:d}', bn)
+                    self.decoder.add_module(f'{activation}{i+1:d}', activation_fn)
+                case str():
+                    self.decoder.add_module('pool',
+                                            nn.Upsample(scale_factor=(2, 2)))
+                case _:
+                    raise TypeError(type(layer))
         conv = Conv2d_SAME(structure[0], channel, kernel_size=(3, 3))
         bn = nn.BatchNorm2d(channel)
         self.decoder.add_module('conv', conv)

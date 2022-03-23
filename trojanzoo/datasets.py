@@ -157,14 +157,17 @@ class Dataset(ABC, BasicObject):
             raise
         # ----------------------------------------------- #
         # Loss Weights
-        if isinstance(loss_weights, bool):
-            loss_weights = self.get_loss_weights(
-            ) if loss_weights else None    # TODO: issue 5 pylance
-        elif isinstance(loss_weights, np.ndarray):
-            loss_weights = torch.from_numpy(loss_weights).to(device=env['device'])
-        else:
-            loss_weights = loss_weights.to(device=env['device'])
-        self.loss_weights: torch.Tensor = loss_weights
+        match loss_weights:
+            case bool():
+                # TODO: issue 5 pylance
+                loss_weights = self.get_loss_weights() if loss_weights else None
+            case np.ndarray():
+                loss_weights = torch.from_numpy(loss_weights).to(device=env['device'])
+            case torch.Tensor():
+                loss_weights = loss_weights.to(device=env['device'])
+            case _:
+                raise TypeError(type(loss_weights))
+        self.loss_weights: None | torch.Tensor = loss_weights
 
     @functools.cached_property
     def batch_size(self):

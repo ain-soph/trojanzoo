@@ -105,8 +105,8 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
             noise_shape = _input.shape[1:] if self.universal else _input.shape
             noise = self.init_noise(noise_shape, pgd_eps=pgd_eps, random_init=random_init, device=_input.device)
         # ----------------------------------------------------------------------------------------- #
-        a = pgd_alpha if isinstance(pgd_alpha, torch.Tensor) else torch.tensor(pgd_alpha)
-        b = pgd_eps if isinstance(pgd_eps, torch.Tensor) else torch.tensor(pgd_eps)
+        a = pgd_alpha if isinstance(pgd_alpha, torch.Tensor) else torch.as_tensor(pgd_alpha)
+        b = pgd_eps if isinstance(pgd_eps, torch.Tensor) else torch.as_tensor(pgd_eps)
         condition_alpha = a.allclose(torch.zeros_like(a))
         condition_eps = b.allclose(torch.zeros_like(b))
         if condition_alpha or condition_eps:

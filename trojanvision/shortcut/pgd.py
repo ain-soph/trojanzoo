@@ -168,7 +168,7 @@ class PGD(Attack, PGDoptimizer):
         return float(succ_iter_list.count) / total_iter_list.count, total_iter_list.global_avg
 
     def optimize(self, _input: torch.Tensor, *args,
-                 target: int | torch.Tensor = None, target_idx: int = None,
+                 target: None | int | torch.Tensor = None, target_idx: int = None,
                  loss_fn: Callable[..., torch.Tensor] = None,
                  require_class: bool = None,
                  loss_kwargs: dict[str, torch.Tensor] = {},
@@ -176,13 +176,12 @@ class PGD(Attack, PGDoptimizer):
         if len(_input) == 0:
             return _input, None
         target_idx = self.target_idx if target_idx is None else target_idx
-        if target is None:
-            target = self.generate_target(_input, idx=self.target_idx) if self.target_class is None \
-                else self.target_class * torch.ones(len(_input), dtype=torch.long, device=_input.device)
-        elif isinstance(target, int):
-            target = target * torch.ones(len(_input), dtype=torch.long, device=_input.device)
-        else:
-            assert isinstance(target, torch.Tensor)
+        match target:
+            case None:
+                target = self.generate_target(_input, idx=self.target_idx) if self.target_class is None \
+                    else self.target_class * torch.ones(len(_input), dtype=torch.long, device=_input.device)
+            case int():
+                target = target * torch.ones(len(_input), dtype=torch.long, device=_input.device)
         if loss_fn is None and self.loss_fn is None:
             untarget_condition = self.target_class is None and self.target_idx == 0
 

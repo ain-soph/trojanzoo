@@ -91,14 +91,15 @@ class Uname(trojanzoo.optim.Optimizer):
 
     def transform_func(self, x: torch.Tensor) -> torch.Tensor:
         if isinstance(self.input_transform, str):
-            if self.input_transform == 'tanh':
-                return tanh_func(x)
-            elif self.input_transform in ['atan', 'arctan']:
-                return atan_func(x)
-            elif self.input_transform in ['sigmoid', 'logistic']:
-                return torch.sigmoid(x)
-            else:
-                raise NotImplementedError(self.input_transform)
+            match self.input_transform:
+                case  'tanh':
+                    return tanh_func(x)
+                case 'atan' | 'arctan':
+                    return atan_func(x)
+                case 'sigmoid' | 'logistic':
+                    return torch.sigmoid(x)
+                case _:
+                    raise NotImplementedError(f'{self.input_transform=}')
         # assert callable(self.input_transform)
         return self.input_transform(x)
 

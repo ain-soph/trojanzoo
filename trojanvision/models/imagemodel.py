@@ -52,24 +52,26 @@ def set_first_layer_channel(model: nn.Module,
         if len(list(module.children())):
             set_first_layer_channel(module, channel=channel)
             break
-        elif isinstance(module, nn.Conv2d):
-            if module.in_channels == channel:
-                break
-            keys = ['out_channels', 'kernel_size', 'bias', 'stride', 'padding']
-            args = {key: getattr(module, key) for key in keys}
-            args['device'] = module.weight.device
-            args.update(kwargs)
-            new_conv = nn.Conv2d(in_channels=channel, **args)
-            setattr(model, name, new_conv)
-        elif isinstance(module, nn.Linear):
-            if module.in_features == channel:
-                break
-            keys = ['out_features', 'bias']
-            args = {key: getattr(module, key) for key in keys}
-            args['device'] = module.weight.device
-            args.update(kwargs)
-            new_linear = nn.Linear(in_features=channel, **args)
-            setattr(model, name, new_linear)
+        else:
+            match module:
+                case nn.Conv2d():
+                    if module.in_channels == channel:
+                        break
+                    keys = ['out_channels', 'kernel_size', 'bias', 'stride', 'padding']
+                    args = {key: getattr(module, key) for key in keys}
+                    args['device'] = module.weight.device
+                    args.update(kwargs)
+                    new_conv = nn.Conv2d(in_channels=channel, **args)
+                    setattr(model, name, new_conv)
+                case nn.Linear():
+                    if module.in_features == channel:
+                        break
+                    keys = ['out_features', 'bias']
+                    args = {key: getattr(module, key) for key in keys}
+                    args['device'] = module.weight.device
+                    args.update(kwargs)
+                    new_linear = nn.Linear(in_features=channel, **args)
+                    setattr(model, name, new_linear)
         break
 
 

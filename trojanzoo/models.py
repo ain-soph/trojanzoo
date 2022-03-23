@@ -310,18 +310,17 @@ class Model(BasicObject):
         if dataset:
             if not isinstance(dataset, Dataset):
                 raise TypeError(f'{type(dataset)=}    {dataset=}')
-            num_classes = num_classes if num_classes is not None \
-                else dataset.num_classes
-            loss_weights = loss_weights if 'loss_weights' in kwargs.keys() \
-                else dataset.loss_weights
+            num_classes = num_classes or dataset.num_classes
+            loss_weights = kwargs.get('loss_weights', dataset.loss_weights)
         self.num_classes = num_classes  # number of classes
         # TODO: what device shall we save loss_weights?
         # numpy, torch, or torch.cuda.
 
-        if isinstance(loss_weights, np.ndarray):
-            loss_weights = torch.from_numpy(loss_weights)
-        if isinstance(loss_weights, torch.Tensor):
-            loss_weights = loss_weights.to(device=env['device'])
+        match loss_weights:
+            case np.ndarray():
+                loss_weights = torch.from_numpy(loss_weights).to(device=env['device'])
+            case torch.Tensor():
+                loss_weights = loss_weights.to(device=env['device'])
 
         self.loss_weights = loss_weights
         self.layer_name_list: list[str] = None
@@ -331,13 +330,15 @@ class Model(BasicObject):
         self.criterion_noreduction = self.define_criterion(
             weight=loss_weights, reduction='none')
         self.softmax = nn.Softmax(dim=1)
-        if isinstance(model, type):
-            if num_classes is not None:
-                kwargs['num_classes'] = num_classes
-            self._model = model(name=name, dataset=dataset, **kwargs)
-        else:
-            assert isinstance(model, nn.Module)
-            self._model = model
+        match model:
+            case type():
+                if num_classes is not None:
+                    kwargs['num_classes'] = num_classes
+                self._model = model(name=name, dataset=dataset, **kwargs)
+            case nn.Module():
+                self._model = model
+            case _:
+                raise TypeError(type(model))
         self.model = self.get_parallel_model(self._model)
         self.activate_params([])
         if official:
@@ -460,10 +461,11 @@ class Model(BasicObject):
         Returns:
             torch.Tensor: The probability tensor with shape ``(N)``.
         """
-        if isinstance(target, int):
-            target = [target] * len(_input)
-        if isinstance(target, list):
-            target = torch.tensor(target, device=_input.device)
+        match target:
+            case int():
+                target = [target] * len(_input)
+            case list():
+                target = torch.tensor(target, device=_input.device)
         return self.get_prob(_input, **kwargs).gather(
             dim=1, index=target.unsqueeze(1)).flatten()
 
@@ -701,10 +703,13 @@ class Model(BasicObject):
         """
         kwargs['momentum'] = momentum
         kwargs['weight_decay'] = weight_decay
-        if isinstance(parameters, str):
-            parameters = self.get_parameter_from_name(name=parameters)
-        if not isinstance(parameters, Iterable):
-            raise TypeError(f'{type(parameters)=}    {parameters=}')
+        match parameters:
+            case str():
+                parameters = self.get_parameter_from_name(name=parameters)
+            case Iterable():
+                pass
+            case _:
+                raise TypeError(f'{type(parameters)=}    {parameters=}')
         if isinstance(OptimType, str):
             OptimType: type[Optimizer] = getattr(torch.optim, OptimType)
         keys = OptimType.__init__.__code__.co_varnames
