@@ -28,13 +28,13 @@ class LatentBackdoor(BadNet):
     | Latent Backdoor proposed by Yuanshun Yao, Huiying Li, Haitao Zheng
       and Ben Y. Zhao from University of Chicago in CCS 2019.
     | It inherits :class:`trojanvision.attacks.BadNet`.
-    |
-    | Similar to :class:`trojanvision.attacks.TrojanNN`,
-      Latent Backdoor preprocesses watermark pixel values to
-      minimize feature mse distance (of other classes with trigger attached)
-      to average feature map of target class.
-    |
-    | Loss formulas are:
+
+    Similar to :class:`trojanvision.attacks.TrojanNN`,
+    Latent Backdoor preprocesses watermark pixel values to
+    minimize feature mse distance (of other classes with trigger attached)
+    to average feature map of target class.
+
+    Loss formulas are:
 
     * ``'preprocess'``: :math:`\mathcal{L}_{MSE}`
     * ``'retrain'``: :math:`\mathcal{L}_{CE} + \text{self.mse\_weight} * \mathcal{L}_{MSE}`

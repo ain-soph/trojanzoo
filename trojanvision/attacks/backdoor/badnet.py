@@ -32,12 +32,12 @@ if TYPE_CHECKING:
 
 
 class BadNet(Attack):
-    r"""
-    | BadNet proposed by Tianyu Gu from New York University in 2017.
-    | It inherits :class:`trojanvision.attacks.Attack` and is the base class for most backdoor attacks.
-    |
-    | BadNet attaches a provided watermark to some training images and inject them into training set with target label.
-    | After retraining, the model will classify images with watermark of certain/all classes into target class.
+    r"""BadNet proposed by Tianyu Gu from New York University in 2017.
+
+    It inherits :class:`trojanvision.attacks.Attack` and is the base class for most backdoor attacks.
+
+    BadNet attaches a provided watermark to some training images and inject them into training set with target label.
+    After retraining, the model will classify images with watermark of certain/all classes into target class.
 
     See Also:
         * paper: `BadNets\: Identifying Vulnerabilities in the Machine Learning Model Supply Chain`_

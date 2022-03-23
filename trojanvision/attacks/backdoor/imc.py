@@ -15,12 +15,11 @@ from collections.abc import Callable
 
 
 class IMC(TrojanNN):
-    r"""
-    | Input Model Co-optimization (IMC) proposed by Ren Pang
-      from Pennsylvania State University in CCS 2020.
-    |
-    | Based on :class:`trojanvision.attacks.TrojanNN`,
-      IMC optimizes the watermark using Adam optimizer during model retraining.
+    r"""Input Model Co-optimization (IMC) proposed by Ren Pang
+    from Pennsylvania State University in CCS 2020.
+
+    Based on :class:`trojanvision.attacks.TrojanNN`,
+    IMC optimizes the watermark using Adam optimizer during model retraining.
 
     See Also:
         * paper: `A Tale of Evil Twins\: Adversarial Inputs versus Poisoned Models`_
