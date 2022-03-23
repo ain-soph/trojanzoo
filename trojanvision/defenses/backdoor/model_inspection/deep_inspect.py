@@ -88,9 +88,9 @@ class DeepInspect(ModelInspection):
                 trigger_output = self.model(trigger_input)
 
                 batch_acc = trigger_label.eq(trigger_output.argmax(1)).float().mean()
-                batch_entropy = self.loss_fn(_input, _label,
-                                             target=label,
-                                             trigger_output=trigger_output)
+                batch_entropy = self.loss(_input, _label,
+                                          target=label,
+                                          trigger_output=trigger_output)
                 batch_norm = torch.mean(self.attack.mark.mark[:-1].norm(p=1))
                 batch_loss = batch_entropy + self.gamma_2 * batch_norm
 
@@ -106,8 +106,9 @@ class DeepInspect(ModelInspection):
 
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
-            pre_str = '{blue_light}Epoch: {0}{reset}'.format(
-                output_iter(_epoch + 1, epochs), **ansi).ljust(64 if env['color'] else 35)
+            pre_str: str = '{blue_light}Epoch: {0}{reset}'.format(
+                output_iter(_epoch + 1, epochs), **ansi)
+            pre_str = pre_str.ljust(64 if env['color'] else 35)
             _str = ' '.join([
                 f'Loss: {losses.avg:.4f},'.ljust(20),
                 f'Acc: {acc.avg:.2f}, '.ljust(20),
