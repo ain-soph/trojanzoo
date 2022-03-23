@@ -5,13 +5,11 @@ from trojanvision.utils.dataset import ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
 
-import trojanvision
 import torchvision.datasets as datasets
 from torchvision.datasets.utils import (check_integrity,
                                         download_and_extract_archive,
                                         extract_archive)
 import numpy as np
-import json
 import zipfile
 import os
 import glob

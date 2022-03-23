@@ -236,7 +236,7 @@ class TrainingFiltering(BackdoorDefense):
             clean_input, clean_label = sample_batch(self.dataset.loader['train'].dataset,
                                                     batch_size=clean_num)
             trigger_input, trigger_label = sample_batch(self.attack.poison_set,
-                                                      batch_size=poison_num)
+                                                        batch_size=poison_num)
             clean_set = TensorListDataset(clean_input, clean_label.tolist())
             poison_set = TensorListDataset(trigger_input, trigger_label.tolist())
         return clean_set, poison_set
