@@ -172,7 +172,7 @@ class Rotate(MagnitudeOperation):
     # @staticmethod
     # def rotate(img: torch.Tensor, matrix: torch.Tensor,
     #            interpolation: str = 'nearest',
-    #            expand: bool = False, fill: Optional[list[float]] = None
+    #            expand: bool = False, fill: None | list[float] = None
     #            ) -> torch.Tensor:
     #     w, h = img.shape[-1], img.shape[-2]
     #     ow, oh = F_t._compute_output_size(matrix, w, h) if expand else (w, h)

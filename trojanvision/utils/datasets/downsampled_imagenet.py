@@ -14,7 +14,6 @@ from torchvision.datasets.utils import check_integrity
 from torchvision.datasets import VisionDataset
 
 from collections.abc import Callable
-from typing import Optional
 
 
 class DownsampledImageNet(VisionDataset):
@@ -28,8 +27,8 @@ class DownsampledImageNet(VisionDataset):
 
     def __init__(self, root: str, train: bool = True,
                  num_classes: int = None,
-                 transform: Optional[Callable] = None,
-                 target_transform: Optional[Callable] = None,
+                 transform: None | Callable = None,
+                 target_transform: None | Callable = None,
                  download: bool = False,
                  ) -> None:
         super().__init__(root, transform=transform,

@@ -15,7 +15,6 @@ from collections import OrderedDict
 from torchvision.models.resnet import conv1x1, conv3x3
 
 from collections.abc import Callable
-from typing import Optional
 
 
 class BasicBlock(nn.Module):
@@ -54,7 +53,7 @@ class Bottleneck(nn.Module):
 
     def __init__(self, inplanes: int, planes: int, stride: int = 1,
                  groups: int = 1, base_width: int = 64, dilation: int = 1,
-                 norm_layer: Optional[Callable[..., nn.Module]] = None) -> None:
+                 norm_layer: None | Callable[..., nn.Module] = None) -> None:
         super().__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d

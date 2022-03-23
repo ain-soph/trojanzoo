@@ -8,8 +8,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from typing import Optional
-
 
 class EKFACState(BaseState):
     def __init__(self):
@@ -81,21 +79,21 @@ class EKFAC(BaseKFAC):
         return filter_conv
 
     def precond_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                    bias_grad: Optional[torch.Tensor]
-                    ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                    bias_grad: None | torch.Tensor
+                    ) -> tuple[torch.Tensor, None | torch.Tensor]:
         precond_func = self._precond_sua_ra if self.ra \
             else self._precond_intra_sua
         return precond_func(mod, weight_grad, bias_grad)
 
     def precond_nosua(self, mod: LayerType, weight_grad: torch.Tensor,
-                      bias_grad: Optional[torch.Tensor]
-                      ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                      bias_grad: None | torch.Tensor
+                      ) -> tuple[torch.Tensor, None | torch.Tensor]:
         precond_func = self._precond_ra if self.ra else self._precond_intra
         return precond_func(mod, weight_grad, bias_grad)
 
     def _precond_sua_ra(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                        bias_grad: Optional[torch.Tensor]
-                        ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                        bias_grad: None | torch.Tensor
+                        ) -> tuple[torch.Tensor, None | torch.Tensor]:
         state = self.state_storage[mod]
         g, gb = weight_grad, bias_grad
         s = weight_grad.size()    # (out, in, kh, kw)
@@ -120,8 +118,8 @@ class EKFAC(BaseKFAC):
         return g, gb
 
     def _precond_intra_sua(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                           bias_grad: Optional[torch.Tensor]
-                           ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                           bias_grad: None | torch.Tensor
+                           ) -> tuple[torch.Tensor, None | torch.Tensor]:
         state = self.state_storage[mod]
         g, gb = weight_grad, bias_grad
         s = weight_grad.size()    # (out, in, kh, kw)
@@ -164,8 +162,8 @@ class EKFAC(BaseKFAC):
         return g, gb
 
     def _precond_ra(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                    bias_grad: Optional[torch.Tensor]
-                    ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                    bias_grad: None | torch.Tensor
+                    ) -> tuple[torch.Tensor, None | torch.Tensor]:
         state = self.state_storage[mod]
         g, gb = weight_grad, bias_grad
         g = g.flatten(1)  # (out, in * kh * kw)
@@ -188,8 +186,8 @@ class EKFAC(BaseKFAC):
         return g, gb
 
     def _precond_intra(self, mod: nn.Conv2d, weight_grad: torch.Tensor,
-                       bias_grad: Optional[torch.Tensor]
-                       ) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+                       bias_grad: None | torch.Tensor
+                       ) -> tuple[torch.Tensor, None | torch.Tensor]:
         state = self.state_storage[mod]
         g, gb = weight_grad, bias_grad
 
