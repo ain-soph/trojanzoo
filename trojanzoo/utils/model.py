@@ -250,14 +250,15 @@ def _get_all_layer(module: nn.Module, x: torch.Tensor,
         if verbose:
             shape_str = str(list(x.shape))
             module_str = ''
-            if verbose == 1:
-                module_str = module.__class__.__name__
-            elif verbose == 2:
-                module_str = type(module)
-            elif verbose == 3:
-                module_str = str(module).split('\n')[0].removesuffix('(')
-            else:
-                module_str = str(module)
+            match verbose:
+                case 1:
+                    module_str = module.__class__.__name__
+                case 2:
+                    module_str = type(module)
+                case 3:
+                    module_str = str(module).split('\n')[0].removesuffix('(')
+                case _:
+                    module_str = str(module)
             print(f'{ansi["blue_light"]}{prefix:<50s}{ansi["reset"]}'
                   f'{ansi["yellow"]}{shape_str:<20}{ansi["reset"]}'
                   f'{module_str}')

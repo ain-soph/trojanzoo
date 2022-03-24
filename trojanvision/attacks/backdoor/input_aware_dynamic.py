@@ -9,7 +9,7 @@ from .badnet import BadNet
 from trojanzoo.environ import env
 from trojanzoo.utils.data import sample_batch
 from trojanzoo.utils.logger import MetricLogger
-from trojanzoo.utils.output import ansi, get_ansi_len, output_iter, prints
+from trojanzoo.utils.output import ansi, get_ansi_len, output_iter
 
 import torch
 import torch.nn as nn
@@ -89,6 +89,9 @@ class InputAwareDynamic(BadNet):
         poison_percent (float): Percentage of poison inputs
             in the whole training set.
             Defaults to ``0.1``.
+        natural (bool): Whether to use natural backdoors.
+            If ``True``, model parameters will be frozen.
+            Defaults to ``False``.
 
     Attributes:
         mark_generator (torch.nn.Sequential): Mark generator instance
@@ -134,12 +137,16 @@ class InputAwareDynamic(BadNet):
                            help='percentage of cross inputs '
                            'in the whole training set '
                            '(default: 0.032)')
+        group.add_argument('--natural', action='store_true',
+                           help='whether to use natural backdoors. '
+                           'if true, model parameters will be frozen')
         return group
 
     def __init__(self, train_mask_epochs: int = 25,
                  lambda_div: float = 1.0, lambda_norm: float = 100.0,
                  mask_density: float = 0.032,
                  cross_percent: float = 0.1,
+                 natural: bool = False,
                  poison_percent: float = 0.1, **kwargs):
         super().__init__(poison_percent=poison_percent, **kwargs)
         self.param_list['input_aware_dynamic'] = ['train_mask_epochs',
@@ -150,6 +157,7 @@ class InputAwareDynamic(BadNet):
         self.lambda_div = lambda_div
         self.lambda_norm = lambda_norm
         self.mask_density = mask_density
+        self.natural = natural
 
         self.poison_ratio = self.poison_percent
         self.poison_num = 0  # monkey patch: to avoid batch size change in badnet
@@ -253,18 +261,18 @@ class InputAwareDynamic(BadNet):
                     main_tag: str = 'valid', indent: int = 0,
                     threshold: float = 5.0,
                     **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+        clean_acc, _ = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                             get_data_fn=None, indent=indent, **kwargs)
-        _, target_acc = self.model._validate(print_prefix='Validate Trigger', main_tag='valid trigger',
-                                             get_data_fn=self.get_data, keep_org=False, poison_label=True,
-                                             indent=indent, **kwargs)
+        asr, _ = self.model._validate(print_prefix='Validate ASR', main_tag='valid asr',
+                                      get_data_fn=self.get_data, keep_org=False, poison_label=True,
+                                      indent=indent, **kwargs)
         self.model._validate(print_prefix='Validate Cross', main_tag='valid cross',
                              get_data_fn=self._get_cross_data, indent=indent, **kwargs)
-        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
+        # prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        # prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > threshold:
-            target_acc = 0.0
-        return clean_acc, target_acc
+            asr = 0.0
+        return asr, clean_acc
 
     def attack(self, epochs: int, optimizer: torch.optim.Optimizer,
                lr_scheduler: torch.optim.lr_scheduler._LRScheduler = None,
@@ -280,10 +288,11 @@ class InputAwareDynamic(BadNet):
 
         self.mark_generator.requires_grad_()
         self.mask_generator.requires_grad_(False)
-        params: list[nn.Parameter] = []
-        for param_group in optimizer.param_groups:
-            params.extend(param_group['params'])
-        self.model.activate_params(params)
+        if not self.natural:
+            params: list[nn.Parameter] = []
+            for param_group in optimizer.param_groups:
+                params.extend(param_group['params'])
+            self.model.activate_params(params)
 
         mark_optimizer = torch.optim.Adam(self.mark_generator.parameters(), lr=1e-2, betas=(0.5, 0.9))
         mark_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -294,19 +303,22 @@ class InputAwareDynamic(BadNet):
         logger.create_meters(loss=None, div=None, ce=None)
 
         if validate_interval != 0:
-            _, best_acc = self.validate_fn()
+            best_validate_result = self.validate_fn()
+            best_asr = best_validate_result[0]
         for _epoch in range(epochs):
             _epoch += 1
             idx = torch.randperm(len(dataset))
             pos = 0
             logger.reset()
-            self.model.train()
+            if not self.natural:
+                self.model.train()
             self.mark_generator.train()
             header: str = '{blue_light}{0}: {1}{reset}'.format(
                 'Epoch', output_iter(_epoch, epochs), **ansi)
             header = header.ljust(max(len('Epoch'), 30) + get_ansi_len(header))
             for data in logger.log_every(loader, header=header):
-                optimizer.zero_grad()
+                if not self.natural:
+                    optimizer.zero_grad()
                 mark_optimizer.zero_grad()
                 _input, _label = self.model.get_data(data)
                 batch_size = len(_input)
@@ -356,25 +368,31 @@ class InputAwareDynamic(BadNet):
 
                 loss = loss_ce + self.lambda_div * loss_div
                 loss.backward()
-                optimizer.step()
+                if not self.natural:
+                    optimizer.step()
                 mark_optimizer.step()
                 logger.update(n=batch_size, loss=loss.item(), div=loss_div.item(), ce=loss_ce.item())
-            if lr_scheduler:
+            if not self.natural and lr_scheduler:
                 lr_scheduler.step()
             mark_scheduler.step()
-            self.model.eval()
+            if not self.natural:
+                self.model.eval()
             self.mark_generator.eval()
             if validate_interval != 0 and (_epoch % validate_interval == 0 or _epoch == epochs):
-                _, cur_acc = self.validate_fn()
-                if cur_acc >= best_acc:
-                    best_acc = cur_acc
+                validate_result = self.validate_fn()
+                cur_asr = validate_result[0]
+                if cur_asr >= best_asr:
+                    best_validate_result = validate_result
+                    best_asr = cur_asr
                     if save:
                         self.save()
-        optimizer.zero_grad()
+        if not self.natural:
+            optimizer.zero_grad()
         mark_optimizer.zero_grad()
         self.mark_generator.requires_grad_(False)
         self.mask_generator.requires_grad_(False)
         self.model.requires_grad_(False)
+        return best_validate_result
 
     def save(self, filename: str = None, **kwargs):
         r"""Save attack results to files."""

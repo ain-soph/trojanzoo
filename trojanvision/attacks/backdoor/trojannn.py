@@ -108,7 +108,7 @@ class TrojanNN(BadNet):
         self.neuron_idx = self.get_neuron_idx()
         print('Neuron Index: ', self.neuron_idx.cpu().tolist())
         self.preprocess_mark(neuron_idx=self.neuron_idx)
-        super().attack(*args, **kwargs)
+        return super().attack(*args, **kwargs)
 
     def get_neuron_idx(self) -> torch.Tensor:
         r"""Get top :attr:`self.neuron_num` well-connected neurons
@@ -131,7 +131,7 @@ class TrojanNN(BadNet):
         The feature map is obtained by calling :meth:`trojanzoo.models.Model.get_layer()`.
 
         Args:
-            trigger_input (torch.Tensor): Triggered input tensor with shape ``(N, C, H, W)``.
+            trigger_input (torch.Tensor): Poison input tensor with shape ``(N, C, H, W)``.
             neuron_idx (torch.Tensor): Neuron index list tensor with shape ``(self.neuron_num)``.
 
         Returns:
@@ -206,12 +206,12 @@ class TrojanNN(BadNet):
         self.mark.mark[:-1] = tanh_func(atanh_mark)
         self.mark.mark.detach_()
 
-    def validate_fn(self, **kwargs) -> tuple[float, float]:
-        if self.neuron_idx is not None:
-            with torch.no_grad():
-                trigger_input = self.add_mark(self.background, mark_alpha=1.0)
-                print(f'Neuron Value: {self.get_neuron_value(trigger_input, self.neuron_idx):.5f}')
-        return super().validate_fn(**kwargs)
+    # def validate_fn(self, **kwargs) -> tuple[float, float]:
+    #     if self.neuron_idx is not None:
+    #         with torch.no_grad():
+    #             trigger_input = self.add_mark(self.background, mark_alpha=1.0)
+    #             print(f'Neuron Value: {self.get_neuron_value(trigger_input, self.neuron_idx):.5f}')
+    #     return super().validate_fn(**kwargs)
 
     @staticmethod
     def denoise(img: torch.Tensor, weight: float = 1.0,

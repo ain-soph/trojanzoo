@@ -28,27 +28,40 @@ import torch.utils.data
 
 
 class ABS(ModelInspection):
+    r"""Artificial Brain Stimulation proposed by Yingqi Liu
+    from Purdue University in CCS 2019.
+
+    It is a model inspection backdoor defense
+    that inherits :class:`trojanvision.defenses.ModelInspection`.
+
+    See Also:
+        * paper: `ABS\: Scanning Neural Networks for Back-doors by Artificial Brain Stimulation`_
+        * code: https://github.com/naiyeleo/ABS
+
+    .. _ABS\: Scanning Neural Networks for Back-doors by Artificial Brain Stimulation:
+        https://openreview.net/forum?id=YHWF1F1RBgF
+    """
     name: str = 'abs'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
         group.add_argument('--seed_data_num', type=int,
-                           help='ABS seed data number (default: -5)')
+                           help='abs seed data number (default: -5)')
         group.add_argument('--mask_eps', type=float,
-                           help='ABS mask epsilon threshold (default: 0.01)')
+                           help='abs mask epsilon threshold (default: 0.01)')
         group.add_argument('--samp_k', type=int,
-                           help='ABS sample k multiplier in neuron sampling (default: 8)')
+                           help='abs sample k multiplier in neuron sampling (default: 8)')
         group.add_argument('--same_range', action='store_true',
-                           help='ABS same range in neuron sampling (default: False)')
+                           help='abs same range in neuron sampling (default: False)')
         group.add_argument('--n_samples', type=int,
-                           help='ABS n_samples in neuron sampling (default: 5)')
+                           help='abs n_samples in neuron sampling (default: 5)')
         group.add_argument('--top_n_neurons', type=int,
-                           help='ABS top-n neuron number in neuron sampling (default: 20)')
+                           help='abs top-n neuron number in neuron sampling (default: 20)')
         group.add_argument('--max_troj_size', type=int,
-                           help='ABS max trojan trigger size in pixel number (default: 16)')
+                           help='abs max trojan trigger size in pixel number (default: 16)')
         group.add_argument('--remask_weight', type=float,
-                           help='ABS optimization norm loss weight (default: 500)')
+                           help='abs optimization norm loss weight (default: 500)')
         return group
 
     def __init__(self, seed_data_num: int = -5, mask_eps: float = 0.01,
@@ -101,31 +114,31 @@ class ABS(ModelInspection):
 
     def optimize_mark(self, label: int, **kwargs) -> tuple[torch.Tensor, float]:
         format_dict = dict(layer='20s', neuron='5d', value='10.3f',
-                           loss='10.3f', atk_acc='8.3f', norm='8.3f')
+                           loss='10.3f', asr='8.3f', norm='8.3f')
         if not self.attack.mark.mark_random_pos:
             format_dict['jaccard'] = '5.3f'
             select_num = self.attack.mark.mark_height * self.attack.mark.mark_width
         format_str = self.serialize_format(**format_dict)
         mark_best: torch.Tensor = torch.ones_like(self.attack.mark.mark)
         loss_best: float = 1e7
-        acc_best: float = 0.0
+        asr_best: float = 0.0
         dict_best = {}
         for _dict in reversed(self.neuron_dict[label]):
             mark, loss = super().optimize_mark(label, loader=self.loader,
                                                verbose=False, **_dict)
             _dict['mark'] = mark.detach().cpu().clone().numpy()
-            _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data,
-                                              keep_org=False, verbose=False)
+            asr, _ = self.model._validate(get_data_fn=self.attack.get_data,
+                                          keep_org=False, verbose=False)
             norm = float(mark[-1].flatten().norm(p=1))
-            str_dict = dict(loss=loss, atk_acc=atk_acc, norm=norm, **_dict)
+            str_dict = dict(loss=loss, asr=asr, norm=norm, **_dict)
             if not self.attack.mark.mark_random_pos:
                 overlap = mask_jaccard(self.attack.mark.get_mask(),
                                        self.real_mask,
                                        select_num=select_num)
                 str_dict['jaccard'] = overlap
             prints(format_str.format(**str_dict), indent=4)
-            if atk_acc > acc_best:
-                acc_best = atk_acc
+            if asr > asr_best:
+                asr_best = asr
                 mark_best = mark
                 loss_best = loss
                 dict_best = str_dict
@@ -163,6 +176,12 @@ class ABS(ModelInspection):
 
     # ---------------------------- Seed Data --------------------------- #
     def gen_seed_data(self) -> dict[str, np.ndarray]:
+        r"""Generate seed data.
+
+        Returns:
+            dict[str, numpy.ndarray]:
+                Seed data dict with keys ``'input'`` and ``'label'``.
+        """
         torch.manual_seed(env['seed'])
         if self.seed_data_num % self.model.num_classes:
             raise ValueError(
@@ -183,6 +202,9 @@ class ABS(ModelInspection):
         return seed_data
 
     def get_seed_data(self) -> dict[str, torch.Tensor]:
+        r"""Get seed data. If npz file doesn't exist,
+        call :meth:`gen_seed_data()` to generate.
+        """
         seed_path = os.path.join(self.folder_path, f'seed_{self.seed_data_num}.npz')
         seed_data: dict[str, torch.Tensor] = {}
         seed_data_np = dict(np.load(seed_path)) if os.path.exists(seed_path) \

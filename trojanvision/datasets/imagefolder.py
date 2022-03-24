@@ -223,25 +223,26 @@ class ImageFolder(ImageSet):
             idx_list = idx_list[:sample_num]
             mode = mode_list[0]
             class_list: list[str] = []
-            if method == 'zip':
-                zip_path = os.path.join(src_path,
-                                        f'{self.name}_{mode}_store.zip')
-                with zipfile.ZipFile(zip_path, 'r',
-                                     compression=zipfile.ZIP_STORED
-                                     ) as src_zip:
-                    name_list = src_zip.namelist()
-                for name in name_list:
-                    name_dir, name_base = os.path.split(os.path.dirname(name))
-                    if name_dir == mode:
-                        class_list.append(name_base)
-            elif method == 'folder':
-                folder_path = os.path.join(src_path, f'{mode}')
-                class_array: np.ndarray = np.array(
-                    os.listdir(folder_path))[idx_list]
-                class_list = class_array.tolist()
-                class_list = [_dir for _dir in class_list
-                              if os.path.isdir(os.path.join(
-                                  folder_path, _dir))]
+            match method:
+                case 'zip':
+                    zip_path = os.path.join(src_path,
+                                            f'{self.name}_{mode}_store.zip')
+                    with zipfile.ZipFile(zip_path, 'r',
+                                         compression=zipfile.ZIP_STORED
+                                         ) as src_zip:
+                        name_list = src_zip.namelist()
+                    for name in name_list:
+                        name_dir, name_base = os.path.split(os.path.dirname(name))
+                        if name_dir == mode:
+                            class_list.append(name_base)
+                case 'folder':
+                    folder_path = os.path.join(src_path, f'{mode}')
+                    class_array: np.ndarray = np.array(
+                        os.listdir(folder_path))[idx_list]
+                    class_list = class_array.tolist()
+                    class_list = [_dir for _dir in class_list
+                                  if os.path.isdir(os.path.join(
+                                      folder_path, _dir))]
             class_list.sort()
             class_array = np.array(class_list)[idx_list]
             class_list = class_array.tolist()

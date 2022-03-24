@@ -44,14 +44,13 @@ class AdvTrain(BackdoorDefense):
         self.attack.validate_fn()
 
     def validate_fn(self, get_data_fn=None, **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean',
+        clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                             get_data_fn=None, **kwargs)
-        _, adv_acc = self.model._validate(print_prefix='Validate Adv',
+        adv_acc, _ = self.model._validate(print_prefix='Validate Adv',
                                           get_data_fn=self.get_data, **kwargs)
-        # todo: Return value
-        if self.clean_acc - clean_acc > 20 and self.clean_acc > 40:
+        if self.clean_acc - clean_acc > 20:
             adv_acc = 0.0
-        return clean_acc, adv_acc
+        return adv_acc, clean_acc
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
         _input, _label = self.model.get_data(data, **kwargs)
@@ -64,7 +63,7 @@ class AdvTrain(BackdoorDefense):
         loader_train = self.dataset.loader['train']
         file_path = os.path.join(self.folder_path, self.get_filename() + '.pth')
 
-        _, best_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
+        best_acc, _ = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
 
         losses = AverageMeter('Loss', ':.4e')
         top1 = AverageMeter('Acc@1', ':6.2f')
@@ -126,11 +125,11 @@ class AdvTrain(BackdoorDefense):
 
             if validate_interval != 0:
                 if (_epoch + 1) % validate_interval == 0 or _epoch == epochs - 1:
-                    _, cur_acc = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
-                    if cur_acc < best_acc:
+                    adv_acc, _ = self.validate_fn(verbose=verbose, indent=indent, **kwargs)
+                    if adv_acc < best_acc:
                         prints('{purple}best result update!{reset}'.format(**ansi), indent=indent)
-                        prints(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
-                        best_acc = cur_acc
+                        prints(f'Current Acc: {adv_acc:.3f}    Previous Best Acc: {best_acc:.3f}', indent=indent)
+                        best_acc = adv_acc
                     if save:
                         self.model.save(file_path=file_path, verbose=verbose)
                     if verbose:

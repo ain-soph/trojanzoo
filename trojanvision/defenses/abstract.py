@@ -342,15 +342,15 @@ class ModelInspection(BackdoorDefense):
             setattr(self.attack.mark, k, v)
         self.attack.mark.mark.zero_()
 
-        mark_list, loss_list, atk_acc_list = self.get_mark_loss_list()
+        mark_list, loss_list, asr_list = self.get_mark_loss_list()
         mask_norms: torch.Tensor = mark_list[:, -1].flatten(start_dim=1).norm(p=1, dim=1)
         mask_norm_list: list[float] = mask_norms.tolist()
         print()
-        print('atk acc       : ' + format_list(atk_acc_list))
+        print('asr           : ' + format_list(asr_list))
         print('mask norms    : ' + format_list(mask_norm_list))
         print('loss          : ' + format_list(loss_list))
         print()
-        print('atk acc MAD   : ' + format_list(normalize_mad(atk_acc_list).tolist()))
+        print('asr MAD       : ' + format_list(normalize_mad(asr_list).tolist()))
         print('mask norm MAD : ' + format_list(normalize_mad(mask_norms).tolist()))
         print('loss MAD      : ' + format_list(normalize_mad(loss_list).tolist()))
 
@@ -377,7 +377,7 @@ class ModelInspection(BackdoorDefense):
         """
         mark_list: list[torch.Tensor] = []
         loss_list: list[float] = []
-        atk_acc_list: list[float] = []
+        asr_list: list[float] = []
         # todo: parallel to avoid for loop
         file_path = os.path.normpath(os.path.join(
             self.folder_path, self.get_filename() + '.npz'))
@@ -385,7 +385,7 @@ class ModelInspection(BackdoorDefense):
             print('Class: ', output_iter(label, self.model.num_classes))
             mark, loss = self.optimize_mark(label, verbose=verbose, **kwargs)
             if verbose:
-                _, atk_acc = self.attack.validate_fn(indent=4)
+                asr, _ = self.attack.validate_fn(indent=4)
                 if not self.mark_random_pos:
                     select_num = self.attack.mark.mark_height * self.attack.mark.mark_width
                     overlap = mask_jaccard(self.attack.mark.get_mask(),
@@ -393,18 +393,18 @@ class ModelInspection(BackdoorDefense):
                                            select_num=select_num)
                     prints(f'Jaccard index: {overlap:.3f}', indent=4)
             else:
-                _, atk_acc = self.model._validate(get_data_fn=self.attack.get_data,
-                                                  keep_org=False, poison_label=True,
-                                                  verbose=False)
+                asr, _ = self.model._validate(get_data_fn=self.attack.get_data,
+                                              keep_org=False, poison_label=True,
+                                              verbose=False)
             mark_list.append(mark)
             loss_list.append(loss)
-            atk_acc_list.append(atk_acc)
+            asr_list.append(asr)
             np.savez(file_path, mark_list=np.stack([mark.detach().cpu().numpy() for mark in mark_list]),
                      loss_list=np.array(loss_list))
         print()
         print('Defense results saved at: ' + file_path)
         mark_list_tensor = torch.stack(mark_list)
-        return mark_list_tensor, loss_list, atk_acc_list
+        return mark_list_tensor, loss_list, asr_list
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor, target: int,
              trigger_output: None | torch.Tensor = None,

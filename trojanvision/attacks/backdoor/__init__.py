@@ -13,13 +13,13 @@ from .clean_label import CleanLabel
 from .hidden_trigger import HiddenTrigger
 from .input_aware_dynamic import InputAwareDynamic
 
-# from .imc_variants import *
 from .others import Unlearn
 
 __all__ = ['BadNet', 'TrojanNN', 'LatentBackdoor',
            'IMC', 'Refool', 'BypassEmbed',
            'TrojanNet', 'CleanLabel', 'HiddenTrigger',
-           'InputAwareDynamic']
+           'InputAwareDynamic',
+           'Unlearn']
 
 class_dict: dict[str, type[Attack]] = {
     'badnet': BadNet,

@@ -69,7 +69,7 @@ class PoisonBasic(Attack):
             if self.clean_epoch > 0:
                 self.model._train(epochs=self.clean_epoch, indent=4, validate_fn=self.validate_fn, **kwargs)
             target_conf, target_acc = self.validate_target()
-            _, clean_acc = self.model._validate()
+            clean_acc, _ = self.model._validate()
             target_conf_list.append(target_conf)
             target_acc_list.append(target_acc)
             clean_acc_list.append(clean_acc)
@@ -83,9 +83,9 @@ class PoisonBasic(Attack):
         self.temp_input = _input
         self.temp_label = _label
 
-        self.model._train(epochs=epochs, save=save,
-                          get_data_fn=self.get_data, save_fn=self.save,
-                          validate_fn=self.validate_fn, indent=indent + 4, **kwargs)
+        return self.model._train(epochs=epochs, save=save,
+                                 get_data_fn=self.get_data, save_fn=self.save,
+                                 validate_fn=self.validate_fn, indent=indent + 4, **kwargs)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True,
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
@@ -121,7 +121,9 @@ class PoisonBasic(Attack):
     #     poison = self.model.loss(self.temp_input, self.temp_label)
     #     self.model.train(mode=training)
     #     print(f'clean: {clean:7.5f}    poison: {poison:7.5f}   eval: {poison:7.5f}')
-    #     return (1 - self.poison_percent) * self.model.loss(x, y, **kwargs) + self.poison_percent * self.model.loss(self.temp_input, self.temp_label)
+    #     loss = (1 - self.poison_percent) * self.model.loss(x, y, **kwargs) \
+    #         + self.poison_percent * self.model.loss(self.temp_input, self.temp_label)
+    #     return loss
 
     def save(self, **kwargs):
         filename = self.get_filename(**kwargs)
@@ -135,20 +137,19 @@ class PoisonBasic(Attack):
     def validate_target(self, indent: int = 0, verbose=True) -> tuple[float, float]:
         self.model.eval()
         _output = self.model(self.temp_input)
-        target_acc, _ = self.model.accuracy(_output, self.temp_label, topk=(1, 5))
-        target_conf = float(self.model.get_target_prob(self.temp_input, self.temp_label).mean())
+        asr, _ = self.model.accuracy(_output, self.temp_label, topk=(1, 5))
+        conf = float(self.model.get_target_prob(self.temp_input, self.temp_label).mean())
         target_loss = self.model.loss(self.temp_input, self.temp_label)
         if verbose:
             prints(f'Validate Target:       Loss: {target_loss:10.4f}     '
-                   f'Confidence: {target_conf:10.4f}    Accuracy: {target_acc:7.3f}',
+                   f'Confidence: {conf:10.4f}    ASR: {asr:7.3f}',
                    indent=indent)
-        # todo: Return value
-        return target_conf, target_acc
+        return asr, conf
 
     def validate_fn(self, get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                     main_tag: str = 'valid', indent: int = 0, verbose=True,
                     loss_fn: Callable = None, **kwargs) -> tuple[float, float]:
-        _, target_acc = self.validate_target(indent=indent, verbose=verbose)
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
-                                            get_data_fn=None, indent=indent, **kwargs)
-        return clean_acc, target_acc
+        asr, _ = self.validate_target(indent=indent, verbose=verbose)
+        clean_acc, = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+                                          get_data_fn=None, indent=indent, **kwargs)
+        return asr, clean_acc

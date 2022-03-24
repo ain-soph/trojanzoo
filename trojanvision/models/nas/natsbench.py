@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+r"""
+--nats_path /data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full --autodl_path ~/workspace/XAutoDL/lib/
+"""  # noqa: E501
+
 from trojanvision.datasets.imageset import ImageSet
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
@@ -8,12 +13,16 @@ from collections import OrderedDict
 
 import argparse
 from typing import Any
+from collections.abc import Callable
 
 
 class _NATSbench(_ImageModel):
 
     def __init__(self, network: nn.Module = None, **kwargs):
         super().__init__(**kwargs)
+        self.load_model(network)
+
+    def load_model(self, network: nn.Module):
         self.features = nn.Sequential(OrderedDict([
             ('stem', getattr(network, 'stem')),
             ('cells', nn.Sequential(*getattr(network, 'cells'))),
@@ -31,19 +40,31 @@ class NATSbench(ImageModel):
 
         .. code-block:: python3
 
-            ['natsbench']
+            ['nats_bench']
+
+    Note:
+        There are prerequisites to use the benchmark:
+
+        * Install ``nats_bench``. (there is numpy version conflict to deal with)
+
+            - ``git clone https://github.com/D-X-Y/NATS-Bench.git``
+            - remove numpy requirements in ``setup.py``
+            - ``python setup.py install`` or ``pip install .``
+        * ``git clone https://github.com/D-X-Y/AutoDL-Projects.git``
+        * Extract ``NATS-tss-v1_0-3ffb9-full``.
 
     See Also:
 
         * paper: `NATS-Bench\: Benchmarking NAS Algorithms for Architecture Topology and Size`_
         * code:
+
           - AutoDL: https://github.com/D-X-Y/AutoDL-Projects
           - NATS-Bench: https://github.com/D-X-Y/NATS-Bench
 
     Args:
         model_index (int): :attr:`model_index` passed to
             ``api.get_net_config()``.
-            Raning from ``0 -- 15624``.
+            Ranging from ``0 -- 15624``.
             Defaults to ``0``.
         model_seed (int): :attr:`model_seed` passed to
             ``api.get_net_param()``.
@@ -67,12 +88,12 @@ class NATSbench(ImageModel):
     .. _NATS-Bench\: Benchmarking NAS Algorithms for Architecture Topology and Size:
         https://arxiv.org/abs/2009.00437
     """
-    available_models = ['natsbench']
+    available_models = ['nats_bench']
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--model_index', type=int, required=True)
+        group.add_argument('--model_index', type=int)
         group.add_argument('--model_seed', type=int)
         group.add_argument('--hp', type=int)
         group.add_argument('--nats_path')
@@ -80,7 +101,7 @@ class NATSbench(ImageModel):
         group.add_argument('--search_space')
         return group
 
-    def __init__(self, name: str = 'natsbench', model: type[_NATSbench] = _NATSbench,
+    def __init__(self, name: str = 'nats_bench', model: type[_NATSbench] = _NATSbench,
                  model_index: int = 0, model_seed: int = 999, hp: int = 200,
                  dataset: ImageSet = None, dataset_name: str = None,
                  nats_path: str = None,
@@ -88,8 +109,11 @@ class NATSbench(ImageModel):
                  search_space: str = 'tss', **kwargs):
         try:
             import sys
-            sys.path.append(autodl_path)
+            # pip install nats_bench
+            # there might be numpy version conflict.
+            # please clone the repo and modify its requirements in setup.py and install manually.
             from nats_bench import create   # type: ignore
+            sys.path.append(autodl_path)
             from models import get_cell_based_tiny_net   # type: ignore
         except ImportError:
             print('You need to install nats_bench and auto-dl library')
@@ -115,9 +139,11 @@ class NATSbench(ImageModel):
 
         self.api = create(nats_path, search_space, fast_mode=True, verbose=False)
         config: dict[str, Any] = self.api.get_net_config(model_index, dataset_name)
-        network: nn.Module = get_cell_based_tiny_net(config)
+        self.get_cell_based_tiny_net: Callable[..., nn.Module] = get_cell_based_tiny_net
+        network = self.get_cell_based_tiny_net(config)
         super().__init__(name=name, model=model, network=network, **kwargs)
-        self.param_list['natsbench'] = ['model_index', 'model_seed', 'search_space']
+        self.param_list['nats_bench'] = ['model_index', 'model_seed', 'search_space']
+        self._model: _NATSbench
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
         _dict: OrderedDict[str, torch.Tensor] = self.api.get_net_param(

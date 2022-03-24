@@ -286,10 +286,11 @@ def create(dataset_name: None | str = None,
     optimizer, lr_scheduler = model.define_optimizer(**optim_args)
 
     module = model._model
-    if optim_args['parameters'] == 'features':
-        module = module.features
-    elif optim_args['parameters'] == 'classifier':
-        module = module.classifier
+    match optim_args['parameters']:
+        case 'features':
+            module = module.features
+        case 'classifier':
+            module = module.classifier
 
     # https://github.com/pytorch/vision/blob/main/references/classification/train.py
     model_ema_module = None

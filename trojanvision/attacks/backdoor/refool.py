@@ -50,7 +50,7 @@ class Refool(BadNet):
         * Trigger size must be the same as image size.
         * Currently, :attr:`mark_alpha` is forced to be ``-1.0``,
           which means to use mean of image and mark to blend them.
-          It should be possible to set a manual :mark_alpha: instead.
+          It should be possible to set a manual :attr:`mark_alpha` instead.
 
     The attack has 3 procedures:
 
@@ -265,7 +265,7 @@ class Refool(BadNet):
             self.model.load_state_dict(model_dict)
         self.mark.mark[:-1] = self.reflect_imgs[W.argmax().item()]
         self.poison_set = self.get_poison_dataset(load_mark=False)
-        super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
+        return super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
 
     def get_poison_dataset(self, poison_num: int = None, load_mark: bool = True,
                            seed: int = None) -> torch.utils.data.Dataset:
@@ -313,21 +313,21 @@ class Refool(BadNet):
         Returns:
             torch.Tensor: Attack succ rate tensor with shape ``(N)``.
         """
-        asr_result_list = []
+        asr_list = []
         logger = MetricLogger(meter_length=35, indent=4)
         logger.create_meters(asr='{median:.3f} ({min:.3f}  {max:.3f})')
         for mark in logger.log_every(marks, header='mark', tqdm_header='mark'):
             self.mark.mark[:-1] = mark
-            _, target_acc = self.model._validate(get_data_fn=self.get_data, keep_org=False,
-                                                 poison_label=True, verbose=False,
-                                                 loader=self.loader_valid)
+            asr, _ = self.model._validate(get_data_fn=self.get_data, keep_org=False,
+                                          poison_label=True, verbose=False,
+                                          loader=self.loader_valid)
             # Original code considers an untargeted-like attack scenario.
-            # _, org_acc = self.model._validate(get_data_fn=self.get_data, keep_org=False,
+            # org_acc, _ = self.model._validate(get_data_fn=self.get_data, keep_org=False,
             #                                   poison_label=False, verbose=False)
-            # target_acc = 100 - org_acc
-            logger.update(asr=target_acc)
-            asr_result_list.append(target_acc)
-        return torch.tensor(asr_result_list)
+            # asr = 100 - org_acc
+            logger.update(asr=asr)
+            asr_list.append(asr)
+        return torch.tensor(asr_list)
 
     def _get_reflect_imgs(self, force_regen: bool = False) -> torch.Tensor:
         r"""Get reflect images with shape ``(candidate_num, C, H, W)``.

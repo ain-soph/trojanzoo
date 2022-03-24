@@ -12,7 +12,6 @@ from trojanvision.marks import Watermark
 from trojanzoo.environ import env
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 from trojanzoo.utils.logger import SmoothedValue
-from trojanzoo.utils.output import prints
 
 
 import torch
@@ -115,28 +114,31 @@ class BadNet(Attack):
                 self.poison_set = None
 
     def attack(self, epochs: int, **kwargs):
-        if self.train_mode == 'batch':
-            loader = self.dataset.get_dataloader(
-                'train', batch_size=self.dataset.batch_size + int(self.poison_num))
-            self.model._train(epochs, loader_train=loader,
-                              validate_fn=self.validate_fn,
-                              get_data_fn=self.get_data,
-                              save_fn=self.save, **kwargs)
-        elif self.train_mode == 'dataset':
-            mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
-                                                          self.poison_set])
-            loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
-            self.model._train(epochs, loader_train=loader,
-                              validate_fn=self.validate_fn,
-                              save_fn=self.save, **kwargs)
-        elif self.train_mode == 'loss':
-            if 'loss_fn' in kwargs.keys():
-                kwargs['loss_fn'] = functools.partial(self.loss_weighted, loss_fn=kwargs['loss_fn'])
-            else:
-                kwargs['loss_fn'] = self.loss_weighted
-            self.model._train(epochs,
-                              validate_fn=self.validate_fn,
-                              save_fn=self.save, **kwargs)
+        match self.train_mode:
+            case 'batch':
+                loader = self.dataset.get_dataloader(
+                    'train', batch_size=self.dataset.batch_size + int(self.poison_num))
+                return self.model._train(epochs, loader_train=loader,
+                                         validate_fn=self.validate_fn,
+                                         get_data_fn=self.get_data,
+                                         save_fn=self.save, **kwargs)
+            case 'dataset':
+                mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
+                                                              self.poison_set])
+                loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
+                return self.model._train(epochs, loader_train=loader,
+                                         validate_fn=self.validate_fn,
+                                         save_fn=self.save, **kwargs)
+            case 'loss':
+                if 'loss_fn' in kwargs.keys():
+                    kwargs['loss_fn'] = functools.partial(self.loss_weighted, loss_fn=kwargs['loss_fn'])
+                else:
+                    kwargs['loss_fn'] = self.loss_weighted
+                return self.model._train(epochs,
+                                         validate_fn=self.validate_fn,
+                                         save_fn=self.save, **kwargs)
+            case _:
+                raise NotImplementedError(f'{self.train_mode=}')
 
     def get_poison_dataset(self, poison_label: bool = True,
                            poison_num: int = None,
@@ -270,19 +272,19 @@ class BadNet(Attack):
                     main_tag: str = 'valid', indent: int = 0,
                     threshold: float = 5.0,
                     **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+        clean_acc, _ = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                             get_data_fn=None, indent=indent, **kwargs)
-        _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
-                                             get_data_fn=self.get_data, keep_org=False, poison_label=True,
-                                             indent=indent, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
-                             get_data_fn=self.get_data, keep_org=False, poison_label=False,
-                             indent=indent, **kwargs)
-        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
+        asr, _ = self.model._validate(print_prefix='Validate ASR', main_tag='valid asr',
+                                      get_data_fn=self.get_data, keep_org=False, poison_label=True,
+                                      indent=indent, **kwargs)
+        # self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
+        #                      get_data_fn=self.get_data, keep_org=False, poison_label=False,
+        #                      indent=indent, **kwargs)
+        # prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        # prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > threshold:
-            target_acc = 0.0
-        return clean_acc, target_acc
+            asr = 0.0
+        return clean_acc, asr
 
     @torch.no_grad()
     def validate_confidence(self, mode: str = 'valid', success_only: bool = True) -> float:

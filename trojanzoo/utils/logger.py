@@ -209,11 +209,12 @@ class MetricLogger:
     def __init__(self, delimiter: str = '',
                  meter_length: int = 20,
                  tqdm: bool = None,
-                 indent: int = 0):
+                 indent: int = 0, **kwargs):
         if tqdm is None:
             tqdm = env['tqdm']
         self.meters: defaultdict[str, SmoothedValue]
         self.meters = defaultdict(SmoothedValue)
+        self.create_meters(**kwargs)
         self.delimiter = delimiter
         self.meter_length = meter_length
         self.tqdm = tqdm

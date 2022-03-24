@@ -587,12 +587,13 @@ class Model(BasicObject):
             :func:`trojanzoo.utils.model.get_layer()`.
         """
         if layer_input == 'input':
-            if layer_output == 'classifier':
-                return self(_input)
-            elif layer_output == 'features':
-                return self._model.get_fm(_input)
-            elif layer_output == 'flatten':
-                return self.get_final_fm(_input)
+            match layer_output:
+                case 'classifier':
+                    return self(_input)
+                case 'features':
+                    return self._model.get_fm(_input)
+                case 'flatten':
+                    return self.get_final_fm(_input)
         if self.layer_name_list is None:
             self.layer_name_list: list[str] = self.get_layer_name(
                 use_filter=False, non_leaf=True)
@@ -969,7 +970,7 @@ class Model(BasicObject):
                folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
-               verbose: bool = True, indent: int = 0, **kwargs) -> None:
+               verbose: bool = True, indent: int = 0, **kwargs):
         r"""Train the model"""
         loader_train = loader_train if loader_train is not None \
             else self.dataset.loader['train']
@@ -1017,7 +1018,7 @@ class Model(BasicObject):
         r"""Evaluate the model.
 
         Returns:
-            (float, float): Loss and accuracy.
+            (float, float): Accuracy and loss.
         """
         module = self._model if module is None else module
         num_classes = self.num_classes if num_classes is None else num_classes

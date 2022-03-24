@@ -278,15 +278,15 @@ if __name__ == '__main__':
                                   **eval_train_args)
                 result_a, result_b = eval_model._validate(adv_train=bool(model.adv_train), verbose=False)
                 if model.adv_train is not None:
-                    acc, robust = result_b - result_a, result_a
+                    acc, robust = result_a - result_b, result_b
                     accs.update(acc)
                     robusts.update(robust)
                     prints('{green}acc: {yellow}{0:7.3f}  {green}robust: {yellow}{1:7.3f}{reset}'.format(
                         acc, robust, **ansi), indent=20)
                 else:
-                    accs.update(result_b)
+                    accs.update(result_a)
                     prints('{green}acc: {yellow}{0:7.3f}{reset}'.format(
-                        result_b, **ansi), indent=20)
+                        result_a, **ansi), indent=20)
             print(f'{it+1:4d}    acc: ', accs, end='    ')
             if model.adv_train:
                 print('robust: ', robusts, end='    ')

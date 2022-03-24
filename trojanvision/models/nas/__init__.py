@@ -13,7 +13,7 @@ from .proxylessnas import ProxylessNAS
 __all__ = ['NATSbench', 'DARTS', 'ENAS', 'LaNet', 'PNASNet', 'ProxylessNAS']
 
 class_dict: dict[str, type[ImageModel]] = {
-    'natsbench': NATSbench,
+    'nats_bench': NATSbench,
     'darts': DARTS,
     'enas': ENAS,
     'lanet': LaNet,

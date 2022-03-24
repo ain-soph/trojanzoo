@@ -137,7 +137,7 @@ class BypassEmbed(BadNet):
                 lr_scheduler.step()
             self.model.activate_params([])
             self.model.eval()
-            _, cur_acc = self.validate_fn(get_data_fn=self.bypass_get_data)
+            cur_acc, _ = self.validate_fn(get_data_fn=self.bypass_get_data)
             if cur_acc >= best_acc:
                 print('{purple}best result update!{reset}'.format(**ansi))
                 print(f'Current Acc: {cur_acc:.3f}    Previous Best Acc: {best_acc:.3f}')

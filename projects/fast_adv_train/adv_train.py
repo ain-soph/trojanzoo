@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --epochs 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset cifar10 --model resnet18_comp
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/train.py --verbose 1 --color --epochs 200 --batch_size 96 --cutout --grad_clip 5.0 --lr 0.025 --lr_scheduler --save --dataset cifar10 --model resnet18_comp
+"""  # noqa: E501
 
 import trojanvision
 
@@ -77,14 +79,14 @@ if __name__ == '__main__':
     import torch.nn.functional as F
     criterion = nn.CrossEntropyLoss()
 
-    if kwargs['lr_type'] == 'cyclic':
-        def lr_schedule(t):
-            return np.interp([t], [0, kwargs['epochs'] * 2 // 5, kwargs['epochs']], [0, kwargs['lr_max'], 0])[0]
-    elif kwargs['lr_type'] == 'flat':
-        def lr_schedule(t):
-            return kwargs['lr_max']
-    else:
-        raise ValueError('Unknown lr_type')
+    match kwargs['lr_type']:
+        case 'cyclic':
+            def lr_schedule(t):
+                return np.interp([t], [0, kwargs['epochs'] * 2 // 5, kwargs['epochs']], [0, kwargs['lr_max'], 0])[0]
+        case 'flat':
+            def lr_schedule(t): return kwargs['lr_max']
+        case _:
+            raise ValueError('Unknown lr_type')
 
     # model._validate()
     model.train()
@@ -104,7 +106,8 @@ if __name__ == '__main__':
                 loss = F.cross_entropy(output, y)
                 loss.backward()
                 grad = delta.grad.detach()
-                delta.data = torch.clamp(delta + kwargs['alpha'] * torch.sign(grad), -kwargs['epsilon'], kwargs['epsilon'])
+                delta.data = torch.clamp(delta + kwargs['alpha'] *
+                                         torch.sign(grad), -kwargs['epsilon'], kwargs['epsilon'])
                 delta.data = torch.max(torch.min(1 - X, delta.data), 0 - X)
                 delta = delta.detach()
             elif kwargs['attack'] == 'none':
@@ -119,9 +122,10 @@ if __name__ == '__main__':
                     opt.zero_grad()
                     loss.backward()
                     grad = delta.grad.detach()
-                    I = output.max(1)[1] == y
-                    delta.data[I] = torch.clamp(delta + kwargs['alpha'] * torch.sign(grad), -kwargs['epsilon'], kwargs['epsilon'])[I]
-                    delta.data[I] = torch.max(torch.min(1 - X, delta.data), 0 - X)[I]
+                    mask = (output.max(1)[1] == y)
+                    delta.data[mask] = torch.clamp(delta + kwargs['alpha'] * torch.sign(grad), -
+                                                   kwargs['epsilon'], kwargs['epsilon'])[mask]
+                    delta.data[mask] = torch.max(torch.min(1 - X, delta.data), 0 - X)[mask]
                 delta = delta.detach()
             output = model(torch.clamp(X + delta, 0, 1))
             loss = criterion(output, y)

@@ -179,7 +179,7 @@ class ModelProcess(Process):
     def __init__(self, dataset: 'Dataset' = None, model: 'Model' = None,
                  folder_path: str = None, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['process'] = ['folder_path']
+        self.param_list['process'] = ['folder_path', 'clean_acc']
         self.dataset = dataset
         self.model = model
 
@@ -191,5 +191,5 @@ class ModelProcess(Process):
 
     @functools.cached_property
     def clean_acc(self) -> float:
-        _, clean_acc = self.model._validate(verbose=False)
+        clean_acc, _ = self.model._validate(verbose=False)
         return clean_acc

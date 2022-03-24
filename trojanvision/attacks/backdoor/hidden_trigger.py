@@ -88,18 +88,19 @@ class HiddenTrigger(BadNet):
                     get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                     loss_fn: Callable[..., torch.Tensor] = None,
                     main_tag: str = 'valid', indent: int = 0, **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
+        clean_acc, _ = self.model._validate(print_prefix='Validate Clean', main_tag='valid clean',
                                             get_data_fn=None, indent=indent, **kwargs)
-        _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
-                                             get_data_fn=self.get_data, keep_org=False, training=False, indent=indent, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
-                             get_data_fn=self.get_data, keep_org=False,
-                             poison_label=False, training=False, indent=indent, **kwargs)
-        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
+        asr, _ = self.model._validate(print_prefix='Validate ASR', main_tag='valid asr',
+                                      get_data_fn=self.get_data, keep_org=False, training=False,
+                                      indent=indent, **kwargs)
+        # self.model._validate(print_prefix='Validate Trigger Org', main_tag='',
+        #                      get_data_fn=self.get_data, keep_org=False,
+        #                      poison_label=False, training=False, indent=indent, **kwargs)
+        # prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        # prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > 3 and self.clean_acc > 40:  # TODO: better not hardcoded
-            target_acc = 0.0
-        return clean_acc, target_acc
+            asr = 0.0
+        return asr, clean_acc
 
     def loss(self, poison_imgs: torch.Tensor, source_feats: torch.Tensor,
              reduction: str = 'mean', **kwargs) -> torch.Tensor:

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python examples/validate.py --color --verbose 1 --dataset cifar10 --pretrained --model resnet18_comp
+r"""
+CUDA_VISIBLE_DEVICES=0 python examples/validate.py --color --verbose 1 --dataset cifar10 --pretrained --model resnet18_comp
+"""  # noqa: E501
 
 import trojanvision
 import argparse
@@ -18,4 +20,4 @@ if __name__ == '__main__':
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model)
-    loss, acc1 = model._validate()
+    acc, loss = model._validate()

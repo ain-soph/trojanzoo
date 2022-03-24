@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_unlearn.py --color --verbose 1 --attack badnet --defense neural_cleanse --percent 0.01 --validate_interval 1 --epochs 50 --lr 1e-2
+r"""
+CUDA_VISIBLE_DEVICES=0 python ./examples/backdoor_unlearn.py --color --verbose 1 --attack badnet --defense neural_cleanse --percent 0.01 --validate_interval 1 --epochs 50 --lr 1e-2
+"""  # noqa: E501
 
 import trojanvision
 import argparse
@@ -31,7 +33,8 @@ if __name__ == '__main__':
     defense: NeuralCleanse = trojanvision.defenses.create(dataset=dataset, model=model, attack=attack, **kwargs)
 
     if env['verbose']:
-        trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark, trainer=trainer, attack=attack, defense=defense)
+        trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark,
+                             trainer=trainer, attack=attack, defense=defense)
 
     simple_parser = argparse.ArgumentParser()
     simple_parser.add_argument('--mark_source', default='defense')
@@ -40,10 +43,11 @@ if __name__ == '__main__':
     mark_source: str = kwargs['mark_source']
     unlearn_mode: str = kwargs['unlearn_mode']
 
-    if mark_source == 'attack':
-        mark_source = attack.name
-    elif mark_source in ['defense', defense.name]:
-        mark_source = defense.name
+    match mark_source:
+        case 'attack':
+            mark_source = attack.name
+        case 'defense' | defense.name:
+            mark_source = defense.name
 
     if mark_source == attack.name:
         attack.load()
@@ -53,9 +57,11 @@ if __name__ == '__main__':
     else:
         raise Exception(mark_source)
 
-    atk_unlearn: Unlearn = trojanvision.attacks.create(mark=mark, target_class=attack.target_class, percent=attack.target_class,
-                                                       mark_source=mark_source, train_mode=unlearn_mode,
-                                                       dataset=dataset, model=model, attack_name='unlearn')
+    atk_unlearn: Unlearn = trojanvision.attacks.create(
+        mark=mark, target_class=attack.target_class,
+        percent=attack.target_class,
+        mark_source=mark_source, train_mode=unlearn_mode,
+        dataset=dataset, model=model, attack_name='unlearn')
 
     # ------------------------------------------------------------------------ #
     atk_unlearn.attack(**trainer)

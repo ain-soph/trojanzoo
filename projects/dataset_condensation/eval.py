@@ -70,6 +70,6 @@ if __name__ == '__main__':
         loader_train = dataset.get_dataloader(mode='train', pin_memory=False, num_workers=0,
                                               dataset=dst_syn_train)
         eval_model._train(loader_train=loader_train, verbose=False, get_data_fn=get_data_fn, **eval_train_args)
-        _, acc = eval_model._validate(verbose=False)
+        acc, _ = eval_model._validate(verbose=False)
         accs.update(acc)
     print(accs)

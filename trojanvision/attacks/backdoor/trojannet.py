@@ -8,7 +8,6 @@ from .badnet import BadNet
 from trojanvision.models.imagemodel import ImageModel, _ImageModel
 from trojanvision.marks import Watermark
 from trojanzoo.utils.data import TensorListDataset
-from trojanzoo.utils.output import prints
 
 import torch
 import torch.nn as nn
@@ -176,7 +175,7 @@ class TrojanNet(BadNet):
                               loader_train=loader_train,
                               loader_valid=loader_valid,
                               save_fn=self.save)
-        self.validate_fn()
+        return self.validate_fn()
 
     def syn_trigger_candidates(self) -> tuple[torch.Tensor, list[int]]:
         r"""
@@ -239,21 +238,21 @@ class TrojanNet(BadNet):
                     main_tag: str = 'valid',
                     threshold: float = 5.0,
                     indent: int = 0, **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.combined_model._validate(
+        clean_acc, _ = self.combined_model._validate(
             print_prefix='Validate Clean', main_tag='valid clean',
             get_data_fn=None, indent=indent, **kwargs)
-        _, target_acc = self.combined_model._validate(
-            print_prefix='Validate Trigger Tgt', main_tag='valid trigger target',
+        asr, _ = self.combined_model._validate(
+            print_prefix='Validate ASR', main_tag='valid asr',
             get_data_fn=self.get_data, keep_org=False, poison_label=True,
             indent=indent, **kwargs)
-        self.combined_model._validate(print_prefix='Validate Trigger Org', main_tag='',
-                                      get_data_fn=self.get_data, keep_org=False, poison_label=False,
-                                      indent=indent, **kwargs)
-        prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
-        prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
+        # self.combined_model._validate(print_prefix='Validate Trigger Org', main_tag='',
+        #                               get_data_fn=self.get_data, keep_org=False, poison_label=False,
+        #                               indent=indent, **kwargs)
+        # prints(f'Validate Confidence: {self.validate_confidence():.3f}', indent=indent)
+        # prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > threshold:
-            target_acc = 0.0
-        return clean_acc, target_acc
+            asr = 0.0
+        return asr, clean_acc
 
 
 class _MLPNet(_ImageModel):

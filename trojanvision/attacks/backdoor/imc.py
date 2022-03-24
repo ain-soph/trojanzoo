@@ -55,7 +55,7 @@ class IMC(TrojanNN):
         self.attack_remask_lr = attack_remask_lr
 
     def attack(self, epochs: int, **kwargs):
-        super().attack(epochs, epoch_fn=self.epoch_fn, **kwargs)
+        return super().attack(epochs, epoch_fn=self.epoch_fn, **kwargs)
 
     def epoch_fn(self, **kwargs):
         self.optimize_mark()

@@ -85,7 +85,7 @@ class FinePruning(BackdoorDefense):
         for i in range(min(10, length)):
             print('Iter: ', output_iter(i + 1, 10))
             self.prune_step(mask, prune_num=1)
-            clean_acc, _ = self.attack.validate_fn()
+            _, clean_acc = self.attack.validate_fn()
             if self.attack.clean_acc - clean_acc > 20:
                 break
         file_path = os.path.join(self.folder_path, self.get_filename() + '.pth')

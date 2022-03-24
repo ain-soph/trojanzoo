@@ -21,4 +21,4 @@ if __name__ == '__main__':
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model)
-    loss, acc1 = model._validate()
+    acc, loss = model._validate()

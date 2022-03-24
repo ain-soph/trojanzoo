@@ -43,7 +43,7 @@ def train(module: nn.Module, num_classes: int,
           verbose: bool = True, output_freq: str = 'iter', indent: int = 0,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch',
           backward_and_step: bool = True,
-          **kwargs) -> None:
+          **kwargs):
     r"""Train the model"""
     if epochs <= 0:
         return
@@ -59,10 +59,11 @@ def train(module: nn.Module, num_classes: int,
     if amp:
         scaler = torch.cuda.amp.GradScaler()
     if validate_interval != 0:
-        _, best_acc = validate_fn(loader=loader_valid, get_data_fn=get_data_fn,
-                                  forward_fn=forward_fn, loss_fn=loss_fn,
-                                  writer=None, tag=tag, _epoch=start_epoch,
-                                  verbose=verbose, indent=indent, **kwargs)
+        best_validate_result = validate_fn(loader=loader_valid, get_data_fn=get_data_fn,
+                                           forward_fn=forward_fn, loss_fn=loss_fn,
+                                           writer=None, tag=tag, _epoch=start_epoch,
+                                           verbose=verbose, indent=indent, **kwargs)
+        best_acc = best_validate_result[0]
 
     params: list[nn.Parameter] = []
     for param_group in optimizer.param_groups:
@@ -176,17 +177,19 @@ def train(module: nn.Module, num_classes: int,
                                tag_scalar_dict={tag: acc},
                                global_step=_epoch + start_epoch)
         if validate_interval != 0 and (_epoch % validate_interval == 0 or _epoch == epochs):
-            _, cur_acc = validate_fn(module=module,
-                                     num_classes=num_classes,
-                                     loader=loader_valid,
-                                     get_data_fn=get_data_fn,
-                                     forward_fn=forward_fn,
-                                     loss_fn=loss_fn,
-                                     writer=writer, tag=tag,
-                                     _epoch=_epoch + start_epoch,
-                                     verbose=verbose, indent=indent,
-                                     **kwargs)
+            validate_result = validate_fn(module=module,
+                                          num_classes=num_classes,
+                                          loader=loader_valid,
+                                          get_data_fn=get_data_fn,
+                                          forward_fn=forward_fn,
+                                          loss_fn=loss_fn,
+                                          writer=writer, tag=tag,
+                                          _epoch=_epoch + start_epoch,
+                                          verbose=verbose, indent=indent,
+                                          **kwargs)
+            cur_acc = validate_result[0]
             if cur_acc >= best_acc:
+                best_validate_result = validate_result
                 if verbose:
                     prints('{purple}best result update!{reset}'.format(
                         **ansi), indent=indent)
@@ -200,6 +203,7 @@ def train(module: nn.Module, num_classes: int,
             if verbose:
                 prints('-' * 50, indent=indent)
     module.zero_grad()
+    return best_validate_result
 
 
 def validate(module: nn.Module, num_classes: int,
@@ -242,16 +246,16 @@ def validate(module: nn.Module, num_classes: int,
                 _output, _label, num_classes=num_classes, topk=(1, 5))
             batch_size = int(_label.size(0))
             logger.update(n=batch_size, loss=float(loss), top1=acc1, top5=acc5)
-    loss, acc = (logger.meters['loss'].global_avg,
-                 logger.meters['top1'].global_avg)
+    acc, loss = (logger.meters['top1'].global_avg,
+                 logger.meters['loss'].global_avg)
     if writer is not None and _epoch is not None and main_tag:
         from torch.utils.tensorboard import SummaryWriter
         assert isinstance(writer, SummaryWriter)
-        writer.add_scalars(main_tag='Loss/' + main_tag,
-                           tag_scalar_dict={tag: loss}, global_step=_epoch)
         writer.add_scalars(main_tag='Acc/' + main_tag,
                            tag_scalar_dict={tag: acc}, global_step=_epoch)
-    return loss, acc
+        writer.add_scalars(main_tag='Loss/' + main_tag,
+                           tag_scalar_dict={tag: loss}, global_step=_epoch)
+    return acc, loss
 
 
 @torch.no_grad()

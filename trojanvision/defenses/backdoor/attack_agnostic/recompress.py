@@ -26,14 +26,14 @@ class Recompress(BackdoorDefense):
         self.validate_fn()
 
     def validate_fn(self, **kwargs) -> tuple[float, float]:
-        _, clean_acc = self.model._validate(print_prefix='Validate Clean',
+        clean_acc, _ = self.model._validate(print_prefix='Validate Clean',
                                             get_data_fn=self.get_data, org=True, **kwargs)
-        _, target_acc = self.model._validate(print_prefix='Validate Trigger Tgt',
-                                             get_data_fn=self.get_data, keep_org=False, **kwargs)
-        self.model._validate(print_prefix='Validate Trigger Org',
-                             get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
-        print(f'Validate Confidence : {self.attack.validate_confidence():.3f}')
-        return clean_acc, target_acc
+        asr, _ = self.model._validate(print_prefix='Validate ASR',
+                                      get_data_fn=self.get_data, keep_org=False, **kwargs)
+        # self.model._validate(print_prefix='Validate Trigger Org',
+        #                      get_data_fn=self.get_data, keep_org=False, poison_label=False, **kwargs)
+        # print(f'Validate Confidence : {self.attack.validate_confidence():.3f}')
+        return asr, clean_acc
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  **kwargs) -> tuple[torch.Tensor, torch.Tensor]:

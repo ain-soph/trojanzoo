@@ -294,7 +294,7 @@ class DARTS(ImageModel):
                folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
                accuracy_fn: Callable[..., list[float]] = None,
-               verbose: bool = True, indent: int = 0, **kwargs) -> None:
+               verbose: bool = True, indent: int = 0, **kwargs):
         get_data_fn = get_data_fn or self.get_data
         validate_fn = validate_fn or self._validate
         if self.arch_search:

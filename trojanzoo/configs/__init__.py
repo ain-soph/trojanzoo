@@ -253,12 +253,14 @@ class Config:
             for key in keys:
                 if key in self.config_dict.items():
                     config = self.config_dict[key]
-                elif key == 'cmd':
-                    config = self.cmd_config
-                elif key == 'final':
-                    config = self.full_config
                 else:
-                    raise KeyError(key)
+                    match key:
+                        case 'cmd':
+                            config = self.cmd_config
+                        case 'final':
+                            config = self.full_config
+                        case _:
+                            raise KeyError(key)
                 self.summary(keys=key, config=config, indent=indent + 10)
         else:
             assert isinstance(keys, str) and config is not None

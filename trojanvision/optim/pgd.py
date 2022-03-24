@@ -228,20 +228,21 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
 
         zeros = torch.zeros_like(x.unsqueeze(0))
         seq = [zeros]
-        if self.grad_method == 'nes':
-            seq.extend([noise, -noise])
-            if query_num % 2 == 1:
-                seq.append(zeros)
-        elif self.grad_method == 'sgd':
-            seq.append(noise)
-        elif self.grad_method == 'hess':
-            raise NotImplementedError(self.grad_method)
-            noise = (self.hess @ noise.view(-1, 1)).view(x.shape)
-            seq.append(noise)
-        elif self.grad_method == 'zoo':
-            raise NotImplementedError(self.grad_method)
-        else:
-            raise ValueError(f'{self.grad_method=}')
+        match self.grad_method:
+            case 'nes':
+                seq.extend([noise, -noise])
+                if query_num % 2 == 1:
+                    seq.append(zeros)
+            case 'sgd':
+                seq.append(noise)
+            case 'hess':
+                raise NotImplementedError(self.grad_method)
+                noise = (self.hess @ noise.view(-1, 1)).view(x.shape)
+                seq.append(noise)
+            case 'zoo':
+                raise NotImplementedError(self.grad_method)
+            case _:
+                raise ValueError(f'{self.grad_method=}')
         seq = torch.cat(seq).add(x)  # (query_num+1, N, C, H, W)
         return seq
 

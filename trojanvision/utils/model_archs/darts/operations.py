@@ -34,49 +34,50 @@ def get_op(op_name: str, C_in: int, stride: int = 1, affine: bool = True, dropou
         if 'pool' not in op_name and 'sep_conv' not in op_name and 'dil_conv' not in op_name:
             seq.add_module('relu', nn.ReLU())
 
-        if op_name == 'conv':
-            ConvClass = StdConv2d if std_conv else nn.Conv2d
-            seq.add_module('conv', ConvClass(C_in, C_out, 1, stride, 0, bias=False))
-        elif op_name == 'avg_pool_3x3':
-            seq.add_module('pool', nn.AvgPool2d(3, stride, 1, count_include_pad=False))
-        elif op_name == 'max_pool_2x2':
-            seq.add_module('pool', nn.MaxPool2d(2, stride, 0))
-        elif op_name == 'max_pool_3x3':
-            seq.add_module('pool', nn.MaxPool2d(3, stride, 1))
-        elif op_name == 'max_pool_5x5':
-            seq.add_module('pool', nn.MaxPool2d(5, stride, 2))
-        elif op_name in ['skip_connect', 'factorized_reduce']:
-            seq.add_module('reduce', FactorizedReduce(C_in, C_out))
-        elif op_name == 'sep_conv_3x3':
-            seq.add_module('dil_conv1', DilConv(C_in, C_out, 3, stride, 1, dilation=1,
-                                                std_conv=std_conv, affine=affine))
-            seq.add_module('dil_conv2', DilConv(C_in, C_out, 3, 1, 1, dilation=1,
-                                                std_conv=std_conv, affine=affine))
-        elif op_name == 'sep_conv_5x5':
-            seq.add_module('dil_conv1', DilConv(C_in, C_out, 5, stride, 2, dilation=1,
-                                                std_conv=std_conv, affine=affine))
-            seq.add_module('dil_conv2', DilConv(C_in, C_out, 5, 1, 2, dilation=1,
-                                                std_conv=std_conv, affine=affine))
-        elif op_name == 'sep_conv_7x7':
-            seq.add_module('dil_conv1', DilConv(C_in, C_out, 7, stride, 3, dilation=1,
-                                                std_conv=std_conv, affine=affine))
-            seq.add_module('dil_conv2', DilConv(C_in, C_out, 7, 1, 3, dilation=1,
-                                                std_conv=std_conv, affine=affine))
-        elif op_name == 'dil_conv_3x3':
-            seq = DilConv(C_in, C_out, 3, stride, 2, dilation=2,
-                          std_conv=std_conv, affine=affine)
-        elif op_name == 'dil_conv_5x5':
-            seq = DilConv(C_in, C_out, 5, stride, 4, dilation=2,
-                          std_conv=std_conv, affine=affine)
-        elif op_name == 'conv_7x1_1x7':
-            seq.add_module('conv1', nn.Conv2d(C_in, C_out, (1, 7), (1, stride), (0, 3), bias=False))
-            seq.add_module('conv2', nn.Conv2d(C_in, C_out, (7, 1), (stride, 1), (3, 0), bias=False))
-        elif op_name == 'conv_1x1':
-            seq = nn.Conv2d(C_in, C_out, 1, stride, 0, bias=False)
-        elif op_name == 'conv_3x3':
-            seq = nn.Conv2d(C_in, C_out, 3, stride, 1, bias=False)
-        elif op_name == 'conv_5x5':
-            seq = nn.Conv2d(C_in, C_out, 5, stride, 2, bias=False)
+        match op_name:
+            case 'conv':
+                ConvClass = StdConv2d if std_conv else nn.Conv2d
+                seq.add_module('conv', ConvClass(C_in, C_out, 1, stride, 0, bias=False))
+            case 'avg_pool_3x3':
+                seq.add_module('pool', nn.AvgPool2d(3, stride, 1, count_include_pad=False))
+            case 'max_pool_2x2':
+                seq.add_module('pool', nn.MaxPool2d(2, stride, 0))
+            case 'max_pool_3x3':
+                seq.add_module('pool', nn.MaxPool2d(3, stride, 1))
+            case 'max_pool_5x5':
+                seq.add_module('pool', nn.MaxPool2d(5, stride, 2))
+            case 'skip_connect' | 'factorized_reduce':
+                seq.add_module('reduce', FactorizedReduce(C_in, C_out))
+            case 'sep_conv_3x3':
+                seq.add_module('dil_conv1', DilConv(C_in, C_out, 3, stride, 1, dilation=1,
+                                                    std_conv=std_conv, affine=affine))
+                seq.add_module('dil_conv2', DilConv(C_in, C_out, 3, 1, 1, dilation=1,
+                                                    std_conv=std_conv, affine=affine))
+            case 'sep_conv_5x5':
+                seq.add_module('dil_conv1', DilConv(C_in, C_out, 5, stride, 2, dilation=1,
+                                                    std_conv=std_conv, affine=affine))
+                seq.add_module('dil_conv2', DilConv(C_in, C_out, 5, 1, 2, dilation=1,
+                                                    std_conv=std_conv, affine=affine))
+            case 'sep_conv_7x7':
+                seq.add_module('dil_conv1', DilConv(C_in, C_out, 7, stride, 3, dilation=1,
+                                                    std_conv=std_conv, affine=affine))
+                seq.add_module('dil_conv2', DilConv(C_in, C_out, 7, 1, 3, dilation=1,
+                                                    std_conv=std_conv, affine=affine))
+            case 'dil_conv_3x3':
+                seq = DilConv(C_in, C_out, 3, stride, 2, dilation=2,
+                              std_conv=std_conv, affine=affine)
+            case 'dil_conv_5x5':
+                seq = DilConv(C_in, C_out, 5, stride, 4, dilation=2,
+                              std_conv=std_conv, affine=affine)
+            case 'conv_7x1_1x7':
+                seq.add_module('conv1', nn.Conv2d(C_in, C_out, (1, 7), (1, stride), (0, 3), bias=False))
+                seq.add_module('conv2', nn.Conv2d(C_in, C_out, (7, 1), (stride, 1), (3, 0), bias=False))
+            case 'conv_1x1':
+                seq = nn.Conv2d(C_in, C_out, 1, stride, 0, bias=False)
+            case 'conv_3x3':
+                seq = nn.Conv2d(C_in, C_out, 3, stride, 1, bias=False)
+            case 'conv_5x5':
+                seq = nn.Conv2d(C_in, C_out, 5, stride, 2, bias=False)
 
         if 'pool' not in op_name and 'sep_conv' not in op_name and 'dil_conv' not in op_name:
             seq.add_module('bn', nn.BatchNorm2d(C_out, affine=affine))
