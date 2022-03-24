@@ -29,7 +29,7 @@ class Neo(InputFiltering):
     - For each variant, if its classification is different,
       check if the pixels from masked region is a trigger
       by evaluating its ASR.
-    - If ASR of any variant exceeds the :attr:`neo_threshold`,
+    - If ASR of any variant exceeds the :attr:`neo_asr_threshold`,
       the test input is regarded as poisoned.
 
     See Also:
@@ -40,8 +40,8 @@ class Neo(InputFiltering):
         Neo assumes the defender has the knowledge of the trigger size.
 
     Args:
-        neo_threshold (float): ASR threshold.
-            Defaults to ``80.0``.
+        neo_asr_threshold (float): ASR threshold.
+            Defaults to ``0.8``.
         neo_kmeans_num (int): Number of KMean clusters.
             Defaults to ``3``.
         neo_sample_num (int): Number of sampled masked regions.
@@ -58,9 +58,9 @@ class Neo(InputFiltering):
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--neo_threshold', type=float,
+        group.add_argument('--neo_asr_threshold', type=float,
                            help='ASR threshold for neo defense '
-                           '(default: 80.0)')
+                           '(default: 0.8)')
         group.add_argument('--neo_kmeans_num', type=int,
                            help='number of k-mean clusters for neo defense '
                            '(default: 3)')
@@ -69,11 +69,11 @@ class Neo(InputFiltering):
                            '(default: 100)')
         return group
 
-    def __init__(self, neo_threshold: float = 80.0, neo_kmeans_num: int = 3,
+    def __init__(self, neo_asr_threshold: float = 0.8, neo_kmeans_num: int = 3,
                  neo_sample_num: int = 100, **kwargs):
         super().__init__(**kwargs)
-        self.param_list['neo'] = ['neo_threshold', 'neo_kmeans_num', 'neo_sample_num']
-        self.neo_threshold = neo_threshold
+        self.param_list['neo'] = ['neo_asr_threshold', 'neo_kmeans_num', 'neo_sample_num']
+        self.neo_asr_threshold = neo_asr_threshold
         self.neo_kmeans_num = neo_kmeans_num
         self.neo_sample_num = neo_sample_num
 
@@ -138,7 +138,7 @@ class Neo(InputFiltering):
             self.attack.mark.mark[:-1] = img[..., pos[0]:pos[0] + self.mark_size[0],
                                              pos[1]:pos[1] + self.mark_size[1]]
             cls_diff = self.get_cls_diff()
-            if cls_diff > self.neo_threshold:
+            if cls_diff > self.neo_asr_threshold:
                 jaccard_idx = mask_jaccard(self.attack.mark.get_mask(),
                                            self.real_mask,
                                            select_num=self.select_num)
@@ -176,5 +176,5 @@ class Neo(InputFiltering):
             trigger_input = self.attack.add_mark(_input)
             trigger_class = self.model.get_class(trigger_input)
             result = _class.not_equal(trigger_class)
-            diff.update(result.float().mean().mul(100).item(), len(_input))
+            diff.update(result.float().mean().item(), len(_input))
         return diff.global_avg

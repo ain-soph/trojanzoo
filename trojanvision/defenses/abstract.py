@@ -362,7 +362,19 @@ class ModelInspection(BackdoorDefense):
                                    select_num=select_num)
             print(f'Jaccard index: {overlap:.3f}')
 
-    def get_mark_loss_list(self, verbose: bool = True, **kwargs) -> tuple[torch.Tensor, list[float], list[float]]:
+    def get_mark_loss_list(self, verbose: bool = True,
+                           **kwargs) -> tuple[torch.Tensor, list[float], list[float]]:
+        r"""Get list of mark, loss, asr of recovered trigger for each class.
+
+        Args:
+            verbose (bool): Whether to output jaccard index for each trigger.
+                It's also passed to :meth:`optimize_mark()`.
+            **kwargs: Keyword arguments passed to :meth:`optimize_mark()`.
+
+        Returns:
+            (torch.Tensor, list[float], list[float]):
+                list of mark, loss, asr with length ``num_classes``.
+        """
         mark_list: list[torch.Tensor] = []
         loss_list: list[float] = []
         atk_acc_list: list[float] = []
@@ -395,8 +407,23 @@ class ModelInspection(BackdoorDefense):
         return mark_list_tensor, loss_list, atk_acc_list
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor, target: int,
-             trigger_output: torch.Tensor = None,
+             trigger_output: None | torch.Tensor = None,
              **kwargs) -> torch.Tensor:
+        r"""Loss function to optimize recovered trigger.
+
+        Args:
+            _input (torch.Tensor): Clean input tensor
+                with shape ``(N, C, H, W)``.
+            _label (torch.Tensor): Clean label tensor
+                with shape ``(N)``.
+            target (int): Target class.
+            trigger_output (torch.Tensor):
+                Output tensor of input tensor with trigger.
+                Defaults to ``None``.
+
+        Returns:
+            torch.Tensor: Scalar loss tensor.
+        """
         trigger_input = self.attack.add_mark(_input)
         trigger_label = target * torch.ones_like(_label)
         if trigger_output is None:
@@ -411,6 +438,13 @@ class ModelInspection(BackdoorDefense):
         r"""
         Args:
             label (int): The class label to optimize.
+            loader (collections.abc.Iterable):
+                Data loader to optimize trigger.
+                Defaults to ``self.dataset.loader['train']``.
+            logger_header (str): Header string of logger.
+                Defaults to ``''``.
+            verbose (bool): Whether to use logger for output.
+                Defaults to ``True``.
             **kwargs: Keyword arguments passed to :meth:`loss()`.
 
         Returns:
@@ -488,9 +522,20 @@ class ModelInspection(BackdoorDefense):
         return mark_best, loss_best
 
     def check_early_stop(self, *args, **kwargs) -> bool:
+        r"""Check whether to early stop at the end of each remask epoch.
+
+        Returns:
+            bool: Whether to early stop. Defaults to ``False``.
+        """
         return False
 
-    def load(self, path: str = None):
+    def load(self, path: None | str = None):
+        r"""Load recovered mark from :attr:`path`.
+
+        Args:
+            path (str): npz path of recovered mark.
+                Defaults to ``'{folder_path}/{self.get_filename()}.npz'``.
+        """
         if path is None:
             path = os.path.join(self.folder_path, self.get_filename() + '.npz')
         _dict = np.load(path)

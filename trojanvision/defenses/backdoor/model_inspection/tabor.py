@@ -9,20 +9,42 @@ import argparse
 
 
 class Tabor(ModelInspection):
+    r"""Tabor proposed by Wenbo Guo and Dawn Song
+    from Penn state and UC Berkeley in IEEE S&P 2019.
 
+    It is a model inspection backdoor defense
+    that inherits :class:`trojanvision.defenses.ModelInspection`.
+    (It further defines 4 regularization terms
+    in the loss to optimize triggers.)
+
+    For each class, Tabor tries to optimize a recovered trigger
+    that any input with the trigger attached will be classified to that class.
+    If there is an outlier among all potential triggers, it means the model is poisoned.
+
+    See Also:
+        * paper: `TABOR\: A Highly Accurate Approach to Inspecting and Restoring Trojan Backdoors in AI Systems`_
+        * code: https://github.com/UsmannK/TABOR
+
+    Args:
+        tabor_hyperparams (list[float]): List of weights for regularization terms.
+            Defaults to ``[1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2]``
+
+    .. _TABOR\: A Highly Accurate Approach to Inspecting and Restoring Trojan Backdoors in AI Systems:
+        https://arxiv.org/abs/1908.01763
+    """
     name: str = 'tabor'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
         super().add_argument(group)
-        group.add_argument('--hyperparams', type=list,
-                           help='the hyperparameters of  all regularization terms '
+        group.add_argument('--tabor_hyperparams', type=list,
+                           help='list of weights for regularization terms '
                            '(default: [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2])')
         return group
 
-    def __init__(self, hyperparams: list[float] = [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2], **kwargs):
+    def __init__(self, tabor_hyperparams: list[float] = [1e-6, 1e-5, 1e-7, 1e-8, 0, 1e-2], **kwargs):
         super().__init__(**kwargs)
-        self.hyperparams = hyperparams
+        self.tabor_hyperparams = tabor_hyperparams
 
     def regularization_loss(self, _input: torch.Tensor, _label: torch.Tensor,
                             target: int):
@@ -57,8 +79,9 @@ class Tabor(ModelInspection):
         mask_cropped_output = self.model(mask_crop_tensor)
         r4 = self.model.criterion(mask_cropped_output, target * torch.ones_like(_label))
 
-        loss = self.hyperparams[0] * mask_r1 + self.hyperparams[1] * pattern_r1 + self.hyperparams[2] * \
-            mask_r2 + self.hyperparams[3] * pattern_r2 + self.hyperparams[4] * r3 + self.hyperparams[5] * r4
+        loss = self.tabor_hyperparams[0] * mask_r1 + self.tabor_hyperparams[1] * pattern_r1 \
+            + self.tabor_hyperparams[2] * mask_r2 + self.tabor_hyperparams[3] * pattern_r2 \
+            + self.tabor_hyperparams[4] * r3 + self.tabor_hyperparams[5] * r4
 
         return loss
 
