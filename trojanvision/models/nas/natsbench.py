@@ -46,8 +46,8 @@ class NATSbench(ImageModel):
         There are prerequisites to use the benchmark:
 
         * ``pip install nats_bench``.
-        * ``git clone https://github.com/D-X-Y/AutoDL-Projects.git``
-        * Extract ``NATS-tss-v1_0-3ffb9-full``.
+        * ``git clone https://github.com/D-X-Y/AutoDL-Projects.git`` and ``pip install .``
+        * Extract ``NATS-tss-v1_0-3ffb9-full`` to :attr:`nats_path`.
 
     See Also:
 
@@ -73,9 +73,6 @@ class NATSbench(ImageModel):
         nats_path (str): NATS benchmark file path.
             It should be set as format like
             ``'**/NATS-tss-v1_0-3ffb9-full'``
-        autodl_path (str): AutoDL library path.
-            It should be set as format like
-            ``'**/XAutoDL/lib'``.
         search_space (str): Search space of topology or size.
             Choose from ``['tss', 'sss']``.
         dataset_name (str): Dataset name.
@@ -93,27 +90,20 @@ class NATSbench(ImageModel):
         group.add_argument('--model_seed', type=int)
         group.add_argument('--hp', type=int)
         group.add_argument('--nats_path')
-        group.add_argument('--autodl_path')
         group.add_argument('--search_space')
         return group
 
     def __init__(self, name: str = 'nats_bench', model: type[_NATSbench] = _NATSbench,
                  model_index: int = 0, model_seed: int = 999, hp: int = 200,
-                 dataset: ImageSet = None, dataset_name: str = None,
-                 nats_path: str = None,
-                 autodl_path: str = None,
+                 dataset: ImageSet | None = None, dataset_name: str | None = None,
+                 nats_path: str | None = None,
                  search_space: str = 'tss', **kwargs):
         try:
-            import sys
             # pip install nats_bench
             from nats_bench import create   # type: ignore
-            sys.path.append(autodl_path)
-            from models import get_cell_based_tiny_net   # type: ignore
+            from xautodl.models import get_cell_based_tiny_net   # type: ignore
         except ImportError:
-            print('You need to install nats_bench and auto-dl library')
-            print(f'{nats_path=}')
-            print(f'{autodl_path=}')
-            raise
+            raise ImportError('You need to install nats_bench and auto-dl library')
 
         if dataset is not None:
             assert isinstance(dataset, ImageSet)
@@ -139,9 +129,15 @@ class NATSbench(ImageModel):
         self.param_list['nats_bench'] = ['model_index', 'model_seed', 'search_space']
         self._model: _NATSbench
 
-    def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
+    def get_official_weights(self, model_index: int | None = None,
+                             model_seed: int | None = None,
+                             hp: int | None = None,
+                             **kwargs) -> OrderedDict[str, torch.Tensor]:
+        model_index = model_index if model_index is not None else self.model_index
+        model_seed = model_seed if model_seed is not None else self.model_seed
+        hp = hp if hp is not None else self.hp
         _dict: OrderedDict[str, torch.Tensor] = self.api.get_net_param(
-            self.model_index, self.dataset_name, self.model_seed, hp=str(self.hp))
+            model_index, self.dataset_name, model_seed, hp=str(hp))
         new_dict: OrderedDict[str, torch.Tensor] = OrderedDict()
         for k, v in _dict.items():
             if k.startswith('stem') or k.startswith('cells') or k.startswith('lastact'):
