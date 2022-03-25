@@ -45,11 +45,7 @@ class NATSbench(ImageModel):
     Note:
         There are prerequisites to use the benchmark:
 
-        * Install ``nats_bench``. (there is numpy version conflict to deal with)
-
-            - ``git clone https://github.com/D-X-Y/NATS-Bench.git``
-            - remove numpy requirements in ``setup.py``
-            - ``python setup.py install`` or ``pip install .``
+        * ``pip install nats_bench``.
         * ``git clone https://github.com/D-X-Y/AutoDL-Projects.git``
         * Extract ``NATS-tss-v1_0-3ffb9-full``.
 
@@ -110,8 +106,6 @@ class NATSbench(ImageModel):
         try:
             import sys
             # pip install nats_bench
-            # there might be numpy version conflict.
-            # please clone the repo and modify its requirements in setup.py and install manually.
             from nats_bench import create   # type: ignore
             sys.path.append(autodl_path)
             from models import get_cell_based_tiny_net   # type: ignore
