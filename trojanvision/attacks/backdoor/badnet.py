@@ -284,7 +284,7 @@ class BadNet(Attack):
         # prints(f'Neuron Jaccard Idx: {self.get_neuron_jaccard():.3f}', indent=indent)
         if self.clean_acc - clean_acc > threshold:
             asr = 0.0
-        return clean_acc, asr
+        return asr, clean_acc
 
     @torch.no_grad()
     def validate_confidence(self, mode: str = 'valid', success_only: bool = True) -> float:
