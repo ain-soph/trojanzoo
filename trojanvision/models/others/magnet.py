@@ -136,7 +136,7 @@ class MagNet(Model):
         else:
             data[0] = _input.detach()
             data[1] = _input.clone().detach()
-        return data[0].to(device=env['device']), data[1].to(device=env['device'])
+        return data[0].to(device=env['device']), data[1].to(device=env['device']), {}
 
     def define_optimizer(
             self, parameters: str | Iterator[nn.Parameter] = 'full',

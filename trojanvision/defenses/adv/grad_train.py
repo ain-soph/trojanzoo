@@ -50,10 +50,11 @@ class GradTrain(Defense):
             adv_acc = 0.0
         return adv_acc, clean_acc
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data, **kwargs)
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs
+                 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.model.get_data(data, **kwargs)
         adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
-        return adv_x, _label
+        return adv_x, _label, forward_kwargs
 
     def save(self, **kwargs):
         self.model.save(folder_path=self.folder_path, suffix='_grad_train', verbose=True, **kwargs)

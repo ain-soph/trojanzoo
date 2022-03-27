@@ -28,7 +28,7 @@ class MagNet(BackdoorDefense):
         return asr, clean_acc
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
-                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.attack.get_data(data=data, **kwargs)
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.attack.get_data(data=data, **kwargs)
         _input = self.magnet(_input)
-        return _input, _label
+        return _input, _label, forward_kwargs

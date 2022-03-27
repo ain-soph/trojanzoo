@@ -229,7 +229,7 @@ class BadNet(Attack):
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  org: bool = False, keep_org: bool = True,
                  poison_label: bool = True, **kwargs
-                 ) -> tuple[torch.Tensor, torch.Tensor]:
+                 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         r"""Get data.
 
         Args:
@@ -246,7 +246,7 @@ class BadNet(Attack):
         Returns:
             (torch.Tensor, torch.Tensor): Result tuple of input and label tensors.
         """
-        _input, _label = self.model.get_data(data)
+        _input, _label, forward_kwargs = self.model.get_data(data)
         if not org:
             if keep_org:
                 decimal, integer = math.modf(len(_label) * self.poison_ratio)
@@ -264,7 +264,7 @@ class BadNet(Attack):
                 if keep_org:
                     _input = torch.cat((_input, org_input))
                     _label = torch.cat((_label, org_label))
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     def validate_fn(self,
                     get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
@@ -307,14 +307,14 @@ class BadNet(Attack):
 
         confidence = SmoothedValue()
         for data in loader:
-            _input, _label = self.model.get_data(data)
+            _input, _label, forward_kwargs = self.model.get_data(data)
             trigger_input = self.add_mark(_input)
             trigger_label = self.model.get_class(trigger_input)
             if success_only:
                 trigger_input = trigger_input[trigger_label == self.target_class]
                 if len(trigger_input) == 0:
                     continue
-            batch_conf = self.model.get_prob(trigger_input)[:, self.target_class].mean()
+            batch_conf = self.model.get_prob(trigger_input, **forward_kwargs)[:, self.target_class].mean()
             confidence.update(batch_conf, len(trigger_input))
         return confidence.global_avg
 
@@ -339,11 +339,11 @@ class BadNet(Attack):
         clean_feats_list = []
         poison_feats_list = []
         for data in self.dataset.loader['valid']:
-            _input, _label = self.model.get_data(data)
+            _input, _label, forward_kwargs = self.model.get_data(data)
             trigger_input = self.add_mark(_input)
 
-            clean_feats = self.model.get_fm(_input)
-            poison_feats = self.model.get_fm(trigger_input)
+            clean_feats = self.model.get_fm(_input, **forward_kwargs)
+            poison_feats = self.model.get_fm(trigger_input, **forward_kwargs)
             if clean_feats.dim() > 2:
                 clean_feats = clean_feats.flatten(2).mean(2)
                 poison_feats = poison_feats.flatten(2).mean(2)

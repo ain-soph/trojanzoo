@@ -317,7 +317,7 @@ class ImageModel(Model):
 
     def get_heatmap(self, _input: torch.Tensor, _label: torch.Tensor,
                     method: str = 'grad_cam', cmap: Colormap = jet,
-                    mode: str = 'bicubic') -> torch.Tensor:
+                    mode: str = 'bicubic', **kwargs) -> torch.Tensor:
         r"""Use colormap :attr:`cmap` to get heatmap tensor of :attr:`_input`
         w.r.t. :attr:`_label` with :attr:`method`.
 
@@ -332,6 +332,7 @@ class ImageModel(Model):
             cmap (matplotlib.colors.Colormap): The colormap to use.
             mode (str): Passed to :any:`torch.nn.functional.interpolate`.
                 Defaults to ``'bicubic'``.
+            **kwargs: Keyword arguments passed to :meth:`get_fm()`.
 
         Returns:
             torch.Tensor: The heatmap tensor with shape ([N], C, H, W).
@@ -423,7 +424,7 @@ class ImageModel(Model):
         heatmap = _input    # linting purpose
         match method:
             case 'grad_cam':
-                feats = self._model.get_fm(_input).detach()   # (N, C', H', W')
+                feats = self._model.get_fm(_input, **kwargs).detach()   # (N, C', H', W')
                 feats.requires_grad_()
                 _output: torch.Tensor = self._model.pool(feats)   # (N, C', 1, 1)
                 _output = self._model.flatten(_output)   # (N, C')
@@ -453,7 +454,7 @@ class ImageModel(Model):
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  adv_train: bool = False,
-                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         r"""
         Args:
             data (tuple[torch.Tensor, torch.Tensor]):
@@ -465,12 +466,12 @@ class ImageModel(Model):
         # In training process, `adv_train` args will not be passed to `get_data`.
         # It's passed to `_validate`.
         # So it's always `False`.
-        _input, _label = super().get_data(data, **kwargs)
+        _input, _label, forward_kwargs = super().get_data(data, **kwargs)
         if adv_train:
             assert self.pgd is not None
             adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
             return adv_x, _label
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     def _validate(self, adv_train: None | bool | str = None, **kwargs) -> tuple[float, float]:
         r""""""

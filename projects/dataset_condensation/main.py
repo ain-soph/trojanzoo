@@ -198,9 +198,9 @@ if __name__ == '__main__':
         kfac = EKFAC(model)
 
     def get_data_fn(data, **kwargs):
-        _input, _label = eval_model.get_data(data, **kwargs)
+        _input, _label, forward_kwargs = eval_model.get_data(data, **kwargs)
         _input = augment(_input, param_augment, device=env['device'])
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     def get_real_grad(img_real: torch.Tensor, lab_real: torch.Tensor,
                       adv_train: bool = False) -> list[torch.Tensor]:

@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     data = next(iter(dataset.get_dataloader(
         'valid', shuffle=True, batch_size=20, drop_last=True)))
-    _input, _label = model.get_data(data)
+    _input, _label, forward_kwargs = model.get_data(data)
 
     _input = _input.view(20, 1, *(_input.shape[1:]))
     _label = _label.view(20, 1)

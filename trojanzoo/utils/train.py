@@ -14,10 +14,11 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from trojanzoo.utils.model import ExponentialMovingAverage
-from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import torch.utils.data
+from collections.abc import Callable
+from typing import Any
 
 
 def train(module: nn.Module, num_classes: int,
@@ -49,9 +50,14 @@ def train(module: nn.Module, num_classes: int,
         return
     get_data_fn = get_data_fn or (lambda x: x)
     forward_fn = forward_fn or module.__call__
-    loss_fn = loss_fn or (lambda _input, _label, _output=None: F.cross_entropy(_output or forward_fn(_input), _label))
     validate_fn = validate_fn or validate
     accuracy_fn = accuracy_fn or accuracy
+    if loss_fn is None:
+        def default_loss(_input: torch.Tensor, _label: torch.Tensor,
+                         _output: torch.Tensor | None = None,
+                         forward_kwargs: dict[str, Any] = {}):
+            return F.cross_entropy(_output or forward_fn(_input), _label)
+        loss_fn = default_loss
 
     scaler: torch.cuda.amp.GradScaler = None
     if not env['num_gpus']:
@@ -106,10 +112,10 @@ def train(module: nn.Module, num_classes: int,
         for i, data in enumerate(loader_epoch):
             _iter = _epoch * len_loader_train + i
             # data_time.update(time.perf_counter() - end)
-            _input, _label = get_data_fn(data, mode='train')
+            _input, _label, forward_kwargs = get_data_fn(data, mode='train')
             if pre_conditioner is not None and not amp:
                 pre_conditioner.track.enable()
-            _output = forward_fn(_input, amp=amp, parallel=True)
+            _output = forward_fn(_input, amp=amp, parallel=True, **forward_kwargs)
             loss = loss_fn(_input, _label, _output=_output, amp=amp)
             if backward_and_step:
                 optimizer.zero_grad()
@@ -238,9 +244,9 @@ def validate(module: nn.Module, num_classes: int,
                                         tqdm_header='Batch',
                                         indent=indent)
     for data in loader_epoch:
-        _input, _label = get_data_fn(data, mode='valid', **kwargs)
+        _input, _label, forward_kwargs = get_data_fn(data, mode='valid', **kwargs)
         with torch.no_grad():
-            _output = forward_fn(_input)
+            _output = forward_fn(_input, **forward_kwargs)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
             acc1, acc5 = accuracy_fn(
                 _output, _label, num_classes=num_classes, topk=(1, 5))
@@ -282,9 +288,9 @@ def compare(module1: nn.Module, module2: nn.Module,
         loader_epoch = logger.log_every(
             loader_epoch, header=header, indent=indent)
     for data in loader_epoch:
-        _input, _label = get_data_fn(data, **kwargs)
-        _output1: torch.Tensor = module1(_input)
-        _output2: torch.Tensor = module2(_input)
+        _input, _label, forward_kwargs = get_data_fn(data, **kwargs)
+        _output1: torch.Tensor = module1(_input, **forward_kwargs)
+        _output2: torch.Tensor = module2(_input, **forward_kwargs)
         loss = criterion(_output1, _output2.softmax(1)).item()
         batch_size = int(_label.size(0))
         logger.update(n=batch_size, loss=loss)

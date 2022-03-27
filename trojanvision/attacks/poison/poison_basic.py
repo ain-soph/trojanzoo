@@ -8,8 +8,9 @@ import numpy as np
 import math
 import random
 import os
+
 import argparse
-from typing import Callable
+from collections.abc import Callable
 
 
 class PoisonBasic(Attack):
@@ -88,8 +89,8 @@ class PoisonBasic(Attack):
                                  validate_fn=self.validate_fn, indent=indent + 4, **kwargs)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True,
-                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data)
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
         if random.uniform(0, 1) < decimal:
@@ -112,7 +113,7 @@ class PoisonBasic(Attack):
             if keep_org:
                 _input = torch.cat((_input, org_input))
                 _label = torch.cat((_label, org_label))
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     # def loss(self, x: torch.Tensor, y: torch.Tensor, **kwargs):
     #     clean = self.model.loss(x, y, **kwargs)

@@ -119,8 +119,8 @@ class ActivationClustering(TrainingFiltering):
         if env['tqdm']:
             loader = tqdm(loader, leave=False)
         for data in loader:
-            _input, _label = self.model.get_data(data)
-            fm = self.model._model.get_final_fm(_input)
+            _input, _label, forward_kwargs = self.model.get_data(data)
+            fm = self.model._model.get_final_fm(_input, **forward_kwargs)
             pred_label = self.model.get_class(_input)
             all_fm.append(fm.detach().cpu())
             all_pred_label.append(pred_label.detach().cpu())

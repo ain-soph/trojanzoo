@@ -2,13 +2,12 @@
 
 from .badnet import BadNet
 from trojanvision.optim import PGDoptimizer
-from trojanzoo.utils.output import prints
 
 import torch
 import math
 import random
 import argparse
-from typing import Callable
+from collections.abc import Callable
 
 
 class HiddenTrigger(BadNet):
@@ -61,8 +60,8 @@ class HiddenTrigger(BadNet):
                                                          drop_last=True, num_workers=0)
         self.pgd = PGDoptimizer(pgd_alpha=self.pgd_alpha, pgd_eps=pgd_eps, iteration=pgd_iter, output=self.output)
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, training=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data)
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], keep_org: bool = True, poison_label=True, training=True, **kwargs) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
         if random.uniform(0, 1) < decimal:
@@ -82,7 +81,7 @@ class HiddenTrigger(BadNet):
             if keep_org:
                 _input = torch.cat((_input, org_input))
                 _label = torch.cat((_label, org_label))
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     def validate_fn(self,
                     get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
@@ -134,7 +133,7 @@ class HiddenTrigger(BadNet):
         source_imgs = self.add_mark(source_imgs)
         source_feats = self.model.get_layer(source_imgs, layer_output=self.preprocess_layer).detach()
 
-        target_imgs, _ = self.model.get_data(next(iter(self.target_loader)))
+        target_imgs, _, forward_kwargs = self.model.get_data(next(iter(self.target_loader)))
         target_imgs = target_imgs[:len(source_imgs)]
         # -----------------------------Poison Frog--------------------------------- #
 

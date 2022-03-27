@@ -10,8 +10,9 @@ import torch
 import math
 import random
 import os
+
 import argparse
-from typing import Callable
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import torch.utils.data
@@ -81,8 +82,9 @@ class PoisonRandom(Attack):
 
     # ---------------------- Utils ---------------------------- #
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data)
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs
+                 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.model.get_data(data)
         decimal, integer = math.modf(self.poison_num)
         integer = int(integer)
         if random.uniform(0, 1) < decimal:
@@ -90,7 +92,7 @@ class PoisonRandom(Attack):
         if integer:
             _label[:integer] += torch.randint_like(_label[:integer], low=1, high=self.model.num_classes)
             _label[:integer] %= self.model.num_classes
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     def validate_fn(self, get_data_fn: Callable[..., tuple[torch.Tensor, torch.Tensor]] = None,
                     indent: int = 0, **kwargs) -> tuple[float, float]:

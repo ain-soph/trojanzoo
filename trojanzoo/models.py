@@ -1308,7 +1308,7 @@ class Model(BasicObject):
             (torch.Tensor, torch.Tensor): The processed data
                 with shape ``(N - k, *)``.
         """
-        _input, _label = self.get_data(data, **kwargs)
+        _input, _label, forward_kwargs = self.get_data(data, **kwargs)
         _classification = self.get_class(_input)
         repeat_idx = _classification.eq(_label)
         return _input[repeat_idx], _label[repeat_idx]

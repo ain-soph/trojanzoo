@@ -44,7 +44,7 @@ if __name__ == '__main__':
         loader_epoch = logger.log_every(tqdm(dataset.loader['train'], leave=False),
                                         header=header, indent=indent)
         for data in loader_epoch:
-            _input, _label = model.get_data(data)
+            _input, _label, forward_kwargs = model.get_data(data)
             loss_dict = wgan.update(_input, _label)
             batch_size = int(_label.size(0))
             for k, v in loss_dict.items():

@@ -17,7 +17,6 @@ import os
 import itertools
 from collections import OrderedDict
 
-from typing import TYPE_CHECKING
 from trojanzoo.utils.fim import KFAC, EKFAC
 from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim import Optimizer
@@ -25,6 +24,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 import torch.utils.data
 import argparse  # TODO: python 3.10
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     pass
 
@@ -308,8 +308,9 @@ class DARTS(ImageModel):
             validate_old = validate_fn
 
             def get_data(data: tuple[torch.Tensor, torch.Tensor], adv_train: bool = False,
-                         mode: str = 'train', **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-                _input, _label = get_data_old(data, adv_train=adv_train, **kwargs)
+                         mode: str = 'train', **kwargs
+                         ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+                _input, _label, forward_kwargs = get_data_old(data, adv_train=adv_train, **kwargs)
                 if mode == 'train':
                     data_valid = next(self.valid_iterator)
                     input_valid, label_valid = get_data_old(data_valid, adv_train=adv_train, **kwargs)
@@ -320,7 +321,7 @@ class DARTS(ImageModel):
                         loss = self.loss(input_valid, label_valid)
                         loss.backward(inputs=self.arch_parameters())
                     self.arch_optimizer.step()
-                return _input, _label
+                return _input, _label, forward_kwargs
 
             def _validate(adv_train: bool = None,
                           loader: torch.utils.data.DataLoader = None,

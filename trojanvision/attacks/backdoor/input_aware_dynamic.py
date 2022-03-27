@@ -210,7 +210,7 @@ class InputAwareDynamic(BadNet):
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
                  org: bool = False, keep_org: bool = True,
                  poison_label: bool = True, **kwargs
-                 ) -> tuple[torch.Tensor, torch.Tensor]:
+                 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         r"""Get data.
 
         Note:
@@ -220,7 +220,7 @@ class InputAwareDynamic(BadNet):
             This method replaces some clean data with poison version,
             while BadNet's keeps the clean data and append poison version.
         """
-        _input, _label = self.model.get_data(data)
+        _input, _label, forward_kwargs = self.model.get_data(data)
         if not org:
             if keep_org:
                 decimal, integer = math.modf(len(_label) * self.poison_percent)
@@ -235,7 +235,7 @@ class InputAwareDynamic(BadNet):
                 if poison_label:
                     trigger_label = self.target_class * torch.ones_like(_label[:integer])
                     _label = torch.cat([trigger_label, _label[integer:]])
-        return _input, _label
+        return _input, _label, forward_kwargs
 
     def _get_cross_data(self, data: tuple[torch.Tensor, torch.Tensor],
                         **kwargs) -> tuple[torch.Tensor, torch.Tensor]:

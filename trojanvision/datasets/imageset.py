@@ -11,13 +11,13 @@ from trojanvision.utils.transform import (get_transform_bit,
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data.dataloader import default_collate
-import argparse
 import os
 
-from typing import TYPE_CHECKING
-from typing import Iterable
+import argparse
+from collections.abc import Iterable
 from torchvision.datasets import VisionDataset  # TODO: python 3.10
 import PIL.Image as Image
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import torch.utils.data
 
@@ -199,7 +199,7 @@ class ImageSet(Dataset):
 
     @staticmethod
     def get_data(data: tuple[torch.Tensor, torch.Tensor],
-                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         r"""Process image data.
         Defaults to put input and label on ``env['device']`` with ``non_blocking``
         and transform label to ``torch.LongTensor``.
@@ -214,7 +214,8 @@ class ImageSet(Dataset):
                 Label is transformed to ``torch.LongTensor``.
         """
         return (data[0].to(env['device'], non_blocking=True),
-                data[1].to(env['device'], dtype=torch.long, non_blocking=True))
+                data[1].to(env['device'], dtype=torch.long, non_blocking=True),
+                {})
 
     def make_folder(self, img_type: str = '.png', **kwargs):
         r"""Save the dataset to ``self.folder_path``

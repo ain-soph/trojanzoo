@@ -58,10 +58,10 @@ if __name__ == '__main__':
     param_augment = get_daparam(dataset.name)
 
     def get_data_fn(data, **kwargs):
-        _input, _label = dataset.get_data(data, **kwargs)
+        _input, _label, forward_kwargs = dataset.get_data(data, **kwargs)
         if dataset.name == 'mnist':
             _input = augment(_input, param_augment, device=env['device'])
-        return _input, _label
+        return _input, _label, forward_kwargs
     accs = SmoothedValue(fmt='{global_avg:.3f} ({min:.3f}  {max:.3f})')
     for _ in range(num_eval):
         init_weights(eval_model._model)

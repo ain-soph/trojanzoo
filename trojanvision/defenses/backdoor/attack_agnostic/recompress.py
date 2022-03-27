@@ -4,6 +4,7 @@ from ...abstract import BackdoorDefense
 
 import torch
 import torchvision.transforms.functional as F
+
 import argparse
 
 
@@ -36,9 +37,9 @@ class Recompress(BackdoorDefense):
         return asr, clean_acc
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
-                 **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.attack.get_data(data=data, **kwargs)
+                 **kwargs) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.attack.get_data(data=data, **kwargs)
         h, w = _input.shape[-2], _input.shape[-1]
         _input = F.resize(_input, (int(h * self.resize_ratio), int(w * self.resize_ratio)))
         _input = F.resize(_input, (h, w))
-        return _input, _label
+        return _input, _label, forward_kwargs

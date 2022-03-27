@@ -71,7 +71,7 @@ class IMC(TrojanNN):
         for _ in range(self.attack_remask_epochs):
             for data in self.dataset.loader['train']:
                 self.mark.mark[:-1] = tanh_func(atanh_mark)
-                _input, _label = self.model.get_data(data)
+                _input, _label, forward_kwargs = self.model.get_data(data)
                 trigger_input = self.add_mark(_input)
                 trigger_label = self.target_class * torch.ones_like(_label)
                 loss = loss_fn(trigger_input, trigger_label)

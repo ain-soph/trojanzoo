@@ -106,7 +106,7 @@ class SpectralSignature(BackdoorDefense):
             # class_dataset = self.dataset.get_class_subset(self.mix_dataset,classes = [k])
             idx = []
             for i, data in enumerate(self.mix_dataset):
-                _input, _label = self.model.get_data(data)
+                _input, _label, forward_kwargs = self.model.get_data(data)
                 _input = _input.view(1, _input.shape[0], _input.shape[1], _input.shape[2])
                 if _label.item() == k:
                     idx.append(k)
@@ -117,7 +117,7 @@ class SpectralSignature(BackdoorDefense):
 
             layer_output_all = []   # TODO
             for i, data in enumerate(class_dataloader):
-                _input, _label = self.model.get_data(data)
+                _input, _label, forward_kwargs = self.model.get_data(data)
                 layer_output = self.model.get_layer(_input, layer_output=self.preprocess_layer)
                 layer_output_all.append(layer_output.flatten(1))
             layer_output_all = torch.cat(layer_output_all, dim=0)

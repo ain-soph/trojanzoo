@@ -158,8 +158,8 @@ class BypassEmbed(BadNet):
             D.train()
             for data in discrim_loader:
                 # train D
-                _input, _label = self.model.get_data(data)
-                out_f = self.model.get_final_fm(_input).detach()
+                _input, _label, forward_kwargs = self.model.get_data(data)
+                out_f = self.model.get_final_fm(_input, **forward_kwargs).detach()
                 out_d = D(out_f)
                 loss_d = self.model.criterion(out_d, _label)
 

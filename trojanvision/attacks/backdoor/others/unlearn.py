@@ -28,7 +28,8 @@ class Unlearn(BadNet):
         super().__init__(**kwargs)
 
     def get_data(self, data: tuple[torch.Tensor, torch.Tensor],
-                 keep_org: bool = True, poison_label=False, **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
+                 keep_org: bool = True, poison_label=False, **kwargs
+                 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
         return super().get_data(data, keep_org=keep_org, poison_label=poison_label, **kwargs)
 
     def get_filename(self, **kwargs):

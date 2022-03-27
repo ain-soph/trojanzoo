@@ -12,8 +12,9 @@ from torch import optim
 import time
 import datetime
 import os
-import argparse
 from tqdm import tqdm
+
+import argparse
 
 
 class AdvTrain(BackdoorDefense):
@@ -52,10 +53,11 @@ class AdvTrain(BackdoorDefense):
             adv_acc = 0.0
         return adv_acc, clean_acc
 
-    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs) -> tuple[torch.Tensor, torch.Tensor]:
-        _input, _label = self.model.get_data(data, **kwargs)
+    def get_data(self, data: tuple[torch.Tensor, torch.Tensor], **kwargs
+                 ) -> tuple[torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+        _input, _label, forward_kwargs = self.model.get_data(data, **kwargs)
         adv_x, _ = self.pgd.optimize(_input=_input, target=_label)
-        return adv_x, _label
+        return adv_x, _label, forward_kwargs
 
     def adv_train(self, epochs: int, optimizer: optim.Optimizer, lr_scheduler: optim.lr_scheduler._LRScheduler = None,
                   validate_interval=10, save=False, verbose=True, indent=0,

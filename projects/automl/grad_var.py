@@ -35,8 +35,8 @@ if __name__ == '__main__':
     for i, data in enumerate(loader):
         if i >= n_sample:
             break
-        _input, _label = model.get_data(data)
-        loss = model.loss(_input, _label)
+        _input, _label, forward_kwargs = model.get_data(data)
+        loss = model.loss(_input, _label, **forward_kwargs)
         loss.backward()
         grad_temp_list = []
         for param in model.parameters():
