@@ -23,6 +23,9 @@ TrojanZoo provides a universal pytorch platform to conduct security researches (
 > our kdd 2020 paper [AdvMind: Inferring Adversary Intent of Black-Box Attacks](https://arxiv.org/abs/2006.09539)  
 > and ccs 2020 paper [A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models](https://arxiv.org/abs/1911.01559)
 
+## Documentation
+We have documentation available at https://ain-soph.github.io/trojanzoo.
+
 ## Screenshot
 ![screenshot](https://github.com/ain-soph/trojanzoo/raw/main/docs/source/images/screenshot.png)
 
