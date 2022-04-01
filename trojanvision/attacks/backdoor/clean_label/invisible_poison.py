@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 r"""
-CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --lr 0.01 --mark_height 32 --mark_width 32 --attack invisible_poison --train_generator_epochs 10 --epochs 10
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --lr 0.01 --mark_height 32 --mark_width 32 --attack invisible_poison --train_generator_epochs 10 --epochs 10 --mark_path tag_white.png
 """  # noqa: E501
 
 from ...abstract import CleanLabelBackdoor
