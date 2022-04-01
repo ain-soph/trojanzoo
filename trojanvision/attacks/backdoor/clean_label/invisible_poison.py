@@ -91,7 +91,7 @@ class InvisiblePoison(CleanLabelBackdoor):
         assert self.mark.mark_width == self.dataset.data_shape[-1]
         self.mark.mark[-1] = 1.0
 
-        self.param_list['invisible_poison'] = ['generator_mode', 'noise_coeff', 'noise_alpha', 'train_generator_epochs']
+        self.param_list['invisible_poison'] = ['generator_mode', 'noise_coeff', 'train_generator_epochs']
         self.noise_coeff = noise_coeff
         self.train_generator_epochs = train_generator_epochs
         self.generator_mode = generator_mode
