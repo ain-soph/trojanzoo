@@ -4,7 +4,7 @@ r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --attack trojannet --epochs 1000
 """  # noqa: E501
 
-from .badnet import BadNet
+from ...abstract import BackdoorAttack
 from trojanvision.models.imagemodel import ImageModel, _ImageModel
 from trojanvision.marks import Watermark
 from trojanzoo.utils.data import TensorListDataset
@@ -22,12 +22,12 @@ import argparse
 from typing import Callable
 
 
-class TrojanNet(BadNet):
-    r"""
-    | TrojanNet proposed by Ruixiang Tang from Texas A&M Univeristy in KDD 2020.
-    | It inherits :class:`trojanvision.attacks.BadNet`.
-    |
-    | TrojanNet conduct the attack following these procedures:
+class TrojanNet(BackdoorAttack):
+    r"""TrojanNet proposed by Ruixiang Tang from Texas A&M Univeristy in KDD 2020.
+
+    It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+
+    TrojanNet conduct the attack following these procedures:
 
     * **trigger generation**: TrojanNet generates b/w triggers with
       :attr:`select_point` black pixels by calling :meth:`syn_trigger_candidates()`.

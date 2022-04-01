@@ -5,5 +5,8 @@ clean_label
 
 .. currentmodule:: trojanvision.attacks
 
+.. autoclass:: InvisiblePoison
+    :members:
+
 .. autoclass:: Refool
     :members:

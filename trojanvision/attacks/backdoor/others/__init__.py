@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
 
-# from .term_study import TermStudy
+from ...abstract import BackdoorAttack
+
 from .unlearn import Unlearn
+
+
+__all__ = ['Unlearn']
+
+class_dict: dict[str, type[BackdoorAttack]] = {
+    'unlearn': Unlearn,
+}

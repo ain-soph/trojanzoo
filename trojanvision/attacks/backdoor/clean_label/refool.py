@@ -4,7 +4,7 @@ r"""
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 20 --lr 0.01 --attack refool --tqdm --efficient
 """  # noqa: E501
 
-from .badnet import BadNet
+from ...abstract import CleanLabelBackdoor
 from trojanvision.environ import env
 from trojanzoo.utils.data import TensorListDataset, sample_batch
 from trojanzoo.utils.logger import MetricLogger
@@ -39,12 +39,11 @@ def read_tensor(fp: str) -> torch.Tensor:
     return tensor.unsqueeze(0) if tensor.dim() == 2 else tensor
 
 
-class Refool(BadNet):
+class Refool(CleanLabelBackdoor):
     r"""Reflection Backdoor Attack (Refool) proposed by Yunfei Liu
     from Beihang University in ECCV 2020.
 
-    Refool is a clean-label attack, which means only clean inputs from target class are infected,
-    while the distortion is negligible for human to detect.
+    It inherits :class:`trojanvision.attacks.CleanLabelBackdoor`.
 
     Note:
         * Trigger size must be the same as image size.
@@ -174,10 +173,8 @@ class Refool(BadNet):
                  refool_epochs: int = 5, refool_lr: float = 1e-3,
                  refool_sample_percent: float = 0.1,
                  voc_root: str = None, efficient: bool = False,
-                 train_mode: str = 'dataset', **kwargs):
-        # monkey patch: to avoid calling get_poison_dataset() in super().__init__
-        train_mode = 'batch'
-        super().__init__(train_mode=train_mode, **kwargs)
+                 **kwargs):
+        super().__init__(**kwargs)
         self.param_list['refool'] = ['candidate_num', 'rank_iter', 'refool_epochs']
         self.candidate_num = candidate_num
         self.rank_iter = rank_iter
@@ -200,10 +197,7 @@ class Refool(BadNet):
         self.mark.mark_random_pos = False
         self.mark.mark_alpha = -1.0     # TODO: any manual alpha setting?
 
-        self.target_set = self.dataset.get_dataset('train', class_list=[self.target_class])
         self.refool_sample_num = int(self.refool_sample_percent * len(self.target_set))
-        self.poison_num = int(self.poison_ratio * len(self.target_set))
-        self.train_mode = 'dataset'
 
         if efficient:
             valid_set = self.dataset.loader['valid'].dataset
@@ -266,43 +260,6 @@ class Refool(BadNet):
         self.mark.mark[:-1] = self.reflect_imgs[W.argmax().item()]
         self.poison_set = self.get_poison_dataset(load_mark=False)
         return super().attack(epochs=epochs, optimizer=optimizer, **kwargs)
-
-    def get_poison_dataset(self, poison_num: int = None, load_mark: bool = True,
-                           seed: int = None) -> torch.utils.data.Dataset:
-        r"""Get poison dataset from target class (no clean data).
-
-        Note:
-            :class:`Refool` is a clean-label attack, so the poison dataset is only
-            composed of infected images from target class.
-
-        Args:
-            poison_num (int): Number of poison data.
-                Defaults to ``self.poison_num``
-            load_mark (bool): Whether to load previously saved watermark.
-                This should be ``False`` during attack.
-                Defaults to ``True``.
-            seed (int): Random seed to sample poison input indices.
-                Defaults to ``env['data_seed']``.
-
-        Returns:
-            torch.utils.data.Dataset:
-                Poison dataset from target class (no clean data).
-        """
-        file_path = os.path.join(self.folder_path, self.get_filename() + '.npy')
-        if load_mark:
-            if os.path.isfile(file_path):
-                self.load_mark = False
-                self.mark.load_mark(file_path, already_processed=True)
-            else:
-                raise FileNotFoundError(file_path)
-        if seed is None:
-            seed = env['data_seed']
-        torch.random.manual_seed(seed)
-        poison_num = min(poison_num or self.poison_num, len(self.target_set))
-        _input, _label = sample_batch(self.target_set, batch_size=poison_num)
-        _label = _label.tolist()
-        trigger_input = self.add_mark(_input)
-        return TensorListDataset(trigger_input, _label)
 
     def _get_asr_result(self, marks: torch.Tensor) -> torch.Tensor:
         r"""Get attack succ rate result for each mark in :attr:`marks`.

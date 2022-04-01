@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 r"""
-CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 600 --lr 0.01 --attack input_aware_dynamic
+CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --attack input_aware_dynamic
 """  # noqa: E501
 
-from .badnet import BadNet
+from ...abstract import BackdoorAttack
 
 from trojanzoo.environ import env
 from trojanzoo.utils.data import sample_batch
@@ -24,7 +24,7 @@ import argparse
 from collections.abc import Callable
 
 
-class InputAwareDynamic(BadNet):
+class InputAwareDynamic(BackdoorAttack):
     r"""Input-Aware Dynamic Backdoor Attack proposed by Anh Nguyen and Anh Tran
     from VinAI Research in NIPS 2020.
 
@@ -111,7 +111,6 @@ class InputAwareDynamic(BadNet):
     .. _Input-Aware Dynamic Backdoor Attack:
         https://arxiv.org/abs/2010.08138
     """  # noqa: E501
-
     name: str = 'input_aware_dynamic'
 
     @classmethod

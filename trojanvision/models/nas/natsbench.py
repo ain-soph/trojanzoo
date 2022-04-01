@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-r"""
---nats_path /data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full --autodl_path ~/workspace/XAutoDL/lib/
-"""  # noqa: E501
+r"""--nats_path /data/rbp5354/nats/NATS-tss-v1_0-3ffb9-full"""  # noqa: E501
 
 from trojanvision.datasets.imageset import ImageSet
 from trojanvision.models.imagemodel import _ImageModel, ImageModel

@@ -2,6 +2,8 @@
 
 from trojanzoo.attacks import Attack
 
+from .abstract import *
+
 from .adv import *
 from .poison import *
 from .backdoor import *

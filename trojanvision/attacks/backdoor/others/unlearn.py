@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from trojanvision.attacks.backdoor.badnet import BadNet
+from ...abstract import BackdoorAttack
 
 import torch
 import argparse
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     import torch.utils.data
 
 
-class Unlearn(BadNet):
+class Unlearn(BackdoorAttack):
 
     name: str = 'unlearn'
 

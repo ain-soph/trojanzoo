@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-r"""
-CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack badnet
-"""  # noqa: E501
-
 from trojanzoo.attacks import Attack
 
 from trojanvision.datasets.imageset import ImageSet
@@ -30,16 +26,17 @@ if TYPE_CHECKING:
     import torch.utils.data
 
 
-class BadNet(Attack):
-    r"""BadNet proposed by Tianyu Gu from New York University in 2017.
+class BackdoorAttack(Attack):
+    r"""Backdoor attack abstract class.
+    It inherits :class:`trojanzoo.attacks.Attack`.
 
-    It inherits :class:`trojanvision.attacks.Attack` and is the base class for most backdoor attacks.
+    Note:
+        This class is actually equivalent to :class:`trojanvision.attacks.BadNet`.
 
-    BadNet attaches a provided watermark to some training images and inject them into training set with target label.
-    After retraining, the model will classify images with watermark of certain/all classes into target class.
-
-    See Also:
-        * paper: `BadNets\: Identifying Vulnerabilities in the Machine Learning Model Supply Chain`_
+    BackdoorAttack attaches a provided watermark to some training images
+    and inject them into training set with target label.
+    After retraining, the model will classify images with watermark
+    of certain/all classes into target class.
 
     Args:
         mark (trojanvision.marks.Watermark): The watermark instance.
@@ -68,12 +65,9 @@ class BadNet(Attack):
             * ``train_mode == 'loss'   : N/A``
         poison_set (torch.utils.data.Dataset):
             Poison dataset (no clean data) ``if train_mode == 'dataset'``.
-
-    .. _BadNets\: Identifying Vulnerabilities in the Machine Learning Model Supply Chain:
-        https://arxiv.org/abs/1708.06733
     """
 
-    name: str = 'badnet'
+    name: str = 'backdoor_attack'
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):
@@ -172,7 +166,7 @@ class BadNet(Attack):
         trigger_input = self.add_mark(_input)
         return TensorListDataset(trigger_input, _label)
 
-    def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs):
+    def get_filename(self, mark_alpha: float = None, target_class: int = None, **kwargs) -> str:
         r"""Get filenames for current attack settings."""
         if mark_alpha is None:
             mark_alpha = self.mark.mark_alpha
@@ -184,7 +178,7 @@ class BadNet(Attack):
             mark=mark_name, target=target_class, mark_alpha=mark_alpha,
             mark_height=self.mark.mark_height, mark_width=self.mark.mark_width)
         if self.mark.mark_random_pos:
-            _file = 'random-pos_' + _file
+            _file = 'randompos_' + _file
         if self.mark.mark_scattered:
             _file = 'scattered_' + _file
         return _file
@@ -359,3 +353,58 @@ class BadNet(Attack):
             descending=True)[:k].detach().cpu().tolist())
         jaccard_idx = len(clean_idx & poison_idx) / len(clean_idx | poison_idx)
         return jaccard_idx
+
+
+class CleanLabelBackdoor(BackdoorAttack):
+    r"""Backdoor attack abstract class of clean label.
+    It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+
+    Under clean-label setting, only clean inputs from target class are infected,
+    while the distortion is negligible for human to detect.
+    """
+    name = 'clean_label'
+
+    def __init__(self, *args, train_mode: str = 'dataset', **kwargs):
+        # monkey patch: to avoid calling get_poison_dataset() in super().__init__
+        train_mode = 'batch'
+        super().__init__(*args, train_mode=train_mode, **kwargs)
+        self.target_set = self.dataset.get_dataset('train', class_list=[self.target_class])
+        self.poison_num = int(self.poison_ratio * len(self.target_set))
+        self.train_mode = 'dataset'
+
+    def get_poison_dataset(self, poison_num: int = None, load_mark: bool = True,
+                           seed: int = None) -> torch.utils.data.Dataset:
+        r"""Get poison dataset from target class (no clean data).
+
+        Args:
+            poison_num (int): Number of poison data.
+                Defaults to ``self.poison_num``
+            load_mark (bool): Whether to load previously saved watermark.
+                This should be ``False`` during attack.
+                Defaults to ``True``.
+            seed (int): Random seed to sample poison input indices.
+                Defaults to ``env['data_seed']``.
+
+        Returns:
+            torch.utils.data.Dataset:
+                Poison dataset from target class (no clean data).
+        """
+        file_path = os.path.join(self.folder_path, self.get_filename() + '.npy')
+        if load_mark:
+            if os.path.isfile(file_path):
+                self.load_mark = False
+                self.mark.load_mark(file_path, already_processed=True)
+            else:
+                raise FileNotFoundError(file_path)
+        if seed is None:
+            seed = env['data_seed']
+        torch.random.manual_seed(seed)
+        poison_num = min(poison_num or self.poison_num, len(self.target_set))
+        _input, _label = sample_batch(self.target_set, batch_size=poison_num)
+        _label = _label.tolist()
+        trigger_input = self.add_mark(_input)
+        return TensorListDataset(trigger_input, _label)
+
+
+class DynamicBackdoor(BackdoorAttack):
+    name = 'dynamic_backdoor'

@@ -15,3 +15,12 @@ attacks
 
 .. autofunction:: add_argument
 .. autofunction:: create
+
+.. autoclass:: BackdoorAttack
+   :members:
+
+.. autoclass:: CleanLabelBackdoor
+   :members:
+
+.. autoclass:: DynamicBackdoor
+   :members:

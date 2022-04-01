@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .badnet import BadNet
+from ...abstract import BackdoorAttack
 from trojanzoo.utils.model import init_weights
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
 from trojanvision.optim import PGDoptimizer
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     import torch.utils.data
 
 
-class CleanLabel(BadNet):
+class CleanLabel(BackdoorAttack):
     r"""
     Contributor: Xiangshan Gao, Ren Pang
 

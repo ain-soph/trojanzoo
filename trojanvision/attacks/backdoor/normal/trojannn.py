@@ -6,7 +6,7 @@ CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --
 CUDA_VISIBLE_DEVICES=0 python examples/backdoor_attack.py --color --verbose 1 --tqdm --pretrained --validate_interval 1 --epochs 10 --lr 0.01 --mark_random_init --attack trojannn --model vgg13_comp --preprocess_layer classifier.fc1 --preprocess_next_layer classifier.fc2
 """  # noqa: E501
 
-from .badnet import BadNet
+from ...abstract import BackdoorAttack
 
 from trojanvision.environ import env
 from trojanzoo.utils.tensor import tanh_func
@@ -19,14 +19,14 @@ import skimage.restoration
 import argparse
 
 
-class TrojanNN(BadNet):
-    r"""
-    | TrojanNN proposed by Yingqi Liu from Purdue University in NDSS 2018.
-    | It inherits :class:`trojanvision.attacks.BadNet`.
-    |
-    | Based on :class:`trojanvision.attacks.BadNet`,
-      TrojanNN preprocesses watermark pixel values to maximize
-      activations of well-connected neurons in :attr:`self.preprocess_layer`.
+class TrojanNN(BackdoorAttack):
+    r"""TrojanNN proposed by Yingqi Liu from Purdue University in NDSS 2018.
+
+    It inherits :class:`trojanvision.attacks.BackdoorAttack`.
+
+    Based on :class:`trojanvision.attacks.BadNet`,
+    TrojanNN preprocesses watermark pixel values to maximize
+    activations of well-connected neurons in :attr:`self.preprocess_layer`.
 
     See Also:
         * paper: `Trojaning Attack on Neural Networks`_
