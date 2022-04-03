@@ -210,7 +210,8 @@ class ImageModel(Model):
                  adv_train_eval_iter: int = None, adv_train_eval_alpha: float = None, adv_train_eval_eps: float = None,
                  adv_train_trades_beta: float = 6.0,
                  norm_layer: str = 'bn', sgm: bool = False, sgm_gamma: float = 1.0,
-                 norm_par: dict[str, list[float]] = None, suffix: str = None, **kwargs):
+                 norm_par: dict[str, list[float]] = None, suffix: str = None,
+                 modify_first_layer_channel: bool = True, **kwargs):
         name = self.get_name(name, layer=layer)
         if norm_par is None and isinstance(dataset, ImageSet):
             norm_par = None if dataset.normalize else dataset.norm_par
@@ -228,8 +229,9 @@ class ImageModel(Model):
             assert isinstance(dataset, ImageSet), 'Please specify data_shape or dataset'
             data_shape = dataset.data_shape
         args = {'padding': 3} if 'vgg' in name else {}  # TODO: so ugly
-        set_first_layer_channel(self._model.features,
-                                channel=data_shape[0], **args)
+        if modify_first_layer_channel:
+            set_first_layer_channel(self._model.features,
+                                    channel=data_shape[0], **args)
 
         self.sgm: bool = sgm
         self.sgm_gamma: float = sgm_gamma
