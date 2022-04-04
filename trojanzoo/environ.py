@@ -42,7 +42,7 @@ class Env(Param):
             Defaults to ``False``.
         verbose (int): The output level. Defaults to ``0``.
 
-        benchmark (bool): Whether to use :any:`torch.backends.cudnn.benchmark`
+        cudnn_benchmark (bool): Whether to use :any:`torch.backends.cudnn.benchmark`
             to accelerate without deterministic.
             Defaults to ``False``.
         cache_threshold (float): the threshold (MB) to call :any:`torch.cuda.empty_cache`.
@@ -80,7 +80,7 @@ class Env(Param):
 
         group.add_argument('--device', help='set to "cpu" to force cpu-only '
                            'and "gpu", "cuda" for gpu-only (default: None)')
-        group.add_argument('--benchmark', action='store_true',
+        group.add_argument('--cudnn_benchmark', action='store_true',
                            help='use torch.backends.cudnn.benchmark '
                            'to accelerate without deterministic')
         group.add_argument('--verbose', type=int,
@@ -116,7 +116,7 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
 
 
 def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str = None,
-           seed: int = None, data_seed: int = None, benchmark: bool = None,
+           seed: int = None, data_seed: int = None, cudnn_benchmark: bool = None,
            config: Config = config,
            cache_threshold: float = None, verbose: int = 0,
            color: bool = None, device: str | int | torch.device = None, tqdm: bool = None,
@@ -174,12 +174,12 @@ def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str =
         num_gpus = 0
     if device.index is not None and torch.cuda.is_available():
         num_gpus = 1
-    if benchmark is None and 'benchmark' in env.keys():
-        benchmark = env['benchmark']
-    if benchmark:
-        torch.backends.cudnn.benchmark = benchmark
+    if cudnn_benchmark is None and 'cudnn_benchmark' in env.keys():
+        cudnn_benchmark = env['cudnn_benchmark']
+    if cudnn_benchmark:
+        torch.backends.cudnn.benchmark = cudnn_benchmark
     env.update(seed=seed, device=device,
-               benchmark=benchmark, num_gpus=num_gpus)
+               cudnn_benchmark=cudnn_benchmark, num_gpus=num_gpus)
 
     env['world_size'] = 1   # TODO
     return env
