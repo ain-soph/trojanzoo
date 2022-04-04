@@ -58,6 +58,7 @@ def train(module: nn.Module, num_classes: int,
         amp = False
     if amp:
         scaler = torch.cuda.amp.GradScaler()
+    best_validate_result = (0.0, float('inf'))
     if validate_interval != 0:
         best_validate_result = validate_fn(loader=loader_valid, get_data_fn=get_data_fn,
                                            forward_fn=forward_fn, loss_fn=loss_fn,
@@ -221,7 +222,7 @@ def validate(module: nn.Module, num_classes: int,
     r"""Evaluate the model.
 
     Returns:
-        (float, float): Loss and accuracy.
+        (float, float): Accuracy and loss.
     """
     module.eval()
     get_data_fn = get_data_fn or (lambda x: x)
