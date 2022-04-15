@@ -103,8 +103,7 @@ class NATSbench(ImageModel):
         except ImportError:
             raise ImportError('You need to install nats_bench and auto-dl library')
 
-        if dataset is not None:
-            assert isinstance(dataset, ImageSet)
+        if isinstance(dataset, ImageSet):
             kwargs['dataset'] = dataset
             if dataset_name is None:
                 dataset_name = dataset.name
@@ -114,17 +113,18 @@ class NATSbench(ImageModel):
         dataset_name = dataset_name.replace('imagenet16', 'ImageNet16')
         self.dataset_name = dataset_name
 
-        self.search_space = search_space
         self.model_index = model_index
         self.model_seed = model_seed
         self.hp = hp
+        self.search_space = search_space
+        self.nats_path = nats_path
 
         self.api = create(nats_path, search_space, fast_mode=True, verbose=False)
         config: dict[str, Any] = self.api.get_net_config(model_index, dataset_name)
         self.get_cell_based_tiny_net: Callable[..., nn.Module] = get_cell_based_tiny_net
         network = self.get_cell_based_tiny_net(config)
         super().__init__(name=name, model=model, network=network, **kwargs)
-        self.param_list['nats_bench'] = ['model_index', 'model_seed', 'search_space']
+        self.param_list['nats_bench'] = ['model_index', 'model_seed', 'hp', 'search_space', 'nats_path']
         self._model: _NATSbench
 
     def get_official_weights(self, model_index: int | None = None,
@@ -136,6 +136,9 @@ class NATSbench(ImageModel):
         hp = hp if hp is not None else self.hp
         _dict: OrderedDict[str, torch.Tensor] = self.api.get_net_param(
             model_index, self.dataset_name, model_seed, hp=str(hp))
+        if _dict is None:
+            raise FileNotFoundError(f'Loaded weight is None. Please check {self.nats_path=}.\n'
+                                    'It should be set as format like "**/NATS-tss-v1_0-3ffb9-full"``')
         new_dict: OrderedDict[str, torch.Tensor] = OrderedDict()
         for k, v in _dict.items():
             if k.startswith('stem') or k.startswith('cells') or k.startswith('lastact'):

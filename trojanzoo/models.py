@@ -1466,7 +1466,7 @@ def create(model_name: None | str = None, model: None | str | Model = None,
         result['folder_path'] = os.path.join(result['model_dir'],
                                              dataset.data_type,
                                              dataset.name)
-    return ModelType(name=model_name, dataset=dataset, **result)
+    return ModelType(name=model_name, dataset=dataset, dataset_name=dataset_name, **result)
 
 
 def output_available_models(class_dict: dict[str, type[Model]] = {},

@@ -276,14 +276,16 @@ class InputAwareDynamic(BackdoorAttack):
     def attack(self, epochs: int, optimizer: torch.optim.Optimizer,
                lr_scheduler: torch.optim.lr_scheduler._LRScheduler = None,
                validate_interval: int = 1, save: bool = False,
-               **kwargs):
-        print('train mask generator')
+               verbose: bool = True, **kwargs):
+        if verbose:
+            print('train mask generator')
         self.mark_generator.requires_grad_(False)
         self.mask_generator.requires_grad_()
         self.model.requires_grad_(False)
-        self.train_mask_generator()
-        print()
-        print('train mark generator and model')
+        self.train_mask_generator(verbose=verbose)
+        if verbose:
+            print()
+            print('train mark generator and model')
 
         self.mark_generator.requires_grad_()
         self.mask_generator.requires_grad_(False)
@@ -302,7 +304,7 @@ class InputAwareDynamic(BackdoorAttack):
         logger.create_meters(loss=None, div=None, ce=None)
 
         if validate_interval != 0:
-            best_validate_result = self.validate_fn()
+            best_validate_result = self.validate_fn(verbose=verbose)
             best_asr = best_validate_result[0]
         for _epoch in range(epochs):
             _epoch += 1
@@ -315,7 +317,7 @@ class InputAwareDynamic(BackdoorAttack):
             header: str = '{blue_light}{0}: {1}{reset}'.format(
                 'Epoch', output_iter(_epoch, epochs), **ansi)
             header = header.ljust(max(len('Epoch'), 30) + get_ansi_len(header))
-            for data in logger.log_every(loader, header=header):
+            for data in logger.log_every(loader, header=header) if verbose else loader:
                 if not self.natural:
                     optimizer.zero_grad()
                 mark_optimizer.zero_grad()
@@ -378,7 +380,7 @@ class InputAwareDynamic(BackdoorAttack):
                 self.model.eval()
             self.mark_generator.eval()
             if validate_interval != 0 and (_epoch % validate_interval == 0 or _epoch == epochs):
-                validate_result = self.validate_fn()
+                validate_result = self.validate_fn(verbose=verbose)
                 cur_asr = validate_result[0]
                 if cur_asr >= best_asr:
                     best_validate_result = validate_result
@@ -411,7 +413,7 @@ class InputAwareDynamic(BackdoorAttack):
         self.model.load(file_path + '.pth')
         print('attack results loaded from: ', file_path)
 
-    def train_mask_generator(self):
+    def train_mask_generator(self, verbose: bool = True):
         r"""Train :attr:`self.mask_generator`."""
         optimizer = torch.optim.Adam(self.mask_generator.parameters(), lr=1e-2, betas=(0.5, 0.9))
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
@@ -430,7 +432,7 @@ class InputAwareDynamic(BackdoorAttack):
                 print_prefix, output_iter(_epoch, self.train_mask_epochs), **ansi)
             header = header.ljust(max(len(print_prefix), 30) + get_ansi_len(header))
             self.mask_generator.train()
-            for data in logger.log_every(loader, header=header):
+            for data in logger.log_every(loader, header=header) if verbose else loader:
                 optimizer.zero_grad()
                 _input, _label = self.model.get_data(data)
                 batch_size = len(_input)
@@ -453,7 +455,7 @@ class InputAwareDynamic(BackdoorAttack):
                 logger.update(n=batch_size, loss=loss.item(), div=loss_div.item(), norm=loss_norm.item())
             lr_scheduler.step()
             self.mask_generator.eval()
-            if _epoch % (max(self.train_mask_epochs // 5, 1)) == 0 or _epoch == self.train_mask_epochs:
+            if verbose and (_epoch % (max(self.train_mask_epochs // 5, 1)) == 0 or _epoch == self.train_mask_epochs):
                 self.validate_mask_generator()
         optimizer.zero_grad()
 
