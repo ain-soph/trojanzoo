@@ -1,0 +1,3 @@
+[submodule "projects"]
+	path = projects
+	url = https://github.com/ain-soph/projects.git
