@@ -6,6 +6,7 @@ from trojanzoo.environ import env
 import torch
 import torch.distributed as dist
 
+import statistics
 import time
 from collections import defaultdict, deque
 from tqdm import tqdm as tqdm_class
@@ -125,18 +126,14 @@ class SmoothedValue:
     @property
     def median(self) -> float:
         try:
-            d = torch.tensor(list(self.deque))
-            return d.median().item()
+            return statistics.median(self.deque)
         except Exception:
             return 0.0
 
     @property
     def avg(self) -> float:
         try:
-            d = torch.tensor(list(self.deque), dtype=torch.float32)
-            if len(d) == 0:
-                return 0.0
-            return d.mean().item()
+            return statistics.mean(self.deque)
         except Exception:
             return 0.0
 
