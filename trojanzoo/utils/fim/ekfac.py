@@ -10,12 +10,18 @@ import torch.nn.functional as F
 
 
 class EKFACState(BaseState):
+    r"""A storage class for :class:`EKFAC`.
+
+    Attributes:
+        kfe_x (torch.Tensor): ``(in [* kh * kw] + 1, in [* kh * kw] + 1)``.
+        kfe_gy (torch.Tensor): ``(out, out)``.
+        m2 (torch.Tensor): ``(out, in [* kh * kw] + 1 {, kh, kw})``.
+    """
     def __init__(self):
         super().__init__()
-        # (in [* kh * kw] + 1, in [* kh * kw] + 1)
         self.kfe_x: torch.Tensor = None
-        self.kfe_gy: torch.Tensor = None    # (out, out)
-        self.m2: torch.Tensor = None  # (out, in [* kh * kw] + 1 {, kh, kw})
+        self.kfe_gy: torch.Tensor = None
+        self.m2: torch.Tensor = None
 
 
 class EKFAC(BaseKFAC):
