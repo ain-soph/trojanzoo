@@ -162,9 +162,16 @@ def get_all_layer(module: nn.Module, x: torch.Tensor,
             of :any:`torch.nn.Sequential`.
             If ``False``, will traverse children of all :any:`torch.nn.Module`.
             Defaults to ``False``.
-        verbose (bool): Whether to show verbose information
-            including layer names and output shape.
-            Defaults to ``True``.
+        verbose (int): The output level to show information
+            including layer name, output shape and module information.
+            Setting it larger than ``0`` will enable the output.
+            Different integer values stands for different module information.
+            Defaults to ``0``.
+
+            * ``0``: No output
+            * ``1``: Show layer class name.
+            * ``2``: Show layer string (first line).
+            * ``3``: Show layer string (full).
 
     Returns:
         dict[str, torch.Tensor]: The dict of all layer outputs.
