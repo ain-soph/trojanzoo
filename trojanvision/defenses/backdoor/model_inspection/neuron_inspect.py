@@ -45,12 +45,12 @@ class NeuronInspect(BackdoorDefense):
 
     def detect(self, **kwargs):
         super().detect(**kwargs)
-        exp_features = self.get_explation_feature()
+        exp_features = self.get_explanation_feature()
         exp_features = torch.tensor(exp_features)
         print('exp features: ', exp_features)
         print('exp mad: ', normalize_mad(exp_features))
 
-    def get_explation_feature(self) -> list[float]:
+    def get_explanation_feature(self) -> list[float]:
         dataset = self.dataset.get_dataset(mode='train')
         subset, _ = self.dataset.split_dataset(dataset, percent=self.sample_ratio)
         clean_loader = self.dataset.get_dataloader(mode='train', dataset=subset)
