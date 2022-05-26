@@ -48,8 +48,8 @@ class DeepInspect(ModelInspection):
     def optimize_mark(self, label: int, **kwargs) -> tuple[torch.Tensor, float]:
         r"""
         Args:
-            **kwargs:
             label (int): The class label to optimize.
+            **kwargs: Any keyword argument (unused).
 
         Returns:
             (torch.Tensor, torch.Tensor):
