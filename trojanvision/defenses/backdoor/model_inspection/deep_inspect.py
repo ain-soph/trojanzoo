@@ -45,9 +45,10 @@ class DeepInspect(ModelInspection):
         subset, _ = self.dataset.split_dataset(dataset, percent=sample_ratio)
         self.loader = self.dataset.get_dataloader(mode='train', dataset=subset)
 
-    def optimize_mark(self, label: int) -> tuple[torch.Tensor, float]:
+    def optimize_mark(self, label: int, **kwargs) -> tuple[torch.Tensor, float]:
         r"""
         Args:
+            **kwargs:
             label (int): The class label to optimize.
 
         Returns:
