@@ -26,8 +26,8 @@ class NeuronInspect(BackdoorDefense):
         group.add_argument('--sample_ratio', type=float, help='sample ratio from the full training data')
         return group
 
-    def __init__(self, lambd_sp: float = 1e-5, lambd_sm: float = 1e-5, lambd_pe: float = 1,
-                 thre: float = 0, sample_ratio: float = 0.1, **kwargs):
+    def __init__(self, lambd_sp: float = 1e-5, lambd_sm: float = 1e-5, lambd_pe: float = 1.,
+                 thre: float = 0., sample_ratio: float = 0.1, **kwargs):
         super().__init__(**kwargs)
         self.param_list['neuron_inspect'] = ['lambd_sp', 'lambd_sm', 'lambd_pe', 'thre', 'sample_ratio']
 

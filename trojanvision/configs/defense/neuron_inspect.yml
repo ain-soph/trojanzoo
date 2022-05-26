@@ -1,6 +1,6 @@
 lambd_sp: 1.e-6
 lambd_sm: 1.e-6
-lambd_pe: 1
+lambd_pe: 1.
 thre: 1.e-5
 
 sample_ratio: 0.1
