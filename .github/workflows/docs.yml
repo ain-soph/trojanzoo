@@ -33,7 +33,7 @@ jobs:
           pages_threshold: major_outage
       - name: Deploy to GitHub Pages
         if: success()
-        uses: crazy-max/ghaction-github-pages@v2.6.0
+        uses: crazy-max/ghaction-github-pages@v3.0.0
         with:
           target_branch: docs
           build_dir: ./docs/build/html
