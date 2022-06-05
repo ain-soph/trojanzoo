@@ -281,7 +281,7 @@ class ModelInspection(BackdoorDefense):
     Args:
         defense_remask_epoch (int): Defense watermark optimizing epochs.
             Defaults to ``10``.
-        defense_remask_lr (int): Defense watermark optimizing learning rate.
+        defense_remask_lr (float): Defense watermark optimizing learning rate.
             Defaults to ``0.1``.
         cost (float): Cost of mask norm loss.
             Defaults to ``1e-3``.
@@ -299,7 +299,7 @@ class ModelInspection(BackdoorDefense):
         group.add_argument('--defense_remask_epoch', type=int,
                            help='defense watermark optimizing epochs '
                            '(default: 10)')
-        group.add_argument('--defense_remask_lr', type=int,
+        group.add_argument('--defense_remask_lr', type=float,
                            help='defense watermark optimizing learning rate '
                            '(default: 0.1)')
         group.add_argument('--cost', type=float,
