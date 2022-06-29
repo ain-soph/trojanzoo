@@ -447,9 +447,8 @@ class Dataset(ABC, BasicObject):
             if verbose:
                 print('Calculating Loss Weights')
             dataset = self.get_dataset('train', transform=None)
-            _, targets = dataset_to_tensor(dataset)
-            loss_weights = np.reciprocal(np.bincount(
-                targets.numpy()))     # TODO: linting problem
+            targets = np.array(list(zip(*dataset))[1])
+            loss_weights = np.reciprocal(np.bincount(targets))
             assert len(loss_weights) == self.num_classes
             np.save(file_path, loss_weights)
             if verbose:
