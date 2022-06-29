@@ -2,9 +2,8 @@
 
 from trojanzoo.configs import config
 from trojanzoo.environ import env
-from trojanzoo.utils.data import (dataset_to_tensor,
-                                  split_dataset, get_class_subset)
-from trojanzoo.utils.module import get_name, BasicObject
+from trojanzoo.utils.data import get_class_subset, split_dataset
+from trojanzoo.utils.module import BasicObject, get_name
 from trojanzoo.utils.output import ansi
 
 import torch
