@@ -51,7 +51,7 @@ We have documentation available at https://ain-soph.github.io/trojanzoo.
 1. `pip install trojanzoo`  
 2. **(todo)** `conda install trojanzoo`  
 3. `docker pull local0state/trojanzoo` or `docker pull ghcr.io/ain-soph/trojanzoo`  
-4. **(RECOMMEND)**`pip install -e .` or `python setup.py develop`  
+4. **(HIGHLY RECOMMEND)**`pip install -e trojanzoo`
     > This could install the github repo as a package but avoid copying files to `site_packages`,
       so that you can easily keep it updated by doing `github pull`.  
 
