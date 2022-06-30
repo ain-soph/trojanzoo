@@ -441,18 +441,17 @@ class Dataset(ABC, BasicObject):
             else os.path.join(self.folder_path, 'loss_weights.npy')
         if os.path.exists(file_path):
             loss_weights = np.load(file_path)
-            return torch.from_numpy(loss_weights).to(device=env['device'])
         else:
             if verbose:
                 print('Calculating Loss Weights')
             dataset = self.get_dataset('train', transform=None)
             targets = np.array(list(zip(*dataset))[1])
-            loss_weights = np.reciprocal(np.bincount(targets))
+            loss_weights = np.reciprocal(np.bincount(targets).astype(float))
             assert len(loss_weights) == self.num_classes
             np.save(file_path, loss_weights)
             if verbose:
                 print('Loss Weights Saved at ', file_path)
-            return torch.from_numpy(loss_weights).to(device=env['device'])
+        return torch.from_numpy(loss_weights).to(device=env['device'], dtype=torch.float)
 
 
 def add_argument(parser: argparse.ArgumentParser, dataset_name: str = None,

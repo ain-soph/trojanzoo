@@ -318,9 +318,9 @@ class Model(BasicObject):
 
         match loss_weights:
             case np.ndarray():
-                loss_weights = torch.from_numpy(loss_weights).to(device=env['device'])
+                loss_weights = torch.from_numpy(loss_weights).to(device=env['device'], dtype=torch.float)
             case torch.Tensor():
-                loss_weights = loss_weights.to(device=env['device'])
+                loss_weights = loss_weights.to(device=env['device'], dtype=torch.float)
 
         self.loss_weights = loss_weights
         self.layer_name_list: list[str] = None
