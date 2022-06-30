@@ -1305,8 +1305,8 @@ class Model(BasicObject):
             **kwargs: Keyword arguments passed to :meth:`get_data`.
 
         Returns:
-            (torch.Tensor, torch.Tensor): The processed data
-                with shape ``(N - k, *)``.
+            (torch.Tensor, torch.Tensor):
+                The processed data with shape ``(N - k, *)``.
         """
         _input, _label = self.get_data(data, **kwargs)
         _classification = self.get_class(_input)
