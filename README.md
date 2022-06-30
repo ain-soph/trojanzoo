@@ -57,7 +57,7 @@ We have documentation available at https://ain-soph.github.io/trojanzoo.
    pip install -e trojanzoo
    ```
     > This could install the github repo as a package but avoid copying files to `site_packages`,
-      so that you can easily keep it updated by doing `github pull`.  
+      so that you can easily keep it updated by doing `git pull`.  
 
 ## Quick Start
 
