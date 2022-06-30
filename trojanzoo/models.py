@@ -1300,13 +1300,13 @@ class Model(BasicObject):
         r"""Remove misclassified samples in a data batch.
 
         Args:
-            data (tuple[torch.Tensor, torch.Tensor]): The data to process
-                with shape ``(N, *)``.
+            data (tuple[torch.Tensor, torch.Tensor]):
+                The input and label to process with shape ``(N, *)`` and ``(N)``.
             **kwargs: Keyword arguments passed to :meth:`get_data`.
 
         Returns:
             (torch.Tensor, torch.Tensor):
-                The processed data with shape ``(N - k, *)``.
+                The processed input and label with shape ``(N - k, *)`` and ``(N - k)``.
         """
         _input, _label = self.get_data(data, **kwargs)
         _classification = self.get_class(_input)
