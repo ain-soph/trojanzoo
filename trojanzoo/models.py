@@ -624,8 +624,8 @@ class Model(BasicObject):
                 if :attr:`_output` is not provided.
 
         Returns:
-            torch.Tensor: A scalar loss tensor
-                (with shape ``(N)`` if ``reduction='none'``).
+            torch.Tensor:
+                A scalar loss tensor (with shape ``(N)`` if ``reduction='none'``).
         """
         criterion = self.criterion_noreduction if reduction == 'none' \
             else self.criterion
