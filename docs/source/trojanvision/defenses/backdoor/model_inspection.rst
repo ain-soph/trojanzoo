@@ -5,8 +5,8 @@ model_inspection
 
 .. currentmodule:: trojanvision.defenses
 
-.. .. autoclass:: ABS
-..     :members:
+.. autoclass:: ABS
+    :members:
 
 .. autoclass:: DeepInspect
     :members:
