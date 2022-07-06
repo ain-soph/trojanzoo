@@ -186,7 +186,7 @@ class TrainingFiltering(BackdoorDefense):
 
     The defense evaluates clean and poison training inputs.
 
-    - If :attr:defense_input_num` is ``None``, use full training data.
+    - If :attr:`defense_input_num` is ``None``, use full training data.
     - Else, sample ``defense_input_num * poison_percent`` poison training data
       and ``defense_input_num * (1 - poison_percent)`` clean training data.
 
