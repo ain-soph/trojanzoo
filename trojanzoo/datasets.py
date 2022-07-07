@@ -31,7 +31,7 @@ class Dataset(ABC, BasicObject):
         For users, please use :func:`create` instead, which is more user-friendly.
 
     Args:
-        batch_size (int): Batch size of training and validation set
+        batch_size (int): Batch size of training set
             (negative number means batch size for each gpu).
         valid_batch_size (int): Batch size of validation set.
             Defaults to ``100``.
