@@ -356,7 +356,7 @@ def _get_layer(module: nn.Module, x: torch.Tensor,
                 layer_input = 'record'
             elif layer_input == full_name:
                 layer_input = 'record'
-            if layer_output.startswith(full_name):
+            if layer_output == full_name or layer_output.startswith(full_name + '.'):
                 return x
     else:
         x = module(x)
