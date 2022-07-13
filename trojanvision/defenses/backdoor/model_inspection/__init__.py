@@ -7,7 +7,7 @@ from .neural_cleanse import NeuralCleanse
 from .neuron_inspect import NeuronInspect
 from .tabor import Tabor
 
-__all__ = ['DeepInspect', 'NeuralCleanse', 'NeuronInspect', 'Tabor']    # 'ABS',
+__all__ = ['ABS', 'DeepInspect', 'NeuralCleanse', 'NeuronInspect', 'Tabor']
 
 class_dict: dict[str, type[BackdoorDefense]] = {
     'abs': ABS,
