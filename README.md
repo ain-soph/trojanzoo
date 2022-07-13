@@ -2,10 +2,10 @@
 ![logo](https://github.com/ain-soph/trojanzoo/raw/main/docs/source/images/trojanzoo-logo-readme.svg)
 
 [![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
-
-[![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
-![python>=3.10](https://img.shields.io/badge/python->=3.10-informational.svg)
 [![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://opensource.org/licenses/GPL-3.0)
+
+![python>=3.10](https://img.shields.io/badge/python->=3.10-informational.svg)
+[![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
 
 [![release](https://img.shields.io/github/v/release/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/releases)
 [![pypi](https://img.shields.io/pypi/v/trojanzoo)](https://pypi.org/project/trojanzoo/)
