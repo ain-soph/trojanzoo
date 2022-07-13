@@ -2,11 +2,20 @@
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torchvision.models
-from torchvision.models.mnasnet import _MODEL_URLS as urls
+from torchvision.models._utils import _ModelURLs
 import re
 
 import torch
 from collections import OrderedDict
+
+urls = _ModelURLs(
+    {
+        "mnasnet0_5": "https://download.pytorch.org/models/mnasnet0.5_top1_67.823-3ffadce67e.pth",
+        "mnasnet0_75": "https://download.pytorch.org/models/mnasnet0_75-7090bc5f.pth",
+        "mnasnet1_0": "https://download.pytorch.org/models/mnasnet1.0_top1_73.512-f206786ef8.pth",
+        "mnasnet1_3": "https://download.pytorch.org/models/mnasnet1_3-a4c69d6f.pth",
+    }
+)
 
 
 class _MNASNet(_ImageModel):
