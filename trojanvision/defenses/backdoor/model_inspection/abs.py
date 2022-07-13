@@ -149,8 +149,7 @@ class ABS(ModelInspection):
         return mark_best, loss_best
 
     def loss(self, _input: torch.Tensor, _label: torch.Tensor,
-             layer: str, neuron: int,
-             **kwargs) -> torch.Tensor:
+             layer: str, neuron: int, **kwargs) -> torch.Tensor:
         trigger_input = self.attack.add_mark(_input)
         feats = self.model.get_layer(trigger_input, layer_output=layer)
         feats = feats + (feats > 0) * feats    # sum up with relu
