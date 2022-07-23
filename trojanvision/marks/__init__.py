@@ -376,7 +376,8 @@ class Watermark(BasicObject):
                 Defaults to ``False``.
 
         Returns:
-            torch.Tensor: Watermark tensor ranging in ``[0, 1]``
+            torch.Tensor:
+                Watermark tensor ranging in ``[0, 1]``
                 with shape ``(channel + 1, height, width)`` with alpha channel.
         """
         if isinstance(mark_img, str):
