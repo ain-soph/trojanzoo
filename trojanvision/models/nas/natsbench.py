@@ -14,6 +14,35 @@ from typing import Any
 from collections.abc import Callable
 
 
+class DARTSCells(nn.ModuleList):
+    def __init__(self, cells: nn.ModuleList, alphas: nn.Parameter):
+        super().__init__(cells)
+        self.alphas = alphas
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        alphas = self.alphas.softmax(dim=-1)
+        for cell in self:
+            if 'search' in cell.__class__.__name__.lower():
+                x = cell(x, alphas)
+            else:
+                x = cell(x)
+        return x
+
+    def arch_str(self) -> str:
+        genotypes = []
+        for i in range(1, self[0].max_nodes):
+            xlist = []
+            for j in range(i):
+                node_str = "{:}<-{:}".format(i, j)
+                with torch.no_grad():
+                    weights = self.alphas[self[0].edge2index[node_str]]
+                    op_name = self[0].op_names[weights.argmax().item()]
+                xlist.append((op_name, j))
+            genotypes.append(tuple(xlist))
+        from xautodl.models.cell_searchs.genotypes import Structure   # type: ignore
+        return Structure(genotypes).tostr()
+
+
 class _NATSbench(_ImageModel):
 
     def __init__(self, network: nn.Module = None, **kwargs):
@@ -21,14 +50,27 @@ class _NATSbench(_ImageModel):
         self.load_model(network)
 
     def load_model(self, network: nn.Module):
-        self.features = nn.Sequential(OrderedDict([
-            ('stem', getattr(network, 'stem')),
-            ('cells', nn.Sequential(*getattr(network, 'cells'))),
-            ('lastact', getattr(network, 'lastact')),
-        ]))
+        if 'darts' in network.__class__.__name__.lower():
+            self.features = nn.Sequential(OrderedDict([
+                ('stem', getattr(network, 'stem')),
+                ('cells', DARTSCells(network.cells, network.arch_parameters)),
+                ('lastact', getattr(network, 'lastact')),
+            ]))
+        else:
+            self.features = nn.Sequential(OrderedDict([
+                ('stem', getattr(network, 'stem')),
+                ('cells', nn.Sequential(*getattr(network, 'cells'))),
+                ('lastact', getattr(network, 'lastact')),
+            ]))
         self.classifier = nn.Sequential(OrderedDict([
             ('fc', getattr(network, 'classifier'))
         ]))
+
+    def arch_parameters(self) -> list[torch.Tensor]:
+        return [self.features.cells.alphas]
+
+    def arch_str(self) -> str:
+        return self.features.cells.arch_str()
 
 
 class NATSbench(ImageModel):

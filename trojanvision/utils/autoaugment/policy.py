@@ -58,12 +58,15 @@ class SubPolicy(nn.Sequential):
 
 
 class Policy(nn.Module):
-    def __init__(self, num_sub_policies: int = 100, num_chunks: int = 8, **kwargs):
+    def __init__(self, num_sub_policies: int = 100, num_chunks: int = 8,
+                 primitives: list[str] = PRIMITIVES, **kwargs):
         super().__init__()
         self.num_sub_policies = num_sub_policies
         self.num_chunks = num_chunks
+        self.primitives = primitives
+
         self.sub_policies: Sequence[SubPolicy] = nn.ModuleList(
-            [SubPolicy(**kwargs) for _ in range(num_sub_policies)])
+            [SubPolicy(primitives=primitives, **kwargs) for _ in range(num_sub_policies)])
 
     def forward(self, _input: torch.Tensor) -> torch.Tensor:
         input_list = _input.chunk(self.num_chunks if self.num_chunks != 0 else len(_input))
