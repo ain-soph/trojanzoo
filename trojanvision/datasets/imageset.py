@@ -36,9 +36,6 @@ class ImageSet(Dataset):
             Data normalization parameters of ``'mean'`` and ``'std'``
             (e.g., ``{'mean': [0.5, 0.4, 0.6], 'std': [0.2, 0.3, 0.1]}``).
             Defaults to ``None``.
-        default_model (str): Default model for the dataset.
-            Usually stored in the config.
-            Defaults to ``'resnet18_comp'``.
         normalize (bool): Whether to use :any:`torchvision.transforms.Normalize`
             in dataset transform. Otherwise, use it as model preprocess layer.
         transform (str): The dataset transform type.
@@ -116,7 +113,6 @@ class ImageSet(Dataset):
         return group
 
     def __init__(self, norm_par: dict[str, list[float]] = None,
-                 default_model: str = 'resnet18_comp',
                  normalize: bool = False, transform: str = None,
                  auto_augment: bool = False,
                  mixup: bool = False, mixup_alpha: float = 0.0,
@@ -147,7 +143,7 @@ class ImageSet(Dataset):
                 return mixupcutmix(*default_collate(batch))  # noqa: E731
             self.collate_fn = collate_fn
 
-        super().__init__(default_model=default_model, **kwargs)
+        super().__init__(**kwargs)
         self.param_list['imageset'] = ['data_shape', 'norm_par',
                                        'normalize', 'transform',
                                        'auto_augment']
