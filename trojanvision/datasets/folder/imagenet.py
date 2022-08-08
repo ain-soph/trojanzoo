@@ -90,8 +90,9 @@ class ImageNet(ImageFolder):
     def get_class_names(self) -> list[str]:
         if hasattr(self, 'class_names'):
             return getattr(self, 'class_names')
-        dataset: datasets.ImageFolder = self.get_org_dataset('train')
-        return [clss[0] for clss in dataset.classes]
+        dataset: datasets.ImageNet = self.get_org_dataset('train')
+        classes: list[tuple[str, ...]] = dataset.classes
+        return [clss[0] for clss in classes]
 
 
 class Sample_ImageNet(ImageNet):
