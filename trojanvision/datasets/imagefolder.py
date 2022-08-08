@@ -81,7 +81,7 @@ class ImageFolder(ImageSet):
                                           'url']
         self.class_names = self.get_class_names()
         if self.num_classes is None:
-            self.num_classes = len(self.class_to_idx)
+            self.num_classes = len(self.class_names)
 
     def initialize(self, *args, **kwargs):
         r"""You could use this method to transform across different :attr:`data_format`."""
@@ -168,8 +168,7 @@ class ImageFolder(ImageSet):
         if hasattr(self, 'class_names'):
             return getattr(self, 'class_names')
         dataset: datasets.ImageFolder = self.get_org_dataset('train')
-        idx_to_class = {i: name for name, i in dataset.class_to_idx.items()}
-        return [idx_to_class[i] for i in range(len(idx_to_class.keys()))]
+        return dataset.classes
 
     def sample(self, child_name: str = None,
                class_dict: dict[str, list[str]] = None,
