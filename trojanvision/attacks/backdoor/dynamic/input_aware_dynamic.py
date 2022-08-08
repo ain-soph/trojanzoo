@@ -148,7 +148,7 @@ class InputAwareDynamic(BackdoorAttack):
                  natural: bool = False,
                  poison_percent: float = 0.1, **kwargs):
         super().__init__(poison_percent=poison_percent, **kwargs)
-        self.param_list['input_aware_dynamic'] = ['train_mask_epochs',
+        self.param_list['input_aware_dynamic'] = ['train_mask_epochs', 'natural',
                                                   'lambda_div', 'lambda_norm',
                                                   'mask_density', 'cross_percent']
 
@@ -303,6 +303,7 @@ class InputAwareDynamic(BackdoorAttack):
         logger = MetricLogger()
         logger.create_meters(loss=None, div=None, ce=None)
 
+        best_validate_result = (0.0, float('inf'))
         if validate_interval != 0:
             best_validate_result = self.validate_fn(verbose=verbose)
             best_asr = best_validate_result[0]
