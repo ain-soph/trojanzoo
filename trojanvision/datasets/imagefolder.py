@@ -80,8 +80,7 @@ class ImageFolder(ImageSet):
         self.param_list['imagefolder'] = ['data_format', 'memory', 'org_folder_name',
                                           'url']
         self.class_names = self.get_class_names()
-        if self.num_classes is None:
-            self.num_classes = len(self.class_names)
+        self.num_classes = self.num_classes or len(self.class_names)
 
     def initialize(self, *args, **kwargs):
         r"""You could use this method to transform across different :attr:`data_format`."""

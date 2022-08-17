@@ -215,7 +215,7 @@ def get_class_subset(dataset: Dataset,
     """
     class_list = [class_list] if isinstance(class_list, int) else class_list
     indices = np.arange(len(dataset))
-    if isinstance(dataset, Subset):
+    while isinstance(dataset, Subset):
         idx = np.array(dataset.indices)
         indices = idx[indices]
         dataset = dataset.dataset
