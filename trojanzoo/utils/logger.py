@@ -320,7 +320,8 @@ class MetricLogger:
 
     def log_every(self, iterable: Iterable[_T], header: str = '',
                   tqdm: bool = None, tqdm_header: str = 'Iter',
-                  indent: int = None) -> Generator[_T, None, None]:
+                  indent: int = None, verbose: int = None
+                  ) -> Generator[_T, None, None]:
         r"""Wrap an :class:`collections.abc.Iterable` with formatted outputs.
 
         * Middle Output:
@@ -339,12 +340,16 @@ class MetricLogger:
             indent (int): The space indent for the entire string.
                 if ``None``, use ``self.indent``.
                 Defaults to ``None``.
+            verbose (int): The verbose level of output information.
+                Defaults to ``env[verbose]``
 
         :Example:
             .. seealso:: :func:`trojanzoo.utils.train.train()`
         """
         tqdm = tqdm if tqdm is not None else self.tqdm
         indent = indent if indent is not None else self.indent
+        if verbose is None:
+            verbose = env['verbose']
         iterator = iterable
         if len(header) != 0:
             header = header.ljust(30 + get_ansi_len(header))
@@ -377,9 +382,9 @@ class MetricLogger:
                 self.memory.update(cur_memory)
             if tqdm:
                 _dict = {k: v for k, v in self.meters.items()}
-                if env['verbose'] > 2 and torch.cuda.is_available():
+                if verbose > 2 and torch.cuda.is_available():
                     _dict.update(memory=f'{cur_memory:.0f} MB')
-                if env['verbose'] > 1:
+                if verbose > 1:
                     _dict.update(iter=f'{cur_iter_time:.3f} s',
                                  data=f'{cur_data_time:.3f} s')
                 iterator.set_description_str(self.get_str(**_dict, strip=False))
@@ -389,9 +394,9 @@ class MetricLogger:
         total_time_str = tqdm_class.format_interval(total_time)
 
         _dict = {k: v for k, v in self.meters.items()}
-        if env['verbose'] > 2 and torch.cuda.is_available():
+        if verbose > 2 and torch.cuda.is_available():
             _dict.update(memory=f'{str(self.memory)} MB')
-        if env['verbose'] > 1:
+        if verbose > 1:
             _dict.update(iter=f'{str(self.iter_time)} s',
                          data=f'{str(self.data_time)} s')
         _dict.update(time=total_time_str)
