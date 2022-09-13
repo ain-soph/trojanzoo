@@ -218,7 +218,7 @@ class Refool(CleanLabelBackdoor):
         if mark_alpha < 0:
             x_weight: float = x.mean().item()
             mark_weight: float = self.mark.mark[:-1].mean().item()
-            alpha = x_weight / (x_weight + mark_weight)
+            alpha = mark_weight / (x_weight + mark_weight)
             kwargs['mark_alpha'] = alpha
         return super().add_mark(x, **kwargs)
 
