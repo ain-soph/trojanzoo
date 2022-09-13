@@ -12,7 +12,7 @@
 [![docker](https://img.shields.io/pypi/v/trojanzoo?label=docker)](https://hub.docker.com/r/local0state/trojanzoo)
 <!-- [![conda](https://img.shields.io/pypi/v/trojanzoo?label=conda)](https://anaconda.org/anaconda/trojanzoo) -->
 
-> **NOTE:** TrojanZoo requires `python>=3.10`, `pytorch>=1.12` and `torchvision>=0.13`, which must be installed manually. Recommend to use `conda` to install.
+> **NOTE:** TrojanZoo requires `python>=3.10`, `pytorch>=1.12.1` and `torchvision>=0.13.1`, which must be installed manually. Recommend to use `conda` to install.
 
 This is the code implementation (pytorch) for our paper in EuroS&P 2022:  
 [TrojanZoo: Towards Unified, Holistic, and Practical Evaluation of Neural Backdoors](https://arxiv.org/abs/2012.09302)
