@@ -118,7 +118,7 @@ def add_argument(parser: argparse.ArgumentParser) -> argparse._ArgumentGroup:
 def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str = None,
            seed: int = None, data_seed: int = None, cudnn_benchmark: bool = None,
            config: Config = config,
-           cache_threshold: float = None, verbose: int = 0,
+           cache_threshold: float = None, verbose: int = None,
            color: bool = None, device: str | int | torch.device = None, tqdm: bool = None,
            **kwargs) -> Env:
     r"""
@@ -139,6 +139,8 @@ def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str =
     Returns:
         Env: The :attr:`env` instance.
     """
+    if verbose is None:
+        verbose = 0
     other_kwargs = {'data_seed': data_seed, 'cache_threshold': cache_threshold,
                     'verbose': verbose, 'color': color, 'device': device, 'tqdm': tqdm}
     config.cmd_config_path = cmd_config_path

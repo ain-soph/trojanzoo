@@ -14,8 +14,8 @@ import trojanzoo.environ
 from trojanvision.configs import Config
 
 
-def create(*args, config: Config = config, **kwargs) -> trojanzoo.environ.Env:
-    return trojanzoo.environ.create(*args, config=config, **kwargs)
+def create(config: Config = config, **kwargs) -> trojanzoo.environ.Env:
+    return trojanzoo.environ.create(config=config, **kwargs)
 
 
 create()
