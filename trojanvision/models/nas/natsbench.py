@@ -70,7 +70,10 @@ class _NATSbench(_ImageModel):
         return [self.features.cells.alphas]
 
     def arch_str(self) -> str:
-        return self.features.cells.arch_str()
+        if isinstance(self.features.cells, DARTSCells):
+            return self.features.cells.arch_str()
+        else:
+            raise TypeError(f'Cells are not DARTSCells but {type(self.features.cells)}')
 
 
 class NATSbench(ImageModel):
@@ -105,7 +108,7 @@ class NATSbench(ImageModel):
         model_seed (int): :attr:`model_seed` passed to
             ``api.get_net_param()``.
             Choose from ``[777, 888, 999]``.
-            Defaults to ``999``.
+            Defaults to ``777``.
         hp (int): Training epochs.
             :attr:`hp` passed to ``api.get_net_param()``.
             Choose from ``[12, 200]``.
@@ -134,7 +137,7 @@ class NATSbench(ImageModel):
         return group
 
     def __init__(self, name: str = 'nats_bench', model: type[_NATSbench] = _NATSbench,
-                 model_index: int = 0, model_seed: int = 999, hp: int = 200,
+                 model_index: int = 0, model_seed: int = 777, hp: int = 200,
                  dataset: ImageSet | None = None, dataset_name: str | None = None,
                  nats_path: str | None = None,
                  search_space: str = 'tss', **kwargs):
@@ -149,8 +152,8 @@ class NATSbench(ImageModel):
             kwargs['dataset'] = dataset
             if dataset_name is None:
                 dataset_name = dataset.name
-                if dataset_name == 'imagenet16':
-                    dataset_name = f'imagenet16-{dataset.num_classes:d}'
+            if dataset_name == 'imagenet16':
+                dataset_name = f'imagenet16-{dataset.num_classes:d}'
         assert dataset_name is not None
         dataset_name = dataset_name.replace('imagenet16', 'ImageNet16')
         self.dataset_name = dataset_name
@@ -166,8 +169,15 @@ class NATSbench(ImageModel):
         self.get_cell_based_tiny_net: Callable[..., nn.Module] = get_cell_based_tiny_net
         network = self.get_cell_based_tiny_net(config)
         super().__init__(name=name, model=model, network=network, **kwargs)
-        self.param_list['nats_bench'] = ['model_index', 'model_seed', 'hp', 'search_space', 'nats_path']
+        self.param_list['nats_bench'] = ['arch_str', 'model_index', 'model_seed', 'hp', 'search_space', 'nats_path']
         self._model: _NATSbench
+
+    @property
+    def arch_str(self) -> str:
+        if isinstance(self._model.features.cells, DARTSCells):
+            return self._model.arch_str()
+        config = self.api.get_net_config(self.model_index, self.dataset_name)
+        return config['arch_str']
 
     def get_official_weights(self, model_index: int | None = None,
                              model_seed: int | None = None,
