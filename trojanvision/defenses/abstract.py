@@ -119,6 +119,7 @@ class InputFiltering(BackdoorDefense):
         print(f'precision_score : {metrics.precision_score(y_true, y_pred):8.3f}')
         print(f'recall_score    : {metrics.recall_score(y_true, y_pred):8.3f}')
         print(f'accuracy_score  : {metrics.accuracy_score(y_true, y_pred):8.3f}')
+        print(f'roc_auc_score  : {metrics.roc_auc_score(y_true, y_pred):8.3f}')
 
     def get_test_data(self) -> tuple[torch.Tensor, torch.Tensor]:
         r"""Get test data.
