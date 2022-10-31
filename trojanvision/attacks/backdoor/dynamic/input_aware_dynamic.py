@@ -554,13 +554,14 @@ class InputAwareDynamic(BackdoorAttack):
         middle_seq.add_module('bn', nn.BatchNorm2d(num_channels[-1], momentum=0.05))
         middle_seq.add_module('relu', nn.ReLU(inplace=True))
         for i in range(len(num_channels)):
-            up_seq.add_module(f'upsample{3*i+1}', nn.Upsample(scale_factor=2.0))
+            up_seq.add_module(f'upsample{3*i+1}', nn.Upsample(scale_factor=2.0, mode='bilinear'))
             up_seq.add_module(f'conv{3*i+2}', conv3x3(up_channel_list[i], up_channel_list[i]))
             up_seq.add_module(f'bn{3*i+2}', nn.BatchNorm2d(up_channel_list[i], momentum=0.05))
             up_seq.add_module(f'relu{3*i+2}', nn.ReLU(inplace=True))
             up_seq.add_module(f'conv{3*i+3}', conv3x3(up_channel_list[i], up_channel_list[i + 1]))
             up_seq.add_module(f'bn{3*i+3}', nn.BatchNorm2d(up_channel_list[i + 1], momentum=0.05))
-            up_seq.add_module(f'relu{3*i+3}', nn.ReLU(inplace=True))
+            if i != len(num_channels) - 1:
+                up_seq.add_module(f'relu{3*i+3}', nn.ReLU(inplace=True))
         seq.add_module('down', down_seq)
         seq.add_module('middle', middle_seq)
         seq.add_module('up', up_seq)
