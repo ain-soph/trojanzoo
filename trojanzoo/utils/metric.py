@@ -36,6 +36,7 @@ def mask_jaccard(mask: torch.Tensor, real_mask: torch.Tensor,
     mask = mask.float()
     real_mask = real_mask.float()
     detect_mask = mask > mask.flatten().topk(select_num)[0][-1]
+    real_mask = real_mask > real_mask.flatten().topk(select_num)[0][-1]
     sum_temp = detect_mask.int() + real_mask.int()
     overlap = (sum_temp == 2).sum().float() / (sum_temp >= 1).sum().float()
     return float(overlap)
