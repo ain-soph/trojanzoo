@@ -354,6 +354,7 @@ class InputAwareDynamic(BackdoorAttack):
                 loss_ce = self.model.loss(final_input, final_label)
                 loss = loss_ce
                 # div loss
+                loss_div = torch.zeros_like(loss_ce)
                 if len(trigger_input) > 0 and len(cross_input) > 0:
                     if len(trigger_input) <= len(cross_input):
                         length = len(trigger_input)
