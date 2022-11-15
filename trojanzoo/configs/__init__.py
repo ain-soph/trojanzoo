@@ -202,11 +202,11 @@ class Config:
             name, ext = os.path.splitext(os.path.split(path)[1])
             if ext in ['.yml', 'yaml', 'json']:
                 with open(path, 'r', encoding='utf-8') as f:
-                    _dict: dict[str, Any | dict[str, Any]] = {}
                     if ext == 'json':
                         _dict = json.load(f.read())
                     else:
                         _dict = yaml.load(f.read(), Loader=yaml.FullLoader)
+                    _dict = _dict or {}
                     return Module(**{name: Config.organize_config_file(_dict)})
             else:
                 return Module()
