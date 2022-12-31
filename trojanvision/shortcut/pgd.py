@@ -14,13 +14,6 @@ if TYPE_CHECKING:
     from trojanvision.models import ImageModel
 
 
-def get_func_key(func: Callable[..., torch.Tensor]) -> str:
-    keys = func.__code__.co_varnames
-    valid_keys = [key for key in keys if 'target' in key or 'label' in key or 'y' in key or 'Y' in key]
-    assert len(valid_keys) == 1, keys
-    return valid_keys[0]
-
-
 class PGD(Attack, PGDoptimizer):
     r"""PGD Adversarial Attack.
 

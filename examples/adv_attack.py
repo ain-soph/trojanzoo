@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-# CUDA_VISIBLE_DEVICES=1 python examples/adv_attack.py --verbose 1 --color --attack pgd --dataset cifar10 --model resnet18_comp --pretrained --stop_threshold 0.0 --target_idx 1 --require_class --grad_method nes --valid_batch_size 200
+r"""
+CUDA_VISIBLE_DEVICES=1 python examples/adv_attack.py --verbose 1 --color --attack pgd --dataset cifar10 --model resnet18_comp --pretrained --stop_threshold 0.0 --target_idx 1 --require_class --grad_method nes --valid_batch_size 200
+"""  # noqa: E501
 
 import trojanvision
 import argparse

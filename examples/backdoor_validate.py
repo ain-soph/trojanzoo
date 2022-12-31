@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import trojanvision
-from trojanvision.attacks import BadNet
 import argparse
+
+from trojanvision.attacks import BackdoorAttack
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     dataset = trojanvision.datasets.create(**kwargs)
     model = trojanvision.models.create(dataset=dataset, **kwargs)
     mark = trojanvision.marks.create(dataset=dataset, **kwargs)
-    attack: BadNet = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **kwargs)
+    attack: BackdoorAttack = trojanvision.attacks.create(dataset=dataset, model=model, mark=mark, **kwargs)
 
     if env['verbose']:
         trojanvision.summary(env=env, dataset=dataset, model=model, mark=mark, attack=attack)
