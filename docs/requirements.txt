@@ -1,4 +1,3 @@
-sphinx>=4.0
 sphinxcontrib.katex
 sphinx-copybutton
 sphinx-autoapi
