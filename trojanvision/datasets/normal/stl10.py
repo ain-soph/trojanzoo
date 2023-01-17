@@ -60,7 +60,7 @@ class STL10(ImageSet):
         r"""Get dataset transform.
 
         Args:
-            mode (str): The dataset mode (e.g., ``'train' | 'valid'``).
+            mode (str): The dataset mode (e.g., ``'train' | 'valid' | 'unlabeled' | 'train+unlabeled'``).
             normalize (bool | None):
                 Whether to use :any:`torchvision.transforms.Normalize`
                 in dataset transform. Defaults to ``self.normalize``.
