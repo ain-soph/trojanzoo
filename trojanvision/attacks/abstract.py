@@ -108,29 +108,26 @@ class BackdoorAttack(Attack):
                 self.poison_set = None
 
     def attack(self, epochs: int, **kwargs):
+        kwargs['validate_fn'] = kwargs.get('validate_fn', self.validate_fn)
+        kwargs['save_fn'] = kwargs.get('save_fn', self.save)
         match self.train_mode:
             case 'batch':
                 loader = self.dataset.get_dataloader(
                     'train', batch_size=self.dataset.batch_size + int(self.poison_num))
                 return self.model._train(epochs, loader_train=loader,
-                                         validate_fn=self.validate_fn,
                                          get_data_fn=self.get_data,
-                                         save_fn=self.save, **kwargs)
+                                         **kwargs)
             case 'dataset':
                 mix_dataset = torch.utils.data.ConcatDataset([self.dataset.loader['train'].dataset,
                                                               self.poison_set])
                 loader = self.dataset.get_dataloader('train', dataset=mix_dataset)
-                return self.model._train(epochs, loader_train=loader,
-                                         validate_fn=self.validate_fn,
-                                         save_fn=self.save, **kwargs)
+                return self.model._train(epochs, loader_train=loader, **kwargs)
             case 'loss':
                 if 'loss_fn' in kwargs.keys():
                     kwargs['loss_fn'] = functools.partial(self.loss_weighted, loss_fn=kwargs['loss_fn'])
                 else:
                     kwargs['loss_fn'] = self.loss_weighted
-                return self.model._train(epochs,
-                                         validate_fn=self.validate_fn,
-                                         save_fn=self.save, **kwargs)
+                return self.model._train(epochs, **kwargs)
             case _:
                 raise NotImplementedError(f'{self.train_mode=}')
 

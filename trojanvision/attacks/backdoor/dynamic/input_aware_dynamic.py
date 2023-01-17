@@ -276,7 +276,11 @@ class InputAwareDynamic(BackdoorAttack):
     def attack(self, epochs: int, optimizer: torch.optim.Optimizer,
                lr_scheduler: torch.optim.lr_scheduler._LRScheduler = None,
                validate_interval: int = 1, save: bool = False,
+               validate_fn: Callable[..., tuple[float, float]] = None,
+               writer=None, main_tag: str = 'train', tag: str = '',
                verbose: bool = True, **kwargs):
+        validate_fn = validate_fn or self.validate_fn
+        start_epoch: int = 0
         if verbose:
             print('train mask generator')
         self.mark_generator.requires_grad_(False)
@@ -305,7 +309,7 @@ class InputAwareDynamic(BackdoorAttack):
 
         best_validate_result = (0.0, float('inf'))
         if validate_interval != 0:
-            best_validate_result = self.validate_fn(verbose=verbose)
+            best_validate_result = validate_fn(writer=writer, tag=tag, _epoch=start_epoch, verbose=verbose, **kwargs)
             best_asr = best_validate_result[0]
         for _epoch in range(epochs):
             _epoch += 1
@@ -382,8 +386,18 @@ class InputAwareDynamic(BackdoorAttack):
             if not self.natural:
                 self.model.eval()
             self.mark_generator.eval()
+            if writer is not None:
+                from torch.utils.tensorboard import SummaryWriter
+                assert isinstance(writer, SummaryWriter)
+                writer.add_scalars(main_tag='Loss/' + main_tag,
+                                   tag_scalar_dict={tag: loss},
+                                   global_step=_epoch + start_epoch)
+                # writer.add_scalars(main_tag='Acc/' + main_tag,
+                #                 tag_scalar_dict={tag: acc},
+                #                 global_step=_epoch + start_epoch)
             if validate_interval != 0 and (_epoch % validate_interval == 0 or _epoch == epochs):
-                validate_result = self.validate_fn(verbose=verbose)
+                validate_result = validate_fn(writer=writer, tag=tag, _epoch=_epoch + start_epoch,
+                                              verbose=verbose, **kwargs)
                 cur_asr = validate_result[0]
                 if cur_asr >= best_asr:
                     best_validate_result = validate_result
