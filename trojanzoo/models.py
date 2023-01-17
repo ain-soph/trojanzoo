@@ -958,6 +958,7 @@ class Model(BasicObject):
     # ---------------------Train and Validate--------------------- #
     # TODO: annotation and remove those arguments to be *args, **kwargs
     def _train(self, epochs: int, optimizer: Optimizer,
+               module: nn.Module = None, num_classes: int = None,
                lr_scheduler: _LRScheduler = None,
                lr_warmup_epochs: int = 0,
                model_ema: ExponentialMovingAverage = None,
@@ -979,8 +980,9 @@ class Model(BasicObject):
                accuracy_fn: Callable[..., list[float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs):
         r"""Train the model"""
-        loader_train = loader_train if loader_train is not None \
-            else self.dataset.loader['train']
+        module = module or self._model
+        num_classes = num_classes or self.num_classes
+        loader_train = loader_train or self.dataset.loader['train']
         get_data_fn = get_data_fn if callable(get_data_fn) else self.get_data
         loss_fn = loss_fn if callable(loss_fn) else self.loss
         validate_fn = validate_fn if callable(validate_fn) else self._validate
@@ -993,7 +995,7 @@ class Model(BasicObject):
             epoch_fn = getattr(self, 'epoch_fn')
         if not callable(after_loss_fn) and hasattr(self, 'after_loss_fn'):
             after_loss_fn = getattr(self, 'after_loss_fn')
-        return train(module=self._model, num_classes=self.num_classes,
+        return train(module=module, num_classes=num_classes,
                      epochs=epochs, optimizer=optimizer, lr_scheduler=lr_scheduler,
                      lr_warmup_epochs=lr_warmup_epochs,
                      model_ema=model_ema, model_ema_steps=model_ema_steps,
@@ -1027,8 +1029,8 @@ class Model(BasicObject):
         Returns:
             (float, float): Accuracy and loss.
         """
-        module = self._model if module is None else module
-        num_classes = self.num_classes if num_classes is None else num_classes
+        module = module or self._model
+        num_classes = num_classes or self.num_classes
         loader = loader or self.dataset.loader['valid']
         get_data_fn = get_data_fn or self.get_data
         loss_fn = loss_fn or self.loss
