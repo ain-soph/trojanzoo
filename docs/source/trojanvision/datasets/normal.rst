@@ -18,3 +18,6 @@ normal
 
 .. autoclass:: ImageNet32
    :members:
+
+.. autoclass:: STL10
+   :members:
