@@ -132,7 +132,7 @@ class Dataset(ABC, BasicObject):
         if not self.valid_set:
             self.param_list['dataset'].append('split_ratio')
         self.__batch_size = batch_size
-        self.valid_batch_size = valid_batch_size
+        self.__valid_batch_size = valid_batch_size
         self.split_ratio = split_ratio
         self.num_workers = num_workers
         self.collate_fn: Callable[[Iterable[torch.Tensor]], Iterable[torch.Tensor]] = None
@@ -172,6 +172,11 @@ class Dataset(ABC, BasicObject):
     def batch_size(self):
         return self.__batch_size if self.__batch_size >= 0 else \
             -self.__batch_size * max(1, env['num_gpus'])
+
+    @functools.cached_property
+    def valid_batch_size(self):
+        return self.__valid_batch_size if self.__valid_batch_size >= 0 else \
+            -self.__valid_batch_size * max(1, env['num_gpus'])
 
     # TODO: should it be abstractmethod?
     def initialize(self, *args, **kwargs):
@@ -401,12 +406,10 @@ class Dataset(ABC, BasicObject):
         """
         if batch_size is None:
             match mode:
-                case 'train':
-                    batch_size = self.batch_size
                 case 'valid':
                     batch_size = self.valid_batch_size
                 case _:
-                    raise ValueError(f'{mode=}')
+                    batch_size = self.batch_size
         if shuffle is None:
             shuffle = (mode == 'train')
         if num_workers is None:
