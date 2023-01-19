@@ -8,9 +8,8 @@ import torchvision.transforms as transforms
 import torch
 import numpy as np
 import os
-import shutil
 
-from typing import Callable, cast, Optional
+from typing import Callable, Optional
 
 from trojanvision import __file__ as root_file
 root_dir = os.path.dirname(root_file)
@@ -97,7 +96,7 @@ class STL10Dataset(datasets.STL10):
         ["train_X.bin", "918c2871b30a85fa023e0c44e0bee87f"],
         ["train_y.bin", "5a34089d4802c674881badbb80307741"],
         ["unlabeled_X.bin", "5242ba1fed5e4be9e1e742405eb56ca4"],
-        ["unlabeled_y.bin", "d45e7ad7cee2e92f60db3241a8e7110f"],
+        ["unlabeled_y.bin", None],
     ]
 
     def __init__(
