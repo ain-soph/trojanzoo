@@ -33,6 +33,7 @@ class Dataset(ABC, BasicObject):
     Args:
         batch_size (int): Batch size of training set
             (negative number means batch size for each gpu).
+            Defaults to ``100``.
         valid_batch_size (int): Batch size of validation set.
             Defaults to ``100``.
         folder_path (str): Folder path to store dataset.
@@ -65,6 +66,7 @@ class Dataset(ABC, BasicObject):
             | Preset dataloader for users at dataset initialization.
             | It contains ``'train'`` and ``'valid'`` loaders.
         batch_size (int): Batch size of training set (always positive).
+            Defaults to ``100``.
         valid_batch_size (int): Batch size of validation set.
             Defaults to ``100``.
         num_classes (int): Number of classes. (need overriding)
@@ -120,7 +122,7 @@ class Dataset(ABC, BasicObject):
         group.add_argument('--data_dir', help='directory to contain datasets')
         return group
 
-    def __init__(self, batch_size: int = None,
+    def __init__(self, batch_size: int = 100,
                  valid_batch_size: int = 100,
                  folder_path: str = None, download: bool = False,
                  split_ratio: float = 0.8, num_workers: int = 4,

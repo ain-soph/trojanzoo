@@ -112,7 +112,7 @@ class ZipFolder(DatasetFolder):
                 pass   # fall through to PIL
         return Image.open(f).convert('RGB')
 
-    def _find_classes(self, *args, **kwargs) -> tuple[list[str], dict[str, int]]:
+    def find_classes(self, *args, **kwargs) -> tuple[list[str], dict[str, int]]:
         r"""Finds the class folders in a dataset.
 
         Args:

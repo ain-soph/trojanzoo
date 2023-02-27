@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from trojanvision.datasets.imagefolder import ImageFolder
-from trojanzoo.utils.module import Module
+import trojanvision
 
 from torchvision import datasets
 import os
@@ -102,11 +102,12 @@ class Sample_ImageNet(ImageNet):
     url = {}
     org_folder_name = {}
 
+    def _get_org_dataset(self, mode: str, data_format: str = None,
+                         **kwargs) -> datasets.DatasetFolder:
+        return super(ImageNet, self)._get_org_dataset(mode, data_format=data_format, **kwargs)
+
     def initialize_folder(self):
-        _dict = Module(self.__dict__)
-        _dict.__delattr__('folder_path')
-        imagenet = ImageNet(**_dict)
-        class_dict: dict = {}
+        imagenet: ImageNet = trojanvision.datasets.create('imagenet')
         json_path = os.path.normpath(os.path.join(
             root_dir, 'data', 'sample_imagenet', 'class_dict.json'))
         with open(json_path, 'r', encoding='utf-8') as f:

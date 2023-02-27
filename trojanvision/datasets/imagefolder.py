@@ -172,7 +172,7 @@ class ImageFolder(ImageSet):
     def sample(self, child_name: str = None,
                class_dict: dict[str, list[str]] = None,
                sample_num: int = None,
-               method='zip'):
+               method='folder'):
         r"""Sample a subset image folder dataset.
 
         Args:
@@ -188,7 +188,7 @@ class ImageFolder(ImageSet):
                 if :attr:`class_dict` is ``None``.
                 Defaults to ``None``.
             method (str): :attr:`data_format` of new subset to save.
-                Defaults to ``'.zip'``.
+                Defaults to ``'folder'``.
         """
         if sample_num is None:
             assert class_dict
@@ -252,64 +252,65 @@ class ImageFolder(ImageSet):
                             for dst_class in dst_list}
         src_class_list = src2dst_dict.keys()
         print(src2dst_dict)
-        if method == 'zip':
-            for mode in mode_list:
-                print('{purple}mode: {0}{reset}'.format(mode, **ansi))
-                assert mode in ['train', 'valid', 'test']
-                dst_zip_path = os.path.join(dst_path,
-                                            f'{child_name}_{mode}_store.zip')
-                dst_zip = zipfile.ZipFile(dst_zip_path, 'w',
-                                          compression=zipfile.ZIP_STORED)
-                src_zip_path = os.path.join(src_path,
-                                            f'{self.name}_{mode}_store.zip')
-                src_zip = zipfile.ZipFile(src_zip_path, 'r',
-                                          compression=zipfile.ZIP_STORED)
-                _list = src_zip.namelist()
-                if env['tqdm']:
-                    _list = tqdm(_list, leave=False)
-                for filename in _list:
-                    if filename[-1] == '/':
-                        continue
-                    dirname, basename = os.path.split(filename)
-                    mode_check, src_class = os.path.split(dirname)
-                    if mode_check == mode and src_class in src_class_list:
-                        print(filename)
-                        dst_class = src2dst_dict[src_class]
-                        dst_zip.writestr(f'{mode}/{dst_class}/{basename}',
-                                         src_zip.read(filename))
-                src_zip.close()
-                dst_zip.close()
-        elif method == 'folder':
-            len_i = len(class_dict.keys())
-            for mode in mode_list:
-                print('{purple}{0}{reset}'.format(mode, **ansi))
-                assert mode in ['train', 'valid', 'test']
-                for i, dst_class in enumerate(class_dict.keys()):
-                    if not os.path.exists(_path := os.path.join(dst_path,
-                                                                mode,
-                                                                dst_class)):
-                        os.makedirs(_path)
-                    prints('{blue_light}{0}{reset}'.format(dst_class, **ansi),
-                           indent=10)
-                    class_list = class_dict[dst_class]
-                    len_j = len(class_list)
-                    for j, src_class in enumerate(class_list):
-                        _list = os.listdir(os.path.join(src_path,
-                                                        mode,
-                                                        src_class))
-                        prints(output_iter(i + 1, len_i),
-                               output_iter(j + 1, len_j),
-                               f'dst: {dst_class:15s}    '
-                               f'src: {src_class:15s}    '
-                               f'image_num: {len(_list):>8d}',
+        match method:
+            case 'zip':
+                for mode in mode_list:
+                    print('{purple}mode: {0}{reset}'.format(mode, **ansi))
+                    assert mode in ['train', 'valid', 'test']
+                    dst_zip_path = os.path.join(dst_path,
+                                                f'{child_name}_{mode}_store.zip')
+                    dst_zip = zipfile.ZipFile(dst_zip_path, 'w',
+                                              compression=zipfile.ZIP_STORED)
+                    src_zip_path = os.path.join(src_path,
+                                                f'{self.name}_{mode}_store.zip')
+                    src_zip = zipfile.ZipFile(src_zip_path, 'r',
+                                              compression=zipfile.ZIP_STORED)
+                    _list = src_zip.namelist()
+                    if env['tqdm']:
+                        _list = tqdm(_list, leave=False)
+                    for filename in _list:
+                        if filename[-1] == '/':
+                            continue
+                        dirname, basename = os.path.split(filename)
+                        mode_check, src_class = os.path.split(dirname)
+                        if mode_check == mode and src_class in src_class_list:
+                            print(filename)
+                            dst_class = src2dst_dict[src_class]
+                            dst_zip.writestr(f'{mode}/{dst_class}/{basename}',
+                                             src_zip.read(filename))
+                    src_zip.close()
+                    dst_zip.close()
+            case 'folder':
+                len_i = len(class_dict.keys())
+                for mode in mode_list:
+                    print('{purple}{0}{reset}'.format(mode, **ansi))
+                    assert mode in ['train', 'valid', 'test']
+                    for i, dst_class in enumerate(class_dict.keys()):
+                        if not os.path.exists(_path := os.path.join(dst_path,
+                                                                    mode,
+                                                                    dst_class)):
+                            os.makedirs(_path)
+                        prints('{blue_light}{0}{reset}'.format(dst_class, **ansi),
                                indent=10)
-                        if env['tqdm']:
-                            _list = tqdm(_list, leave=False)
-                        for _file in _list:
-                            src_file_path = os.path.join(src_path, mode,
-                                                         src_class, _file)
-                            dst_file_path = os.path.join(dst_path, mode,
-                                                         dst_class, _file)
-                            shutil.copyfile(src_file_path, dst_file_path)
-                        if env['tqdm']:
-                            print('{upline}{clear_line}'.format(**ansi))
+                        class_list = class_dict[dst_class]
+                        len_j = len(class_list)
+                        for j, src_class in enumerate(class_list):
+                            _list = os.listdir(os.path.join(src_path,
+                                                            mode,
+                                                            src_class))
+                            prints(output_iter(i + 1, len_i),
+                                   output_iter(j + 1, len_j),
+                                   f'dst: {dst_class:15s}    '
+                                   f'src: {src_class:15s}    '
+                                   f'image_num: {len(_list):>8d}',
+                                   indent=10)
+                            if env['tqdm']:
+                                _list = tqdm(_list, leave=False)
+                            for _file in _list:
+                                src_file_path = os.path.join(src_path, mode,
+                                                             src_class, _file)
+                                dst_file_path = os.path.join(dst_path, mode,
+                                                             dst_class, _file)
+                                shutil.copyfile(src_file_path, dst_file_path)
+                            if env['tqdm']:
+                                print('{upline}{clear_line}'.format(**ansi))
