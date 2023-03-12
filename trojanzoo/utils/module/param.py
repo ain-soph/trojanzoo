@@ -159,7 +159,7 @@ class Param(Module, Generic[_KT, _VT]):
     Attributes:
         _marker (str): The marker of the class,
             which is shown in ``str(self)``.
-            Defaults to ``'M'``.
+            Defaults to ``'P'``.
         default (Any): The default value of unknown keys.
     """
     _marker = 'P'
