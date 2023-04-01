@@ -2,7 +2,8 @@
 
 import trojanvision
 from trojanvision.utils import superimpose
-import torchvision.transforms.functional as F
+
+import torchvision
 import argparse
 import os
 
@@ -26,6 +27,5 @@ if __name__ == '__main__':
         _input, _label = model.get_data(data)
         heatmap = model.get_heatmap(_input, _label, method='saliency_map')
         heatmap = superimpose(heatmap, _input, alpha=0.5)
-        for i, map in enumerate(heatmap):
-            F.to_pil_image(heatmap[i]).save(f'./result/heatmap_{i}.jpg')
+        torchvision.utils.save_image(heatmap, './result/heatmap.jpg')
         break

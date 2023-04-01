@@ -176,10 +176,8 @@ class LabelConsistent(BackdoorAttack):
                         # target_img = self.wgan.G(target_encode)
                         # if not os.path.exists('./imgs'):
                         #     os.makedirs('./imgs')
-                        # for i in range(len(source_img)):
-                        #     F.to_pil_image(source_img[i]).save(f'./imgs/source_{i}.png')
-                        # for i in range(len(target_img)):
-                        #     F.to_pil_image(target_img[i]).save(f'./imgs/target_{i}.png')
+                        # torchvision.utils.save_image(source_img, './imgs/source.png')
+                        # torchvision.utils.save_image(target_img, './imgs/target.png')
                         # exit()
                         interpolation_encode = source_encode * self.tau + target_encode * (1 - self.tau)
                         poison_imgs = self.wgan.G(interpolation_encode).detach()

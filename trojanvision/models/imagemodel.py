@@ -351,8 +351,8 @@ class ImageModel(Model):
 
                 import trojanvision
                 from trojanvision.utils import superimpose
+                import torchvision
                 import torchvision.transforms as transforms
-                import torchvision.transforms.functional as F
                 import PIL.Image as Image
                 import os
                 import wget
@@ -387,11 +387,11 @@ class ImageModel(Model):
                 grad_cam_impose = grad_cam_impose.div(grad_cam_impose.max())
                 saliency_map_impose = saliency_map_impose.div(saliency_map_impose.max())
 
-                F.to_pil_image(_input).save('./center_cropped.png')
-                F.to_pil_image(grad_cam).save('./grad_cam.png')
-                F.to_pil_image(saliency_map).save('./saliency_map.png')
-                F.to_pil_image(grad_cam_impose).save('./grad_cam_impose.png')
-                F.to_pil_image(saliency_map_impose).save('./saliency_map_impose.png')
+                torchvision.utils.save_image(_input, './center_cropped.png')
+                torchvision.utils.save_image(grad_cam, './grad_cam.png')
+                torchvision.utils.save_image(saliency_map, './saliency_map.png')
+                torchvision.utils.save_image(grad_cam_impose, './grad_cam_impose.png')
+                torchvision.utils.save_image(saliency_map_impose, './saliency_map_impose.png')
 
             ``label=386  conf=77.74%``
 

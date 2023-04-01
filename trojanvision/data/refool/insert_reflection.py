@@ -170,7 +170,7 @@ def main():
                     filename = os.path.basename(reflect_paths[i])
                     bytes_io = io.BytesIO()
                     format = os.path.splitext(filename)[1][1:].lower().replace('jpg', 'jpeg')
-                    F.to_pil_image(reflection_layer).save(bytes_io, format=format)
+                    torchvision.utils.save_image(reflection_layer, bytes_io, format=format)
                     bytes_data = bytes_io.getvalue()
                     tarinfo = tarfile.TarInfo(name=filename)
                     tarinfo.size = len(bytes_data)
