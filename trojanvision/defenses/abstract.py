@@ -382,8 +382,11 @@ class ModelInspection(BackdoorDefense):
         # todo: parallel to avoid for loop
         file_path = os.path.normpath(os.path.join(
             self.folder_path, self.get_filename() + '.npz'))
+
+        org_target_class = self.attack.target_class
         for label in range(self.model.num_classes):
             print('Class: ', output_iter(label, self.model.num_classes))
+            self.attack.target_class = label
             mark, loss = self.optimize_mark(label, verbose=verbose, **kwargs)
             if verbose:
                 asr, _ = self.attack.validate_fn(indent=4)
@@ -402,6 +405,7 @@ class ModelInspection(BackdoorDefense):
             asr_list.append(asr)
             np.savez(file_path, mark_list=np.stack([mark.detach().cpu().numpy() for mark in mark_list]),
                      loss_list=np.array(loss_list))
+        self.attack.target_class = org_target_class
         print()
         print('Defense results saved at: ' + file_path)
         mark_list_tensor = torch.stack(mark_list)
