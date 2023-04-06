@@ -5,7 +5,6 @@ from trojanvision.datasets import ImageSet
 from trojanvision.utils import apply_cmap
 from trojanvision.utils.sgm import register_hook
 from trojanzoo.models import _Model, Model
-from trojanzoo.environ import env
 from trojanzoo.utils.fim import KFAC, EKFAC
 from trojanzoo.utils.tensor import add_noise
 
@@ -212,6 +211,7 @@ class ImageModel(Model):
                  norm_layer: str = 'bn', sgm: bool = False, sgm_gamma: float = 1.0,
                  norm_par: dict[str, list[float]] = None, suffix: str = None,
                  modify_first_layer_channel: bool = True, **kwargs):
+        self.norm_par = norm_par
         name = self.get_name(name, layer=layer)
         if norm_par is None and isinstance(dataset, ImageSet):
             norm_par = None if dataset.normalize else dataset.norm_par
@@ -259,23 +259,10 @@ class ImageModel(Model):
                                             'adv_train_eval_iter', 'adv_train_eval_alpha', 'adv_train_eval_eps']
             if adv_train == 'trades':
                 self.param_list['adv_train'].append('adv_train_trades_beta')
-            clip_min, clip_max = 0.0, 1.0
-            if norm_par is None and isinstance(dataset, ImageSet):
-                if dataset.normalize and dataset.norm_par is not None:
-                    mean = torch.tensor(dataset.norm_par['mean'],
-                                        device=env['device']).view(-1, 1, 1)
-                    std = torch.tensor(dataset.norm_par['std'],
-                                       device=env['device']).view(-1, 1, 1)
-                    clip_min, clip_max = -mean / std, (1 - mean) / std
-                    self.adv_train_eval_alpha /= std
-                    self.adv_train_eval_eps /= std
-                    self.adv_train_alpha /= std
-                    self.adv_train_eps /= std
             self.pgd = PGD(pgd_alpha=self.adv_train_eval_alpha, pgd_eps=self.adv_train_eval_eps,
                            iteration=self.adv_train_eval_iter, stop_threshold=None,
                            target_idx=0,
                            random_init=self.adv_train_eval_random_init,
-                           clip_min=clip_min, clip_max=clip_max,
                            model=self, dataset=self.dataset)
         self._model: _ImageModel
         self.dataset: ImageSet

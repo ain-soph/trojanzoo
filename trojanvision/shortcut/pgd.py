@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from trojanvision.environ import env
 from trojanvision.optim import PGDoptimizer
 from trojanzoo.attacks import Attack
 from trojanzoo.utils.output import prints, ansi
@@ -50,14 +51,34 @@ class PGD(Attack, PGDoptimizer):
         return group
 
     def __init__(self, target_class: int = None, target_idx: int = -1, test_num: int = 1000, num_restart: int = 0,
-                 require_class: bool = False, **kwargs):
+                 require_class: bool = False,
+                 dataset: ImageSet = None, model: 'ImageModel' = None,
+                 pgd_alpha: float | torch.Tensor = 2.0 / 255,
+                 pgd_eps: float | torch.Tensor = 8.0 / 255,
+                 clip_min: float | torch.Tensor = 0.0,
+                 clip_max: float | torch.Tensor = 1.0,
+                 **kwargs):
         self.target_class = target_class
         self.target_idx = target_idx
         self.test_num = test_num
         self.num_restart = num_restart
         self.require_class = require_class
-        kwargs.update(random_init=bool(num_restart))
-        super().__init__(**kwargs)
+        if num_restart > 0:
+            kwargs.update(random_init=True)
+
+        if model.norm_par is None and isinstance(dataset, ImageSet):
+            if dataset.normalize and dataset.norm_par is not None:
+                mean = torch.tensor(dataset.norm_par['mean'],
+                                    device=env['device']).view(-1, 1, 1)
+                std = torch.tensor(dataset.norm_par['std'],
+                                   device=env['device']).view(-1, 1, 1)
+                clip_min = (clip_min - mean) / std
+                clip_max = (clip_max - mean) / std
+                pgd_alpha /= std
+                pgd_eps /= std
+        super().__init__(dataset=dataset, model=model,
+                         pgd_alpha=pgd_alpha, pgd_eps=pgd_eps,
+                         clip_min=clip_min, clip_max=clip_max, **kwargs)
         self.param_list['pgd_attack'] = ['target_class', 'target_idx', 'test_num', 'num_restart', 'require_class']
         self.dataset: ImageSet
         self.model: 'ImageModel'
