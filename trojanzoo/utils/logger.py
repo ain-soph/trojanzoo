@@ -306,8 +306,8 @@ class MetricLogger:
     def __getattr__(self, attr: str) -> float:
         if attr in self.meters:
             return self.meters[attr]
-        if attr in self.__dict__:   # TODO: use hasattr
-            return self.__dict__[attr]
+        if attr in vars(self):   # TODO: use hasattr
+            return vars(self)[attr]
         raise AttributeError("'{}' object has no attribute '{}'".format(
             type(self).__name__, attr))
 
@@ -433,4 +433,4 @@ class AverageMeter:
 
     def __str__(self):
         fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
-        return fmtstr.format(**self.__dict__)
+        return fmtstr.format(**vars(self))

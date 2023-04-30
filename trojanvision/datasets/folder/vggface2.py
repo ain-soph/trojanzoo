@@ -40,7 +40,7 @@ class Sample_VGGface2(VGGface2):
     org_folder_name = {}
 
     def initialize_folder(self):
-        _dict = Module(self.__dict__)
+        _dict = Module(vars(self))
         _dict.__delattr__('folder_path')
         vggface2 = VGGface2(**_dict)
         vggface2.sample(child_name=self.name, sample_num=self.num_classes)

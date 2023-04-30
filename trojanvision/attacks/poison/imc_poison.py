@@ -69,14 +69,14 @@ class IMC_Poison(PoisonBasic):
         difficult = 0
         normal = 0
         loader = self.dataset.get_dataloader(mode='valid', batch_size=1)
-        if 'curvature' in self.__dict__.keys():
+        if 'curvature' in vars(self).keys():
             benign_curvature = self.curvature.benign_measure()
             tgt_curvature_list = []
             org_curvature_list = []
         if self.randomized_smooth:
             org_conf_list = []
             tgt_conf_list = []
-        if 'magnet' in self.__dict__.keys():
+        if 'magnet' in vars(self).keys():
             org_magnet_list = []
             tgt_magnet_list = []
         for data in loader:
@@ -114,7 +114,7 @@ class IMC_Poison(PoisonBasic):
                   f'PGD Norm: {np.mean(pgd_norm_list)}({np.std(pgd_norm_list)})\n\n\n')
             org_conf = self.model.get_target_prob(_input=trigger_input, target=_label)
             tgt_conf = self.model.get_target_prob(_input=trigger_input, target=target_label)
-            if 'curvature' in self.__dict__.keys():
+            if 'curvature' in vars(self).keys():
                 org_curvature_list.extend(self.curvature.measure(trigger_input, _label).detach().cpu().tolist())
                 tgt_curvature_list.extend(self.curvature.measure(trigger_input, target_label).detach().cpu().tolist())
                 print('Curvature:')
@@ -132,7 +132,7 @@ class IMC_Poison(PoisonBasic):
                 print(f'    org_confidence: {np.mean(org_conf_list)}')
                 print(f'    tgt_confidence: {np.mean(tgt_conf_list)}')
                 print()
-            if 'magnet' in self.__dict__.keys():
+            if 'magnet' in vars(self).keys():
                 trigger_input = self.magnet(trigger_input)
                 org_new = self.model.get_target_prob(_input=trigger_input, target=_label)
                 tgt_new = self.model.get_target_prob(_input=trigger_input, target=target_label)

@@ -12,7 +12,7 @@ if __name__ == '__main__':
     trojanvision.environ.add_argument(parser)
     trojanvision.datasets.add_argument(parser)
     trojanvision.models.add_argument(parser)
-    kwargs = parser.parse_args().__dict__
+    kwargs = vars(parser.parse_args())
 
     env = trojanvision.environ.create(**kwargs)
     dataset = trojanvision.datasets.create(**kwargs)

@@ -94,7 +94,7 @@ class RandomMixup(nn.Module):
         s += ", alpha={alpha}"
         s += ", inplace={inplace}"
         s += ")"
-        return s.format(**self.__dict__)
+        return s.format(**vars(self))
 
 
 class RandomCutmix(nn.Module):
@@ -192,7 +192,7 @@ class RandomCutmix(nn.Module):
         s += ", alpha={alpha}"
         s += ", inplace={inplace}"
         s += ")"
-        return s.format(**self.__dict__)
+        return s.format(**vars(self))
 
 
 def cutout(img: torch.Tensor, length: int | tuple[int, int] | torch.Tensor,

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     trojanvision.marks.add_argument(parser)
     trojanvision.attacks.add_argument(parser)
     trojanvision.defenses.add_argument(parser)
-    kwargs = parser.parse_args().__dict__
+    kwargs = vars(parser.parse_args())
 
     env = trojanvision.environ.create(**kwargs)
     dataset = trojanvision.datasets.create(**kwargs)

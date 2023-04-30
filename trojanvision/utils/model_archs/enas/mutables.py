@@ -66,10 +66,10 @@ class Mutable(nn.Module):
         return super().__call__(*args, **kwargs)
 
     def set_mutator(self, mutator):
-        if "mutator" in self.__dict__:
+        if "mutator" in vars(self):
             raise RuntimeError("`set_mutator` is called more than once. Did you parse the search space multiple times? "
                                "Or did you apply multiple fixed architectures?")
-        self.__dict__["mutator"] = mutator
+        vars(self)["mutator"] = mutator
 
     @property
     def key(self):

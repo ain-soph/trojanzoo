@@ -124,7 +124,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--voc_root', default='~/voc')
     parser.add_argument('--tar_path', default='~/reflection.tar')
-    kwargs = parser.parse_args().__dict__
+    kwargs = vars(parser.parse_args())
     voc_root: str = kwargs['voc_root']
     tar_path: str = kwargs['tar_path']
 
