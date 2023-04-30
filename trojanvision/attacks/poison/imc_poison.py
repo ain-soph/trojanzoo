@@ -2,8 +2,8 @@
 
 from .poison_basic import PoisonBasic
 from trojanvision.attacks import PGD
-from trojanvision.optim import PGDoptimizer
 from trojanvision.models import MagNet
+from trojanzoo.optim import PGD as PGDoptimizer
 
 import torch
 import numpy as np

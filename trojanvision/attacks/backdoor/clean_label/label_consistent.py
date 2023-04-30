@@ -3,8 +3,8 @@
 from ...abstract import BackdoorAttack
 from trojanzoo.utils.model import init_weights
 from trojanvision.attacks.adv import PGD    # TODO: Need to check whether this will cause ImportError
-from trojanvision.optim import PGDoptimizer
-from trojanvision.environ import env
+from trojanzoo.environ import env
+from trojanzoo.optim import PGD as PGDoptimizer
 from trojanzoo.utils.data import TensorListDataset, dataset_to_tensor, sample_batch
 
 import torch
@@ -29,7 +29,7 @@ class LabelConsistent(BackdoorAttack):
     in order to render learning the salient characteristic of the input more difficult,
     causing the model rely more heavily on the backdoor pattern in order to successfully introduce backdoor.
 
-    Utilize the adversarial examples and GAB generated data,
+    Utilize the adversarial examples and GAN generated data,
     the resulted poisoned inputs appear to be consistent with their label
     and thus seem benign even upon human inspection.
 

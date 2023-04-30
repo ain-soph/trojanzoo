@@ -95,6 +95,14 @@ class Env(Param):
     def __init__(self, *args, device: str = 'auto', **kwargs):
         super().__init__(*args, device=device, **kwargs)
 
+    def set_seed(self, seed: int = None):
+        if seed is None:
+            seed = self['seed']
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+
 
 env = Env(default=None)
 
@@ -154,10 +162,7 @@ def create(cmd_config_path: str = None, dataset_name: str = None, dataset: str =
     ansi.switch(env['color'])
     if seed is None and 'seed' in env.keys():
         seed = env['seed']
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    env.set_seed(seed)
 
     num_gpus: int = torch.cuda.device_count()
     device: str | int | torch.device = result['device']

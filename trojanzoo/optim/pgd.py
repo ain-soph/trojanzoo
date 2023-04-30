@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import trojanzoo.optim
+from .optimizer import Optimizer
 
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.tensor import add_noise
@@ -16,17 +16,10 @@ from typing import Iterable
 def init_noise(noise_shape: Iterable[int], pgd_eps: float | torch.Tensor,
                random_init: bool = False, device: None | str | torch.device = None) -> torch.Tensor:
     device = device or env['device']
-    noise: torch.Tensor = torch.zeros(noise_shape, dtype=torch.float, device=device)
     if random_init:
-        if isinstance(pgd_eps, torch.Tensor) and pgd_eps.shape[0] != 1:
-            assert all([size == 1 for size in pgd_eps.shape[1:]])
-            for i in range(pgd_eps.shape[0]):
-                data = noise[i, :, :] if noise.dim() == 3 else noise[:, i, :, :]
-                data.uniform_(-pgd_eps[i].item(), pgd_eps[i].item())
-        else:
-            pgd_eps = float(pgd_eps)
-            noise.uniform_(-pgd_eps, pgd_eps)
-    return noise
+        return pgd_eps * torch.rand(*noise_shape, device=device).mul(2).sub(1)
+    else:
+        return torch.zeros(noise_shape, device=device)
 
 
 def valid_noise(adv_input: torch.Tensor, org_input: torch.Tensor, universal: bool = False) -> torch.Tensor:
@@ -34,7 +27,7 @@ def valid_noise(adv_input: torch.Tensor, org_input: torch.Tensor, universal: boo
     return result.mode(dim=0)[0] if universal else result
 
 
-class PGDoptimizer(trojanzoo.optim.Optimizer):
+class PGD(Optimizer):
     r"""Projected Gradient Descent.
     Args:
         pgd_alpha (float): learning rate :math:`\pgd_alpha`. Default: :math:`\frac{3}{255}`.
@@ -155,7 +148,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
         noise.copy_(self.valid_noise(adv_input, org_input))
         return adv_input
 
-    @torch.no_grad()
+    # @torch.no_grad()
     def output_info(self, org_input: torch.Tensor, noise: torch.Tensor, *args,
                     loss_fn: Callable[[torch.Tensor], torch.Tensor] = None,
                     loss_kwargs: dict[str, torch.Tensor] = {},
@@ -208,22 +201,25 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
     def blackbox_grad(self, f: Callable[[torch.Tensor], torch.Tensor], x: torch.Tensor,
                       query_num: int = None, sigma: float = None,
                       loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
-        seq = self.gen_seq(x, query_num=query_num, sigma=sigma)
-        grad = self.calc_seq(f, seq, loss_kwargs=loss_kwargs)
+        query_num = query_num or self.query_num
+        sigma = sigma or self.sigma
+        scale = torch.as_tensor(self.clip_max - self.clip_min, device=x.device)
+        sigma_tensor = sigma * scale
+
+        seq = self.gen_seq(x, query_num=query_num, sigma=sigma_tensor)
+        grad = self.calc_seq(f, seq, sigma=sigma_tensor, loss_kwargs=loss_kwargs)
         return grad
 
-    # x: (N, C, H, W)
-    # return: (query_num+1, N, C, H, W)
-    def gen_seq(self, x: torch.Tensor, query_num: int = None, sigma: float = None) -> torch.Tensor:
-        query_num = query_num if query_num is not None else self.query_num
-        sigma = sigma if sigma is not None else self.sigma
+    # x: (*)
+    # return: (query_num+1, *)
+    def gen_seq(self, x: torch.Tensor, query_num: int, sigma: torch.Tensor) -> torch.Tensor:
         shape = list(x.shape)
         shape.insert(0, query_num)
         if self.grad_method == 'nes':
             shape[0] = shape[0] // 2
         noise = sigma * torch.normal(mean=0.0, std=1.0, size=shape, device=x.device)
 
-        zeros = torch.zeros_like(x.unsqueeze(0))
+        zeros = torch.zeros_like(x).unsqueeze(0)
         seq = [zeros]
         match self.grad_method:
             case 'nes':
@@ -240,28 +236,30 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
                 raise NotImplementedError(self.grad_method)
             case _:
                 raise ValueError(f'{self.grad_method=}')
-        seq = torch.cat(seq).add(x)  # (query_num+1, N, C, H, W)
+        seq = torch.cat(seq).add(x)  # (query_num+1, *)
         return seq
 
     @torch.no_grad()
-    def calc_seq(self, f: Callable[[torch.Tensor], torch.Tensor], seq: torch.Tensor,
+    def calc_seq(self, f: Callable[..., torch.Tensor], seq: torch.Tensor,
+                 sigma: torch.Tensor,
                  loss_kwargs: dict[str, torch.Tensor] = {}) -> torch.Tensor:
-        X = seq[0]  # (N, C, H, W)
-        seq = seq[1:]  # (query_num, N, C, H, W)
-        noise = seq.sub(X)
+        X = seq[0]  # (N, *)
+        noise = seq[1:].sub(X)  # (query_num, N, *)
         temp_list: list[torch.Tensor] = []
-        for sub_seq in seq:
-            temp_list.append(f(sub_seq, reduction='none', **loss_kwargs))   # (query_num, N)
-        g = torch.stack(temp_list)[..., None, None, None].mul(noise).sum(dim=0)  # (N, C, H, W)
+        for element in seq[1:]:
+            temp_list.append(f(element, reduction='none', **loss_kwargs))
+        stack_result = torch.stack(temp_list)   # (query_num, N)
+        shape = list(stack_result.size()) + [1]*(noise.dim-stack_result.dim)  # (query_num, N, [1]*[*])
+        g = stack_result.view(shape).mul(noise).sum(dim=0)  # (N, *)
         if self.grad_method in ['sgd', 'hess']:
-            g -= f(X) * noise.sum(dim=0)
-        g /= len(seq) * self.sigma * self.sigma
+            g -= f(X, reduction='none', **loss_kwargs).view(shape[1:]) * noise.sum(dim=0)
+        g /= (len(seq) - 1) * sigma.square()
         return g
 
     @staticmethod
     @torch.no_grad()
     def calc_hess(f: Callable[[torch.Tensor], torch.Tensor], X: torch.Tensor,
-                  sigma: float, hess_b: int, hess_lambda: float = 1) -> torch.Tensor:
+                  sigma: torch.Tensor, hess_b: int, hess_lambda: float = 1) -> torch.Tensor:
         length = X.numel()
         hess: torch.Tensor = torch.zeros(length, length, device=X.device)
         for i in range(hess_b):
@@ -270,7 +268,7 @@ class PGDoptimizer(trojanzoo.optim.Optimizer):
             X2 = X - sigma * noise
             hess += abs(f(X1) + f(X2) - 2 * f(X)) * \
                 (noise.view(-1, 1) @ noise.view(1, -1))
-        hess /= (2 * hess_b * sigma * sigma)
+        hess /= (2 * hess_b * sigma.square())
         hess += hess_lambda * torch.eye(length, device=X.device)
         result = hess.cholesky_inverse()
         return result

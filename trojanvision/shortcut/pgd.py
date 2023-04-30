@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
 from trojanvision.environ import env
-from trojanvision.optim import PGDoptimizer
 from trojanzoo.attacks import Attack
+from trojanzoo.optim import PGD as PGDoptimizer
 from trojanzoo.utils.output import prints, ansi
 from trojanzoo.utils.logger import SmoothedValue
 
+from trojanvision.datasets import ImageSet
 import torch
 import argparse
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from trojanvision.datasets import ImageSet
     from trojanvision.models import ImageModel
 
 
@@ -31,7 +31,7 @@ class PGD(Attack, PGDoptimizer):
         group.add_argument('--pgd_alpha', type=float, help='PGD learning rate per step, defaults to 2.0/255')
         group.add_argument('--pgd_eps', type=float, help='Projection norm constraint, defaults to 8.0/255')
         group.add_argument('--iteration', type=int, help='Attack Iteration, defaults to 7')
-        group.add_argument('--stop_threshold', type=float, help='early stop confidence, defaults to 0.99')
+        group.add_argument('--stop_threshold', type=float, help='early stop confidence, defaults to 0.99 (defined in config)')
         group.add_argument('--target_class', type=int, help='Do not set it if using target_idx')
         group.add_argument('--target_idx', type=int,
                            help='Target label order in original classification, defaults to -1 '
@@ -74,8 +74,8 @@ class PGD(Attack, PGDoptimizer):
                                    device=env['device']).view(-1, 1, 1)
                 clip_min = (clip_min - mean) / std
                 clip_max = (clip_max - mean) / std
-                pgd_alpha /= std
-                pgd_eps /= std
+                pgd_alpha = pgd_alpha / std
+                pgd_eps = pgd_eps / std
         super().__init__(dataset=dataset, model=model,
                          pgd_alpha=pgd_alpha, pgd_eps=pgd_eps,
                          clip_min=clip_min, clip_max=clip_max, **kwargs)

@@ -2,33 +2,32 @@
 
 # todo: Need a better name
 
-import trojanzoo.optim
+from .optimizer import Optimizer
 
 from trojanzoo.utils.output import prints
 from trojanzoo.utils.tensor import atan_func, tanh_func
 
 import torch
 import torch.optim
-from torch.optim import Optimizer
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from collections.abc import Callable
 from typing import Any
 
 
-class Uname(trojanzoo.optim.Optimizer):
+class Uname(Optimizer):
     r"""This class transforms input (tanh, atan or sigmoid) and then apply standard torch.optim.Optimizer
     """
 
     name: str = 'uname'
 
-    def __init__(self, OptimType: str | type[Optimizer], optim_kwargs: dict[str, Any] = {},
+    def __init__(self, OptimType: str | type[torch.optim.Optimizer], optim_kwargs: dict[str, Any] = {},
                  lr_scheduler: bool = False,
                  input_transform: str | Callable[[torch.Tensor], torch.Tensor] = lambda x: x, **kwargs):
         super().__init__(**kwargs)
         self.param_list['uname'] = ['OptimType', 'optim_kwargs', 'lr_scheduler', 'input_transform']
         if isinstance(OptimType, str):
             OptimType = getattr(torch.optim, OptimType)
-        self.OptimType: type[Optimizer] = OptimType
+        self.OptimType: type[torch.optim.Optimizer] = OptimType
         self.optim_kwargs: dict = optim_kwargs
         self.lr_scheduler: bool = lr_scheduler
         self.input_transform: Callable[[torch.Tensor], torch.Tensor] = input_transform
