@@ -9,7 +9,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     container:
-      image: ain-soph/base:cpu
+      image: local0state/base:cpu
     steps:
       - name: Checkout
         uses: actions/checkout@v3
