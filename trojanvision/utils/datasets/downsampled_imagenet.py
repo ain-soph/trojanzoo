@@ -137,3 +137,22 @@ class ImageNet32(DownsampledImageNet):
     test_list = [
         ['val_data', '4836a1eec28cd4476eb017126cd0f059'],
     ]
+
+
+class ImageNet64(DownsampledImageNet):
+    data_shape: list[int] = [3, 64, 64]
+    train_list = [
+        ['train_data_batch_1', '7d78180ed6d675199904d73e97363aa3'],
+        ['train_data_batch_2', '62979cbd524679ea440f2eb998cf70ed'],
+        ['train_data_batch_3', '022d13e31ebf76e3a3b4995f59d5898b'],
+        ['train_data_batch_4', 'b595889ec25e147ac6a807e55fa0a5a0'],
+        ['train_data_batch_5', 'd0ca147cd803ad8ad2ea89a82838ff61'],
+        ['train_data_batch_6', '559bdb1c5dc35865d698de7e96067db5'],
+        ['train_data_batch_7', '9799a53adf03a4f99599822ac8ee65ad'],
+        ['train_data_batch_8', '97c910a5c1807fb7ff08f5722c1a6cb8'],
+        ['train_data_batch_9', 'fc1ef2b2a8667a72a046e165413ef006'],
+        ['train_data_batch_10', 'b31fa3cd87885f6161c6e12cb6fd6030'],
+    ]
+    test_list = [
+        ['val_data', '68a29f115231937c359924d8af1b0922'],
+    ]

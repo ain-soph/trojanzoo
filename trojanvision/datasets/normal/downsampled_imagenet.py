@@ -68,7 +68,7 @@ class ImageNet32(DownsampledImageNet):
         * website: https://patrykchrabaszcz.github.io/Imagenet32/
 
     Attributes:
-        name (str): ``'imagenet32'``
+        name (str): ``'imagenet64'``
         num_classes (int): Flexible (passed by command line argument, no larger than 1000).
         data_shape (list[int]): ``[3, 32, 32]``
 
@@ -81,4 +81,29 @@ class ImageNet32(DownsampledImageNet):
     def _get_org_dataset(self, mode: str, **kwargs):
         assert mode in ['train', 'valid']
         return di.ImageNet32(root=self.folder_path, train=(mode == 'train'),
+                             num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)
+
+
+class ImageNet64(DownsampledImageNet):
+    r"""ImageNet64 dataset introduced by Patryk Chrabaszcz in 2017.
+    It inherits :class:`trojanvision.datasets.ImageSet`.
+
+    See Also:
+        * paper: `A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets`_
+        * website: https://patrykchrabaszcz.github.io/Imagenet32/
+
+    Attributes:
+        name (str): ``'imagenet32'``
+        num_classes (int): Flexible (passed by command line argument, no larger than 1000).
+        data_shape (list[int]): ``[3, 64, 64]``
+
+    .. _A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets:
+        https://arxiv.org/abs/1707.08819
+    """
+    name = 'imagenet64'
+    data_shape = [3, 64, 64]
+
+    def _get_org_dataset(self, mode: str, **kwargs):
+        assert mode in ['train', 'valid']
+        return di.ImageNet64(root=self.folder_path, train=(mode == 'train'),
                              num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)
