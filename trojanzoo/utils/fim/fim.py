@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from torch.nn.utils import _stateless
+from torch.nn.utils import stateless
 
 from typing import Iterable
 
@@ -81,7 +81,7 @@ def new_fim(module: nn.Module, _input: torch.Tensor,
         prob = _output.softmax(dim=1).unsqueeze(-1).unsqueeze(-1)  # (N, C, 1, 1)
 
     def func(*params: torch.Tensor):
-        _output: torch.Tensor = _stateless.functional_call(
+        _output: torch.Tensor = stateless.functional_call(
             module, {n: p for n, p in zip(keys, params)}, _input)
         return _output.log_softmax(dim=1)  # (N, C)
     jac: tuple[torch.Tensor] = torch.autograd.functional.jacobian(

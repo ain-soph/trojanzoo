@@ -4,7 +4,7 @@
 
 import torch
 import torch.nn as nn
-from torch.nn.utils import _stateless
+from torch.nn.utils import stateless
 
 import functools
 
@@ -36,7 +36,7 @@ def empirical_ntk(module: nn.Module, input1: torch.Tensor, input2: torch.Tensor,
     names, values = zip(*parameters.items())
 
     def func(*params: torch.Tensor, _input: torch.Tensor = None):
-        _output: torch.Tensor = _stateless.functional_call(
+        _output: torch.Tensor = stateless.functional_call(
             module, {n: p for n, p in zip(names, params)}, _input)
         return _output  # (N, C)
 
