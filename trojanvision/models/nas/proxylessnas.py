@@ -36,7 +36,7 @@ class ProxylessNAS(ImageModel):
 
         .. code-block:: python3
 
-            ['proxylessnas']
+            {'proxylessnas'}
 
     See Also:
         * paper: `ProxylessNAS\: Direct Neural Architecture Search on Target Task and Hardware`_
@@ -50,7 +50,7 @@ class ProxylessNAS(ImageModel):
     .. _ProxylessNAS\: Direct Neural Architecture Search on Target Task and Hardware:
         https://arxiv.org/abs/1812.00332
     """  # noqa: E501
-    available_models = ['proxylessnas']
+    available_models = {'proxylessnas'}
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):

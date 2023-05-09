@@ -4,7 +4,7 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.alexnet import model_urls as urls
+from torchvision.models.alexnet import AlexNet_Weights
 
 
 class _AlexNet(_ImageModel):
@@ -25,7 +25,7 @@ class AlexNet(ImageModel):
 
         .. code-block:: python3
 
-            ['alexnet']
+            {'alexnet'}
 
     See Also:
         * torchvision: :any:`torchvision.models.alexnet`
@@ -65,8 +65,8 @@ class AlexNet(ImageModel):
     .. _One weird trick for parallelizing convolutional neural networks:
         https://arxiv.org/abs/1404.5997
     """
-    available_models = ['alexnet']
-    model_urls = urls
+    available_models = {'alexnet'}
+    weights = {'alexnet': AlexNet_Weights}
 
     def __init__(self, name: str = 'alexnet',
                  model: type[_AlexNet] = _AlexNet, **kwargs):

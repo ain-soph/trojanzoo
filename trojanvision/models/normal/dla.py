@@ -9,23 +9,6 @@ import torch
 from collections import OrderedDict
 from collections.abc import Callable
 
-urls = {
-    'dla34': 'http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth',
-    'dla46_c': 'http://dl.yf.io/dla/models/imagenet/dla46_c-2bfd52c3.pth',
-    'dla46x_c': 'http://dl.yf.io/dla/models/imagenet/dla46x_c-d761bae7.pth',
-    'dla60x_c': 'http://dl.yf.io/dla/models/imagenet/dla60x_c-b870c45c.pth',
-    'dla60': 'http://dl.yf.io/dla/models/imagenet/dla60-24839fc4.pth',
-    'dla60x': 'http://dl.yf.io/dla/models/imagenet/dla60x-d15cacda.pth',
-    'dla102': 'http://dl.yf.io/dla/models/imagenet/dla102-d94d9790.pth',
-    'dla102x': 'http://dl.yf.io/dla/models/imagenet/dla102x-ad62be81.pth',
-    'dla102x2': 'http://dl.yf.io/dla/models/imagenet/dla102x2-262837b6.pth',
-    'dla169': 'http://dl.yf.io/dla/models/imagenet/dla169-0914e092.pth',
-    # 'dla60_res2net':
-    #     'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-res2net/res2net_dla60_4s-d88db7f9.pth',
-    # 'dla60_res2next':
-    #     'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-res2net/res2next_dla60_4s-d327927b.pth',
-}
-
 
 class _DLA(_ImageModel):
 
@@ -45,12 +28,27 @@ class _DLA(_ImageModel):
 
 
 class DLA(ImageModel):
-    available_models = ['dla', 'dla_comp',
+    available_models = {'dla', 'dla_comp',
                         'dla34', 'dla46_c', 'dla46x_c', 'dla60x_c', 'dla60', 'dla60x',
                         'dla102', 'dla102x', 'dla102x2', 'dla169',
                         'dla34_comp', 'dla46_c_comp', 'dla46x_c_comp', 'dla60x_c_comp', 'dla60_comp', 'dla60x_comp',
-                        'dla102_comp', 'dla102x_comp', 'dla102x2_comp', 'dla169_comp']
-    model_urls = urls
+                        'dla102_comp', 'dla102x_comp', 'dla102x2_comp', 'dla169_comp'}
+    model_urls = {  # TODO
+        'dla34': 'http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth',
+        'dla46_c': 'http://dl.yf.io/dla/models/imagenet/dla46_c-2bfd52c3.pth',
+        'dla46x_c': 'http://dl.yf.io/dla/models/imagenet/dla46x_c-d761bae7.pth',
+        'dla60x_c': 'http://dl.yf.io/dla/models/imagenet/dla60x_c-b870c45c.pth',
+        'dla60': 'http://dl.yf.io/dla/models/imagenet/dla60-24839fc4.pth',
+        'dla60x': 'http://dl.yf.io/dla/models/imagenet/dla60x-d15cacda.pth',
+        'dla102': 'http://dl.yf.io/dla/models/imagenet/dla102-d94d9790.pth',
+        'dla102x': 'http://dl.yf.io/dla/models/imagenet/dla102x-ad62be81.pth',
+        'dla102x2': 'http://dl.yf.io/dla/models/imagenet/dla102x2-262837b6.pth',
+        'dla169': 'http://dl.yf.io/dla/models/imagenet/dla169-0914e092.pth',
+        # 'dla60_res2net':
+        #     'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-res2net/res2net_dla60_4s-d88db7f9.pth',
+        # 'dla60_res2next':
+        #     'https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-res2net/res2next_dla60_4s-d327927b.pth',
+    }
 
     def __init__(self, name: str = 'dla', layer: int = 34, model: type[_DLA] = _DLA, **kwargs):
         super().__init__(name=name, layer=layer, model=model, **kwargs)
@@ -63,7 +61,7 @@ class DLA(ImageModel):
         new2old: dict[str, str] = {}
         i = 0
         j = 0
-        while(i < len(new_keys) and j < len(old_keys)):
+        while (i < len(new_keys) and j < len(old_keys)):
             if 'num_batches_tracked' in new_keys[i]:
                 i += 1
                 continue

@@ -83,7 +83,7 @@ class MagNet(Model):
 
         .. code-block:: python3
 
-            ['magnet']
+            {'magnet'}
 
     See Also:
         * paper: `MagNet\: a Two-Pronged Defense against Adversarial Examples`_
@@ -104,7 +104,7 @@ class MagNet(Model):
     .. _MagNet\: a Two-Pronged Defense against Adversarial Examples:
         https://arxiv.org/abs/1705.09064
     """
-    available_models = ['magnet']
+    available_models = {'magnet'}
 
     def __init__(self, name: str = 'magnet',
                  dataset: ImageSet = None, model: type = _MagNet,

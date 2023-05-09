@@ -41,7 +41,7 @@ class PNASNet(ImageModel):
 
         .. code-block:: python3
 
-            ['pnasnet', 'pnasnet_a', 'pnasnet_b']
+            {'pnasnet', 'pnasnet_a', 'pnasnet_b'}
 
     See Also:
         * paper: `Progressive Neural Architecture Search`_
@@ -50,7 +50,7 @@ class PNASNet(ImageModel):
     .. _Progressive Neural Architecture Search:
         https://arxiv.org/abs/1712.00559
     """
-    available_models = ['pnasnet', 'pnasnet_a', 'pnasnet_b']
+    available_models = {'pnasnet', 'pnasnet_a', 'pnasnet_b'}
 
     def __init__(self, name: str = 'pnasnet', layer: str = '_b',
                  model: type[_PNASNet] = _PNASNet, **kwargs):

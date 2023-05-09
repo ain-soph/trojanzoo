@@ -83,7 +83,7 @@ class NATSbench(ImageModel):
 
         .. code-block:: python3
 
-            ['nats_bench']
+            {'nats_bench'}
 
     Note:
         There are prerequisites to use the benchmark:
@@ -124,7 +124,7 @@ class NATSbench(ImageModel):
     .. _NATS-Bench\: Benchmarking NAS Algorithms for Architecture Topology and Size:
         https://arxiv.org/abs/2009.00437
     """
-    available_models = ['nats_bench']
+    available_models = {'nats_bench'}
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):

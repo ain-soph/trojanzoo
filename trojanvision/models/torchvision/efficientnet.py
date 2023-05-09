@@ -4,7 +4,11 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.efficientnet import model_urls as urls
+from torchvision.models.efficientnet import (EfficientNet_B0_Weights, EfficientNet_B1_Weights, EfficientNet_B2_Weights,
+                                             EfficientNet_B3_Weights, EfficientNet_B4_Weights, EfficientNet_B5_Weights,
+                                             EfficientNet_B6_Weights, EfficientNet_B7_Weights,
+                                             EfficientNet_V2_S_Weights, EfficientNet_V2_M_Weights,
+                                             EfficientNet_V2_L_Weights)
 
 from collections.abc import Callable
 
@@ -36,13 +40,13 @@ class EfficientNet(ImageModel):
 
         .. code-block:: python3
 
-            ['efficientnet', 'efficientnet_comp',
+            {'efficientnet', 'efficientnet_comp',
              'efficientnet_b0', 'efficientnet_b1', 'efficientnet_b2',
              'efficientnet_b3', 'efficientnet_b4', 'efficientnet_b5',
              'efficientnet_b6', 'efficientnet_b7',
              'efficientnet_b0_comp', 'efficientnet_b1_comp', 'efficientnet_b2_comp',
              'efficientnet_b3_comp', 'efficientnet_b4_comp', 'efficientnet_b5_comp',
-             'efficientnet_b6_comp', 'efficientnet_b7_comp']
+             'efficientnet_b6_comp', 'efficientnet_b7_comp'}
 
     See Also:
         * torchvision: :any:`torchvision.models.efficientnet_b0`
@@ -57,14 +61,26 @@ class EfficientNet(ImageModel):
     .. _EfficientNet\: Rethinking Model Scaling for Convolutional Neural Networks:
         https://arxiv.org/abs/1905.11946
     """
-    available_models = ['efficientnet', 'efficientnet_comp',
+    available_models = {'efficientnet', 'efficientnet_comp',
                         'efficientnet_b0', 'efficientnet_b1', 'efficientnet_b2',
                         'efficientnet_b3', 'efficientnet_b4', 'efficientnet_b5',
                         'efficientnet_b6', 'efficientnet_b7',
                         'efficientnet_b0_comp', 'efficientnet_b1_comp', 'efficientnet_b2_comp',
                         'efficientnet_b3_comp', 'efficientnet_b4_comp', 'efficientnet_b5_comp',
-                        'efficientnet_b6_comp', 'efficientnet_b7_comp']
-    model_urls = urls
+                        'efficientnet_b6_comp', 'efficientnet_b7_comp'}
+    weights = {
+        'efficientnet_b0': EfficientNet_B0_Weights,
+        'efficientnet_b1': EfficientNet_B1_Weights,
+        'efficientnet_b2': EfficientNet_B2_Weights,
+        'efficientnet_b3': EfficientNet_B3_Weights,
+        'efficientnet_b4': EfficientNet_B4_Weights,
+        'efficientnet_b5': EfficientNet_B5_Weights,
+        'efficientnet_b6': EfficientNet_B6_Weights,
+        'efficientnet_b7': EfficientNet_B7_Weights,
+        'efficientnet_v2_s': EfficientNet_V2_S_Weights,
+        'efficientnet_v2_m': EfficientNet_V2_M_Weights,
+        'efficientnet_v2_l': EfficientNet_V2_L_Weights,
+    }
 
     def __init__(self, name: str = 'efficientnet', layer: str = '_b0',
                  model: type[_EfficientNet] = _EfficientNet, **kwargs):

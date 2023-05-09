@@ -26,6 +26,7 @@ from trojanzoo.configs import Config    # TODO: python 3.10
 from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+from torchvision.models._api import WeightsEnum
 import argparse
 from collections.abc import Callable
 if TYPE_CHECKING:
@@ -208,8 +209,8 @@ class Model(BasicObject):
         rs_n (int): Randomized smoothing sampling number. Defaults to ``100``.
 
     Attributes:
-        available_models (list[str]): The list of available model names.
-        model_urls (dict[str, str]): The links to official pretrained model weights.
+        available_models (set[str]): The list of available model names.
+        weights (~torchvision.models._api.WeightsEnum): The pretrained weights to use.
 
         name (str): Name of model.
         suffix (str):
@@ -242,8 +243,8 @@ class Model(BasicObject):
             Used in :meth:`get_prob()`.
     """
 
-    available_models: list[str] = []
-    model_urls: dict[str, str] = []
+    available_models: set[str] = set()
+    weights: dict[str, WeightsEnum] = None
 
     @staticmethod
     def add_argument(group: argparse._ArgumentGroup) -> argparse._ArgumentGroup:
@@ -934,14 +935,16 @@ class Model(BasicObject):
             prints(
                 f'Model {self.name} saved at: {file_path}', indent=indent)
 
-    def get_official_weights(self, url: str = None,
+    def get_official_weights(self, weights: WeightsEnum | None = None,
+                             progress: bool = True,
                              map_location: str | Callable | torch.device | dict = 'cpu',
                              **kwargs) -> OrderedDict[str, torch.Tensor]:
-        r"""Get official model weights from :attr:`url`.
+        r"""Get official model weights from :attr:`weights`.
 
         Args:
-            url (str | None): The link to model weights.
-                Defaults to :attr:`self.model_urls[self.name]`.
+            weights (~torchvision.models._api.WeightsEnum | None):
+                The pretrained weights to use.
+                Defaults to :attr:`self.weights[self.name]`.
             map_location (str | ~torch.torch.device | dict):
                 Passed to :any:`torch.hub.load_state_dict_from_url`.
                 Defaults to ``'cpu'``.
@@ -951,9 +954,10 @@ class Model(BasicObject):
         Returns:
             OrderedDict[str, torch.Tensor]: The model weights OrderedDict.
         """
-        url = self.model_urls[self.name] if url is None else url
-        print('get official model weights from: ', url)
-        return torch.hub.load_state_dict_from_url(url, map_location=map_location, **kwargs)
+        if weights is None:
+            weights = getattr(self.weights, self.name)
+        return weights.get_state_dict(progress=progress, check_hash=True,
+                                      map_location=map_location, **kwargs)
 
     # ---------------------Train and Validate--------------------- #
     # TODO: annotation and remove those arguments to be *args, **kwargs
@@ -1496,7 +1500,7 @@ def output_available_models(class_dict: dict[str, type[Model]] = {},
 
 
 def get_available_models(class_dict: dict[str, type[Model]] = {}
-                         ) -> dict[str, list[str]]:
+                         ) -> dict[str, set[str]]:
     return {k: v.available_models for k, v in class_dict.items()}
 
 

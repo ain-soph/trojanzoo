@@ -7,7 +7,10 @@ import trojanvision.utils.model_archs.resnet_ap as resnet_ap
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.resnet import model_urls as urls
+from torchvision.models.resnet import (ResNet18_Weights, ResNet34_Weights, ResNet50_Weights,
+                                       ResNet101_Weights, ResNet152_Weights,
+                                       ResNeXt50_32X4D_Weights, ResNeXt101_32X8D_Weights, ResNeXt101_64X4D_Weights,
+                                       Wide_ResNet50_2_Weights, Wide_ResNet101_2_Weights)
 from torchvision.models.resnet import conv3x3
 from collections import OrderedDict
 
@@ -73,7 +76,7 @@ class ResNet(ImageModel):
 
         .. code-block:: python3
 
-            ['resnet', 'resnet_comp', 'resnet_s',
+            {'resnet', 'resnet_comp', 'resnet_s',
              'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
              'resnet18_comp', 'resnet34_comp', 'resnet50_comp', 'resnet101_comp', 'resnet152_comp',
              'resnext50_32x4d', 'resnext101_32x8d',
@@ -82,7 +85,7 @@ class ResNet(ImageModel):
              'wide_resnet50_2_comp', 'wide_resnet101_2_comp',
 
              'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
-             'resnet18_ap_comp']
+             'resnet18_ap_comp'}
 
     See Also:
         * ResNet:
@@ -129,17 +132,28 @@ class ResNet(ImageModel):
     .. _Dataset Condensation with Gradient Matching:
         https://arxiv.org/abs/2006.05929
     """
-    available_models = ['resnet', 'resnet_comp', 'resnet_s',
+    available_models = {'resnet', 'resnet_comp', 'resnet_s',
                         'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
                         'resnet18_comp', 'resnet34_comp', 'resnet50_comp', 'resnet101_comp', 'resnet152_comp',
-                        'resnext50_32x4d', 'resnext101_32x8d',
-                        'resnext50_32x4d_comp', 'resnext101_32x8d_comp',
+                        'resnext50_32x4d', 'resnext101_32x8d', 'resnext101_64x4d',
+                        'resnext50_32x4d_comp', 'resnext101_32x8d_comp', 'resnext101_64x4d_comp',
                         'wide_resnet50_2', 'wide_resnet101_2',
                         'wide_resnet50_2_comp', 'wide_resnet101_2_comp',
 
                         'resnet18_s', 'resnet34_s', 'resnet50_s', 'resnet101_s', 'resnet152_s',
-                        'resnet18_ap_comp']
-    model_urls = urls
+                        'resnet18_ap_comp'}
+    weights = {
+        'resnet18': ResNet18_Weights,
+        'resnet34': ResNet34_Weights,
+        'resnet50': ResNet50_Weights,
+        'resnet101': ResNet101_Weights,
+        'resnet152': ResNet152_Weights,
+        'resnext50_32x4d': ResNeXt50_32X4D_Weights,
+        'resnext101_32x8d': ResNeXt101_32X8D_Weights,
+        'resnext101_64x4d': ResNeXt101_64X4D_Weights,
+        'wide_resnet50_2': Wide_ResNet50_2_Weights,
+        'wide_resnet101_2': Wide_ResNet101_2_Weights,
+    }
 
     def __init__(self, name: str = 'resnet', layer: int = 18,
                  model: type[_ResNet] = _ResNet,

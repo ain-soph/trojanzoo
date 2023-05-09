@@ -53,7 +53,7 @@ class BiT(ImageModel):
 
         .. code-block:: python3
 
-            ['bit', 'bit_comp', 'bit_official',
+            {'bit', 'bit_comp', 'bit_official',
              'bit-m-r50x1', 'bit-m-r50x3', 'bit-m-r101x1', 'bit-m-r101x3', 'bit-m-r152x2', 'bit-m-r152x4',
              'bit-s-r50x1', 'bit-s-r50x3', 'bit-s-r101x1', 'bit-s-r101x3', 'bit-s-r152x2', 'bit-s-r152x4',
              'bit-m-r50x1_comp', 'bit-m-r50x3_comp', 'bit-m-r101x1_comp',
@@ -63,7 +63,7 @@ class BiT(ImageModel):
              'bit-m-r50x1_official', 'bit-m-r50x3_official', 'bit-m-r101x1_official',
              'bit-m-r101x3_official', 'bit-m-r152x2_official', 'bit-m-r152x4_official',
              'bit-s-r50x1_official', 'bit-s-r50x3_official', 'bit-s-r101x1_official',
-             'bit-s-r101x3_official', 'bit-s-r152x2_official', 'bit-s-r152x4_official']
+             'bit-s-r101x3_official', 'bit-s-r152x2_official', 'bit-s-r152x4_official'}
 
     See Also:
         * paper: `Big Transfer (BiT)\: General Visual Representation Learning`_
@@ -81,7 +81,7 @@ class BiT(ImageModel):
     .. _Big Transfer (BiT)\: General Visual Representation Learning:
         https://arxiv.org/abs/1912.11370
     """
-    available_models = ['bit', 'bit_comp', 'bit_official',
+    available_models = {'bit', 'bit_comp', 'bit_official',
                         'bit-m-r50x1', 'bit-m-r50x3', 'bit-m-r101x1', 'bit-m-r101x3', 'bit-m-r152x2', 'bit-m-r152x4',
                         'bit-s-r50x1', 'bit-s-r50x3', 'bit-s-r101x1', 'bit-s-r101x3', 'bit-s-r152x2', 'bit-s-r152x4',
                         'bit-m-r50x1_comp', 'bit-m-r50x3_comp', 'bit-m-r101x1_comp',
@@ -91,7 +91,7 @@ class BiT(ImageModel):
                         'bit-m-r50x1_official', 'bit-m-r50x3_official', 'bit-m-r101x1_official',
                         'bit-m-r101x3_official', 'bit-m-r152x2_official', 'bit-m-r152x4_official',
                         'bit-s-r50x1_official', 'bit-s-r50x3_official', 'bit-s-r101x1_official',
-                        'bit-s-r101x3_official', 'bit-s-r152x2_official', 'bit-s-r152x4_official']
+                        'bit-s-r101x3_official', 'bit-s-r152x2_official', 'bit-s-r152x4_official'}
 
     def __init__(self, name: str = 'bit',
                  pretrained_dataset: str = 'm', layer: int = 50, width_factor: int = 1,

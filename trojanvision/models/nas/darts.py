@@ -67,7 +67,7 @@ class DARTS(ImageModel):
 
         .. code-block:: python3
 
-            ['darts']
+            {'darts'}
 
     See Also:
         * paper: `DARTS\: Differentiable Architecture Search`_
@@ -120,7 +120,7 @@ class DARTS(ImageModel):
     .. _DARTS\: Differentiable Architecture Search:
         https://arxiv.org/abs/1806.09055
     """
-    available_models = ['darts']
+    available_models = {'darts'}
 
     @classmethod
     def add_argument(cls, group: argparse._ArgumentGroup):

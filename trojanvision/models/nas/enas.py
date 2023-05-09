@@ -51,7 +51,7 @@ class ENAS(ImageModel):
 
         .. code-block:: python3
 
-            ['enas']
+            {'enas'}
 
     See Also:
         * paper: `Efficient Neural Architecture Search via Parameter Sharing`_
@@ -61,7 +61,7 @@ class ENAS(ImageModel):
     .. _Efficient Neural Architecture Search via Parameter Sharing:
         https://arxiv.org/abs/1802.03268
     """
-    available_models = ['enas']
+    available_models = {'enas'}
 
     def __init__(self, name: str = 'enas', model: type[_ENAS] = _ENAS, folder_path: str = None, **kwargs):
         import sys

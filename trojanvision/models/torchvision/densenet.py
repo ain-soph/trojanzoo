@@ -5,7 +5,8 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 import torch
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.densenet import model_urls as urls
+from torchvision.models.densenet import (DenseNet121_Weights, DenseNet161_Weights,
+                                         DenseNet169_Weights, DenseNet201_Weights)
 import re
 from collections import OrderedDict
 
@@ -39,9 +40,9 @@ class DenseNet(ImageModel):
 
         .. code-block:: python3
 
-            ['densenet', 'densenet_comp',
+            {'densenet', 'densenet_comp',
              'densenet121', 'densenet169', 'densenet201', 'densenet161',
-             'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
+             'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp'}
 
     See Also:
         * torchvision: :any:`torchvision.models.densenet121`
@@ -59,10 +60,15 @@ class DenseNet(ImageModel):
     .. _Densely Connected Convolutional Networks:
         https://arxiv.org/abs/1608.06993
     """
-    available_models = ['densenet', 'densenet_comp',
+    available_models = {'densenet', 'densenet_comp',
                         'densenet121', 'densenet169', 'densenet201', 'densenet161',
-                        'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp']
-    model_urls = urls
+                        'densenet121_comp', 'densenet169_comp', 'densenet201_comp', 'densenet161_comp'}
+    weights = {
+        'densenet121': DenseNet121_Weights,
+        'densenet161': DenseNet161_Weights,
+        'densenet169': DenseNet169_Weights,
+        'densenet201': DenseNet201_Weights,
+    }
 
     def __init__(self, name: str = 'densenet', layer: int = 121,
                  model: type[_DenseNet] = _DenseNet, **kwargs):

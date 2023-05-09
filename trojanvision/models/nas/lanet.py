@@ -28,7 +28,7 @@ class LaNet(DARTS):
 
         .. code-block:: python3
 
-            ['lanet']
+            {'lanet'}
 
     See Also:
         * paper: `Sample-Efficient Neural Architecture Search by Learning Action Space`_
@@ -37,8 +37,8 @@ class LaNet(DARTS):
     .. _Sample-Efficient Neural Architecture Search by Learning Action Space:
         https://arxiv.org/abs/1906.06832
     """
-    available_models = ['lanet']
-    model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }
+    available_models = {'lanet'}
+    model_urls = {'cifar10': '1bZsEoG-sroVyYR4F_2ozGLA5W50CT84P', }  # TODO
 
     def __init__(self, name: str = 'lanet', layers: int = 24, init_channels: int = 128,
                  arch: list[int] = cifar_arch, model: type[_DARTS] = _DARTS,
@@ -77,7 +77,7 @@ class LaNet(DARTS):
         new2old: dict[str, str] = {}
         i = 0
         j = 0
-        while(i < len(new_keys) and j < len(old_keys)):
+        while (i < len(new_keys) and j < len(old_keys)):
             if 'auxiliary_head' not in new_keys[i] and 'auxiliary_head' in old_keys[j]:
                 j += 1
                 continue

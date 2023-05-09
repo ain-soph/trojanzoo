@@ -2,20 +2,11 @@
 from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torchvision.models
-from torchvision.models._utils import _ModelURLs
+from torchvision.models.mnasnet import MNASNet0_5_Weights, MNASNet0_75_Weights, MNASNet1_0_Weights, MNASNet1_3_Weights
 import re
 
 import torch
 from collections import OrderedDict
-
-urls = _ModelURLs(
-    {
-        "mnasnet0_5": "https://download.pytorch.org/models/mnasnet0.5_top1_67.823-3ffadce67e.pth",
-        "mnasnet0_75": "https://download.pytorch.org/models/mnasnet0_75-7090bc5f.pth",
-        "mnasnet1_0": "https://download.pytorch.org/models/mnasnet1.0_top1_73.512-f206786ef8.pth",
-        "mnasnet1_3": "https://download.pytorch.org/models/mnasnet1_3-a4c69d6f.pth",
-    }
-)
 
 
 class _MNASNet(_ImageModel):
@@ -36,7 +27,7 @@ class MNASNet(ImageModel):
 
         .. code-block:: python3
 
-            ['mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3']
+            {'mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3'}
 
     See Also:
         * torchvision: :any:`torchvision.models.mnasnet0_5`
@@ -45,8 +36,13 @@ class MNASNet(ImageModel):
     .. _MnasNet\: Platform-Aware Neural Architecture Search for Mobile:
         https://arxiv.org/abs/1807.11626
     """
-    available_models = ['mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3']
-    model_urls = urls
+    available_models = {'mnasnet', 'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3'}
+    weights = {
+        'mnasnet0_5': MNASNet0_5_Weights,
+        'mnasnet0_75': MNASNet0_75_Weights,
+        'mnasnet1_0': MNASNet1_0_Weights,
+        'mnasnet1_3': MNASNet1_3_Weights,
+    }
 
     def __init__(self, name: str = 'mnasnet', mnas_alpha: float = 1.0,
                  model: type[_MNASNet] = _MNASNet, **kwargs):
@@ -64,8 +60,8 @@ class MNASNet(ImageModel):
         return f'{name}{mnas_alpha_str}'.replace('.', '_'), mnas_alpha
 
     def get_official_weights(self, **kwargs) -> OrderedDict[str, torch.Tensor]:
-        url = self.model_urls[self.parse_name('mnasnet', self.mnas_alpha)[0]]
-        _dict = super().get_official_weights(url=url)
+        weights = getattr(self.weights, self.parse_name('mnasnet', self.mnas_alpha)[0])
+        _dict = super().get_official_weights(weights=weights)
         new_dict = OrderedDict()
         for key, value in _dict.items():
             if key.startswith('layers.'):

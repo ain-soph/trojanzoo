@@ -3,6 +3,7 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
+from torchvision.models.mobilenet import MobileNet_V2_Weights, MobileNet_V3_Small_Weights, MobileNet_V3_Large_Weights
 
 
 cifar10_inverted_residual_setting = [
@@ -21,6 +22,7 @@ class _MobileNet(_ImageModel):
     def __init__(self, name: str = 'mobilenet_v2', **kwargs):
         try:
             sub_type: str = name[10:]
+            # TODO
             assert sub_type in ['v2', 'v2_comp', 'v3_small', 'v3_large', 'v3_small_comp', 'v3_large_comp'], f'{name=}'
         except Exception:
             raise AssertionError(f'model name should be in {MobileNet.available_models}')
@@ -72,13 +74,13 @@ class MobileNet(ImageModel):
     .. _Searching for MobileNetV3:
         https://arxiv.org/abs/1905.02244
     """
-    available_models = ['mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
-                        'mobilenet_v2_comp', 'mobilenet_v3_large_comp', 'mobilenet_v3_small_comp']
+    available_models = {'mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
+                        'mobilenet_v2_comp', 'mobilenet_v3_large_comp', 'mobilenet_v3_small_comp'}
 
-    model_urls = {
-        'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
-        'mobilenet_v3_large': 'https://download.pytorch.org/models/mobilenet_v3_large-8738ca79.pth',
-        'mobilenet_v3_small': 'https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth',
+    weights = {
+        'mobilenet_v2': MobileNet_V2_Weights,
+        'mobilenet_v3_small': MobileNet_V3_Small_Weights,
+        'mobilenet_v3_large': MobileNet_V3_Large_Weights,
     }
 
     def __init__(self, name: str = 'mobilenet_v2', model: type[_MobileNet] = _MobileNet, **kwargs):

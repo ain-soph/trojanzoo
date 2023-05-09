@@ -4,8 +4,8 @@ from trojanvision.models.imagemodel import _ImageModel, ImageModel
 
 import torch.nn as nn
 import torchvision.models
-from torchvision.models.vgg import model_urls as urls
-
+from torchvision.models.vgg import (VGG11_Weights, VGG11_BN_Weights, VGG13_Weights, VGG13_BN_Weights,
+                                    VGG16_Weights, VGG16_BN_Weights, VGG19_Weights, VGG19_BN_Weights)
 from collections.abc import Callable
 
 
@@ -42,13 +42,13 @@ class VGG(ImageModel):
 
         .. code-block:: python3
 
-            ['vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp', 'vgg_s', 'vgg_bn_s',
+            {'vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp', 'vgg_s', 'vgg_bn_s',
              'vgg11', 'vgg13', 'vgg16', 'vgg19',
              'vgg11_bn', 'vgg13_bn', 'vgg16_bn', 'vgg19_bn',
              'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
              'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp'
              'vgg11_s', 'vgg13_s', 'vgg16_s', 'vgg19_s',
-             'vgg11_bn_s', 'vgg13_bn_s', 'vgg16_bn_s', 'vgg19_bn_s']
+             'vgg11_bn_s', 'vgg13_bn_s', 'vgg16_bn_s', 'vgg19_bn_s'}
 
     See Also:
         * torchvision: :any:`torchvision.models.vgg11`
@@ -62,15 +62,24 @@ class VGG(ImageModel):
     .. _Very Deep Convolutional Networks for Large-Scale Image Recognition:
         https://arxiv.org/abs/1409.1556
     """
-    available_models = ['vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp', 'vgg_s', 'vgg_bn_s',
+    available_models = {'vgg', 'vgg_bn', 'vgg_comp', 'vgg_bn_comp', 'vgg_s', 'vgg_bn_s',
                         'vgg11', 'vgg13', 'vgg16', 'vgg19',
                         'vgg11_bn', 'vgg13_bn', 'vgg16_bn', 'vgg19_bn',
                         'vgg11_comp', 'vgg13_comp', 'vgg16_comp', 'vgg19_comp',
                         'vgg11_bn_comp', 'vgg13_bn_comp', 'vgg16_bn_comp', 'vgg19_bn_comp'
                         'vgg11_s', 'vgg13_s', 'vgg16_s', 'vgg19_s',
-                        'vgg11_bn_s', 'vgg13_bn_s', 'vgg16_bn_s', 'vgg19_bn_s']
+                        'vgg11_bn_s', 'vgg13_bn_s', 'vgg16_bn_s', 'vgg19_bn_s'}
 
-    model_urls = urls
+    weights = {
+        'vgg11': VGG11_Weights,
+        'vgg11_bn': VGG11_BN_Weights,
+        'vgg13': VGG13_Weights,
+        'vgg13_bn': VGG13_BN_Weights,
+        'vgg16': VGG16_Weights,
+        'vgg16_bn': VGG16_BN_Weights,
+        'vgg19': VGG19_Weights,
+        'vgg19_bn': VGG19_BN_Weights,
+    }
 
     def __init__(self, name: str = 'vgg', layer: int = 13,
                  model: type[_VGG] = _VGG, **kwargs):

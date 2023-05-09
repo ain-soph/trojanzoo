@@ -103,5 +103,5 @@ def output_available_models(class_dict: dict[str, type[ImageModel]] = class_dict
     return trojanzoo.models.output_available_models(class_dict=class_dict, indent=indent)
 
 
-def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -> dict[str, list[str]]:
+def get_available_models(class_dict: dict[str, type[ImageModel]] = class_dict) -> dict[str, set[str]]:
     return trojanzoo.models.get_available_models(class_dict=class_dict)

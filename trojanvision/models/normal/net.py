@@ -29,7 +29,7 @@ class _Net(_ImageModel):
 
 
 class Net(ImageModel):
-    available_models = ['net']
+    available_models = {'net'}
 
     def __init__(self, name: str = 'net', model: type[_Net] = _Net, **kwargs):
         super().__init__(name=name, model=model, **kwargs)
