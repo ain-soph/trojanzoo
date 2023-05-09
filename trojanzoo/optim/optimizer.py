@@ -174,7 +174,7 @@ class Optimizer(ABC, Process):
         assert loss_values.dim() == 1
         if adv_input[current_idx] is not None:
             assert len(loss_values) == len(current_idx)
-        return loss_values < stop_threshold
+        return loss_values.detach().cpu() < stop_threshold
 
     def output_info(self, *args, mode: str = 'start',
                     _iter: int = 0, iteration: int = 0,

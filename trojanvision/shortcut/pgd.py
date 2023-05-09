@@ -229,7 +229,7 @@ class PGD(Attack, PGDoptimizer):
             if untarget_condition:
                 class_result = ~class_result
             result = result.bitwise_and(class_result)
-        return result
+        return result.detach().cpu()
 
     @torch.no_grad()
     def output_info(self, org_input: torch.Tensor, noise: torch.Tensor, target: torch.Tensor,
