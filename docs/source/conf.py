@@ -111,6 +111,8 @@ autodoc_inherit_docstrings = False
 autodoc_preserve_defaults = True
 autodoc_typehints = 'none'
 
+toc_object_entries = True
+toc_object_entries_show_parents = "hide"
 # autoapi_type = 'python'
 # autoapi_generate_api_docs = False
 
