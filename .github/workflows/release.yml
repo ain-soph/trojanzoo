@@ -103,9 +103,9 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.get-version.outputs.result }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ github.job }}
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}-${{ github.job }}
-            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}
-            ghcr.io/${{ github.repository }}:${{ github.job }}
-            ghcr.io/${{ github.repository }}:latest
+          # ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}-${{ github.job }}
+          # ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.result }}
+          # ghcr.io/${{ github.repository }}:${{ github.job }}
+          # ghcr.io/${{ github.repository }}:latest
           cache-from: type=gha
           cache-to: type=gha

@@ -1,4 +1,4 @@
-FROM ghcr.io/ain-soph/base:gpu-conda
+FROM local0state/base:gpu-conda
 LABEL maintainer="Ren Pang <rbp5354@psu.edu>"
 LABEL org.opencontainers.image.source=https://github.com/ain-soph/trojanzoo
 
