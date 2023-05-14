@@ -16,7 +16,7 @@ pkg_file = package.__file__
 pkg_version = str(package.__version__)
 pkg_location = path.dirname(path.dirname(pkg_file))
 
-autoapi_dirs = ['../../trojanzoo']
+# autoapi_dirs = ['../../trojanzoo']
 
 # -- General configuration ------------------------------------------------
 
@@ -57,15 +57,16 @@ html_theme_options = {
 # -- Extension configuration ----------------------------------------------
 
 extensions = [
-    # 'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
     'sphinx.ext.linkcode',  # viewcode
     'sphinx.ext.napoleon',
     'sphinxcontrib.katex',
+    'sphinxcontrib.jquery',
     'sphinx_copybutton',
-    'autoapi.extension',
+    # 'autoapi.extension',
 ]
 
 
@@ -91,7 +92,7 @@ intersphinx_mapping = {
 
 # -- General default configuration ----------------------------------------
 
-needs_sphinx = '4.0.2'
+needs_sphinx = '7.0.0'
 templates_path = ['_templates']
 source_suffix = '.rst'  # ['.rst', '.md']
 root_doc = 'index'
@@ -99,7 +100,7 @@ root_doc = 'index'
 release = pkg_version
 version = release if release.find('a') == -1 else release[:release.find('a')]
 
-language = None
+language = 'en'
 exclude_patterns = []
 
 # -- General default extension configuration ------------------------------
@@ -110,8 +111,8 @@ autodoc_inherit_docstrings = False
 autodoc_preserve_defaults = True
 autodoc_typehints = 'none'
 
-autoapi_type = 'python'
-autoapi_generate_api_docs = False
+# autoapi_type = 'python'
+# autoapi_generate_api_docs = False
 
 # autosectionlabel options
 # autosectionlabel throws warnings if section names are duplicated.

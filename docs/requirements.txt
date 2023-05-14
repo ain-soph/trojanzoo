@@ -1,5 +1,5 @@
-sphinxcontrib.katex
+sphinxcontrib-katex
 sphinx-copybutton
-sphinx-autoapi
+# sphinx-autoapi
 trojanzoo_sphinx_theme
 # git+https://github.com/ain-soph/trojanzoo_sphinx_theme.git#egg=trojanzoo_sphinx_theme
