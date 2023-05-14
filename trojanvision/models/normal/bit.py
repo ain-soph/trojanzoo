@@ -16,6 +16,7 @@ import torch.hub
 import numpy as np
 import os
 from collections import OrderedDict
+from typing import Self
 
 
 class _BiT(_ImageModel):
@@ -164,7 +165,7 @@ class BiT(ImageModel):
         _dict['classifier.fc.bias'] = tf2th(weights['resnet/head/conv2d/bias'])
         return _dict
 
-    def parametrize_(self, parametrize: bool = True):
+    def parametrize_(self, parametrize: bool = True) -> Self:
         for mod in self.modules():
             if isinstance(mod, StdConv2d):
                 mod.parametrize_(parametrize)

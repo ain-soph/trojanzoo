@@ -4,7 +4,7 @@
 [![contact](https://img.shields.io/badge/contact-rbp5354@psu.edu-yellow)](mailto:rbp5354@psu.edu)
 [![License](https://img.shields.io/github/license/ain-soph/trojanzoo)](https://opensource.org/licenses/GPL-3.0)
 
-![python>=3.10](https://img.shields.io/badge/python->=3.10-informational.svg)
+![python>=3.11](https://img.shields.io/badge/python->=3.11-informational.svg)
 [![docs](https://github.com/ain-soph/trojanzoo/workflows/docs/badge.svg)](https://ain-soph.github.io/trojanzoo/)
 
 [![release](https://img.shields.io/github/v/release/ain-soph/trojanzoo)](https://github.com/ain-soph/trojanzoo/releases)

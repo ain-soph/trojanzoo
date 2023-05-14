@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.utils.parametrize as P
 
+from typing import Self
+
 
 class Std(nn.Module):
     def forward(self, X: torch.Tensor):
@@ -18,7 +20,7 @@ class StdConv2d(nn.Conv2d):
         if parametrize:
             P.register_parametrization(self, 'weight', Std())
 
-    def parametrize_(self, parametrize: bool = True):
+    def parametrize_(self, parametrize: bool = True) -> Self:
         if parametrize:
             if not self.parametrize:
                 P.register_parametrization(self, 'weight', Std())

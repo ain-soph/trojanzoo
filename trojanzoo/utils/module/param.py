@@ -2,7 +2,7 @@
 
 from trojanzoo.utils.output import prints
 
-from typing import Generic, MutableMapping, TypeVar
+from typing import Generic, MutableMapping, Self, TypeVar
 _KT = TypeVar("_KT")  # Key type.
 _VT = TypeVar("_VT")  # Value type.
 
@@ -30,7 +30,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
             return
         self.update(*args, **kwargs)
 
-    def update(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT):
+    def update(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT) -> Self:
         r"""update values.
 
         Args:
@@ -49,7 +49,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         return self
 
     # TODO: issue 4 dict | Module
-    def _update(self, module: MutableMapping[_KT, _VT]):
+    def _update(self, module: MutableMapping[_KT, _VT]) -> Self:
         for key, value in module.items():
             if value is None:
                 continue
@@ -64,7 +64,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
                 self[key] = value
         return self
 
-    def remove_none(self):
+    def remove_none(self) -> Self:
         r"""Remove the parameters whose values are ``None``.
 
         Returns:
@@ -83,7 +83,7 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         """
         return type(self)(self)
 
-    def clear(self):
+    def clear(self) -> Self:
         r"""Remove all keys.
 
         Returns:
@@ -164,21 +164,21 @@ class Param(Module, Generic[_KT, _VT]):
     """
     _marker = 'P'
 
-    def update(self, *args: dict[_KT, _VT], **kwargs: _VT):
+    def update(self, *args: dict[_KT, _VT], **kwargs: _VT) -> Self:
         if len(kwargs) == 0 and len(args) == 1 and \
                 not isinstance(args[0], (dict, Module)):
             self.default = args[0]
             return self
         return super().update(*args, **kwargs)
 
-    def _update(self, module: dict[_KT, _VT]):
+    def _update(self, module: dict[_KT, _VT]) -> Self:
         for key, value in module.items():
             if key == 'default':
                 self.default = value
         super()._update(module)
         return self     # For linting purpose
 
-    def remove_none(self):
+    def remove_none(self) -> Self:
         for key in list(self.__data.keys()):
             if self.__data[key] is None and \
                     not (isinstance(key, str) and key == 'default'):
@@ -201,7 +201,7 @@ class Param(Module, Generic[_KT, _VT]):
                 raise KeyError(key)
         return super().__getitem__(key)
 
-    def clear(self):
+    def clear(self) -> Self:
         super().clear()
         self.default = None
         return self

@@ -21,8 +21,8 @@ from collections.abc import Iterable
 
 from typing import TYPE_CHECKING
 # TODO: python 3.10
-from typing import Generator, Iterator, Mapping
-from trojanzoo.configs import Config    # TODO: python 3.10
+from typing import Generator, Iterator, Mapping, Self
+from trojanzoo.configs import Config
 from trojanzoo.utils.model import ExponentialMovingAverage
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -1166,7 +1166,7 @@ class Model(BasicObject):
 
     # -------------------------------Reload---------------------------- #
 
-    def train(self, mode: bool = True):
+    def train(self, mode: bool = True) -> Self:
         r"""Sets the module in training mode.
 
         See Also:
@@ -1176,7 +1176,7 @@ class Model(BasicObject):
         self.model.train(mode=mode)
         return self
 
-    def eval(self):
+    def eval(self) -> Self:
         r"""Sets the module in evaluation mode.
 
         See Also:
@@ -1186,7 +1186,7 @@ class Model(BasicObject):
         self.model.eval()
         return self
 
-    def cpu(self):
+    def cpu(self) -> Self:
         r"""Moves all model parameters and buffers to the CPU.
 
         See Also:
@@ -1196,7 +1196,7 @@ class Model(BasicObject):
         self.model.cpu()
         return self
 
-    def cuda(self, device: None | int | torch.device = None):
+    def cuda(self, device: None | int | torch.device = None) -> Self:
         r"""Moves all model parameters and buffers to the GPU.
 
         See Also:
@@ -1206,7 +1206,7 @@ class Model(BasicObject):
         self.model.cuda(device=device)
         return self
 
-    def zero_grad(self, set_to_none: bool = False):
+    def zero_grad(self, set_to_none: bool = False) -> Self:
         r"""Sets gradients of all model parameters to zero.
 
         See Also:
