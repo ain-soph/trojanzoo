@@ -28,12 +28,12 @@ jobs:
           cd ./docs/
           make html
       - name: Check GitHub Pages status
-        uses: crazy-max/ghaction-github-status@v2.2.0
+        uses: crazy-max/ghaction-github-status@v3.1.0
         with:
           pages_threshold: major_outage
       - name: Deploy to GitHub Pages
         if: success()
-        uses: crazy-max/ghaction-github-pages@v2.6.0
+        uses: crazy-max/ghaction-github-pages@v3.1.0
         with:
           target_branch: docs
           build_dir: ./docs/build/html
