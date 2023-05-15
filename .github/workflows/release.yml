@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: local0state/base:cpu
+    environment:
+      name: pypi
+      url: https://pypi.org/p/trojanzoo
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -20,9 +23,9 @@ jobs:
         run: python -m build
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        # with:
+        #   user: __token__
+        #   password: ${{ secrets.PYPI_API_TOKEN }}
   cpu:
     name: docker-cpu
     needs: pypi
