@@ -11,13 +11,10 @@ from trojanvision.configs import config
 from trojanzoo.trainer import Trainer
 import trojanzoo.trainer
 
-from typing import TYPE_CHECKING
-from trojanvision.datasets import ImageSet    # TODO: python 3.10
+from trojanvision.datasets import ImageSet
 from trojanvision.models import ImageModel
 from trojanzoo.configs import Config
 import argparse
-if TYPE_CHECKING:
-    pass
 
 
 def add_argument(parser: argparse.ArgumentParser, ClassType: type[Trainer] = Trainer) -> argparse._ArgumentGroup:

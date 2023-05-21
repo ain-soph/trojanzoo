@@ -4,6 +4,7 @@ from trojanvision.datasets.imageset import ImageSet
 from trojanvision.utils.dataset import ZipFolder
 from trojanvision.environ import env
 from trojanzoo.utils.output import ansi, prints, output_iter
+from trojanzoo.utils.module import Param
 
 import torchvision.datasets as datasets
 from torchvision.datasets.utils import (check_integrity,
@@ -16,10 +17,7 @@ import glob
 import shutil
 from tqdm import tqdm
 
-from typing import TYPE_CHECKING
-import argparse    # TODO: python 3.10
-if TYPE_CHECKING:
-    pass
+import argparse
 
 
 class ImageFolder(ImageSet):
@@ -30,7 +28,7 @@ class ImageFolder(ImageSet):
 
     Attributes:
         url (dict[str, str]): links to data files.
-        ext (dict[str, str]): Map from mode to downloaded file extension.
+        ext (Param[str, str]): Map from mode to downloaded file extension.
         md5 (dict[str, str]): Map from mode to downloaded file md5.
         org_folder_name (dict[str, str]):
             Map from mode to extracted folder name of downloaded file.
@@ -47,7 +45,7 @@ class ImageFolder(ImageSet):
 
     name: str = 'imagefolder'
     url: dict[str, str] = {}
-    ext = {'train': '.zip', 'valid': '.zip', 'test': '.zip'}    # TODO: Use Param?  # noqa
+    ext: Param[str, str] = Param('.zip')
     md5: dict[str, str] = {}
     org_folder_name: dict[str, str] = {}
 

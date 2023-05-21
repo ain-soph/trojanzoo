@@ -27,7 +27,7 @@ class ResNetBlock(nn.Module):
         super().__init__()
         self.conv_block = nn.Sequential(
             nn.ReflectionPad2d(1),
-            # TODO: torchvision 0.13
+            # Alternative:
             # torchvision.ops.Conv2dNormActivation(dim, dim, kernel_size=3, padding=0, bias=False),
             nn.Conv2d(dim, dim, kernel_size=3, bias=False),
             nn.BatchNorm2d(dim),

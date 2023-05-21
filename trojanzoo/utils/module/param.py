@@ -2,13 +2,14 @@
 
 from trojanzoo.utils.output import prints
 
-from typing import Generic, MutableMapping, Self, TypeVar
-_KT = TypeVar("_KT")  # Key type.
-_VT = TypeVar("_VT")  # Value type.
+from collections.abc import MutableMapping
+from typing import Self, Generic, TypeVar
+
+_KT = TypeVar("_KT", str)  # key type
+_VT = TypeVar("_VT")  # value type
 
 
-# TODO: issue 3 why need Generic
-class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
+class Module(MutableMapping[str, _VT], Generic[_KT, _VT]):
     r"""A dict-like class which supports attribute-like view as well.
 
     Args:
@@ -24,13 +25,13 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     """
     _marker: str = 'M'
 
-    def __init__(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT):
-        self.__data: dict[_KT, _VT] = {}
+    def __init__(self, *args: MutableMapping[str, _VT], **kwargs: _VT):
+        self.__data: dict[str, _VT] = {}
         if len(args) == 1 and args[0] is None:
             return
         self.update(*args, **kwargs)
 
-    def update(self, *args: MutableMapping[_KT, _VT], **kwargs: _VT) -> Self:
+    def update(self, *args: MutableMapping[str, _VT], **kwargs: _VT) -> Self:
         r"""update values.
 
         Args:
@@ -42,14 +43,13 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         Returns:
             Module: return :attr:`self` for stream usage.
         """
-        args: list = list(args)     # TODO: issue 2 pylance issue
-        args.append(kwargs)
-        for module in args:
+        args_list = list(args)
+        args_list.append(kwargs)
+        for module in args_list:
             self._update(module)
         return self
 
-    # TODO: issue 4 dict | Module
-    def _update(self, module: MutableMapping[_KT, _VT]) -> Self:
+    def _update(self, module: MutableMapping[str, _VT]) -> Self:
         for key, value in module.items():
             if value is None:
                 continue
@@ -98,26 +98,26 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
     def items(self):
         return self.__data.items()
 
-    def __getattr__(self, name: _KT) -> _VT:
+    def __getattr__(self, name: str) -> _VT:
         if '__data' in name:
             return super().__getattr__(name)
         return self.__data[name]
 
-    def __getitem__(self, k: _KT):
+    def __getitem__(self, k: str):
         return self.__data[k]
 
-    def __setattr__(self, name: _KT, value: _VT):
+    def __setattr__(self, name: str, value: _VT):
         if '__data' in name:
             return super().__setattr__(name, value)
         self.__data[name] = value
 
-    def __setitem__(self, k: _KT, v: _VT):
+    def __setitem__(self, k: str, v: _VT):
         self.__data[k] = v
 
-    def __delattr__(self, name: _KT):
+    def __delattr__(self, name: str):
         del self.__data[name]
 
-    def __delitem__(self, v: _KT):
+    def __delitem__(self, v: str):
         del self.__data[v]
 
     def __str__(self):
@@ -142,7 +142,6 @@ class Module(MutableMapping[_KT, _VT], Generic[_KT, _VT]):
         prints(self, indent=indent)
 
 
-# TODO: issue 3 why need Generic, Module[_KT, _VT]
 class Param(Module, Generic[_KT, _VT]):
     r"""A dict-like class to store parameters config that
     inherits :class:`Module` and further extends default values.
@@ -164,19 +163,18 @@ class Param(Module, Generic[_KT, _VT]):
     """
     _marker = 'P'
 
-    def update(self, *args: dict[_KT, _VT], **kwargs: _VT) -> Self:
+    def update(self, *args: dict[str, _VT] | _VT, **kwargs: _VT) -> Self:
         if len(kwargs) == 0 and len(args) == 1 and \
                 not isinstance(args[0], (dict, Module)):
             self.default = args[0]
             return self
         return super().update(*args, **kwargs)
 
-    def _update(self, module: dict[_KT, _VT]) -> Self:
+    def _update(self, module: dict[str, _VT]) -> Self:
         for key, value in module.items():
             if key == 'default':
                 self.default = value
-        super()._update(module)
-        return self     # For linting purpose
+        return super()._update(module)
 
     def remove_none(self) -> Self:
         for key in list(self.__data.keys()):
