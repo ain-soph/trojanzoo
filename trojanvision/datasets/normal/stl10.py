@@ -9,7 +9,7 @@ import torch
 import numpy as np
 import os
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from trojanvision import __file__ as root_file
 root_dir = os.path.dirname(root_file)
@@ -103,9 +103,9 @@ class STL10Dataset(datasets.STL10):
         self,
         root: str,
         split: str = "train",
-        folds: Optional[int] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        folds: int | None = None,
+        transform: Callable | None = None,
+        target_transform:  Callable | None = None,
         download: bool = False,
     ) -> None:
         super().__init__(root, split=split, folds=folds,

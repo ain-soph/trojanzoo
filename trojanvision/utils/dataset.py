@@ -52,8 +52,8 @@ class MemoryDataset(VisionDataset):
 
 # https://github.com/koenvandesande/vision/blob/read_zipped_data/torchvision/datasets/zippedfolder.py
 class ZipFolder(DatasetFolder):
-    def __init__(self, root: str, transform: None | Callable = None, target_transform: None | Callable = None,
-                 is_valid_file: None | Callable[[str], bool] = None, memory: bool = True) -> None:
+    def __init__(self, root: str, transform: Callable | None = None, target_transform: Callable | None = None,
+                 is_valid_file: Callable[[str], bool] | None = None, memory: bool = True) -> None:
         if not root.lower().endswith('.zip'):
             raise TypeError("Need zip file for data source: ", root)
         if memory:

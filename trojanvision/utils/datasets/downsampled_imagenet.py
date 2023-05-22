@@ -27,8 +27,8 @@ class DownsampledImageNet(VisionDataset):
 
     def __init__(self, root: str, train: bool = True,
                  num_classes: int = None,
-                 transform: None | Callable = None,
-                 target_transform: None | Callable = None,
+                 transform: Callable | None = None,
+                 target_transform: Callable | None = None,
                  download: bool = False,
                  ) -> None:
         super().__init__(root, transform=transform,

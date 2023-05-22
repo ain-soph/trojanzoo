@@ -5,7 +5,7 @@ from trojanzoo.utils.output import prints
 from collections.abc import MutableMapping
 from typing import Self, Generic, TypeVar
 
-_KT = TypeVar("_KT", str)  # key type
+_KT = TypeVar("_KT")  # key type
 _VT = TypeVar("_VT")  # value type
 
 

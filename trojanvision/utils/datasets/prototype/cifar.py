@@ -2,18 +2,18 @@
 
 from .utils import _Resource
 
-from torchdata.datapipes.iter import IterDataPipe, Mapper, Zipper
+import torch
+from torchvision.datapoints import Image
+from torchvision.prototype.datapoints import Label
 from torchvision.prototype.datasets.utils._internal import hint_sharding, hint_shuffling
 from torchvision.prototype.datasets.utils import Dataset, GDriveResource, OnlineResource
 from torchvision.prototype.datasets import Cifar10, Cifar100
-import pathlib
-from typing import Any, Literal
+from torchdata.datapipes.iter import IterDataPipe, Mapper, Zipper
 
-import torch
-from typing import BinaryIO, Generic, Iterator, TypeVar
 import numpy as np
-from torchvision.datapoints import Image
-from torchvision.prototype.datapoints import Label
+import pathlib
+from abc import ABC
+from typing import Any, Literal, BinaryIO, Generic, Iterator, TypeVar
 
 
 __all__ = ['Cifar10C', 'Cifar100C', 'Cifar10P', 'Cifar100P']
@@ -47,7 +47,7 @@ class CifarFileReader(IterDataPipe[torch.Tensor]):
             yield from data
 
 
-class _CifarBase(Dataset, Generic[DistortionType]):
+class _CifarBase(Dataset, Generic[DistortionType], ABC):
     _categories: list[str]
     _RESOURCES: dict[str, _Resource]
 
@@ -55,7 +55,7 @@ class _CifarBase(Dataset, Generic[DistortionType]):
                  distortion_name: DistortionType,
                  skip_integrity_check: bool = False) -> None:
         self.distortion_name = distortion_name
-        super().__init__(root=root, skip_integrity_checkskip_integrity_check=skip_integrity_check)
+        super().__init__(root=root, skip_integrity_check=skip_integrity_check)
 
     def _resources(self) -> list[OnlineResource]:
         return [GDriveResource(**self._RESOURCES[self.distortion_name]),

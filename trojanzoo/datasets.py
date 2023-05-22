@@ -150,9 +150,7 @@ class Dataset(ABC, BasicObject):
             self.initialize()
         # Preset Loader
         try:
-            self.loader: dict[str, torch.utils.data.DataLoader] = {}
-            self.loader['train'] = self.get_dataloader(mode='train')
-            self.loader['valid'] = self.get_dataloader(mode='valid')
+            self.loader = self._get_loader_dict()
         except Exception:
             print(f'Dataset Folder Path: {self.folder_path}')
             raise
@@ -169,6 +167,11 @@ class Dataset(ABC, BasicObject):
             case _:
                 raise TypeError(type(loss_weights))
         self.loss_weights: None | torch.Tensor = loss_weights
+
+    def _get_loader_dict(self) -> dict[str, torch.utils.data.DataLoader]:
+        return {'train': self.get_dataloader(mode='train'),
+                'valid': self.get_dataloader(mode='valid'),
+                }
 
     @functools.cached_property
     def batch_size(self):
@@ -255,7 +258,7 @@ class Dataset(ABC, BasicObject):
         return self._get_org_dataset(mode=mode, **kwargs)
 
     @abstractmethod
-    def _get_org_dataset(self, mode: str, transform: object = None,
+    def _get_org_dataset(self, mode: str, transform: Callable | None = None,
                          **kwargs) -> torch.utils.data.Dataset:
         ...
 

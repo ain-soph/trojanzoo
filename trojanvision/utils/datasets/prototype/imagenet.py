@@ -2,7 +2,7 @@
 
 from .utils import _Resource
 
-from torchdata.datapipes.iter import Filter, IterDataPipe, Mapper, TarArchiveLoader
+from torchdata.datapipes.iter import Filter, IterDataPipe, Mapper
 from torchvision.prototype.datasets.utils import Dataset, EncodedImage, GDriveResource, OnlineResource
 from torchvision.prototype.datapoints import Label
 from torchvision.prototype.datasets.utils._internal import (
@@ -11,10 +11,11 @@ from torchvision.prototype.datasets.utils._internal import (
 )
 from torchvision.prototype.datasets._builtin.imagenet import _info  # TODO: unstable
 
+import os
 import pathlib
-import re
+from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Any, BinaryIO, cast, Generic, Literal, Match, Sequence, TypeVar
+from typing import Any, BinaryIO, Generic, Literal, Sequence, TypeVar
 
 
 __all__ = ['ImageNetC', 'ImageNetP']
@@ -27,10 +28,9 @@ PDistortionCategoryType = Literal['noise', 'blur', 'weather', 'digital', 'valida
 DistortionCategoryType = TypeVar('DistortionCategoryType', CDistortionCategoryType, PDistortionCategoryType)
 
 
-class _ImageNetBase(Dataset, Generic[DistortionCategoryType]):
+class _ImageNetBase(Dataset, Generic[DistortionCategoryType], ABC):
     _DISTORTIONS: dict[DistortionCategoryType, list[str]]
     _RESOURCES: dict[DistortionCategoryType, _Resource]
-    _TRAIN_IMAGE_NAME_PATTERN = re.compile(r"(?P<wnid>n\d{8})_\d+[.]JPEG")
 
     @cached_property
     def distortion_map(self) -> dict[str, DistortionCategoryType]:
@@ -38,16 +38,14 @@ class _ImageNetBase(Dataset, Generic[DistortionCategoryType]):
 
     def __init__(self, root: str | pathlib.Path,
                  distortion_name: str,
-                 severity: Sequence[int] = (1, 2, 3, 4, 5),
                  skip_integrity_check: bool = False) -> None:
         self.distortion_name = distortion_name
-        self.severity = severity
         info = _info()
         categories, wnids = info["categories"], info["wnids"]
         self._categories = categories
         self._wnids = wnids
         self._wnid_to_category = dict(zip(wnids, categories))
-        super().__init__(root=root, skip_integrity_checkskip_integrity_check=skip_integrity_check)
+        super().__init__(root=root, skip_integrity_check=skip_integrity_check)
 
     def _resources(self) -> list[OnlineResource]:
         distortion_category = self.distortion_map[self.distortion_name]
@@ -55,24 +53,24 @@ class _ImageNetBase(Dataset, Generic[DistortionCategoryType]):
 
     def _datapipe(self, resource_dps: list[IterDataPipe]) -> IterDataPipe[dict[str, Any]]:
         dp = resource_dps[0]
-        dp = TarArchiveLoader(dp)
-        dp = Filter(dp, lambda x: x.name.endswith('.JPEG'))
+        dp = Filter(dp, self._filter)
         dp = hint_shuffling(dp)
         dp = hint_sharding(dp)
         return Mapper(dp, self._prepare_sample)
 
+    @abstractmethod
+    def _filter(self, data: tuple[str, Any]) -> bool:
+        ...
+
+    @abstractmethod
     def _prepare_sample(
         self,
         data: tuple[str, BinaryIO],
     ) -> dict[str, Any]:
-        path, buffer = data
-        wnid = cast(Match[str], self._TRAIN_IMAGE_NAME_PATTERN.match(pathlib.Path(path).name))["wnid"]
-        label = Label.from_category(self._wnid_to_category[wnid], categories=self._categories)
-        return dict(label=label, wnid=wnid, path=path,
-                    image=EncodedImage.from_file(buffer))
+        ...
 
     def __len__(self) -> int:
-        return 10_000
+        return 50_000
 
 
 class ImageNetC(_ImageNetBase[CDistortionCategoryType]):
@@ -105,6 +103,28 @@ class ImageNetC(_ImageNetBase[CDistortionCategoryType]):
             file_name='extra.tar',
         ),
     }
+
+    def __init__(self, root: str | pathlib.Path, distortion_name: str,
+                 severity: int | Sequence[int] = (1, 2, 3, 4, 5),
+                 skip_integrity_check: bool = False) -> None:
+        self.severity: tuple[int, ...] = (severity,) if isinstance(severity, int) else tuple(severity)
+        super().__init__(root, distortion_name, skip_integrity_check=skip_integrity_check)
+
+    def _filter(self, data: tuple[str, Any]) -> bool:
+        # blur.tar/defocus_blur/4/n03884397/ILSVRC2012_val_00018337.JPEG
+        split_list = os.path.split(data[0])
+        distortion_name, severity = split_list[-4], split_list[-3]
+        return distortion_name == self.distortion_name and severity in self.severity
+
+    def _prepare_sample(
+        self,
+        data: tuple[str, BinaryIO],
+    ) -> dict[str, Any]:
+        path, buffer = data
+        wnid = os.path.split(data[0])[-2]
+        label = Label.from_category(self._wnid_to_category[wnid], categories=self._categories)
+        return dict(label=label, wnid=wnid, path=path,
+                    image=EncodedImage.from_file(buffer))
 
 
 class ImageNetP(_ImageNetBase[PDistortionCategoryType]):
@@ -147,3 +167,19 @@ class ImageNetP(_ImageNetBase[PDistortionCategoryType]):
             file_name='harder_noise_validation.tar',
         ),
     }
+
+    def _filter(self, data: tuple[str, Any]) -> bool:
+        # weather.tar/brightness/n03032252/ILSVRC2012_val_00015013.mp4
+        split_list = os.path.split(data[0])
+        distortion_name = split_list[-3]
+        return distortion_name == self.distortion_name
+
+    def _prepare_sample(
+        self,
+        data: tuple[str, BinaryIO],
+    ) -> dict[str, Any]:
+        path, buffer = data
+        wnid = os.path.split(data[0])[-2]
+        label = Label.from_category(self._wnid_to_category[wnid], categories=self._categories)
+        return dict(label=label, wnid=wnid, path=path,
+                    video=EncodedImage.from_file(buffer))   # TODO: video
