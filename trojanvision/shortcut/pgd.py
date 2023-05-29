@@ -31,7 +31,8 @@ class PGD(Attack, PGDoptimizer):
         group.add_argument('--pgd_alpha', type=float, help='PGD learning rate per step, defaults to 2.0/255')
         group.add_argument('--pgd_eps', type=float, help='Projection norm constraint, defaults to 8.0/255')
         group.add_argument('--iteration', type=int, help='Attack Iteration, defaults to 7')
-        group.add_argument('--stop_threshold', type=float, help='early stop confidence, defaults to 0.99 (defined in config)')
+        group.add_argument('--stop_threshold', type=float,
+                           help='early stop confidence, defaults to 0.99 (defined in config)')
         group.add_argument('--target_class', type=int, help='Do not set it if using target_idx')
         group.add_argument('--target_idx', type=int,
                            help='Target label order in original classification, defaults to -1 '
@@ -85,7 +86,7 @@ class PGD(Attack, PGDoptimizer):
 
     def attack(self, verbose: int = 1, **kwargs) -> tuple[float, float]:
         validset = self.dataset.get_dataset('valid')
-        testset, _ = self.dataset.split_dataset(validset, percent=0.3)
+        testset, _ = self.dataset.split_dataset(validset, length=2 * self.test_num)
         loader = self.dataset.get_dataloader(mode='valid', dataset=testset,
                                              shuffle=True)
         fmt_str = '{global_avg:7.3f} ({min:7.3f}  {max:7.3f})'
@@ -163,7 +164,7 @@ class PGD(Attack, PGDoptimizer):
                 prints(f'{succ_adv_org_conf=:}', indent=8)
         if verbose:
             prints(f'{ansi["green"]}{succ_iter_list.count} / {total_iter_list.count}{ansi["reset"]}')
-            prints(succ_idx_list)
+            # prints(succ_idx_list)
         if verbose >= 2:
             prints(f'{total_iter_list=:}', indent=4)
             prints(f'{succ_iter_list=:}', indent=4)
