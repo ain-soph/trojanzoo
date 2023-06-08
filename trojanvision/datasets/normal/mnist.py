@@ -37,5 +37,5 @@ class MNIST(ImageSet):
         datasets.MNIST(root=self.folder_path, train=False, download=True)
 
     def _get_org_dataset(self, mode, **kwargs):
-        assert mode in ['train', 'valid']
+        assert mode in ['train', 'valid'], mode
         return datasets.MNIST(root=self.folder_path, train=(mode == 'train'), **kwargs)

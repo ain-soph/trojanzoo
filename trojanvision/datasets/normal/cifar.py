@@ -44,7 +44,7 @@ class CIFAR10(ImageSet):
         datasets.CIFAR10(root=self.folder_path, train=False, download=True)
 
     def _get_org_dataset(self, mode: str, **kwargs) -> datasets.CIFAR10:
-        assert mode in ['train', 'valid']
+        assert mode in ['train', 'valid'], mode
         return datasets.CIFAR10(root=self.folder_path, train=(mode == 'train'), **kwargs)
 
 
@@ -75,5 +75,5 @@ class CIFAR100(CIFAR10):
         datasets.CIFAR100(root=self.folder_path, train=False, download=True)
 
     def _get_org_dataset(self, mode: str, **kwargs) -> datasets.CIFAR100:
-        assert mode in ['train', 'valid']
+        assert mode in ['train', 'valid'], mode
         return datasets.CIFAR100(root=self.folder_path, train=(mode == 'train'), **kwargs)

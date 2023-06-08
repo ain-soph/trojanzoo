@@ -54,7 +54,7 @@ class ImageNet16(DownsampledImageNet):
     data_shape = [3, 16, 16]
 
     def _get_org_dataset(self, mode: str, **kwargs):
-        assert mode in ['train', 'valid']
+        assert mode in ['train', 'valid'], mode
         return di.ImageNet16(root=self.folder_path, train=(mode == 'train'),
                              num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)
 
@@ -79,7 +79,7 @@ class ImageNet32(DownsampledImageNet):
     data_shape = [3, 32, 32]
 
     def _get_org_dataset(self, mode: str, **kwargs):
-        assert mode in ['train', 'valid']
+        assert mode in ['train', 'valid'], mode
         return di.ImageNet32(root=self.folder_path, train=(mode == 'train'),
                              num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)
 
@@ -104,6 +104,6 @@ class ImageNet64(DownsampledImageNet):
     data_shape = [3, 64, 64]
 
     def _get_org_dataset(self, mode: str, **kwargs):
-        assert mode in ['train', 'valid']
+        assert mode in ['train', 'valid'], mode
         return di.ImageNet64(root=self.folder_path, train=(mode == 'train'),
                              num_classes=self.num_classes if self.num_classes < 1000 else None, **kwargs)

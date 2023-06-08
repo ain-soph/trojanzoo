@@ -229,7 +229,7 @@ class PGD(Attack, PGDoptimizer):
             class_result = _class == target[current_idx]
             if untarget_condition:
                 class_result = ~class_result
-            result = result.bitwise_and(class_result)
+            result = result.logical_and(class_result)
         return result.detach().cpu()
 
     @torch.no_grad()
