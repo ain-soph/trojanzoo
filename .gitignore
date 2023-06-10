@@ -37,6 +37,7 @@ package-lock.json
 /result
 /output
 /projects
+/pretrained
 
 abandon
 unused
