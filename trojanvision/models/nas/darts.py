@@ -293,7 +293,7 @@ class DARTS(ImageModel):
                save_fn: Callable[..., None] = None, file_path: str = None,
                folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
-               accuracy_fn: Callable[..., list[float]] = None,
+               metric_fn: Callable[..., dict[str, float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs):
         get_data_fn = get_data_fn or self.get_data
         validate_fn = validate_fn or self._validate
@@ -350,7 +350,7 @@ class DARTS(ImageModel):
                               save_fn=save_fn, file_path=file_path,
                               folder_path=folder_path, suffix=suffix,
                               writer=writer, main_tag=main_tag, tag=tag,
-                              accuracy_fn=accuracy_fn,
+                              metric_fn=metric_fn,
                               verbose=verbose, indent=indent, **kwargs)
 
     def _backward_step_unrolled(self, input_train: torch.Tensor, target_train: torch.Tensor,

@@ -8,7 +8,7 @@ from trojanvision.utils.model import Conv2d_SAME
 import torch
 import torch.nn as nn
 
-from typing import Iterator
+from typing import Iterator, Iterable
 from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -172,8 +172,8 @@ class MagNet(Model):
         return loss_fn
 
     def accuracy(self, _output: torch.Tensor, _label: torch.Tensor,
-                 num_classes: int = None, topk=(1, 5)):
-        res = []
+                 num_classes: int = None, topk: Iterable[int] = (1, 5)) -> dict[str, float]:
+        res = {}
         for k in topk:
-            res.append(-self.criterion(_output, _label))
+            res[f'top{k}'] = -float(self.criterion(_output, _label))
         return res

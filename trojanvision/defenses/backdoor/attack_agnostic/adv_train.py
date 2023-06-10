@@ -100,11 +100,11 @@ class AdvTrain(BackdoorDefense):
                 optimizer.zero_grad()
                 with torch.no_grad():
                     _output = self.model(_input)
-                acc1, acc5 = self.model.accuracy(_output, _label, topk=(1, 5))
+                acc_dict = self.model.accuracy(_output, _label, topk=(1, 5))
                 batch_size = int(_label.size(0))
                 losses.update(loss.item(), batch_size)
-                top1.update(acc1, batch_size)
-                top5.update(acc5, batch_size)
+                top1.update(acc_dict['top1'], batch_size)
+                top5.update(acc_dict['top5'], batch_size)
             epoch_time = str(datetime.timedelta(seconds=int(
                 time.perf_counter() - epoch_start)))
             self.model.eval()

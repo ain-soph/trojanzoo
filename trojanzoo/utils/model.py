@@ -484,20 +484,21 @@ def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
             Defaults to ``(1, 5)``.
 
     Returns:
-        list[float]: Top-k accuracies.
+        dict[str, float]: Top-k accuracies.
     """
     maxk = min(max(topk), num_classes)
     batch_size = _label.size(0)
     _, pred = _output.topk(maxk, 1, True, True)
+    pred: torch.Tensor
     pred = pred.t()
     correct = pred.eq(_label[None])
-    res: list[float] = []
+    res: dict[str, float] = {}
     for k in topk:
         if k > num_classes:
-            res.append(100.0)
+            res[f'top{k}'] = 100.0
         else:
             correct_k = float(correct[:k].sum(dtype=torch.float32))
-            res.append(correct_k * (100.0 / batch_size))
+            res[f'top{k}'] = correct_k * (100.0 / batch_size)
     return res
 
 

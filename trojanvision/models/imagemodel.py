@@ -491,7 +491,7 @@ class ImageModel(Model):
                save_fn: Callable[..., None] = None, file_path: str = None,
                folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
-               accuracy_fn: Callable[..., list[float]] = None,
+               metric_fn: Callable[..., dict[str, float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs):
         adv_train = adv_train if adv_train is not None else bool(self.adv_train)
         if adv_train:
@@ -559,7 +559,7 @@ class ImageModel(Model):
                               save_fn=save_fn, file_path=file_path,
                               folder_path=folder_path, suffix=suffix,
                               writer=writer, main_tag=main_tag, tag=tag,
-                              accuracy_fn=accuracy_fn,
+                              metric_fn=metric_fn,
                               verbose=verbose, indent=indent, **kwargs)
 
     def adv_loss(self, _input: torch.Tensor, _label: torch.Tensor,

@@ -981,7 +981,7 @@ class Model(BasicObject):
                save_fn: Callable[..., None] = None, file_path: str = None,
                folder_path: str = None, suffix: str = None,
                writer=None, main_tag: str = 'train', tag: str = '',
-               accuracy_fn: Callable[..., list[float]] = None,
+               metric_fn: Callable[..., dict[str, float]] = None,
                verbose: bool = True, indent: int = 0, **kwargs):
         r"""Train the model"""
         module = module or self._model
@@ -991,7 +991,7 @@ class Model(BasicObject):
         loss_fn = loss_fn if callable(loss_fn) else self.loss
         validate_fn = validate_fn if callable(validate_fn) else self._validate
         save_fn = save_fn if callable(save_fn) else self.save
-        accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
+        metric_fn = metric_fn if callable(metric_fn) else self.accuracy
         kwargs['forward_fn'] = kwargs.get('forward_fn', self.__call__)
         # if not callable(iter_fn) and hasattr(self, 'iter_fn'):
         #     iter_fn = getattr(self, 'iter_fn')
@@ -1014,7 +1014,7 @@ class Model(BasicObject):
                      save_fn=save_fn, file_path=file_path,
                      folder_path=folder_path, suffix=suffix,
                      writer=writer, main_tag=main_tag, tag=tag,
-                     accuracy_fn=accuracy_fn,
+                     metric_fn=metric_fn,
                      verbose=verbose, indent=indent, **kwargs)
 
     def _validate(self, module: nn.Module = None, num_classes: int = None,
@@ -1026,7 +1026,7 @@ class Model(BasicObject):
                   loss_fn: Callable[..., torch.Tensor] = None,
                   writer=None, main_tag: str = 'valid',
                   tag: str = '', _epoch: int = None,
-                  accuracy_fn: Callable[..., list[float]] = None,
+                  metric_fn: Callable[..., dict[str, float]] = None,
                   **kwargs) -> tuple[float, float]:
         r"""Evaluate the model.
 
@@ -1038,7 +1038,7 @@ class Model(BasicObject):
         loader = loader or self.dataset.loader['valid']
         get_data_fn = get_data_fn or self.get_data
         loss_fn = loss_fn or self.loss
-        accuracy_fn = accuracy_fn if callable(accuracy_fn) else self.accuracy
+        metric_fn = metric_fn if callable(metric_fn) else self.accuracy
         kwargs['forward_fn'] = kwargs.get('forward_fn', self.__call__)
         return validate(module=module, num_classes=num_classes, loader=loader,
                         print_prefix=print_prefix,
@@ -1046,7 +1046,7 @@ class Model(BasicObject):
                         get_data_fn=get_data_fn,
                         loss_fn=loss_fn,
                         writer=writer, main_tag=main_tag, tag=tag,
-                        _epoch=_epoch, accuracy_fn=accuracy_fn, **kwargs)
+                        _epoch=_epoch, metric_fn=metric_fn, **kwargs)
 
     def _compare(self, peer: nn.Module = None,
                  loader: torch.utils.data.DataLoader = None,
@@ -1084,7 +1084,7 @@ class Model(BasicObject):
 
     def accuracy(self, _output: torch.Tensor, _label: torch.Tensor,
                  num_classes: int = None,
-                 topk: tuple[int] = (1, 5)) -> list[float]:
+                 topk: Iterable[int] = (1, 5)) -> dict[str, float]:
         r"""Computes the accuracy over the k top predictions
         for the specified values of k.
 
@@ -1096,7 +1096,7 @@ class Model(BasicObject):
                 Defaults to ``(1, 5)``.
 
         Returns:
-            list[float]: Top-k accuracies.
+            dict[str, float]: Top-k accuracies.
 
         Note:
             The implementation is in :func:`trojanzoo.utils.model.accuracy`.

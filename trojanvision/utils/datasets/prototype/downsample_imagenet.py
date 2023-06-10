@@ -15,7 +15,10 @@ DistortionCategoryType = TypeVar('DistortionCategoryType', CDistortionCategoryTy
 
 
 class _DownsampleImageNetC(_ImageNetBase[CDistortionCategoryType]):
-    ...
+    _DISTORTIONS = {
+        'main': [],
+        'extra': [],
+    }
 
 
 class _DownsampleImageNetP(_ImageNetBase[PDistortionCategoryType]):

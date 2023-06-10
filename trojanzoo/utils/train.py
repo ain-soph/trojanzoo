@@ -14,10 +14,11 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from trojanzoo.utils.model import ExponentialMovingAverage
-from collections.abc import Callable
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import torch.utils.data
+from typing import Any
+from collections.abc import Callable
 
 
 def train(module: nn.Module, num_classes: int,
@@ -39,10 +40,10 @@ def train(module: nn.Module, num_classes: int,
           save_fn: Callable[..., None] = None, file_path: str = None,
           folder_path: str = None, suffix: str = None,
           writer=None, main_tag: str = 'train', tag: str = '',
-          accuracy_fn: Callable[..., list[float]] = None,
+          metric_fn: Callable[..., dict[str, float]] = None,
           verbose: bool = True, output_freq: str = 'iter', indent: int = 0,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch',
-          backward_and_step: bool = True,
+          backward_and_step: bool = True, metric_kwargs: dict[str, Any] = {},
           **kwargs):
     r"""Train the model"""
     if epochs <= 0:
@@ -51,7 +52,7 @@ def train(module: nn.Module, num_classes: int,
     forward_fn = forward_fn or module.__call__
     loss_fn = loss_fn or (lambda _input, _label, _output=None: F.cross_entropy(_output or forward_fn(_input), _label))
     validate_fn = validate_fn or validate
-    accuracy_fn = accuracy_fn or accuracy
+    metric_fn = metric_fn or accuracy
 
     scaler: torch.cuda.amp.GradScaler = None
     if not env['num_gpus']:
@@ -155,10 +156,9 @@ def train(module: nn.Module, num_classes: int,
 
             if lr_scheduler and lr_scheduler_freq == 'iter':
                 lr_scheduler.step()
-            acc1, acc5 = accuracy_fn(
-                _output, _label, num_classes=num_classes, topk=(1, 5))
+            metrics = metric_fn(_output, _label, num_classes=num_classes, **metric_kwargs)
             batch_size = int(_label.size(0))
-            logger.update(n=batch_size, loss=float(loss), top1=acc1, top5=acc5)
+            logger.update(n=batch_size, loss=float(loss), **metrics)
             empty_cache()
         optimizer.zero_grad()
         if lr_scheduler and lr_scheduler_freq == 'epoch':
@@ -187,6 +187,7 @@ def train(module: nn.Module, num_classes: int,
                                           writer=writer, tag=tag,
                                           _epoch=_epoch + start_epoch,
                                           verbose=verbose, indent=indent,
+                                          metric_kwargs=metric_kwargs,
                                           **kwargs)
             cur_acc = validate_result[0]
             if cur_acc >= best_acc:
@@ -217,7 +218,8 @@ def validate(module: nn.Module, num_classes: int,
              loss_fn: Callable[..., torch.Tensor] = None,
              writer=None, main_tag: str = 'valid',
              tag: str = '', _epoch: int = None,
-             accuracy_fn: Callable[..., list[float]] = None,
+             metric_fn: Callable[..., dict[str, float]] = None,
+             metric_kwargs: dict[str, Any] = {},
              **kwargs) -> tuple[float, float]:
     r"""Evaluate the model.
 
@@ -228,7 +230,7 @@ def validate(module: nn.Module, num_classes: int,
     get_data_fn = get_data_fn or (lambda x: x)
     forward_fn = forward_fn or module.__call__
     loss_fn = loss_fn or nn.CrossEntropyLoss()
-    accuracy_fn = accuracy_fn or accuracy
+    metric_fn = metric_fn or accuracy
     logger = MetricLogger()
     logger.create_meters(loss=None, top1=None, top5=None)
     loader_epoch = loader
@@ -243,10 +245,9 @@ def validate(module: nn.Module, num_classes: int,
         with torch.no_grad():
             _output = forward_fn(_input)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
-            acc1, acc5 = accuracy_fn(
-                _output, _label, num_classes=num_classes, topk=(1, 5))
+            metrics = metric_fn(_output, _label, num_classes=num_classes, **metric_kwargs)
             batch_size = int(_label.size(0))
-            logger.update(n=batch_size, loss=float(loss), top1=acc1, top5=acc5)
+            logger.update(n=batch_size, loss=float(loss), **metrics)
     acc, loss = (logger.meters['top1'].global_avg,
                  logger.meters['loss'].global_avg)
     if writer is not None and _epoch is not None and main_tag:
