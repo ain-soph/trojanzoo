@@ -249,6 +249,8 @@ class MetricLogger:
             MetricLogger: return ``self`` for stream usage.
         """
         for k, v in kwargs.items():
+            if k not in self.meters:
+                self.meters[k] = SmoothedValue()
             self.meters[k].update(float(v), n=n)
         return self
 
