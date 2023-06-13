@@ -113,7 +113,7 @@ class BackdoorAttack(Attack):
         match self.train_mode:
             case 'batch':
                 loader = self.dataset.get_dataloader(
-                    'train', batch_size=self.dataset.batch_size + int(self.poison_num))
+                    'train', batch_size=self.dataset.batch_size)
                 return self.model._train(epochs, loader_train=loader,
                                          get_data_fn=self.get_data,
                                          **kwargs)
