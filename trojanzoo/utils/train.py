@@ -44,6 +44,7 @@ def train(module: nn.Module, num_classes: int,
           verbose: bool = True, output_freq: str = 'iter', indent: int = 0,
           change_train_eval: bool = True, lr_scheduler_freq: str = 'epoch',
           backward_and_step: bool = True, metric_kwargs: dict[str, Any] = {},
+          logger_train: MetricLogger | None = None, logger_valid: MetricLogger | None = None,
           **kwargs):
     r"""Train the model"""
     if epochs <= 0:
@@ -61,10 +62,16 @@ def train(module: nn.Module, num_classes: int,
         scaler = torch.cuda.amp.GradScaler()
     best_validate_result = (0.0, float('inf'))
     if validate_interval != 0:
-        best_validate_result = validate_fn(loader=loader_valid, get_data_fn=get_data_fn,
+        best_validate_result = validate_fn(module=module,
+                                           num_classes=num_classes,
+                                           loader=loader_valid, get_data_fn=get_data_fn,
                                            forward_fn=forward_fn, loss_fn=loss_fn,
                                            writer=writer, tag=tag, _epoch=start_epoch,
-                                           verbose=verbose, indent=indent, **kwargs)
+                                           verbose=verbose, indent=indent,
+                                           metric_fn=metric_fn,
+                                           metric_kwargs=metric_kwargs,
+                                           logger=logger_valid,
+                                           **kwargs)
         best_acc = best_validate_result[0]
 
     params: list[nn.Parameter] = []
@@ -73,8 +80,9 @@ def train(module: nn.Module, num_classes: int,
     len_loader_train = len(loader_train)
     total_iter = (epochs - resume) * len_loader_train
 
-    logger = MetricLogger()
-    logger.create_meters(loss=None, top1=None, top5=None)
+    if logger_train is None:
+        logger_train = MetricLogger()
+    logger_train.create_meters(loss=None, top1=None)
 
     if resume and lr_scheduler:
         for _ in range(resume):
@@ -83,13 +91,13 @@ def train(module: nn.Module, num_classes: int,
     if verbose and output_freq == 'epoch':
         header: str = '{blue_light}{0}: {reset}'.format(print_prefix, **ansi)
         header = header.ljust(max(len(header), 30) + get_ansi_len(header))
-        iterator = logger.log_every(range(resume, epochs),
-                                    header=print_prefix,
-                                    tqdm_header='Epoch',
-                                    indent=indent)
+        iterator = logger_train.log_every(range(resume, epochs),
+                                          header=print_prefix,
+                                          tqdm_header='Epoch',
+                                          indent=indent)
     for _epoch in iterator:
         _epoch += 1
-        logger.reset()
+        logger_train.reset()
         if callable(epoch_fn):
             activate_params(module, [])
             epoch_fn(optimizer=optimizer, lr_scheduler=lr_scheduler,
@@ -99,9 +107,9 @@ def train(module: nn.Module, num_classes: int,
             header: str = '{blue_light}{0}: {1}{reset}'.format(
                 'Epoch', output_iter(_epoch, epochs), **ansi)
             header = header.ljust(max(len('Epoch'), 30) + get_ansi_len(header))
-            loader_epoch = logger.log_every(loader_train, header=header,
-                                            tqdm_header='Batch',
-                                            indent=indent)
+            loader_epoch = logger_train.log_every(loader_train, header=header,
+                                                  tqdm_header='Batch',
+                                                  indent=indent)
         if change_train_eval:
             module.train()
         activate_params(module, params)
@@ -158,7 +166,7 @@ def train(module: nn.Module, num_classes: int,
                 lr_scheduler.step()
             metrics = metric_fn(_output, _label, num_classes=num_classes, **metric_kwargs)
             batch_size = int(_label.size(0))
-            logger.update(n=batch_size, loss=float(loss), **metrics)
+            logger_train.update(n=batch_size, loss=float(loss), **metrics)
             empty_cache()
         optimizer.zero_grad()
         if lr_scheduler and lr_scheduler_freq == 'epoch':
@@ -166,8 +174,8 @@ def train(module: nn.Module, num_classes: int,
         if change_train_eval:
             module.eval()
         activate_params(module, [])
-        loss, acc = (logger.meters['loss'].global_avg,
-                     logger.meters['top1'].global_avg)
+        loss, acc = (logger_train.meters['loss'].global_avg,
+                     logger_train.meters['top1'].global_avg)
         if writer is not None:
             from torch.utils.tensorboard import SummaryWriter
             assert isinstance(writer, SummaryWriter)
@@ -187,7 +195,9 @@ def train(module: nn.Module, num_classes: int,
                                           writer=writer, tag=tag,
                                           _epoch=_epoch + start_epoch,
                                           verbose=verbose, indent=indent,
+                                          metric_fn=metric_fn,
                                           metric_kwargs=metric_kwargs,
+                                          logger=logger_valid,
                                           **kwargs)
             cur_acc = validate_result[0]
             if cur_acc >= best_acc:
@@ -220,6 +230,7 @@ def validate(module: nn.Module, num_classes: int,
              tag: str = '', _epoch: int = None,
              metric_fn: Callable[..., dict[str, float]] = None,
              metric_kwargs: dict[str, Any] = {},
+             logger: MetricLogger | None = None,
              **kwargs) -> tuple[float, float]:
     r"""Evaluate the model.
 
@@ -231,8 +242,9 @@ def validate(module: nn.Module, num_classes: int,
     forward_fn = forward_fn or module.__call__
     loss_fn = loss_fn or nn.CrossEntropyLoss()
     metric_fn = metric_fn or accuracy
-    logger = MetricLogger()
-    logger.create_meters(loss=None, top1=None, top5=None)
+    if logger is None:
+        logger = MetricLogger()
+    logger.create_meters(loss=None, top1=None)
     loader_epoch = loader
     if verbose:
         header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
