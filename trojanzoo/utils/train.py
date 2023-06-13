@@ -210,7 +210,7 @@ def train(module: nn.Module, num_classes: int,
                            indent=indent)
                 best_acc = cur_acc
                 if save:
-                    save_fn(file_path=file_path, folder_path=folder_path,
+                    save_fn(_epoch=_epoch, file_path=file_path, folder_path=folder_path,
                             suffix=suffix, verbose=verbose)
             if verbose:
                 prints('-' * 50, indent=indent)
