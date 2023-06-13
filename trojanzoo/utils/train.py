@@ -202,7 +202,7 @@ def train(module: nn.Module, num_classes: int,
             cur_acc = validate_result[0]
             if cur_acc >= best_acc:
                 best_validate_result = validate_result
-                if verbose:
+                if verbose and output_freq == 'iter':
                     prints('{purple}best result update!{reset}'.format(
                         **ansi), indent=indent)
                     prints(f'Current Acc: {cur_acc:.3f}    '
@@ -212,7 +212,7 @@ def train(module: nn.Module, num_classes: int,
                 if save:
                     save_fn(_epoch=_epoch, file_path=file_path, folder_path=folder_path,
                             suffix=suffix, verbose=verbose)
-            if verbose:
+            if verbose and output_freq == 'iter':
                 prints('-' * 50, indent=indent)
     module.zero_grad()
     return best_validate_result
