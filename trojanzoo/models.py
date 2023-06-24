@@ -1083,17 +1083,16 @@ class Model(BasicObject):
             return data
 
     def accuracy(self, _output: torch.Tensor, _label: torch.Tensor,
-                 num_classes: int = None,
-                 topk: Iterable[int] = (1, 5)) -> dict[str, float]:
+                 topk: Iterable[int] = (1, 5), **kwargs) -> dict[str, float]:
         r"""Computes the accuracy over the k top predictions
         for the specified values of k.
 
         Args:
             _output (torch.Tensor): The batched logit tensor with shape ``(N, C)``.
             _label (torch.Tensor): The batched label tensor with shape ``(N)``.
-            num_classes (int): Number of classes. Defaults to :attr:`self.num_classes`.
             topk (~collections.abc.Iterable[int]): Which top-k accuracies to show.
                 Defaults to ``(1, 5)``.
+            **kwargs: Keyword arguments passed to :func:`trojanzoo.utils.model.accuracy`.
 
         Returns:
             dict[str, float]: Top-k accuracies.
@@ -1101,8 +1100,7 @@ class Model(BasicObject):
         Note:
             The implementation is in :func:`trojanzoo.utils.model.accuracy`.
         """
-        num_classes = num_classes or self.num_classes
-        return accuracy(_output, _label, num_classes, topk)
+        return accuracy(_output, _label, topk, **kwargs)
 
     def activate_params(self, params: Iterator[nn.Parameter] = []) -> None:
         r"""Set ``requires_grad=True`` for selected :attr:`params` of :attr:`module`.

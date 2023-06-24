@@ -471,21 +471,22 @@ def activate_params(module: nn.Module, params: Iterator[nn.Parameter] = []):
 
 
 @torch.no_grad()
-def accuracy(_output: torch.Tensor, _label: torch.Tensor, num_classes: int,
-             topk: Iterable[int] = (1, 5)) -> list[float]:
+def accuracy(_output: torch.Tensor, _label: torch.Tensor,
+             topk: Iterable[int] = (1, 5), **kwargs) -> list[float]:
     r"""Computes the accuracy over the k top predictions
     for the specified values of k.
 
     Args:
         _output (torch.Tensor): The batched logit tensor with shape ``(N, C)``.
         _label (torch.Tensor): The batched label tensor with shape ``(N)``.
-        num_classes (int): Number of classes.
         topk (~collections.abc.Iterable[int]): Which top-k accuracies to show.
             Defaults to ``(1, 5)``.
+        **kwargs: Any keyword argument (unused).
 
     Returns:
         dict[str, float]: Top-k accuracies.
     """
+    num_classes = _output.size(1)
     maxk = min(max(topk), num_classes)
     batch_size = _label.size(0)
     _, pred = _output.topk(maxk, 1, True, True)

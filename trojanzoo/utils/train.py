@@ -164,7 +164,7 @@ def train(module: nn.Module, num_classes: int,
 
             if lr_scheduler and lr_scheduler_freq == 'iter':
                 lr_scheduler.step()
-            metrics = metric_fn(_output, _label, num_classes=num_classes, **metric_kwargs)
+            metrics = metric_fn(_input=_input, _label=_label, _output=_output, **metric_kwargs)
             batch_size = int(_label.size(0))
             logger_train.update(n=batch_size, loss=float(loss), **metrics)
             empty_cache()
@@ -176,6 +176,7 @@ def train(module: nn.Module, num_classes: int,
         activate_params(module, [])
         loss, acc = (logger_train.meters['loss'].global_avg,
                      logger_train.meters['top1'].global_avg)
+        logger_train.reset()
         if writer is not None:
             from torch.utils.tensorboard import SummaryWriter
             assert isinstance(writer, SummaryWriter)
@@ -245,6 +246,7 @@ def validate(module: nn.Module, num_classes: int,
     if logger is None:
         logger = MetricLogger()
     logger.create_meters(loss=None, top1=None)
+    logger.reset()
     loader_epoch = loader
     if verbose:
         header: str = '{yellow}{0}{reset}'.format(print_prefix, **ansi)
@@ -257,7 +259,7 @@ def validate(module: nn.Module, num_classes: int,
         with torch.no_grad():
             _output = forward_fn(_input)
             loss = float(loss_fn(_input, _label, _output=_output, **kwargs))
-            metrics = metric_fn(_output, _label, num_classes=num_classes, **metric_kwargs)
+            metrics = metric_fn(_input=_input, _label=_label, _output=_output, **metric_kwargs)
             batch_size = int(_label.size(0))
             logger.update(n=batch_size, loss=float(loss), **metrics)
     acc, loss = (logger.meters['top1'].global_avg,
@@ -269,6 +271,7 @@ def validate(module: nn.Module, num_classes: int,
                            tag_scalar_dict={tag: acc}, global_step=_epoch)
         writer.add_scalars(main_tag='Loss/' + main_tag,
                            tag_scalar_dict={tag: loss}, global_step=_epoch)
+    logger.reset()
     return acc, loss
 
 
