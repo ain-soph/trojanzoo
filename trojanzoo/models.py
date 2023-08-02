@@ -891,7 +891,9 @@ class Model(BasicObject):
     @torch.no_grad()
     def save(self, file_path: str = None, folder_path: str = None,
              suffix: str = None, component: str = '',
-             verbose: bool = False, indent: int = 0, **kwargs):
+             _epoch: int | None = None,
+             verbose: bool = False, indent: int = 0,
+             **kwargs):
         r"""Save pretrained model weights.
 
         Args:

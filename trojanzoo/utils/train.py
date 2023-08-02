@@ -211,8 +211,8 @@ def train(module: nn.Module, num_classes: int,
                            indent=indent)
                 best_acc = cur_acc
                 if save:
-                    save_fn(_epoch=_epoch, file_path=file_path, folder_path=folder_path,
-                            suffix=suffix, verbose=verbose)
+                    save_fn(file_path=file_path, folder_path=folder_path,
+                            suffix=suffix, verbose=verbose, _epoch=_epoch)
             if verbose and output_freq == 'iter':
                 prints('-' * 50, indent=indent)
     module.zero_grad()
