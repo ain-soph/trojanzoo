@@ -99,7 +99,7 @@ class Module(MutableMapping[str, _VT], Generic[_KT, _VT]):
         return self.__data.items()
 
     def __getattr__(self, name: str) -> _VT:
-        if '__data' in name:
+        if name.startswith('__'):
             return super().__getattr__(name)
         return self.__data[name]
 

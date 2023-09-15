@@ -957,7 +957,7 @@ class Model(BasicObject):
             OrderedDict[str, torch.Tensor]: The model weights OrderedDict.
         """
         if weights is None:
-            weights = getattr(self.weights, self.name)
+            weights = getattr(self.weights[self.name], 'DEFAULT')
         return weights.get_state_dict(progress=progress, check_hash=True,
                                       map_location=map_location, **kwargs)
 
