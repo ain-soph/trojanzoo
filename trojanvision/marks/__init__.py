@@ -310,7 +310,7 @@ class Watermark(BasicObject):
                 org_patch = _input[i, :, h_start[i]:h_end[i], w_start[i]:w_end[i]]
                 trigger_patch = org_patch + mark_alpha_channel * (mark_rgb_channel - org_patch)
                 trigger_input[i, :, h_start[i]:h_end[i], w_start[i]:w_end[i]] = trigger_patch
-                return trigger_input
+            return trigger_input
         h_start, w_start = self.mark_height_offset, self.mark_width_offset
         h_end, w_end = h_start + self.mark_height, w_start + self.mark_width
         org_patch = _input[..., h_start:h_end, w_start:w_end]
