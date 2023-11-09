@@ -154,7 +154,7 @@ TrojanZoo has a GPL-style license, as found in the [LICENSE](https://github.com/
 }
 
 @inproceedings{pang:2020:kdd, 
-    title = "{A Tale of Evil Twins: Adversarial Inputs versus Poisoned Models}", 
+    title = "{AdvMind: Inferring Adversary Intent of Black-Box Attacks}", 
     author = {Ren Pang and Xinyang Zhang and Shouling Ji and Xiapu Luo and Ting Wang}, 
     year = {2020}, 
     booktitle = {Proceedings of ACM International Conference on Knowledge Discovery and Data Mining (KDD)},
