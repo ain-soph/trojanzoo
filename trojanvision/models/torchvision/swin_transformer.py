@@ -68,7 +68,7 @@ def swin_t_comp(*, weights: Optional[Swin_T_Weights] = None, progress: bool = Tr
     return _swin_transformer(
         patch_size=[2, 2],
         embed_dim=96,
-        depths=[2, 2, 2, 2],
+        depths=[2, 2, 6, 2],
         num_heads=[3, 6, 12, 24],
         window_size=[4, 4],
         stochastic_depth_prob=0.2,
