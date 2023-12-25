@@ -66,7 +66,7 @@ class IMC(TrojanNN):
         r"""Optimize watermark at the beginning of each training epoch."""
         loss_fn = loss_fn or self.model.loss
 
-        atanh_mark = torch.randn_like(self.mark.mark[:-1], requires_grad=True)
+        atanh_mark = self.mark.mark[:-1].mul(2).sub(1).mul(0.999).atanh().detach().requires_grad_()
         optimizer = optim.Adam([atanh_mark], lr=self.attack_remask_lr)
         optimizer.zero_grad()
 
