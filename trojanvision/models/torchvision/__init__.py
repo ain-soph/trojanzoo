@@ -24,7 +24,7 @@ class_dict: dict[str, type[ImageModel]] = {
     'mobilenet': MobileNet,
     'resnet': ResNet,
     'resnext': ResNet,
-    'shufflenetv2': ShuffleNetV2,
+    'shufflenet_v2': ShuffleNetV2,
     'swin': SwinTransformer,
     'vgg': VGG,
 }

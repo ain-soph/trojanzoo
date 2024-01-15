@@ -19,7 +19,7 @@ class _ShuffleNetV2(_ImageModel):
             raise AssertionError(f'model name should be in {ShuffleNetV2.available_models}')
         super().__init__(**kwargs)
         ModelClass: Callable[..., torchvision.models.ShuffleNetV2] = getattr(
-            torchvision.models, name[:16])
+            torchvision.models, name.removesuffix('_comp'))
         _model = ModelClass(num_classes=self.num_classes)
         module_list: list[nn.Module] = []
         if '_comp' in name:

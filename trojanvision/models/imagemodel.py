@@ -58,6 +58,7 @@ def set_first_layer_channel(model: nn.Module,
                         break
                     keys = ['out_channels', 'kernel_size', 'bias', 'stride', 'padding']
                     args = {key: getattr(module, key) for key in keys}
+                    args['bias'] = args['bias'] is not None
                     args['device'] = module.weight.device
                     args.update(kwargs)
                     new_conv = nn.Conv2d(in_channels=channel, **args)
