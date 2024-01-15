@@ -12,7 +12,7 @@ from collections.abc import Callable
 
 
 class _ShuffleNetV2(_ImageModel):
-    def __init__(self, name: str = 'shufflenetv2_x1_0', **kwargs):
+    def __init__(self, name: str = 'shufflenet_v2_x1_0', **kwargs):
         try:
             assert name in ShuffleNetV2.available_models, f'{name=}'
         except Exception:
@@ -50,11 +50,11 @@ class ShuffleNetV2(ImageModel):
 
         .. code-block:: python3
 
-            {'shufflenetv2', 'shufflenetv2_comp',
-             'shufflenetv2_x0_5', 'shufflenetv2_x1_0',
-             'shufflenetv2_x1_5', 'shufflenetv2_x2_0',
-             'shufflenetv2_x0_5_comp', 'shufflenetv2_x1_0_comp',
-             'shufflenetv2_x1_5_comp', 'shufflenetv2_x2_0_comp'}
+            {'shufflenet_v2', 'shufflenet_v2_comp',
+             'shufflenet_v2_x0_5', 'shufflenet_v2_x1_0',
+             'shufflenet_v2_x1_5', 'shufflenet_v2_x2_0',
+             'shufflenet_v2_x0_5_comp', 'shufflenet_v2_x1_0_comp',
+             'shufflenet_v2_x1_5_comp', 'shufflenet_v2_x2_0_comp'}
 
     See Also:
         * torchvision: :any:`torchvision.models.shufflenet_v2_x0_5`
@@ -70,20 +70,20 @@ class ShuffleNetV2(ImageModel):
     .. _ShuffleNet V2\: Practical Guidelines for Efficient CNN Architecture Design:
         https://arxiv.org/abs/1807.11164
     """
-    available_models = {'shufflenetv2', 'shufflenetv2_comp',
-                        'shufflenetv2_x0_5', 'shufflenetv2_x1_0',
-                        'shufflenetv2_x1_5', 'shufflenetv2_x2_0',
-                        'shufflenetv2_x0_5_comp', 'shufflenetv2_x1_0_comp',
-                        'shufflenetv2_x1_5_comp', 'shufflenetv2_x2_0_comp'}
+    available_models = {'shufflenet_v2', 'shufflenet_v2_comp',
+                        'shufflenet_v2_x0_5', 'shufflenet_v2_x1_0',
+                        'shufflenet_v2_x1_5', 'shufflenet_v2_x2_0',
+                        'shufflenet_v2_x0_5_comp', 'shufflenet_v2_x1_0_comp',
+                        'shufflenet_v2_x1_5_comp', 'shufflenet_v2_x2_0_comp'}
 
     weights = {
-        'shufflenetv2_x0_5': ShuffleNet_V2_X0_5_Weights,
-        'shufflenetv2_x1_0': ShuffleNet_V2_X1_0_Weights,
-        'shufflenetv2_x1_5': ShuffleNet_V2_X1_5_Weights,
-        'shufflenetv2_x2_0': ShuffleNet_V2_X2_0_Weights,
+        'shufflenet_v2_x0_5': ShuffleNet_V2_X0_5_Weights,
+        'shufflenet_v2_x1_0': ShuffleNet_V2_X1_0_Weights,
+        'shufflenet_v2_x1_5': ShuffleNet_V2_X1_5_Weights,
+        'shufflenet_v2_x2_0': ShuffleNet_V2_X2_0_Weights,
     }
 
-    def __init__(self, name: str = 'shufflenetv2', layer: str = '_x0_5',
+    def __init__(self, name: str = 'shufflenet_v2', layer: str = '_x0_5',
                  model: type[_ShuffleNetV2] = _ShuffleNetV2, **kwargs):
         super().__init__(name=name, layer=layer, model=model, **kwargs)
 
