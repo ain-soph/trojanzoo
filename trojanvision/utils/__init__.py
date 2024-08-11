@@ -3,8 +3,8 @@
 import torch
 
 from matplotlib.colors import Colormap  # type: ignore  # TODO
-from matplotlib.cm import get_cmap  # type: ignore  # TODO
-jet = get_cmap('jet')
+import matplotlib
+jet = matplotlib.colormaps.get_cmap('jet')
 # jet = torch.tensor(jet(np.arange(256))[:, :3])
 
 

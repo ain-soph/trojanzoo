@@ -25,8 +25,8 @@ from collections.abc import Callable
 if TYPE_CHECKING:
     import torch.utils.data
 
-from matplotlib.cm import get_cmap  # type: ignore  # TODO
-jet = get_cmap('jet')
+import matplotlib
+jet = matplotlib.colormaps.get_cmap('jet')
 
 
 def replace_bn_to_gn(model: nn.Module) -> None:
