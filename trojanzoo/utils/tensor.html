@@ -1,0 +1,539 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tensor &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="next" title="train" href="train.html" />
+  <link rel="prev" title="module" href="module.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">trojanzoo</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trainer.html">trainer</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logger.html">logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module.html">module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../trojanvision/index.html">trojanvision</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/datasets/index.html">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/datasets/normal.html">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/datasets/folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/defenses/index.html">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/defenses/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/defenses/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/marks.html">marks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/models/index.html">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/torchvision.html">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="../index.html">trojanzoo</a> &gt;</li>
+          <li><a href="index.html">utils</a> &gt;</li>
+      <li>tensor</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanzoo/utils/tensor.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="tensor">
+<span id="trojanzoo-utils-tensor"></span><h1>tensor<a class="headerlink" href="#tensor" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.tensor.tanh_func">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.tensor.</span></span><span class="sig-name descname"><span class="pre">tanh_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/tensor.py#L10-L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.tensor.tanh_func" title="Link to this definition">¶</a></dt>
+<dd><p>tanh object function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">tanh</span><span class="p">()</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The tensor ranging from
+<span class="math"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">[</mo><mo>−</mo><mi mathvariant="normal">∞</mi><mo separator="true">,</mo><mo>+</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-\infty, +\infty]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">−</span><span class="mord">∞</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">+</span><span class="mord">∞</span><span class="mclose">]</span></span></span></span></span>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> – The tensor ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.tensor.atan_func">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.tensor.</span></span><span class="sig-name descname"><span class="pre">atan_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/tensor.py#L26-L39"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.tensor.atan_func" title="Link to this definition">¶</a></dt>
+<dd><p>arctan object function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">atan</span><span class="p">()</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The tensor ranging from
+<span class="math"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">[</mo><mo>−</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">]</mo><mo separator="true">,</mo><mo>+</mo><mi mathvariant="normal">∞</mi><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">[-\infty], +\infty]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">−</span><span class="mord">∞</span><span class="mclose">]</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">+</span><span class="mord">∞</span><span class="mclose">]</span></span></span></span></span>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> – The tensor ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.tensor.repeat_to_batch">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.tensor.</span></span><span class="sig-name descname"><span class="pre">repeat_to_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/tensor.py#L43-L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.tensor.repeat_to_batch" title="Link to this definition">¶</a></dt>
+<dd><p>Repeat a single input tensor to a batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The single input tensor to process
+with shape <code class="docutils literal notranslate"><span class="pre">(*)</span></code>.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Batch size. Defaults to <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> –     The batched input tensor with shape <code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">*)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.tensor.add_noise">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.tensor.</span></span><span class="sig-name descname"><span class="pre">add_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">universal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/tensor.py#L57-L100"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.tensor.add_noise" title="Link to this definition">¶</a></dt>
+<dd><p>Add noise to a batched input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The input tensor to process
+with shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">*)</span></code>.</p></li>
+<li><p><strong>noise</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a><em> | </em><em>None</em>) – The pre-defined noise.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, generate Gaussian noise
+using <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.normal.html#torch.normal" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.normal</span></code></a>.
+Defaults to be <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – The mean of generated Gaussian noise.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0.0</span></code>.</p></li>
+<li><p><strong>std</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – The std of generated Gaussian noise.
+Defaults to <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p></li>
+<li><p><strong>universal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether the noise is universal
+for all samples in the batch.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>clip_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The min value of available input region.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0.0</span></code>.</p></li>
+<li><p><strong>clip_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The max value of available input region.
+Defaults to <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> –     The noisy batched input tensor
+with shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">*)</span></code> (<code class="docutils literal notranslate"><span class="pre">(*)</span></code> when <code class="docutils literal notranslate"><span class="pre">universal=True</span></code>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="train.html" class="btn btn-neutral float-right" title="train" accesskey="n" rel="next">Next <img src="../../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="module.html" class="btn btn-neutral" title="module" accesskey="p" rel="prev"><img src="../../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">tensor</a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.tensor.tanh_func"><code class="docutils literal notranslate"><span class="pre">tanh_func()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.tensor.atan_func"><code class="docutils literal notranslate"><span class="pre">atan_func()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.tensor.repeat_to_batch"><code class="docutils literal notranslate"><span class="pre">repeat_to_batch()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.tensor.add_noise"><code class="docutils literal notranslate"><span class="pre">add_noise()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>

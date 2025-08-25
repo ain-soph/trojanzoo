@@ -1,0 +1,863 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>model &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="next" title="module" href="module.html" />
+  <link rel="prev" title="logger" href="logger.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">trojanzoo</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trainer.html">trainer</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logger.html">logger</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="module.html">module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensor.html">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../trojanvision/index.html">trojanvision</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/datasets/index.html">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/datasets/normal.html">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/datasets/folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/defenses/index.html">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/defenses/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/defenses/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/marks.html">marks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/models/index.html">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/torchvision.html">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="../index.html">trojanzoo</a> &gt;</li>
+          <li><a href="index.html">utils</a> &gt;</li>
+      <li>model</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanzoo/utils/model.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="model">
+<span id="trojanzoo-utils-model"></span><h1>model<a class="headerlink" href="#model" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.init_weights">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">init_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L22-L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.init_weights" title="Link to this definition">¶</a></dt>
+<dd><p>Traverse module <code class="xref py py-attr docutils literal notranslate"><span class="pre">m</span></code> to intialize weights of all submodules
+except for those in <code class="xref py py-attr docutils literal notranslate"><span class="pre">filter_list</span></code>.</p>
+<p>Module parameters are reset by calling <code class="docutils literal notranslate"><span class="pre">module.reset_parameters()</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An alternative implementation is to call <code class="docutils literal notranslate"><span class="pre">m.apply(init_weights)</span></code>
+so that this method could be non-recursive and avoid traverse.</p>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – Module to initialize.</p></li>
+<li><p><strong>filter_list</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.13)"><em>type</em></a><em>]</em>) – List of submodule types as exceptions.
+Defaults to <code class="docutils literal notranslate"><span class="pre">[]</span></code> (empty).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Example<span class="colon">:</span></dt>
+<dd class="field-even"><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">trojanzoo.utils.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_weights</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+
+<span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="hll"><span class="n">init_weights</span><span class="p">(</span><span class="n">filter_list</span><span class="o">=</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">])</span>   <span class="c1"># no change</span>
+</span><span class="hll"><span class="n">init_weights</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>                       <span class="c1"># init nn.Linear layers</span>
+</span></pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.get_layer_name">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">get_layer_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L57-L130"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.get_layer_name" title="Link to this definition">¶</a></dt>
+<dd><p>Get layer names of a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – the module to process.</p></li>
+<li><p><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The traverse depth.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-1</span></code> (<span class="math"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">\infty</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord">∞</span></span></span></span></span>).</p></li>
+<li><p><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The prefix string to all elements.
+Defaults to empty string <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
+<li><p><strong>use_filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – <p>Whether to filter out certain layer types.</p>
+<ul>
+<li><p><a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.Normalize.html#torchvision.transforms.Normalize" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.transforms.Normalize</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Dropout.html#torch.nn.Dropout" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Dropout</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html#torch.nn.BatchNorm2d" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.BatchNorm2d</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ReLU.html#torch.nn.ReLU" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.ReLU</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html#torch.nn.Sigmoid" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Sigmoid</span></code></a></p></li>
+</ul>
+</p></li>
+<li><p><strong>non_leaf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to include non-leaf nodes.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>seq_only</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to only traverse children
+of <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, will traverse children of all <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>list[str]</em> – The list of all layer names.</p>
+</dd>
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchvision</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">trojanzoo.utils.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_layer_name</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">[&#39;conv1&#39;, &#39;maxpool&#39;, &#39;layer1&#39;, &#39;layer2&#39;,</span>
+<span class="go">&#39;layer3&#39;, &#39;layer4&#39;, &#39;avgpool&#39;, &#39;fc&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;model&#39;</span><span class="p">)</span>
+<span class="go">[&#39;model.conv1&#39;, &#39;model.maxpool&#39;, &#39;model.layer1.0&#39;, &#39;model.layer1.1&#39;,</span>
+<span class="go">&#39;model.layer2.0&#39;, &#39;model.layer2.1&#39;, &#39;model.layer3.0&#39;, &#39;model.layer3.1&#39;,</span>
+<span class="go">&#39;model.layer4.0&#39;, &#39;model.layer4.1&#39;, &#39;model.avgpool&#39;, &#39;model.fc&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">seq_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">[&#39;conv1&#39;, &#39;maxpool&#39;, &#39;layer1.0&#39;, &#39;layer1.1&#39;, &#39;layer2.0&#39;, &#39;layer2.1&#39;,</span>
+<span class="go">&#39;layer3.0&#39;, &#39;layer3.1&#39;, &#39;layer4.0&#39;, &#39;layer4.1&#39;, &#39;avgpool&#39;, &#39;fc&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">seq_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">non_leaf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">[&#39;conv1&#39;, &#39;maxpool&#39;,</span>
+<span class="go">&#39;layer1.0&#39;, &#39;layer1.1&#39;, &#39;layer1&#39;,</span>
+<span class="go">&#39;layer2.0&#39;, &#39;layer2.1&#39;, &#39;layer2&#39;,</span>
+<span class="go">&#39;layer3.0&#39;, &#39;layer3.1&#39;, &#39;layer3&#39;,</span>
+<span class="go">&#39;layer4.0&#39;, &#39;layer4.1&#39;, &#39;layer4&#39;,</span>
+<span class="go">&#39;avgpool&#39;, &#39;fc&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer_name</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="go">[&#39;conv1&#39;, &#39;maxpool&#39;,</span>
+<span class="go">&#39;layer1.0.conv1&#39;, &#39;layer1.0.conv2&#39;, &#39;layer1.1.conv1&#39;, &#39;layer1.1.conv2&#39;,</span>
+<span class="go">&#39;layer2.0.conv1&#39;, &#39;layer2.0.conv2&#39;, &#39;layer2.0.downsample.0&#39;, &#39;layer2.1.conv1&#39;, &#39;layer2.1.conv2&#39;,</span>
+<span class="go">&#39;layer3.0.conv1&#39;, &#39;layer3.0.conv2&#39;, &#39;layer3.0.downsample.0&#39;, &#39;layer3.1.conv1&#39;, &#39;layer3.1.conv2&#39;,</span>
+<span class="go">&#39;layer4.0.conv1&#39;, &#39;layer4.0.conv2&#39;, &#39;layer4.0.downsample.0&#39;, &#39;layer4.1.conv1&#39;, &#39;layer4.1.conv2&#39;,</span>
+<span class="go">&#39;avgpool&#39;, &#39;fc&#39;]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.get_all_layer">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">get_all_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'input'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L133-L227"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.get_all_layer" title="Link to this definition">¶</a></dt>
+<dd><p>Get all intermediate layer outputs of
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">_input</span></code> from any intermediate layer
+in a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – the module to process.</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The batched input tensor
+from <code class="xref py py-attr docutils literal notranslate"><span class="pre">layer_input</span></code>.</p></li>
+<li><p><strong>layer_input</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The intermediate layer name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">x</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'input'</span></code>.</p></li>
+<li><p><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The traverse depth.
+Defaults to <code class="docutils literal notranslate"><span class="pre">-1</span></code> (<span class="math"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∞</mi></mrow><annotation encoding="application/x-tex">\infty</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord">∞</span></span></span></span></span>).</p></li>
+<li><p><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The prefix string to all elements.
+Defaults to empty string <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
+<li><p><strong>use_filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – <p>Whether to filter out certain layer types.</p>
+<ul>
+<li><p><a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.Normalize.html#torchvision.transforms.Normalize" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.transforms.Normalize</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Dropout.html#torch.nn.Dropout" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Dropout</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html#torch.nn.BatchNorm2d" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.BatchNorm2d</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.ReLU.html#torch.nn.ReLU" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.ReLU</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sigmoid.html#torch.nn.Sigmoid" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Sigmoid</span></code></a></p></li>
+</ul>
+</p></li>
+<li><p><strong>non_leaf</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to include non-leaf nodes.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>seq_only</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to only traverse children
+of <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, will traverse children of all <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <p>The output level to show information
+including layer name, output shape and module information.
+Setting it larger than <code class="docutils literal notranslate"><span class="pre">0</span></code> will enable the output.
+Different integer values stands for different module information.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code>: No output</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code>: Show layer class name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2</span></code>: Show layer string (first line).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">3</span></code>: Show layer string (full).</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict[str, torch.Tensor]</em> – The dict of all layer outputs.</p>
+</dd>
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchvision</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">trojanzoo.utils.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_all_layer</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">densenet121</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">get_all_layer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">layer name                                        output shape        module information</span>
+<span class="go">conv0                                             [5, 64, 112, 112]   Conv2d</span>
+<span class="go">pool0                                             [5, 64, 56, 56]     MaxPool2d</span>
+<span class="go">denseblock1                                       [5, 256, 56, 56]    _DenseBlock</span>
+<span class="go">transition1.conv                                  [5, 128, 56, 56]    Conv2d</span>
+<span class="go">transition1.pool                                  [5, 128, 28, 28]    AvgPool2d</span>
+<span class="go">denseblock2                                       [5, 512, 28, 28]    _DenseBlock</span>
+<span class="go">transition2.conv                                  [5, 256, 28, 28]    Conv2d</span>
+<span class="go">transition2.pool                                  [5, 256, 14, 14]    AvgPool2d</span>
+<span class="go">denseblock3                                       [5, 1024, 14, 14]   _DenseBlock</span>
+<span class="go">transition3.conv                                  [5, 512, 14, 14]    Conv2d</span>
+<span class="go">transition3.pool                                  [5, 512, 7, 7]      AvgPool2d</span>
+<span class="go">denseblock4                                       [5, 1024, 7, 7]     _DenseBlock</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<span class="go">dict_keys([&#39;conv0&#39;, &#39;pool0&#39;,</span>
+<span class="go">&#39;denseblock1&#39;, &#39;transition1.conv&#39;, &#39;transition1.pool&#39;,</span>
+<span class="go">&#39;denseblock2&#39;, &#39;transition2.conv&#39;, &#39;transition2.pool&#39;,</span>
+<span class="go">&#39;denseblock3&#39;, &#39;transition3.conv&#39;, &#39;transition3.pool&#39;,</span>
+<span class="go">&#39;denseblock4&#39;])</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method regards <code class="xref py py-attr docutils literal notranslate"><span class="pre">module</span></code> as a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>.
+Many modules embed flatten operation in their <code class="xref py py-attr docutils literal notranslate"><span class="pre">forward</span></code> method
+(e.g., <code class="docutils literal notranslate"><span class="pre">view(n,</span> <span class="pre">-1)</span></code> or <code class="docutils literal notranslate"><span class="pre">flatten(1)</span></code>),
+making <code class="docutils literal notranslate"><span class="pre">get_all_layer</span></code> raise error.
+We suggest to use <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Flatten.html#torch.nn.Flatten" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Flatten</span></code></a> instead to keep the module sequential.</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.get_layer">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">get_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'output'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'input'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L275-L341"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.get_layer" title="Link to this definition">¶</a></dt>
+<dd><p>Get one certain intermediate layer output
+of <code class="xref py py-attr docutils literal notranslate"><span class="pre">_input</span></code> from any intermediate layer
+in a <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – the module to process.</p></li>
+<li><p><strong>x</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The batched input tensor
+from <code class="xref py py-attr docutils literal notranslate"><span class="pre">layer_input</span></code>.</p></li>
+<li><p><strong>layer_output</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The intermediate output layer name.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'classifier'</span></code>.</p></li>
+<li><p><strong>layer_input</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The intermediate layer name that outputs <code class="xref py py-attr docutils literal notranslate"><span class="pre">x</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'input'</span></code>.</p></li>
+<li><p><strong>seq_only</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to only traverse children
+of <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Sequential.html#torch.nn.Sequential" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Sequential</span></code></a>.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, will traverse children of all <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></a>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> – The output of layer <code class="xref py py-attr docutils literal notranslate"><span class="pre">layer_output</span></code>.</p>
+</dd>
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchvision</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">trojanzoo.utils.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_all_layer</span><span class="p">,</span> <span class="n">get_layer</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">densenet121</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">get_all_layer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">layer name                                        output shape        module information</span>
+<span class="go">conv0                                             [5, 64, 112, 112]   Conv2d</span>
+<span class="go">pool0                                             [5, 64, 56, 56]     MaxPool2d</span>
+<span class="go">denseblock1                                       [5, 256, 56, 56]    _DenseBlock</span>
+<span class="go">transition1.conv                                  [5, 128, 56, 56]    Conv2d</span>
+<span class="go">transition1.pool                                  [5, 128, 28, 28]    AvgPool2d</span>
+<span class="go">denseblock2                                       [5, 512, 28, 28]    _DenseBlock</span>
+<span class="go">transition2.conv                                  [5, 256, 28, 28]    Conv2d</span>
+<span class="go">transition2.pool                                  [5, 256, 14, 14]    AvgPool2d</span>
+<span class="go">denseblock3                                       [5, 1024, 14, 14]   _DenseBlock</span>
+<span class="go">transition3.conv                                  [5, 512, 14, 14]    Conv2d</span>
+<span class="go">transition3.pool                                  [5, 512, 7, 7]      AvgPool2d</span>
+<span class="go">denseblock4                                       [5, 1024, 7, 7]     _DenseBlock</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">56</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_layer</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">layer_input</span><span class="o">=</span><span class="s1">&#39;denseblock1&#39;</span><span class="p">,</span> <span class="n">layer_output</span><span class="o">=</span><span class="s1">&#39;transition3.conv&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">torch.Size([6, 512, 14, 14])</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.summary">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent_atom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">12</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L372-L455"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.summary" title="Link to this definition">¶</a></dt>
+<dd><div class="line-block">
+<div class="line">Prints a string summary of the module.</div>
+<div class="line">This method is similar to <a class="reference external" href="https://www.tensorflow.org/api_docs/python/tf/keras/Model#summary">tensorflow.keras.Model.summary()</a>.</div>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – The module to process.</p></li>
+<li><p><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The traverse depth. Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to output auxiliary information.
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>indent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The space indent for the entire string.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>tree_length</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The tree length.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, use <code class="docutils literal notranslate"><span class="pre">indent_atom</span> <span class="pre">*</span> <span class="pre">(depth</span> <span class="pre">+</span> <span class="pre">1)</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>indent_atom</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The indent incremental for each sub-structure.
+Defaults to <code class="docutils literal notranslate"><span class="pre">12</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Example<span class="colon">:</span></dt>
+<dd class="field-even"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">torchvision</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">trojanzoo.utils.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">summary</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">=</span><span class="n">torchvision</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">conv1                   Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)</span>
+<span class="go">bn1                     BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)</span>
+<span class="go">relu                    ReLU(inplace=True)</span>
+<span class="go">maxpool                 MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)</span>
+<span class="go">layer1                  Sequential</span>
+<span class="go">layer2                  Sequential</span>
+<span class="go">layer3                  Sequential</span>
+<span class="go">layer4                  Sequential</span>
+<span class="go">avgpool                 AdaptiveAvgPool2d(output_size=(1, 1))</span>
+<span class="go">fc                      Linear(in_features=512, out_features=1000, bias=True)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="go">conv1</span>
+<span class="go">bn1</span>
+<span class="go">relu</span>
+<span class="go">maxpool</span>
+<span class="go">layer1</span>
+<span class="go">layer2</span>
+<span class="go">layer3</span>
+<span class="go">layer4</span>
+<span class="go">avgpool</span>
+<span class="go">fc</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">conv1                               Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)</span>
+<span class="go">bn1                                 BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)</span>
+<span class="go">relu                                ReLU(inplace=True)</span>
+<span class="go">maxpool                             MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)</span>
+<span class="go">layer1                              Sequential</span>
+<span class="go">            0                       BasicBlock</span>
+<span class="go">            1                       BasicBlock</span>
+<span class="go">layer2                              Sequential</span>
+<span class="go">            0                       BasicBlock</span>
+<span class="go">            1                       BasicBlock</span>
+<span class="go">layer3                              Sequential</span>
+<span class="go">            0                       BasicBlock</span>
+<span class="go">            1                       BasicBlock</span>
+<span class="go">layer4                              Sequential</span>
+<span class="go">            0                       BasicBlock</span>
+<span class="go">            1                       BasicBlock</span>
+<span class="go">avgpool                             AdaptiveAvgPool2d(output_size=(1, 1))</span>
+<span class="go">fc                                  Linear(in_features=512, out_features=1000, bias=True)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You could use <a class="reference internal" href="#trojanzoo.utils.model.get_all_layer" title="trojanzoo.utils.model.get_all_layer"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_all_layer()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">verbose=True</span></code> to see the output tensor shape for each layer.</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.activate_params">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">activate_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L458-L470"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.activate_params" title="Link to this definition">¶</a></dt>
+<dd><p>Set <code class="docutils literal notranslate"><span class="pre">requires_grad=True</span></code> for selected <code class="xref py py-attr docutils literal notranslate"><span class="pre">params</span></code> of <code class="xref py py-attr docutils literal notranslate"><span class="pre">module</span></code>.
+All other params are frozen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – The module to process.</p></li>
+<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterator" title="(in Python v3.13)"><em>Iterator</em></a><em>[</em><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.parameter.Parameter.html#torch.nn.parameter.Parameter" title="(in PyTorch v2.8)"><em>torch.nn.parameter.Parameter</em></a><em>]</em>) – <dl class="simple">
+<dt>The parameters to <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code>.</dt><dd><p>Defaults to <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.accuracy">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L473-L503"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.accuracy" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the accuracy over the k top predictions
+for the specified values of k.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_output</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The batched logit tensor with shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">C)</span></code>.</p></li>
+<li><p><strong>_label</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The batched label tensor with shape <code class="docutils literal notranslate"><span class="pre">(N)</span></code>.</p></li>
+<li><p><strong>topk</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – Which top-k accuracies to show.
+Defaults to <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">5)</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> – Any keyword argument (unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict[str, float]</em> – Top-k accuracies.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.generate_target">
+<span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">generate_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">same</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L506-L531"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.generate_target" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Generate target labels of a batched input based on</dt><dd><p>the classification confidence ranking index.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch v2.8)"><em>torch.nn.Module</em></a>) – The module to process.</p></li>
+<li><p><strong>_input</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The input tensor.</p></li>
+<li><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The classification confidence
+rank of target class.
+Defaults to <code class="docutils literal notranslate"><span class="pre">1</span></code>.</p></li>
+<li><p><strong>same</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Generate the same label
+for all samples using mod.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> –     The generated target label with shape <code class="docutils literal notranslate"><span class="pre">(N)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanzoo.utils.model.ExponentialMovingAverage">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.model.</span></span><span class="sig-name descname"><span class="pre">ExponentialMovingAverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/model.py#L534-L555"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.model.ExponentialMovingAverage" title="Link to this definition">¶</a></dt>
+<dd><p>Maintains moving averages of model parameters using an exponential decay.
+<code class="docutils literal notranslate"><span class="pre">ema_avg</span> <span class="pre">=</span> <span class="pre">decay</span> <span class="pre">*</span> <span class="pre">avg_model_param</span> <span class="pre">+</span> <span class="pre">(1</span> <span class="pre">-</span> <span class="pre">decay)</span> <span class="pre">*</span> <span class="pre">model_param</span></code></p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference external" href="https://github.com/pytorch/vision/blob/main/references/classification/utils.py">https://github.com/pytorch/vision/blob/main/references/classification/utils.py</a></p>
+<p><a class="reference external" href="https://pytorch.org/docs/stable/optim.html#stochastic-weight-averaging">torch.optim.swa_utils.AveragedModel</a>
+is used to compute the EMA.</p>
+</div>
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="module.html" class="btn btn-neutral float-right" title="module" accesskey="n" rel="next">Next <img src="../../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="logger.html" class="btn btn-neutral" title="logger" accesskey="p" rel="prev"><img src="../../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">model</a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.model.init_weights"><code class="docutils literal notranslate"><span class="pre">init_weights()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.get_layer_name"><code class="docutils literal notranslate"><span class="pre">get_layer_name()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.get_all_layer"><code class="docutils literal notranslate"><span class="pre">get_all_layer()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.get_layer"><code class="docutils literal notranslate"><span class="pre">get_layer()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.activate_params"><code class="docutils literal notranslate"><span class="pre">activate_params()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.accuracy"><code class="docutils literal notranslate"><span class="pre">accuracy()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.generate_target"><code class="docutils literal notranslate"><span class="pre">generate_target()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.model.ExponentialMovingAverage"><code class="docutils literal notranslate"><span class="pre">ExponentialMovingAverage</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>

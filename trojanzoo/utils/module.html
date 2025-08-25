@@ -1,0 +1,753 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>module &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="next" title="tensor" href="tensor.html" />
+  <link rel="prev" title="model" href="model.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">trojanzoo</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trainer.html">trainer</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">utils</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logger.html">logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="model.html">model</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tensor.html">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../trojanvision/index.html">trojanvision</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/datasets/index.html">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/datasets/normal.html">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/datasets/folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/defenses/index.html">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/defenses/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/defenses/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../trojanvision/defenses/backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/marks.html">marks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/models/index.html">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/torchvision.html">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanvision/models/others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanvision/utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="../index.html">trojanzoo</a> &gt;</li>
+          <li><a href="index.html">utils</a> &gt;</li>
+      <li>module</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanzoo/utils/module.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="module">
+<span id="trojanzoo-utils-module"></span><h1>module<a class="headerlink" href="#module" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.BasicObject">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.module.</span></span><span class="sig-name descname"><span class="pre">BasicObject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L17-L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.BasicObject" title="Link to this definition">¶</a></dt>
+<dd><p>A basic class with a pretty <a class="reference internal" href="#trojanzoo.utils.module.BasicObject.summary" title="trojanzoo.utils.module.BasicObject.summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">summary()</span></code></a> method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The name of the instance or class.</p></li>
+<li><p><strong>param_list</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em><em>]</em>) – Map from category strings to variable name list.</p></li>
+<li><p><strong>indent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The indent when calling <a class="reference internal" href="#trojanzoo.utils.module.BasicObject.summary" title="trojanzoo.utils.module.BasicObject.summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">summary()</span></code></a>. Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.BasicObject.summary">
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L33-L54"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.BasicObject.summary" title="Link to this definition">¶</a></dt>
+<dd><p>Summary the variables of the instance
+according to <code class="xref py py-attr docutils literal notranslate"><span class="pre">param_list</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>indent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The space indent for the entire string.
+Defaults to <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.indent</span></code>.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../models.html#trojanzoo.models.Model.summary" title="trojanzoo.models.Model.summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">trojanzoo.models.Model.summary()</span></code></a>.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Process">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.module.</span></span><span class="sig-name descname"><span class="pre">Process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L62-L158"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Process" title="Link to this definition">¶</a></dt>
+<dd><p>It inherits <a class="reference internal" href="#trojanzoo.utils.module.BasicObject" title="trojanzoo.utils.module.BasicObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicObject</span></code></a> and further specify output levels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – The level of output or the set of output items.</p>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>output</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.13)"><em>set</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – The set of output items
+generated by <a class="reference internal" href="#trojanzoo.utils.module.Process.get_output" title="trojanzoo.utils.module.Process.get_output"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output()</span></code></a>.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../optim.html#trojanzoo.optim.Optimizer" title="trojanzoo.optim.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanzoo.optim.Optimizer</span></code></a>
+and <a class="reference internal" href="#trojanzoo.utils.module.ModelProcess" title="trojanzoo.utils.module.ModelProcess"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelProcess</span></code></a> inherit this class.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Process.get_output">
+<span class="sig-name descname"><span class="pre">get_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">org_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L89-L108"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Process.get_output" title="Link to this definition">¶</a></dt>
+<dd><p>Get output items based on output level.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>org_output</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><em>Iterable</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – Output level integer or output items.
+If <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, call <a class="reference internal" href="#trojanzoo.utils.module.Process.get_output_int" title="trojanzoo.utils.module.Process.get_output_int"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_output_int()</span></code></a>.
+Defaults to <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.output</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>set[str]</em> – The set of output items.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Process.get_output_int">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_output_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">org_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L110-L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Process.get_output_int" title="Link to this definition">¶</a></dt>
+<dd><p>Get output items based on output level integer.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span>&#160; <span class="pre">-</span> <span class="pre">4</span> <span class="pre">:</span> <span class="pre">{'verbose'}</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">5</span>&#160; <span class="pre">-</span> <span class="pre">9</span> <span class="pre">:</span> <span class="pre">{'verbose',</span> <span class="pre">'end'}</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">10</span> <span class="pre">-</span> <span class="pre">19:</span> <span class="pre">{'verbose',</span> <span class="pre">'end',</span> <span class="pre">'start'}</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">20</span> <span class="pre">-</span> <span class="pre">29:</span> <span class="pre">{'verbose',</span> <span class="pre">'end',</span> <span class="pre">'start',</span> <span class="pre">'middle'}</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">30</span> <span class="pre">-</span> <span class="pre">*</span> <span class="pre">:</span> <span class="pre">{'verbose',</span> <span class="pre">'end',</span> <span class="pre">'start',</span> <span class="pre">'middle',</span> <span class="pre">'memory'}</span></code></p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>org_output</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Output level integer.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>set[str]</em> – The set of output items.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Process.output_iter">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">output_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L140-L158"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Process.output_iter" title="Link to this definition">¶</a></dt>
+<dd><p>Output an iteration string:
+<code class="docutils literal notranslate"><span class="pre">{name}</span> <span class="pre">Iter:</span> <span class="pre">[</span> <span class="pre">{_iter</span> <span class="pre">+</span> <span class="pre">1}</span> <span class="pre">/</span> <span class="pre">{iteration}</span> <span class="pre">]</span></code>
+or <code class="docutils literal notranslate"><span class="pre">{name}</span> <span class="pre">Iter:</span> <span class="pre">[</span> <span class="pre">{_iter</span> <span class="pre">+</span> <span class="pre">1}</span> <span class="pre">]</span></code>
+if <code class="xref py py-attr docutils literal notranslate"><span class="pre">iteration</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The header string.</p></li>
+<li><p><strong>_iter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The current iteration.</p></li>
+<li><p><strong>iteration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The total iteration.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>The implementation is in
+<code class="xref py py-func docutils literal notranslate"><span class="pre">trojanzoo.utils.output.output_iter()</span></code>.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.ModelProcess">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.module.</span></span><span class="sig-name descname"><span class="pre">ModelProcess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/process.py#L161-L195"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.ModelProcess" title="Link to this definition">¶</a></dt>
+<dd><p>It inherits <a class="reference internal" href="#trojanzoo.utils.module.Process" title="trojanzoo.utils.module.Process"><code class="xref py py-class docutils literal notranslate"><span class="pre">Process</span></code></a>
+and further specify model related items.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<a class="reference internal" href="../datasets.html#trojanzoo.datasets.Dataset" title="trojanzoo.datasets.Dataset"><em>trojanzoo.datasets.Dataset</em></a><em> | </em><em>None</em>) – The dataset instance.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="../models.html#trojanzoo.models.Model" title="trojanzoo.models.Model"><em>trojanzoo.models.Model</em></a><em> | </em><em>None</em>) – The model instance.</p></li>
+<li><p><strong>folder_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – The folder path to store results.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>clean_acc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – The clean accuracy of <code class="xref py py-attr docutils literal notranslate"><span class="pre">model</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../attacks.html#trojanzoo.attacks.Attack" title="trojanzoo.attacks.Attack"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanzoo.attacks.Attack</span></code></a>
+and <a class="reference internal" href="../defenses.html#trojanzoo.defenses.Defense" title="trojanzoo.defenses.Defense"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanzoo.defenses.Defense</span></code></a>
+inherit this class.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.module.</span></span><span class="sig-name descname"><span class="pre">Module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L12-L142"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module" title="Link to this definition">¶</a></dt>
+<dd><p>A dict-like class which supports attribute-like view as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> – Positional dict-like arguments.
+All keys will be merged together.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments that compose a dict.
+All keys will be merged together.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>_marker</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The marker of the class,
+which is shown in <code class="docutils literal notranslate"><span class="pre">str(self)</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'M'</span></code>.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L86-L93"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.clear" title="Link to this definition">¶</a></dt>
+<dd><p>Remove all keys.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Module</em> – return <code class="xref py py-attr docutils literal notranslate"><span class="pre">self</span></code> for stream usage.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L78-L84"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.copy" title="Link to this definition">¶</a></dt>
+<dd><p>Deepcopy of <code class="xref py py-attr docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Module</em> – return the deepcopy of <code class="xref py py-attr docutils literal notranslate"><span class="pre">self</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L98-L99"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.items" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L95-L96"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.keys" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.remove_none">
+<span class="sig-name descname"><span class="pre">remove_none</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L67-L76"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.remove_none" title="Link to this definition">¶</a></dt>
+<dd><p>Remove the parameters whose values are <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Module</em> – return <code class="xref py py-attr docutils literal notranslate"><span class="pre">self</span></code> for stream usage.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.summary">
+<span class="sig-name descname"><span class="pre">summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L135-L142"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.summary" title="Link to this definition">¶</a></dt>
+<dd><p>Output information of <code class="xref py py-attr docutils literal notranslate"><span class="pre">self</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>indent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The space indent for the entire string.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Module.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L34-L50"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Module.update" title="Link to this definition">¶</a></dt>
+<dd><p>update values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> – Positional dict-like arguments.
+All keys will be merged together.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments that compose a dict.
+All keys will be merged together.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Module</em> – return <code class="xref py py-attr docutils literal notranslate"><span class="pre">self</span></code> for stream usage.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Param">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanzoo.utils.module.</span></span><span class="sig-name descname"><span class="pre">Param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L145-L205"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Param" title="Link to this definition">¶</a></dt>
+<dd><p>A dict-like class to store parameters config that
+inherits <a class="reference internal" href="#trojanzoo.utils.module.Module" title="trojanzoo.utils.module.Module"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a> and further extends default values.
+You can view and set keys by attributes as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*args</strong> – Positional dict-like arguments.
+All keys will be merged together.
+If there is only 1 argument and no keyword argument,
+regard it as the default value.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments that compose a dict.
+All keys will be merged together.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>_marker</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The marker of the class,
+which is shown in <code class="docutils literal notranslate"><span class="pre">str(self)</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'P'</span></code>.</p></li>
+<li><p><strong>default</strong> (<em>Any</em>) – The default value of unknown keys.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Param.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L202-L205"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Param.clear" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Param.remove_none">
+<span class="sig-name descname"><span class="pre">remove_none</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L179-L184"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Param.remove_none" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanzoo.utils.module.Param.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanzoo/utils/module/param.py#L166-L171"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanzoo.utils.module.Param.update" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tensor.html" class="btn btn-neutral float-right" title="tensor" accesskey="n" rel="next">Next <img src="../../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="model.html" class="btn btn-neutral" title="model" accesskey="p" rel="prev"><img src="../../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">module</a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.module.BasicObject"><code class="docutils literal notranslate"><span class="pre">BasicObject</span></code></a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.module.BasicObject.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Process"><code class="docutils literal notranslate"><span class="pre">Process</span></code></a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Process.get_output"><code class="docutils literal notranslate"><span class="pre">get_output()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Process.get_output_int"><code class="docutils literal notranslate"><span class="pre">get_output_int()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Process.output_iter"><code class="docutils literal notranslate"><span class="pre">output_iter()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.ModelProcess"><code class="docutils literal notranslate"><span class="pre">ModelProcess</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module"><code class="docutils literal notranslate"><span class="pre">Module</span></code></a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.clear"><code class="docutils literal notranslate"><span class="pre">clear()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.copy"><code class="docutils literal notranslate"><span class="pre">copy()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.items"><code class="docutils literal notranslate"><span class="pre">items()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.keys"><code class="docutils literal notranslate"><span class="pre">keys()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.remove_none"><code class="docutils literal notranslate"><span class="pre">remove_none()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.summary"><code class="docutils literal notranslate"><span class="pre">summary()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Module.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Param"><code class="docutils literal notranslate"><span class="pre">Param</span></code></a><ul>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Param.clear"><code class="docutils literal notranslate"><span class="pre">clear()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Param.remove_none"><code class="docutils literal notranslate"><span class="pre">remove_none()</span></code></a></li>
+<li><a class="reference internal" href="#trojanzoo.utils.module.Param.update"><code class="docutils literal notranslate"><span class="pre">update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>

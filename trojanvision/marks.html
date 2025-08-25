@@ -1,0 +1,730 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>marks &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../genindex.html" />
+  <link rel="search" title="Search" href="../search.html" />
+  <link rel="next" title="models" href="models/index.html" />
+  <link rel="prev" title="environ" href="environ.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../trojanzoo/index.html">trojanzoo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trojanzoo/utils/index.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/logger.html">logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/module.html">module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/tensor.html">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trojanzoo/utils/train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">trojanvision</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="datasets/normal.html">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets/folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="defenses/index.html">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="defenses/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="defenses/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="defenses/backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="defenses/backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="defenses/backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="defenses/backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="environ.html">environ</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">marks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models/index.html">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="models/torchvision.html">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models/nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models/others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="index.html">trojanvision</a> &gt;</li>
+      <li>marks</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanvision/marks.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="marks">
+<span id="trojanvision-marks"></span><h1>marks<a class="headerlink" href="#marks" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanvision.marks.add_argument">
+<span class="sig-prename descclassname"><span class="pre">trojanvision.marks.</span></span><span class="sig-name descname"><span class="pre">add_argument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L417-L426"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.add_argument" title="Link to this definition">¶</a></dt>
+<dd><div class="line-block">
+<div class="line">Add watermark arguments to argument parser.</div>
+<div class="line">For specific arguments implementation, see <a class="reference internal" href="#trojanvision.marks.Watermark.add_argument" title="trojanvision.marks.Watermark.add_argument"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Watermark.add_argument()</span></code></a>.</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> (<a class="reference external" href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.13)"><em>argparse.ArgumentParser</em></a>) – The parser to add arguments.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanvision.marks.create">
+<span class="sig-prename descclassname"><span class="pre">trojanvision.marks.</span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mark_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L429-L460"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.create" title="Link to this definition">¶</a></dt>
+<dd><div class="line-block">
+<div class="line">Create a watermark instance.</div>
+<div class="line">For arguments not included in <code class="xref py py-attr docutils literal notranslate"><span class="pre">kwargs</span></code>,
+use the default values in <code class="xref py py-attr docutils literal notranslate"><span class="pre">config</span></code>.</div>
+<div class="line">For watermark implementation, see <a class="reference internal" href="#trojanvision.marks.Watermark" title="trojanvision.marks.Watermark"><code class="xref py py-class docutils literal notranslate"><span class="pre">Watermark</span></code></a>.</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mark_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <div class="line-block">
+<div class="line">Path to watermark image or npy file.
+There are some preset marks in the package.</div>
+<div class="line">Defaults to <code class="docutils literal notranslate"><span class="pre">'square_white.png'</span></code>.</div>
+</div>
+</p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – The shape of image data <code class="docutils literal notranslate"><span class="pre">[C,</span> <span class="pre">H,</span> <span class="pre">W]</span></code>.</p></li>
+<li><p><strong>dataset_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The dataset name.</p></li>
+<li><p><strong>dataset</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The alias of <cite>dataset_name</cite>.</p></li>
+<li><p><strong>config</strong> (<a class="reference internal" href="../trojanzoo/configs.html#trojanzoo.configs.Config" title="trojanzoo.configs.Config"><em>Config</em></a>) – The default parameter config.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments
+passed to dataset init method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Watermark</em> – Watermark instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.marks.Watermark">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.marks.</span></span><span class="sig-name descname"><span class="pre">Watermark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mark_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'square_white.png'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_background_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_height_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_width_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_random_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_random_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_scattered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_scattered_height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_scattered_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_mark_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L62-L414"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.Watermark" title="Link to this definition">¶</a></dt>
+<dd><p>Watermark class that is used for backdoor attacks.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Images with alpha channel are supported.
+In this case, <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_alpha</span></code> will be multiplied.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_random_init</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_scattered</span></code> can’t be used together.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mark_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <div class="line-block">
+<div class="line">Path to watermark image or npy file.
+There are some preset marks in the package.</div>
+<div class="line">Defaults to <code class="docutils literal notranslate"><span class="pre">'square_white.png'</span></code>.</div>
+</div>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>mark_path</p></th>
+<th class="head"><p>mark image</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'apple_black.png'</span></code></p></td>
+<td><p><a class="reference internal" href="../_images/apple_black.png"><img alt="apple_black" src="../_images/apple_black.png" style="width: 50px; height: 50px;" /></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'apple_white.png'</span></code></p></td>
+<td><p><a class="reference internal" href="../_images/apple_white.png"><img alt="apple_white" src="../_images/apple_white.png" style="width: 50px; height: 50px;" /></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'square_black.png'</span></code></p></td>
+<td><p><a class="reference internal" href="../_images/square_black.png"><img alt="square_black" src="../_images/square_black.png" style="width: 50px; height: 50px;" /></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'square_white.png'</span></code></p></td>
+<td><p><a class="reference internal" href="../_images/square_white.png"><img alt="square_white" src="../_images/square_white.png" style="width: 50px; height: 50px;" /></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'watermark_black.png'</span></code></p></td>
+<td><p><a class="reference internal" href="../_images/watermark_black.png"><img alt="watermark_black" src="../_images/watermark_black.png" style="width: 50px; height: 50px;" /></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'watermark_white.png'</span></code></p></td>
+<td><p><a class="reference internal" href="../_images/watermark_white.png"><img alt="watermark_white" src="../_images/watermark_white.png" style="width: 50px; height: 50px;" /></a></p></td>
+</tr>
+</tbody>
+</table>
+</p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <p>The shape of image data <code class="docutils literal notranslate"><span class="pre">[C,</span> <span class="pre">H,</span> <span class="pre">W]</span></code>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>Usually passed by <code class="docutils literal notranslate"><span class="pre">dataset.data_shape</span></code>.
+See <code class="xref py py-attr docutils literal notranslate"><span class="pre">data_shape</span></code> from
+<a class="reference internal" href="datasets/index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+</div>
+</p></li>
+<li><p><strong>mark_background_color</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Mark background color.
+If <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, choose from <code class="docutils literal notranslate"><span class="pre">['auto',</span> <span class="pre">'black',</span> <span class="pre">'white']</span></code>;
+else, it shall be 1-dim tensor ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>.
+It’s ignored when alpha channel in watermark image.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>.</p></li>
+<li><p><strong>mark_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Mark opacity. Defaults to <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p></li>
+<li><p><strong>mark_height</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Mark resize height. Defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code>.</p></li>
+<li><p><strong>mark_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <p>Mark resize width. Defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_height</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_width</span></code> will be different
+from the passed argument values
+when <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_scattered</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+</p></li>
+<li><p><strong>mark_height_offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Mark height offset. Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>mark_width_offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <p>Mark width offset. Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_height_offset</span></code> and
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_width_offset</span></code> will be ignored
+when <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_random_pos</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+</p></li>
+<li><p><strong>mark_random_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to randomly set pixel values of watermark,
+which means only using the mark shape from the watermark image.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>mark_random_pos</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to add mark at random location when calling <a class="reference internal" href="#trojanvision.marks.Watermark.add_mark" title="trojanvision.marks.Watermark.add_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_mark()</span></code></a>.
+If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_height_offset</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_height_offset</span></code> will be ignored.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>mark_scattered</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Random scatter mark pixels
+in the entire image to get the watermark. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>mark_scattered_height</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – Scattered mark height. Defaults to data_shape[1].</p></li>
+<li><p><strong>mark_scattered_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – <p>Scattered mark width. Defaults to data_shape[2].</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul>
+<li><p>The random scatter process only occurs once at watermark initialization.
+<a class="reference internal" href="#trojanvision.marks.Watermark.add_mark" title="trojanvision.marks.Watermark.add_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_mark()</span></code></a> will still add the same scattered mark to images.</p></li>
+<li><p>Mark image will first resize to <code class="docutils literal notranslate"><span class="pre">(mark_height,</span> <span class="pre">mark_width)</span></code> and then
+scattered to <code class="docutils literal notranslate"><span class="pre">(mark_scattered_height,</span> <span class="pre">mark_scattered_width)</span></code>.
+If they are the same, it’s actually pixel shuffling.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_height</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_width</span></code> will be set to scattered version.</p></li>
+</ul>
+</div>
+</p></li>
+<li><p><strong>add_mark_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><em>Callable</em></a><em> | </em><em>None</em>) – Customized function to add mark to images for <a class="reference internal" href="#trojanvision.marks.Watermark.add_mark" title="trojanvision.marks.Watermark.add_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_mark()</span></code></a> to call.
+<code class="docutils literal notranslate"><span class="pre">add_mark_fn(_input,</span> <span class="pre">mark_random_pos=mark_random_pos,</span> <span class="pre">mark_alpha=mark_alpha,</span> <span class="pre">**kwargs)</span></code>
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>mark</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Mark float tensor with shape
+<code class="docutils literal notranslate"><span class="pre">(data_shape[0]</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">mark_height,</span> <span class="pre">mark_width)</span></code>
+(last dimension is alpha channel).</p></li>
+<li><p><strong>mark_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Mark opacity. Defaults to <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p></li>
+<li><p><strong>mark_height</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Mark resize height. Defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code>.</p></li>
+<li><p><strong>mark_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <p>Mark resize width. Defaults to <code class="docutils literal notranslate"><span class="pre">3</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_height</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_width</span></code> will be different
+from the passed argument values
+when <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_scattered</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+</p></li>
+<li><p><strong>mark_height_offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Mark height offset. Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p></li>
+<li><p><strong>mark_width_offset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <p>Mark width offset. Defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_height_offset</span></code> and
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_width_offset</span></code> will be ignored
+when <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_random_pos</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div>
+</p></li>
+<li><p><strong>mark_random_init</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to randomly set pixel values of watermark,
+which means only using the mark shape from the watermark image.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>mark_random_pos</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to add mark at random location when calling <a class="reference internal" href="#trojanvision.marks.Watermark.add_mark" title="trojanvision.marks.Watermark.add_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_mark()</span></code></a>.
+If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_height_offset</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_height_offset</span></code> will be ignored.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>mark_scattered</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Random scatter mark pixels
+in the entire image to get the watermark. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><strong>mark_scattered_height</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Scattered mark height. Defaults to data_shape[1].</p></li>
+<li><p><strong>mark_scattered_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Scattered mark width. Defaults to data_shape[2].</p></li>
+<li><p><strong>add_mark_fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Callable" title="(in Python v3.13)"><em>Callable</em></a><em> | </em><em>None</em>) – Customized function to add mark to images for <a class="reference internal" href="#trojanvision.marks.Watermark.add_mark" title="trojanvision.marks.Watermark.add_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_mark()</span></code></a> to call.
+<code class="docutils literal notranslate"><span class="pre">add_mark_fn(_input,</span> <span class="pre">mark_random_pos=mark_random_pos,</span> <span class="pre">mark_alpha=mark_alpha,</span> <span class="pre">**kwargs)</span></code>
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.marks.Watermark.add_argument">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_argument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L200-L236"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.Watermark.add_argument" title="Link to this definition">¶</a></dt>
+<dd><p>Add watermark arguments to argument parser group.
+View source to see specific arguments.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This is the implementation of adding arguments.
+For users, please use <a class="reference internal" href="#trojanvision.marks.add_argument" title="trojanvision.marks.add_argument"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_argument()</span></code></a> instead, which is more user-friendly.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.marks.Watermark.add_mark">
+<span class="sig-name descname"><span class="pre">add_mark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_random_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L276-L320"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.Watermark.add_mark" title="Link to this definition">¶</a></dt>
+<dd><p>Main method to add watermark to a batched input image tensor ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>.</p>
+<p>Call <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.add_mark_fn()</span></code> instead if it’s not <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_input</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Batched input tensor
+ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> with shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">C,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>.</p></li>
+<li><p><strong>mark_random_pos</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em> | </em><em>None</em>) – Whether to add mark at random location.
+Defaults to <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_random_pos</span></code>.</p></li>
+<li><p><strong>mark_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em> | </em><em>None</em>) – Mark opacity. Defaults to <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark_alpha</span></code>.</p></li>
+<li><p><strong>mark</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a><em> | </em><em>None</em>) – Mark tensor. Defaults to <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to <cite>self.add_mark_fn()</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.marks.Watermark.load_mark">
+<span class="sig-name descname"><span class="pre">load_mark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mark_img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_background_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">already_processed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L357-L414"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.Watermark.load_mark" title="Link to this definition">¶</a></dt>
+<dd><p>Load watermark tensor from image <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_img</span></code>,
+scale by calling <a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.resize" title="(in Pillow (PIL Fork) v11.3.0)"><code class="xref any docutils literal notranslate"><span class="pre">PIL.Image.Image.resize</span></code></a>
+and transform to <code class="docutils literal notranslate"><span class="pre">(channel</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">height,</span> <span class="pre">width)</span></code> with alpha channel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mark_img</strong> (<a class="reference external" href="https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image" title="(in Pillow (PIL Fork) v11.3.0)"><em>PIL.Image.Image</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Pillow image instance or file path.</p></li>
+<li><p><strong>mark_background_color</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a><em> | </em><em>None</em>) – Mark background color.
+If <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, choose from <code class="docutils literal notranslate"><span class="pre">['auto',</span> <span class="pre">'black',</span> <span class="pre">'white']</span></code>;
+else, it shall be 1-dim tensor ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>.
+It’s ignored when alpha channel in watermark image.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>.</p></li>
+<li><p><strong>already_processed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, will just load <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_img</span></code> as <code class="xref py py-attr docutils literal notranslate"><span class="pre">self.mark</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> –     Watermark tensor ranging in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>
+with shape <code class="docutils literal notranslate"><span class="pre">(channel</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">height,</span> <span class="pre">width)</span></code> with alpha channel.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.marks.Watermark.scatter_mark">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">scatter_mark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mark_unscattered</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mark_scattered_shape</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/marks/__init__.py#L329-L353"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.marks.Watermark.scatter_mark" title="Link to this definition">¶</a></dt>
+<dd><p>Scatter the original mark tensor to a provided shape.</p>
+<p>If the shape are the same, it becomes a pixel shuffling process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mark_unscattered</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – The unscattered mark tensor
+with shape <code class="docutils literal notranslate"><span class="pre">(data_shape[0]</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">mark_height,</span> <span class="pre">mark_width)</span></code></p></li>
+<li><p><strong>mark_scattered_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – The scattered mark shape
+<code class="docutils literal notranslate"><span class="pre">(data_shape[0]</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">mark_scattered_height,</span> <span class="pre">mark_scattered_width)</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> – The scattered mark with shape <code class="xref py py-attr docutils literal notranslate"><span class="pre">mark_scattered_shape</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="models/index.html" class="btn btn-neutral float-right" title="models" accesskey="n" rel="next">Next <img src="../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="environ.html" class="btn btn-neutral" title="environ" accesskey="p" rel="prev"><img src="../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">marks</a><ul>
+<li><a class="reference internal" href="#trojanvision.marks.add_argument"><code class="docutils literal notranslate"><span class="pre">add_argument()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.marks.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.marks.Watermark"><code class="docutils literal notranslate"><span class="pre">Watermark</span></code></a><ul>
+<li><a class="reference internal" href="#trojanvision.marks.Watermark.add_argument"><code class="docutils literal notranslate"><span class="pre">add_argument()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.marks.Watermark.add_mark"><code class="docutils literal notranslate"><span class="pre">add_mark()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.marks.Watermark.load_mark"><code class="docutils literal notranslate"><span class="pre">load_mark()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.marks.Watermark.scatter_mark"><code class="docutils literal notranslate"><span class="pre">scatter_mark()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,760 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>torchvision &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="next" title="nas" href="nas.html" />
+  <link rel="prev" title="models" href="index.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../trojanzoo/index.html">trojanzoo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/utils/index.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/logger.html">logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/module.html">module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/tensor.html">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">trojanvision</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/index.html">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/normal.html">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../defenses/index.html">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../defenses/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../defenses/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../marks.html">marks</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">models</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="../index.html">trojanvision</a> &gt;</li>
+          <li><a href="index.html">models</a> &gt;</li>
+      <li>torchvision</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanvision/models/torchvision.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="torchvision">
+<span id="trojanvision-models-torchvision"></span><h1>torchvision<a class="headerlink" href="#torchvision" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.AlexNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">AlexNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'alexnet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_AlexNet</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/alexnet.py#L21-L73"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.AlexNet" title="Link to this definition">¶</a></dt>
+<dd><p>AlexNet proposed by Alex Krizhevsky from Google in 2014.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;alexnet&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.alexnet.html#torchvision.models.alexnet" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.alexnet</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1404.5997">One weird trick for parallelizing convolutional neural networks</a></p></li>
+</ul>
+</div>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">192</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">192</span><span class="p">,</span> <span class="mi">384</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">384</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">pool</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">AdaptiveAvgPool2d</span><span class="p">((</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">flatten</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">256</span> <span class="o">*</span> <span class="mi">6</span> <span class="o">*</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">4096</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span> <span class="mi">4096</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.DenseNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">DenseNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'densenet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">121</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_DenseNet</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/densenet.py#L36-L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.DenseNet" title="Link to this definition">¶</a></dt>
+<dd><p>DenseNet proposed by Gao Huang from Cornell University in CVPR 2017.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;densenet&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;densenet121&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet169&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet201&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet161&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;densenet121_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet169_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet201_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;densenet161_comp&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.densenet121.html#torchvision.models.densenet121" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.densenet121</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1608.06993">Densely Connected Convolutional Networks</a></p></li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">_comp</span></code> reduces the first convolutional layer
+from <code class="docutils literal notranslate"><span class="pre">kernel_size=7,</span> <span class="pre">stride=2,</span> <span class="pre">padding=3</span></code></p>
+<p>to <code class="docutils literal notranslate"><span class="pre">kernel_size=3,</span> <span class="pre">stride=1,</span> <span class="pre">padding=1</span></code>,
+and removes following <code class="docutils literal notranslate"><span class="pre">norm0,</span> <span class="pre">relu0,</span> <span class="pre">pool0</span></code>
+(<code class="docutils literal notranslate"><span class="pre">pool0</span></code> is <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html#torch.nn.MaxPool2d" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.MaxPool2d</span></code></a>)
+before block layers.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.EfficientNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">EfficientNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'efficientnet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_b0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_EfficientNet</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/efficientnet.py#L36-L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.EfficientNet" title="Link to this definition">¶</a></dt>
+<dd><p>EfficientNet proposed by Mingxing Tan from Google in ICML 2019.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;efficientnet&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;efficientnet_b0&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b1&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b2&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;efficientnet_b3&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b4&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b5&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;efficientnet_b6&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b7&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;efficientnet_b0_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b1_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b2_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;efficientnet_b3_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b4_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b5_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;efficientnet_b6_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet_b7_comp&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.efficientnet_b0.html#torchvision.models.efficientnet_b0" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.efficientnet_b0</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1905.11946">EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks</a></p></li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">_comp</span></code> reduces the first convolutional layer
+from <code class="docutils literal notranslate"><span class="pre">kernel_size=7,</span> <span class="pre">stride=2,</span> <span class="pre">padding=3</span></code></p>
+<p>to <code class="docutils literal notranslate"><span class="pre">kernel_size=3,</span> <span class="pre">stride=1,</span> <span class="pre">padding=1</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.MNASNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">MNASNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mnasnet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mnas_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_MNASNet</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/mnasnet.py#L23-L70"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.MNASNet" title="Link to this definition">¶</a></dt>
+<dd><p>MNASNet proposed by Mingxing Tan from Google in CVPR 2019.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;mnasnet&#39;</span><span class="p">,</span> <span class="s1">&#39;mnasnet0_5&#39;</span><span class="p">,</span> <span class="s1">&#39;mnasnet0_75&#39;</span><span class="p">,</span> <span class="s1">&#39;mnasnet1_0&#39;</span><span class="p">,</span> <span class="s1">&#39;mnasnet1_3&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mnasnet0_5.html#torchvision.models.mnasnet0_5" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.mnasnet0_5</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1807.11626">MnasNet: Platform-Aware Neural Architecture Search for Mobile</a></p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.MobileNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">MobileNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mobilenet_v2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_MobileNet</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/mobilenet.py#L48-L87"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.MobileNet" title="Link to this definition">¶</a></dt>
+<dd><p>MobileNets proposed by Andrew Howard and Liang-Chieh Chen from Google in CVPR 2018.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;mobilenet_v2&#39;</span><span class="p">,</span> <span class="s1">&#39;mobilenet_v3_large&#39;</span><span class="p">,</span> <span class="s1">&#39;mobilenet_v3_small&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mobilenet_v2_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;mobilenet_v3_large_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;mobilenet_v3_small_comp&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>MobileNet v2:</p>
+<ul>
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v2.html#torchvision.models.mobilenet_v2" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.mobilenet_v2</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1801.04381">MobileNetV2: Inverted Residuals and Linear Bottlenecks</a></p></li>
+</ul>
+</li>
+<li><p>MobileNet v3:</p>
+<ul>
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html#torchvision.models.mobilenet_v3_small" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.mobilenet_v3_small</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1905.02244">Searching for MobileNetV3</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">_comp</span></code> uses a small <code class="docutils literal notranslate"><span class="pre">inverted_residual_setting</span></code>
+and set first conv layer <code class="docutils literal notranslate"><span class="pre">stride=1</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.ResNet">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">ResNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'resnet'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_ResNet</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/resnet.py#L72-L177"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.ResNet" title="Link to this definition">¶</a></dt>
+<dd><p>ResNet model series including ResNet, ResNext and WideResNet.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet_s&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;resnet18&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet34&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet50&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet101&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet152&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;resnet18_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet34_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet50_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet101_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet152_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;resnext50_32x4d&#39;</span><span class="p">,</span> <span class="s1">&#39;resnext101_32x8d&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;resnext50_32x4d_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;resnext101_32x8d_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;wide_resnet50_2&#39;</span><span class="p">,</span> <span class="s1">&#39;wide_resnet101_2&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;wide_resnet50_2_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;wide_resnet101_2_comp&#39;</span><span class="p">,</span>
+
+ <span class="s1">&#39;resnet18_s&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet34_s&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet50_s&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet101_s&#39;</span><span class="p">,</span> <span class="s1">&#39;resnet152_s&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;resnet18_ap_comp&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>ResNet:</p>
+<ul>
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html#torchvision.models.resnet18" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.resnet18</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1512.03385">Deep Residual Learning for Image Recognition</a></p></li>
+</ul>
+</li>
+<li><p>ResNext:</p>
+<ul>
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnext50_32x4d.html#torchvision.models.resnext50_32x4d" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.resnext50_32x4d</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1611.05431">Aggregated Residual Transformations for Deep Neural Networks</a></p></li>
+</ul>
+</li>
+<li><p>WideResNet:</p>
+<ul>
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.wide_resnet50_2.html#torchvision.models.wide_resnet50_2" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.wide_resnet50_2</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1605.07146">Wide Residual Networks</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">_comp</span></code> reduces the first convolutional layer
+from <code class="docutils literal notranslate"><span class="pre">kernel_size=7,</span> <span class="pre">stride=2,</span> <span class="pre">padding=3</span></code></p>
+<p>to <code class="docutils literal notranslate"><span class="pre">kernel_size=3,</span> <span class="pre">stride=1,</span> <span class="pre">padding=1</span></code>,
+and removes the <code class="docutils literal notranslate"><span class="pre">maxpool</span></code> layer before block layers.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_s</span></code> further reduces the conv channels and number of blocks based on <code class="docutils literal notranslate"><span class="pre">_comp</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ResNetS</span></code> is used in NIPS 2017 paper by Facebook Research about continual learning.</p>
+<ul class="simple">
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1706.08840">Gradient Episodic Memory for Continual Learning</a> (GEM)</p></li>
+<li><p>code: <a class="reference external" href="https://github.com/facebookresearch/GradientEpisodicMemory/blob/master/model/common.py">https://github.com/facebookresearch/GradientEpisodicMemory/blob/master/model/common.py</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_ap</span></code> conducts average pooling in all blocks
+rather than a global pooling layer after feature extractor.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ResNetAP</span></code> is used in ICLR 2021 paper about dataset condensation.</p>
+<ul class="simple">
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/2006.05929">Dataset Condensation with Gradient Matching</a></p></li>
+<li><p>code: <a class="reference external" href="https://github.com/VICO-UoE/DatasetCondensation/blob/master/networks.py">https://github.com/VICO-UoE/DatasetCondensation/blob/master/networks.py</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.ShuffleNetV2">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">ShuffleNetV2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'shufflenet_v2'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_x0_5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_ShuffleNetV2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/shufflenetv2.py#L46-L101"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.ShuffleNetV2" title="Link to this definition">¶</a></dt>
+<dd><p>ShuffleNet v2 proposed by Ningning Ma from Megvii in ECCV 2018.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;shufflenet_v2&#39;</span><span class="p">,</span> <span class="s1">&#39;shufflenet_v2_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;shufflenet_v2_x0_5&#39;</span><span class="p">,</span> <span class="s1">&#39;shufflenet_v2_x1_0&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;shufflenet_v2_x1_5&#39;</span><span class="p">,</span> <span class="s1">&#39;shufflenet_v2_x2_0&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;shufflenet_v2_x0_5_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;shufflenet_v2_x1_0_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;shufflenet_v2_x1_5_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;shufflenet_v2_x2_0_comp&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x0_5.html#torchvision.models.shufflenet_v2_x0_5" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.shufflenet_v2_x0_5</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1807.11164">ShuffleNet V2: Practical Guidelines for Efficient CNN Architecture Design</a></p></li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">_comp</span></code> reduces the first convolutional layer
+from <code class="docutils literal notranslate"><span class="pre">kernel_size=7,</span> <span class="pre">stride=2,</span> <span class="pre">padding=3</span></code></p>
+<p>to <code class="docutils literal notranslate"><span class="pre">kernel_size=3,</span> <span class="pre">stride=1,</span> <span class="pre">padding=1</span></code>,
+and removes the <code class="docutils literal notranslate"><span class="pre">maxpool</span></code> layer before block layers.</p>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.models.VGG">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.models.</span></span><span class="sig-name descname"><span class="pre">VGG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'vgg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">13</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">_VGG</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/models/torchvision/vgg.py#L38-L86"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.models.VGG" title="Link to this definition">¶</a></dt>
+<dd><p>VGG model proposed by Karen Simonyan from University of Oxford in ICLR 2015.</p>
+<dl class="field-list">
+<dt class="field-odd">Available model names<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;vgg&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg_bn&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg_bn_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg_bn_s&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;vgg11&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg13&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg16&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg19&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;vgg11_bn&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg13_bn&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg16_bn&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg19_bn&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;vgg11_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg13_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg16_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg19_comp&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;vgg11_bn_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg13_bn_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg16_bn_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg19_bn_comp&#39;</span>
+ <span class="s1">&#39;vgg11_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg13_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg16_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg19_s&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;vgg11_bn_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg13_bn_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg16_bn_s&#39;</span><span class="p">,</span> <span class="s1">&#39;vgg19_bn_s&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.vgg11.html#torchvision.models.vgg11" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.models.vgg11</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1409.1556">Very Deep Convolutional Networks for Large-Scale Image Recognition</a></p></li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_comp</span></code> sets <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.nn.AdaptiveAvgPool2d.html#torch.nn.AdaptiveAvgPool2d" title="(in PyTorch v2.8)"><code class="xref any docutils literal notranslate"><span class="pre">torch.nn.AdaptiveAvgPool2d</span></code></a> from <code class="docutils literal notranslate"><span class="pre">(7,</span> <span class="pre">7)</span></code> to <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">1)</span></code>,
+update the intermediate feature dimension from 4096 to 512 in <code class="docutils literal notranslate"><span class="pre">self.classifier</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_s</span></code> further makes <code class="docutils literal notranslate"><span class="pre">self.classifier</span></code> only one single linear layer based on <code class="docutils literal notranslate"><span class="pre">_comp</span></code>.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="nas.html" class="btn btn-neutral float-right" title="nas" accesskey="n" rel="next">Next <img src="../../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="models" accesskey="p" rel="prev"><img src="../../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">torchvision</a><ul>
+<li><a class="reference internal" href="#trojanvision.models.AlexNet"><code class="docutils literal notranslate"><span class="pre">AlexNet</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.DenseNet"><code class="docutils literal notranslate"><span class="pre">DenseNet</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.EfficientNet"><code class="docutils literal notranslate"><span class="pre">EfficientNet</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.MNASNet"><code class="docutils literal notranslate"><span class="pre">MNASNet</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.MobileNet"><code class="docutils literal notranslate"><span class="pre">MobileNet</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.ResNet"><code class="docutils literal notranslate"><span class="pre">ResNet</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.ShuffleNetV2"><code class="docutils literal notranslate"><span class="pre">ShuffleNetV2</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.models.VGG"><code class="docutils literal notranslate"><span class="pre">VGG</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>

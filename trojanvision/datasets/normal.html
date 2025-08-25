@@ -1,0 +1,633 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>normal &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="next" title="folder" href="folder.html" />
+  <link rel="prev" title="datasets" href="index.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../trojanzoo/index.html">trojanzoo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/utils/index.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/logger.html">logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/module.html">module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/tensor.html">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">trojanvision</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">datasets</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../defenses/index.html">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../defenses/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../defenses/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../defenses/backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../marks.html">marks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models/index.html">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../models/torchvision.html">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="../index.html">trojanvision</a> &gt;</li>
+          <li><a href="index.html">datasets</a> &gt;</li>
+      <li>normal</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanvision/datasets/normal.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="normal">
+<span id="trojanvision-datasets-normal"></span><h1>normal<a class="headerlink" href="#normal" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.datasets.MNIST">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.datasets.</span></span><span class="sig-name descname"><span class="pre">MNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norm_par</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'mean':</span> <span class="pre">[0.1307],</span> <span class="pre">'std':</span> <span class="pre">[0.3081]}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/mnist.py#L8-L41"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.MNIST" title="Link to this definition">¶</a></dt>
+<dd><p>MNIST dataset.
+It inherits <a class="reference internal" href="index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.MNIST.html#torchvision.datasets.MNIST" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.datasets.MNIST</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://ieeexplore.ieee.org/document/726791">Gradient-based learning applied to document recognition</a></p></li>
+<li><p>website: <a class="reference external" href="http://yann.lecun.com/exdb/mnist/">http://yann.lecun.com/exdb/mnist/</a></p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'mnist'</span></code></p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <code class="docutils literal notranslate"><span class="pre">10</span></code></p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">28,</span> <span class="pre">28]</span></code></p></li>
+<li><p><strong>norm_par</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>]</em><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">{'mean':</span> <span class="pre">[0.1307],</span> <span class="pre">'std':</span> <span class="pre">[0.3081]}</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.datasets.CIFAR10">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.datasets.</span></span><span class="sig-name descname"><span class="pre">CIFAR10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norm_par</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'mean':</span> <span class="pre">[0.49139968,</span> <span class="pre">0.48215827,</span> <span class="pre">0.44653124],</span> <span class="pre">'std':</span> <span class="pre">[0.24703233,</span> <span class="pre">0.24348505,</span> <span class="pre">0.26158768]}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/cifar.py#L8-L48"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.CIFAR10" title="Link to this definition">¶</a></dt>
+<dd><p>CIFAR10 dataset introduced by Alex Krizhevsky in 2009.
+It inherits <a class="reference internal" href="index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.CIFAR10.html#torchvision.datasets.CIFAR10" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.datasets.CIFAR10</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf">Learning Multiple Layers of Features from Tiny Images</a></p></li>
+<li><p>website: <a class="reference external" href="https://www.cs.toronto.edu/~kriz/cifar.html">https://www.cs.toronto.edu/~kriz/cifar.html</a></p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'cifar10'</span></code></p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <code class="docutils literal notranslate"><span class="pre">10</span></code></p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">32,</span> <span class="pre">32]</span></code></p></li>
+<li><p><strong>class_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>]</em>) – <div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">['airplane',</span> <span class="pre">'automobile',</span> <span class="pre">'bird',</span> <span class="pre">'cat',</span> <span class="pre">'deer',</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">'dog',</span> <span class="pre">'frog',</span> <span class="pre">'horse',</span> <span class="pre">'ship',</span> <span class="pre">'truck']</span></code></div>
+</div>
+</p></li>
+<li><p><strong>norm_par</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>]</em><em>]</em>) – <div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">{'mean':</span> <span class="pre">[0.49139968,</span> <span class="pre">0.48215827,</span> <span class="pre">0.44653124],</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">'std'</span>&#160; <span class="pre">:</span> <span class="pre">[0.24703233,</span> <span class="pre">0.24348505,</span> <span class="pre">0.26158768]}</span></code></div>
+</div>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.datasets.CIFAR100">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.datasets.</span></span><span class="sig-name descname"><span class="pre">CIFAR100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norm_par</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'mean':</span> <span class="pre">[0.49139968,</span> <span class="pre">0.48215827,</span> <span class="pre">0.44653124],</span> <span class="pre">'std':</span> <span class="pre">[0.24703233,</span> <span class="pre">0.24348505,</span> <span class="pre">0.26158768]}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/cifar.py#L51-L79"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.CIFAR100" title="Link to this definition">¶</a></dt>
+<dd><p>CIFAR100 dataset. It inherits <a class="reference internal" href="index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.CIFAR100.html#torchvision.datasets.CIFAR100" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.datasets.CIFAR100</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf">Learning Multiple Layers of Features from Tiny Images</a></p></li>
+<li><p>website: <a class="reference external" href="https://www.cs.toronto.edu/~kriz/cifar.html">https://www.cs.toronto.edu/~kriz/cifar.html</a></p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'cifar100'</span></code></p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <code class="docutils literal notranslate"><span class="pre">100</span></code></p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">32,</span> <span class="pre">32]</span></code></p></li>
+<li><p><strong>norm_par</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>]</em><em>]</em>) – <div class="line-block">
+<div class="line"><code class="docutils literal notranslate"><span class="pre">{'mean':</span> <span class="pre">[0.49139968,</span> <span class="pre">0.48215827,</span> <span class="pre">0.44653124],</span></code></div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">'std'</span>&#160; <span class="pre">:</span> <span class="pre">[0.24703233,</span> <span class="pre">0.24348505,</span> <span class="pre">0.26158768]}</span></code></div>
+</div>
+</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.datasets.ImageNet16">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.datasets.</span></span><span class="sig-name descname"><span class="pre">ImageNet16</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norm_par</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'mean':</span> <span class="pre">[122.68</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">116.66</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">104.01</span> <span class="pre">/</span> <span class="pre">255],</span> <span class="pre">'std':</span> <span class="pre">[63.22</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">61.26</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">65.09</span> <span class="pre">/</span> <span class="pre">255]}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/downsampled_imagenet.py#L37-L59"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.ImageNet16" title="Link to this definition">¶</a></dt>
+<dd><p>ImageNet16 dataset introduced by Patryk Chrabaszcz in 2017.
+It inherits <a class="reference internal" href="index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1707.08819">A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets</a></p></li>
+<li><p>website: <a class="reference external" href="https://patrykchrabaszcz.github.io/Imagenet32/">https://patrykchrabaszcz.github.io/Imagenet32/</a></p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'imagenet16'</span></code></p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Flexible (passed by command line argument, no larger than 1000).</p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">16,</span> <span class="pre">16]</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.datasets.ImageNet32">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.datasets.</span></span><span class="sig-name descname"><span class="pre">ImageNet32</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norm_par</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'mean':</span> <span class="pre">[122.68</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">116.66</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">104.01</span> <span class="pre">/</span> <span class="pre">255],</span> <span class="pre">'std':</span> <span class="pre">[63.22</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">61.26</span> <span class="pre">/</span> <span class="pre">255,</span> <span class="pre">65.09</span> <span class="pre">/</span> <span class="pre">255]}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/downsampled_imagenet.py#L62-L84"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.ImageNet32" title="Link to this definition">¶</a></dt>
+<dd><p>ImageNet32 dataset introduced by Patryk Chrabaszcz in 2017.
+It inherits <a class="reference internal" href="index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>paper: <a class="reference external" href="https://arxiv.org/abs/1707.08819">A Downsampled Variant of ImageNet as an Alternative to the CIFAR datasets</a></p></li>
+<li><p>website: <a class="reference external" href="https://patrykchrabaszcz.github.io/Imagenet32/">https://patrykchrabaszcz.github.io/Imagenet32/</a></p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'imagenet64'</span></code></p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Flexible (passed by command line argument, no larger than 1000).</p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">32,</span> <span class="pre">32]</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.datasets.STL10">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.datasets.</span></span><span class="sig-name descname"><span class="pre">STL10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">norm_par</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'mean':</span> <span class="pre">[0.507,</span> <span class="pre">0.487,</span> <span class="pre">0.441],</span> <span class="pre">'std':</span> <span class="pre">[0.267,</span> <span class="pre">0.256,</span> <span class="pre">0.276]}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/stl10.py#L18-L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.STL10" title="Link to this definition">¶</a></dt>
+<dd><p>STL10 dataset.
+It inherits <a class="reference internal" href="index.html#trojanvision.datasets.ImageSet" title="trojanvision.datasets.ImageSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.datasets.ImageSet</span></code></a>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>torchvision: <a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.STL10.html#torchvision.datasets.STL10" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.datasets.STL10</span></code></a></p></li>
+<li><p>paper: <a class="reference external" href="https://cs.stanford.edu/~acoates/papers/coatesleeng_aistats_2011.pdf">An Analysis of Single-Layer Networks in Unsupervised Feature Learning</a></p></li>
+<li><p>website: <a class="reference external" href="https://cs.stanford.edu/~acoates/stl10/">https://cs.stanford.edu/~acoates/stl10/</a></p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – <code class="docutils literal notranslate"><span class="pre">'stl10'</span></code></p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – <code class="docutils literal notranslate"><span class="pre">10</span></code></p></li>
+<li><p><strong>data_shape</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">256,</span> <span class="pre">256]</span></code></p></li>
+<li><p><strong>norm_par</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a><em>]</em><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">{'mean':</span> <span class="pre">[0.507,</span> <span class="pre">0.487,</span> <span class="pre">0.441],</span> <span class="pre">'std':</span> <span class="pre">[0.267,</span> <span class="pre">0.256,</span> <span class="pre">0.276]}</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.datasets.STL10.get_transform">
+<span class="sig-name descname"><span class="pre">get_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/datasets/normal/stl10.py#L57-L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.datasets.STL10.get_transform" title="Link to this definition">¶</a></dt>
+<dd><p>Get dataset transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – The dataset mode (e.g., <code class="docutils literal notranslate"><span class="pre">'train'</span> <span class="pre">|</span> <span class="pre">'valid'</span> <span class="pre">|</span> <span class="pre">'unlabeled'</span> <span class="pre">|</span> <span class="pre">'train+unlabeled'</span></code>).</p></li>
+<li><p><strong>normalize</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a><em> | </em><em>None</em>) – Whether to use <a class="reference external" href="https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.Normalize.html#torchvision.transforms.Normalize" title="(in Torchvision v0.23)"><code class="xref any docutils literal notranslate"><span class="pre">torchvision.transforms.Normalize</span></code></a>
+in dataset transform. Defaults to <code class="docutils literal notranslate"><span class="pre">self.normalize</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torchvision.transforms.Compose</em> – The transform sequence.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="folder.html" class="btn btn-neutral float-right" title="folder" accesskey="n" rel="next">Next <img src="../../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="datasets" accesskey="p" rel="prev"><img src="../../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">normal</a><ul>
+<li><a class="reference internal" href="#trojanvision.datasets.MNIST"><code class="docutils literal notranslate"><span class="pre">MNIST</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.datasets.CIFAR10"><code class="docutils literal notranslate"><span class="pre">CIFAR10</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.datasets.CIFAR100"><code class="docutils literal notranslate"><span class="pre">CIFAR100</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.datasets.ImageNet16"><code class="docutils literal notranslate"><span class="pre">ImageNet16</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.datasets.ImageNet32"><code class="docutils literal notranslate"><span class="pre">ImageNet32</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.datasets.STL10"><code class="docutils literal notranslate"><span class="pre">STL10</span></code></a><ul>
+<li><a class="reference internal" href="#trojanvision.datasets.STL10.get_transform"><code class="docutils literal notranslate"><span class="pre">get_transform()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>

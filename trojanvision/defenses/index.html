@@ -1,0 +1,779 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>defenses &mdash; TrojanZoo 2.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+  
+
+  
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/katex-math.css" type="text/css" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="next" title="adv" href="adv.html" />
+  <link rel="prev" title="folder" href="../datasets/folder.html" /> 
+
+  <!-- Preload the theme fonts -->
+
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-book.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-Medium.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/FreightSans/freight-sans-medium-italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="../../_static/fonts/IBMPlexMono/IBMPlexMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+
+<!-- Preload the katex fonts -->
+
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Math-Italic.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Main-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size1-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size4-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size2-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Size3-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/fonts/KaTeX_Caligraphic-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css"
+    integrity="sha384-vSIIfh2YWi9wW0r9iZe7RJPrKwp6bG+s9QZMoITbCckVJqGCCRhc+ccxNcdpHuYu" crossorigin="anonymous">
+</head>
+
+
+<div class="container-fluid header-holder docs-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active docs-active">
+            <div id="resourcesDropdownButton" data-toggle="resources-dropdown" class="resources-dropdown">
+              <a class="resource-option with-down-orange-arrow">
+                Docs
+              </a>
+              <div class="resources-dropdown-menu">
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/alpsplot">
+                  <span class="dropdown-title">AlpsPlot</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item active" href="/trojanzoo">
+                  <span class="dropdown-title">TrojanZoo</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="/trojanzoo_sphinx_theme">
+                  <span class="dropdown-title">trojanzoo_sphinx_theme</span>
+                  <p></p>
+                </a>
+                  <a class="doc-dropdown-option nav-dropdown-item" href="https://github.com/ain-soph/base">
+                  <span class="dropdown-title">base</span>
+                  <p></p>
+                </a>
+              </div>
+            </div>
+          </li>
+
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+  </div>
+</div>
+
+<body class="sphinx-template-body">
+
+   
+
+  
+
+  <div class="table-of-contents-link-wrapper">
+    <span>Table of Contents</span>
+    <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+  </div>
+
+  <nav data-toggle="sphinx-template-nav-shift" class="sphinx-template-left-menu" id="sphinx-template-left-menu">
+    <div class="sphinx-template-side-scroll">
+      <div class="sphinx-template-menu sphinx-template-menu-vertical" data-spy="affix" role="navigation"
+        aria-label="main navigation">
+        <div class="sphinx-template-left-menu-search">
+          
+
+          
+          
+          
+          <div class="version">
+            2.0.3
+          </div>
+          
+          
+
+          
+
+
+<div role="search">
+  <form id="rtd-search-form" class="sphinx-template-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search Docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        
+        
+        
+        
+        
+        <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/basic.html">basic</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">TrojanZoo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../trojanzoo/index.html">trojanzoo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/attacks.html">attacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/datasets.html">datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/defenses.html">defenses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/models.html">models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../trojanzoo/utils/index.html">utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/data.html">data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/fim.html">fim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/logger.html">logger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/module.html">module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/tensor.html">tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../trojanzoo/utils/train.html">train</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">trojanvision</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../attacks/index.html">attacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../attacks/adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../attacks/backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/normal.html">normal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/clean_label.html">clean_label</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../attacks/backdoor/dynamic.html">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../configs.html">configs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/index.html">datasets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/normal.html">normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/folder.html">folder</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">defenses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="adv.html">adv</a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="backdoor/attack_agnostic.html">attack_agnostic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="backdoor/input_filtering.html">input_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="backdoor/training_filtering.html">training_filtering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="backdoor/model_inspection.html">model_inspection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../environ.html">environ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../marks.html">marks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../models/index.html">models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../models/torchvision.html">torchvision</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/nas.html">nas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/others.html">others</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../optim.html">optim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../trainer.html">trainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils.html">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        
+        
+      </div>
+    </div>
+  </nav>
+
+  <div class="sphinx-template-container">
+    <div class="sphinx-template-page-level-bar" id="sphinx-template-page-level-bar">
+      <div class="sphinx-template-breadcrumbs-wrapper">
+        <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="sphinx-template-breadcrumbs">
+      <li><a href="../../index.html" class="fa fa-large fa-home">Docs</a> &gt;</li>
+          <li><a href="../index.html">trojanvision</a> &gt;</li>
+      <li>defenses</li>
+      <li class="sphinx-template-breadcrumbs-aside">
+              <a href="https://github.com/ain-soph/trojanzoo/blob/main/docs/source/trojanvision/defenses/index.rst" class="fa fa-large fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+</div>
+      </div>
+
+      <div class="sphinx-template-shortcuts-wrapper" id="sphinx-template-shortcuts-wrapper">
+        Shortcuts
+      </div>
+    </div>
+
+    <section data-toggle="sphinx-template-nav-shift" id="sphinx-template-content-wrap" class="sphinx-template-content-wrap">
+      <div class="sphinx-template-content-left">
+        
+          <div class="rst-content">
+            
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+              <article itemprop="articleBody" id="sphinx-template-article" class="sphinx-template-article">
+                
+  <section id="defenses">
+<span id="trojanvision-defenses"></span><h1>defenses<a class="headerlink" href="#defenses" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="adv.html">adv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="backdoor/index.html">backdoor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="backdoor/attack_agnostic.html">attack_agnostic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/attack_agnostic.html#trojanvision.defenses.AdvTrain"><code class="docutils literal notranslate"><span class="pre">AdvTrain</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/attack_agnostic.html#trojanvision.defenses.FinePruning"><code class="docutils literal notranslate"><span class="pre">FinePruning</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/attack_agnostic.html#trojanvision.defenses.MagNet"><code class="docutils literal notranslate"><span class="pre">MagNet</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/attack_agnostic.html#trojanvision.defenses.RandomizedSmooth"><code class="docutils literal notranslate"><span class="pre">RandomizedSmooth</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/attack_agnostic.html#trojanvision.defenses.Recompress"><code class="docutils literal notranslate"><span class="pre">Recompress</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="backdoor/input_filtering.html">input_filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/input_filtering.html#trojanvision.defenses.Neo"><code class="docutils literal notranslate"><span class="pre">Neo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/input_filtering.html#trojanvision.defenses.Strip"><code class="docutils literal notranslate"><span class="pre">Strip</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="backdoor/training_filtering.html">training_filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/training_filtering.html#trojanvision.defenses.ActivationClustering"><code class="docutils literal notranslate"><span class="pre">ActivationClustering</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="backdoor/model_inspection.html">model_inspection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/model_inspection.html#trojanvision.defenses.ABS"><code class="docutils literal notranslate"><span class="pre">ABS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/model_inspection.html#trojanvision.defenses.DeepInspect"><code class="docutils literal notranslate"><span class="pre">DeepInspect</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/model_inspection.html#trojanvision.defenses.NeuralCleanse"><code class="docutils literal notranslate"><span class="pre">NeuralCleanse</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/model_inspection.html#trojanvision.defenses.NeuronInspect"><code class="docutils literal notranslate"><span class="pre">NeuronInspect</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="backdoor/model_inspection.html#trojanvision.defenses.Tabor"><code class="docutils literal notranslate"><span class="pre">Tabor</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanvision.defenses.add_argument">
+<span class="sig-prename descclassname"><span class="pre">trojanvision.defenses.</span></span><span class="sig-name descname"><span class="pre">add_argument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">class_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/__init__.py#L28-L32"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.add_argument" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="trojanvision.defenses.create">
+<span class="sig-prename descclassname"><span class="pre">trojanvision.defenses.</span></span><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">defense_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">class_dict</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/__init__.py#L35-L40"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.create" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.defenses.BackdoorDefense">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.defenses.</span></span><span class="sig-name descname"><span class="pre">BackdoorDefense</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L33-L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.BackdoorDefense" title="Link to this definition">¶</a></dt>
+<dd><p>Backdoor defense abstract class.
+It inherits <a class="reference internal" href="../../trojanzoo/defenses.html#trojanzoo.defenses.Defense" title="trojanzoo.defenses.Defense"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanzoo.defenses.Defense</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>original</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to load original clean model.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, load attack poisoned model
+by calling <code class="docutils literal notranslate"><span class="pre">self.attack.load()</span></code>.</p>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>real_mark</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Watermark that the attacker uses
+with shape <code class="docutils literal notranslate"><span class="pre">(C+1,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>.</p></li>
+<li><p><strong>real_mask</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Mask of the watermark
+by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">trojanvision.marks.Watermark.get_mask()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.BackdoorDefense.get_filename">
+<span class="sig-name descname"><span class="pre">get_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L73-L75"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.BackdoorDefense.get_filename" title="Link to this definition">¶</a></dt>
+<dd><p>Get filenames for current defense settings.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.defenses.InputFiltering">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.defenses.</span></span><span class="sig-name descname"><span class="pre">InputFiltering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">defense_input_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L78-L178"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.InputFiltering" title="Link to this definition">¶</a></dt>
+<dd><p>Backdoor defense abstract class of input filtering.
+It inherits <a class="reference internal" href="#trojanvision.defenses.BackdoorDefense" title="trojanvision.defenses.BackdoorDefense"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.defenses.BackdoorDefense</span></code></a>.</p>
+<p>It detects whether a test input is poisoned.</p>
+<p>The defense tests <code class="xref py py-attr docutils literal notranslate"><span class="pre">defense_input_num</span></code> clean test inputs
+and their corresponding poison version
+(<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">defense_input_num</span></code> in total).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>defense_input_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Number of test inputs.
+Defaults to <code class="docutils literal notranslate"><span class="pre">100</span></code>.</p>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>test_set</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="(in PyTorch v2.8)"><em>torch.utils.data.Dataset</em></a>) – Test dataset
+with length <code class="xref py py-attr docutils literal notranslate"><span class="pre">defense_input_num</span></code>.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.InputFiltering.get_pred_labels">
+<span class="sig-name descname"><span class="pre">get_pred_labels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L172-L178"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.InputFiltering.get_pred_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Get predicted labels for test inputs (need overriding).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>torch.Tensor</em> – <code class="docutils literal notranslate"><span class="pre">torch.BoolTensor</span></code> with shape <code class="docutils literal notranslate"><span class="pre">(2</span> <span class="pre">*</span> <span class="pre">defense_input_num)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.InputFiltering.get_test_data">
+<span class="sig-name descname"><span class="pre">get_test_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L124-L158"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.InputFiltering.get_test_data" title="Link to this definition">¶</a></dt>
+<dd><p>Get test data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>(torch.Tensor, torch.Tensor)</em> –     Input and label tensors
+with length <code class="docutils literal notranslate"><span class="pre">defense_input_num</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.InputFiltering.get_true_labels">
+<span class="sig-name descname"><span class="pre">get_true_labels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L160-L170"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.InputFiltering.get_true_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Get ground-truth labels for test inputs.</p>
+<p>Defaults to return <code class="docutils literal notranslate"><span class="pre">[False]</span> <span class="pre">*</span> <span class="pre">defense_input_num</span> <span class="pre">+</span> <span class="pre">[True]</span> <span class="pre">*</span> <span class="pre">defense_input_num</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>torch.Tensor</em> – <code class="docutils literal notranslate"><span class="pre">torch.BoolTensor</span></code> with shape <code class="docutils literal notranslate"><span class="pre">(2</span> <span class="pre">*</span> <span class="pre">defense_input_num)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.defenses.TrainingFiltering">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.defenses.</span></span><span class="sig-name descname"><span class="pre">TrainingFiltering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">defense_input_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L181-L272"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.TrainingFiltering" title="Link to this definition">¶</a></dt>
+<dd><p>Backdoor defense abstract class of training data filtering.
+It inherits <a class="reference internal" href="#trojanvision.defenses.BackdoorDefense" title="trojanvision.defenses.BackdoorDefense"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.defenses.BackdoorDefense</span></code></a>.</p>
+<p>Provided <code class="xref py py-attr docutils literal notranslate"><span class="pre">defense_input_num</span></code> training data,
+it detects which training data is poisoned.</p>
+<p>The defense evaluates clean and poison training inputs.</p>
+<ul class="simple">
+<li><p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">defense_input_num</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, use full training data.</p></li>
+<li><p>Else, sample <code class="docutils literal notranslate"><span class="pre">defense_input_num</span> <span class="pre">*</span> <span class="pre">poison_percent</span></code> poison training data
+and <code class="docutils literal notranslate"><span class="pre">defense_input_num</span> <span class="pre">*</span> <span class="pre">(1</span> <span class="pre">-</span> <span class="pre">poison_percent)</span></code> clean training data.</p></li>
+</ul>
+<p>If dataset is not using <code class="docutils literal notranslate"><span class="pre">train_mode</span> <span class="pre">==</span> <span class="pre">'dataset'</span></code>,
+construct poison dataset using all clean data with watermark attached.
+(If <code class="xref py py-attr docutils literal notranslate"><span class="pre">defense_input_num</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> as well,
+the defense will evaluate the whole clean training set and its poisoned version.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>defense_input_num</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Number of training inputs to evaluate.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (all training set).</p>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>clean_set</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="(in PyTorch v2.8)"><em>torch.utils.data.Dataset</em></a>) – Clean training data to evaluate.</p></li>
+<li><p><strong>poison_set</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="(in PyTorch v2.8)"><em>torch.utils.data.Dataset</em></a>) – Poison training data to evaluate.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.TrainingFiltering.get_datasets">
+<span class="sig-name descname"><span class="pre">get_datasets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L222-L243"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.TrainingFiltering.get_datasets" title="Link to this definition">¶</a></dt>
+<dd><p>Get clean and poison datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>(torch.utils.data.Dataset, torch.utils.data.Dataset)</em> –     Clean training dataset and poison training dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.TrainingFiltering.get_pred_labels">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_pred_labels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L265-L272"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.TrainingFiltering.get_pred_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Get predicted labels for training inputs (need overriding).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>torch.Tensor</em> – <code class="docutils literal notranslate"><span class="pre">torch.BoolTensor</span></code> with shape <code class="docutils literal notranslate"><span class="pre">(defense_input_num)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.TrainingFiltering.get_true_labels">
+<span class="sig-name descname"><span class="pre">get_true_labels</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L254-L263"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.TrainingFiltering.get_true_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Get ground-truth labels for training inputs.</p>
+<p>Defaults to return <code class="docutils literal notranslate"><span class="pre">[False]</span> <span class="pre">*</span> <span class="pre">len(self.clean_set)</span> <span class="pre">+</span> <span class="pre">[True]</span> <span class="pre">*</span> <span class="pre">len(self.poison_set)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>torch.Tensor</em> – <code class="docutils literal notranslate"><span class="pre">torch.BoolTensor</span></code> with shape <code class="docutils literal notranslate"><span class="pre">(defense_input_num)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="trojanvision.defenses.ModelInspection">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">trojanvision.defenses.</span></span><span class="sig-name descname"><span class="pre">ModelInspection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">defense_remask_epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defense_remask_lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cost</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-3</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L275-L550"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.ModelInspection" title="Link to this definition">¶</a></dt>
+<dd><p>Backdoor defense abstract class of model inspection.
+It inherits <a class="reference internal" href="#trojanvision.defenses.BackdoorDefense" title="trojanvision.defenses.BackdoorDefense"><code class="xref py py-class docutils literal notranslate"><span class="pre">trojanvision.defenses.BackdoorDefense</span></code></a>.</p>
+<p>Provided a model, it tries to search for a trigger.
+If trigger exists, that means the model is poisoned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>defense_remask_epoch</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Defense watermark optimizing epochs.
+Defaults to <code class="docutils literal notranslate"><span class="pre">10</span></code>.</p></li>
+<li><p><strong>defense_remask_lr</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Defense watermark optimizing learning rate.
+Defaults to <code class="docutils literal notranslate"><span class="pre">0.1</span></code>.</p></li>
+<li><p><strong>cost</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Cost of mask norm loss.
+Defaults to <code class="docutils literal notranslate"><span class="pre">1e-3</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>cost</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><em>float</em></a>) – Cost of mask norm loss.</p></li>
+<li><p><strong>clean_set</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="(in PyTorch v2.8)"><em>torch.utils.data.Dataset</em></a>) – Clean training data to evaluate.</p></li>
+<li><p><strong>poison_set</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/data.html#torch.utils.data.Dataset" title="(in PyTorch v2.8)"><em>torch.utils.data.Dataset</em></a>) – Poison training data to evaluate.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.ModelInspection.check_early_stop">
+<span class="sig-name descname"><span class="pre">check_early_stop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L529-L535"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.ModelInspection.check_early_stop" title="Link to this definition">¶</a></dt>
+<dd><p>Check whether to early stop at the end of each remask epoch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>bool</em> – Whether to early stop. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.ModelInspection.get_mark_loss_list">
+<span class="sig-name descname"><span class="pre">get_mark_loss_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L366-L412"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.ModelInspection.get_mark_loss_list" title="Link to this definition">¶</a></dt>
+<dd><p>Get list of mark, loss, asr of recovered trigger for each class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to output jaccard index for each trigger.
+It’s also passed to <a class="reference internal" href="#trojanvision.defenses.ModelInspection.optimize_mark" title="trojanvision.defenses.ModelInspection.optimize_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">optimize_mark()</span></code></a>.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to <a class="reference internal" href="#trojanvision.defenses.ModelInspection.optimize_mark" title="trojanvision.defenses.ModelInspection.optimize_mark"><code class="xref py py-meth docutils literal notranslate"><span class="pre">optimize_mark()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>(torch.Tensor, list[float], list[float])</em> –     list of mark, loss, asr with length <code class="docutils literal notranslate"><span class="pre">num_classes</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.ModelInspection.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L537-L550"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.ModelInspection.load" title="Link to this definition">¶</a></dt>
+<dd><p>Load recovered mark from <code class="xref py py-attr docutils literal notranslate"><span class="pre">path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – npz path of recovered mark.
+Defaults to <code class="docutils literal notranslate"><span class="pre">'{folder_path}/{self.get_filename()}.npz'</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.ModelInspection.loss">
+<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trigger_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L414-L436"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.ModelInspection.loss" title="Link to this definition">¶</a></dt>
+<dd><p>Loss function to optimize recovered trigger.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_input</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Clean input tensor
+with shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">C,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>.</p></li>
+<li><p><strong>_label</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Clean label tensor
+with shape <code class="docutils literal notranslate"><span class="pre">(N)</span></code>.</p></li>
+<li><p><strong>target</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Target class.</p></li>
+<li><p><strong>trigger_output</strong> (<a class="reference external" href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" title="(in PyTorch v2.8)"><em>torch.Tensor</em></a>) – Output tensor of input tensor with trigger.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>torch.Tensor</em> – Scalar loss tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="trojanvision.defenses.ModelInspection.optimize_mark">
+<span class="sig-name descname"><span class="pre">optimize_mark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger_header</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/ain-soph/trojanzoo/blob/main/trojanvision/defenses/abstract.py#L438-L527"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#trojanvision.defenses.ModelInspection.optimize_mark" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – The class label to optimize.</p></li>
+<li><p><strong>loader</strong> (<a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.13)"><em>collections.abc.Iterable</em></a>) – Data loader to optimize trigger.
+Defaults to <code class="docutils literal notranslate"><span class="pre">self.dataset.loader['train']</span></code>.</p></li>
+<li><p><strong>logger_header</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Header string of logger.
+Defaults to <code class="docutils literal notranslate"><span class="pre">''</span></code>.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><em>bool</em></a>) – Whether to use logger for output.
+Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> – Keyword arguments passed to <a class="reference internal" href="#trojanvision.defenses.ModelInspection.loss" title="trojanvision.defenses.ModelInspection.loss"><code class="xref py py-meth docutils literal notranslate"><span class="pre">loss()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>(torch.Tensor, torch.Tensor)</em> –     Optimized mark tensor with shape <code class="docutils literal notranslate"><span class="pre">(C</span> <span class="pre">+</span> <span class="pre">1,</span> <span class="pre">H,</span> <span class="pre">W)</span></code>
+and loss tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+              </article>
+              
+            </div>
+            <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="adv.html" class="btn btn-neutral float-right" title="adv" accesskey="n" rel="next">Next <img src="../../_static/images/chevron-right-orange.svg" class="next-page"></a>
+      
+      
+        <a href="../datasets/folder.html" class="btn btn-neutral" title="folder" accesskey="p" rel="prev"><img src="../../_static/images/chevron-right-orange.svg" class="previous-page"> Previous</a>
+      
+    </div>
+  
+  
+  <hr>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, ain-soph.
+
+    </p>
+  </div>
+    
+      <div>
+        Built with <a href="http://sphinx-doc.org/">Sphinx</a> using <a href="https://github.com/ain-soph/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a> (modified from  <a href="https://github.com/ain-soph/pytorch_sphinx_theme">pytorch_sphinx_theme</a>).
+      </div>
+     
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="sphinx-template-content-right" id="sphinx-template-content-right">
+          <div class="sphinx-template-right-menu" id="sphinx-template-right-menu">
+            <div class="sphinx-template-side-scroll" id="sphinx-template-side-scroll-right">
+              <ul>
+<li><a class="reference internal" href="#">defenses</a><ul>
+<li><a class="reference internal" href="#trojanvision.defenses.add_argument"><code class="docutils literal notranslate"><span class="pre">add_argument()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.create"><code class="docutils literal notranslate"><span class="pre">create()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.BackdoorDefense"><code class="docutils literal notranslate"><span class="pre">BackdoorDefense</span></code></a><ul>
+<li><a class="reference internal" href="#trojanvision.defenses.BackdoorDefense.get_filename"><code class="docutils literal notranslate"><span class="pre">get_filename()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trojanvision.defenses.InputFiltering"><code class="docutils literal notranslate"><span class="pre">InputFiltering</span></code></a><ul>
+<li><a class="reference internal" href="#trojanvision.defenses.InputFiltering.get_pred_labels"><code class="docutils literal notranslate"><span class="pre">get_pred_labels()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.InputFiltering.get_test_data"><code class="docutils literal notranslate"><span class="pre">get_test_data()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.InputFiltering.get_true_labels"><code class="docutils literal notranslate"><span class="pre">get_true_labels()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trojanvision.defenses.TrainingFiltering"><code class="docutils literal notranslate"><span class="pre">TrainingFiltering</span></code></a><ul>
+<li><a class="reference internal" href="#trojanvision.defenses.TrainingFiltering.get_datasets"><code class="docutils literal notranslate"><span class="pre">get_datasets()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.TrainingFiltering.get_pred_labels"><code class="docutils literal notranslate"><span class="pre">get_pred_labels()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.TrainingFiltering.get_true_labels"><code class="docutils literal notranslate"><span class="pre">get_true_labels()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#trojanvision.defenses.ModelInspection"><code class="docutils literal notranslate"><span class="pre">ModelInspection</span></code></a><ul>
+<li><a class="reference internal" href="#trojanvision.defenses.ModelInspection.check_early_stop"><code class="docutils literal notranslate"><span class="pre">check_early_stop()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.ModelInspection.get_mark_loss_list"><code class="docutils literal notranslate"><span class="pre">get_mark_loss_list()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.ModelInspection.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.ModelInspection.loss"><code class="docutils literal notranslate"><span class="pre">loss()</span></code></a></li>
+<li><a class="reference internal" href="#trojanvision.defenses.ModelInspection.optimize_mark"><code class="docutils literal notranslate"><span class="pre">optimize_mark()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+          </div>
+        </div>
+    </section>
+  </div>
+
+  
+
+  
+
+  
+  <script src="../../_static/jquery.js?v=5d32c60e"></script>
+  <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+  <script src="../../_static/documentation_options.js?v=664ffad9"></script>
+  <script src="../../_static/doctools.js?v=9bcbadda"></script>
+  <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+  <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+  <script src="../../_static/copybutton.js?v=f281be69"></script>
+  
+
+  
+
+  <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  <script type="text/javascript">
+    jQuery(function () {
+      $('.header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo.svg)');
+      $('.docs-header .header-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-dark.svg)');
+      $('.footer-logo').css('background-image', 'url(../../_static/logo/trojanzoo-logo-icon.svg)');
+      });
+  </script>
+  <script script type="text/javascript">
+    var collapsedSections = [];
+  </script>
+  
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-resources" id="docs-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for TrojanZoo</p>
+          <a class="with-right-arrow" href="../../index.html">View Docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="/" class="footer-logo"></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="/" aria-label="TrojanZoo"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+
+          <li>
+            <a href="/">Home</a>
+          </li>
+
+          <li class="active resources-mobile-menu-title">
+            <a href="../../">Docs</a>
+          </li>
+          <ul class="resources-mobile-menu-items">
+              <li>
+              <a href="/alpsplot">AlpsPlot</a>
+            </li>
+              <li class="active">
+              <a href="/trojanzoo">TrojanZoo</a>
+            </li>
+              <li>
+              <a href="/trojanzoo_sphinx_theme">trojanzoo_sphinx_theme</a>
+            </li>
+              <li>
+              <a href="https://github.com/ain-soph/base">base</a>
+            </li>
+          </ul>
+          
+          <li>
+            <a href="https://github.com/ain-soph/trojanzoo/">GitHub</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="../../_static/js/vendor/anchor.min.js"></script>
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      trojanzooAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+      mainMenuDropdown.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.sphinx-template-article a span.pre").each(function (e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+
+</html>
